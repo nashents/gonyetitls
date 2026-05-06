@@ -331,6 +331,7 @@ class Edit extends Component
    
 
     public function update(){
+        
       DB::transaction(function () {
           $user = User::find($this->user_id);
           $user->name = $this->name;

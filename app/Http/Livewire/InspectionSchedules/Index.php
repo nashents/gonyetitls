@@ -93,6 +93,40 @@ class Index extends Component
        'trigger_type' => 'required'
     ];
 
+     public function scheduleNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $schedule = InspectionSchedule::latest()->orderBy('id','desc')->first();
+
+        if (!$schedule) {
+            $schedule_number =  $initials .'IS'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $schedule->id + 1;
+            $schedule_number =  $initials .'IS'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $schedule_number;
+
+
+    }
+
     public function store(){
         
             $this->validate();

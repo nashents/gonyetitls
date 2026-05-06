@@ -18,6 +18,9 @@ class Horse extends Model implements Auditable
    public function category_checklists(){
         return $this->hasMany('App\Models\CategoryChecklist');
     }
+     public function fuel_requests(){
+        return $this->hasMany('App\Models\FuelRequest');
+    }
     public function horse_documents(){
         return $this->hasMany('App\Models\HorseDocument');
     }

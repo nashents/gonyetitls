@@ -24,6 +24,16 @@ class FuelRequest extends Model implements Auditable
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
+    public function horse(){
+        return $this->belongsTo('App\Models\Horse');
+    }
+    public function asset(){
+        return $this->belongsTo('App\Models\Asset');
+    }
+    public function vehicle(){
+        return $this->belongsTo('App\Models\Vehicle');
+    }
+  
     public function allocation(){
         return $this->belongsTo('App\Models\Allocation');
     }

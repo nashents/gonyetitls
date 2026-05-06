@@ -15,6 +15,9 @@ class Vehicle extends Model implements Auditable
     public function rentals(){
         return $this->hasMany('App\Models\Rental');
     }
+     public function fuel_requests(){
+        return $this->hasMany('App\Models\FuelRequest');
+    }
     public function vehicle_documents(){
         return $this->hasMany('App\Models\VehicleDocument');
     }

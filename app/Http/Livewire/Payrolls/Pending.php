@@ -49,7 +49,7 @@ class Pending extends Component
             $payroll->comments = $this->comments;
             $payroll->save();
 
-            if ($this->authorize == "Approved") {
+            if ($this->authorize == "approved") {
                 
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->dispatchBrowserEvent('alert', [

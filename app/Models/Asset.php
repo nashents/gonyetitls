@@ -22,6 +22,9 @@ class Asset extends Model implements Auditable
     public function goods_received(){
         return $this->belongsTo('App\Models\GoodsReceived');
     }
+     public function fuel_requests(){
+        return $this->hasMany('App\Models\FuelRequest');
+    }
     public function bin(){
         return $this->belongsTo('App\Models\Bin');
     }

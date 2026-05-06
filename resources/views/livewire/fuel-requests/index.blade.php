@@ -38,7 +38,6 @@
                             <table id="fuel_requestsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-
                                     <th class="th-sm">Request #
                                     </th>
                                     <th class="th-sm">Type
@@ -114,13 +113,18 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fuel_requestModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-gas-pump"></i> Add Fuel Request <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="from_allocation"   class="line-style" />
+                        <label for="one" class="radio-label">Generate request from allocation</label>
+                        @error('from_allocation') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
                     <div class="form-group">
                         <label for="request_type">Request Type</label>
                        <select wire:model.debounce.300ms="request_type" class="form-control" required>
