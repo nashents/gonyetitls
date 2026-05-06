@@ -60,13 +60,8 @@ Route::get('admins/management','AdminController@manage')->name('admins.manage');
 //**Fuel Management Routes**
 
 //Fuel Requisition Routes
-Route::get('employee/{id}/fuel/requests','FuelRequestController@myRequests')->name('fuel_requests.myrequests');
-Route::get('fuel/requests/deleted','FuelRequestController@deleted')->name('fuel_requests.deleted');
-Route::get('fuel/requests/approved','FuelRequestController@approved')->name('fuel_requests.approved');
-Route::get('fuel/requests/rejected','FuelRequestController@rejected')->name('fuel_requests.rejected');
-Route::get('fuel/requests/pending','FuelRequestController@pending')->name('fuel_requests.pending');
-Route::get('fuel/requests/management','FuelRequestController@manage')->name('fuel_requests.manage');
-Route::get('fuel/requests/reports','FuelRequestController@reports')->name('fuel_requests.reports');
+
+
 
 //Purchase Order Routes
 Route::get('purchase/orders/deleted','PurchaseController@deleted')->name('purchases.deleted');
@@ -742,6 +737,11 @@ Route::get('requisitions/{purchase}/export-to-pdf','RequisitionController@genera
 Route::get('requisitions/authorization/pending','RequisitionController@pending')->name('requisitions.pending');
 Route::get('requisitions/authorization/approved','RequisitionController@approved')->name('requisitions.approved');
 Route::get('requisitions/authorization/rejected','RequisitionController@rejected')->name('requisitions.rejected');
+
+Route::get('fuel_requests/authorization/pending','FuelRequestController@pending')->name('fuel_requests.pending');
+Route::get('fuel_requests/authorization/approved','FuelRequestController@approved')->name('fuel_requests.approved');
+Route::get('fuel_requests/authorization/rejected','FuelRequestController@rejected')->name('fuel_requests.rejected');
+Route::get('employee/{id}/fuel/requests','FuelRequestController@myRequests')->name('fuel_requests.myrequests');
 
 Route::get('incidents/authorization/pending','IncidentController@pending')->name('incidents.pending');
 Route::get('incidents/authorization/approved','IncidentController@approved')->name('incidents.approved');

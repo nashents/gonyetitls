@@ -1686,9 +1686,9 @@
                                         </div> 
                                     @endif
                                     <br>
-                                    <div class="row">
+                                    <div class="row mt-15 mb-35">
                                         @if ($is_discount == False)
-                                            <div class="col-md-3" >
+                                            <div class="col-md-3 " >
                                                 <a href="#" wire:click.prevent="discount"><i class="fa fa-plus-square-o"></i> Add a discount</a> 
                                             </div>
                                         @else

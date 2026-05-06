@@ -266,6 +266,16 @@ class SidebarComposer
         $waste_collectionsRejectedCount = WasteCollection::where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+       
+        $fuel_requestsPendingCount = FuelRequest::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $fuel_requestsApprovedCount = FuelRequest::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $fuel_requestsRejectedCount = FuelRequest::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
 
         $loansPendingCount = Loan::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -677,6 +687,10 @@ class SidebarComposer
         'leaves_pending_count'  => (int) ($leavesPendingCount ?? 0),
         'leaves_approved_count' => (int) ($leavesApprovedCount ?? 0),
         'leaves_rejected_count' => (int) ($leavesRejectedCount ?? 0),
+      
+        'fuel_requests_pending_count'  => (int) ($fuel_requestsPendingCount ?? 0),
+        'fuel_requests_approved_count' => (int) ($fuel_requestsApprovedCount ?? 0),
+        'fuel_requests_rejected_count' => (int) ($fuel_requestsRejectedCount ?? 0),
 
         'attendances_pending_count'  => (int) ($attendancesPendingCount ?? 0),
         'attendances_approved_count' => (int) ($attendancesApprovedCount ?? 0),
@@ -914,6 +928,10 @@ class SidebarComposer
             'waste_disposalsPendingCount'  => $waste_disposalsPendingCount,
             'waste_disposalsApprovedCount' => $waste_disposalsApprovedCount,
             'waste_disposalsRejectedCount' => $waste_disposalsRejectedCount,
+           
+            'fuel_requestsPendingCount'  => $fuel_requestsPendingCount,
+            'fuel_requestsApprovedCount' => $fuel_requestsApprovedCount,
+            'fuel_requestsRejectedCount' => $fuel_requestsRejectedCount,
             
             'waste_collectionsPendingCount'  => $waste_collectionsPendingCount,
             'waste_collectionsApprovedCount' => $waste_collectionsApprovedCount,

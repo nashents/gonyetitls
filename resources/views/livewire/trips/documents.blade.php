@@ -96,6 +96,7 @@
                                     <option value="">Select Title</option>
                                     <option value="POD">POD</option>
                                     <option value="CD3">CD3</option>
+                                    <option value="CDOS">Container Drop-Off Slip</option>
                                 </select>
                                 @error('title.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -134,6 +135,7 @@
                                         <option value="">Select Title</option>
                                         <option value="POD">POD</option>
                                         <option value="CD3">CD3</option>
+                                        <option value="CDOS">Container Drop-Off Slip</option>
                                     </select>
                                     @error('title.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -203,6 +205,7 @@
                             <option value="">Select Title</option>
                             <option value="POD">POD</option>
                             <option value="CD3">CD3</option>
+                            <option value="CDOS">Container Drop-Off Slip</option>
                             </select>
                             @error('title') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>

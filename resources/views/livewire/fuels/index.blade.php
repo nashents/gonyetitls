@@ -50,7 +50,7 @@
                                         <span class="input-group-addon">
                                   From
                                   </span>
-                                  <input type="date" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control" aria-label="...">
+                                  <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
@@ -59,7 +59,7 @@
                                         <span class="input-group-addon">
                                   To
                                   </span>
-                                  <input type="date" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control" aria-label="...">
+                                  <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
@@ -69,7 +69,7 @@
                                         <span class="input-group-addon">
                                   From
                                   </span>
-                                  <input type="datetime-local" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control" aria-label="...">
+                                  <input type="datetime-local" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
@@ -78,7 +78,7 @@
                                         <span class="input-group-addon">
                                   To
                                   </span>
-                                  <input type="datetime-local" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control" aria-label="...">
+                                  <input type="datetime-local" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>

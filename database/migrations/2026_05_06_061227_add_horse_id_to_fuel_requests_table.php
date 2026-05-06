@@ -18,6 +18,7 @@ class AddHorseIdToFuelRequestsTable extends Migration
             $table->foreign('horse_id')->references('id')->on('horses')->onDelete('cascade');
             $table->bigInteger('asset_id')->unsigned()->nullable();
             $table->foreign('asset_id')->references('id')->on('assets')->onDelete('cascade');
+          
             $table->boolean('from_allocation')->default(False);
             $table->text('reason')->nullable();
         });
@@ -39,6 +40,7 @@ class AddHorseIdToFuelRequestsTable extends Migration
                    'asset_id',
                    'from_allocation',
                    'reason',
+                 
                 ]);
            
         });

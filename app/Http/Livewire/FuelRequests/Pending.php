@@ -2,15 +2,25 @@
 
 namespace App\Http\Livewire\FuelRequests;
 
-use Livewire\Component;
 use App\Models\FuelRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Pending extends Component
 {
-    public $fuel_requests;
+    use WithFileUploads;
+
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    private $fuel_requests;
     public $authorize;
     public $comments;
     public $fuel_request_id;
@@ -28,24 +38,30 @@ class Pending extends Component
     public $delivery_point;
 
     public function mount(){
-        $this->fuel_requests = FuelRequest::where('status', 'pending')->latest()->get();
+        
     }
 
-    public function decision($id){
+    public function authorize($id){
         $fuel_request = FuelRequest::find($id);
         $this->fuel_request_id = $fuel_request->id;
         $this->dispatchBrowserEvent('show-fuelRequestAuthorizationModal');
     }
 
     public function update(){
+
         $fuel_request = FuelRequest::find($this->fuel_request_id);
-        $fuel_request->status = $this->authorize;
-        $fuel_request->comments = $this->comments;
+        $fuel_request->authorized_by_id = Auth::user()->id;
+        $fuel_request->authorization = $this->authorize;
+        $fuel_request->authorization_date = now();
+        $fuel_request->authorization_comments = $this->comments;
         $fuel_request->update();
 
-        $allocation = $fuel_request->employee->allocation;
-        $allocation->balance  =   $allocation->balance - $fuel_request->quantity;
-        $allocation->update();
+        if ($fuel_request->allocation) {
+            $allocation = $fuel_request->employee->allocation;
+            $allocation->balance  =   $allocation->balance - $fuel_request->quantity;
+            $allocation->update();
+        }
+        
 
         $this->email = $fuel_request->employee->allocation->container->vendor->email;
         $this->date = $fuel_request->date;
@@ -101,6 +117,85 @@ class Pending extends Component
 
     public function render()
     {
-        return view('livewire.fuel-requests.pending');
+        $query = FuelRequest::query()
+            ->with([
+                'employee',
+                'horse',
+                'vehicle',
+                'asset',
+            ])
+            ->where('authorization', 'pending')
+
+            // Date Filtering
+            ->when(
+                isset($this->from_date) && isset($this->to_date)
+                    && $this->from_date && $this->to_date,
+
+                function ($q) {
+
+                    $q->whereBetween('created_at', [
+                        Carbon::parse($this->from_date)->startOfDay(),
+                        Carbon::parse($this->to_date)->endOfDay(),
+                    ]);
+                },
+
+                function ($q) {
+
+                    // Default: Current Month
+                    $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+                }
+            )
+
+            // Search
+            ->when($this->search, function ($q) {
+
+                $search = '%' . $this->search . '%';
+
+                $q->where(function ($subQuery) use ($search) {
+
+                    $subQuery->where('reason', 'like', $search)
+                        ->orWhere('fuel_type', 'like', $search)
+
+                        // Quantity numeric-safe
+                        ->orWhereRaw('CAST(quantity AS CHAR) LIKE ?', [$search])
+
+                        // Employee
+                        ->orWhereHas('employee', function ($employeeQuery) use ($search) {
+                            $employeeQuery->where('name', 'like', $search)
+                                ->orWhere('employee_number', 'like', $search);
+                        })
+
+                        // Horse
+                        ->orWhereHas('horse', function ($horseQuery) use ($search) {
+                            $horseQuery->where('registration_number', 'like', $search)
+                                ->orWhere('fleet_number', 'like', $search)
+                                ->orWhere('make', 'like', $search)
+                                ->orWhere('model', 'like', $search);
+                        })
+
+                        // Vehicle
+                        ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                            $vehicleQuery->where('registration_number', 'like', $search)
+                                ->orWhere('fleet_number', 'like', $search)
+                                ->orWhere('make', 'like', $search)
+                                ->orWhere('model', 'like', $search);
+                        })
+
+                        // Asset
+                        ->orWhereHas('asset', function ($assetQuery) use ($search) {
+                            $assetQuery->where('name', 'like', $search)
+                                ->orWhere('serial_number', 'like', $search)
+                                ->orWhere('asset_number', 'like', $search);
+                        });
+                });
+            })
+
+            ->latest()
+            ->paginate(10);
+
+        return view('livewire.fuel-requests.pending',[
+            'fuel_requests' => $query
+        ]);
     }
 }

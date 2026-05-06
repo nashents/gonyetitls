@@ -1389,9 +1389,9 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             $all(['isSuperAdmin']),
         ]);
         $upsertSub($m, ['name'=>'Manage Requests','slug'=>'manage-fuel-requests','icon'=>'fas fa-list','route_name'=>'fuel_requests.index','sort_order'=>15,'visibility'=>$fuelReqManageVis]);
-        $upsertSub($m, ['name'=>'Pending Requests','slug'=>'pending-fuel-requests','icon'=>'fas fa-clock','route_name'=>'fuel_requests.pending','sort_order'=>20,'badge_key'=>'fuel_requisition_pending_count','visibility'=>$fuelReqManageVis]);
-        $upsertSub($m, ['name'=>'Approved Requests','slug'=>'approved-fuel-requests','icon'=>'fas fa-check','route_name'=>'fuel_requests.approved','sort_order'=>30,'badge_key'=>'fuel_requisition_approved_count','visibility'=>$fuelReqManageVis]);
-        $upsertSub($m, ['name'=>'Rejected Requests','slug'=>'rejected-fuel-requests','icon'=>'fas fa-ban','route_name'=>'fuel_requests.rejected','sort_order'=>40,'badge_key'=>'fuel_requisition_rejected_count','visibility'=>$fuelReqManageVis]);
+        $upsertSub($m, ['name'=>'Pending Requests','slug'=>'pending-fuel-requests','icon'=>'fas fa-clock','route_name'=>'fuel_requests.pending','sort_order'=>20,'badge_key'=>'fuel_requests_pending_count','visibility'=>$fuelReqManageVis]);
+        $upsertSub($m, ['name'=>'Approved Requests','slug'=>'approved-fuel-requests','icon'=>'fas fa-check','route_name'=>'fuel_requests.approved','sort_order'=>30,'badge_key'=>'fuel_requests_approved_count','visibility'=>$fuelReqManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Requests','slug'=>'rejected-fuel-requests','icon'=>'fas fa-ban','route_name'=>'fuel_requests.rejected','sort_order'=>40,'badge_key'=>'fuel_requests_rejected_count','visibility'=>$fuelReqManageVis]);
 
         // ----------------------------
         // GROUP: Trip Management (Finance or Transport or Super)

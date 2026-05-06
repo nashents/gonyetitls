@@ -50,6 +50,7 @@ class Myrequests extends Component
     public $date;
     public $reason;
     public $fuel_balance = 0;
+    public $user_id;
 
 
     public function updatedSelectedAllocation($id){
@@ -61,8 +62,20 @@ class Myrequests extends Component
             
         }
     }
+    public function resetInputFields(){
+        $this->reason = Null;
+        $this->category = Null;
+        $this->selectedHorse = Null;
+        $this->selectedAsset = Null;
+        $this->selectedVehicle = Null;
+        $this->fuel_type = Null;
+        $this->quantity = Null;
+        $this->selectedAllocation = Null;
+        $this->request_type = Null;
+        $this->from_allocation = False;
+    }
 
-    public $user_id;
+  
 
     public function mount($id){
         $this->employee_id = $id;
@@ -125,15 +138,16 @@ class Myrequests extends Component
             $fuel_request->user_id = Auth::user()->id;
             $fuel_request->request_number = $this->requestNumber();
             $fuel_request->employee_id = $this->selectedEmployee ?: Null;
-
             $fuel_request->horse_id = $this->selectedHorse ?: Null;
             $fuel_request->vehicle_id = $this->selectedVehicle ?: Null;
             $fuel_request->asset_id = $this->selectedAsset ?: Null;
             $fuel_request->allocation_id = $this->selectedAllocation;
             $fuel_request->request_type = $this->request_type;
             $fuel_request->fuel_type = $this->fuel_type;
+            $fuel_request->from_allocation = $this->from_allocation;
             $fuel_request->quantity = $this->quantity;
             $fuel_request->reason = $this->reason;
+            $fuel_request->category = $this->category;
             $fuel_request->date = $this->date;
             $fuel_request->status = "pending";
             $fuel_request->save();
@@ -158,7 +172,9 @@ class Myrequests extends Component
         $this->request_type = $fuel_request->request_type;
         $this->fuel_type = $fuel_request->fuel_type;
         $this->reason = $fuel_request->reason;
+        $this->category = $fuel_request->category;
         $this->selectedEmployee = $fuel_request->employee_id;
+        $this->from_allocation = $fuel_request->from_allocation;
         $this->selectedHorse = $fuel_request->horse_id;
         $this->selectedVehicle = $fuel_request->vehicle_id;
         $this->selectedAsset = $fuel_request->asset_id;
@@ -181,7 +197,9 @@ class Myrequests extends Component
             $fuel_request->request_type = $this->request_type;
             $fuel_request->fuel_type = $this->fuel_type;
             $fuel_request->quantity = $this->quantity;
+            $fuel_request->from_allocation = $this->from_allocation;
             $fuel_request->reason = $this->reason;
+            $fuel_request->category = $this->category;
             $fuel_request->date = $this->date;
             $fuel_request->status = "pending";
             $fuel_request->update();
@@ -208,7 +226,7 @@ class Myrequests extends Component
             'message'=>"Fuel Request Deleted Successfully!!"
         ]);
 
-        $this->dispatchBrowserEvent('show-deleteModal');
+        $this->dispatchBrowserEvent('hide-deleteModal');
     }
 
     public function render()
