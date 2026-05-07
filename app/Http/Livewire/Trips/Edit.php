@@ -1768,6 +1768,20 @@ class Edit extends Component
 
     }
 
+      public function updatedDistance($distance){
+        if (!is_null($distance)) {
+            if (is_numeric($distance)) {
+                $consumption = $this->with_cargos 
+                    ? $this->fuel_consumption_loaded_standard 
+                    : $this->fuel_consumption_empty_standard;
+
+                if ($consumption && is_numeric($consumption)) {
+                    $this->trip_fuel = $distance / $consumption;
+                }
+            }
+            $this->calculateFreight();
+        }
+    }
     
     public function updatedSelectedStatus($status){
         
