@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 
+use App\Models\Company;
 use App\Models\Module;
 use App\Models\ModuleGroup;
 use App\Models\ProblemCategory;
@@ -1987,18 +1988,50 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug' => 'business-settings',
             'sort_order' => 160,
             'visibility' => $any([
+                $all(['isSystemAdmin']),
                 $all(['isSuperAdmin']),
             ]),
         ]);
 
-        // Company Profile (dynamic company_id at runtime)
+   
+
+        // Parent dropdown
+        $companyProfileModule = $upsertModule($g, [
+            'name' => 'Company Profile',
+            'slug' => 'company-profile-dynamic',
+            'icon' => 'fas fa-cog',
+            'route_name' => null, // dropdown parent, no direct route
+            'route_params' => null,
+            'sort_order' => 10,
+           'visibility' => $any([
+                $all(['isSystemAdmin']),
+              
+            ]),
+        ]);
+
+        // Dropdown children: companies
+        Company::orderBy('name')->get()->each(function ($company, $index) use ($upsertSub, $companyProfileModule) {
+            $upsertSub($companyProfileModule, [
+                'name' => $company->name,
+                'slug' => 'company-profile-' . $company->id,
+                'icon' => 'fas fa-building',
+                'route_name' => 'company-profile',
+                'route_params' => [
+                    'company' => $company->id,
+                ],
+                'sort_order' => $index + 1,
+                'visibility' => null,
+            ]);
+        });
+
+          // Company Profile (dynamic company_id at runtime)
         $upsertModule($g, [
             'name' => 'Company Profile',
             'slug' => 'company-profile',
             'icon' => 'fas fa-cog',
             'route_name' => 'company-profile',
             'route_params'=> ['company' => '{company_id}'], // ✅ MUST match {company}
-            'sort_order' => 10,
+            'sort_order' => 20,
             'visibility' => null,
         ]);
 

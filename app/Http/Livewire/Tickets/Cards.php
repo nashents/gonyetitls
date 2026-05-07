@@ -21,8 +21,6 @@ class Cards extends Component
     public $mechanic_ids;
     public $mechanics;
     public $ticket_status = "all";
-
-    use WithPagination;
     public $selectedRows = [];
     public $selectPageRows = false;
     protected $paginationTheme = 'bootstrap';
@@ -119,12 +117,13 @@ class Cards extends Component
                 $to   = Carbon::parse($this->to)->endOfDay();
 
                 $query->whereBetween('created_at', [$from, $to]);
-            } else {
-                $query->whereBetween('created_at', [
-                    now()->startOfMonth(),
-                    now()->endOfMonth(),
-                ]);
-            }
+            } 
+            // else {
+            //     $query->whereBetween('created_at', [
+            //         now()->startOfMonth(),
+            //         now()->endOfMonth(),
+            //     ]);
+            // }
 
             // ✅ Normal status filter (on ticket)
             if ($this->ticket_status !== 'all') {
@@ -200,9 +199,6 @@ class Cards extends Component
 
     public function render()
     {
-
-        
-
         return view('livewire.tickets.cards', [
             'tickets' => $this->tickets
         ]);

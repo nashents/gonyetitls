@@ -30,7 +30,9 @@
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i>Dashboard</a></li>
             							<li class="active"> <i class="fa fa-user"></i> Company Profile</li>
-                                        <li class="active"> {{$company->name}}</li>
+                                        <li class="active"> 
+                                            {{$company->name}}
+                                        </li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
