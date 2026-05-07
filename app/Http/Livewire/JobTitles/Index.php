@@ -9,6 +9,7 @@ use App\Models\JobTitleQualification;
 use App\Models\Qualification;
 use App\Models\Rank;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -99,10 +100,15 @@ class Index extends Component
     protected $rules = [
        
         'title' => 'required|unique:job_titles,title,NULL,id,deleted_at,NULL|string|min:2',
+        'grade_id' => 'nullable|integer|exists:grades,id',
     ];
 
     public function store(){
         // try{
+        $this->validate();
+
+         DB::transaction(function () {
+
         $job_title = new JobTitle;
         $job_title->user_id = Auth::user()->id;
         $job_title->title = $this->title;
@@ -113,7 +119,10 @@ class Index extends Component
         $job_title->instructions = $this->instructions;
         $job_title->requirements = $this->requirements;
         $job_title->save();
-        $job_title->grades()->attach($this->grade_id);
+
+        if($this->grade_id && is_numeric($this->grade_id)){
+            $job_title->grades()->attach($this->grade_id);
+        }
 
         $this->dispatchBrowserEvent('hide-job_titleModal');
         $this->resetInputFields();
@@ -121,6 +130,7 @@ class Index extends Component
             'type'=>'success',
             'message'=>"Job Title Created Successfully!!"
         ]);
+         });
    
     }
 
@@ -150,6 +160,8 @@ class Index extends Component
 
     public function update()
     {
+         DB::transaction(function () {
+
         if ($this->job_title_id) {
           
             $job_title = JobTitle::find($this->job_title_id);
@@ -162,7 +174,10 @@ class Index extends Component
             $job_title->requirements = $this->requirements;
             $job_title->update();
             $job_title->grades()->detach();
-            $job_title->grades()->attach($this->grade_id);
+            
+            if($this->grade_id && is_numeric($this->grade_id)){
+                $job_title->grades()->attach($this->grade_id);
+            }
 
             $this->dispatchBrowserEvent('hide-job_titleEditModal');
             $this->resetInputFields();
@@ -172,6 +187,8 @@ class Index extends Component
             ]);
       
         }
+
+         });
     }
 
      public function removeShow($id){

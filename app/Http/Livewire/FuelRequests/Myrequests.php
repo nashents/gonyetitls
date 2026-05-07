@@ -10,6 +10,7 @@ use App\Models\Horse;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -134,6 +135,8 @@ class Myrequests extends Component
     }
     public function store(){
       
+     DB::transaction(function () {
+
             $fuel_request = new FuelRequest;
             $fuel_request->user_id = Auth::user()->id;
             $fuel_request->request_number = $this->requestNumber();
@@ -159,6 +162,7 @@ class Myrequests extends Component
                 'message'=>"Fuel Request Submitted Successfully!!"
             ]);
        
+     });
 
 
     }
@@ -188,6 +192,9 @@ class Myrequests extends Component
 
     public function update()
     {
+
+     DB::transaction(function () {
+
         if ($this->fuel_request_id) {
             $fuel_request = FuelRequest::find($this->fuel_request_id);
             $fuel_request->horse_id = $this->selectedHorse ?: Null;
@@ -211,6 +218,7 @@ class Myrequests extends Component
             ]);
 
         }
+     });
     }
 
     public function delete($id){
