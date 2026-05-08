@@ -24,6 +24,10 @@ class InvoiceController extends Controller
     {
         return view('invoices.index');
     }
+    public function trinitas()
+    {
+        return view('invoices.templates.trinitas');
+    }
     public function customerStatements()
     {
         return view('customer_statements.index');

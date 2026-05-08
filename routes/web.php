@@ -469,6 +469,8 @@ Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goo
 
 Route::get('reminders/copy/','ReminderController@copy')->name('reminders.copy');
 
+Route::get('invoices/templates/trinitas','InvoiceController@trinitas')->name('invoices.trinitas');
+
 //Transportation Order Routes
 Route::get('order','TransportOrderController@order')->name('order');
 Route::get('transportation/order/{trip}/preview','TransportOrderController@preview')->name('transport_orders.preview');

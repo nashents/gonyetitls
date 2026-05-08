@@ -2,59 +2,63 @@
 
 namespace App\Http\Livewire\Shifts;
 
-use Carbon\Carbon;
-use App\Models\Fuel;
-use App\Models\Hour;
-use App\Models\Team;
-use App\Models\Trip;
-use App\Models\User;
-use App\Models\Work;
-use App\Models\Cargo;
-use App\Models\Horse;
-use App\Models\Shift;
-use App\Models\TopUp;
-use App\Models\Driver;
-use App\Models\Account;
-use App\Models\Cluster;
-use App\Models\Company;
-use App\Models\Mileage;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\Customer;
-use App\Models\Employee;
-use App\Models\Location;
-use App\Models\TripType;
-use App\Models\Container;
-use App\Models\Rehandling;
-use App\Models\Destination;
-use App\Models\Measurement;
-use App\Models\Transporter;
-use App\Models\DeliveryNote;
-use App\Models\ExchangeRate;
-use App\Models\LoadingPoint;
-use Livewire\WithPagination;
-use Maatwebsite\Excel\Excel;
+use App\Exports\MonthlyLoadingPointDailyReportExport;
+use App\Exports\MonthlyShiftActivitiesExport;
+use App\Exports\ShiftActivitiesExport;
+use App\Exports\ShiftsDailyExport;
 use App\Exports\ShiftsExport;
 use App\Imports\ShiftsImport;
-use Livewire\WithFileUploads;
-use App\Models\OffloadingPoint;
-use Illuminate\Validation\Rule;
 use App\Imports\ShiftTripsImport;
-use App\Exports\ShiftsDailyExport;
-use Illuminate\Support\Facades\DB;
+use App\Models\Account;
+use App\Models\Cargo;
+use App\Models\Cluster;
+use App\Models\Company;
+use App\Models\Container;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Models\DeliveryNote;
+use App\Models\Destination;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\ExchangeRate;
+use App\Models\Fuel;
+use App\Models\Horse;
+use App\Models\Hour;
+use App\Models\LoadingPoint;
+use App\Models\Location;
+use App\Models\Measurement;
+use App\Models\Mileage;
+use App\Models\OffloadingPoint;
+use App\Models\Rehandling;
+use App\Models\Shift;
+use App\Models\Team;
+use App\Models\TopUp;
+use App\Models\Transporter;
+use App\Models\Trip;
+use App\Models\TripType;
+use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\Work;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Database\Eloquent\Builder;
-use Maatwebsite\Excel\Validators\ValidationException;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 use Maatwebsite\Excel\Exceptions\NoFilePathGivenException;
+use Maatwebsite\Excel\Validators\ValidationException;
 
 class Index extends Component
 {
 
     use WithPagination;
     use WithFileUploads;
+   
 
 
     protected $paginationTheme = 'bootstrap';
@@ -277,6 +281,9 @@ class Index extends Component
     public $shift_trips;
     public $shift_rehandlings;
 
+    public $year;
+    public $month;
+
     public $cargo_type = [];
     public $calculation_measurement = [];
 
@@ -472,7 +479,8 @@ class Index extends Component
         $this->shift_filter = "created_at";
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
-     
+        $this->year = date('Y');
+        $this->month = date('m');
         $this->team = $this->employee->teams->first();
         $this->team_id =  $this->team?->id;
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
@@ -939,6 +947,43 @@ class Index extends Component
     }
     public function exportShiftsDailyExcel(Excel $excel){
         return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.xlsx');
+    }
+
+    public function exportMonthlyReport(Excel $excel)
+    {
+        $filename = 'loading_point_report_' . $this->year . '_' . str_pad($this->month, 2, '0', STR_PAD_LEFT) . '.xlsx';
+        return $excel->download(new MonthlyLoadingPointDailyReportExport($this->year, $this->month), $filename);
+    }
+
+     /**
+     * Single day — all horses, pairs side by side.
+     * ?date=2026-05-08  (defaults to today)
+     */
+   
+
+    public function exportDailyShiftActivities(Excel $excel)
+    {
+        $date = Carbon::parse($this->date ?? today());
+
+        return $excel->download(
+            new ShiftActivitiesExport($date),
+            'shift_activities_' . $date->format('Y_m_d') . '.xlsx'
+        );
+    }
+
+    /**
+     * Full month — one sheet per day.
+     * ?year=2026&month=5  (defaults to current month)
+     */
+    public function exportMonthlyShiftActivities(Excel $excel)
+    {
+        $year  = (int) request('year',  now()->year);
+        $month = (int) request('month', now()->month);
+
+        return $excel->download(
+            new MonthlyShiftActivitiesExport($year, $month),
+            'shift_activities_' . $year . '_' . str_pad($month, 2, '0', STR_PAD_LEFT) . '.xlsx'
+        );
     }
 
         public function importShifts(){

@@ -247,13 +247,23 @@
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#shiftModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Shift</a>
-                                {{-- <a href="" data-toggle="modal" data-target="#shiftTripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import Shift Trips</a> --}}
-                                <a href="#" wire:click="exportShiftsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportShiftsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportShiftsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-                                <a href="#" wire:click="exportShiftsDailyExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Production Report</a>
+                                <a href="#" wire:click.prevent="exportShiftsExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click.prevent="exportShiftsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click.prevent="exportShiftsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
 
-                        </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default border-primary btn-rounded dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-download"></i> Production Reports <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li><a href="#" wire:click.prevent="exportShiftsDailyExcel()"><i class="fa fa-file-excel-o"></i> Production Report</a></li>
+                                        <li><a href="#" wire:click.prevent="exportMonthlyReport()"><i class="fa fa-file-excel-o"></i> LP Prod Report</a></li>
+                                        <li><a href="#" wire:click.prevent="exportDailyShiftActivities()"><i class="fa fa-file-excel-o"></i> Daily Shift Activities Report</a></li>
+                                        <li><a href="#" wire:click.prevent="exportMonthlyShiftActivities()"><i class="fa fa-file-excel-o"></i> Monthly Shift Activities Report</a></li>
+                                        {{-- Add more here --}}
+                                    </ul>
+                                </div>
+                            </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="col-md-5" style="float: right; padding-right:2px">
                                 <div class="form-group">
