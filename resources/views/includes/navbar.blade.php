@@ -162,8 +162,8 @@
                                 'payrolls' => ['label' => 'Payroll', 'route' => 'payrolls.pending', 'icon'  => 'fa-money'],
                                 'loans' => ['label' => 'Loan', 'route' => 'loans.pending', 'icon'  => 'fa-credit-card'],
                                 'leaves' => ['label' => 'Leave', 'route' => 'leaves.pending', 'icon'  => 'fa-plane'],
-                                'fuels' => ['label' => 'Fuel Orders', 'route' => 'fuels.pending', 'icon'  => 'fa-cart-shopping'],
-                                'fuels_requests' => ['label' => 'Fuel Requests', 'route' => 'fuel_requests.pending', 'icon'  => 'fa-gas-pump'],
+                                'fuels' => ['label' => 'Fuel Order', 'route' => 'fuels.pending', 'icon'  => 'fa-cart-shopping'],
+                                'fuels_requests' => ['label' => 'Fuel Request', 'route' => 'fuel_requests.pending', 'icon'  => 'fa-gas-pump'],
                                 'attendances' => ['label' => 'Attendance', 'route' => 'attendances.pending', 'icon'  => 'fa-clock-o'],
                                 'overdue_tickets' => ['label' => 'Overdue Ticket','route' => 'tickets.index', 'icon'  => 'fa-wrench'],
 
