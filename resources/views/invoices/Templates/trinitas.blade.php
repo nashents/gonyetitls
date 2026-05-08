@@ -17,7 +17,6 @@
         position: relative;
     }
 
-    /* ── FISCAL BANNER ── */
     .fiscal-banner {
         border: 1.5px solid #1a1a1a;
         padding: 6px 10px;
@@ -50,7 +49,6 @@
         text-align: center;
     }
 
-    /* ── HEADER ROW ── */
     .header-row {
         display: flex;
         justify-content: space-between;
@@ -104,7 +102,6 @@
         min-width: 110px;
     }
 
-    /* ── CUSTOMER BLOCK ── */
     .customer-section {
         margin-bottom: 14px;
     }
@@ -128,7 +125,6 @@
         color: #c00;
     }
 
-    /* ── LINE ITEMS TABLE ── */
     .items-table {
         width: 100%;
         border-collapse: collapse;
@@ -163,7 +159,6 @@
         text-align: left;
     }
 
-    /* ── TOTALS ── */
     .totals-section {
         display: flex;
         justify-content: flex-end;
@@ -189,7 +184,6 @@
         font-size: 12px;
     }
 
-    /* ── FOOTER ── */
     .invoice-footer {
         margin-top: 30px;
         border-top: 1px solid #ccc;
@@ -244,13 +238,13 @@
         <div style="flex:1">
             <div class="fiscal-title">FISCAL TAX INVOICE</div>
             <div class="fiscal-text">
-                <strong>Receipt Counter:</strong> {{ $invoice['receipt_counter'] ?? '4/935' }} &nbsp;&nbsp;
-                <strong>Fiscal Day No:</strong> {{ $invoice['fiscal_day_no'] ?? '318' }}<br>
-                Invoice No: {{ $invoice['number'] }} &nbsp;&nbsp;
-                Date: {{ \Carbon\Carbon::parse($invoice['date'])->format('d/m/Y') }} {{ $invoice['time'] ?? '14:05' }}<br>
-                Device Serial: {{ $invoice['device_serial'] ?? '02ZIM10001014' }} &nbsp;&nbsp;
-                Fiscal Device Id: {{ $invoice['fiscal_device_id'] ?? '10276' }}<br>
-                Verification Code: {{ $invoice['verification_code'] ?? '3843-341A-6238-88D0' }}<br>
+                <strong>Receipt Counter:</strong> 4/935 &nbsp;&nbsp;
+                <strong>Fiscal Day No:</strong> 318<br>
+                Invoice No: 4106 &nbsp;&nbsp;
+                Date: 28/04/2026 14:05<br>
+                Device Serial: 02ZIM10001014 &nbsp;&nbsp;
+                Fiscal Device Id: 10276<br>
+                Verification Code: 3843-341A-6238-88D0<br>
                 You can verify receipt manually at
                 <a href="https://fdms.zimra.co.zw" target="_blank" style="color:#0057b7">https://fdms.zimra.co.zw</a>
             </div>
@@ -260,23 +254,23 @@
     {{-- HEADER --}}
     <div class="header-row">
         <div class="company-block">
-            <div class="company-name">{{ $company['name'] ?? 'Trinitas Distributors' }}</div>
-            <p>{{ $company['address_line1'] ?? '1817 Usselby Road,' }}</p>
-            <p>{{ $company['address_line2'] ?? 'Waterfalls' }}</p>
-            <p>{{ $company['city'] ?? 'Harare' }}</p>
-            <p>Tel: {{ $company['tel'] ?? '08644 068 714 / 0864 202 362' }}</p>
-            <p>Cell: {{ $company['cell'] ?? '0785 677 691 / 0788 829 894' }}</p>
-            <p><a href="mailto:{{ $company['email'] ?? 'sales@trinitaszw.com' }}">{{ $company['email'] ?? 'sales@trinitaszw.com' }}</a></p>
+            <div class="company-name">Trinitas Distributors</div>
+            <p>1817 Usselby Road,</p>
+            <p>Waterfalls</p>
+            <p>Harare</p>
+            <p>Tel: 08644 068 714 / 0864 202 362</p>
+            <p>Cell: 0785 677 691 / 0788 829 894</p>
+            <p><a href="mailto:sales@trinitaszw.com">sales@trinitaszw.com</a></p>
         </div>
 
         <div class="invoice-meta">
-            <div class="invoice-number">INVOICE No. {{ $invoice['number'] ?? '4106' }}</div>
+            <div class="invoice-number">INVOICE No. 4106</div>
             <table>
-                <tr><td>DATE:</td><td>{{ \Carbon\Carbon::parse($invoice['date'])->format('d/m/Y') }}</td></tr>
-                <tr><td>INVOICE CURRENCY:</td><td>{{ $invoice['currency'] ?? 'USD' }}</td></tr>
-                <tr><td>VAT No:</td><td>{{ $company['vat_no'] ?? '220149113' }}</td></tr>
-                <tr><td>TIN No:</td><td>{{ $company['tin_no'] ?? '2000619633' }}</td></tr>
-                <tr><td>PO No:</td><td>{{ $invoice['po_no'] ?? '4700797253' }}</td></tr>
+                <tr><td>DATE:</td><td>28/04/2026</td></tr>
+                <tr><td>INVOICE CURRENCY:</td><td>USD</td></tr>
+                <tr><td>VAT No:</td><td>220149113</td></tr>
+                <tr><td>TIN No:</td><td>2000619633</td></tr>
+                <tr><td>PO No:</td><td>4700797253</td></tr>
             </table>
         </div>
     </div>
@@ -286,39 +280,39 @@
         <table>
             <tr>
                 <td>Customer Name:</td>
-                <td class="customer-name-value">{{ $customer['name'] ?? 'World Food Programme, Country Office' }}</td>
+                <td class="customer-name-value">World Food Programme, Country Office</td>
             </tr>
             <tr>
                 <td>Customer House No:</td>
-                <td>{{ $customer['house_no'] ?? 'Block 1, Arundel Office Park, Norfolk Rd,' }}</td>
+                <td>Block 1, Arundel Office Park, Norfolk Rd,</td>
             </tr>
             <tr>
                 <td>Customer Street:</td>
-                <td>{{ $customer['street'] ?? 'Mt Pleasant,' }}</td>
+                <td>Mt Pleasant,</td>
             </tr>
             <tr>
                 <td>Customer Province:</td>
-                <td>{{ $customer['province'] ?? 'Harare' }}</td>
+                <td>Harare</td>
             </tr>
             <tr>
                 <td>Customer Email:</td>
-                <td>{{ $customer['email'] ?? 'harare.supplychaininvoicing@wfp.org' }}</td>
+                <td>harare.supplychaininvoicing@wfp.org</td>
             </tr>
             <tr>
                 <td>Customer Phone:</td>
-                <td>{{ $customer['phone'] ?? '+263 08677000805' }}</td>
+                <td>+263 08677000805</td>
             </tr>
             <tr>
                 <td>Customer VAT:</td>
-                <td>{{ $customer['vat'] ?? '10091435' }}</td>
+                <td>10091435</td>
             </tr>
             <tr>
                 <td>Customer TIN:</td>
-                <td>{{ $customer['tin'] ?? '6000000416' }}</td>
+                <td>6000000416</td>
             </tr>
             <tr>
                 <td>Customer Bp No:</td>
-                <td>{{ $customer['bp_no'] ?? '300012191' }}</td>
+                <td>300012191</td>
             </tr>
         </table>
     </div>
@@ -343,27 +337,9 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($items ?? [] as $item)
-            <tr>
-                <td>{{ $item['hs_code'] }}</td>
-                <td>{{ \Carbon\Carbon::parse($item['date'])->format('d/m/Y') }}</td>
-                <td>{{ $item['waybill_no'] }}</td>
-                <td>{{ $item['lti_no'] }}</td>
-                <td class="text-left">{{ $item['origin'] }}</td>
-                <td class="text-left">{{ $item['destination'] }}</td>
-                <td>{{ $item['reg_no'] }}</td>
-                <td>{{ number_format($item['truck_capacity'], 2) }}</td>
-                <td>{{ number_format($item['delivered_tonnage'], 1) }}</td>
-                <td>{{ number_format($item['distance']) }}</td>
-                <td>{{ number_format($item['rate_per_km'], 2) }}</td>
-                <td>{{ $item['loading_fee'] ?? '' }}</td>
-                <td>{{ number_format($item['amount'], 2) }}</td>
-            </tr>
-            @empty
-            {{-- Sample row --}}
             <tr>
                 <td>87042290</td>
-                <td>14/3/2026</td>
+                <td>14/03/2026</td>
                 <td>14111</td>
                 <td>7700783200</td>
                 <td class="text-left">DORMERVALE MARONDERA</td>
@@ -376,7 +352,6 @@
                 <td></td>
                 <td>1,316.70</td>
             </tr>
-            @endforelse
         </tbody>
     </table>
 
@@ -385,15 +360,15 @@
         <table class="totals-table">
             <tr>
                 <td>Total VAT Exc</td>
-                <td>{{ number_format($totals['vat_exclusive'] ?? 1316.70, 2) }}</td>
+                <td>1,316.70</td>
             </tr>
             <tr>
                 <td>VAT 15.5%</td>
-                <td>{{ number_format($totals['vat_amount'] ?? 204.09, 2) }}</td>
+                <td>204.09</td>
             </tr>
             <tr class="total-final">
                 <td>Total VAT Inc</td>
-                <td>{{ number_format($totals['vat_inclusive'] ?? 1520.79, 2) }}</td>
+                <td>1,520.79</td>
             </tr>
         </table>
     </div>
@@ -403,20 +378,20 @@
         <div class="footer-grid">
             <div>
                 <div class="section-label">Prepared By</div>
-                <p>{{ $invoice['prepared_by'] ?? 'Tawanda Dafana (0788829894)' }}</p>
+                <p>Tawanda Dafana (0788829894)</p>
                 <br>
                 <div class="section-label">Company Stamp</div>
                 <div class="stamp-box">Company Stamp (Date)</div>
             </div>
             <div>
                 <div class="section-label">Banking Details</div>
-                <p><strong>Account Name:</strong> {{ $bank['account_name'] ?? 'TRINITAS INVESTMENTS PRIVATE LIMITED' }}</p>
-                <p><strong>Bank:</strong> {{ $bank['bank_name'] ?? 'ECOBANK ZIMBABWE LIMITED' }}</p>
-                <p><strong>Branch:</strong> {{ $bank['branch'] ?? 'JOINA CITY' }}</p>
-                <p><strong>Sort Code:</strong> {{ $bank['sort_code'] ?? '26000' }}</p>
-                <p><strong>Account No ZWL:</strong> {{ $bank['account_zwl'] ?? '5722100001146' }}</p>
-                <p><strong>Account No USD:</strong> {{ $bank['account_usd'] ?? '5783600018539' }}</p>
-                <p><strong>Swift Code:</strong> {{ $bank['swift'] ?? 'ECOCZWHX' }}</p>
+                <p><strong>Account Name:</strong> TRINITAS INVESTMENTS PRIVATE LIMITED</p>
+                <p><strong>Bank:</strong> ECOBANK ZIMBABWE LIMITED</p>
+                <p><strong>Branch:</strong> JOINA CITY</p>
+                <p><strong>Sort Code:</strong> 26000</p>
+                <p><strong>Account No ZWL:</strong> 5722100001146</p>
+                <p><strong>Account No USD:</strong> 5783600018539</p>
+                <p><strong>Swift Code:</strong> ECOCZWHX</p>
             </div>
         </div>
     </div>

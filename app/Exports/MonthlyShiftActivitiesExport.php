@@ -41,8 +41,8 @@ class MonthlyShiftActivitiesExport implements WithMultipleSheets
 
         // Load ALL shifts for the month with relations in one query
         $allShifts = Shift::with([
-            'trips.loadingPoint',
-            'trips.offloadingPoint',
+            'trips.loading_point',
+            'trips.offloading_point',
             'user',
             'team',
             'horse',
@@ -251,7 +251,7 @@ class DailyAllHorsesSheet implements FromArray, WithTitle, WithStyles, WithColum
 
                 $rows[] = [
                     $num,
-                    $trip->loadingPoint?->name ?? '',
+                    $trip->loading_point?->name ?? '',
                     $departLP ? $departLP->format('H:i') : '',
                     $loadingTime   !== null ? $this->fmtMinutes($loadingTime)   : '0:00',
                     $arriveOP ? $arriveOP->format('H:i') : '',

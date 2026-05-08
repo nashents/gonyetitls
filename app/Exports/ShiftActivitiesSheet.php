@@ -157,7 +157,7 @@ class ShiftActivitiesSheet implements FromArray, WithTitle, WithStyles, WithColu
 
                 $rows[] = [
                     $num,
-                    $trip->loadingPoint?->name ?? '',
+                    $trip->loading_point?->name ?? '',
                     $departLP  ? $departLP->format('H:i')  : '',
                     $loadingTime   !== null ? $this->fmtMinutes($loadingTime)   : '0:00',
                     $arriveOP  ? $arriveOP->format('H:i')  : '',

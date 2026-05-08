@@ -22,7 +22,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 {
     protected int $year;
     protected int $month;
-    protected Collection $loadingPoints;
+    protected Collection $loading_points;
     protected array $dailyData = [];
     protected int $totalDataCols; // loading point dynamic cols count
     protected array $colMap = [];  // maps purpose => Excel col letter
@@ -37,7 +37,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
     {
         $this->year  = $year;
         $this->month = $month;
-        $this->loadingPoints = LoadingPoint::orderBy('name')->get();
+        $this->loading_points = LoadingPoint::orderBy('name')->get();
         $this->buildDailyData();
     }
 
@@ -52,7 +52,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
         // Load all shifts for the month keyed by calendar date (using shift start_time)
         $shifts = Shift::with([
-            'trips.loadingPoint',
+            'trips.loading_point',
             'fuel',
         ])
             ->whereBetween('shift_start_time', [$start, $end])
@@ -70,7 +70,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
             // Per loading-point aggregates
             $lpLoads   = [];
             $lpTonnage = [];
-            foreach ($this->loadingPoints as $lp) {
+            foreach ($this->loading_points as $lp) {
                 $lpLoads[$lp->id]   = 0;
                 $lpTonnage[$lp->id] = 0.0;
             }
@@ -143,7 +143,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
     public function array(): array
     {
-        $lpCount = $this->loadingPoints->count();
+        $lpCount = $this->loading_points->count();
         $rows    = [];
 
         // ── ROW 1: Month header
@@ -152,7 +152,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
         // ── ROW 2: Loading point group headers (dynamic)
         $row2 = ['', ''];
-        foreach ($this->loadingPoints as $lp) {
+        foreach ($this->loading_points as $lp) {
             $row2[] = strtoupper($lp->name);
             $row2[] = '';
         }
@@ -161,7 +161,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
         // ── ROW 3: Sub-headers
         $row3 = ['Date', 'Day'];
-        foreach ($this->loadingPoints as $lp) {
+        foreach ($this->loading_points as $lp) {
             $row3[] = 'LOADS';
             $row3[] = 'TONNAGE';
         }
@@ -182,7 +182,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
                 $date->format('D'),
             ];
 
-            foreach ($this->loadingPoints as $lp) {
+            foreach ($this->loading_points as $lp) {
                 $row[] = $d['lp_loads'][$lp->id] ?? 0;
                 $row[] = $d['lp_tonnage'][$lp->id] ?? 0;
             }
@@ -202,7 +202,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
         // ── TOTALS ROW
         $daysInMonth = count($this->dailyData);
         $totalsRow   = ['TOTALS', ''];
-        foreach ($this->loadingPoints as $lp) {
+        foreach ($this->loading_points as $lp) {
             $totalsRow[] = array_sum(array_column($this->dailyData, 'lp_loads.' . $lp->id) ?: array_map(fn($d) => $d['lp_loads'][$lp->id] ?? 0, $this->dailyData));
             $totalsRow[] = array_sum(array_map(fn($d) => $d['lp_tonnage'][$lp->id] ?? 0, $this->dailyData));
         }
@@ -254,7 +254,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet     = $event->sheet->getDelegate();
-                $lpCount   = $this->loadingPoints->count();
+                $lpCount   = $this->loading_points->count();
                 $dataRows  = count($this->dailyData);
                 $headerRow = 3; // 1=month, 2=lp groups, 3=sub-headers
                 $firstData = 4;
@@ -278,7 +278,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
                 // ── Row 2: Loading point group headers
                 $col = 3; // start at col C (0-indexed internally, but 1-based here: C=3)
-                foreach ($this->loadingPoints as $lp) {
+                foreach ($this->loading_points as $lp) {
                     $startLetter = $this->colLetter($col);
                     $endLetter   = $this->colLetter($col + 1);
                     $sheet->mergeCells("{$startLetter}2:{$endLetter}2");
@@ -381,7 +381,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
                 // ── Number formats: tonnage columns
                 $col = 3;
-                foreach ($this->loadingPoints as $lp) {
+                foreach ($this->loading_points as $lp) {
                     $tonnageCol = $this->colLetter($col + 1);
                     $sheet->getStyle("{$tonnageCol}{$firstData}:{$tonnageCol}{$totalsRow}")
                         ->getNumberFormat()->setFormatCode('#,##0.0');
@@ -406,7 +406,7 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
 
                 // ── Dynamic column widths for LP columns
                 $col = 3;
-                foreach ($this->loadingPoints as $lp) {
+                foreach ($this->loading_points as $lp) {
                     $loadsLetter   = $this->colLetter($col);
                     $tonnageLetter = $this->colLetter($col + 1);
                     $sheet->getColumnDimension($loadsLetter)->setWidth(8);

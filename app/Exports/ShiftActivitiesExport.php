@@ -23,8 +23,8 @@ class ShiftActivitiesExport implements WithMultipleSheets
         $query = Horse::with([
             'shifts' => function ($q) {
                 $q->with([
-                    'trips.loadingPoint',
-                    'trips.offloadingPoint',
+                    'trips.loading_point',
+                    'trips.offloading_point',
                     'user',
                     'team',
                 ])
