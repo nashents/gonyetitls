@@ -605,7 +605,24 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         }
 
         $start_date = $this->formatDateTimeValue($trip->start_date ?? null);
-        $loading_date = $trip->delivery_note ? $this->formatDateTimeValue($trip->delivery_note->loaded_date ?? null) : "";
+        $formatDate = function (?string $date): string {
+                if (!$date) return '';
+                return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
+                    ? Carbon::parse($date)->format('d M Y g:i A')
+                    : $date;
+            };
+
+            $loading_date = $trip->trip_transport_orders
+                ->map(fn($tto) => $formatDate($tto->delivery_note?->loaded_date))
+                ->filter()
+                ->unique()
+                ->join(', ');
+
+            $offloaded_date = $trip->trip_transport_orders
+                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+                ->filter()
+                ->unique()
+                ->join(', ');
 
         $fuel_purchased = ($trip->fuels ?? collect())->where('amount', '!=', null)->where('amount', '!=', '')->sum('amount');
         $fuel_sold = ($trip->fuels ?? collect())->where('transporter_total', '!=', null)->where('transporter_total', '!=', '')->sum('transporter_total');
@@ -714,7 +731,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $trip->trip_status_date,
             $start_date,
             $loading_date,
-            $trip->trip_status == "Offloaded" ?  $trip->trip_status_date : "",
+            $offloaded_date,
             $trip->trip_type ? $trip->trip_type->name : "",
             $border_list,
             $clearing_agent_list,

@@ -314,7 +314,7 @@
                                                 </div>
                                             </div>
                                         @endif
-                                        
+
                                         <div class="row mt-15">
                                             <div class="col-md-5">
                                                 <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
@@ -386,9 +386,23 @@
                                         @forelse($trips as $trip)
                                             @php
                                                 $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
-                                                $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
-                                                                    ? $trip->trip_status_date
-                                                                    : $trip->end_date;
+                                                // $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
+                                                //                     ? $trip->trip_status_date
+                                                //                     : $trip->end_date;
+
+                                            $formatDate = function (?string $date): string {
+                                                if (!$date) return '';
+                                                return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
+                                                    ? Carbon::parse($date)->format('d M Y g:i A')
+                                                    : $date;
+                                            };
+
+                                           
+                                            $offloadedDate = $trip->trip_transport_orders
+                                                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+                                                ->filter()
+                                                ->unique()
+                                                ->join(', ');
                                                 $pod = $trip->pod;
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp

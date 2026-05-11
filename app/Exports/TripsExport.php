@@ -353,16 +353,24 @@ WithCustomStartCell
                 $start_date  = "";
             }
 
-            if ($trip->delivery_note){
-                $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                if ((preg_match($pattern, $trip->delivery_note->loaded_date)) ){
-                    $loading_date = Carbon::parse($trip->delivery_note->loaded_date)->format('d M Y g:i A');
-                }else{
-                    $loading_date = $trip->delivery_note->loaded_date;
-                }  
-            }else {
-                $loading_date = "";
-            }     
+            $formatDate = function (?string $date): string {
+                if (!$date) return '';
+                return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
+                    ? Carbon::parse($date)->format('d M Y g:i A')
+                    : $date;
+            };
+
+            $loading_date = $trip->trip_transport_orders
+                ->map(fn($tto) => $formatDate($tto->delivery_note?->loaded_date))
+                ->filter()
+                ->unique()
+                ->join(', ');
+
+            $offloaded_date = $trip->trip_transport_orders
+                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+                ->filter()
+                ->unique()
+                ->join(', ');
               
               
             
@@ -505,7 +513,7 @@ WithCustomStartCell
                     $trip->trip_status_date,
                     $start_date,
                     $loading_date,
-                    $trip->trip_status == "Offloaded" ?  $trip->trip_status_date : "",
+                    $offloaded_date,
                     $trip->trip_type ? $trip->trip_type->name : "",
                     $border_list,
                     $clearing_agent_list,
