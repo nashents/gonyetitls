@@ -606,23 +606,48 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
         $start_date = $this->formatDateTimeValue($trip->start_date ?? null);
         $formatDate = function (?string $date): string {
-                if (!$date) return '';
-                return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
-                    ? Carbon::parse($date)->format('d M Y g:i A')
-                    : $date;
-            };
+            if (!$date) {
+                return '';
+            }
 
-            $loading_date = $trip->trip_transport_orders
-                ->map(fn($tto) => $formatDate($tto->delivery_note?->loaded_date))
-                ->filter()
-                ->unique()
-                ->join(', ');
+            return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
+                ? Carbon::parse($date)->format('d M Y g:i A')
+                : Carbon::parse($date)->format('d M Y g:i A');
+        };
 
-            $offloaded_date = $trip->trip_transport_orders
-                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
-                ->filter()
-                ->unique()
-                ->join(', ');
+        /*
+        |--------------------------------------------------------------------------
+        | First try:
+        | Delivery note offloaded dates from trip transport orders
+        |--------------------------------------------------------------------------
+        */
+        $loading_date = $trip->trip_transport_orders
+            ->map(fn($tto) => $formatDate($tto->delivery_note?->loaded_date))
+            ->filter()
+            ->unique()
+            ->join(', ');
+       
+        $offloaded_date = $trip->trip_transport_orders
+            ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+            ->filter()
+            ->unique()
+            ->join(', ');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fallback:
+        | Trip delivery note offloaded date
+        |--------------------------------------------------------------------------
+        */
+        if (!$offloaded_date) {
+            $offloaded_date = $formatDate($trip->delivery_note?->offloaded_date);
+        }
+        if (!$loading_date) {
+            $loading_date = $formatDate($trip->delivery_note?->loaded_date);
+        }
+
+      
+     
 
         $fuel_purchased = ($trip->fuels ?? collect())->where('amount', '!=', null)->where('amount', '!=', '')->sum('amount');
         $fuel_sold = ($trip->fuels ?? collect())->where('transporter_total', '!=', null)->where('transporter_total', '!=', '')->sum('transporter_total');

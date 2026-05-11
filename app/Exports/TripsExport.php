@@ -353,36 +353,59 @@ WithCustomStartCell
                 $start_date  = "";
             }
 
-            $formatDate = function (?string $date): string {
-                if (!$date) return '';
+           $formatDate = function (?string $date): string {
+            if (!$date) {
+                return '';
+            }
+
                 return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
                     ? Carbon::parse($date)->format('d M Y g:i A')
-                    : $date;
+                    : Carbon::parse($date)->format('d M Y g:i A');
             };
 
+            /*
+            |--------------------------------------------------------------------------
+            | First try:
+            | Delivery note offloaded dates from trip transport orders
+            |--------------------------------------------------------------------------
+            */
             $loading_date = $trip->trip_transport_orders
                 ->map(fn($tto) => $formatDate($tto->delivery_note?->loaded_date))
                 ->filter()
                 ->unique()
                 ->join(', ');
-
+        
             $offloaded_date = $trip->trip_transport_orders
                 ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
                 ->filter()
                 ->unique()
                 ->join(', ');
-              
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fallback:
+            | Trip delivery note offloaded date
+            |--------------------------------------------------------------------------
+            */
+            if (!$loading_date) {
+                $loading_date = $formatDate($trip->delivery_note?->loaded_date);
+            }
+            if (!$offloaded_date) {
+                $offloaded_date = $formatDate($trip->delivery_note?->offloaded_date);
+            }
+          
+                
               
             
-                $fuel_purchased = $trip->fuels->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
-                $fuel_sold = $trip->fuels->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
-                $fuel_profit = $trip->fuels->where('profit','!=',Null)->where('profit','!=','')->sum('profit');
+            $fuel_purchased = $trip->fuels->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
+            $fuel_sold = $trip->fuels->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
+            $fuel_profit = $trip->fuels->where('profit','!=',Null)->where('profit','!=','')->sum('profit');
+        
+            $weight = $trip->weight ? $trip->weight : "";
+            $quantity = $trip->quantity ? $trip->quantity : "";
+            $litreage = $trip->litreage ? $trip->litreage : "";
+            $litreage_at_20 = $trip->litreage_at_20 ? $trip->litreage_at_20 : "";
             
-                $weight = $trip->weight ? $trip->weight : "";
-                $quantity = $trip->quantity ? $trip->quantity : "";
-                $litreage = $trip->litreage ? $trip->litreage : "";
-                $litreage_at_20 = $trip->litreage_at_20 ? $trip->litreage_at_20 : "";
-               
             if ($trip->delivery_note) {
                 $loaded_weight = $trip->delivery_note ? $trip->delivery_note->loaded_weight : "";
                 $loaded_quantity = $trip->delivery_note ? $trip->delivery_note->loaded_quantity : "";

@@ -390,24 +390,50 @@
                                                 //                     ? $trip->trip_status_date
                                                 //                     : $trip->end_date;
 
-                                           $formatDate = function (?string $date): string {
-                                                if (!$date) return '';
+                                            $formatDate = function (?string $date): string {
+                                                if (!$date) {
+                                                    return '';
+                                                }
+
                                                 return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
                                                     ? Carbon\Carbon::parse($date)->format('d M Y g:i A')
-                                                    : $date;
+                                                    : Carbon\Carbon::parse($date)->format('d M Y g:i A');
                                             };
 
+                                            /*
+                                            |--------------------------------------------------------------------------
+                                            | First try:
+                                            | Delivery note offloaded dates from trip transport orders
+                                            |--------------------------------------------------------------------------
+                                            */
                                             $offloadedDate = $trip->trip_transport_orders
                                                 ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
                                                 ->filter()
                                                 ->unique()
                                                 ->join(', ');
 
+                                            /*
+                                            |--------------------------------------------------------------------------
+                                            | Fallback:
+                                            | Trip delivery note offloaded date
+                                            |--------------------------------------------------------------------------
+                                            */
                                             if (!$offloadedDate) {
-                                                $offloadedDate = $formatDate($trip->trip_status_date) 
+                                                $offloadedDate = $formatDate($trip->delivery_note?->offloaded_date);
+                                            }
+
+                                            /*
+                                            |--------------------------------------------------------------------------
+                                            | Final fallback:
+                                            | Trip status date or end date
+                                            |--------------------------------------------------------------------------
+                                            */
+                                            if (!$offloadedDate) {
+                                                $offloadedDate = $formatDate($trip->trip_status_date)
                                                     ?: $formatDate($trip->end_date);
                                             }
 
+                                          
                                                 $pod = $trip->pod;
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp
