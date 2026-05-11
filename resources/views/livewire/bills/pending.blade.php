@@ -26,7 +26,7 @@
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                @if ($bill_filter == "created_at")
+                            
                                 <div class="col-lg-2" >
                                     <div class="input-group">
                                         <span class="input-group-addon">
@@ -46,7 +46,7 @@
                                     <!-- /input-group -->
                                 </div>
                           
-                                @endif
+                              
                                
                                 <!-- /input-group -->
                             </div>

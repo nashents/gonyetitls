@@ -36,7 +36,9 @@ class Pending extends Component
     public $trip_id;
     public $authorize;
     public $comments;
-
+    public $search;
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     public $order_number;
     public $date;
     public $fullname;
@@ -66,7 +68,7 @@ class Pending extends Component
 
     public function mount(){
         $this->fuel_filter = "created_at";
-
+        $this->notificationsOnly = request()->boolean('notifications', false);
         $this->fuel_id = (int) request()->query('fuel_id');
         $this->authorize = request()->query('authorize');
         $this->comments = request()->query('comments');
@@ -147,19 +149,37 @@ class Pending extends Component
      
       }
 
-      public function getFuelsProperty(){
- 
-        if (isset($this->from) && isset($this->to)) {
-            return Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-            ])->where('authorization','pending')->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc')->paginate(10);
-           
-        }else { 
-            return Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-            ])->where('authorization','pending')->whereMonth('created_at', date('m'))
-            ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc')->paginate(10);
-          
+     public function getFuelsProperty()
+    {
+        $query = Fuel::query()
+            ->with([
+                'container:id,name',
+                'horse',
+                'horse.horse_model',
+                'horse.horse_make',
+                'vehicle',
+                'vehicle.vehicle_model',
+                'vehicle.vehicle_make',
+            ])
+            ->where('authorization', 'pending');
+
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->fuel_filter, now()->year);
+        }else{
+        if (!empty($this->from) && !empty($this->to)) {
+            $query->whereBetween($this->fuel_filter, [
+                $this->from,
+                $this->to,
+            ]);
+        } else {
+            $query->whereMonth($this->fuel_filter, now()->month)
+                ->whereYear($this->fuel_filter, now()->year);
+        }
         }
 
+        return $query
+            ->latest('created_at')
+            ->paginate(10);
     }
 
       public function authorizeSelectedRows(){

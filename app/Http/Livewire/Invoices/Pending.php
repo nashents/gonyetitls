@@ -31,19 +31,25 @@ class Pending extends Component
     public $comments;
     public $invoice;
     public $accrual_balance;
+    public $from;
+    public $to;
+    public $invoice_filter;
+    public $search;
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
 
 
 
     public function mount(){
-      
-
+        $this->invoice_filter = "created_at";
+        $this->notificationsOnly = request()->boolean('notifications', false);
     }
 
 
 
     public function showBulkyAuthorize(){
         $this->dispatchBrowserEvent('show-bulkyAuthorizationModal');
-      }
+    }
 
     public function updatedSelectPageRows($value){
 
@@ -109,6 +115,8 @@ class Pending extends Component
                         ->where('customer_id', $customerId)
                         ->where('currency_id', $currencyId)
                         ->whereNotNull('accrual_balance');
+
+                    
 
                     // Invoices subquery (exclude the current invoice)
                     $invoices = DB::table('invoices')
@@ -180,9 +188,32 @@ class Pending extends Component
         });
       }
 
-      public function getInvoicesProperty(){
-        return Invoice::query()->where('authorization', 'pending')->latest()->paginate(10);
-      }
+      public function getInvoicesProperty()
+    {
+        $query = Invoice::query()
+            ->where('authorization', 'pending');
+
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->invoice_filter, now()->year);
+        }else{
+            if (!empty($this->from) && !empty($this->to)) {
+
+                $query->whereBetween($this->invoice_filter, [
+                    $this->from,
+                    $this->to
+                ]);
+
+            } else {
+
+                $query->whereMonth($this->invoice_filter, now()->month)
+                    ->whereYear($this->invoice_filter, now()->year);
+            }
+        }
+
+        return $query
+            ->latest()
+            ->paginate(10);
+    }
 
     public function authorize($id){
         $invoice = Invoice::find($id);

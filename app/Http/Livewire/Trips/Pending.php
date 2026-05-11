@@ -101,7 +101,7 @@ class Pending extends Component
     public $delivery_point;
     public $fuel;
     public $mileage;
-
+    public bool $notificationsOnly = false;
     public $search;
     public $perPage = 10;
     protected $queryString = [
@@ -111,6 +111,7 @@ class Pending extends Component
         'to'                     => ['except' => ''],
         'perPage'                => ['except' => 10],
         'page'                   => ['except' => 1],
+        'notificationsOnly' => ['as' => 'notifications', 'except' => false]
     ];
 
   
@@ -171,6 +172,7 @@ class Pending extends Component
 
 
     public function mount(){
+         $this->notificationsOnly = request()->boolean('notifications', false);
           $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->employee_department = $this->employee->departments->first();
@@ -1571,16 +1573,20 @@ class Pending extends Component
         });
 
         // Date filter
-        $query->when(
-            !empty($this->from) && !empty($this->to),
-            function ($q) {
-                $q->whereBetween($this->trip_filter, [$this->from, $this->to]);
-            },
-            function ($q) {
-                $q->whereMonth($this->trip_filter, date('m'))
-                ->whereYear($this->trip_filter, date('Y'));
-            }
-        );
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->trip_filter, now()->year);
+        }else{
+            $query->when(
+                !empty($this->from) && !empty($this->to),
+                function ($q) {
+                    $q->whereBetween($this->trip_filter, [$this->from, $this->to]);
+                },
+                function ($q) {
+                    $q->whereMonth($this->trip_filter, date('m'))
+                    ->whereYear($this->trip_filter, date('Y'));
+                }
+            );
+        }
 
         // Search filter
         $query->when(!empty($this->search), function ($q) {

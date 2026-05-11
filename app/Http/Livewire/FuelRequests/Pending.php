@@ -19,7 +19,8 @@ class Pending extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     private $fuel_requests;
     public $authorize;
     public $comments;
@@ -38,7 +39,7 @@ class Pending extends Component
     public $delivery_point;
 
     public function mount(){
-        
+          $this->notificationsOnly = request()->boolean('notifications', false);
     }
 
     public function authorize($id){
@@ -57,61 +58,54 @@ class Pending extends Component
         $fuel_request->update();
 
         if ($fuel_request->allocation) {
-            $allocation = $fuel_request->employee->allocation;
+            $allocation = $fuel_request?->allocation;
             $allocation->balance  =   $allocation->balance - $fuel_request->quantity;
             $allocation->update();
         }
         
-
-        $this->email = $fuel_request->employee->allocation->container->vendor->email;
-        $this->date = $fuel_request->date;
-        $this->supplier = $fuel_request->employee->allocation->container->vendor->name;
-        $this->driver = $fuel_request->employee->name .' '. $fuel_request->employee->surname;
-        $this->fuel_type = $fuel_request->fuel_type;
-        $this->quantity = $fuel_request->quantity;
-        $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
-        $this->regnumber = $fuel_request->employee->allocation->vehicle->registration_number;
-        if ($fuel_request->status =! "approved") {
-
         if ($this->authorize == "approved") {
-            $data = array(
-                'email'=> $this->email,
-                'employee_email'=> $fuel_request->employee->email,
-                'date'=> $this->date,
-                'supplier'=> $this->supplier,
-                'driver'=> $this->driver,
-                'regnumber'=> $this->regnumber,
-                'authorized_by'=> $this->authorized_by,
-                'fuel_type'=> $this->fuel_type,
-                'quantity'=> $this->quantity,
-                'from'=> 'no-reply@tinmac.com',
-                'subject'=> 'Auto generated fuel request confirmation'
 
-               );
-             Mail::send('emails.fuel_requests',$data, function($message) use($data){
-                 $message->to($data['email']);
-                 $message->cc($data['employee_email']);
-                 $message->from($data['from']);
-                 $message->subject($data['subject']);
-             });
+            if ($fuel_request->from_allocation == True) {
+                $this->email = $fuel_request->allocation?->container?->vendor?->email;
+                $this->date = $fuel_request->date;
+                $this->supplier = $fuel_request->employee->allocation->container->vendor->name;
+                $this->driver = $fuel_request->employee->name .' '. $fuel_request->employee->surname;
+                $this->fuel_type = $fuel_request->fuel_type;
+                $this->quantity = $fuel_request->quantity;
+                $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
+                $this->regnumber = $fuel_request->employee->allocation->vehicle->registration_number;
 
+                $data = array(
+                    'email'=> $this->email,
+                    'employee_email'=> $fuel_request->employee->email,
+                    'date'=> $this->date,
+                    'supplier'=> $this->supplier,
+                    'driver'=> $this->driver,
+                    'regnumber'=> $this->regnumber,
+                    'authorized_by'=> $this->authorized_by,
+                    'fuel_type'=> $this->fuel_type,
+                    'quantity'=> $this->quantity,
+                    'subject'=> 'Auto generated fuel request confirmation'
+
+                );
+                Mail::send('emails.fuel_requests',$data, function($message) use($data){
+                    $message->to($data['email']);
+                    $message->cc($data['employee_email']);
+                    $message->from($data['from']);
+                    $message->subject($data['subject']);
+                });
+            }
+            
             $this->dispatchBrowserEvent('hide-fuelRequestAuthorizationModal');
             Session::flash('success','Fuel Request approved successfully');
             return redirect()->route('fuel_requests.approved');
             
         }else {
             $this->dispatchBrowserEvent('hide-fuelRequestAuthorizationModal');
-            Session::flash('success','Fuel Request rejected successfully');
+            Session::flash('success','Fuel Request Rejected Successfully!!');
             return redirect()->route('fuel_requests.rejected');
         }
-    }else {
-        Session::flash('error','Authorization already approved');
-        if ($this->authorize == 'approved') {
-            return redirect()->route('fuel_requests.approved');
-        }else {
-            return redirect()->route('fuel_requests.rejected');
-        }
-    }
+  
 
     }
 
@@ -124,10 +118,13 @@ class Pending extends Component
                 'vehicle',
                 'asset',
             ])
-            ->where('authorization', 'pending')
+            ->where('authorization', 'pending');
 
             // Date Filtering
-            ->when(
+            if ($this->notificationsOnly) {
+                $query->whereYear('created_at', now()->year);
+            }else{
+            $query->when(
                 isset($this->from_date) && isset($this->to_date)
                     && $this->from_date && $this->to_date,
 
@@ -145,10 +142,11 @@ class Pending extends Component
                     $q->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year);
                 }
-            )
+            );
+            }
 
             // Search
-            ->when($this->search, function ($q) {
+            $query->when($this->search, function ($q) {
 
                 $search = '%' . $this->search . '%';
 

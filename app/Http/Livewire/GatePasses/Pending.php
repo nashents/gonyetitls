@@ -14,7 +14,8 @@ class Pending extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     public $from;
     public $to;
 
@@ -24,6 +25,7 @@ class Pending extends Component
     public $authorize;
     public $comments;
     public $gate_pass;
+    public $gate_pass_filter;
     public $department;
 
     public $selectedRows = [];
@@ -31,6 +33,8 @@ class Pending extends Component
 
     public function mount($department){
         $this->department = $department;
+        $this->gate_pass_filter = 'created_at';
+        $this->notificationsOnly = request()->boolean('notifications', false);
 
     }
 
@@ -50,16 +54,54 @@ class Pending extends Component
      
       }
 
-      public function getTripGatePassesProperty(){
+     public function getTripGatePassesProperty()
+    {
+        $query = GatePass::query()
+            ->with([
+                'trip:id,trip_number',
+                'horse:id,registration_number',
+                'driver',
+                'driver.employee:id,name,surname',
+                'branch:id,name',
+            ])
+            ->where('type', 'Trip');
 
+        // Department authorization logic
         if ($this->department == "logistics") {
-            return  GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('logistics_authorization', 'pending')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10);
-        }elseif($this->department == "workshop"){
-            return GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('workshop_authorization', 'pending')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10);
-        }elseif($this->department == "security"){
-            return GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'pending')->where('type','Trip')->orderBy('created_at','desc')->take(10)->paginate(10);
+
+            $query->where('logistics_authorization', 'pending');
+
+        } elseif ($this->department == "workshop") {
+
+            $query->where('workshop_authorization', 'pending');
+
+        } elseif ($this->department == "security") {
+
+            $query->where('authorization', 'pending');
         }
 
+        // Date filtering
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->gate_pass_filter, now()->year);
+        }else{
+            if (!empty($this->from) && !empty($this->to)) {
+
+                $query->whereBetween($this->gate_pass_filter, [
+                    $this->from,
+                    $this->to
+                ]);
+
+            } else {
+
+                $query->whereMonth($this->gate_pass_filter, now()->month)
+                    ->whereYear($this->gate_pass_filter, now()->year);
+            }
+        }
+
+        return $query
+            ->latest()
+            ->take(100)
+            ->paginate(10);
     }
 
       public function authorizeSelectedRows(){

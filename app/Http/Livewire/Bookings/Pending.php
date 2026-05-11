@@ -26,9 +26,9 @@ class Pending extends Component
 
     
     protected $paginationTheme = 'bootstrap';
-
+     public bool $notificationsOnly = false;
     public $search;
-    protected $queryString = ['search'];
+    protected $queryString = ['search',  'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     public $from;
     public $to;
     
@@ -44,7 +44,7 @@ class Pending extends Component
 
 
     public function mount(){
-        
+         $this->notificationsOnly = request()->boolean('notifications', false);
       }
 
       public function inspectionNumber(){
@@ -473,15 +473,19 @@ class Pending extends Component
             ->with(['ticket','inspection','horse','trailer','vehicle'])->where('authorization','pending');
 
         // Date window
-        if ($this->from && $this->to) {
-            $from = Carbon::parse($this->from)->startOfDay();
-            $to   = Carbon::parse($this->to)->endOfDay();
-            $query->whereBetween('created_at', [$from, $to]);
-        } else {
-            $query->whereBetween('created_at', [
-                now()->startOfMonth(),
-                now()->endOfMonth(),
-            ]);
+        if ($this->notificationsOnly) {
+            $query->whereYear('created_at', now()->year);
+        }else{
+            if ($this->from && $this->to) {
+                $from = Carbon::parse($this->from)->startOfDay();
+                $to   = Carbon::parse($this->to)->endOfDay();
+                $query->whereBetween('created_at', [$from, $to]);
+            } else {
+                $query->whereBetween('created_at', [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            }
         }
 
 

@@ -22,7 +22,8 @@ class Pending extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     public $from;
     public $to;
     public $purchase_filter;
@@ -72,6 +73,7 @@ class Pending extends Component
 
     public function mount($category){
         $this->department = $category;
+        $this->notificationsOnly = request()->boolean('notifications', false);
     }
     public function authorize($id){
         $purchase = Purchase::find($id);
@@ -222,9 +224,31 @@ class Pending extends Component
 
     public function render()
     {
-        return view('livewire.purchases.pending',[
-            'purchases' => Purchase::where('authorization', 'pending')
-            ->where('department',$this->department)->latest()->paginate(10)
+        $query = Purchase::query()
+            ->where('authorization', 'pending')
+            ->where('department', $this->department);
+
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->purchase_filter, now()->year);
+        }else{
+            if (!empty($this->from) && !empty($this->to)) {
+
+                $query->whereBetween($this->purchase_filter, [
+                    $this->from,
+                    $this->to
+                ]);
+
+            } else {
+
+                $query->whereMonth($this->purchase_filter, now()->month)
+                    ->whereYear($this->purchase_filter, now()->year);
+            }
+        }
+
+        return view('livewire.purchases.pending', [
+            'purchases' => $query
+                ->latest()
+                ->paginate(10),
         ]);
     }
 }

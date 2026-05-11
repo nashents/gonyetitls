@@ -30,7 +30,8 @@ class Pending extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     public $from;
     public $to;
     public $bill_filter;
@@ -44,6 +45,7 @@ class Pending extends Component
 
 
     public function mount(){
+        $this->notificationsOnly = request()->boolean('notifications', false);
         $this->resetPage();
         $this->bill_filter = "created_at";
     }
@@ -187,102 +189,78 @@ class Pending extends Component
     });
    }
 
-   public function getBillsProperty(){
+    public function getBillsProperty()
+    {
+        $query = Bill::query()
+            ->with([
+                'invoice',
+                'transporter',
+                'container',
+                'top_up',
+                'trip',
+                'horse',
+                'driver',
+                'purchase',
+                'currency',
+                'payments',
+                'ticket',
+                'vendor',
+            ])
+            ->where('authorization', 'pending')
+            ->where('to_be_paid', true);
 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                ->whereDate($this->bill_filter, '>=', $this->from)
-                ->whereDate($this->bill_filter, '<=', $this->to)
-                ->where('authorization','pending')
-                ->where('to_be_paid', True)
-                ->where('bill_number','like', '%'.$this->search.'%')
-                ->orWhere('status','like', '%'.$this->search.'%')
-                ->orWhere('bill_date','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip', function ($query) {
-                    return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('ticket', function ($query) {
-                    return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('invoice', function ($query) {
-                    return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('container', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('purchase', function ($query) {
-                    return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vendor', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('bill_number','desc')->paginate(10);
-            }else {
-                return  Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->where('authorization','pending')
-                ->whereDate($this->bill_filter, '>=', $this->from)
-                ->whereDate($this->bill_filter, '<=', $this->to)
-                ->where('to_be_paid', True)
-                ->orderBy('bill_number','desc')->paginate(10);
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->bill_filter, now()->year);
+        }else{
+            if (!empty($this->from) && !empty($this->to)) {
+                $query->whereDate($this->bill_filter, '>=', $this->from)
+                    ->whereDate($this->bill_filter, '<=', $this->to);
+            } else {
+                $query->whereMonth($this->bill_filter, now()->month)
+                    ->whereYear($this->bill_filter, now()->year);
             }
-           
         }
-        elseif (isset($this->search)) {
-           
-            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth('created_at', date('m'))
-            ->where('authorization','pending')
-            ->whereYear('created_at', date('Y'))
-            ->where('to_be_paid', True)
-            ->where('bill_number','like', '%'.$this->search.'%')
-            ->orWhere('status','like', '%'.$this->search.'%')
-            ->orWhere('bill_date','like', '%'.$this->search.'%')
-            ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('ticket', function ($query) {
-                return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('trip', function ($query) {
-                return $query->where('trip_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('invoice', function ($query) {
-                return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('transporter', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('container', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('purchase', function ($query) {
-                return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('vendor', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orderBy('bill_number','desc')->paginate(10);
+        if (!empty($this->search)) {
+            $search = '%' . $this->search . '%';
+
+            $query->where(function ($q) use ($search) {
+                $q->where('bill_number', 'like', $search)
+                    ->orWhere('status', 'like', $search)
+                    ->orWhere('bill_date', 'like', $search)
+                    ->orWhereHas('horse', function ($query) use ($search) {
+                        $query->where('registration_number', 'like', $search);
+                    })
+                    ->orWhereHas('trip', function ($query) use ($search) {
+                        $query->where('trip_number', 'like', $search);
+                    })
+                    ->orWhereHas('ticket', function ($query) use ($search) {
+                        $query->where('ticket_number', 'like', $search);
+                    })
+                    ->orWhereHas('currency', function ($query) use ($search) {
+                        $query->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('invoice', function ($query) use ($search) {
+                        $query->where('invoice_number', 'like', $search);
+                    })
+                    ->orWhereHas('transporter', function ($query) use ($search) {
+                        $query->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('container', function ($query) use ($search) {
+                        $query->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('purchase', function ($query) use ($search) {
+                        $query->where('purchase_number', 'like', $search);
+                    })
+                    ->orWhereHas('vendor', function ($query) use ($search) {
+                        $query->where('name', 'like', $search);
+                    });
+            });
         }
-        else {
-           
-            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth('created_at', date('m'))
-            ->where('authorization','pending')->where('to_be_paid', True)
-            ->whereYear($this->bill_filter, date('Y'))->orderBy('bill_number','desc')->paginate(10);
-          
-        }
-   
-   }
+
+        return $query
+            ->orderBy('bill_number', 'desc')
+            ->paginate(10);
+    }
 
 
     public function authorize($id){
