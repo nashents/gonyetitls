@@ -384,6 +384,7 @@
                                         </thead>
                                         <tbody>
                                         @forelse($trips as $trip)
+
                                             @php
                                                 $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
                                                 // $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
@@ -406,11 +407,8 @@
                                             | Delivery note offloaded dates from trip transport orders
                                             |--------------------------------------------------------------------------
                                             */
-                                            $offloadedDate = $trip->trip_transport_orders
-                                                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
-                                                ->filter()
-                                                ->unique()
-                                                ->join(', ');
+                                            $offloadedDate = $formatDate($trip->delivery_note?->offloaded_date);
+                                           
 
                                             /*
                                             |--------------------------------------------------------------------------
@@ -419,7 +417,11 @@
                                             |--------------------------------------------------------------------------
                                             */
                                             if (!$offloadedDate) {
-                                                $offloadedDate = $formatDate($trip->delivery_note?->offloaded_date);
+                                                $offloadedDate = $trip->trip_transport_orders
+                                                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+                                                ->filter()
+                                                ->unique()
+                                                ->join(', ');
                                             }
 
                                             /*
@@ -429,9 +431,10 @@
                                             |--------------------------------------------------------------------------
                                             */
                                             if (!$offloadedDate) {
-                                                $offloadedDate = $formatDate($trip->trip_status_date)
-                                                    ?: $formatDate($trip->end_date);
-                                            }
+                                            $offloadedDate = $trip->status == "Offloaded"
+                                                ? ($formatDate($trip->trip_status_date) ?: $formatDate($trip->end_date))
+                                                : '';
+                                        }
 
                                           
                                                 $pod = $trip->pod;

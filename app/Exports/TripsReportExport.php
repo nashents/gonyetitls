@@ -627,11 +627,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             ->unique()
             ->join(', ');
        
-        $offloaded_date = $trip->trip_transport_orders
-            ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
-            ->filter()
-            ->unique()
-            ->join(', ');
+        $offloaded_date = $formatDate($trip->delivery_note?->offloaded_date);
 
         /*
         |--------------------------------------------------------------------------
@@ -639,16 +635,23 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         | Trip delivery note offloaded date
         |--------------------------------------------------------------------------
         */
-        if (!$offloaded_date) {
-            $offloaded_date = $formatDate($trip->delivery_note?->offloaded_date);
-        }
         if (!$loading_date) {
             $loading_date = $formatDate($trip->delivery_note?->loaded_date);
         }
+        if (!$offloaded_date) {
 
-      
-     
+         $offloaded_date = $trip->trip_transport_orders
+            ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+            ->filter()
+            ->unique()
+            ->join(', ');
+           
+        }
 
+        if (!$offloaded_date) {
+            $offloaded_date = $trip->trip_status == "Offloaded" ? $formatDate($trip->trip_status_date) : "";
+        }
+        
         $fuel_purchased = ($trip->fuels ?? collect())->where('amount', '!=', null)->where('amount', '!=', '')->sum('amount');
         $fuel_sold = ($trip->fuels ?? collect())->where('transporter_total', '!=', null)->where('transporter_total', '!=', '')->sum('transporter_total');
         $fuel_profit = ($trip->fuels ?? collect())->where('profit', '!=', null)->where('profit', '!=', '')->sum('profit');
