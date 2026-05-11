@@ -59,6 +59,7 @@ class Edit extends Component
     public $selectedProduct = [];
     public $description = [];
     public $selectedAccount = [];
+    public array $is_custom_item = [];
     public $qty = [];
     public $amount = [];
     public $invoices;
@@ -73,6 +74,7 @@ class Edit extends Component
     public $invoice_items;
     public $transporters;
     public $selectedTransporter;
+    public $multi_select = False;
 
         //discount vars
         public $discount_name;
@@ -84,6 +86,7 @@ class Edit extends Component
     
     public $selectedCurrentTax;
     public $selectedCurrentProduct;
+    public $current_is_custom_item;
     public $selectedCurrentTTO;
     public $selectedCurrentTrip;
     public $selectedCurrentBooking;
@@ -958,7 +961,10 @@ class Edit extends Component
     
         if (isset( $this->invoice_items)) {
            foreach($this->invoice_items as $item){
+
             $this->selectedCurrentProduct[] = $item->product_id;
+            $this->current_is_custom_item[] = $item->is_custom_item;
+            
             $this->selectedCurrentTrip[] = $item->trip_id;
             $this->selectedCurrentTTO[] = $item->trip_transport_id;
             $this->selectedCurrentRental[] = $item->rental_id;
@@ -1157,6 +1163,7 @@ class Edit extends Component
                 //     return redirect()->route('invoices.index');
                 
                 // }
+
                 $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
 
                 if (!empty($validAccounts)) {
@@ -1192,6 +1199,12 @@ class Edit extends Component
                         
                         if (isset($this->selectedCurrentTrip[$key])) {
                             $invoice_item->trip_id = $this->selectedCurrentTrip[$key];
+                        }
+                        if (isset($this->selectedCurrentProduct[$key])) {
+                            $invoice_item->product_id = $this->selectedCurrentProduct[$key];
+                        }
+                        if (isset($this->current_is_custom_item[$key])) {
+                            $invoice_item->is_custom_item = $this->current_is_custom_item[$key];
                         }
                         if (isset($this->selectedCurrentTax[$key])) {
                             $invoice_item->tax_id = $this->selectedCurrentTax[$key];
@@ -1243,69 +1256,139 @@ class Edit extends Component
                         $invoice_item->update();
                     }
             
-                    foreach($this->selectedTrip as $key => $value){
-                    
-                        $invoice_item = new InvoiceItem;
-                        $invoice_item->invoice_id = $invoice->id;
-            
-                        if (isset($this->selectedTrip[$key])) {
-                            $invoice_item->trip_id = $this->selectedTrip[$key];
-                        }
-                        if (isset($this->selectedProduct[$key])) {
-                            $invoice_item->product_id = $this->selectedProduct[$key];
-                        }
-                        if (isset($this->is_custom_item[$key])) {
-                            $invoice_item->is_custom_item = $this->is_custom_item[$key];
-                        }
-                        if (isset($this->selectedTax[$key])) {
-                            $invoice_item->tax_id = $this->selectedTax[$key];
-                        }
-                        if (isset($this->tax_rate[$key])) {
-                            $invoice_item->tax_rate = $this->tax_rate[$key];
-                        }
-                        if (isset($this->hs_code[$key])) {
-                            $invoice_item->hs_code = $this->hs_code[$key];
-                        }
-                        if (isset($this->selectedAccount[$key])) {
-                            $invoice_item->account_id = $this->selectedAccount[$key];
-                        }
-                        if (isset($this->description[$key])) {
-                            $invoice_item->description = $this->description[$key];
-                        }
-                        if (isset($this->qty[$key])) {
-                            $invoice_item->qty = $this->qty[$key];
-                        }
-                        if (isset($this->amount[$key])) {
-                            $invoice_item->amount = $this->amount[$key];
-                        }
-                        if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
-                            $item_subtotal = $this->amount[$key]*$this->qty[$key];
-                            $invoice_item->subtotal = $item_subtotal;
-                            $this->subtotal = $this->subtotal + $item_subtotal;
-            
-                        }
-                        if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
-            
-                            $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
-                            $invoice_item->tax_amount =  $item_tax_amount;
-                            $this->tax_amount = $this->tax_amount + $item_tax_amount;
-                            $item_subtotal_incl = $item_tax_amount + $item_subtotal;
-                            $invoice_item->subtotal_incl =  $item_subtotal_incl;
-                            $this->total =  $this->total + $item_subtotal_incl;
-            
-                        }else{
-                            $item_subtotal_incl = $item_subtotal;
-                            $invoice_item->subtotal_incl = $item_subtotal_incl;
-                            $this->total =  $this->total + $item_subtotal_incl;
-                        }
 
-                        if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
-                            $invoice_item->exchange_rate = $this->exchange_rate;
-                            $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl;
-                        }
-                        $invoice_item->save();
-            
+                    if($this->multi_select == True){
+                    
+                    foreach($this->selectedMultiTrip as $tripId){
+                            $trip = Trip::find($tripId);
+                            $delivery_note = $trip?->delivery_note;
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            $invoice_item->multi_select = True;
+                            $invoice_item->account_id = $this->income_account_id;
+                            $invoice_item->trip_id = $tripId;
+                            $invoice_item->qty = 1;
+                            if($this->values == "scheduled"){
+                                $invoice_item->amount = $trip?->freight;
+                            }elseif($this->values == "loading"){
+                                $invoice_item->amount = $delivery_note?->loaded_freight;
+                            }elseif($this->values == "offloading"){
+                                $invoice_item->amount = $delivery_note?->offloaded_freight;
+                            }
+                           
+                            $invoice_item->description = $this->setDescription($tripId);
+                            $tax_rate = Null;
+                           
+                            if(!is_null($this->selectedMultiTax)){
+                                
+                                $tax = Account::find($this->selectedMultiTax);
+                                $invoice_item->tax_rate = $tax?->rate;
+                                $tax_rate = $tax?->rate;
+                                $invoice_item->hs_code = $tax?->hs_code;
+                                $invoice_item->tax_id = $this->selectedMultiTax;
+                
+                            }
+                            
+                            $amount = $trip?->freight;
+                            $qty = 1;
+                            if ((isset($amount) && is_numeric($amount)) && ( isset($qty) && is_numeric($qty) ) ) {
+
+                                $item_subtotal = $amount*$qty;
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if (isset($tax_rate) && is_numeric($tax_rate)) {
+
+                                $item_tax_amount = ($item_subtotal * ($tax_rate / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                        
                     }
+
+                    }else{
+                        
+
+                    foreach($this->qty as $key => $value){
+
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedTrip[$key])) {
+                                $invoice_item->trip_id = $this->selectedTrip[$key];
+                            }
+                            if (isset($this->selectedProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                               
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                    
+                    }
+                }
             
                 }
                 elseif ($this->source == "TTO") {
@@ -1376,7 +1459,73 @@ class Edit extends Component
                         
                     }
 
-                    foreach($this->selectedTTO as $key => $value){
+                   if($this->multi_select == True){
+                    
+                    foreach($this->selectedMultiTTO as $ttoId){
+                            $tto = TripTransportOrder::find($ttoId);
+                            $delivery_note = $tto?->delivery_note;
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            $invoice_item->account_id = $this->income_account_id;
+                            $invoice_item->multi_select = True;
+                            $invoice_item->trip_transport_order_id = $ttoId;
+                            $invoice_item->qty = 1;
+                            if($this->values == "scheduled"){
+                                $invoice_item->amount = $tto?->allocated_freight;
+                            }elseif($this->values == "loading"){
+                                $invoice_item->amount = $delivery_note?->loaded_freight;
+                            }elseif($this->values == "offloading"){
+                                $invoice_item->amount = $delivery_note?->offloaded_freight;
+                            }
+                           
+                            $invoice_item->description = $this->setTTODescription($ttoId);
+                            $tax_rate = Null;
+                           
+                            if(!is_null($this->selectedMultiTax)){
+                                
+                                $tax = Account::find($this->selectedMultiTax);
+                                $invoice_item->tax_rate = $tax?->rate;
+                                $tax_rate = $tax?->rate;
+                                $invoice_item->hs_code = $tax?->hs_code;
+                                $invoice_item->tax_id = $this->selectedMultiTax;
+                
+                            }
+                            
+                            $amount = $tto?->allocated_freight;
+                            $qty = 1;
+                            if ((isset($amount) && is_numeric($amount)) && ( isset($qty) && is_numeric($qty) ) ) {
+
+                                $item_subtotal = $amount*$qty;
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if (isset($tax_rate) && is_numeric($tax_rate)) {
+
+                                $item_tax_amount = ($item_subtotal * ($tax_rate / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                        
+                    }
+
+                    }else{
+
+                    foreach($this->qty as $key => $value){
 
                             $invoice_item = new InvoiceItem;
                             $invoice_item->invoice_id = $invoice->id;
@@ -1440,6 +1589,7 @@ class Edit extends Component
                             $invoice_item->save();
                     
                     }
+                }
                 
                     
             }

@@ -17,7 +17,7 @@ class CreateFiscalizationsTable extends Migration
             $table->id();
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->bigInteger('company_id')->unsigned()->nullable();
-            $table->string('service_provider')->nullable();
+            $table->bigInteger('integration_provider_id')->unsigned()->nullable();
             $table->string('device_serial')->nullable();
             $table->string('device_id')->nullable();
             $table->timestamps();

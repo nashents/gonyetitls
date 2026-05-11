@@ -406,6 +406,7 @@
                                                 </div>
                                             </div>
                                             @foreach ($inputs as $key => $value)
+                                            
                                                 <div class="row">
                                                     <div class="col-md-12" >
                                                         <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />

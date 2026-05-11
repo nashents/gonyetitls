@@ -1343,6 +1343,7 @@ class Create extends Component
                             $invoice_item = new InvoiceItem;
                             $invoice_item->invoice_id = $invoice->id;
                             $invoice_item->account_id = $this->income_account_id;
+                            $invoice_item->multi_select = True;
                             $invoice_item->trip_id = $tripId;
                             $invoice_item->qty = 1;
                             if($this->values == "scheduled"){
@@ -1399,6 +1400,7 @@ class Create extends Component
                     }
 
                     }else{
+
 
                     foreach($this->qty as $key => $value){
 
@@ -1477,6 +1479,7 @@ class Create extends Component
                             $invoice_item = new InvoiceItem;
                             $invoice_item->invoice_id = $invoice->id;
                             $invoice_item->account_id = $this->income_account_id;
+                            $invoice_item->multi_select = True;
                             $invoice_item->trip_transport_order_id = $ttoId;
                             $invoice_item->qty = 1;
                             if($this->values == "scheduled"){
