@@ -364,16 +364,7 @@ WithCustomStartCell
                 $loading_date = "";
             }     
               
-            if ($trip->delivery_note){
-                $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                if ((preg_match($pattern, $trip->delivery_note->offloaded_date)) ){
-                    $offloading_date = Carbon::parse($trip->delivery_note->offloaded_date)->format('d M Y g:i A');
-                }else{
-                    $offloading_date = $trip->delivery_note->offloaded_date;
-                }  
-            }else {
-                $offloading_date = "";
-            }     
+              
             
                 $fuel_purchased = $trip->fuels->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
                 $fuel_sold = $trip->fuels->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
@@ -510,9 +501,11 @@ WithCustomStartCell
 
                 return   [
                     $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
+                    $trip->trip_status,
+                    $trip->trip_status_date,
                     $start_date,
                     $loading_date,
-                    $offloading_date,
+                    $trip->trip_status == "Offloaded" ?  $trip->trip_status_date : "",
                     $trip->trip_type ? $trip->trip_type->name : "",
                     $border_list,
                     $clearing_agent_list,
@@ -578,8 +571,6 @@ WithCustomStartCell
                     $fuel_purchased ? $fuel_purchased : "",
                     $fuel_sold ? $fuel_sold : "",
                     $fuel_profit ? $fuel_profit : "",
-                    $trip->trip_status,
-                    $trip->trip_status_date,
                     $location,
                     isset($pod) ? "Submitted" : "Pending",
                     $invoice_date,
@@ -593,6 +584,8 @@ WithCustomStartCell
     public function headings(): array{
             return[
                 'Trip#',
+                'Trip Status',
+                'Updated On',
                 'Date Booked',
                 'Date Loaded',
                 'Date Offloaded',
@@ -661,8 +654,6 @@ WithCustomStartCell
                 'Fuel Purchased',
                 'Fuel Sold',
                 'Fuel Profit',
-                'Trip Status',
-                'Updated On',
                 'Location',
                 'POD Status',
                 'Date Invoiced',

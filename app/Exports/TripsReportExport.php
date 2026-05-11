@@ -606,7 +606,6 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
         $start_date = $this->formatDateTimeValue($trip->start_date ?? null);
         $loading_date = $trip->delivery_note ? $this->formatDateTimeValue($trip->delivery_note->loaded_date ?? null) : "";
-        $offloading_date = $trip->delivery_note ? $this->formatDateTimeValue($trip->delivery_note->offloaded_date ?? null) : "";
 
         $fuel_purchased = ($trip->fuels ?? collect())->where('amount', '!=', null)->where('amount', '!=', '')->sum('amount');
         $fuel_sold = ($trip->fuels ?? collect())->where('transporter_total', '!=', null)->where('transporter_total', '!=', '')->sum('transporter_total');
@@ -711,9 +710,11 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
         return [
             $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
+            $trip->trip_status,
+            $trip->trip_status_date,
             $start_date,
             $loading_date,
-            $offloading_date,
+            $trip->trip_status == "Offloaded" ?  $trip->trip_status_date : "",
             $trip->trip_type ? $trip->trip_type->name : "",
             $border_list,
             $clearing_agent_list,
@@ -779,8 +780,6 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $fuel_purchased ?: "",
             $fuel_sold ?: "",
             $fuel_profit ?: "",
-            $trip->trip_status,
-            $trip->trip_status_date,
             $location,
             isset($pod) ? "Submitted" : "Pending",
             $invoice_date,
@@ -793,6 +792,8 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
     {
         return [
             'Trip#/Ref',
+            'Trip Status',
+            'Updated On',
             'Date Booked',
             'Date Loaded',
             'Date Offloaded',
@@ -861,8 +862,6 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             'Fuel Purchased',
             'Fuel Sold',
             'Fuel Profit',
-            'Trip Status',
-            'Updated On',
             'Location',
             'POD Status',
             'Date Invoiced',

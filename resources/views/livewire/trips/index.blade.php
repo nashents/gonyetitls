@@ -314,6 +314,7 @@
                                                 </div>
                                             </div>
                                         @endif
+                                        
                                         <div class="row mt-15">
                                             <div class="col-md-5">
                                                 <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
