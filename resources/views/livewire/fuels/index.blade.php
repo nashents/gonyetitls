@@ -100,9 +100,9 @@
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th class="th-sm">Order#
+                                        <th class="th-sm">FOrder#
                                         </th>
-                                        <th class="th-sm">CreatedBy
+                                        <th class="th-sm">Fuel Request
                                         </th>
                                         <th class="th-sm">Date
                                         </th>
@@ -133,9 +133,35 @@
                                     <tr style="background-color: #4CAF50">
                                     <td>
                                         {{$fuel->order_number}} <br>
-                                        <small><strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</small>
+                                        <small>
+                                            <strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}} <br>
+                                            <strong>CreatedOn: </strong>{{$fuel->created_at}}
+                                        </small>
                                     </td>
-                                      <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
+                                    <td>
+                                        @if ($fuel->fuel_request)
+                                            @php
+                                                $fuel_request = $fuel->fuel_request;
+                                            @endphp
+                                             <a href="fuel_requests.show,$fuel_request?->id" target="_blank" style="color: blue">{{$fuel_request?->request_number}}</a> <br>
+                                             <small>
+                                                <strong>RequestedBy:</strong> {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} <br>
+                                                <strong>RequestedFor:</strong>
+                                                    @if ($fuel_request->horse)
+                                                        {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                                    @elseif ($fuel_request->vehicle)
+                                                        {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                                    @elseif ($fuel_request->asset)
+                                                        {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
+                                                    @else
+                                                        Other
+                                                    @endif <br>
+                                                <strong>Fuel Type:</strong>  {{$fuel_request->fuel_type}} <br>
+                                                <strong>Requested Qty:</strong>  {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
+                                             </small>
+                                        @endif
+                                       
+                                    </td>
                                       <td>
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -194,11 +220,16 @@
                                             Other
                                         @endif
                                       </td>
-                                      <td>{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
+                                      <td>
+                                        {{ucfirst($fuel->container ? $fuel->container->name : "")}} <br>
+                                        <small>
+                                            <strong>Fuel Type:</strong> {{$fuel->container->fuel_type}}
+                                        </small>
+                                      </td>
                                       <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
                                       <td>{{$fuel->quantity}}</td>
-                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}} {{$fuel->currency ? $fuel->currency->symbol : ""}}</td>
-                                      <td>{{number_format($fuel->amount,2)}}</td>
+                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}} </td>
+                                      <td>{{$fuel->currency ? $fuel->currency->symbol : ""}}{{number_format($fuel->amount,2)}}</td>
                                       <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                       <td>{{$fuel->comments}}</td>
                                       <td class="w-10 line-height-35 table-dropdown">
@@ -223,9 +254,38 @@
                                     </tr>
                                     @elseif ($fuel->fillup == 0)
                                     <tr style="background-color: #FFC107">
-                                      <td>{{$fuel->order_number}}</td>
-                                       <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
-                                      <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
+                                      <td>
+                                        {{$fuel->order_number}} <br>
+                                          <small>
+                                            <strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}} <br>
+                                            <strong>CreatedOn: </strong>{{$fuel->created_at}}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        @if ($fuel->fuel_request)
+                                            @php
+                                                $fuel_request = $fuel->fuel_request;
+                                            @endphp
+                                             <a href="fuel_requests.show,$fuel_request?->id" target="_blank" style="color: blue">{{$fuel_request?->request_number}}</a> <br>
+                                             <small>
+                                                <strong>RequestedBy:</strong> {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} <br>
+                                                <strong>RequestedFor:</strong>
+                                                    @if ($fuel_request->horse)
+                                                        {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                                    @elseif ($fuel_request->vehicle)
+                                                        {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                                    @elseif ($fuel_request->asset)
+                                                        {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
+                                                    @else
+                                                        Other
+                                                    @endif <br>
+                                                <strong>Fuel Type:</strong>  {{$fuel_request->fuel_type}} <br>
+                                                <strong>Requested Qty:</strong>  {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
+                                             </small>
+                                        @endif
+                                       
+                                    </td>
+                                      
                                       <td>
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -283,11 +343,16 @@
                                         Other
                                     @endif
                                       </td>
-                                      <td>{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
+                                      <td>
+                                            {{ucfirst($fuel->container ? $fuel->container->name : "")}} <br>
+                                            <small>
+                                                <strong>Fuel Type:</strong> {{$fuel->container->fuel_type}}
+                                            </small>
+                                      </td>
                                       <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
                                       <td>{{$fuel->quantity}}</td>
-                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}} {{$fuel->currency ? $fuel->currency->symbol : ""}}</td>
-                                       <td>{{number_format($fuel->amount,2)}}</td>
+                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}}</td>
+                                       <td>{{$fuel->currency ? $fuel->currency->symbol : ""}}{{number_format($fuel->amount,2)}}</td>
                                       <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                       <td>{{$fuel->comments}}</td>
                                       <td class="w-10 line-height-35 table-dropdown">
@@ -356,6 +421,34 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="fuel_request"   class="line-style" />
+                        <label for="one" class="radio-label">Attach fuel request to this order.</label>
+                        @error('fuel_request') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if ($fuel_request == "True")
+                            <div class="form-group">
+                                <label for="horses">Fuel Requisitions<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="selectedFuelRequest" class="form-control" required>
+                                   <option value="">Select Fuel Request</option>
+                                  @foreach ($fuel_requests as $fuel_request)
+                                      <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
+                                        @if ($fuel_request->horse)
+                                            {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                        @elseif ($fuel_request->vehicle)
+                                            {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                        @elseif ($fuel_request->asset)
+                                            {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
+                                        @else
+                                            Other
+                                        @endif
+                                        FuelType: {{$fuel_request->fuel_type}} Qty: {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
+                                        </option>
+                                  @endforeach
+                               </select>
+                                @error('selectedFuelRequest') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                    @endif
                     <div class="row">
                     <div class="form-group">
                              <div class="col-sm-10">

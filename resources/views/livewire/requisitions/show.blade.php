@@ -8,6 +8,7 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Requisition Details</a></li>
                 <li role="presentation"><a href="#items" aria-controls="items" role="tab" data-toggle="tab">Requisition Items</a></li>
+                <li role="presentation"><a href="#documents" aria-controls="items" role="tab" data-toggle="tab">Documents</a></li>
 
             </ul>
             <div class="tab-content bg-white p-15">
@@ -133,8 +134,12 @@
                     </table>
                 </div>
                 <div role="tabpanel" class="tab-pane" id="items">
-                  @livewire('requisitions.items', ['id' => $requisition->id])
+                    @livewire('requisitions.items', ['id' => $requisition->id])
                 </div> 
+                <div role="tabpanel" class="tab-pane" id="documents">
+                    @livewire('documents.index', ['id' => $requisition->id,'category' =>'requisition'])
+                </div>
+
                 <div class="row">
                     <div class="col-md-12">
                         <div class="btn-group pull-right mt-10" >

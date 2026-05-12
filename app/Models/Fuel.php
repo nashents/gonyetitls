@@ -51,6 +51,9 @@ class Fuel extends Model implements Auditable
     public function trip(){
         return $this->belongsTo('App\Models\Trip');
     }
+    public function fuel_request(){
+        return $this->belongsTo('App\Models\FuelRequest');
+    }
     public function cash_flow(){
         return $this->hasOne('App\Models\CashFlow');
     }

@@ -2,39 +2,40 @@
 
 namespace App\Http\Livewire\Fuels;
 
-use Carbon\Carbon;
-use App\Models\Fuel;
-use App\Models\Hour;
-use App\Models\Trip;
+use App\Exports\FuelsExport;
+use App\Mail\PendingNotificationEmails;
 use App\Models\Asset;
-use App\Models\Horse;
-use App\Models\TopUp;
-use App\Models\Driver;
-use App\Models\Vendor;
-use App\Models\Expense;
-use App\Models\Mileage;
-use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Category;
-use App\Models\Currency;
-use App\Models\Employee;
+use App\Models\CategoryValue;
 use App\Models\Container;
-use App\Models\FuelCount;
-use App\Models\TripExpense;
-use App\Exports\FuelsExport;
+use App\Models\Currency;
+use App\Models\Driver;
+use App\Models\Employee;
 use App\Models\ExchangeRate;
+use App\Models\Expense;
+use App\Models\Fuel;
+use App\Models\FuelCount;
+use App\Models\FuelRequest;
+use App\Models\Horse;
+use App\Models\Hour;
+use App\Models\Mileage;
 use App\Models\Notification;
+use App\Models\TopUp;
+use App\Models\Trailer;
+use App\Models\Trip;
+use App\Models\TripExpense;
+use App\Models\Vehicle;
+use App\Models\Vendor;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Models\CategoryValue;
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\PendingNotificationEmails;
-use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
@@ -72,6 +73,9 @@ class Index extends Component
     public $container;
     public $container_id;
     public $type = NULL;
+    public $fuel_request = False;
+    public $fuel_requests;
+    public $selectedFuelRequest;
 
 
     public $transporter_price = 0;
@@ -154,6 +158,7 @@ class Index extends Component
         $this->assets = Asset::latest()->get();
         $this->fillup = 1;
         $this->categories = Category::latest()->get();
+        $this->fuel_requests = FuelRequest::where('authorization','approved')->doesntHave('fuel')->get();
         $this->category_values = collect();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->employees = Employee::orderBy('name','asc')->get();
@@ -164,6 +169,38 @@ class Index extends Component
 
     }
 
+
+    public function updatedSelectedFuelRequest($id){
+        if(is_null($id)){
+            return;
+        }
+        $fuel_request = FuelRequest::find($id);
+        $this->selectedHorse = $fuel_request->horse_id;
+        $this->selectedVehicle = $fuel_request->vehicle_id;
+        $this->asset_id = $fuel_request->asset_id;
+
+        if($this->selectedHorse){
+            $horse = Horse::find($this->selectedHorse);
+            $this->mileage = $horse?->mileage;
+            $this->hours = $horse?->hours;
+            $this->type = "Horse";
+        }elseif($this->selectedVehicle){
+            $vehicle = Vehicle::find($this->selectedVehicle);
+            $this->mileage = $vehicle?->mileage;
+            $this->hours = $vehicle?->hours;
+            $this->type = "Vehicle";
+        }elseif($this->asset_id){
+             $this->type = "Asset";
+        }else{
+             $this->type = "Other";
+        }
+        $fuel_type = $fuel_request->fuel_type;
+        if($fuel_type){
+             $this->containers = Container::where('fuel_type', $fuel_type)->orderBy('name','asc')->get();
+        }
+       
+        $this->quantity = $fuel_request->quantity;
+    }
     
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
@@ -351,6 +388,7 @@ class Index extends Component
         $fuel->user_id = Auth::user()->id;
         $fuel->order_number = $this->orderNumber();
         $fuel->employee_id = $this->employee_id;
+        $fuel->fuel_request_id = $this->selectedFuelRequest;
 
         if (isset($this->selectedTrip)) {
             $trip = Trip::find($this->selectedTrip);
@@ -534,6 +572,7 @@ class Index extends Component
     $this->container_balance = $this->container ? $this->container->balance : "";
     $this->driver_id = $fuel->driver_id;
     $this->date = $fuel->date;
+    $this->selectedFuelRequest = $fuel->fuel_request_id;
     $this->fillup = $fuel->fillup;
     $this->type = $fuel->type;
     $this->mileage = $fuel->odometer;
@@ -597,6 +636,7 @@ class Index extends Component
            
             $fuel->container_id = $this->selectedContainer;
             $fuel->date = $this->date;
+            $fuel->fuel_request_id = $this->selectedFuelRequest;
             $fuel->unit_price = $this->unit_price;
             $fuel->transporter_price = $this->transporter_price;
             $fuel->transporter_total = $this->transporter_total;
@@ -814,22 +854,18 @@ class Index extends Component
     public function render()
     {
 
-        // $this->container = Container::find($this->selectedContainer);
-        $this->containers = Container::orderBy('name','asc')->get();
-      
         if(($this->unit_price != null) && ($this->quantity != null)){
             $this->amount = $this->unit_price * $this->quantity;
         }
        
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
-
             $this->exchange_amount = $this->exchange_rate * $this->amount;
-
         }
 
         if(($this->transporter_price != null) && ($this->quantity != null)){
             $this->transporter_total = $this->transporter_price * $this->quantity;
         }
+
         if(isset($this->transporter_total) && isset($this->amount) ){
             $this->fuel_profit = $this->transporter_total - $this->amount;
         }
@@ -841,174 +877,78 @@ class Index extends Component
         }
        
 
-
-            if (isset($this->from) && isset($this->to)) {
-
-                if (isset($this->search)) {
-                    return view('livewire.fuels.index',[
-                        'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make'
-                        ])->whereBetween($this->fuel_filter,[$this->from, $this->to] )
-                        ->where('order_number','like', '%'.$this->search.'%')
-                        ->orWhere('quantity','like', '%'.$this->search.'%')
-                        ->orWhere('comments','like', '%'.$this->search.'%')
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('user', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('asset.product.brand', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('container', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            return $query->where('trip_ref', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy('order_number','desc')->paginate(10),
-                        'unit_price' => $this->unit_price,
-                        'amount' => $this->amount,
-                        'fuel_profit' => $this->fuel_profit,
-                        'transporter_total' => $this->transporter_total,
-                        'type' => $this->type,
-                        'containers' => $this->containers,
-                        'fuel_tank_capacity'=>$this->fuel_tank_capacity,
-                        'mileage'=>$this->mileage,
-                        'hours'=>$this->hours,
-                        'selected_horse'=>$this->selected_horse,
-                        'fuel_filter'=>$this->fuel_filter,
-                    ]);
-                }elseif(isset($this->container_id)){
-                    return view('livewire.fuels.index',[
-                        'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                        ])->where('container_id',$this->container_id)->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('order_number','desc')->paginate(10),
-                        'unit_price' => $this->unit_price,
-                        'amount' => $this->amount,
-                        'fuel_profit' => $this->fuel_profit,
-                        'transporter_total' => $this->transporter_total,
-                        'type' => $this->type,
-                        'containers' => $this->containers,
-                        'fuel_tank_capacity'=>$this->fuel_tank_capacity,
-                        'mileage'=>$this->mileage,
-                        'hours'=>$this->hours,
-                        'selected_horse'=>$this->selected_horse,
-                        'fuel_filter'=>$this->fuel_filter,
-
-                    ]);
-                }else {
-                    return view('livewire.fuels.index',[
-                        'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                        ])->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('order_number','desc')->paginate(10),
-                        'unit_price' => $this->unit_price,
-                        'amount' => $this->amount,
-                        'type' => $this->type,
-                        'fuel_profit' => $this->fuel_profit,
-                        'transporter_total' => $this->transporter_total,
-                        'containers' => $this->containers,
-                        'fuel_tank_capacity'=>$this->fuel_tank_capacity,
-                        'mileage'=>$this->mileage,
-                          'hours'=>$this->hours,
-                        'selected_horse'=>$this->selected_horse,
-                        'fuel_filter'=>$this->fuel_filter,
-
-                    ]);
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return view('livewire.fuels.index',[
-                    'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                    ])->whereMonth('created_at', date('m'))
-                    ->whereYear('created_at', date('Y'))
-                    ->where('order_number','like', '%'.$this->search.'%')
-                    ->orWhere('quantity','like', '%'.$this->search.'%')
-                    ->orWhere('comments','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('user', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('asset.product.brand', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('container', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_ref', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('order_number','desc')->paginate(10),
-                    'unit_price' => $this->unit_price,
-                    'amount' => $this->amount,
-                    'fuel_profit' => $this->fuel_profit,
-                    'transporter_total' => $this->transporter_total,
-                    'type' => $this->type,
-                    'containers' => $this->containers,
-                    'fuel_tank_capacity'=>$this->fuel_tank_capacity,
-                    'mileage'=>$this->mileage,
-                      'hours'=>$this->hours,
-                    'selected_horse'=>$this->selected_horse,
-                    'fuel_filter'=>$this->fuel_filter,
+        $query = Fuel::query()
+                ->with([
+                    'container',
+                    'horse',
+                    'horse.horse_model',
+                    'horse.horse_make',
+                    'vehicle',
+                    'vehicle.vehicle_model',
+                    'vehicle.vehicle_make',
+                    'asset.product.brand',
+                    'trip',
+                    'user',
                 ]);
-            }elseif(isset($this->container_id)){
-                return view('livewire.fuels.index',[
-                    'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                    ])->where('container_id',$this->container_id)->whereMonth($this->fuel_filter, date('m'))
-                    ->whereYear($this->fuel_filter, date('Y'))->orderBy('order_number','desc')->paginate(10),
-                    'unit_price' => $this->unit_price,
-                    'amount' => $this->amount,
-                    'fuel_profit' => $this->fuel_profit,
-                    'transporter_total' => $this->transporter_total,
-                    'type' => $this->type,
-                    'containers' => $this->containers,
-                    'fuel_tank_capacity'=>$this->fuel_tank_capacity,
-                    'mileage'=>$this->mileage,
-                      'hours'=>$this->hours,
-                    'selected_horse'=>$this->selected_horse,
-                    'fuel_filter'=>$this->fuel_filter,
-                ]);
+
+            // Date filter: from/to if set, otherwise current month
+            if ($this->from && $this->to) {
+                $query->whereBetween($this->fuel_filter, [$this->from, $this->to]);
+            } else {
+                $query->whereMonth($this->fuel_filter, now()->month)
+                    ->whereYear($this->fuel_filter, now()->year);
             }
-            else {
-               
-                return view('livewire.fuels.index',[
-                    'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                    ])->whereMonth($this->fuel_filter, date('m'))
-                    ->whereYear($this->fuel_filter, date('Y'))->orderBy('order_number','desc')->paginate(10),
-                    'unit_price' => $this->unit_price,
-                    'amount' => $this->amount,
-                    'fuel_profit' => $this->fuel_profit,
-                    'transporter_total' => $this->transporter_total,
-                    'type' => $this->type,
-                    'containers' => $this->containers,
-                    'fuel_tank_capacity'=>$this->fuel_tank_capacity,
-                    'mileage'=>$this->mileage,
-                      'hours'=>$this->hours,
-                    'selected_horse'=>$this->selected_horse,
-                    'fuel_filter'=>$this->fuel_filter,
-                ]);
-              
+
+            // Container filter
+            if ($this->container_id) {
+                $query->where('container_id', $this->container_id);
             }
+
+            // Search filter
+            if ($this->search) {
+                $search = '%' . $this->search . '%';
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('order_number', 'like', $search)
+                        ->orWhere('quantity', 'like', $search)
+                        ->orWhere('comments', 'like', $search)
+                        ->orWhereHas('horse', function ($q) use ($search) {
+                            $q->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search);
+                        })
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where(DB::raw("concat(name, ' ', surname)"), 'like', $search);
+                        })
+                        ->orWhereHas('vehicle', function ($q) use ($search) {
+                            $q->where('registration_number', 'like', $search);
+                        })
+                        ->orWhereHas('asset.product.brand', function ($q) use ($search) {
+                            $q->where('name', 'like', $search);
+                        })
+                        ->orWhereHas('container', function ($q) use ($search) {
+                            $q->where('name', 'like', $search);
+                        })
+                        ->orWhereHas('trip', function ($q) use ($search) {
+                            $q->where('trip_number', 'like', $search)
+                            ->orWhere('trip_ref', 'like', $search);
+                        });
+                });
+            }
+
+            return view('livewire.fuels.index', [
+                'fuels' => $query->orderBy('order_number', 'desc')->paginate(10),
+                'unit_price' => $this->unit_price,
+                'amount' => $this->amount,
+                'fuel_profit' => $this->fuel_profit,
+                'transporter_total' => $this->transporter_total,
+                'type' => $this->type,
+                'containers' => $this->containers,
+                'fuel_tank_capacity' => $this->fuel_tank_capacity,
+                'mileage' => $this->mileage,
+                'hours' => $this->hours,
+                'selected_horse' => $this->selected_horse,
+                'fuel_filter' => $this->fuel_filter,
+            ]);
         
     }
 }

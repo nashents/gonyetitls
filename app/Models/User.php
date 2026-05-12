@@ -71,6 +71,9 @@ class User extends Authenticatable implements Auditable
 
     }
 
+    public function fuel_requests(){
+      return $this->hasMany('App\Models\FuelRequest');
+    }
     public function rates(){
       return $this->hasMany('App\Models\Rate');
     }

@@ -240,6 +240,13 @@
                                         <td>
                                             <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                 
+                                            @if ($requisition->authorized_by_id)
+                                                @php
+                                                    $user = App\Models\User::find($requisition->authorized_by_id);
+                                                @endphp
+                                                <br>
+                                                 <small style="background-color: orange"><strong >AuthBy: </strong> {{$user?->name}} {{$user?->surname}}</small>  
+                                            @endif
                                             @if ($requisition->authorization_date)
                                                 <br>
                                                  <small style="background-color: orange"><strong >Date: </strong> {{$requisition->authorization_date}}</small>  

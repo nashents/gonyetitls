@@ -21,6 +21,9 @@ class FuelRequest extends Model implements Auditable
         'quantity',
     ];
 
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
@@ -36,5 +39,8 @@ class FuelRequest extends Model implements Auditable
   
     public function allocation(){
         return $this->belongsTo('App\Models\Allocation');
+    }
+    public function fuel(){
+        return $this->hasOne('App\Models\Fuel');
     }
 }

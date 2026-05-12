@@ -48,6 +48,7 @@
                                             </span>
                                             <select wire:model.debounce.300ms="filter_shift_type" class="form-control" aria-label="..." >
                                                 <option value="">Select Shift</option>
+                                                <option value="Backshift">Backshift</option>
                                                 <option value="Morning">Morning</option>
                                                 <option value="Night">Night</option>
                                             </select> 
@@ -592,6 +593,7 @@
                                     <label for="name">Type<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="type" required>
                                         <option value="">Select Option</option>
+                                        <option value="Backshift">Backshift</option>
                                         <option value="Morning">Morning</option>
                                         <option value="Night">Night</option>
                                     </select>
@@ -1320,6 +1322,7 @@
                                     <label for="name">Type<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="type">
                                         <option value="">Select Option</option>
+                                        <option value="Backshift">Backshift</option>
                                         <option value="Morning">Morning</option>
                                         <option value="Night">Night</option>
                                     </select>
