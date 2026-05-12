@@ -797,6 +797,34 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
+                        <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="fuel_request"   class="line-style" />
+                        <label for="one" class="radio-label">Attach fuel request to this order.</label>
+                        @error('fuel_request') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if ($fuel_request == "True")
+                            <div class="form-group">
+                                <label for="horses">Fuel Requisitions<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="selectedFuelRequest" class="form-control" required>
+                                   <option value="">Select Fuel Request</option>
+                                  @foreach ($fuel_requests as $fuel_request)
+                                      <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
+                                        @if ($fuel_request->horse)
+                                            {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                        @elseif ($fuel_request->vehicle)
+                                            {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                        @elseif ($fuel_request->asset)
+                                            {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
+                                        @else
+                                            Other
+                                        @endif
+                                        FuelType: {{$fuel_request->fuel_type}} Qty: {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
+                                        </option>
+                                  @endforeach
+                               </select>
+                                @error('selectedFuelRequest') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                    @endif
                         <div class="row">
                             <div class="form-group">
                                      <div class="col-sm-10">
