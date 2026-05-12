@@ -2,14 +2,17 @@
 
 namespace App\Http\Livewire\FuelRequests;
 
+use App\Mail\PendingNotificationEmails;
 use App\Models\Allocation;
 use App\Models\Asset;
 use App\Models\Employee;
 use App\Models\FuelRequest;
 use App\Models\Horse;
+use App\Models\Notification;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -51,6 +54,7 @@ class Index extends Component
     public $reason;
     public $fuel_balance = 0;
     public $user_id;
+    public $company;
 
 
     public function updatedSelectedAllocation($id){
@@ -81,7 +85,7 @@ class Index extends Component
      
         $this->fuel_balance = Auth::user()->employee->allocations->where('status',1)->sum('balance');
         $this->allocations = Allocation::where('employee_id',Auth::user()->employee->id)->get();
-       
+        $this->company = Auth::user()->employee->company;
         $this->horses = Horse::where('archive',0)->orderBy('registration_number','asc')->get();
         $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
         $this->employees = Employee::where('archive',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
@@ -150,6 +154,19 @@ class Index extends Component
             $fuel_request->date = $this->date;
             $fuel_request->status = "pending";
             $fuel_request->save();
+
+
+            $notifications = Notification::where('when','before')->where('category','Bill Authorization')->where('status',1)->get();
+            if ($notifications->isNotEmpty()) {
+                foreach ($notifications as $notification) {
+                    if($notification && isset($notification->category)){
+                    $email = $notification->email ?? $notification->employee->email ?? null;
+                    if($email){
+                        Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $fuel_request));
+                    }
+                    }
+                }
+            }
 
 
             $this->dispatchBrowserEvent('hide-fuel_requestModal');

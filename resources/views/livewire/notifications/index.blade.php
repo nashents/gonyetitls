@@ -160,6 +160,7 @@
                                    <option value="Bill Authorization">Bill Authorization</option>
                                    <option value="Credit Note Authorization">Credit Note Authorization</option>
                                    <option value="Dispatch Authorization">Dispatch Authorization</option>
+                                   <option value="Fuel Request Authorization">Fuel Request Authorization</option> 
                                    <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
                                    <option value="Fuel Top Up Authorization">Fuel Top Up Authorization</option> 
                                    <option value="Garage Booking Authorization">Garage Booking Authorization</option>
@@ -274,6 +275,7 @@
                                     <option value="Bill Authorization">Bill Authorization</option>
                                     <option value="Credit Note Authorization">Credit Note Authorization</option>
                                     <option value="Dispatch Authorization">Dispatch Authorization</option>
+                                    <option value="Fuel Request Authorization">Fuel Request Authorization</option> 
                                     <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
                                     <option value="Fuel Top Up Authorization">Fuel Top Up Authorization</option> 
                                     <option value="Garage Booking Authorization">Garage Booking Authorization</option>

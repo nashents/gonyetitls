@@ -71,6 +71,7 @@ Route::get('purchase/orders/pending','PurchaseController@pending')->name('purcha
 Route::get('purchase/orders/management','PurchaseController@manage')->name('purchases.manage');
 Route::get('purchase/orders/reports','PurchaseController@reports')->name('purchases.reports');
 
+Route::get('dispatches/{dispatch}/preview','DispatchController@preview')->name('dispatches.preview');
 Route::get('inventory_dispatches/approved','InventoryDispatchController@approved')->name('inventory_dispatches.approved');
 Route::get('inventory_dispatches/rejected','InventoryDispatchController@rejected')->name('inventory_dispatches.rejected');
 Route::get('inventory_dispatches/pending','InventoryDispatchController@pending')->name('inventory_dispatches.pending');
@@ -452,6 +453,7 @@ Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-stateme
 Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-statements/pdf/','BillController@vendorStatementsPDF')->name('vendor_statements.pdf.account');
 Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-statements/print/','BillController@vendorStatementsPrint')->name('vendor_statements.print.account');
 Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-statements/','BillController@vendorStatementsPreview')->name('vendor_statements.preview.account');
+
 
 
 Route::get('tickets/{ticket}/job-card','TicketController@jobcard')->name('tickets.jobcard');

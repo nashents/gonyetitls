@@ -53,6 +53,12 @@ Authorization Notification | {{$company->name}}
 														Your fuel order {{ $model->order_number }} has been authorized.
 														<a href="{{ $baseUrl }}/fuels/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
+												
+												@elseif ($notification == "Fuel Request Authorization")
+													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+														Your fuel request {{ $model->request_number }} has been authorized.
+														<a href="{{ $baseUrl }}/fuel_requests/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
+													</p>
 
 												@elseif ($notification == "Garage Booking Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">

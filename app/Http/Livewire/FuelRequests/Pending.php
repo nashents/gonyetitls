@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\FuelRequests;
 
+use App\Mail\AuthorizationNotificationMail;
 use App\Models\FuelRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,6 @@ class Pending extends Component
     public $search;
     public bool $notificationsOnly = false;
     protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
-    private $fuel_requests;
     public $authorize;
     public $comments;
     public $fuel_request_id;
@@ -56,6 +56,15 @@ class Pending extends Component
         $fuel_request->authorization_date = now();
         $fuel_request->authorization_comments = $this->comments;
         $fuel_request->update();
+
+        $company =  Auth::user()->employee->company;
+        $user = $fuel_request->user;
+        $email = $user?->email ?? null;
+        $notification = "Fuel Request Authorization";
+        if($email){
+            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $fuel_request));
+        }
+
 
         if ($fuel_request->allocation) {
             $allocation = $fuel_request?->allocation;
@@ -120,80 +129,68 @@ class Pending extends Component
             ])
             ->where('authorization', 'pending');
 
-            // Date Filtering
-            if ($this->notificationsOnly) {
-                $query->whereYear('created_at', now()->year);
-            }else{
+        // Date Filtering
+        if ($this->notificationsOnly) {
+            $query->whereYear('created_at', now()->year);
+        } else {
             $query->when(
-                isset($this->from_date) && isset($this->to_date)
-                    && $this->from_date && $this->to_date,
-
+                filled($this->from_date) && filled($this->to_date),
                 function ($q) {
-
                     $q->whereBetween('created_at', [
                         Carbon::parse($this->from_date)->startOfDay(),
                         Carbon::parse($this->to_date)->endOfDay(),
                     ]);
                 },
-
                 function ($q) {
-
-                    // Default: Current Month
                     $q->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
+                        ->whereYear('created_at', now()->year);
                 }
             );
-            }
+        }
 
-            // Search
-            $query->when($this->search, function ($q) {
+        // Search
+        $query->when($this->search, function ($q) {
+            $search = '%' . trim($this->search) . '%';
 
-                $search = '%' . $this->search . '%';
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('reason', 'like', $search)
+                    ->orWhere('fuel_type', 'like', $search)
+                    ->orWhereRaw('CAST(quantity AS CHAR) LIKE ?', [$search])
 
-                $q->where(function ($subQuery) use ($search) {
+                    ->orWhereHas('employee', function ($employeeQuery) use ($search) {
+                        $employeeQuery->where('name', 'like', $search)
+                            ->orWhere('surname', 'like', $search)
+                            ->orWhere('employee_number', 'like', $search);
+                    })
 
-                    $subQuery->where('reason', 'like', $search)
-                        ->orWhere('fuel_type', 'like', $search)
+                    ->orWhereHas('horse', function ($horseQuery) use ($search) {
+                        $horseQuery->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search)
+                            ->orWhere('make', 'like', $search)
+                            ->orWhere('model', 'like', $search);
+                    })
 
-                        // Quantity numeric-safe
-                        ->orWhereRaw('CAST(quantity AS CHAR) LIKE ?', [$search])
+                    ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        $vehicleQuery->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search)
+                            ->orWhere('make', 'like', $search)
+                            ->orWhere('model', 'like', $search);
+                    })
 
-                        // Employee
-                        ->orWhereHas('employee', function ($employeeQuery) use ($search) {
-                            $employeeQuery->where('name', 'like', $search)
-                                ->orWhere('employee_number', 'like', $search);
-                        })
+                    ->orWhereHas('asset', function ($assetQuery) use ($search) {
+                        $assetQuery->where('name', 'like', $search)
+                            ->orWhere('serial_number', 'like', $search)
+                            ->orWhere('asset_number', 'like', $search);
+                    });
+            });
+        });
 
-                        // Horse
-                        ->orWhereHas('horse', function ($horseQuery) use ($search) {
-                            $horseQuery->where('registration_number', 'like', $search)
-                                ->orWhere('fleet_number', 'like', $search)
-                                ->orWhere('make', 'like', $search)
-                                ->orWhere('model', 'like', $search);
-                        })
-
-                        // Vehicle
-                        ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
-                            $vehicleQuery->where('registration_number', 'like', $search)
-                                ->orWhere('fleet_number', 'like', $search)
-                                ->orWhere('make', 'like', $search)
-                                ->orWhere('model', 'like', $search);
-                        })
-
-                        // Asset
-                        ->orWhereHas('asset', function ($assetQuery) use ($search) {
-                            $assetQuery->where('name', 'like', $search)
-                                ->orWhere('serial_number', 'like', $search)
-                                ->orWhere('asset_number', 'like', $search);
-                        });
-                });
-            })
-
+        $fuel_requests = $query
             ->latest()
             ->paginate(10);
 
-        return view('livewire.fuel-requests.pending',[
-            'fuel_requests' => $query
+        return view('livewire.fuel-requests.pending', [
+            'fuel_requests' => $fuel_requests,
         ]);
     }
 }

@@ -100,13 +100,13 @@
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
-                                <nav class="text-center" style="float: right">
+                             <nav class="text-center" style="float: right">
                                 <ul class="pagination rounded-corners">
                                     @if (isset($fuel_requests))
                                         {{ $fuel_requests->links() }} 
                                     @endif 
                                 </ul>
-                            </nav>    
+                            </nav>   
 
                             <!-- /.col-md-12 -->
                         </div>

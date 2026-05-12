@@ -273,7 +273,7 @@
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('tickets.show', $ticket->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     {{-- <li><a href="{{route('tickets.preview',$ticket->id)}}"   ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li> --}}
-                                                     <li><a href="{{route('tickets.jobcard',$ticket->id)}}"   ><i class="fas fa-file color-warning"></i> JobCard</a></li>
+                                                    <li><a href="{{route('tickets.jobcard',$ticket->id)}}"   ><i class="fas fa-file color-warning"></i> Preview</a></li>
                                                     @if ($ticket->status == 1)
                                                         <li><a href="#"  wire:click="showTicket({{$ticket->id}})"><i class="fa fa-window-close color-success"></i> Close Ticket</a></li>
                                                     @endif

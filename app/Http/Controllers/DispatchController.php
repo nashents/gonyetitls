@@ -18,6 +18,12 @@ class DispatchController extends Controller
         //
     }
 
+     public function preview(Dispatch $dispatch){
+        return view('dispatches.preview')->with([
+            'dispatch' => $dispatch,
+          ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      *

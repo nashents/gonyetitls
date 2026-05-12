@@ -11,6 +11,42 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                            <div class="panel-title">
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                Filter By
+                                            </span>
+                                            <select wire:model.debounce.300ms="purchase_filter" class="form-control" aria-label="..." >
+                                                <option value="created_at">PO Created At</option>
+                                                <option value="date">PO Date</option>
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-2" >
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                From
+                                            </span>
+                                            <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-2" >
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                To
+                                            </span>
+                                            <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                <!-- /input-group -->
+                                </div>
+                            </div> 
+                            <br>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
