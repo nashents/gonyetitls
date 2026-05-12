@@ -184,11 +184,13 @@ class Index extends Component
             $this->mileage = $horse?->mileage;
             $this->hours = $horse?->hours;
             $this->type = "Horse";
+            $this->trips = Trip::with('horse','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('horse_id',$this->selectedHorse)->orderBy('created_at','desc')->take(100)->get();
         }elseif($this->selectedVehicle){
             $vehicle = Vehicle::find($this->selectedVehicle);
             $this->mileage = $vehicle?->mileage;
             $this->hours = $vehicle?->hours;
             $this->type = "Vehicle";
+            $this->trips = Trip::with('vehicle','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('vehicle_id',$this->selectedVehicle)->orderBy('created_at','desc')->take(100)->get();
         }elseif($this->asset_id){
              $this->type = "Asset";
         }else{
