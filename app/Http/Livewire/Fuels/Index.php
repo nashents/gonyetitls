@@ -153,7 +153,7 @@ class Index extends Component
         $this->assets = Asset::latest()->get();
         $this->fillup = 1;
         $this->categories = Category::latest()->get();
-        $this->fuel_requests = FuelRequest::where('authorization','approved')->doesntHave('fuel')->get();
+        $this->fuel_requests = FuelRequest::where('authorization','approved')->doesntHave('fuel')->orderBy('created_at','desc')->get();
         $this->category_values = collect();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->employees = Employee::orderBy('name','asc')->get();
@@ -610,14 +610,14 @@ class Index extends Component
 
     public function edit($id){
     $fuel = Fuel::find($id);
-    $this->fuel_requests = FuelRequest::where('authorization','approved')->get();
+    $this->fuel_requests = FuelRequest::where('authorization','approved')->orderBy('created_at','desc')->get();
     $this->user_id = $fuel->user_id;
     $this->selectedHorse = $fuel->horse_id;
     $this->employee_id = $fuel->employee_id;
     $this->selectedVehicle = $fuel->vehicle_id;
     $this->selectedTrip = $fuel->trip_id;
     $this->fuel_type = $fuel->fuel_type;
-    $this->trips = Trip::orderBy('created_at','desc')->get();
+    $this->trips = Trip::where('trip_status','!=','Cancelled')->orderBy('created_at','desc')->orderBy('created_at','desc')->get();
     $this->selectedCurrency = $fuel->currency_id;
     $this->asset_id = $fuel->asset_id;
     $this->selectedContainer = $fuel->container_id;
