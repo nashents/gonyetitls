@@ -118,10 +118,7 @@ class Rejected extends Component
             ])
             ->where('authorization', 'rejected');
 
-        // Date Filtering
-        if ($this->notificationsOnly) {
-            $query->whereYear($this->fuel_request_filter, now()->year);
-        } else {
+     
             $query->when(
                 filled($this->from) && filled($this->to),
                 function ($q) {
@@ -135,7 +132,7 @@ class Rejected extends Component
                         ->whereYear($this->fuel_request_filter, now()->year);
                 }
             );
-        }
+      
 
         // Search
         $query->when($this->search, function ($q) {

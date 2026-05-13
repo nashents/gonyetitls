@@ -122,9 +122,7 @@ class Approved extends Component
             ->where('authorization', 'approved');
 
         // Date Filtering
-        if ($this->notificationsOnly) {
-            $query->whereYear($this->fuel_request_filter, now()->year);
-        } else {
+       
             $query->when(
                 filled($this->from) && filled($this->to),
                 function ($q) {
@@ -138,7 +136,7 @@ class Approved extends Component
                         ->whereYear($this->fuel_request_filter, now()->year);
                 }
             );
-        }
+      
 
         // Search
         $query->when($this->search, function ($q) {
