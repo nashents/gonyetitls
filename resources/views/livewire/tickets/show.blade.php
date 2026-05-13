@@ -332,8 +332,15 @@
 
                 <div class="row">
                     <div class="col-md-12">
+                        @php
+                            $backUrl = request('back_url')
+                                ? base64_decode(request('back_url'))
+                                : route('tickets.index');
+                        @endphp
                         <div class="btn-group pull-right mt-10" >
-                            <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
+                           <a href="{{ $backUrl }}" class="btn bg-gray btn-wide btn-rounded">
+                                <i class="fa fa-arrow-left"></i>Back
+                            </a>
                             {{-- <button type="submit" wire:click="store({{$inspection->id}})" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Save</button> --}}
                         </div>
                     </div>
