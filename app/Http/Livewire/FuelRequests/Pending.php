@@ -25,6 +25,8 @@ class Pending extends Component
     public $authorize;
     public $comments;
     public $fuel_request_id;
+    public $from;
+    public $to;
 
     public $date;
     public $fullname;
@@ -37,6 +39,7 @@ class Pending extends Component
     public $driver;
     public $collection_point;
     public $delivery_point;
+    public $fuel_request_filter;
 
     public function mount(){
           $this->notificationsOnly = request()->boolean('notifications', false);
@@ -45,6 +48,7 @@ class Pending extends Component
     public function authorize($id){
         $fuel_request = FuelRequest::find($id);
         $this->fuel_request_id = $fuel_request->id;
+        $this->fuel_request_filter = "created_at";
         $this->dispatchBrowserEvent('show-fuelRequestAuthorizationModal');
     }
 
@@ -134,11 +138,11 @@ class Pending extends Component
             $query->whereYear('created_at', now()->year);
         } else {
             $query->when(
-                filled($this->from_date) && filled($this->to_date),
+                filled($this->from) && filled($this->to),
                 function ($q) {
                     $q->whereBetween('created_at', [
-                        Carbon::parse($this->from_date)->startOfDay(),
-                        Carbon::parse($this->to_date)->endOfDay(),
+                        Carbon::parse($this->from)->startOfDay(),
+                        Carbon::parse($this->to)->endOfDay(),
                     ]);
                 },
                 function ($q) {
