@@ -466,6 +466,7 @@ Route::get('recoveries/{driver}/driver/','DriverController@recoveries')->name('d
 Route::get('inspections/{driver}/driver/','DriverController@inspections')->name('driver.inspections');
 Route::get('breakdowns/{driver}/driver/','DriverController@breakdowns')->name('driver.breakdowns');
 
+Route::get('goods_receiveds/{goods_received}/preview','GoodsReceivedController@preview')->name('goods_receiveds.preview');
 Route::get('goods-received/tyres/','GoodsReceivedController@tyres')->name('goods_receiveds.tyres');
 Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goods_receiveds.assets');
 

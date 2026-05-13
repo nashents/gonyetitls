@@ -18,6 +18,11 @@ class GoodsReceivedController extends Controller
     {
         return view('goods_receiveds.index');
     }
+    public function preview(GoodsReceived $goodsReceived){
+        return view('goods_receiveds.preview')->with([
+            'goods_received' => $goodsReceived,
+          ]);
+    }
     public function assets()
     {
         return view('goods_receiveds.assets');
