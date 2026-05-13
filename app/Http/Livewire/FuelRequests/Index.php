@@ -55,6 +55,9 @@ class Index extends Component
     public $fuel_balance = 0;
     public $user_id;
     public $company;
+      public $from;
+    public $to;
+    public $fuel_request_filter;
 
 
     public function updatedSelectedAllocation($id){
@@ -82,7 +85,7 @@ class Index extends Component
   
 
     public function mount(){
-     
+         $this->fuel_request_filter = "created_at";
         $this->fuel_balance = Auth::user()->employee->allocations->where('status',1)->sum('balance');
         $this->allocations = Allocation::where('employee_id',Auth::user()->employee->id)->get();
         $this->company = Auth::user()->employee->company;

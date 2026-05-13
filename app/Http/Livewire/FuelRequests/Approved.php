@@ -36,9 +36,12 @@ class Approved extends Component
     public $driver;
     public $collection_point;
     public $delivery_point;
+      public $from;
+    public $to;
+    public $fuel_request_filter;
 
     public function mount(){
-      
+       $this->fuel_request_filter = "created_at";
     }
 
     public function authorize($id){

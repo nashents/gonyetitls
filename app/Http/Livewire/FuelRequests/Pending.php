@@ -25,8 +25,7 @@ class Pending extends Component
     public $authorize;
     public $comments;
     public $fuel_request_id;
-    public $from;
-    public $to;
+  
 
     public $date;
     public $fullname;
@@ -39,6 +38,8 @@ class Pending extends Component
     public $driver;
     public $collection_point;
     public $delivery_point;
+    public $from;
+    public $to;
     public $fuel_request_filter;
 
     public function mount(){

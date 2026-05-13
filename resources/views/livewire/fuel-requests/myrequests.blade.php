@@ -21,16 +21,45 @@
                                 </center>
 
                             </div>
-                            <div class="panel-title" style="float: right">
-                                {{-- <a href="{{route('fuel_requests.export.excel')}}"  class="btn btn-default"><i class="fa fa-download"></i>Excel</a>
-                                <a href="{{route('fuel_requests.export.csv')}}"  class="btn btn-default"><i class="fa fa-download"></i>CSV</a>
-                                <a href="{{route('fuel_requests.export.pdf')}}"  class="btn btn-default"><i class="fa fa-download"></i>PDF</a> --}}
-                                {{-- <a href="" data-toggle="modal" data-target="#fuel_requestsImportModal" class="btn btn-default"><i class="fa fa-upload"></i>Import</a> --}}
+                             <div class="panel-title">
+                                <div class="row">
+                                
+                                <div class="col-lg-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                            Filter By
+                                        </span>
+                                    <select wire:model.debounce.300ms="fuel_request_filter" class="form-control" aria-label="..." >
+                                        <option value="created_at">Fuel Request Created At</option>
+                                    </select>
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                               
+                                <div class="col-lg-2" >
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                  From
+                                  </span>
+                                  <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                                <div class="col-lg-2" >
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                  To
+                                  </span>
+                                  <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                                <!-- /input-group -->
                             </div>
-                            <div class="panel-title">
-                                <a href="" data-toggle="modal" data-target="#fuel_requestModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Fuel Request</a>
-
+                             <a href="" data-toggle="modal" data-target="#fuel_requestModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Fuel Request</a>
+                           
                             </div>
+                            
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="col-md-5" style="float: right;">

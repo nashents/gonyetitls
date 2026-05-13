@@ -52,6 +52,9 @@ class Myrequests extends Component
     public $reason;
     public $fuel_balance = 0;
     public $user_id;
+      public $from;
+    public $to;
+    public $fuel_request_filter;
 
 
     public function updatedSelectedAllocation($id){
@@ -79,6 +82,7 @@ class Myrequests extends Component
   
 
     public function mount($id){
+         $this->fuel_request_filter = "created_at";
         $this->employee_id = $id;
         $this->selectedEmployee = $id;
         $this->fuel_balance = Auth::user()->employee->allocations->where('status',1)->sum('balance');

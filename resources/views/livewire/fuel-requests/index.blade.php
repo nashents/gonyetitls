@@ -7,7 +7,44 @@
                     <div class="panel">
                         <div class="panel-heading">
                            
-                            
+                             <div class="panel-title">
+                                <div class="row">
+                                
+                                <div class="col-lg-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                            Filter By
+                                        </span>
+                                    <select wire:model.debounce.300ms="fuel_request_filter" class="form-control" aria-label="..." >
+                                        <option value="created_at">Fuel Request Created At</option>
+                                    </select>
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                               
+                                <div class="col-lg-2" >
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                  From
+                                  </span>
+                                  <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                                <div class="col-lg-2" >
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                  To
+                                  </span>
+                                  <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                                <!-- /input-group -->
+                            </div>
+                          
+                           
+                            </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#fuel_requestModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Fuel Request</a>
 
