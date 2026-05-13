@@ -50,8 +50,10 @@
                                         @forelse ($fuel_requests as $fuel_request)
                                             <tr>
                                                 <td>
-                                                    {{$fuel_request->request_number}}
+                                                    {{$fuel_request->request_number}} <br>
                                                     <small class="text-muted">
+                                                        <strong>CreatedBy:</strong> {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} <br>
+                                                        <strong>CreatedOn:</strong> {{$fuel_request->created_at}}<br>
                                                         @if ($fuel_request->allocation)
                                                             <strong>Allocation#:</strong>{{ucfirst($fuel_request->allocation ? $fuel_request->allocation->allocation_number : "")}}
                                                         @endif

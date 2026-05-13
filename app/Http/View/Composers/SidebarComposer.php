@@ -692,6 +692,7 @@ class SidebarComposer
         'fuel_requests_approved_count' => (int) ($fuel_requestsApprovedCount ?? 0),
         'fuel_requests_rejected_count' => (int) ($fuel_requestsRejectedCount ?? 0),
 
+
         'attendances_pending_count'  => (int) ($attendancesPendingCount ?? 0),
         'attendances_approved_count' => (int) ($attendancesApprovedCount ?? 0),
         'attendances_rejected_count' => (int) ($attendancesRejectedCount ?? 0),
@@ -774,9 +775,7 @@ class SidebarComposer
         // Fuel Allocations / Requests
         'my_allocation_count' => (int) ($myAllocationCount ?? 0),
 
-        'fuel_requests_pending_count'  => (int) ($fuelRequesitionPendingCount ?? 0),
-        'fuel_requests_approved_count' => (int) ($fuelRequesitionApprovedCount ?? 0),
-        'fuel_requests_rejected_count' => (int) ($fuelRequesitionRejectedCount ?? 0),
+       
 
         // Trips
         'trips_pending_count'  => (int) ($tripsPendingCount ?? 0),
