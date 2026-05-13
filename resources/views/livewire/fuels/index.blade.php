@@ -422,17 +422,18 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="fuel_request"   class="line-style" />
+                        <input type="checkbox" wire:model.debounce.300ms="attach_fuel_request"   class="line-style" />
                         <label for="one" class="radio-label">Attach fuel request to this order.</label>
-                        @error('fuel_request') <span class="text-danger error">{{ $message }}</span>@enderror
+                        @error('attach_fuel_request') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
-                    @if ($fuel_request == "True")
-                            <div class="form-group">
-                                <label for="horses">Fuel Requisitions<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="selectedFuelRequest" class="form-control" required>
-                                   <option value="">Select Fuel Request</option>
-                                  @foreach ($fuel_requests as $fuel_request)
-                                      <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
+                    @if (!is_null($attach_fuel_request) && $attach_fuel_request == "True")
+                        <div class="form-group">
+                            <label for="horses">Fuel Requisitions<span class="required" style="color: red">*</span></label>
+                            <input type="text" wire:model.debounce.300ms="searchRequest" placeholder="Search requests..." class="form-control">
+                            <select wire:model.debounce.300ms="selectedFuelRequest" class="form-control" required size="4">
+                                <option value="">Select Fuel Request</option>
+                                @foreach ($fuel_requests as $fuel_request)
+                                    <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
                                         @if ($fuel_request->horse)
                                             {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
                                         @elseif ($fuel_request->vehicle)
@@ -443,11 +444,11 @@
                                             Other
                                         @endif
                                         FuelType: {{$fuel_request->fuel_type}} Qty: {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
-                                        </option>
-                                  @endforeach
-                               </select>
-                                @error('selectedFuelRequest') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('selectedFuelRequest') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
                     @endif
                     <div class="row">
                     <div class="form-group">
@@ -629,14 +630,25 @@
                          @endif
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="date">Fuel Type<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="fuel_type" required disabled>
+                                    <option value="">Select Fuel Type</option>
+                                    <option value="Diesel">Diesel</option>
+                                    <option value="Petrol">Petrol</option>
+                                </select>
+                                @error('fuel_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="date">Fill Up Date<span class="required" style="color: red">*</span></label>
                                 <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date" required>
                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <div class="col-sm-12">
                                     <label for="gender">Type for fillup<span class="required" style="color: red">*</span></label>
@@ -655,16 +667,13 @@
                                     @if (isset($fuel_trip))
                                     <small style="color:red">An initial fuel order created already.</small>
                                     @endif
-                                    </div>
-                                   
-                                   
-                                    @error('fillup') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
+                                </div>   
+                                @error('fillup') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                           
                             <div class="form-group">
                                 <label for="quantity">Quantity</label>
                                 @if (isset($selected_container))
@@ -701,8 +710,6 @@
                                @endif
                                
                             </div>
-                     
-                       
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -747,30 +754,7 @@
                             </div>
                         </div>
                     </div>
-                    @if (isset($selected_trip))
-                        @if ($selected_trip->transporter_agreement == True)
-                            <div class="row">
-                    
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="unit_price">Retail Rate</label>
-                                        <input type="number" class="form-control" step="any" min="0"  wire:model.debounce.300ms="transporter_price" placeholder="Enter Transporter Price/Litre" />
-                                        @error('transporter_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="amount">Retail Total</label>
-                                        <input type="number" class="form-control" required="required" wire:model.debounce.300ms="transporter_total" placeholder="Enter Transporter Fuel Total" disabled/>
-                                        @error('transporter_total') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                        
-                            </div>
-                        @endif
-                    @endif
-                
-
+                   
                     <div class="form-group">
                         <label for="file">Comments</label>
                        <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="4" placeholder="Write fuel order comments..."></textarea>
@@ -798,30 +782,31 @@
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
                         <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="fuel_request"   class="line-style" />
+                        <input type="checkbox" wire:model.debounce.300ms="attach_fuel_request"   class="line-style" />
                         <label for="one" class="radio-label">Attach fuel request to this order.</label>
-                        @error('fuel_request') <span class="text-danger error">{{ $message }}</span>@enderror
+                        @error('attach_fuel_request') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
-                    @if ($fuel_request == "True")
+                    @if ($attach_fuel_request == "True")
                             <div class="form-group">
                                 <label for="horses">Fuel Requisitions<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="selectedFuelRequest" class="form-control" required>
-                                   <option value="">Select Fuel Request</option>
-                                  @foreach ($fuel_requests as $fuel_request)
-                                      <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
-                                        @if ($fuel_request->horse)
-                                            {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
-                                        @elseif ($fuel_request->vehicle)
-                                            {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
-                                        @elseif ($fuel_request->asset)
-                                            {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
-                                        @else
-                                            Other
-                                        @endif
-                                        FuelType: {{$fuel_request->fuel_type}} Qty: {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
-                                        </option>
-                                  @endforeach
-                               </select>
+                                 <input type="text" wire:model.debounce="searchRequest" placeholder="Search fuel requests..." class="form-control">
+                                <select wire:model.debounce.300ms="selectedFuelRequest" class="form-control" required size="4">
+                                    <option value="">Select Fuel Request</option>
+                                        @foreach ($fuel_requests as $fuel_request)
+                                            <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
+                                                @if ($fuel_request->horse)
+                                                    {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                                @elseif ($fuel_request->vehicle)
+                                                    {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                                @elseif ($fuel_request->asset)
+                                                    {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
+                                                @else
+                                                    Other
+                                                @endif
+                                                FuelType: {{$fuel_request->fuel_type}} Qty: {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
+                                            </option>
+                                        @endforeach
+                                </select>
                                 @error('selectedFuelRequest') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                     @endif
@@ -920,35 +905,49 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">  
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="date">Fill Up Date<span class="required" style="color: red">*</span></label>
-                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date" required>
-                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
+                        <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="date">Fuel Type<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="fuel_type" required disabled>
+                                    <option value="">Select Fuel Type</option>
+                                    <option value="Diesel">Diesel</option>
+                                    <option value="Petrol">Petrol</option>
+                                </select>
+                                @error('fuel_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <div class="col-sm-10">
-                                        <label for="gender">Type for fillup<span class="required" style="color: red">*</span></label>
-                                        <div class="radio">
-                                            <label>
-                                            <input type="radio" wire:model.debounce.300ms="fillup" id="optionsRadios1" value="1" required>
-                                            Initial
-                                            </label>
-                                        </div>
-                                        <div class="radio">
-                                            <label>
-                                            <input type="radio"  wire:model.debounce.300ms="fillup" id="optionsRadios2" value="0" required>
-                                            Top Up
-                                            </label>
-                                        </div>
-                                        </div>
-                                        @error('fillup') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="date">Fill Up Date<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date" required>
+                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <label for="gender">Type for fillup<span class="required" style="color: red">*</span></label>
+                                    <div class="radio">
+                                        <label>
+                                        <input type="radio" wire:model.debounce.300ms="fillup" id="optionsRadios1" value="1" required {{ isset($fuel_trip) ? "disabled" : "" }}>
+                                        Initial
+                                        </label>
+                                    </div>
+                                    <div class="radio">
+                                        <label>
+                                        <input type="radio"  wire:model.debounce.300ms="fillup" id="optionsRadios2" value="0" >
+                                        Top Up
+                                        </label>
+                                    </div>
+                                    @if (isset($fuel_trip))
+                                    <small style="color:red">An initial fuel order created already.</small>
+                                    @endif
+                                </div>   
+                                @error('fillup') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -1015,28 +1014,7 @@
                                 </div>
                             </div>
                         </div>
-                        @if (isset($selected_trip))
-                        @if ($selected_trip->transporter_agreement == True)
-                            <div class="row">
-                    
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="unit_price">Retail Rate</label>
-                                        <input type="number" class="form-control" step="any" min="0"  wire:model.debounce.300ms="transporter_price" placeholder="Enter Transporter Price/Litre" />
-                                        @error('transporter_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="amount">Retail Total</label>
-                                        <input type="number" class="form-control" required="required" wire:model.debounce.300ms="transporter_total" placeholder="Enter Transporter Fuel Total" disabled/>
-                                        @error('transporter_total') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                        
-                            </div>
-                        @endif
-                    @endif
+                       
                         <div class="form-group">
                             <label for="file">Comments</label>
                            <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="4" placeholder="Write fuel order comments..."></textarea>
@@ -1203,29 +1181,7 @@
                                 </div>
                             </div>
                         </div>
-                        @if (isset($selected_trip))
-                        @if ($selected_trip->transporter_agreement == True)
-                            <div class="row">
-                    
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="unit_price">Retail Rate</label>
-                                        <input type="number" class="form-control" step="any" min="0"  wire:model.debounce.300ms="transporter_price" placeholder="Enter Transporter Price/Litre" />
-                                        @error('transporter_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="amount">Retail Total</label>
-                                        <input type="number" class="form-control" required="required" wire:model.debounce.300ms="transporter_total" placeholder="Enter Transporter Fuel Total" disabled/>
-                                        @error('transporter_total') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
                         
-                            </div>
-                        @endif
-                    @endif
-                      
                         <div class="form-group">
                             <label for="file">Comments</label>
                            <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="4" placeholder="Write fuel order comments..."></textarea>

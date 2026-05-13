@@ -401,14 +401,13 @@ class Create extends Component
     public $container_balance;
     public $unit_price = 0;
     public $fuel_amount;
-    public $transporter_price = 0;
-    public $transporter_total;
+   
     public $odometer;
     public $fuel_comments;
     public $customer_updates = False;
     public $fuel_consumption_loaded_standard;
     public $fuel_consumption_empty_standard;
-    public $fuel_profit;
+  
 
 
     //Google Maps Api
@@ -2065,9 +2064,8 @@ class Create extends Component
                         $fuel->unit_price = $this->unit_price;
                         $fuel->quantity = $this->fuel_quantity;
                         $fuel->amount = $this->fuel_amount;
-                        $fuel->transporter_price = $this->transporter_price;
-                        $fuel->transporter_total = $this->transporter_total;
-                        $fuel->profit = $this->fuel_profit;
+                       
+                      
                         $fuel->odometer = $this->odometer;
                         $fuel->hours = $this->hours;
                         $fuel->category = $this->fuel_category;
@@ -2667,12 +2665,8 @@ class Create extends Component
         if((isset($this->unit_price) && $this->unit_price != null && is_numeric($this->unit_price)) && (isset($this->fuel_quantity) && $this->fuel_quantity != null && is_numeric($this->fuel_quantity) )){
             $this->fuel_amount = $this->unit_price * $this->fuel_quantity;
         }
-        if((isset($this->transporter_price) && $this->transporter_price != null && is_numeric($this->transporter_price)) && (isset($this->fuel_quantity) && $this->fuel_quantity != null && is_numeric($this->fuel_quantity))){
-            $this->transporter_total = $this->transporter_price * $this->fuel_quantity;
-        }
-        if((isset($this->transporter_total) && ($this->transporter_total >= 0) && is_numeric($this->transporter_total))  && (isset($this->fuel_amount) && ($this->fuel_amount >= 0) && is_numeric($this->fuel_amount))){
-            $this->fuel_profit = $this->transporter_total - $this->fuel_amount;
-        }
+       
+      
     }
      
     public function updatedFuelExchangeRate(){

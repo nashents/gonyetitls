@@ -73,14 +73,9 @@ class Index extends Component
     public $container;
     public $container_id;
     public $type = NULL;
-    public $fuel_request = False;
+    public $attach_fuel_request = False;
     public $fuel_requests;
     public $selectedFuelRequest;
-
-
-    public $transporter_price = 0;
-    public $transporter_total;
-    public $fuel_profit;
 
     public $unit_price = 0;
     public $amount = 0;
@@ -118,11 +113,11 @@ class Index extends Component
     public $vehicle_id;
     public $selected_vehicle;
     public $net_profit;
-
-
+    public $fuel_type;
 
     public $search;
-    protected $queryString = ['search'];
+    public $searchRequest;
+    protected $queryString = ['search','searchRequest'];
     public $fuel_filter;
     public $from;
     public $to;
@@ -153,8 +148,8 @@ class Index extends Component
         $this->company = Auth::user()->employee->company;
         $this->fuel_filter = "created_at";
 
-        $this->horses = Horse::where('service',0)->orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::where('service',0)->orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
         $this->assets = Asset::latest()->get();
         $this->fillup = 1;
         $this->categories = Category::latest()->get();
@@ -169,8 +164,66 @@ class Index extends Component
 
     }
 
+    public function updatedSearchRequest($value){
+        $query = FuelRequest::query()
+        ->with([
+            'employee',
+            'user',
+            'horse',
+            'vehicle',
+            'asset',
+        ])
+        ->where('authorization', 'approved')
+        ->doesntHave('fuel');
+
+        $query->when($this->searchRequest, function ($q) {
+
+        $search = '%' . $this->searchRequest . '%';
+
+        $q->where(function ($subQ) use ($search) {
+
+            $subQ->where('reason', 'like', $search)
+                ->orWhere('fuel_type', 'like', $search)
+                ->orWhere('quantity', 'like', $search)
+
+                ->orWhereHas('employee', function ($employeeQ) use ($search) {
+                    $employeeQ->where('name', 'like', $search)
+                        ->orWhere('surname', 'like', $search)
+                        ->orWhereRaw("CONCAT(name, ' ', surname) LIKE ?", [$search]);
+                })
+
+                ->orWhereHas('user', function ($userQ) use ($search) {
+                    $userQ->where('name', 'like', $search)
+                    ->orWhere('surname', 'like', $search)
+                    ->orWhereRaw("CONCAT(name, ' ', surname) LIKE ?", [$search]);
+                })
+
+                ->orWhereHas('horse', function ($horseQ) use ($search) {
+                    $horseQ->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search);
+                })
+
+                ->orWhereHas('vehicle', function ($vehicleQ) use ($search) {
+                    $vehicleQ->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search);
+                })
+
+               ->orWhereHas('asset', function ($assetQ) use ($search) {
+                    $assetQ->where('serial_number', 'like', $search)
+                        ->orWhereHas('product', function ($productQ) use ($search) {
+                            $productQ->where('name', 'like', $search);
+                        });
+                });
+            });
+        });
+
+        $this->fuel_requests = $query
+            ->latest()
+            ->get();
+    }
 
     public function updatedSelectedFuelRequest($id){
+       
         if(is_null($id)){
             return;
         }
@@ -273,6 +326,7 @@ class Index extends Component
             }
         
             $this->container_balance = $this->container ? $this->container->balance : "";
+            $this->fuel_type = $this->container?->fuel_type;
            
             $this->selectedCurrency = $this->container->currency_id;
            
@@ -343,12 +397,10 @@ class Index extends Component
         $this->date = "";
         $this->quantity = "";
         $this->unit_price = "";
-        $this->transporter_price = "";
-        $this->transporter_total = "";
-        $this->fuel_profit = "";
         $this->mileage = "";
         $this->hours = "";
-        $this->fillup = "";
+        $this->fillup = ""; 
+        $this->attach_fuel_request = False; 
         $this->type = "";
         $this->invoice_number = "";
     }
@@ -391,6 +443,7 @@ class Index extends Component
         $fuel->order_number = $this->orderNumber();
         $fuel->employee_id = $this->employee_id;
         $fuel->fuel_request_id = $this->selectedFuelRequest;
+        $fuel->fuel_type = $this->fuel_type;
 
         if (isset($this->selectedTrip)) {
             $trip = Trip::find($this->selectedTrip);
@@ -423,9 +476,6 @@ class Index extends Component
         $fuel->container_id = $this->selectedContainer;
         $fuel->date = $this->date;
         $fuel->unit_price = $this->unit_price;
-        $fuel->transporter_price = $this->transporter_price;
-        $fuel->transporter_total = $this->transporter_total;
-        $fuel->profit = $this->fuel_profit;
         $fuel->quantity = $this->quantity;
         $fuel->currency_id = $this->selectedCurrency;
         $fuel->amount = $this->amount;
@@ -560,11 +610,13 @@ class Index extends Component
 
     public function edit($id){
     $fuel = Fuel::find($id);
+    $this->fuel_requests = FuelRequest::where('authorization','approved')->get();
     $this->user_id = $fuel->user_id;
     $this->selectedHorse = $fuel->horse_id;
     $this->employee_id = $fuel->employee_id;
     $this->selectedVehicle = $fuel->vehicle_id;
     $this->selectedTrip = $fuel->trip_id;
+    $this->fuel_type = $fuel->fuel_type;
     $this->trips = Trip::orderBy('created_at','desc')->get();
     $this->selectedCurrency = $fuel->currency_id;
     $this->asset_id = $fuel->asset_id;
@@ -575,6 +627,7 @@ class Index extends Component
     $this->driver_id = $fuel->driver_id;
     $this->date = $fuel->date;
     $this->selectedFuelRequest = $fuel->fuel_request_id;
+    $this->attach_fuel_request = $fuel->fuel_request_id ? True : False;
     $this->fillup = $fuel->fillup;
     $this->type = $fuel->type;
     $this->mileage = $fuel->odometer;
@@ -584,9 +637,8 @@ class Index extends Component
     $this->comments = $fuel->comments;
     $this->amount = $fuel->amount;
     $this->unit_price = $fuel->unit_price;
-    $this->transporter_price = $fuel->transporter_price;
-    $this->transporter_total = $fuel->transporter_total;
-    $this->fuel_profit = $fuel->profit;
+  
+  
     $this->quantity = $fuel->quantity;
     $this->previous_quantity = $fuel->quantity;
     $this->fuel_id = $fuel->id;
@@ -640,9 +692,8 @@ class Index extends Component
             $fuel->date = $this->date;
             $fuel->fuel_request_id = $this->selectedFuelRequest;
             $fuel->unit_price = $this->unit_price;
-            $fuel->transporter_price = $this->transporter_price;
-            $fuel->transporter_total = $this->transporter_total;
-            $fuel->profit = $this->fuel_profit;
+            $fuel->fuel_type = $this->fuel_type;
+            
             $fuel->quantity = $this->quantity;
             $fuel->currency_id = $this->selectedCurrency;
             $fuel->amount = $this->amount;
@@ -864,14 +915,9 @@ class Index extends Component
             $this->exchange_amount = $this->exchange_rate * $this->amount;
         }
 
-        if(($this->transporter_price != null) && ($this->quantity != null)){
-            $this->transporter_total = $this->transporter_price * $this->quantity;
-        }
+       
 
-        if(isset($this->transporter_total) && isset($this->amount) ){
-            $this->fuel_profit = $this->transporter_total - $this->amount;
-        }
-
+       
         $this->selected_horse = Horse::find($this->horse_id);
         if ( $this->selected_horse) {
             $this->fuel_tank_capacity = $this->selected_horse->fuel_tank_capacity;
@@ -941,8 +987,6 @@ class Index extends Component
                 'fuels' => $query->orderBy('order_number', 'desc')->paginate(10),
                 'unit_price' => $this->unit_price,
                 'amount' => $this->amount,
-                'fuel_profit' => $this->fuel_profit,
-                'transporter_total' => $this->transporter_total,
                 'type' => $this->type,
                 'containers' => $this->containers,
                 'fuel_tank_capacity' => $this->fuel_tank_capacity,

@@ -344,9 +344,6 @@ class Edit extends Component
     public $fuel_category;
     public $unit_price = 0;
     public $fuel_amount;
-    public $transporter_price = 0;
-    public $transporter_total;
-    public $fuel_profit;
     public $fuel_quantity = 0 ;
     public $odometer;
     public $container_balance;
@@ -1160,9 +1157,6 @@ class Edit extends Component
          if ($this->fuel) {
             $this->fuel_id = $this->fuel->id;
             $this->unit_price = $this->fuel->unit_price;
-            $this->transporter_price = $this->fuel->transporter_price;
-            $this->transporter_total = $this->fuel->transporter_total;
-            $this->profit = $this->fuel->profit;
             $this->selectedFuelCurrency = $this->fuel->currency_id;
             $this->selectedContainer = $this->fuel->container_id;
             $this->selected_container = Container::find($this->fuel->container_id);
@@ -2570,9 +2564,6 @@ class Edit extends Component
                     $fuel->unit_price = $this->unit_price;
                     $fuel->quantity = $this->fuel_quantity;
                     $fuel->amount = $this->fuel_amount;
-                    $fuel->transporter_price = $this->transporter_price;
-                    $fuel->transporter_total = $this->transporter_total;
-                    $fuel->profit = $this->fuel_profit;
                     $fuel->odometer = $this->odometer;
                     $fuel->hours = $this->hours;
                     $fuel->category = $this->fuel_category;
@@ -2653,9 +2644,6 @@ class Edit extends Component
                 $fuel->unit_price = $this->unit_price;
                 $fuel->quantity = $this->fuel_quantity;
                 $fuel->amount = $this->fuel_amount;
-                $fuel->transporter_price = $this->transporter_price;
-                $fuel->transporter_total = $this->transporter_total;
-                $fuel->profit = $this->fuel_profit;
                 $fuel->odometer = $this->odometer;
                 $fuel->hours = $this->hours;
                 $fuel->category = $this->fuel_category;
@@ -3335,12 +3323,7 @@ class Edit extends Component
             if((isset($this->unit_price) && $this->unit_price != null && is_numeric($this->unit_price)) && (isset($this->fuel_quantity) && $this->fuel_quantity != null && is_numeric($this->fuel_quantity) )){
                 $this->fuel_amount = $this->unit_price * $this->fuel_quantity;
             }
-            if((isset($this->transporter_price) && $this->transporter_price != null && is_numeric($this->transporter_price)) && (isset($this->fuel_quantity) && $this->fuel_quantity != null && is_numeric($this->fuel_quantity))){
-                $this->transporter_total = $this->transporter_price * $this->fuel_quantity;
-            }
-            if((isset($this->transporter_total) && ($this->transporter_total >= 0) && is_numeric($this->transporter_total))  && (isset($this->fuel_amount) && ($this->fuel_amount >= 0) && is_numeric($this->fuel_amount))){
-                $this->fuel_profit = $this->transporter_total - $this->fuel_amount;
-            }
+           
         }
         
         public function updatedFuelExchangeRate(){
