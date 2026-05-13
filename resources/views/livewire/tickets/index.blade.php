@@ -271,11 +271,9 @@
                                                     <span class="caret"></span>
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li>
-                                                        <a href="{{ route('tickets.show', [
-                                                            'ticket' => $ticket->id,
-                                                            'back_url' => base64_encode(request()->fullUrl())
-                                                        ]) }}">
+                                                  <li>
+                                                        <a href="#"
+                                                        onclick="openTicketShow('{{ route('tickets.show', $ticket->id) }}')">
                                                             <i class="fa fa-eye color-default"></i>View
                                                         </a>
                                                     </li>
@@ -437,5 +435,15 @@
                 </div>
             </div>
         </div>
+@section('extra-js')
+    <script>
+        function openTicketShow(showUrl) {
+            let currentUrl = window.location.href;
+            let encodedBackUrl = btoa(currentUrl);
+
+            window.location.href = showUrl + '?back_url=' + encodeURIComponent(encodedBackUrl);
+        }
+    </script>
+@endsection
 
     </div>
