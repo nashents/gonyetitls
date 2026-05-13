@@ -297,7 +297,7 @@
       <div class="card">
         <h3>Technician Notes</h3>
         <div class="notes" data-field="notes.tech">
-            {{$ticket->description}}
+            {{$ticket->report}}
         </div>
       </div>
     </section>

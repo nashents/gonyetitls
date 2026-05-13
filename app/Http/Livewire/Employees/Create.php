@@ -148,9 +148,9 @@ class Create extends Component
       ];
 
       protected $rules = [
-          'name' => 'required|alpha|min:2',
-          'middle_name' => 'nullable|alpha|min:2',
-          'surname' => 'required|alpha|min:2',
+          'name' => 'required',
+          'middle_name' => 'nullable',
+          'surname' => 'required',
           'dob' => 'nullable',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
           'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',

@@ -28,7 +28,7 @@ class Index extends Component
     public $search;
     
     public bool $overdueOnly = false;
-    protected $queryString = ['search', 'overdueOnly' => ['as' => 'overdue', 'except' => false]];
+    protected $queryString = ['search', 'overdueOnly' => ['as' => 'overdue', 'except' => false], 'from','to'];
     public $from;
     public $to;
 

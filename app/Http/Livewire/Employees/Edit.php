@@ -229,18 +229,12 @@ class Edit extends Component
         return [
             'name' => [
                 'required',
-                'alpha',
-                'min:2',
             ],
             'middle_name' => [
                 'nullable',
-                'alpha',
-                'min:2',
             ],
             'surname' => [
                 'required',
-                'alpha',
-                'min:2',
             ],
             'dob' => [
                 'nullable',
