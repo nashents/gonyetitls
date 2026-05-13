@@ -116,77 +116,70 @@ class Rejected extends Component
                 'vehicle',
                 'asset',
             ])
-            ->where('authorization', 'rejected')
+            ->where('authorization', 'rejected');
 
-            // Date Filtering
-            ->when(
-                isset($this->from_date) && isset($this->to_date)
-                    && $this->from_date && $this->to_date,
-
+        // Date Filtering
+        if ($this->notificationsOnly) {
+            $query->whereYear($this->fuel_request_filter, now()->year);
+        } else {
+            $query->when(
+                filled($this->from) && filled($this->to),
                 function ($q) {
-
-                    $q->whereBetween('created_at', [
-                        Carbon::parse($this->from_date)->startOfDay(),
-                        Carbon::parse($this->to_date)->endOfDay(),
+                    $q->whereBetween($this->fuel_request_filter, [
+                        Carbon::parse($this->from)->startOfDay(),
+                        Carbon::parse($this->to)->endOfDay(),
                     ]);
                 },
-
                 function ($q) {
-
-                    // Default: Current Month
-                    $q->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
+                    $q->whereMonth($this->fuel_request_filter, now()->month)
+                        ->whereYear($this->fuel_request_filter, now()->year);
                 }
-            )
+            );
+        }
 
-            // Search
-            ->when($this->search, function ($q) {
+        // Search
+        $query->when($this->search, function ($q) {
+            $search = '%' . trim($this->search) . '%';
 
-                $search = '%' . $this->search . '%';
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('reason', 'like', $search)
+                    ->orWhere('fuel_type', 'like', $search)
+                    ->orWhereRaw('CAST(quantity AS CHAR) LIKE ?', [$search])
 
-                $q->where(function ($subQuery) use ($search) {
+                    ->orWhereHas('employee', function ($employeeQuery) use ($search) {
+                        $employeeQuery->where('name', 'like', $search)
+                            ->orWhere('surname', 'like', $search)
+                            ->orWhere('employee_number', 'like', $search);
+                    })
 
-                    $subQuery->where('reason', 'like', $search)
-                        ->orWhere('fuel_type', 'like', $search)
+                    ->orWhereHas('horse', function ($horseQuery) use ($search) {
+                        $horseQuery->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search)
+                            ->orWhere('make', 'like', $search)
+                            ->orWhere('model', 'like', $search);
+                    })
 
-                        // Quantity numeric-safe
-                        ->orWhereRaw('CAST(quantity AS CHAR) LIKE ?', [$search])
+                    ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        $vehicleQuery->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search)
+                            ->orWhere('make', 'like', $search)
+                            ->orWhere('model', 'like', $search);
+                    })
 
-                        // Employee
-                        ->orWhereHas('employee', function ($employeeQuery) use ($search) {
-                            $employeeQuery->where('name', 'like', $search)
-                                ->orWhere('employee_number', 'like', $search);
-                        })
+                    ->orWhereHas('asset', function ($assetQuery) use ($search) {
+                        $assetQuery->where('name', 'like', $search)
+                            ->orWhere('serial_number', 'like', $search)
+                            ->orWhere('asset_number', 'like', $search);
+                    });
+            });
+        });
 
-                        // Horse
-                        ->orWhereHas('horse', function ($horseQuery) use ($search) {
-                            $horseQuery->where('registration_number', 'like', $search)
-                                ->orWhere('fleet_number', 'like', $search)
-                                ->orWhere('make', 'like', $search)
-                                ->orWhere('model', 'like', $search);
-                        })
-
-                        // Vehicle
-                        ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
-                            $vehicleQuery->where('registration_number', 'like', $search)
-                                ->orWhere('fleet_number', 'like', $search)
-                                ->orWhere('make', 'like', $search)
-                                ->orWhere('model', 'like', $search);
-                        })
-
-                        // Asset
-                        ->orWhereHas('asset', function ($assetQuery) use ($search) {
-                            $assetQuery->where('name', 'like', $search)
-                                ->orWhere('serial_number', 'like', $search)
-                                ->orWhere('asset_number', 'like', $search);
-                        });
-                });
-            })
-
+        $fuel_requests = $query
             ->latest()
             ->paginate(10);
-        return view('livewire.fuel-requests.rejected',[
-            'fuel_requests' => $query
+
+        return view('livewire.fuel-requests.rejected', [
+            'fuel_requests' => $fuel_requests,
         ]);
     }
 }

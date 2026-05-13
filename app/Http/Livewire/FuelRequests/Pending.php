@@ -43,6 +43,7 @@ class Pending extends Component
 
     public function mount(){
           $this->notificationsOnly = request()->boolean('notifications', false);
+          $this->fuel_request_filter = "created_at";
     }
 
     public function authorize($id){
@@ -135,19 +136,19 @@ class Pending extends Component
 
         // Date Filtering
         if ($this->notificationsOnly) {
-            $query->whereYear('created_at', now()->year);
+            $query->whereYear($this->fuel_request_filter, now()->year);
         } else {
             $query->when(
                 filled($this->from) && filled($this->to),
                 function ($q) {
-                    $q->whereBetween('created_at', [
+                    $q->whereBetween($this->fuel_request_filter, [
                         Carbon::parse($this->from)->startOfDay(),
                         Carbon::parse($this->to)->endOfDay(),
                     ]);
                 },
                 function ($q) {
-                    $q->whereMonth('created_at', now()->month)
-                        ->whereYear('created_at', now()->year);
+                    $q->whereMonth($this->fuel_request_filter, now()->month)
+                        ->whereYear($this->fuel_request_filter, now()->year);
                 }
             );
         }
