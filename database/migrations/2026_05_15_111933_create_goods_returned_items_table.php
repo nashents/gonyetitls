@@ -17,7 +17,6 @@ class CreateGoodsReturnedItemsTable extends Migration
             $table->id();
             $table->foreignId('goods_returned_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
-            $table->foreignId('goods_received_item_id')->constrained()->restrictOnDelete(); // traces back to original GRN line
             $table->string('return_reason'); // wrong_size, damaged, over_delivery, wrong_item
             $table->decimal('qty_returned', 15, 4);
             $table->decimal('unit_cost', 15, 4);
