@@ -171,18 +171,8 @@ class TripController extends Controller
     }
     
     public function preview(Trip $trip){
-        if (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }elseif (isset(Auth::user()->company)) {
-          $company =  Auth::user()->company;
-        }
-        $cargos = $trip->cargos;
-        $customer = $trip->customer;
         return view('trips.preview')->with([
             'trip' => $trip,
-            'company' => $company,
-            'cargos' => $cargos,
-            'customer' => $customer,
           ]);
     }
 

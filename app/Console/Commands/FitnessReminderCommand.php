@@ -68,6 +68,11 @@ class FitnessReminderCommand extends Command
                     $q->whereNotNull('third_reminder_at')
                     ->whereDate('third_reminder_at', '<=', $today)
                     ->where('third_reminder_at_status', false);
+                })
+                ->orWhere(function ($q) use ($today) {
+                    $q->whereNotNull('fourth_reminder_at')
+                    ->whereDate('fourth_reminder_at', '<=', $today)
+                    ->where('fourth_reminder_at_status', false);
                 });
             })
             ->get();
@@ -83,10 +88,12 @@ class FitnessReminderCommand extends Command
             $first  = $fitness->first_reminder_at  ? Carbon::parse($fitness->first_reminder_at)  : null;
             $second = $fitness->second_reminder_at ? Carbon::parse($fitness->second_reminder_at) : null;
             $third  = $fitness->third_reminder_at  ? Carbon::parse($fitness->third_reminder_at)  : null;
+            $fourth  = $fitness->fourth_reminder_at  ? Carbon::parse($fitness->fourth_reminder_at)  : null;
 
             $dueFirst  = $first  && $first->lte($today)  && ! $fitness->first_reminder_at_status;
             $dueSecond = $second && $second->lte($today) && ! $fitness->second_reminder_at_status;
             $dueThird  = $third  && $third->lte($today)  && ! $fitness->third_reminder_at_status;
+            $dueThird  = $fourth  && $third->lte($today)  && ! $fitness->fourth_reminder_at_status;
 
             // Nothing due? Skip (extra safety)
             if (! ($dueFirst || $dueSecond || $dueThird)) {
@@ -110,6 +117,7 @@ class FitnessReminderCommand extends Command
             if ($dueFirst)  $fitness->first_reminder_at_status  = true;
             if ($dueSecond) $fitness->second_reminder_at_status = true;
             if ($dueThird)  $fitness->third_reminder_at_status  = true;
+            if ($dueThird)  $fitness->fourth_reminder_at_status  = true;
 
             $fitness->save();
         }

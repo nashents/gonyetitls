@@ -42,6 +42,8 @@ class Index extends Component
     public $second_reminder_at_status;
     public $third_reminder_at;
     public $third_reminder_at_status;
+    public $fourth_reminder_at;
+    public $fourth_reminder_at_status;
     public $horses;
     public $horse_id;
     public $trailers;
@@ -173,9 +175,10 @@ class Index extends Component
                 $expiresAtDb = $this->parseDateTimeLocalToDb($expiresAt);
 
                 // Reminders derived from expires_at
-                $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14) : null;
-                $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)  : null;
-                $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
+                $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(30) : null;
+                $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14)  : null;
+                $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)   : null;
+                $fourthReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()    : null;
 
                 // Active status
                 $status = 0;
@@ -228,6 +231,9 @@ class Index extends Component
 
                     'third_reminder_at'        => $thirdReminder,
                     'third_reminder_at_status' => 0,
+                   
+                    'fourth_reminder_at'        => $fourthReminder,
+                    'fourth_reminder_at_status' => 0,
 
                     'status' => $status,
                 ];
@@ -301,6 +307,7 @@ class Index extends Component
         $this->first_reminder_at  = $this->dbToDateTimeLocal($fitness->first_reminder_at);
         $this->second_reminder_at = $this->dbToDateTimeLocal($fitness->second_reminder_at);
         $this->third_reminder_at  = $this->dbToDateTimeLocal($fitness->third_reminder_at);
+        $this->fourth_reminder_at  = $this->dbToDateTimeLocal($fitness->fourth_reminder_at);
         $this->cc =  $fitness->cc;
 
         $this->status = $fitness->status;
@@ -372,9 +379,10 @@ class Index extends Component
             $expiresAtDb = $this->parseDateTimeLocalToDb($this->expires_at);
 
             // Derived reminders from expires_at
-            $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14) : null;
-            $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)  : null;
-            $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
+            $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(30) : null;
+            $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14)  : null;
+            $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)    : null;
+            $fourthReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
 
             // Status
             $status = 0;
@@ -401,6 +409,9 @@ class Index extends Component
 
                 'third_reminder_at'        => $thirdReminder,
                 'third_reminder_at_status' => (int) $this->third_reminder_at_status,
+                
+                'fourth_reminder_at'        => $fourthReminder,
+                'fourth_reminder_at_status' => (int) $this->fourth_reminder_at_status,
 
                 // clear all then set only the correct one
                 'horse_id'    => $targets['horse_id'],
@@ -473,7 +484,8 @@ class Index extends Component
                         ->orWhereDate('issued_at', $term)
                         ->orWhereDate('first_reminder_at', $term)
                         ->orWhereDate('second_reminder_at', $term)
-                        ->orWhereDate('third_reminder_at', $term);
+                        ->orWhereDate('third_reminder_at', $term)
+                        ->orWhereDate('fourth_reminder_at', $term);
                     }
                 });
             });

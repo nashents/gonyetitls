@@ -3,158 +3,189 @@
 namespace App\Http\Livewire\VendorStatements;
 
 use App\Models\Bill;
-use Livewire\Component;
+use App\Models\Currency;
 use App\Models\Vendor;
+use App\Exports\VendorStatementExport;
+use Livewire\Component;
 use Maatwebsite\Excel\Excel;
 use Illuminate\Support\Facades\DB;
-use App\Exports\VendorStatementExport;
 
 class Index extends Component
 {
     public $from;
     public $to;
-    public $payments;
-    public $payment_id;
-    public $results;
-    protected $bills;
-    public $bill_id;
-    public $vendors;
-    public $vendor;
-    public $vendor_id;
     public $selectedVendor;
     public $selectedType;
 
-    public function mount(){
-       $this->vendors = Vendor::orderBy('name','asc')->where('status',True)->get(); 
+    public $vendor;
+    public $vendors;
+
+    public $bills               = null;
+    public $results             = null;
+    public $statementByCurrency = [];
+
+    public function mount()
+    {
+        $this->vendors = Vendor::where('status', true)->orderBy('name')->get();
     }
 
-    public function exportVendorStatementExcel(Excel $excel){
-        return $excel->download(new VendorStatementExport($this->selectedType,$this->selectedVendor,$this->from,$this->to), 'vendor_statement.xlsx');
+    // ─── Watchers ─────────────────────────────────────────────────────────────
+
+    public function updatedSelectedVendor($id)
+    {
+        $this->vendor = $id ? Vendor::find($id) : null;
+        $this->resetStatement();
+        $this->generateStatement();
     }
 
-    
-    public function updatedSelectedVendor($id){
-        if (!is_null($id)) {
-            $this->selectedVendor = $id;
-            $this->vendor = Vendor::find($this->selectedVendor);
+    public function updatedSelectedType()
+    {
+        $this->resetStatement();
+        $this->generateStatement();
+    }
 
-            if ( isset($id) && $this->selectedType == "Outstanding Bills") {
-                $this->bills = Bill::where('vendor_id', $this->selectedVendor)
-                ->where('status', 'Unpaid')
-                ->where('authorization', 'approved')
-                ->orWhere('vendor_id', $this->selectedVendor)
-                ->where('authorization','approved')
-                ->where('status', 'Partial')
-                ->get();
-        
-            }elseif ( isset($this->selectedVendor) && $this->selectedType == "Account Activity") {
-                if (isset($this->from) && isset($this->to)) {
-                    $this->bills = Bill::where('vendor_id', $this->selectedVendor)->where('authorization', 'approved')->orderBy('date','desc')
-                    ->whereBetween('date',[$this->from, $this->to] )->get();
-                }
-              
-            }
+    public function updatedFrom()
+    {
+        $this->resetStatement();
+        $this->generateStatement();
+    }
+
+    public function updatedTo()
+    {
+        $this->resetStatement();
+        $this->generateStatement();
+    }
+
+    // ─── Statement Generation ─────────────────────────────────────────────────
+
+    public function generateStatement()
+    {
+        if (! $this->selectedVendor || ! $this->selectedType) {
+            return;
+        }
+
+        if ($this->selectedType === 'Outstanding Bills') {
+            $this->loadOutstandingBills();
+        } elseif ($this->selectedType === 'Account Activity' && $this->from && $this->to) {
+            $this->loadAccountActivity();
         }
     }
-    public function updatedSelectedType($type){
-        if (!is_null($type)) {
-            $this->selectedType = $type;
-            
-            if ( isset($this->selectedVendor) && $this->selectedType == "Outstanding Bills") {
-                $this->bills = Bill::where('vendor_id', $this->selectedVendor)
-                ->where('status', 'Unpaid')
-                ->where('authorization', 'approved')
-                ->orWhere('vendor_id', $this->selectedVendor)
-                ->where('authorization','approved')
-                ->where('status', 'Partial')
-                ->get();
-        
-            }elseif ( isset($this->selectedVendor) && $this->selectedType == "Account Activity") {
-                if (isset($this->from) && isset($this->to)) {
-                    $this->bills = Bill::where('vendor_id', $this->selectedVendor)->where('authorization', 'approved')->orderBy('date','desc')
-                    ->whereBetween('date',[$this->from, $this->to] )->get();
-                }
-              
-            }
-        }
-      
-    }
 
-    public function vendorStatementPreview($selectedType = NULL, $selectedVendor = NULL, $from = NULL, $to = NULL){
-        $this->emit('showVendorStatement',['selectedType' => $selectedType]);
-    }
-
-    public function generateStatement(){
-
-        if ( isset($this->selectedVendor) && $this->selectedType == "Outstanding Bills") {
-            $this->bills = Bill::where('vendor_id', $this->selectedVendor)
+    private function loadOutstandingBills()
+    {
+        $this->bills = Bill::with(['vendor', 'currency', 'payments'])
+            ->where('vendor_id', $this->selectedVendor)
             ->where('authorization', 'approved')
-            ->where('status', 'Unpaid')->orWhere('status', 'Partial')->get();
-    
-        }elseif ( isset($this->selectedVendor) && $this->selectedType == "Account Activity") {
-            if (isset($this->from) && isset($this->to)) {
-                $this->bills = DB::table('bills')->select('bill_number as number','currency_id','date as transaction_date','total as amount','balance','accrual_balance','created_at')
-                ->where('authorization', 'approved')
-                ->where('vendor_id', $this->selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$this->from, $this->to] );
-              
-                $this->results = DB::table('payments')->select('payment_number as number','currency_id','date as transaction_date','amount','balance','accrual_balance','created_at')
-                ->where('vendor_id', $this->selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$this->from, $this->to] )
-               
-                ->union($this->bills)
-                ->get()->
-                sortBy([
-                    ['transaction_date', 'desc'],
-                    ['accrual_balance', 'asc']
-                ]);
-
-                // $this->results = $this->bills->union($this->payments);
-            }
-          
-        }
+            ->where(function ($q) {
+                $q->where('status', 'Unpaid')
+                  ->orWhere('status', 'Partial');
+            })
+            ->orderBy('due_date')
+            ->get();
     }
+
+    private function loadAccountActivity()
+    {
+       
+       $billsQuery = DB::table('bills')
+        ->selectRaw('
+        bill_number as number,
+        currency_id,
+        bill_date as transaction_date,
+        total as amount,
+        balance,
+        accrual_balance,
+        created_at')
+        ->where('vendor_id', $this->selectedVendor)
+        ->where('authorization', 'approved')
+        ->whereNull('deleted_at')
+        ->whereBetween('bill_date', [$this->from, $this->to]);
+
+        $this->results = DB::table('payments')
+            ->select(
+                'payment_number as number',
+                'currency_id',
+                'date as transaction_date',
+                'amount',
+                'balance',
+                'accrual_balance',
+                'created_at'
+            )
+            ->where('vendor_id', $this->selectedVendor)
+            ->whereNull('deleted_at')
+            ->whereBetween('date', [$this->from, $this->to])
+            ->union($billsQuery)
+            ->get()
+            ->sortBy([
+                ['transaction_date', 'asc'],
+                ['created_at', 'asc'],
+            ]);
+
+        // Build per-currency statement data (opening/closing from accrual_balance snapshots)
+        $currencyIds = $this->results->pluck('currency_id')->unique();
+
+        $this->statementByCurrency = [];
+
+        foreach ($currencyIds as $currencyId) {
+            // Last approved bill before $from — snapshot opening balance
+            $openingBill = Bill::where('vendor_id', $this->selectedVendor)
+                ->where('authorization', 'approved')
+                ->where('currency_id', $currencyId)
+                ->where('bill_date', '<', $this->from)
+                ->whereNotNull('accrual_balance')
+                ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
+                ->orderBy('bill_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            // Last approved bill within range — snapshot closing balance
+            $closingBill = Bill::where('vendor_id', $this->selectedVendor)
+                ->where('authorization', 'approved')
+                ->where('currency_id', $currencyId)
+                ->whereBetween('bill_date', [$this->from, $this->to])
+                ->whereNotNull('accrual_balance')
+                ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
+                ->orderBy('bill_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $this->statementByCurrency[$currencyId] = [
+                'currency'        => Currency::find($currencyId),
+                'opening_balance' => $openingBill?->accrual_balance,
+                'closing_balance' => $closingBill?->accrual_balance,
+                'results'         => $this->results->where('currency_id', $currencyId)->values(),
+            ];
+        }
+
+        // $this->bills drives the "has results" check in the view
+        $this->bills = $this->results->isNotEmpty() ? $this->results : collect();
+    }
+
+    // ─── Export ───────────────────────────────────────────────────────────────
+
+    public function exportVendorStatementExcel(Excel $excel)
+    {
+        return $excel->download(
+            new VendorStatementExport($this->selectedType, $this->selectedVendor, $this->from, $this->to),
+            'vendor_statement.xlsx'
+        );
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private function resetStatement()
+    {
+        $this->bills               = null;
+        $this->results             = null;
+        $this->statementByCurrency = [];
+    }
+
+    // ─── Render ───────────────────────────────────────────────────────────────
 
     public function render()
     {
-        
-        if ( isset($this->selectedVendor) && $this->selectedType == "Outstanding Bills") {
-            $this->bills = Bill::where('vendor_id', $this->selectedVendor)
-            ->where('authorization', 'approved')
-            ->where('status', 'Unpaid')
-            ->orWhere('vendor_id', $this->selectedVendor)
-            ->where('authorization','approved')
-            ->where('status', 'Partial')
-            ->get();
-    
-        }elseif ( isset($this->selectedVendor) && $this->selectedType == "Account Activity") {
-            if (isset($this->from) && isset($this->to)) {
-                $this->bills = DB::table('bills')->select('bill_number as number','currency_id','date as transaction_date','total as amount','balance','accrual_balance','created_at')
-                ->where('authorization', 'approved')
-                ->where('vendor_id', $this->selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$this->from, $this->to] );
-             
-                $this->results = DB::table('payments')->select('payment_number as number','currency_id','date as transaction_date','amount','balance','accrual_balance','created_at')
-                ->where('vendor_id', $this->selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$this->from, $this->to] )
-             
-                ->union($this->bills)
-                ->get()->
-                sortBy([
-                    ['transaction_date', 'desc'],
-                    ['accrual_balance', 'asc']
-                ]);
-
-                // $this->results = $this->bills->union($this->payments);
-            }
-          
-        }
-        return view('livewire.vendor-statements.index',[
-            'bills' => $this->bills
+        return view('livewire.vendor-statements.index', [
+            'bills' => $this->bills,
         ]);
     }
 }

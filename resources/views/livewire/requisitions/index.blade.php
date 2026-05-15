@@ -981,8 +981,80 @@
                                 <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4"></textarea>
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
+
+                            
+                        <h5 class="underline mt-n">Upload Supporting Documents</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="title">Title</label>
+                                    <input type="text"  wire:model.debounce.300ms="title.0" class="form-control" placeholder="Title">
+                                    @error('title.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="file">File</label>
+                                    <input type="file" class="form-control" wire:model.debounce.300ms="file.0"  placeholder="Upload File " >
+                                    @error('file.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="expires_at">Expiry Date</label>
+                                    <input type="date" class="form-control" wire:model.debounce.300ms="expires_at.0" placeholder="dd/mm/yy" />
+                                    @error('expires_at.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+
+
+                            <!-- /.col-md-6 -->
                         </div>
-                    @endif
+                        @foreach ($documentInputs as $key => $value)
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="title">Title</label>
+                                    <input type="text"  wire:model.debounce.300ms="title.{{$value}}" class="form-control" placeholder="Title">
+                                    @error('title.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="file">File</label>
+                                    <input type="file" class="form-control" wire:model.debounce.300ms="file.{{$value}}"  placeholder="Upload File ">
+                                    @error('file.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="file">Expiry Date</label>
+                                    <input type="date" class="form-control" wire:model.debounce.300ms="expires_at.{{$value}}"  placeholder="dd/mm/yy"/>
+                                    @error('expires_at.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                        
+                            <div class="col-md-1">
+                                <div class="form-group">
+                                    <label for=""></label>
+                                    <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="documentsRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                </div>
+                            </div>
+                            <!-- /.col-md-6 -->
+                        </div>
+                        @endforeach
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="documentsAdd({{$m}})"> <i class="fa fa-plus"></i> File</button>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        </div>
+                  
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>

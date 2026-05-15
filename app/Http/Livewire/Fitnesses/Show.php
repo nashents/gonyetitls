@@ -34,6 +34,8 @@ class Show extends Component
     public $second_reminder_at_status;
     public $third_reminder_at;
     public $third_reminder_at_status;
+    public $fourth_reminder_at;
+    public $fourth_reminder_at_status;
     public $horses;
     public $horse_id;
     public $trailers;
@@ -161,6 +163,7 @@ class Show extends Component
         $fitness->first_reminder_at_status = True;
         $fitness->second_reminder_at_status = True;
         $fitness->third_reminder_at_status = True;
+        $fitness->fourth_reminder_at_status = True;
         $fitness->closed = 1;
         $fitness->update();
 
@@ -189,6 +192,10 @@ class Show extends Component
             $fitness->third_reminder_at_status = True;
            
         }
+        if ($fitness->fourth_reminder_at <=  Carbon::today() ) {
+            $fitness->fourth_reminder_at_status = True;
+           
+        }
         $fitness->update();
 
         $this->dispatchBrowserEvent('alert',[
@@ -211,6 +218,7 @@ class Show extends Component
         $this->first_reminder_at  = $this->dbToDateTimeLocal($fitness->first_reminder_at);
         $this->second_reminder_at = $this->dbToDateTimeLocal($fitness->second_reminder_at);
         $this->third_reminder_at  = $this->dbToDateTimeLocal($fitness->third_reminder_at);
+        $this->fourth_reminder_at  = $this->dbToDateTimeLocal($fitness->fourth_reminder_at);
         $this->status = $fitness->status;
         $this->cc = $fitness->cc;
         $this->horse_id = $fitness->horse_id;
@@ -263,9 +271,10 @@ class Show extends Component
             $expiresAtDb = $this->parseDateTimeLocalToDb($this->expires_at);
 
             // Derived reminders from expires_at
-            $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14) : null;
-            $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)  : null;
-            $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
+            $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(30) : null;
+            $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14)  : null;
+            $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)     : null;
+            $fourthReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
 
             // Status
             $status = 0;
@@ -292,6 +301,9 @@ class Show extends Component
 
                 'third_reminder_at'        => $thirdReminder,
                 'third_reminder_at_status' => (int) $this->third_reminder_at_status,
+               
+                'fourth_reminder_at'        => $fourthReminder,
+                'fourth_reminder_at_status' => (int) $this->fourth_reminder_at_status,
 
                 // clear all then set only the correct one
                 'horse_id'    => $targets['horse_id'],

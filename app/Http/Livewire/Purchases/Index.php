@@ -97,14 +97,7 @@ class Index extends Component
     public $suburb;
     public $street_address;
     public $company;
-   
-
-
-    public $title;
-    public $vendor;
-    public $file;
-    public $expires_at;
-
+     public $vendor;
 
     public $tax_rate = [];
     public $current_tax_rate = [];
@@ -156,10 +149,14 @@ class Index extends Component
         unset($this->inputs[$i]);
     }
 
-    
+    public $title;
+    public $file;
+    public $expires_at;
+
     public $documentInputs = [];
     public $m = 1;
     public $o = 1;
+
     public function documentsAdd($m)
     {
         $m = $m + 1;
@@ -532,45 +529,45 @@ class Index extends Component
 
 
           
-        if (isset($this->file) && isset($this->title) && $this->file != "") {
+        if ( isset($this->title) && (isset($this->file) && !empty($this->file))) {
     
             foreach ($this->file as $key => $value) {
-              if(isset($this->file[$key])){
-                  $file = $this->file[$key];
-                  // get file with ext
-                  $fileNameWithExt = $file->getClientOriginalName();
-                  //get filename
-                  $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                  //get extention
-                  $extention = $file->getClientOriginalExtension();
-                  //file name to store
-                  $fileNameToStore= $filename.'_'.time().'.'.$extention;
-                  $file->storeAs('/documents', $fileNameToStore, 'my_files');
+                if(isset($this->file[$key])){
+                    $file = $this->file[$key];
+                    // get file with ext
+                    $fileNameWithExt = $file->getClientOriginalName();
+                    //get filename
+                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                    //get extention
+                    $extention = $file->getClientOriginalExtension();
+                    //file name to store
+                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
+                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
+                }
+                $document = new Document;
+                $document->user_id = Auth::user()->id;
+                $document->purchase_id = $purchase->id;
+                $document->category = 'purchase';
+                if(isset($this->title[$key])){
+                $document->title = $this->title[$key];
+                }
+                if (isset($fileNameToStore)) {
+                    $document->filename = $fileNameToStore;
+                }
 
-              }
-              $document = new Document;
-              $document->purchase_id = $purchase->id;
-              $document->category = 'purchase';
-              if(isset($this->title[$key])){
-              $document->title = $this->title[$key];
-              }
-              if (isset($fileNameToStore)) {
-                  $document->filename = $fileNameToStore;
-              }
-              if(isset($this->expires_at[$key])){
-                  $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
-                  $today = now()->toDateTimeString();
-                  $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
-                  if ($today <=  $expire) {
-                      $document->status = 1;
-                  }else{
-                      $document->status = 0;
-                  }
-              }else {
-                $document->status = 1;
-              }
-              $document->save();
-
+                if(isset($this->expires_at[$key])){
+                    $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                    $today = now()->toDateTimeString();
+                    $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                    if ($today <=  $expire) {
+                        $document->status = 1;
+                    }else{
+                        $document->status = 0;
+                    }
+                }else {
+                    $document->status = 1;
+                }
+                $document->save();
             }
     
         }

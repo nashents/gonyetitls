@@ -329,6 +329,9 @@
                                                 <option value="Sister">Sister</option>
                                                 <option value="Nephew">Nephew</option>
                                                 <option value="Niece">Niece</option>
+                                                 <option value="Aunt">Aunt</option>
+                                                <option value="Uncle">Uncle</option>
+                                                <option value="Cousin">Cousin</option>
                                                 <option value="Other">Other</option>
                                             </select>
                                             @error('relationship') <span class="text-danger error">{{ $message }}</span>@enderror

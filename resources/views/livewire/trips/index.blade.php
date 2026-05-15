@@ -391,7 +391,7 @@
                                                 //                     ? $trip->trip_status_date
                                                 //                     : $trip->end_date;
 
-                                            $formatDate = function (?string $date): string {
+                                            $newformatDate = function (?string $date): string {
                                                 if (!$date) {
                                                     return '';
                                                 }
@@ -407,7 +407,7 @@
                                             | Delivery note offloaded dates from trip transport orders
                                             |--------------------------------------------------------------------------
                                             */
-                                            $offloadedDate = $formatDate($trip->delivery_note?->offloaded_date);
+                                            $offloadedDate = $newformatDate($trip->delivery_note?->offloaded_date);
                                            
 
                                             /*
@@ -418,7 +418,7 @@
                                             */
                                             if (!$offloadedDate) {
                                                 $offloadedDate = $trip->trip_transport_orders
-                                                ->map(fn($tto) => $formatDate($tto->delivery_note?->offloaded_date))
+                                                ->map(fn($tto) => $newformatDate($tto->delivery_note?->offloaded_date))
                                                 ->filter()
                                                 ->unique()
                                                 ->join(', ');
@@ -431,10 +431,10 @@
                                             |--------------------------------------------------------------------------
                                             */
                                             if (!$offloadedDate) {
-                                            $offloadedDate = $trip->status == "Offloaded"
-                                                ? ($formatDate($trip->trip_status_date) ?: $formatDate($trip->end_date))
-                                                : '';
-                                        }
+                                                $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
+                                                                   ? $newformatDate($trip->trip_status_date)
+                                                                     : $newformatDate($trip->end_date);
+                                            }
 
                                           
                                                 $pod = $trip->pod;
@@ -465,7 +465,7 @@
                                                 <td>
                                                     {{ $formatDate($trip->start_date) }}
                                                     <hr class="my-1">
-                                                    {{ $formatDate($offloadedDate) }}
+                                                    {{ $offloadedDate }}
                                                 </td>
                                                 <td>
                                                     @php

@@ -2,35 +2,38 @@
 
 namespace App\Http\Livewire\Requisitions;
 
-use Carbon\Carbon;
+use App\Exports\RequisitionExport;
+use App\Mail\PendingNotificationEmails;
+use App\Models\Account;
+use App\Models\Allowance;
+use App\Models\Booking;
+use App\Models\Currency;
+use App\Models\Department;
+use App\Models\Document;
+use App\Models\Employee;
+use App\Models\ExchangeRate;
+use App\Models\Expense;
+use App\Models\Notification;
+use App\Models\PaymentMethod;
+use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\Requisition;
+use App\Models\RequisitionItem;
 use App\Models\Trip;
 use App\Models\User;
-use App\Models\Account;
-use App\Models\Booking;
-use App\Models\Expense;
-use App\Models\Product;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
-use App\Models\Currency;
-use App\Models\Employee;
-use App\Models\Purchase;
-use App\Models\Allowance;
-use App\Models\Department;
-use App\Models\Requisition;
-use App\Models\ExchangeRate;
-use App\Models\Notification;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Models\PaymentMethod;
-use App\Models\RequisitionItem;
-use App\Exports\RequisitionExport;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\PendingNotificationEmails;
 
 class Index extends Component
 {
 
+    use WithFileUploads;
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
@@ -136,6 +139,26 @@ class Index extends Component
         $i = $i + 1;
         $this->i = $i;
         array_push($this->inputs ,$i);
+    }
+
+    public $title;
+    public $file;
+    public $expires_at;
+
+    public $documentInputs = [];
+    public $m = 1;
+    public $o = 1;
+    
+    public function documentsAdd($m)
+    {
+        $m = $m + 1;
+        $this->m = $m;
+        array_push($this->documentInputs ,$m);
+    }
+
+    public function documentsRemove($m)
+    {
+        unset($this->documentInputs[$m]);
     }
     
     public function remove($i)
@@ -726,6 +749,54 @@ class Index extends Component
 
         $notifications = Notification::where('when','before')->where('category','Requisition Authorization')->where('status',1)->get();
         $company =  $this->company;
+
+
+
+         if ( isset($this->title) && ( isset($this->file) && !empty($this->file) )) {
+    
+            foreach ($this->file as $key => $value) {
+
+                if(isset($this->file[$key])){
+                    $file = $this->file[$key];
+                    // get file with ext
+                    $fileNameWithExt = $file->getClientOriginalName();
+                    //get filename
+                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                    //get extention
+                    $extention = $file->getClientOriginalExtension();
+                    //file name to store
+                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
+                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
+                }
+
+                $document = new Document;
+                $document->user_id = Auth::user()->id;
+                $document->requisition_id = $requisition->id;
+                $document->category = 'requisition';
+                if(isset($this->title[$key])){
+                    $document->title = $this->title[$key];
+                }
+                if (isset($fileNameToStore)) {
+                    $document->filename = $fileNameToStore;
+                }
+              
+                if(isset($this->expires_at[$key])){
+                    $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                    $today = now()->toDateTimeString();
+                    $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                    if ($today <=  $expire) {
+                        $document->status = 1;
+                    }else{
+                        $document->status = 0;
+                    }
+                }else {
+                    $document->status = 1;
+                }
+                $document->save();
+            }
+    
+        }
+
                 
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
