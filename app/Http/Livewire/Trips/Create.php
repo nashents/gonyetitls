@@ -2960,10 +2960,7 @@ class Create extends Component
             ]);
         }
         elseif($category == 'cargos'){
-            if ($this->selectedTransporter) {
-               $this->cargos = Cargo::orderBy('name','asc')->get();
-               
-            }
+            $this->cargos = Cargo::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Cargos Refreshed Successfully!!."
