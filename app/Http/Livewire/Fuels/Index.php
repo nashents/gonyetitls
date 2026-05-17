@@ -299,8 +299,8 @@ class Index extends Component
             $this->selected_trip = $trip;
             $this->horse = $trip->horse;
             $this->driver = $trip->driver;
-            $this->selectedHorse = $this->horse->id;
-            $this->selectedDriver = $this->driver->id;
+            $this->selectedHorse = $this->horse?->id;
+            $this->selectedDriver = $this->driver?->id;
             $this->distance = $trip->distance;
             $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
             $this->fuel_consumption = $this->horse->fuel_consumption;
@@ -317,7 +317,7 @@ class Index extends Component
             $this->selected_container = Container::find($id);
             $top_ups = TopUp::where('container_id',$id)->where('rate','!=', NULL)->where('rate','!=',"")->where('currency_id',$this->container->currency_id)->get();
             
-            $topups_price_total = TopUp::where('container_id',$this->container->id)->where('rate','!=', NULL)->where('rate','!=',"")->where('rate', 'REGEXP', '^[0-9]+$')->where('currency_id',$this->container->currency_id)->get()->sum('rate');
+            $topups_price_total = TopUp::where('container_id',$this->container?->id)->where('rate','!=', NULL)->where('rate','!=',"")->where('rate', 'REGEXP', '^[0-9]+$')->where('currency_id',$this->container->currency_id)->get()->sum('rate');
             
             $topups_count = $top_ups->count();
             
@@ -387,22 +387,23 @@ class Index extends Component
 
     private function resetInputFields(){
 
-        $this->selectedVehicle = "";
-        $this->selectedHorse = "";
-        $this->selectedTrip = "";
-        $this->selectedContainer = "";
-        $this->selectedCategory = "";
-        $this->selectedCategoryValue = "";
-        $this->asset_id = "";
-        $this->date = "";
-        $this->quantity = "";
-        $this->unit_price = "";
-        $this->mileage = "";
-        $this->hours = "";
-        $this->fillup = ""; 
+        $this->selectedVehicle = Null;
+        $this->selectedHorse = Null;
+        $this->selectedTrip = Null;
+        $this->selectedContainer = Null;
+        $this->selectedCategory = Null;
+        $this->selectedFuelRequest = Null;
+        $this->selectedCategoryValue = Null;
+        $this->asset_id = Null;
+        $this->date = Null;
+        $this->quantity = Null;
+        $this->unit_price = Null;
+        $this->mileage = Null;
+        $this->hours = Null;
+        $this->fillup = Null; 
         $this->attach_fuel_request = False; 
-        $this->type = "";
-        $this->invoice_number = "";
+        $this->type = Null;
+        $this->invoice_number = Null;
     }
     public function orderNumber(){
 
@@ -433,6 +434,17 @@ class Index extends Component
         return $order_number;
     }
 
+    public function updatedAttachFuelRequest($value){
+        
+        if(is_null($value)){
+            return ;
+        }
+
+        if($value == False){
+            $this->resetInputFields();
+        }
+    }
+
 
     public function store(){
 
@@ -447,7 +459,7 @@ class Index extends Component
 
         if (isset($this->selectedTrip)) {
             $trip = Trip::find($this->selectedTrip);
-            $fuel->trip_id = $trip->id;
+            $fuel->trip_id = $trip?->id;
             $fuel->driver_id = $trip->driver_id ? $trip->driver_id : Null;
         }
 
