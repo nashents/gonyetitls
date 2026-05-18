@@ -84,13 +84,15 @@ class Approved extends Component
     if ($this->authorize == "approved") {
 
     $container = Container::find($this->container->id);
-    if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
-        $container->balance = $container->balance + $this->top_up->quantity;
-    }
-    if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
-        $container->account_balance = $container->account_balance + $this->top_up->amount;
-    }
-    $container->update();
+        if($container){
+            if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
+                $container->balance = $container->balance + $this->top_up->quantity;
+            }
+            if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
+                $container->account_balance = $container->account_balance + $this->top_up->amount;
+            }
+            $container->update();
+        }
 
     if (isset($top_up->amount) && $top_up->amount > 0) {
 

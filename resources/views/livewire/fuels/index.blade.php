@@ -366,13 +366,15 @@
                                                 @if ($fuel->authorization == "approved")
                                                 <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
                                                 @endif
+                                                @if ($fuel->authorization == "pending")
+                                                    <li><a href="#"  wire:click.prevent="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @endif
                                                 @if ($fuel->authorization == "pending" || $fuel->authorized_by_id == Auth::user()->id )
-                                                    <li><a href="#"  wire:click="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                    <li><a href="#" data-toggle="modal" data-target="#fuelDeleteModal{{ $fuel->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                    <li><a href="#" wire:click.prevent="delete({{$fuel->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
                                             </ul>
                                           </div>
-                                          @include('fuels.delete')
+                                          @
                                   </td>
                                     </tr>
                                     @endif
@@ -413,6 +415,26 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="fuelDeleteModal{{ $fuel->id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-danger">
+            <div class="modal-body">
+               <center> <strong>Are you sure you want to delete this Fuel Order?</strong> </center>
+            </div>
+            <form wire:submit.prevent="destroy()" >
+            <div class="modal-footer no-border">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fuelModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">

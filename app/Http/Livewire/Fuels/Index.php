@@ -903,6 +903,42 @@ class Index extends Component
     }
     }
 
+    public function delete($id){
+        $this->fuel_id = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');        
+    }
+
+    public function destroy(){
+        $fuel = Fuel::find($this->fuel_id);
+
+        if($fuel->authorization == "approved"){
+
+            $container = $fuel->container;
+            
+            if($container->purchase_type == "Bulk Buy"){
+                            
+                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
+                            $container->balance = $container->balance + $fuel->quantity;
+                        }
+                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                           $container->account_balance = $container->account_balance + $fuel->amount;
+                        }
+                        $container->update();
+                    }
+        }
+        
+        $fuel->delete();
+
+        
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Fuel Order Deleted Successfully!!"
+        ]);
+        
+    }
+
 
 
     public function dateRange(){
