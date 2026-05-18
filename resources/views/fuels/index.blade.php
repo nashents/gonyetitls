@@ -20,7 +20,6 @@
 <body class="top-navbar-fixed">
 @endsection
 
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">

@@ -904,6 +904,7 @@ class Index extends Component
     }
 
     public function delete($id){
+        
         $this->fuel_id = $id;
         $this->dispatchBrowserEvent('show-deleteModal');        
     }

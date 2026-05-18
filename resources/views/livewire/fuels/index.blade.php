@@ -238,18 +238,35 @@
                                                   <i class="fa fa-bars"></i>
                                                   <span class="caret"></span>
                                               </button>
-                                              <ul class="dropdown-menu">
-                                                  <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
-                                                  @if ($fuel->authorization == "approved")
-                                                  <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
-                                                  @endif
-                                                  @if ($fuel->authorization == "pending" || $fuel->authorization == "rejected" )
-                                                  <li><a href="#"  wire:click="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                  <li><a href="#" data-toggle="modal" data-target="#fuelDeleteModal{{ $fuel->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                                  @endif
-                                              </ul>
+                                               <ul class="dropdown-menu">
+                                                    <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
+                                                @if ($fuel->authorization == "approved")
+                                                    <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
+                                                @endif
+                                                @if ($fuel->authorization == "pending")
+                                                    <li><a href="#"  wire:click.prevent="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @endif
+                                                @if (
+                                                    // Pending fuel can be deleted normally
+                                                    $fuel->authorization == "pending"
+
+                                                    ||
+
+                                                    // Approved fuel can ONLY be deleted by the authorizer
+                                                    (
+                                                        $fuel->authorization == "approved"
+                                                        && $fuel->authorized_by_id == Auth::user()->id
+                                                    )
+                                                )
+                                                    <li>
+                                                        <a href="#" wire:click.prevent="delete({{$fuel->id}})">
+                                                            <i class="fa fa-trash color-danger"></i>Delete
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                            </ul>
                                           </div>
-                                          @include('fuels.delete')
+                                         
                                   </td>
                                     </tr>
                                     @elseif ($fuel->fillup == 0)
@@ -362,19 +379,33 @@
                                                   <span class="caret"></span>
                                               </button>
                                               <ul class="dropdown-menu">
-                                                <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
+                                                    <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
                                                 @if ($fuel->authorization == "approved")
-                                                <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
+                                                    <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
                                                 @endif
                                                 @if ($fuel->authorization == "pending")
                                                     <li><a href="#"  wire:click.prevent="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @endif
-                                                @if ($fuel->authorization == "pending" || $fuel->authorized_by_id == Auth::user()->id )
-                                                    <li><a href="#" wire:click.prevent="delete({{$fuel->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if (
+                                                    // Pending fuel can be deleted normally
+                                                    $fuel->authorization == "pending"
+
+                                                    ||
+
+                                                    // Approved fuel can ONLY be deleted by the authorizer
+                                                    (
+                                                        $fuel->authorization == "approved"
+                                                        && $fuel->authorized_by_id == Auth::user()->id
+                                                    )
+                                                )
+                                                    <li>
+                                                        <a href="#" wire:click.prevent="delete({{$fuel->id}})">
+                                                            <i class="fa fa-trash color-danger"></i>Delete
+                                                        </a>
+                                                    </li>
                                                 @endif
                                             </ul>
                                           </div>
-                                          @
                                   </td>
                                     </tr>
                                     @endif
@@ -416,7 +447,7 @@
         <!-- /.container-fluid -->
     </section>
 
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="fuelDeleteModal{{ $fuel->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
