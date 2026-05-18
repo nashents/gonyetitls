@@ -12,9 +12,12 @@ class Transactions extends Component
     public $account;
 
     public function mount($id){
+
         $this->account = Account::find($id);
         $name = $this->account->name;
-        $this->payments = Payment::whereYear('created_at',date('Y'))->where('account_id',$id)->orWhere('transaction_category',"Customer Deposits")->orderBy('created_at','desc')->get();
+        $this->payments = Payment::with('account','customer','vendor')->whereYear('created_at',date('Y'))->where('account_id',$id)
+        // ->orWhere('transaction_category',"Customer Deposits")
+        ->orderBy('created_at','desc')->get();
     }
 
     public function render()

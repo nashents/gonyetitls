@@ -366,7 +366,7 @@
                                                 @if ($fuel->authorization == "approved")
                                                 <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
                                                 @endif
-                                                @if ($fuel->authorization == "pending" || $fuel->authorization == "rejected" )
+                                                @if ($fuel->authorization == "pending" || $fuel->authorized_by_id == Auth::user()->id )
                                                 <li><a href="#"  wire:click="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#fuelDeleteModal{{ $fuel->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
