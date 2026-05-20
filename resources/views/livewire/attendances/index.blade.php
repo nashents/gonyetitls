@@ -242,6 +242,7 @@
                                                     <option value="">Select Option</option>
                                                     <option value="absent">Absent</option>
                                                     <option value="annual_leave">Annual Leave</option>
+                                                    <option value="compassionate_leave">Compassionate Leave</option>
                                                     <option value="off">Off</option>
                                                     <option value="present">Present</option>
                                                     <option value="public_holiday">Public Holiday</option>
@@ -374,6 +375,7 @@
                                                     <option value="">Select Option</option>
                                                     <option value="absent">Absent</option>
                                                     <option value="annual_leave">Annual Leave</option>
+                                                    <option value="compassionate_leave">Compassionate Leave</option>
                                                     <option value="off">Off</option>
                                                     <option value="present">Present</option>
                                                     <option value="public_holiday">Public Holiday</option>

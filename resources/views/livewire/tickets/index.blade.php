@@ -273,7 +273,7 @@
                                                 <ul class="dropdown-menu">
                                                   <li>
                                                         <a href="#"
-                                                        onclick="openTicketShow('{{ route('tickets.show', $ticket->id) }}')">
+                                                            onclick="openTicketShow('{{ route('tickets.show', $ticket->id) }}')">
                                                             <i class="fa fa-eye color-default"></i>View
                                                         </a>
                                                     </li>

@@ -243,7 +243,12 @@
                                                     <span class="caret"></span>
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li><a href="{{route('tickets.show', $ticket->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
+                                                    <li>
+                                                        <a href="#"
+                                                            onclick.prevent="openTicketShow('{{ route('tickets.show', $ticket->id) }}')">
+                                                            <i class="fa fa-eye color-default"></i>View
+                                                        </a>
+                                                    </li>
                                                     {{-- <li><a href="{{route('tickets.preview',$ticket->id)}}"   ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li> --}}
                                                     <li><a href="{{route('tickets.jobcard',$ticket->id)}}"   ><i class="fas fa-file color-warning"></i> JobCard</a></li>
                                                     @if ($ticket->inspection->status == 1)
@@ -292,7 +297,16 @@
 
         
 
+    @section('extra-js')
+        <script>
+            function openTicketShow(showUrl) {
+                let currentUrl = window.location.href;
+                let encodedBackUrl = btoa(currentUrl);
 
+                window.location.href = showUrl + '?back_url=' + encodeURIComponent(encodedBackUrl);
+            }
+        </script>
+    @endsection
    
 
     </div>
