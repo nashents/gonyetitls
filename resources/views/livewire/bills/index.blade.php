@@ -348,7 +348,24 @@
                                         @endif
                                     </td>
                                     <td><span class="label label-{{($bill->status == 'Paid') ? 'success' : (($bill->status == 'Partial') ? 'warning' : 'danger') }}">{{ $bill->status }}</span></td>
-                                    <td><span class="badge bg-{{($bill->authorization == 'approved') ? 'success' : (($bill->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($bill->authorization == 'approved') ? 'approved' : (($bill->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                        <span class="badge bg-{{($bill->authorization == 'approved') ? 'success' : (($bill->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($bill->authorization == 'approved') ? 'approved' : (($bill->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        @if ($bill->authorized_by_id)
+                                            @php
+                                                $user = App\Models\User::find($bill->authorized_by_id);
+                                            @endphp
+                                            <br>
+                                            <small style="background-color: orange"><strong >AuthBy: </strong> {{$user?->name}} {{$user?->surname}}</small>  
+                                        @endif
+                                        @if ($bill->authorization_date)
+                                            <br>
+                                            <small style="background-color: orange"><strong >Date: </strong> {{$bill->authorization_date}}</small>  
+                                        @endif
+                                        @if ($bill->comments)
+                                            <br>
+                                            <small style="background-color: orange"><strong >Comments: </strong> {{$bill->comments}}</small>  
+                                        @endif 
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

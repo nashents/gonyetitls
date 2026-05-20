@@ -144,7 +144,7 @@
                             <div class="col-md-6">
                                 <div class="panel-heading">
                                     <div class="panel-title">
-                                        <h5><a href="#" style="color:blue">Trial Balance</a></h5>
+                                        <h5><a href="{{ route('reports.trial-balance') }}" style="color:blue">Trial Balance</a></h5>
                                     </div>
                                 </div>
                                 <div class="panel-body">

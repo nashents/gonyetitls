@@ -64,6 +64,25 @@ class Fuel extends Model implements Auditable
         return $this->hasOne('App\Models\Bill');
     }
 
+    public function getFillupLabelAttribute()
+    {
+        return $this->fillup ? 'Initial' : 'Top Up';
+    }
+
+    public function getRowClassAttribute()
+    {
+        return $this->fillup ? 'table-success' : 'table-warning';
+    }
+
+    public function getAuthorizationBadgeAttribute()
+    {
+        return match ($this->authorization) {
+            'approved' => 'success',
+            'rejected' => 'danger',
+            default => 'warning',
+        };
+    }
+
   protected $fillable = [
         'user_id',
         'order_number',      // include this only if you allow mass-assigning it

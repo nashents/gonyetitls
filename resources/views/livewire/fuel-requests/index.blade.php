@@ -109,7 +109,24 @@
                                                 <td>{{$fuel_request->fuel_type}}</td>
                                                 <td>{{$fuel_request->quantity ? $fuel_request->quantity."Litres" : ""}}</td>
                                                 <td>{{$fuel_request->reason }}</td>
-                                                <td><span class="badge bg-{{($fuel_request->authorization == 'approved') ? 'success' : (($fuel_request->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel_request->authorization == 'approved') ? 'approved' : (($fuel_request->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                                <td>
+                                                    <span class="badge bg-{{($fuel_request->authorization == 'approved') ? 'success' : (($fuel_request->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel_request->authorization == 'approved') ? 'approved' : (($fuel_request->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                                    @if ($fuel_request->authorized_by_id)
+                                                        @php
+                                                            $user = App\Models\User::find($fuel_request->authorized_by_id);
+                                                        @endphp
+                                                        <br>
+                                                        <small style="background-color: orange"><strong >AuthBy: </strong> {{$user?->name}} {{$user?->surname}}</small>  
+                                                    @endif
+                                                    @if ($fuel_request->authorization_date)
+                                                        <br>
+                                                        <small style="background-color: orange"><strong >Date: </strong> {{$fuel_request->authorization_date}}</small>  
+                                                    @endif
+                                                    @if ($fuel_request->authorization_comments)
+                                                        <br>
+                                                        <small style="background-color: orange"><strong >Comments: </strong> {{$fuel_request->authorization_comments}}</small>  
+                                                    @endif 
+                                                </td>
                                                 <td class="w-10 line-height-35 table-dropdown">
                                                     <div class="dropdown">
                                                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

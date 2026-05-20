@@ -4755,6 +4755,26 @@ window.addEventListener('hide-imageModal', event => {
         $('#updateModal').modal('hide');
     })
 </script>
+<script type="text/javascript">
+    window.addEventListener('show-journalModal', event => {
+        $('#journalModal').modal('show');
+    })
+</script>
+<script type="text/javascript">
+    window.addEventListener('hide-journalModal', event => {
+        $('#journalModal').modal('hide');
+    })
+</script>
+<script type="text/javascript">
+    window.addEventListener('show-journalEditModal', event => {
+        $('#journalEditModal').modal('show');
+    })
+</script>
+<script type="text/javascript">
+    window.addEventListener('hide-journalEditModal', event => {
+        $('#journalEditModal').modal('hide');
+    })
+</script>
 
 <script>
     ClassicEditor

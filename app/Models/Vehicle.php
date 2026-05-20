@@ -15,19 +15,29 @@ class Vehicle extends Model implements Auditable
     public function rentals(){
         return $this->hasMany('App\Models\Rental');
     }
-     public function fuel_requests(){
+    
+    public function fuel_requests(){
         return $this->hasMany('App\Models\FuelRequest');
     }
+
+    public function journal_entry_lines()
+    {
+        return $this->hasMany(JournalEntryLine::class);
+    }
+
     public function vehicle_documents(){
         return $this->hasMany('App\Models\VehicleDocument');
     }
+
     public function category_checklists(){
         return $this->hasMany('App\Models\CategoryChecklist');
     }
+
     public function movements(){
         return $this->hasMany('App\Models\Movement');
     }
-     public function breakdowns(){
+
+    public function breakdowns(){
         return $this->hasMany('App\Models\Breakdown');
     }
       public function dispatches(){

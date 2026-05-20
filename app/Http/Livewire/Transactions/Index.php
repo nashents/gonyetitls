@@ -2,23 +2,31 @@
 
 namespace App\Http\Livewire\Transactions;
 
-use Carbon\Carbon;
-use App\Models\Horse;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Expense;
-use App\Models\Payment;
-use Livewire\Component;
+use App\Models\AccountType;
+use App\Models\AccountTypeGroup;
+use App\Models\BankAccount;
+use App\Models\Branch;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Document;
-use App\Models\AccountType;
-use App\Models\BankAccount;
-use Livewire\WithFileUploads;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\Expense;
+use App\Models\Horse;
+use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
+use App\Models\Payment;
+use App\Models\Trailer;
 use App\Models\TransactionType;
-use Illuminate\Support\Facades\DB;
+use App\Models\Transporter;
+use App\Models\Vehicle;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Index extends Component
 {
@@ -50,7 +58,6 @@ class Index extends Component
     public $account;
     public $selectedCurrency;
     public $exchange_amount;
-    public $exchange_rate;
     public $account_id;
     public $customer = null;
     public $vendor = null;
@@ -66,10 +73,200 @@ class Index extends Component
     public $invoice;
    
     public $amount;
-    public $currency_id;
+   
+    public $currencies;
     public $date;
+    public $from;
+    public $to;
+    public $category;
+    public $type;
+    public $payment_id;
+    public $receiptUpload;
+
+  
+    public string $journal_number = '';
+    public string $reference = '';
+  
+    public string $status = 'posted';
+
+    public ?int $currency_id = null;
+    public float $exchange_rate = 1;
+
+    public function getIsForeignCurrencyProperty(): bool
+    {
+        if (!$this->currency_id) return false;
+        return $this->currency_id !== Auth::user()->employee->company->currency_id;
+    }
+
+    // Reset exchange rate when currency changes
+    public function updatedCurrencyId(): void
+    {
+        $this->exchange_rate = $this->isForeignCurrency ? 0 : 1;
+    }
+
+    // Lines
+    public array $lines = [];
+
+    protected function blankLine(): array
+    {
+        return [
+            'account_id'      => '',
+            'debit'           => 0,
+            'credit'          => 0,
+            'description'     => '',
+        ];
+    }
+
+    public function updatedLines($value, $key): void
+    {
+        // $key is e.g. "0.debit" or "1.credit"
+        [$index, $field] = explode('.', $key);
+
+        if ($field === 'debit' && (float) $value > 0) {
+            $this->lines[$index]['credit'] = 0;
+        }
+
+        if ($field === 'credit' && (float) $value > 0) {
+            $this->lines[$index]['debit'] = 0;
+        }
+    }
+
+    // Computed totals
+    public function getTotalDebitProperty(): float
+    {
+        return collect($this->lines)->sum(fn($l) => (float) $l['debit']);
+    }
+
+    public function getTotalCreditProperty(): float
+    {
+        return collect($this->lines)->sum(fn($l) => (float) $l['credit']);
+    }
+
+    public function addLine(): void
+    {
+        $this->lines[] = $this->blankLine();
+    }
+
+    public function removeLine(int $index): void
+    {
+        if (count($this->lines) <= 2) return;
+        array_splice($this->lines, $index, 1);
+    }
+
+    public function storeJournalEntry(): void
+    {
+        $this->validate([
+            'date'                   => 'required|date',
+            'currency_id'            => 'required|integer|exists:currencies,id',
+            'exchange_rate'          => ['required', 'numeric', 'min:0', $this->isForeignCurrency ? 'gt:0' : ''],
+            'status'                 => 'required|in:draft,posted',
+            'lines'                  => 'required|array|min:2',
+            'lines.*.account_id'     => 'required|integer|exists:accounts,id',
+            'lines.*.debit'          => 'required|numeric|min:0',
+            'lines.*.credit'         => 'required|numeric|min:0',
+        ]);
+
+        if (abs($this->totalDebit - $this->totalCredit) >= 0.01) {
+            $this->addError('lines', 'Journal must be balanced before posting.');
+            return;
+        }
+
+        DB::transaction(function () {
+
+            $companyId = Auth::user()->employee->company_id;
+
+            $entry = JournalEntry::create([
+                'company_id'     => $companyId,
+                'journal_number' => $this->journal_number,
+                'date'           => $this->date,
+                'reference'      => $this->reference ?: null,
+                'description'    => $this->description ?: null,
+                'is_manual'      => true,
+                'status'         => $this->status,
+                'created_by_id'  => Auth::id(),
+                'posted_by_id'   => $this->status === 'posted' ? Auth::id() : null,
+                'posted_at'      => $this->status === 'posted' ? now() : null,
+            ]);
+
+            foreach ($this->lines as $line) {
+
+                $debit  = (float) $line['debit'];
+                $credit = (float) $line['credit'];
+                $rate = (float) $this->exchange_rate;
+
+                JournalEntryLine::create([
+                    'journal_entry_id' => $entry->id,
+                    'account_id'       => $line['account_id'],
+                    'currency_id'      => $this->currency_id,
+                    'exchange_rate'    => $this->exchange_rate,
+                    'debit'            => $debit,
+                    'credit'           => $credit,
+                    'exchange_debit'   => $debit * $this->exchange_rate,
+                    'exchange_credit'  => $credit * $this->exchange_rate,
+                    'description'      => $line['description'] ?: null,
+                    'branch_id'        => null,
+                    'customer_id'      => null,
+                    'vendor_id'        => null,
+                    'employee_id'      => null,
+                    'driver_id'        => null,
+                    'horse_id'         => null,
+                    'vehicle_id'       => null,
+                    'trailer_id'       => null,
+                    'transporter_id'   => null,
+                ]);
+                        
+            }
+        });
+
+        $this->reset(['reference', 'description', 'lines']);
+
+        $this->journal_number = $this->generateJournalNumber();
+
+        $this->lines = [$this->blankLine(), $this->blankLine()];
+
+        $this->dispatchBrowserEvent('hide-journalModal');
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Journal entry saved successfully."
+        ]);
+       
+    }
+
+    protected function generateJournalNumber(): string
+    {
+        $last = JournalEntry::whereNotNull('journal_number')
+            ->orderByDesc('id')
+            ->value('journal_number');
+
+        $next = $last ? ((int) substr($last, 4)) + 1 : 1;
+
+        return 'JNL-' . str_pad($next, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function getDimensionOptionsProperty(): array
+    {
+        return [
+            'branch_id'      => Branch::select('id', 'name')->get(),
+            'customer_id'    => Customer::select('id', 'name')->get(),
+            'vendor_id'      => Vendor::select('id', 'name')->get(),
+            'employee_id'    => Employee::select('id', 'name')->get(),
+            'driver_id'      => Driver::select('id')->get(),
+            'horse_id'       => Horse::select('id', 'registration_number')->get(),
+            'vehicle_id'     => Vehicle::select('id', 'registration_number')->get(),
+            'trailer_id'     => Trailer::select('id', 'registration_number')->get(),
+            'transporter_id' => Transporter::select('id', 'name')->get(),
+        ];
+    }
 
     public function mount(){
+
+      $this->date          = now()->toDateString();
+        $this->journal_number = $this->generateJournalNumber();
+        $this->lines         = [
+            $this->blankLine(),
+            $this->blankLine(),
+        ];
        
         $this->selectedAccount = "All";
 
@@ -78,6 +275,7 @@ class Index extends Component
         }else{
             $this->payments = collect();
         }
+        
 
         $account_type_names = ['Cash & Bank', 'Business Owner Contribution & Drawing', 'Other Short-Term Asset', 'Due to You & Other Business Owners', 'Other Short-Term Liability']; 
         $this->transaction_account_types = AccountType::whereIn('name', $account_type_names)->get();
@@ -143,6 +341,7 @@ class Index extends Component
 
     public function paymentNumber(){
 
+        $initials = "";
         if (isset(Auth::user()->company)) {
             $str = Auth::user()->company->name;
             $words = explode(' ', $str);
@@ -272,18 +471,7 @@ class Index extends Component
         if (isset( $fileNameToStore)) {
              $document->filename = $fileNameToStore;
         }
-        if(isset($this->expires_at)){
-            $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
-            $today = now()->toDateTimeString();
-            $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
-            if ($today <=  $expire) {
-                $document->status = 1;
-            }else{
-                $document->status = 0;
-            }
-        }else {
         $document->status = 1;
-        }
         $document->save();
   
 
@@ -360,18 +548,7 @@ class Index extends Component
         if (isset( $fileNameToStore)) {
              $document->filename = $fileNameToStore;
         }
-        if(isset($this->expires_at)){
-            $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
-            $today = now()->toDateTimeString();
-            $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
-            if ($today <=  $expire) {
-                $document->status = 1;
-            }else{
-                $document->status = 0;
-            }
-        }else {
         $document->status = 1;
-        }
         $document->save();
   
 
@@ -472,8 +649,17 @@ class Index extends Component
             $this->last_payment = Payment::where('customer_id',$this->customer_id)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Customer Deposits")->orderBy('created_at','desc')->first();
            
         }
+
+      
    
-        return view('livewire.transactions.index');
+        return view('livewire.transactions.index',[
+            'journal_transaction_account_types' => AccountTypeGroup::with('account_types.accounts')->get(),
+            'currencies'                => Currency::all(),
+            'dimensionOptions'          => $this->dimensionOptions,
+            'totalDebit'                => $this->totalDebit,
+            'totalCredit'               => $this->totalCredit,
+            'isForeignCurrency'         => $this->isForeignCurrency,
+        ]);
     }
 
 

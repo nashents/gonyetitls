@@ -22,6 +22,10 @@ class Driver extends Model implements Auditable
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
+    public function journal_entry_lines()
+    {
+        return $this->hasMany(JournalEntryLine::class);
+    }
    
     public function fitnesses(){
         return $this->hasMany('App\Models\Fitness');

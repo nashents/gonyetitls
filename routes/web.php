@@ -416,6 +416,7 @@ Route::get('reports/financial-statements','ReportController@index')->name('repor
 Route::get('reports/income-statement','ReportController@incomeStatement')->name('reports.income_statement');
 Route::get('reports/cashflow','ReportController@incomeStatement')->name('reports.cashflow');
 Route::get('reports/balance-sheet','ReportController@balanceSheet')->name('reports.balance_sheet');
+Route::get('reports/trial-balance','ReportController@trialBalance')->name('reports.trial-balance');
 
 Route::get('bookings/delete','BookingController@deleted')->name('bookings.deleted');
 Route::get('bookings/authorization/pending','BookingController@pending')->name('bookings.pending');

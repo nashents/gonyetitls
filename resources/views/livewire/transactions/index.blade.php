@@ -30,6 +30,7 @@
                                     <label for="">Transactions</label>
                                     <button type="button" wire:click.prevent="showDepositModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Deposit</button>
                                     <button type="button"  wire:click.prevent="showWithdrawalModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Withdrawal</button>
+                                    <button type="button"  data-toggle="modal" data-target="#journalModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Journal Entry</button>
 
                                 </div>
                            
@@ -58,11 +59,11 @@
                                 </thead>
                                 @if ($payments->count()>0)
                                 <tbody>
-                                    @foreach ($payments as $payment)
+                                  @foreach ($payments as $payment)
+
                                   <tr>
                                     <td>{{Carbon\Carbon::parse($payment->date)->format('d M Y')}}</td>
                                     <td>
-                                       
                                         @if ($payment->invoice)
                                             {{$payment->customer ? $payment->customer->name : ""}} Payment for invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> <br>
                                         @elseif($payment->bill)
@@ -150,8 +151,190 @@
         </div>
     </div>
 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="journalModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog mw-100 w-50" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="fas fa-book"></i> Manual Journal Entry
+                    <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                </h4>
+            </div>
+            <form wire:submit.prevent="storeJournalEntry">
+                <div class="modal-body">
+
+                    {{-- Header --}}
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="date" required />
+                                @error('date') <span class="text-danger small">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Journal Number</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="journal_number" placeholder="Auto-generated" readonly />
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Reference</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="reference" placeholder="e.g. INV-001" />
+                                @error('reference') <span class="text-danger small">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select class="form-control" wire:model.debounce.300ms="status">
+                                    <option value="draft">Draft</option>
+                                    <option value="posted">Post Immediately</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Description / Narration</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="description" placeholder="Enter journal narration" />
+                                @error('description') <span class="text-danger small">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Currency <span class="text-danger">*</span></label>
+                                <select class="form-control" wire:model="currency_id">
+                                    <option value="">Select Currency</option>
+                                    @foreach ($currencies as $currency)
+                                           <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                </select>
+                                @error('currency_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Exchange Rate</label>
+                                <input type="number" step="any" min="0" class="form-control"
+                                    wire:model.debounce.300ms="exchange_rate"
+                                    placeholder="{{ $isForeignCurrency ? 'Enter rate' : 'Base currency' }}"
+                                    @if(!$isForeignCurrency) disabled @endif />
+                                @if($isForeignCurrency)
+                                    <small class="text-muted">Rate against base currency</small>
+                                @endif
+                                @error('exchange_rate') <span class="text-danger small">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Journal Lines --}}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th style="width:38%">Description</th>
+                                    <th style="width:30%">Account <span class="text-danger">*</span></th>
+                                    <th style="width:12%" class="text-right">Debit</th>
+                                    <th style="width:12%" class="text-right">Credit</th>
+                                    <th style="width:8%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($lines as $index => $line)
+                                <tr wire:key="line-{{ $index }}">
+                                     <td>
+                                        <input type="text" class="form-control form-control-sm"
+                                            wire:model.debounce.300ms="lines.{{ $index }}.description"
+                                            placeholder="Optional" />
+                                    </td>
+                                    <td>
+                                        <select class="form-control form-control-sm" wire:model="lines.{{ $index }}.account_id">
+                                            <option value="">Select Account</option>
+                                                @foreach ($journal_transaction_account_types as $group)
+                                                    <optgroup label="{{ $group->name }}">
+                                                        @foreach ($group->account_types as $account_type)
+                                                            @foreach ($account_type->accounts as $account)
+                                                                <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                                            @endforeach
+                                                        @endforeach
+                                                    </optgroup>
+                                                @endforeach
+                                        </select>
+                                        @error("lines.{$index}.account_id") <span class="text-danger small">{{ $message }}</span> @enderror
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" min="0" class="form-control form-control-sm text-right"
+                                            wire:model.debounce.300ms="lines.{{ $index }}.debit" placeholder="0.00" />
+                                        @error("lines.{$index}.debit") <span class="text-danger small">{{ $message }}</span> @enderror
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" min="0" class="form-control form-control-sm text-right"
+                                            wire:model.debounce.300ms="lines.{{ $index }}.credit" placeholder="0.00" />
+                                        @error("lines.{$index}.credit") <span class="text-danger small">{{ $message }}</span> @enderror
+                                    </td>
+                                   
+                                    <td class="text-center">
+                                        @if (count($lines) > 2)
+                                        <button type="button" class="btn btn-sm btn-link text-danger p-0" wire:click="removeLine({{ $index }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="thead-light">
+                                <tr>
+                                    <td class="font-weight-bold">Totals</td>
+                                    <td class="text-right font-weight-bold">{{ number_format($totalDebit, 2) }}</td>
+                                    <td class="text-right font-weight-bold">{{ number_format($totalCredit, 2) }}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5">
+                                        @if ($totalDebit > 0 || $totalCredit > 0)
+                                            @if (abs($totalDebit - $totalCredit) < 0.01)
+                                                <span class="text-success small"><i class="fas fa-check-circle"></i> Balanced</span>
+                                            @else
+                                                <span class="text-danger small"><i class="fas fa-exclamation-triangle"></i> Out of balance by {{ number_format(abs($totalDebit - $totalCredit), 2) }}</span>
+                                            @endif
+                                        @endif
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="addLine">
+                            <i class="fas fa-plus"></i> Add Line
+                        </button>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                            <i class="fa fa-times"></i> Close
+                        </button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"
+                            @if(abs($totalDebit - $totalCredit) >= 0.01 || $totalDebit == 0) disabled @endif>
+                            <i class="fa fa-save"></i> {{ $status === 'posted' ? 'Post Journal' : 'Save Draft' }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="depositModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add a deposit transaction <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -298,7 +481,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="withdrawalModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add a withdrawal transaction <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

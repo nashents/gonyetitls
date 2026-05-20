@@ -255,7 +255,24 @@
                                        
                                         {{-- @endif --}}
                                     </td>
-                                    <td><span class="badge bg-{{($invoice->authorization == 'approved') ? 'success' : (($invoice->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($invoice->authorization == 'approved') ? 'approved' : (($invoice->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                        <span class="badge bg-{{($invoice->authorization == 'approved') ? 'success' : (($invoice->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($invoice->authorization == 'approved') ? 'approved' : (($invoice->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                         @if ($invoice->authorized_by_id)
+                                            @php
+                                                $user = App\Models\User::find($invoice->authorized_by_id);
+                                            @endphp
+                                            <br>
+                                            <small style="background-color: orange"><strong >AuthBy: </strong> {{$user?->name}} {{$user?->surname}}</small>  
+                                        @endif
+                                        @if ($invoice->authorization_date)
+                                            <br>
+                                            <small style="background-color: orange"><strong >Date: </strong> {{$invoice->authorization_date}}</small>  
+                                        @endif
+                                        @if ($invoice->comments)
+                                            <br>
+                                            <small style="background-color: orange"><strong >Comments: </strong> {{$invoice->comments}}</small>  
+                                        @endif 
+                                    </td>
                                    
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

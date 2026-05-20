@@ -16,6 +16,10 @@ class Employee extends Model implements Auditable
     public function grade(){
         return $this->belongsTo('App\Models\Grade');
     }
+    public function journal_entry_lines()
+    {
+        return $this->hasMany(JournalEntryLine::class);
+    }
     public function goods_receiveds(){
         return $this->hasMany('App\Models\GoodsReceived');
     }

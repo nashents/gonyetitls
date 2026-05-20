@@ -15,23 +15,19 @@ use App\Models\Employee;
 use App\Models\ExchangeRate;
 use App\Models\Expense;
 use App\Models\Fuel;
-use App\Models\FuelCount;
 use App\Models\FuelRequest;
 use App\Models\Horse;
 use App\Models\Hour;
 use App\Models\Mileage;
 use App\Models\Notification;
 use App\Models\TopUp;
-use App\Models\Trailer;
 use App\Models\Trip;
 use App\Models\TripExpense;
 use App\Models\Vehicle;
-use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -976,16 +972,18 @@ class Index extends Component
 
         $query = Fuel::query()
                 ->with([
-                    'container',
-                    'horse',
-                    'horse.horse_model',
-                    'horse.horse_make',
-                    'vehicle',
-                    'vehicle.vehicle_model',
-                    'vehicle.vehicle_make',
-                    'asset.product.brand',
-                    'trip',
                     'user',
+                    'fuel_request.employee',
+                    'fuel_request.horse',
+                    'fuel_request.vehicle',
+                    'fuel_request.asset.product.brand',
+                    'horse',
+                    'vehicle',
+                    'asset.product.brand',
+                    'trip.fromDestination.country',
+                    'trip.toDestination.country',
+                    'container',
+                    'currency',
                 ]);
 
             // Date filter: from/to if set, otherwise current month

@@ -97,333 +97,220 @@
                                
                             </div>
                             <br>
+                           
+
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th class="th-sm">FOrder#
-                                        </th>
-                                        <th class="th-sm">Fuel Request
-                                        </th>
-                                        <th class="th-sm">Date
-                                        </th>
-                                        <th class="th-sm">OrderFor
-                                        </th>
-                                        <th class="th-sm">Station
-                                        </th>
-                                        <th class="th-sm">FillUp
-                                        </th>
-                                        <th class="th-sm">Qty(l)
-                                        </th>
-                                        <th class="th-sm">Ccy
-                                        </th>
-                                        <th class="th-sm">Amt
-                                        </th>
-                                        <th class="th-sm">Auth
-                                        </th>
-                                        <th class="th-sm">Notes
-                                        </th>
-                                        <th class="th-sm">Action
-                                        </th>
-                                      </tr>
+                                        <th>FOrder#</th>
+                                        <th>Fuel Request</th>
+                                        <th>Date</th>
+                                        <th>Order For</th>
+                                        <th>Station</th>
+                                        <th>Fill Up</th>
+                                        <th>Qty (l)</th>
+                                        <th>Ccy</th>
+                                        <th>Amt</th>
+                                        <th>Auth</th>
+                                        <th>Notes</th>
+                                        <th>Action</th>
+                                    </tr>
                                 </thead>
-                                @if (isset($fuels))
                                 <tbody>
-                                    @forelse  ($fuels as $fuel)
-                                    @if ($fuel->fillup == 1)
-                                    <tr style="background-color: #4CAF50">
-                                    <td>
-                                        {{$fuel->order_number}} <br>
-                                        <small>
-                                            <strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}} <br>
-                                            <strong>CreatedOn: </strong>{{$fuel->created_at}}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        @if ($fuel->fuel_request)
+                                    @isset($fuels)
+                                        @forelse($fuels as $fuel)
                                             @php
-                                                $fuel_request = $fuel->fuel_request;
+                                                $isInitial   = $fuel->fillup == 1;
+                                                $rowClass    = $isInitial ? 'row-fillup-initial' : 'row-fillup-topup';
+                                                $fillupLabel = $isInitial ? 'Initial' : 'Top Up';
+
+                                                $datePattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                                $formattedDate = preg_match($datePattern, $fuel->date)
+                                                    ? \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')
+                                                    : $fuel->date;
+
+                                                $fuelRequest = $fuel->fuel_request ?? null;
                                             @endphp
-                                             <a href="fuel_requests.show,$fuel_request?->id" target="_blank" style="color: blue">{{$fuel_request?->request_number}}</a> <br>
-                                             <small>
-                                                <strong>RequestedBy:</strong> {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} <br>
-                                                <strong>RequestedFor:</strong>
-                                                    @if ($fuel_request->horse)
-                                                        {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
-                                                    @elseif ($fuel_request->vehicle)
-                                                        {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
-                                                    @elseif ($fuel_request->asset)
-                                                        {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
+
+                                            <tr class="{{ $rowClass }}" style="background-color: {{ $isInitial ? '#4CAF50' : '#FFC107' }} !important;">
+
+                                                {{-- FOrder# --}}
+                                                <td>
+                                                    {{ $fuel->order_number }}
+                                                    <div class="fuel-meta">
+                                                        <small><strong>Created By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small>
+                                                        <small><strong>Created On:</strong> {{ $fuel->created_at }}</small>
+                                                    </div>
+                                                </td>
+
+                                                {{-- Fuel Request --}}
+                                                <td>
+                                                    @if($fuelRequest)
+                                                        <a href="{{ route('fuel_requests.show', $fuelRequest->id) }}" target="_blank">
+                                                            {{ $fuelRequest->request_number }}
+                                                        </a> <br>
+                                                        <div class="fuel-meta">
+                                                            <small><strong>Requested By:</strong> {{ optional($fuelRequest->employee)->name }} {{ optional($fuelRequest->employee)->surname }}</small>
+                                                            <br>
+                                                            <small>
+                                                                <strong>Requested For:</strong>
+                                                                @if($fuelRequest->horse) <br>
+                                                                    {{ $fuelRequest->horse->registration_number }}
+                                                                    {{ $fuelRequest->horse->fleet_number ? '(' . $fuelRequest->horse->fleet_number . ')' : '' }}
+                                                                @elseif($fuelRequest->vehicle) <br>
+                                                                    {{ $fuelRequest->vehicle->registration_number }}
+                                                                    {{ $fuelRequest->vehicle->fleet_number ? '(' . $fuelRequest->vehicle->fleet_number . ')' : '' }}
+                                                                @elseif($fuelRequest->asset) <br>
+                                                                    {{ optional($fuelRequest->asset->product->brand)->name }}
+                                                                    {{ optional($fuelRequest->asset->product)->name }}
+                                                                @else
+                                                                    Other
+                                                                @endif
+                                                            </small>
+                                                            <small><strong>Fuel Type:</strong> {{ $fuelRequest->fuel_type }}</small>
+                                                            <small><strong>Requested Qty:</strong> {{ $fuelRequest->quantity ? $fuelRequest->quantity . 'l' : '-' }}</small>
+                                                        </div>
                                                     @else
+                                                        —
+                                                    @endif
+                                                </td>
+
+                                                {{-- Date --}}
+                                                <td>{{ $formattedDate }}</td>
+
+                                                {{-- Order For --}}
+                                                <td>
+                                                    @if($fuel->type === 'Horse' && isset($fuel->horse))
+                                                        Horse | {{ $fuel->horse->registration_number }}
+                                                        {{ $fuel->horse->fleet_number ? '(' . $fuel->horse->fleet_number . ')' : '' }}
+                                                    @elseif($fuel->type === 'Vehicle' && isset($fuel->vehicle))
+                                                        Vehicle | {{ $fuel->vehicle->registration_number }}
+                                                        {{ $fuel->vehicle->fleet_number ? '(' . $fuel->vehicle->fleet_number . ')' : '' }}
+                                                    @elseif($fuel->type === 'Asset' && isset($fuel->asset))
+                                                        Asset | {{ optional($fuel->asset->product->brand)->name }}
+                                                        {{ optional($fuel->asset->product)->name }}
+                                                    @elseif($fuel->type === 'Other')
                                                         Other
-                                                    @endif <br>
-                                                <strong>Fuel Type:</strong>  {{$fuel_request->fuel_type}} <br>
-                                                <strong>Requested Qty:</strong>  {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
-                                             </small>
-                                        @endif
-                                       
-                                    </td>
-                                      <td>
-                                        @php
-                                        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                        @endphp
-                                        @if ((preg_match($pattern, $fuel->date)) )
-                                            {{ \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')}}
-                                        @else
-                                        {{$fuel->date}}
-                                        @endif    
-                                       </td>
-                                      <td>
+                                                    @endif
 
-                                        @if ($fuel->type == "Horse")
-                                            @if (isset($fuel->horse))
-                                            Horse | {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse->fleet_number ? "(".$fuel->horse->fleet_number.")" : ""}}  
-                                                @if (isset($fuel->trip))
-                                                <br>
+                                                    @if(in_array($fuel->type, ['Horse', 'Vehicle']) && isset($fuel->trip))
+                                                        @php
+                                                            $from = App\Models\Destination::find($fuel->trip->from);
+                                                            $to   = App\Models\Destination::find($fuel->trip->to); // ← bug fix: was ->from
+                                                        @endphp
+                                                        <br>
+                                                        Trip | {{ $fuel->trip->trip_number }}{{ $fuel->trip->trip_ref ? '/' . $fuel->trip->trip_ref : '' }}
+                                                        {{ optional($from?->country)->name }} {{ $from?->city }} -
+                                                        {{ optional($to?->country)->name }} {{ $to?->city }}
+                                                    @endif
+                                                </td>
+
+                                                {{-- Station --}}
+                                                <td>
+                                                    {{ ucfirst(optional($fuel->container)->name) }}
+                                                    <div class="fuel-meta">
+                                                        <small><strong>Fuel Type:</strong> {{ $fuel->container->fuel_type ?? '' }}</small>
+                                                    </div>
+                                                </td>
+
+                                                {{-- Fill Up --}}
+                                                <td>{{ $fillupLabel }}</td>
+
+                                                {{-- Qty --}}
+                                                <td>{{ $fuel->quantity }}</td>
+
+                                                {{-- Currency --}}
+                                                <td>{{ optional($fuel->currency)->name }}</td>
+
+                                                {{-- Amount --}}
+                                                <td>{{ optional($fuel->currency)->symbol }}{{ number_format($fuel->amount, 2) }}</td>
+
+                                                {{-- Authorization --}}
+                                                <td>
                                                     @php
-                                                        $from = App\Models\Destination::find($fuel->trip->from);
-                                                        $to = App\Models\Destination::find($fuel->trip->from);
+                                                        $authStatus = $fuel->authorization;
+                                                        $badgeClass = match($authStatus) {
+                                                            'approved' => 'success',
+                                                            'rejected' => 'danger',
+                                                            default    => 'warning',
+                                                        };
                                                     @endphp
-                                                    Trip | {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
-                                                    @if (isset($from))
-                                                        {{$from->country ? $from->country->name : ""}}   {{$from->city}} - 
-                                                    @endif
-                                                    @if (isset($to))
-                                                        {{$to->country ? $from->country->name : ""}} {{$to->city}}
-                                                    @endif
-                                            
-                                                @endif
-                                            @endif
-                                        @elseif($fuel->type == "Vehicle")
-                                            @if(isset($fuel->vehicle)) 
-                                                Vehicle | {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->fleet_number ? "(".$fuel->vehicle->fleet_number.")" : ""}}  
-                                                @if (isset($fuel->trip))
-                                                <br>
-                                                    @php
-                                                        $from = App\Models\Destination::find($fuel->trip->from);
-                                                        $to = App\Models\Destination::find($fuel->trip->from);
-                                                    @endphp
-                                                    Trip: {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
-                                                    @if (isset($from))
-                                                        {{$from->country ? $from->country->name : ""}}   {{$from->city}} - 
-                                                    @endif
-                                                    @if (isset($to))
-                                                        {{$to->country ? $from->country->name : ""}} {{$to->city}}
-                                                    @endif
-                                            
-                                                @endif
-                                            @endif
-                                        @elseif($fuel->type == "Asset")
-                                            @if(isset($fuel->asset))
-                                                Asset | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
-                                            @endif
-                                        @elseif($fuel->type == "Other")
-                                            Other
-                                        @endif
-                                      </td>
-                                      <td>
-                                        {{ucfirst($fuel->container ? $fuel->container->name : "")}} <br>
-                                        <small>
-                                            <strong>Fuel Type:</strong> {{$fuel->container->fuel_type}}
-                                        </small>
-                                      </td>
-                                      <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
-                                      <td>{{$fuel->quantity}}</td>
-                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}} </td>
-                                      <td>{{$fuel->currency ? $fuel->currency->symbol : ""}}{{number_format($fuel->amount,2)}}</td>
-                                      <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                      <td>{{$fuel->comments}}</td>
-                                      <td class="w-10 line-height-35 table-dropdown">
-                                          <div class="dropdown">
-                                              <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                  <i class="fa fa-bars"></i>
-                                                  <span class="caret"></span>
-                                              </button>
-                                               <ul class="dropdown-menu">
-                                                    <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
-                                                @if ($fuel->authorization == "approved")
-                                                    <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
-                                                @endif
-                                                @if ($fuel->authorization == "pending")
-                                                    <li><a href="#"  wire:click.prevent="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @endif
-                                                @if (
-                                                    // Pending fuel can be deleted normally
-                                                    $fuel->authorization == "pending"
+                                                    <span class="badge bg-{{ $badgeClass }}">{{ ucfirst($authStatus ?? 'pending') }}</span>
 
-                                                    ||
+                                                    @if($fuel->authorized_by_id)
+                                                        @php $authorizer = App\Models\User::find($fuel->authorized_by_id); @endphp
+                                                        <small class="auth-meta"><strong>Auth By:</strong> {{ optional($authorizer)->name }} {{ optional($authorizer)->surname }}</small>
+                                                    @endif
+                                                    @if($fuel->authorization_date)
+                                                        <small class="auth-meta"><strong>Date:</strong> {{ $fuel->authorization_date }}</small>
+                                                    @endif
+                                                    @if($fuel->reason)
+                                                        <small class="auth-meta"><strong>Comments:</strong> {{ $fuel->reason }}</small>
+                                                    @endif
+                                                </td>
 
-                                                    // Approved fuel can ONLY be deleted by the authorizer
-                                                    (
-                                                        $fuel->authorization == "approved"
-                                                        && $fuel->authorized_by_id == Auth::user()->id
-                                                    )
-                                                )
-                                                    <li>
-                                                        <a href="#" wire:click.prevent="delete({{$fuel->id}})">
-                                                            <i class="fa fa-trash color-danger"></i>Delete
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                            </ul>
-                                          </div>
-                                         
-                                  </td>
-                                    </tr>
-                                    @elseif ($fuel->fillup == 0)
-                                    <tr style="background-color: #FFC107">
-                                      <td>
-                                        {{$fuel->order_number}} <br>
-                                          <small>
-                                            <strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}} <br>
-                                            <strong>CreatedOn: </strong>{{$fuel->created_at}}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        @if ($fuel->fuel_request)
-                                            @php
-                                                $fuel_request = $fuel->fuel_request;
-                                            @endphp
-                                             <a href="fuel_requests.show,$fuel_request?->id" target="_blank" style="color: blue">{{$fuel_request?->request_number}}</a> <br>
-                                             <small>
-                                                <strong>RequestedBy:</strong> {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} <br>
-                                                <strong>RequestedFor:</strong>
-                                                    @if ($fuel_request->horse)
-                                                        {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
-                                                    @elseif ($fuel_request->vehicle)
-                                                        {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
-                                                    @elseif ($fuel_request->asset)
-                                                        {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
-                                                    @else
-                                                        Other
-                                                    @endif <br>
-                                                <strong>Fuel Type:</strong>  {{$fuel_request->fuel_type}} <br>
-                                                <strong>Requested Qty:</strong>  {{$fuel_request->quantity ? $fuel_request->quantity."l" : ""}}
-                                             </small>
-                                        @endif
-                                       
-                                    </td>
-                                      
-                                      <td>
-                                        @php
-                                        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                        @endphp
-                                        @if ((preg_match($pattern, $fuel->date)) )
-                                            {{ \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')}}
-                                        @else
-                                        {{$fuel->date}}
-                                        @endif  
-                                    </td>
-                                      <td>
-                                        @if ($fuel->type == "Horse")
-                                        @if (isset($fuel->horse))
-                                        Horse | {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse->fleet_number ? "(".$fuel->horse->fleet_number.")" : ""}}  
-                                            @if (isset($fuel->trip))
-                                            <br>
-                                                @php
-                                                    $from = App\Models\Destination::find($fuel->trip->from);
-                                                    $to = App\Models\Destination::find($fuel->trip->from);
-                                                @endphp
-                                                Trip | {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
-                                                @if (isset($from))
-                                                    {{$from->country ? $from->country->name : ""}}   {{$from->city}} - 
-                                                @endif
-                                                @if (isset($to))
-                                                    {{$to->country ? $from->country->name : ""}} {{$to->city}}
-                                                @endif
-                                        
-                                            @endif
-                                        @endif
-                                    @elseif($fuel->type == "Vehicle")
-                                        @if(isset($fuel->vehicle)) 
-                                            Vehicle | {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->fleet_number ? "(".$fuel->vehicle->fleet_number.")" : ""}}  
-                                            @if (isset($fuel->trip))
-                                            <br>
-                                                @php
-                                                    $from = App\Models\Destination::find($fuel->trip->from);
-                                                    $to = App\Models\Destination::find($fuel->trip->from);
-                                                @endphp
-                                                Trip | {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
-                                                @if (isset($from))
-                                                    {{$from->country ? $from->country->name : ""}}   {{$from->city}} - 
-                                                @endif
-                                                @if (isset($to))
-                                                    {{$to->country ? $from->country->name : ""}} {{$to->city}}
-                                                @endif
-                                        
-                                            @endif
-                                        @endif
-                                    @elseif($fuel->type == "Asset")
-                                        @if(isset($fuel->asset))
-                                            Asset | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
-                                        @endif
-                                    @elseif($fuel->type == "Other")
-                                        Other
-                                    @endif
-                                      </td>
-                                      <td>
-                                            {{ucfirst($fuel->container ? $fuel->container->name : "")}} <br>
-                                            <small>
-                                                <strong>Fuel Type:</strong> {{$fuel->container->fuel_type}}
-                                            </small>
-                                      </td>
-                                      <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
-                                      <td>{{$fuel->quantity}}</td>
-                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}}</td>
-                                       <td>{{$fuel->currency ? $fuel->currency->symbol : ""}}{{number_format($fuel->amount,2)}}</td>
-                                      <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                      <td>{{$fuel->comments}}</td>
-                                      <td class="w-10 line-height-35 table-dropdown">
-                                          <div class="dropdown">
-                                              <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                  <i class="fa fa-bars"></i>
-                                                  <span class="caret"></span>
-                                              </button>
-                                              <ul class="dropdown-menu">
-                                                    <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
-                                                @if ($fuel->authorization == "approved")
-                                                    <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
-                                                @endif
-                                                @if ($fuel->authorization == "pending")
-                                                    <li><a href="#"  wire:click.prevent="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @endif
-                                                @if (
-                                                    // Pending fuel can be deleted normally
-                                                    $fuel->authorization == "pending"
+                                                {{-- Notes --}}
+                                                <td>{{ $fuel->comments }}</td>
 
-                                                    ||
+                                                {{-- Actions --}}
+                                                <td class="w-10 line-height-35 table-dropdown">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-default dropdown-toggle" type="button"
+                                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-bars"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li>
+                                                                <a href="{{ route('fuels.show', $fuel->id) }}">
+                                                                    <i class="fa fa-eye color-default"></i> View
+                                                                </a>
+                                                            </li>
+                                                            @if($fuel->authorization === 'approved')
+                                                                <li>
+                                                                    <a href="{{ route('fuels.preview', $fuel->id) }}">
+                                                                        <i class="fa fa-file-invoice color-primary"></i> Preview
+                                                                    </a>
+                                                                </li>
+                                                            @endif
+                                                            @if($fuel->authorization === 'pending')
+                                                                <li>
+                                                                    <a href="#" wire:click.prevent="edit({{ $fuel->id }})">
+                                                                        <i class="fa fa-edit color-success"></i> Edit
+                                                                    </a>
+                                                                </li>
+                                                            @endif
+                                                            @if(
+                                                                $fuel->authorization === 'pending'
+                                                                || ($fuel->authorization === 'approved' && $fuel->authorized_by_id == Auth::id())
+                                                            )
+                                                                <li>
+                                                                    <a href="#" wire:click.prevent="delete({{ $fuel->id }})">
+                                                                        <i class="fa fa-trash color-danger"></i> Delete
+                                                                    </a>
+                                                                </li>
+                                                            @endif
+                                                        </ul>
+                                                    </div>
+                                                </td>
 
-                                                    // Approved fuel can ONLY be deleted by the authorizer
-                                                    (
-                                                        $fuel->authorization == "approved"
-                                                        && $fuel->authorized_by_id == Auth::user()->id
-                                                    )
-                                                )
-                                                    <li>
-                                                        <a href="#" wire:click.prevent="delete({{$fuel->id}})">
-                                                            <i class="fa fa-trash color-danger"></i>Delete
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                            </ul>
-                                          </div>
-                                  </td>
-                                    </tr>
-                                    @endif
-                                    @empty
-                                    <tr>
-                                        <td colspan="9">
-                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                                No Fuel Orders Found ....
-                                            </div>
-                                           
-                                        </td>
-                                      </tr> 
-                                    @endforelse
+                                            </tr>
+
+                                        @empty
+                                            <tr>
+                                                <td colspan="12" class="text-center text-muted py-3" style="font-size: 17px;">
+                                                    No Fuel Orders Found.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    @else
+                                        <tr>
+                                            <td colspan="12" class="text-center">
+                                                <img src="{{ asset('images/nodata.png') }}" alt="No data" style="max-width: 300px; padding: 2rem 0;">
+                                            </td>
+                                        </tr>
+                                    @endisset
                                 </tbody>
-                                @else
-                                    <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                                 @endif
-                              </table>
+                            </table>
 
                               <nav class="text-center" style="float: right">
                                 <ul class="pagination rounded-corners">
@@ -448,23 +335,23 @@
     </section>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content bg-danger">
-            <div class="modal-body">
-               <center> <strong>Are you sure you want to delete this Fuel Order?</strong> </center>
-            </div>
-            <form wire:submit.prevent="destroy()" >
-            <div class="modal-footer no-border">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                    <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                <center> <strong>Are you sure you want to delete this Fuel Order?</strong> </center>
                 </div>
-                <!-- /.btn-group -->
+                <form wire:submit.prevent="destroy()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
             </div>
-        </form>
         </div>
     </div>
-</div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fuelModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-50" role="document">

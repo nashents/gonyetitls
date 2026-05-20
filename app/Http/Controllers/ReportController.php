@@ -18,4 +18,7 @@ class ReportController extends Controller
     public function balanceSheet(){
         return view('reports.balance_sheets.index');
     }
+    public function trialBalance(){
+        return view('reports.trial_balance');
+    }
 }
