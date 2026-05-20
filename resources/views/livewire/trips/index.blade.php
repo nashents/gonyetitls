@@ -926,7 +926,7 @@
                 <br>
                 <div class="form-group">
                     <label for="name">Upload Trip(s) Excel File<span class="required" style="color: red">*</span></label>
-                    <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload horse File" required>
+                    <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Trips File" required>
                     @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
                 </div>
             </div>

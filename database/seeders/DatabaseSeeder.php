@@ -44,10 +44,7 @@ use Database\Seeders\PaymentMethodSeeder;
 use Database\Seeders\ProblemCategorySeeder;
 use Database\Seeders\PublicHolidaySeeder;
 use Database\Seeders\RankSeeder;
-use Database\Seeders\ReminderItemSeeder;
 use Database\Seeders\RoleSeeder;
-use Database\Seeders\SalaryItemSeeder;
-use Database\Seeders\ServiceSeeder;
 use Database\Seeders\ServiceTypeSeeder;
 use Database\Seeders\StageSeeder;
 use Database\Seeders\TaxBracketSeeder;
@@ -125,6 +122,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CheckSeeder::class);
         $this->call(PublicHolidaySeeder::class);
         $this->call(ProblemCategorySeeder::class);
+        $this->call(TaxSeeder::class);
         $this->call(MenuRegistrySeeder::class);
      
     }

@@ -29,20 +29,20 @@
                                     <td class="w-20 line-height-35">{{$tax->abbreviation}}</td>
                                 </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Tax Number</th>
-                                    <td class="w-20 line-height-35">{{$tax->tax_number}}</td>
+                                    <th class="w-10 text-center line-height-35">Category</th>
+                                    <td class="w-20 line-height-35">{{$tax->category}}</td>
                                 </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Show tax number on invoices</th>
-                                    <td class="w-20 line-height-35">{{$tax->show_tax_number}}</td>
+                                    <th class="w-10 text-center line-height-35">Account</th>
+                                    <td class="w-20 line-height-35">{{$tax->account?->name}}</td>
                                 </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Tax Recoverable</th>
-                                    <td class="w-20 line-height-35">{{$tax->tax_recoverable}}</td>
+                                    <th class="w-10 text-center line-height-35">Rate</th>
+                                    <td class="w-20 line-height-35">{{$tax->rate}}</td>
                                 </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Compound Tax</th>
-                                    <td class="w-20 line-height-35">{{$tax->compound_tax}}</td>
+                                    <th class="w-10 text-center line-height-35">HS Code</th>
+                                    <td class="w-20 line-height-35">{{$tax->hs_code}}</td>
                                 </tr>
                              
                                 <tr>

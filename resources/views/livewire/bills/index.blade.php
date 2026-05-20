@@ -159,6 +159,7 @@
                                 </div>
                                <div class="row">
                                     <div class="col-lg-12">
+                                        <a href="" data-toggle="modal" data-target="#billsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                          <a href="#" wire:click="exportBillsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                         <a href="#" wire:click="exportBillsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                         <a href="#" wire:click="exportBillsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -316,9 +317,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                      
                                         {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->tax_amount ? $bill->tax_amount : 0,2)}}
-                                       
                                     </td>
                                     <td>
                                         @if ($bill->total)
@@ -336,10 +335,7 @@
                                         {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($total_paid,2)}}
                                     </td>
                                     <td>
-                                        @if ($bill->balance)
-                                             {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance,2)}}
-
-                                        @endif
+                                         {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance ? $bill->balance : 0,2)}}
                                          @if ($bill->accrual_balance)
                                             <br>
                                             <small>
@@ -778,6 +774,32 @@
             </div>
         </div>
     </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="billsImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Bills <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+            </div>
+            <form wire:submit.prevent="importBills"  enctype="multipart/form-data">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="name">Upload Bill(s) Excel File<span class="required" style="color: red">*</span></label>
+                    <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Bills File" required>
+                    @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit"  class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div><!-- Modal -->
 
   
 </div>

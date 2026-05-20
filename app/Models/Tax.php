@@ -21,4 +21,17 @@ class Tax extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function account(){
+        return $this->belongsTo('App\Models\Account');
+    }
+
+    protected $fillable =[
+        'name',
+        'abbreviation',
+        'description',
+        'account_id',
+        'user_id',
+        'rate',
+        'hs_code',
+    ];
 }

@@ -2,32 +2,29 @@
 
 namespace App\Http\Livewire\Taxes;
 
-use App\Models\Tax;
 use App\Models\Account;
-use Livewire\Component;
+use App\Models\Tax;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-   
-    public $taxes;
+     use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
     public $tax_id;
-    public $account_types;
-    public $account_type_id;
+    public $accounts;
+    public $account_id;
     public $tax;
     public $name;
     public $abbreviation;
-    public $tax_number;
+    public $hs_code;
     public $rate;
     public $description;
-    public $compound_tax = False;
-    public $show_tax_number = False;
-    public $tax_recoverable = True;
-   
-    public $user_id;
+    public $category;
   
-  
-
 
     public function remove($i)
     {
@@ -35,9 +32,7 @@ class Index extends Component
     }
 
     public function mount(){
-        $this->taxes = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+      $this->accounts = Account::orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -50,33 +45,28 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->abbreviation = '';
-        $this->compound_tax = '';
+        $this->category = '';
         $this->name = '';
-        $this->show_tax_number = '';
-        $this->tax_number = '';
-        $this->tax_recoverable = '';
         $this->description = '';
         $this->rate = '';
         $this->tax_id = "" ;
+        $this->hs_code = "" ;
     }
 
 
 
     public function store(){
-        // try{
-        $account_type = AccountType::where('name','Sales Taxes')->first();
-        $account = new Account;
+    
+        $account = new Tax;
 
         $account->user_id = Auth::user()->id;
-        $account->account_type_id = $account_type ? $account_type->id : Null;
+        $account->account_id = $this->account_id;
+        $account->category = $this->category;
         $account->name = $this->name;
         $account->abbreviation = $this->abbreviation;
-        $account->tax_number = $this->tax_number;
         $account->rate = $this->rate;
-        $account->tax_recoverable = $this->tax_recoverable;
-        $account->show_tax_number = $this->show_tax_number;
         $account->description = $this->description;
-        $account->compound_tax = $this->compound_tax;
+        $account->hs_code = $this->hs_code;
         $account->save();
 
         $this->dispatchBrowserEvent('hide-taxModal');
@@ -86,34 +76,22 @@ class Index extends Component
             'message'=>"Tax Created Successfully!!"
         ]);
 
-        // return redirect()->route('taxes.index');
-
-    //     }
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'abbreviation'=>'error',
-    //         'message'=>"Something goes wrong while creating tax!!"
-    //     ]);
-    // }
+     
     }
 
     public function edit($id){
         
-    $account = Account::find($id);
-    $this->user_id = $account->user_id;
-    $this->account_type_id = $account->account_type_id;
-    $this->name = $account->name;
-    $this->abbreviation = $account->abbreviation;
-    $this->description = $account->description;
-    $this->show_tax_number = $account->show_tax_number;
-    $this->tax_recoverable = $account->tax_recoverable;
-    $this->compound_tax = $account->compound_tax;
-    $this->tax_number = $account->tax_number;
-    $this->rate = $account->rate;
-    $this->tax_id = $account->id;
+        $tax = Tax::find($id);
+        $this->name = $tax->name;
+        $this->category = $tax->category;
+        $this->abbreviation = $tax->abbreviation;
+        $this->description = $tax->description;
+        $this->hs_code = $tax->hs_code;
+        $this->rate = $tax->rate;
+        $this->tax_id = $tax->id;
+        $this->account_id = $tax->account_id;
 
-    $this->dispatchBrowserEvent('show-taxEditModal');
+        $this->dispatchBrowserEvent('show-taxEditModal');
 
     }
 
@@ -121,17 +99,15 @@ class Index extends Component
     public function update()
     {
         if ($this->tax_id) {
-            try{
-            $account = Account::find($this->tax_id);
+        
+            $account = Tax::find($this->tax_id);
+            $account->category = $this->category;
             $account->name = $this->name;
-            $account->account_type_id = $this->account_type_id;
+            $account->account_id = $this->account_id;
             $account->abbreviation = $this->abbreviation;
-            $account->tax_number = $this->tax_number;
             $account->rate = $this->rate;
-            $account->tax_recoverable = $this->tax_recoverable;
-            $account->show_tax_number = $this->show_tax_number;
             $account->description = $this->description;
-            $account->compound_tax = $this->compound_tax;
+            $account->hs_code = $this->hs_code;
             $account->update();
 
             $this->dispatchBrowserEvent('hide-taxEditModal');
@@ -141,27 +117,16 @@ class Index extends Component
                 'message'=>"Tax Updated Successfully!!"
             ]);
 
-
-            // return redirect()->route('taxes.index');
-            }
-            catch(\Exception $e){
-            $this->dispatchBrowserEvent('hide-taxEditModal');
-            $this->dispatchBrowserEvent('alert',[
-                'abbreviation'=>'error',
-                'message'=>"Something goes wrong while creating Tax!!"
-            ]);
-          }
         }
     }
 
 
     public function render()
     {
-        $this->taxes = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+
+        $query = Tax::orderBy('name','asc')->paginate(10);
         return view('livewire.taxes.index',[
-            'taxes'=>   $this->taxes
+            'taxes'=>  $query
         ]);
     }
 }

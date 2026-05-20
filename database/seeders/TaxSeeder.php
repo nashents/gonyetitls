@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Tax;
 use Illuminate\Database\Seeder;
+use App\Models\Tax;
+use App\Models\Account;
 
 class TaxSeeder extends Seeder
 {
@@ -14,11 +15,66 @@ class TaxSeeder extends Seeder
      */
     public function run()
     {
-        $taxes = [
-            ['name' => "Value Added Tax",'abbreviation' => 'VAT','rate' => '15']
-           
-           ];
+        /*
+        |--------------------------------------------------------------------------
+        | Get Tax Control Account
+        |--------------------------------------------------------------------------
+        | This should be the ledger account where VAT is posted.
+        | Example account names:
+        | - VAT Payable
+        | - Sales Tax Payable
+        |--------------------------------------------------------------------------
+        */
 
-           Tax::insert($taxes);
+        $taxAccount = Account::where('name', 'Value Added Tax')->first();
+
+        if (!$taxAccount) {
+            return;
+        }
+
+        $taxes = [
+
+            [   
+                'user_id' => Null,
+                'account_id'   => $taxAccount->id,
+                'category'     => 'VAT',
+                'name'         => 'Value Added Tax 15%',
+                'abbreviation' => 'VAT 15%',
+                'rate' => '15',
+                'hs_code'      => '99001000',
+                'description'  => 'Standard VAT rate of 15%',
+            ],
+
+            [
+                'account_id'   => $taxAccount->id,
+                'category'     => 'VAT',
+                'name'         => 'Value Added Tax 0%',
+                'abbreviation' => 'VAT 0%',
+                'rate' => '0',
+                'hs_code'      => '99002000',
+                'description'  => 'Zero rated VAT',
+            ],
+
+            [
+                'account_id'   => $taxAccount->id,
+                'category'     => 'VAT',
+                'name'         => 'Value Added Tax Exempt',
+                'abbreviation' => 'VAT Exempt',
+                'rate' => '0',
+                'hs_code'      => '99003000',
+                'description'  => 'VAT exempt supplies',
+            ],
+
+        ];
+
+        foreach ($taxes as $tax) {
+
+            Tax::updateOrCreate(
+                [
+                    'name' => $tax['name'],
+                ],
+                $tax
+            );
+        }
     }
 }

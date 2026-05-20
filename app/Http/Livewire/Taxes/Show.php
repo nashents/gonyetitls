@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Taxes;
 
-use App\Models\Account;
+use App\Models\Tax;
 use Livewire\Component;
 
 class Show extends Component
@@ -11,7 +11,7 @@ class Show extends Component
     public $tax;
 
     public function mount($id){
-        $this->tax = Account::find($id);
+        $this->tax = Tax::find($id);
     }
 
     public function render()

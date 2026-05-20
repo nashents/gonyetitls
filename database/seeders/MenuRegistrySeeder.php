@@ -15,10 +15,50 @@ use Illuminate\Support\Str;
 class MenuRegistrySeeder extends Seeder
 {
 
+
+    private function seedAccount(array $data)
+    {
+        return \App\Models\Account::updateOrCreate(
+
+            [
+                'name' => $data['name'],
+            ],
+
+            [
+                'currency_id'          => $data['currency_id'] ?? null,
+                'account_type_group_id'=> $data['account_type_group_id'],
+                'account_type_id'      => $data['account_type_id'],
+                'name'                 => $data['name'],
+                'abbreviation'         => $data['abbreviation'] ?? null,
+                'rate'                 => $data['rate'] ?? null,
+                'description'          => $data['description'] ?? null,
+                'hs_code'              => $data['hs_code'] ?? null,
+            ]
+        );
+    }
  
 
     public function run(): void
     {
+
+        $sales_taxes = \App\Models\AccountType::where('name', 'Sales Taxes')->first();
+
+        if (!$sales_taxes) {
+            throw new \Exception('Sales Taxes account type not found.');
+        }
+
+        $this->seedAccount([
+            'currency_id'           => null,
+            'account_type_group_id' => $sales_taxes->account_type_group->id,
+            'account_type_id'       => $sales_taxes->id,
+            'name'                  => 'Value Added Tax',
+            'abbreviation'          => 'VAT',
+            'rate'                  => null,
+            'description'           => '',
+            'hs_code'               => '',
+        ]);
+
+    
 
       $categories = [
             // Suspension & Steering
@@ -858,10 +898,10 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
         $upsertSub($m, ['name'=>'Manage Accounts','slug'=>'manage-accounts','icon'=>'fas fa-list','route_name'=>'accounts.index','sort_order'=>10]);
         $upsertSub($m, [
-            'name'=>'Manage Sales Taxes',
+            'name'=>'Manage Tax Categories',
             'slug'=>'manage-sales-taxes',
             'icon'=>'fas fa-list',
-            'route_name'=>'accounts.tax',
+            'route_name'=>'taxes.index',
             'sort_order'=>20,
             'visibility'=>$any([$all(['isAdmin','inFinance']), $all(['isSuperAdmin'])]),
         ]);

@@ -31,6 +31,8 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel as ExcelFacade;
+use Maatwebsite\Excel\Validators\ValidationException as ExcelValidationException;
 
 class Index extends Component
 {
@@ -106,6 +108,7 @@ class Index extends Component
     public $mode_of_payment;
     public $accounts;
     public $account_id;
+    public $company;
     public $filters;
     public $accrual_balance;
     public $date;
@@ -179,29 +182,8 @@ class Index extends Component
         ]);
 
         try {
-            
             $import = new BillsImport($this->company);
-            Excel::import($import, $this->importFile);
-
-            $failures = $import->failures();
-            $errors   = $import->errors();
-
-            if ($failures->isNotEmpty()) {
-                foreach ($failures as $failure) {
-                    $this->addError(
-                        'importFile',
-                        "Row {$failure->row()}: " . implode(', ', $failure->errors())
-                    );
-                }
-                return;
-            }
-
-            if ($errors->isNotEmpty()) {
-                foreach ($errors as $error) {
-                    $this->addError('importFile', $error->getMessage());
-                }
-                return;
-            }
+            ExcelFacade::import($import, $this->importFile);
 
             $this->importFile = null;
             $this->dispatchBrowserEvent('alert', [
@@ -209,13 +191,19 @@ class Index extends Component
                 'message' => 'Bills imported successfully!',
             ]);
 
+        } catch (ExcelValidationException $e) {
+            foreach ($e->failures() as $failure) {
+                $this->addError('importFile', "Row {$failure->row()}: " . implode(', ', $failure->errors()));
+            }
         } catch (\Exception $e) {
             $this->addError('importFile', 'Import failed: ' . $e->getMessage());
         }
+
+        return redirect(request()->header('Referer'));
     }
 
     public function mount(){
-        
+        $this->company = Auth::user()->employee->company;
         $this->resetPage();
         $this->recalculateBills();
         $this->bill_filter = "created_at";

@@ -19,6 +19,9 @@ class Account extends Model implements Auditable
     public function account_type_group(){
         return $this->belongsTo('App\Models\AccountTypeGroup');
     }
+    public function taxes(){
+        return $this->hasMany('App\Models\Tax');
+    }
     public function retreads(){
         return $this->hasMany('App\Models\Retread');
     }
