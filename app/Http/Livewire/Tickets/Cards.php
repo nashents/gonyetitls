@@ -26,7 +26,13 @@ class Cards extends Component
     protected $paginationTheme = 'bootstrap';
     public $search;
     public bool $overdueOnly = false;
-    protected $queryString = ['search', 'overdueOnly' => ['as' => 'overdue', 'except' => false]];
+    protected $queryString = [
+            'search' => ['except' => ''],
+            'from' => ['except' => ''],
+            'to' => ['except' => ''],
+            'page' => ['except' => 1],
+            'overdueOnly' => ['as' => 'overdue', 'except' => false]
+        ];
     public $from;
     public $to;
 
@@ -58,9 +64,7 @@ class Cards extends Component
 
     public function mount($id){
         $this->mechanic_id = $id;
-        $this->resetPage();
-         $this->overdueOnly = request()->boolean('overdue', false);
-        $this->resetPage();
+        $this->overdueOnly = request()->boolean('overdue', false);
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->company = $this->employee->company;

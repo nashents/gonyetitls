@@ -3,38 +3,34 @@
 namespace App\Http\Livewire\Bills;
 
 
-use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\Trip;
-use App\Models\Asset;
-use App\Models\Brand;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Vendor;
+use App\Exports\BillsExport;
+use App\Imports\BillsImport;
 use App\Models\Account;
+use App\Models\Asset;
+use App\Models\BankAccount;
+use App\Models\Bill;
+use App\Models\BillPayment;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Models\Denomination;
+use App\Models\Document;
+use App\Models\Driver;
+use App\Models\Horse;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\CashFlow;
-use App\Models\Category;
-use App\Models\Currency;
-use App\Models\Customer;
-use App\Models\Document;
-use App\Models\BankAccount;
-use App\Models\BillPayment;
+use App\Models\TransactionType;
 use App\Models\Transporter;
-use App\Exports\BillsExport;
-use App\Models\Denomination;
+use App\Models\Trip;
+use App\Models\Vehicle;
+use App\Models\Vendor;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Models\CategoryValue;
-use Livewire\WithFileUploads;
-use App\Models\TransactionType;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
@@ -79,6 +75,7 @@ class Index extends Component
     public $payment_drawdown_balance;
     public $selectedVendorAccount;
     public $selectedVendor;
+    public $importFile;
     private $bills;
     public $bill;
     public $selectedBill;
@@ -171,6 +168,52 @@ class Index extends Component
         return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->search), 'bills_' .time().'.xlsx');
     }
 
+   // In your Livewire component
+
+  
+
+    public function importBills()
+    {
+        $this->validate([
+            'importFile' => 'required|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            
+            $import = new BillsImport($this->company);
+            Excel::import($import, $this->importFile);
+
+            $failures = $import->failures();
+            $errors   = $import->errors();
+
+            if ($failures->isNotEmpty()) {
+                foreach ($failures as $failure) {
+                    $this->addError(
+                        'importFile',
+                        "Row {$failure->row()}: " . implode(', ', $failure->errors())
+                    );
+                }
+                return;
+            }
+
+            if ($errors->isNotEmpty()) {
+                foreach ($errors as $error) {
+                    $this->addError('importFile', $error->getMessage());
+                }
+                return;
+            }
+
+            $this->importFile = null;
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Bills imported successfully!',
+            ]);
+
+        } catch (\Exception $e) {
+            $this->addError('importFile', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
     public function mount(){
         
         $this->resetPage();
@@ -235,6 +278,7 @@ class Index extends Component
 
     public function receiptNumber(){
 
+        $initials = "";
         if (isset(Auth::user()->company)) {
             $str = Auth::user()->company->name;
             $words = explode(' ', $str);
@@ -267,6 +311,8 @@ class Index extends Component
     
     }
     public function paymentNumber(){
+
+     $initials = "";
 
         if (isset(Auth::user()->company)) {
             $str = Auth::user()->company->name;

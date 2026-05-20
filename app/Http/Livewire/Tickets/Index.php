@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 class Index extends Component
 {
 
+
     use WithPagination;
     public $selectedRows = [];
     public $selectPageRows = false;

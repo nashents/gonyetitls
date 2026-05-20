@@ -243,9 +243,9 @@
                                                     <span class="caret"></span>
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li>
+                                                   <li>
                                                         <a href="#"
-                                                            onclick.prevent="openTicketShow('{{ route('tickets.show', $ticket->id) }}')">
+                                                            onclick="openTicketShow('{{ route('tickets.show', $ticket->id) }}')">
                                                             <i class="fa fa-eye color-default"></i>View
                                                         </a>
                                                     </li>

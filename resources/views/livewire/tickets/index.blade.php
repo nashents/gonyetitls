@@ -435,6 +435,7 @@
                 </div>
             </div>
         </div>
+        
 @section('extra-js')
     <script>
         function openTicketShow(showUrl) {
@@ -446,4 +447,4 @@
     </script>
 @endsection
 
-    </div>
+</div>
