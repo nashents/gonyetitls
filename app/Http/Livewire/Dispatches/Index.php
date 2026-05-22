@@ -17,6 +17,7 @@ use App\Models\Notification;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\Tax;
 use App\Models\Ticket;
 use App\Models\Tyre;
 use App\Models\Vendor;
@@ -356,8 +357,8 @@ class Index extends Component
             if($value == "expenses"){
                 $this->currencies = Currency::orderBy('name','asc')->get();
                 $this->vendors = Vendor::orderBy('name','asc')->get();
-                $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-                        return $query->where('name','Sales Taxes');
+                 $this->tax_accounts = Tax::whereHas('account', function ($query) {
+                        return $query->where('name','Value Added Tax');
                     })->orderBy('name','asc')->get();
                 $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
                     return $query->where('name','Expenses');
@@ -513,7 +514,7 @@ class Index extends Component
 
       public function updatedSelectedTax($id, $key){
         if(!is_null($id) && !is_null($key)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
             }

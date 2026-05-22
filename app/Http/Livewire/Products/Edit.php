@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\CategoryValue;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\Tax;
 use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -127,9 +128,9 @@ class Edit extends Component
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+          $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
     }
 
 
@@ -268,9 +269,9 @@ class Edit extends Component
             ]);
         }
          elseif($category == 'taxes'){
-             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-            })->orderBy('name','asc')->get();
+               $this->tax_accounts = Tax::whereHas('account', function ($query) {
+                    return $query->where('name','Value Added Tax');
+                })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Sales Taxes Refreshed Successfully!!."
@@ -289,9 +290,9 @@ class Edit extends Component
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+         $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
     
 
         return view('livewire.products.edit');

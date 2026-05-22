@@ -513,7 +513,7 @@
                                                             <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                                  <option value="">Select Tax Category</option>
                                                                     @foreach ($tax_accounts as $tax)
-                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                                     @endforeach
                                                                 </select>
                                                                 <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
@@ -882,7 +882,7 @@
                                                             <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                                     <option value="">Select Tax Category</option>
                                                                     @foreach ($tax_accounts as $tax)
-                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                     @endforeach
                                                                 </select>
                                                                 <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
@@ -1138,7 +1138,7 @@
                                                         <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                                 <option value="">Select Tax Category</option>
                                                                 @foreach ($tax_accounts as $tax)
-                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                 @endforeach
                                                             </select>
                                                             <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
@@ -1361,7 +1361,7 @@
                                                         <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                                 <option value="">Select Tax Category</option>
                                                                 @foreach ($tax_accounts as $tax)
-                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                 @endforeach
                                                             </select>
                                                             <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
@@ -2063,7 +2063,7 @@
                         <select wire:model.debounce.300ms="tax_id" class="form-control">
                                 <option value="">Select Tax Category</option>
                                 @foreach ($tax_accounts as $tax)
-                                <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                 @endforeach
                             </select>
                             <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 

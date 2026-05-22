@@ -247,7 +247,7 @@ class Edit extends Component
 
     public function updatedSelectedTax($id, $key){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
             }

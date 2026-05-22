@@ -3,20 +3,21 @@
 namespace App\Http\Livewire\Products;
 
 
-use App\Models\Brand;
 use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
-use App\Models\Category;
 use App\Models\Attribute;
-use App\Models\CategoryValue;
-use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\CategoryValue;
+use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\Tax;
 use App\Models\UnitsOfMeasure;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
@@ -140,9 +141,9 @@ class Create extends Component
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
          $this->expense_account_id = $this->expense_accounts->where('name','Uncategorized Expense')->first()?->id;
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+          $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
     }
 
     public function updatedSelectedCategory($id)
@@ -260,8 +261,8 @@ class Create extends Component
             ]);
         }
          elseif($category == 'taxes'){
-             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+             $this->tax_accounts = Tax::whereHas('account', function ($query) {
+                return $query->where('name','Value Added Tax');
             })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -376,9 +377,9 @@ class Create extends Component
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+         $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
      
         return view('livewire.products.create',[
             'brands' => $this->brands,

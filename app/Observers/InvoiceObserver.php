@@ -26,7 +26,7 @@ class InvoiceObserver
      */
     public function updated(Invoice $invoice)
     {
-        if ($invoice->isDirty('status') && $invoice->status === 'approved') {
+        if ($invoice->isDirty('authorization') && $invoice->authorization === 'approved') {
             app(InvoiceJournalService::class)->post($invoice);
         }
     }

@@ -19,6 +19,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Requisition;
 use App\Models\RequisitionItem;
+use App\Models\Tax;
 use App\Models\Trip;
 use App\Models\User;
 use Carbon\Carbon;
@@ -443,7 +444,7 @@ class Index extends Component
                 return;
             }
             
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if ($tax) {
                 $this->tax_rate[$key] = $tax->rate;
             }
@@ -472,8 +473,8 @@ class Index extends Component
         $this->allowances = Allowance::orderBy('name','asc')->where('status',1)->get();
         $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
 
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
         $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
