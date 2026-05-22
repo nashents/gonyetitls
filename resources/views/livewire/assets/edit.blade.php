@@ -180,7 +180,7 @@
                                     <div class="form-group">
                                         <label for="subheading">Taxes</label>
                                         <select wire:model.debounce.300ms="selectedTax"  class="form-control">
-                                            <option value="">Select Tax</option>
+                                             <option value="">Select Tax Category</option>
                                                 @foreach ($tax_accounts as $tax)
                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                 @endforeach

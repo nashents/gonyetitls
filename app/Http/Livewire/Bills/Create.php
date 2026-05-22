@@ -3,28 +3,29 @@
 namespace App\Http\Livewire\Bills;
 
 
-use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\Asset;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Vendor;
+use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
-use App\Models\Product;
-use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Currency;
+use App\Models\Asset;
+use App\Models\Bill;
 use App\Models\BillAccount;
 use App\Models\BillExpense;
-use App\Models\Transporter;
+use App\Models\Currency;
+use App\Models\Driver;
 use App\Models\ExchangeRate;
+use App\Models\Horse;
 use App\Models\Notification;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\Tax;
+use App\Models\Trailer;
+use App\Models\Transporter;
+use App\Models\Vehicle;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\PendingNotificationEmails;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
 
 class Create extends Component
 {
@@ -158,8 +159,8 @@ class Create extends Component
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -504,9 +505,6 @@ class Create extends Component
             $this->income_accounts = Account::whereHas('account_type', function($q){
                 $q->where('name', 'Income');
              })->orderBy('name','asc')->get();
-            $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-                return $query->where('name','Sales Taxes');
-            })->orderBy('name','asc')->get();
             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
                 return $query->where('name','Expenses');
             })->orderBy('name','asc')->get();

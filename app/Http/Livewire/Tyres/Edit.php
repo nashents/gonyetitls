@@ -2,30 +2,31 @@
 
 namespace App\Http\Livewire\Tyres;
 
-use Carbon\Carbon;
-use App\Models\Bin;
-use App\Models\Bill;
-use App\Models\Rack;
-use App\Models\Tyre;
-use App\Models\Store;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Product;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\Purchase;
-use App\Models\Transfer;
-use App\Models\TyreDetail;
+use App\Models\Bill;
 use App\Models\BillExpense;
+use App\Models\Bin;
+use App\Models\Currency;
 use App\Models\ExchangeRate;
-use App\Models\TransferItem;
 use App\Models\GoodsReceived;
-use Livewire\WithFileUploads;
+use App\Models\Product;
+use App\Models\Purchase;
 use App\Models\PurchaseProduct;
-use Illuminate\Support\Facades\DB;
+use App\Models\Rack;
+use App\Models\Store;
+use App\Models\Tax;
+use App\Models\Transfer;
+use App\Models\TransferItem;
+use App\Models\Tyre;
+use App\Models\TyreDetail;
+use App\Models\Vehicle;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
@@ -153,9 +154,9 @@ class Edit extends Component
       $this->income_accounts = Account::whereHas('account_type', function($q){
           $q->where('name', 'Income');
       })->orderBy('name','asc')->get();
-      $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-          return $query->where('name','Sales Taxes');
-      })->orderBy('name','asc')->get();
+       $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
         $tyre = Tyre::find($id);
         $this->tyre = $tyre;
         $this->tyre_id = $id;

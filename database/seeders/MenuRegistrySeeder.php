@@ -984,13 +984,22 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Deleted Orders','slug'=>'deleted-asset-orders','icon'=>'fas fa-trash','route_name'=>'purchases.deleted','sort_order'=>50,'badge_key'=>'asset_purchases_deleted_count','visibility'=>$assetPOVis]);
 
         $m = $upsertModule($g, [
-            'name' => 'GRV (Assets)',
+            'name' => 'GRVs (Assets)',
             'slug' => 'grv-assets',
             'icon' => 'fas fa-th-list',
             'route_name' => 'goods_receiveds.assets',
             'sort_order' => 40,
         ]);
-        $upsertSub($m, ['name'=>'Manage Assets GRVs','slug'=>'manage-assets-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.assets','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Goods Received','slug'=>'manage-assets-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.assets','sort_order'=>10]);
+       
+        $m = $upsertModule($g, [
+            'name' => 'GR (Assets)',
+            'slug' => 'gr-assets',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'goods_returneds.assets',
+            'sort_order' => 45,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Goods Returned','slug'=>'manage-gr-assets','icon'=>'fas fa-list','route_name'=>'goods_returneds.assets','sort_order'=>10]);
 
         $m = $upsertModule($g, [
             'name' => 'Assets',
@@ -1888,7 +1897,16 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'route_name' => 'goods_receiveds.index',
             'sort_order' => 50,
         ]);
-        $upsertSub($m, ['name'=>'Manage Inventory GRVs','slug'=>'manage-inventory-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Goods Received','slug'=>'manage-inventory-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'GR (Inventory)',
+            'slug' => 'gr-inventory',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'goods_returneds.index',
+            'sort_order' => 55,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Goods Returned','slug'=>'manage-gr-inventory','icon'=>'fas fa-list','route_name'=>'goods_returneds.index','sort_order'=>10]);
 
         $m = $upsertModule($g, [
             'name' => 'Inventory',
@@ -1972,7 +1990,17 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'route_name' => 'goods_receiveds.tyres',
             'sort_order' => 40,
         ]);
-        $upsertSub($m, ['name'=>'Manage Tyre GRVs','slug'=>'manage-tyre-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.tyres','sort_order'=>10]);
+
+        $upsertSub($m, ['name'=>'Manage Goods Received','slug'=>'manage-tyre-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.tyres','sort_order'=>10]);
+
+          $m = $upsertModule($g, [
+            'name' => 'GR (Tyres)',
+            'slug' => 'gr-tyres',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'goods_returneds.tyres',
+            'sort_order' => 45,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Goods Returned','slug'=>'manage-gr-tyres','icon'=>'fas fa-list','route_name'=>'goods_returneds.tyres','sort_order'=>10]);
 
         $m = $upsertModule($g, [
             'name' => 'Tyres',

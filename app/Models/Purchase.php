@@ -12,6 +12,12 @@ class Purchase extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function goods_receiveds(){
+        return $this->hasMany('App\Models\GoodsReceived');
+    }
+    public function goods_returneds(){
+        return $this->hasMany('App\Models\GoodsReturned');
+    }
     public function requisitions(){
         return $this->hasMany('App\Models\Requisition');
     }

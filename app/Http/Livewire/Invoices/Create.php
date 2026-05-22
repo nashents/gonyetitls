@@ -63,7 +63,6 @@ class Create extends Component
     public $invoice_to = "Customer";
     public $booking_filter;
     public $rental_filter;
-
     public $products;
     public $inventory_products;
     public $weight = [];
@@ -488,8 +487,8 @@ class Create extends Component
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');

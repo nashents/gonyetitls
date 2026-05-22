@@ -12,6 +12,12 @@ class GoodsReceived extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function goods_returned(){
+        return $this->hasOne('App\Models\GoodsReturned');
+    }
+    public function purchase(){
+        return $this->belongsTo('App\Models\Purchase');
+    }
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
     }

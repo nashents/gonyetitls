@@ -132,6 +132,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-goods_returnedModal', event => {
+                $('#goods_returnedModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-goods_returnedModal', event => {
+                $('#goods_returnedModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-goods_returnedEditModal', event => {
+                $('#goods_returnedEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-goods_returnedEditModal', event => {
+                $('#goods_returnedEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-deleteModal', event => {
                 $('#deleteModal').modal('show');
             })

@@ -470,6 +470,9 @@ Route::get('breakdowns/{driver}/driver/','DriverController@breakdowns')->name('d
 Route::get('goods_receiveds/{goods_received}/preview','GoodsReceivedController@preview')->name('goods_receiveds.preview');
 Route::get('goods-received/tyres/','GoodsReceivedController@tyres')->name('goods_receiveds.tyres');
 Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goods_receiveds.assets');
+Route::get('goods_returned/{goods_returned}/preview','GoodsReturnedController@preview')->name('goods_returneds.preview');
+Route::get('goods-returned/tyres/','GoodsReturnedController@tyres')->name('goods_returneds.tyres');
+Route::get('goods-receireturnedved/assets/','GoodsReturnedController@assets')->name('goods_returneds.assets');
 
 Route::get('reminders/copy/','ReminderController@copy')->name('reminders.copy');
 
@@ -500,6 +503,7 @@ Route::resource('claims','ClaimController');
 Route::resource('inventory_transfers','InventoryTransferController');
 Route::resource('tyre_transfers','TyreTransferController');
 Route::resource('goods_receiveds','GoodsReceivedController');
+Route::resource('goods_returneds','GoodsReturnedController');
 Route::resource('racks','RackController');
 Route::resource('waste_types','WasteTypeController');
 Route::resource('waste_receptacles','WasteReceptacleController');

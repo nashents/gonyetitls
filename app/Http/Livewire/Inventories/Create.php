@@ -28,6 +28,7 @@ use App\Models\Purchase;
 use App\Models\PurchaseProduct;
 use App\Models\Rack;
 use App\Models\Store;
+use App\Models\Tax;
 use App\Models\Transfer;
 use App\Models\TransferItem;
 use App\Models\UnitsOfMeasure;
@@ -187,8 +188,8 @@ class Create extends Component
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
     }
 

@@ -2,36 +2,37 @@
 
 namespace App\Http\Livewire\Purchases;
 
-use Carbon\Carbon;
-use App\Models\Vendor;
+use App\Exports\PurchasesExport;
+use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
+use App\Models\AccountType;
 use App\Models\Booking;
-use App\Models\Contact;
-use App\Models\Expense;
-use App\Models\Product;
-use Livewire\Component;
 use App\Models\Category;
+use App\Models\CategoryValue;
+use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Document;
 use App\Models\Employee;
-use App\Models\Purchase;
-use App\Models\VendorType;
-use App\Models\AccountType;
-use App\Models\Requisition;
 use App\Models\ExchangeRate;
+use App\Models\Expense;
 use App\Models\Notification;
+use App\Models\PaymentMethod;
+use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\PurchaseDocument;
+use App\Models\PurchaseProduct;
+use App\Models\Requisition;
+use App\Models\Tax;
+use App\Models\Vendor;
+use App\Models\VendorType;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Models\CategoryValue;
-use App\Models\PaymentMethod;
-use Livewire\WithFileUploads;
-use App\Models\PurchaseProduct;
-use App\Exports\PurchasesExport;
-use App\Models\PurchaseDocument;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\PendingNotificationEmails;
 
 class Index extends Component
 {
@@ -296,9 +297,9 @@ class Index extends Component
             $this->income_accounts = Account::whereHas('account_type', function($q){
                 $q->where('name', 'Income');
              })->orderBy('name','asc')->get();
-             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-                return $query->where('name','Sales Taxes');
-            })->orderBy('name','asc')->get();
+            $this->tax_accounts = Tax::whereHas('account', function ($query) {
+                    return $query->where('name','Value Added Tax');
+                })->orderBy('name','asc')->get();
             $this->vendors = Vendor::orderBy('name','asc')->get();
             $this->currencies = Currency::orderBy('name','asc')->get();
             $this->purchase_number = $this->purchaseNumber();

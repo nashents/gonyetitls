@@ -73,11 +73,7 @@
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
-                                    <th class="th-sm">Delivery#
-                                    </th>
-                                    <th class="th-sm">Driver Name
-                                    </th>
-                                    <th class="th-sm">Delivery Date
+                                    <th class="th-sm">Delivery Details
                                     </th>
                                     <th class="th-sm">Item(s)
                                     </th>
@@ -93,14 +89,36 @@
                                 <tbody>
                                     @forelse ($goods_receiveds as $goods_received)
                                   <tr>
-                                    <td>{{ucfirst($goods_received->goods_received_number)}}</td>
+                                    <td>
+                                        {{ucfirst($goods_received->goods_received_number)}}
+                                        @php
+                                            $po = $goods_received->purchase;
+                                        @endphp
+                                        @if ($po)
+                                            <br>
+                                            <small class="text-muted">
+                                               <strong>PurchaseOrder#:</strong> {{$po->purchase_number}}
+                                            </small>  
+                                        @endif
+                                    </td>
+                                    
                                     <td>{{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}}</td>
                                     <td>{{$goods_received->vendor ? $goods_received->vendor->name : ""}}</td>
                                     <td>{{$goods_received->condition}}</td>
                                     <td>{{$goods_received->date}}</td>
-                                    <td>{{$goods_received->delivery_number}}</td>
-                                    <td>{{$goods_received->driver_name}}</td>
-                                    <td>{{$goods_received->delivery_date}}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            @if ($goods_received->delivery_number)
+                                                <strong>Delivery#:</strong> {{$goods_received->delivery_number}}
+                                            @endif
+                                            @if ($goods_received->delivery_date) <br>
+                                                <strong>Date:</strong> {{$goods_received->delivery_date}}
+                                            @endif
+                                            @if ($goods_received->driver_name) <br>
+                                                <strong>Driver:</strong> {{$goods_received->driver_name}}
+                                            @endif
+                                        </small>
+                                    </td>
                                     <td>
                                         @if ($department == "inventory")
                                             {{$goods_received->inventories->count()}}
@@ -200,6 +218,24 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
+                      <div class="mb-20 mt-20">
+                        <input type="checkbox" wire:model.debounce.300ms="attach"   class="line-style"  />
+                        <label for="one" class="radio-label">Attach a purchase order to this GRVoucher. </label>
+                        @error('attach') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if(isset($attach) && $attach == True)
+                        <div class="form-group">
+                            <label for="name">Purchase Orders</label>
+                            <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search purchase orders" class="form-control">
+                            <select class="form-control" wire:model.debounce.300ms="purchase_id" size="4">
+                                <option value="">Select Purchase Order</option>
+                                @foreach ($purchases as $purchase)
+                                    <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                @endforeach
+                            </select>
+                            @error('purchase_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
                     <div class="row">
                         <div class="col-md-4">
                                 <div class="form-group">
@@ -297,11 +333,28 @@
                 <form wire:submit.prevent="update()" >
 
                 <div class="modal-body">
+                    <div class="mb-20 mt-20">
+                        <input type="checkbox" wire:model.debounce.300ms="attach"   class="line-style"  />
+                        <label for="one" class="radio-label">Attach a purchase order to this GRVoucher. </label>
+                        @error('attach') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if(isset($attach) && $attach == True)
+                        <div class="form-group">
+                            <label for="name">Purchase Orders</label>
+                            <select class="form-control" wire:model.debounce.300ms="purchase_id" size="4">
+                                <option value="">Select Purchase Order</option>
+                                @foreach ($purchases as $purchase)
+                                    <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                @endforeach
+                            </select>
+                            @error('purchase_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
                    <div class="row">
                         <div class="col-md-4">
                                 <div class="form-group">
                                 <label for="name">Vendors<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="vendor_id">
+                                <select class="form-control" wire:model.debounce.300ms="vendor_id" required>
                                     <option value="">Select Vendor</option>
                                     @foreach ($vendors as $vendor)
                                         <option value="{{$vendor->id}}">{{$vendor->name}}</option>

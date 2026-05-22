@@ -2,13 +2,15 @@
 
 namespace App\Http\Livewire\GoodsReceiveds;
 
-use App\Models\Vendor;
-use Livewire\Component;
 use App\Models\Employee;
-use Livewire\WithPagination;
 use App\Models\GoodsReceived;
-use Illuminate\Support\Facades\DB;
+use App\Models\Purchase;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -17,7 +19,8 @@ class Index extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public $searchPurchase;
+    protected $queryString = ['search','searchPurchase'];
     public $from;
     public $to;
     public $goods_received_filter;
@@ -26,6 +29,8 @@ class Index extends Component
     private $goods_receiveds;
     public $goods_received;
     public $goods_received_id;
+    public $purchases;
+    public $purchase_id;
     public $vendors;
     public $vendor_id;
     public $employees;
@@ -40,6 +45,7 @@ class Index extends Component
     public $comments;
     public $company;
     public $department;
+    public $attach = False;
 
     public function mount($department){
         $this->goods_received_filter = "created_at";
@@ -47,6 +53,7 @@ class Index extends Component
         $this->department = $department;
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
+       
     }
 
         public function updated($value){
@@ -67,6 +74,7 @@ class Index extends Component
         $this->delivery_number = '';
         $this->comments = '';
         $this->condition = '';
+        $this->purchase_id = '';
     }
 
      public function goodsReceivedNumber(){
@@ -95,27 +103,30 @@ class Index extends Component
     }
 
     public function store(){
-      
-        $goods_received = new GoodsReceived;
-        $goods_received->goods_received_number = $this->goodsReceivedNumber();
-        $goods_received->user_id = Auth::user()->id;
-        $goods_received->vendor_id = $this->vendor_id;
-        $goods_received->department = $this->department;
-        $goods_received->employee_id = $this->employee_id;
-        $goods_received->date = $this->date;
-        $goods_received->delivery_date = $this->delivery_date;
-        $goods_received->delivery_number = $this->delivery_number;
-        $goods_received->driver_name = $this->driver_name;
-        $goods_received->condition = $this->condition;
-        $goods_received->comments = $this->comments;
-        $goods_received->save();
 
-        $this->dispatchBrowserEvent('hide-goods_receivedModal');
-        $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Good Received Voucher Created Successfully!!"
-        ]);
+        DB::transaction(function () {
+            $goods_received = new GoodsReceived;
+            $goods_received->goods_received_number = $this->goodsReceivedNumber();
+            $goods_received->user_id = Auth::user()->id;
+            $goods_received->vendor_id = $this->vendor_id;
+            $goods_received->purchase_id = $this->purchase_id;
+            $goods_received->department = $this->department;
+            $goods_received->employee_id = $this->employee_id;
+            $goods_received->date = $this->date;
+            $goods_received->delivery_date = $this->delivery_date;
+            $goods_received->delivery_number = $this->delivery_number;
+            $goods_received->driver_name = $this->driver_name;
+            $goods_received->condition = $this->condition;
+            $goods_received->comments = $this->comments;
+            $goods_received->save();
+
+            $this->dispatchBrowserEvent('hide-goods_receivedModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Good Received Voucher Created Successfully!!"
+            ]);
+        });
 
     }
 
@@ -123,8 +134,10 @@ class Index extends Component
         $this->goods_received_id = $id;
         $goods_received = GoodsReceived::find($id);
         $this->date = $goods_received->date;
+        $this->attach = !is_null($goods_received->purchase_id) ? True : False;
         $this->delivery_date = $goods_received->delivery_date;
         $this->employee_id = $goods_received->employee_id;
+        $this->purchase_id = $goods_received->purchase_id;
         $this->vendor_id = $goods_received->vendor_id;
         $this->delivery_number = $goods_received->delivery_number;
         $this->driver_name = $goods_received->driver_name;
@@ -135,34 +148,26 @@ class Index extends Component
 
     public function update(){
 
-        try{
+        DB::transaction(function () {
+            $goods_received = GoodsReceived::find($this->goods_received_id);
+            $goods_received->vendor_id = $this->vendor_id;
+            $goods_received->employee_id = $this->employee_id;
+            $goods_received->purchase_id = $this->purchase_id;
+            $goods_received->date = $this->date;
+            $goods_received->delivery_date = $this->delivery_date;
+            $goods_received->delivery_number = $this->delivery_number;
+            $goods_received->driver_name = $this->driver_name;
+            $goods_received->condition = $this->condition;
+            $goods_received->comments = $this->comments;
+            $goods_received->update();
 
-        $goods_received = GoodsReceived::find($this->goods_received_id);
-        $goods_received->vendor_id = $this->vendor_id;
-        $goods_received->employee_id = $this->employee_id;
-        $goods_received->date = $this->date;
-        $goods_received->delivery_date = $this->delivery_date;
-        $goods_received->delivery_number = $this->delivery_number;
-        $goods_received->driver_name = $this->driver_name;
-        $goods_received->condition = $this->condition;
-        $goods_received->comments = $this->comments;
-        $goods_received->update();
-
-        $this->dispatchBrowserEvent('hide-goods_receivedEditModal');
-        $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Goods Received Voucher Updated Successfully!!"
-        ]);
-
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while updating goods received voucher !!"
-        ]);
-    }
+            $this->dispatchBrowserEvent('hide-goods_receivedEditModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Goods Received Voucher Updated Successfully!!"
+            ]);
+        });
     }
 
      public function showClose($id){
@@ -184,77 +189,89 @@ class Index extends Component
         ]);
     }
 
+    public function updatedPurchaseId($id){
+        if(is_null($id)){
+            return;
+        }
+        $purchase = Purchase::find($id);
+        $this->vendor_id = $purchase?->vendor_id;
+
+    }
+
 
     public function render()
     {
+        $query = Purchase::query()
+        ->with(['vendor', 'booking', 'purchase_products', 'purchase_products.product'])
+        ->where('department', $this->department)
+        ->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')
+        ->where('status', 1);
 
-               if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return view('livewire.goods-receiveds.index',[
-                        'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
-                          ->where('department',$this->department)
-                        ->whereDate($this->goods_received_filter, '>=', $this->from)
-                        ->whereDate($this->goods_received_filter, '<=', $this->to)
-                        ->where('goods_received_number','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('delivery_date','like', '%'.$this->search.'%')
-                        ->orWhere('driver_name','like', '%'.$this->search.'%')
-                        ->orWhere('delivery_number','like', '%'.$this->search.'%')
-                        ->orWhereHas('vendor', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('employee', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->goods_received_filter,'desc')->paginate(10),
-                       
-    
+        // 🔹 Search filter (properly grouped so ORs don't escape other conditions)
+        if (filled($this->searchPurchase)) {
+            $search = '%'.$this->searchPurchase.'%';
 
-                    ]);
-                }else {
-                    return view('livewire.goods-receiveds.index',[
-                        'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
-                          ->where('department',$this->department)
-                        ->whereDate($this->goods_received_filter, '>=', $this->from)
-                        ->whereDate($this->goods_received_filter, '<=', $this->to)
-                        ->where('to_be_paid', True)
-                        ->orderBy($this->goods_received_filter,'desc')->paginate(10),
+            $query->where(function ($q) use ($search) {
+                $q->where('purchase_number', 'like', $search)
+                ->orWhere('date', 'like', $search)
+                ->orWhere('description', 'like', $search)
+                ->orWhereHas('vendor', function ($sub) use ($search) {
+                    $sub->where('name', 'like', $search);
+                })
+                ->orWhereHas('booking', function ($sub) use ($search) {
+                    $sub->where('booking_number', 'like', $search);
+                })
+                ->orWhereHas('purchase_products.product', function ($sub) use ($search) {
+                    $sub->where('name', 'like', $search);
+                });
+            });
+        }
 
-                    ]);
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return view('livewire.goods-receiveds.index',[
-                    'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
-                      ->where('department',$this->department)
-                    ->whereMonth($this->goods_received_filter, date('m'))
-                    ->whereYear($this->goods_received_filter, date('Y'))
-                    ->where('goods_received_number','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('delivery_date','like', '%'.$this->search.'%')
-                    ->orWhere('driver_name','like', '%'.$this->search.'%')
-                    ->orWhere('delivery_number','like', '%'.$this->search.'%')
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
+        $this->purchases = $query
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $query = GoodsReceived::query()
+            ->with(['vendor', 'employee'])
+            ->where('department', $this->department);
+
+        // Date filter
+        if ($this->from && $this->to) {
+            $query->whereDate($this->goods_received_filter, '>=', $this->from)
+                ->whereDate($this->goods_received_filter, '<=', $this->to);
+        } else {
+            $query->whereMonth($this->goods_received_filter, now()->month)
+                ->whereYear($this->goods_received_filter, now()->year);
+        }
+
+
+        // Search filter
+        $query->when($this->search, function ($q) {
+            $search = '%' . $this->search . '%';
+
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('goods_received_number', 'like', $search)
+                    ->orWhere('date', 'like', $search)
+                    ->orWhere('delivery_date', 'like', $search)
+                    ->orWhere('driver_name', 'like', $search)
+                    ->orWhere('delivery_number', 'like', $search)
+                    ->orWhereHas('vendor', function ($vendorQuery) use ($search) {
+                        $vendorQuery->where('name', 'like', $search);
                     })
-                    ->orWhereHas('employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->goods_received_filter,'desc')->paginate(10),
-                ]);
-            }
-            else {
-               
-                return view('livewire.goods-receiveds.index',[
-                    'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
-                    ->where('department',$this->department)
-                    ->whereMonth($this->goods_received_filter, date('m'))
-                    ->whereYear($this->goods_received_filter, date('Y'))
-                    ->orderBy($this->goods_received_filter,'desc')->paginate(10),
-                ]);
-              
-            }
+                    ->orWhereHas('employee', function ($employeeQuery) use ($search) {
+                        $employeeQuery->where(
+                            DB::raw("concat(name, ' ', surname)"),
+                            'like',
+                            $search
+                        );
+                    });
+            });
+        });
+
+        return view('livewire.goods-receiveds.index', [
+            'goods_receiveds' => $query
+                ->orderBy($this->goods_received_filter, 'desc')
+                ->paginate(10),
+        ]);
     }
 }

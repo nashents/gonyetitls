@@ -15,7 +15,16 @@ class GoodsReturnedController extends Controller
      */
     public function index()
     {
-        //
+        return view('goods_returneds.index');
+    }
+
+    public function assets()
+    {
+        return view('goods_returneds.assets');
+    }
+    public function tyres()
+    {
+        return view('goods_returneds.tyres');
     }
 
     /**

@@ -254,7 +254,7 @@
                                     <div class="form-group">
                                         <label for="subheading">Taxes</label>
                                         <select wire:model.debounce.300ms="selectedTax.0"  class="form-control">
-                                            <option value="">Select Tax</option>
+                                             <option value="">Select Tax Category</option>
                                                 @foreach ($tax_accounts as $tax)
                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                                 @endforeach
@@ -321,7 +321,7 @@
                                             <div class="form-group">
                                                 <label for="subheading">Taxes</label>
                                                 <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
-                                                    <option value="">Select Tax</option>
+                                                     <option value="">Select Tax Category</option>
                                                         @foreach ($tax_accounts as $tax)
                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                                         @endforeach
@@ -470,7 +470,7 @@
                     <div class="form-group">
                         <label for="subheading">Sales Tax</label>
                         <select wire:model.debounce.300ms="tax_id" class="form-control">
-                            <option value="">Select Tax</option>
+                             <option value="">Select Tax Category</option>
                                 @foreach ($tax_accounts as $tax)
                                 <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                 @endforeach

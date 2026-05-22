@@ -795,7 +795,7 @@ class Edit extends Component
             
             $topups_price_total = TopUp::where('container_id',$this->container->id)->where('rate','!=', NULL)->where('rate','!=',"")->where('rate', 'REGEXP', '^[0-9]+$')->where('currency_id',$this->container->currency_id)->get()->sum('rate');
             $topups_count = $top_ups->count();
-            if ((isset($topups_count) && $topups_count > 0) && (isset($topups_price_total) && $topups_price_total > 0)) {
+            if ((is_numeric($topups_count) && $topups_count > 0) && (is_numeric($topups_price_total) && $topups_price_total > 0)) {
                 $this->unit_price = number_format($topups_price_total/$topups_count,2);
             }
         
@@ -2202,9 +2202,19 @@ class Edit extends Component
                         ? (float) ($trip_transport_order->exchange_amount ?? 0)
                         : (float) ($trip_transport_order->allocated_freight ?? 0);
 
+                    $freight = is_numeric($freight) ? (float) $freight : 0;
+
+                    $allocatedWeight = is_numeric($trip_transport_order->allocated_weight)
+                        ? (float) $trip_transport_order->allocated_weight
+                        : 0;
+
+                    $allocatedLitreage = is_numeric($trip_transport_order->allocated_litreage)
+                        ? (float) $trip_transport_order->allocated_litreage
+                        : 0;
+
                     $totalFreight += $freight;
-                    $totalWeight  += (float) ($trip_transport_order->allocated_weight ?? 0);
-                    $totalLitreage += (float) ($trip_transport_order->allocated_litreage ?? 0);
+                    $totalWeight += $allocatedWeight;
+                    $totalLitreage += $allocatedLitreage;
                     
 
                     $this->createDeliveryNotes($trip_transport_order);
@@ -2299,9 +2309,19 @@ class Edit extends Component
                         ? (float) ($trip_transport_order->exchange_amount ?? 0)
                         : (float) ($trip_transport_order->allocated_freight ?? 0);
 
+                    $freight = is_numeric($freight) ? (float) $freight : 0;
+
+                    $allocatedWeight = is_numeric($trip_transport_order->allocated_weight)
+                        ? (float) $trip_transport_order->allocated_weight
+                        : 0;
+
+                    $allocatedLitreage = is_numeric($trip_transport_order->allocated_litreage)
+                        ? (float) $trip_transport_order->allocated_litreage
+                        : 0;
+
                     $totalFreight += $freight;
-                    $totalWeight  += (float) ($trip_transport_order->allocated_weight ?? 0);
-                    $totalLitreage += (float) ($trip_transport_order->allocated_litreage ?? 0);
+                    $totalWeight += $allocatedWeight;
+                    $totalLitreage += $allocatedLitreage;
 
                     $this->createDeliveryNotes($trip_transport_order);
                     $this->addDestinations($trip_transport_order);

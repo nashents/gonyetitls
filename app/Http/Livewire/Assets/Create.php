@@ -3,41 +3,42 @@
 namespace App\Http\Livewire\Assets;
 
 
-use Carbon\Carbon;
-use App\Models\Bin;
-use App\Models\Bill;
-use App\Models\Rack;
-use App\Models\Asset;
-use App\Models\Brand;
-use App\Models\Store;
-use App\Models\Branch;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Contact;
-use App\Models\Product;
-use Livewire\Component;
+use App\Models\Asset;
+use App\Models\AssetDetail;
+use App\Models\AssetDocument;
+use App\Models\AssetSerial;
+use App\Models\Attribute;
+use App\Models\AttributeValue;
+use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\Bin;
+use App\Models\Branch;
+use App\Models\Brand;
 use App\Models\Category;
+use App\Models\CategoryValue;
+use App\Models\Contact;
 use App\Models\Currency;
+use App\Models\Department;
 use App\Models\Document;
 use App\Models\Employee;
-use App\Models\Purchase;
-use App\Models\Attribute;
-use App\Models\Department;
-use App\Models\VendorType;
-use App\Models\AssetDetail;
-use App\Models\AssetSerial;
-use App\Models\BillExpense;
 use App\Models\ExchangeRate;
-use App\Models\AssetDocument;
-use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
-use Livewire\WithFileUploads;
-use App\Models\AttributeValue;
-use App\Models\PurchaseProduct;
+use App\Models\Product;
 use App\Models\ProductAttribute;
-use Illuminate\Support\Facades\DB;
+use App\Models\Purchase;
+use App\Models\PurchaseProduct;
+use App\Models\Rack;
+use App\Models\Store;
+use App\Models\Tax;
+use App\Models\Vendor;
+use App\Models\VendorType;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
@@ -179,8 +180,8 @@ class Create extends Component
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+         $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
     }
 
