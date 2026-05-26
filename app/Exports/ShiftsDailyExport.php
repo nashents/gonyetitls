@@ -29,7 +29,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle, WithDrawings, WithCustomStartCell
 {
     protected string $shiftDateColumn = 'shift_start_time';
-    protected string $shiftTypeColumn = 'type';
+    protected string $shiftTypeColumn = 'ytype';
     protected string $tripWeightColumn = 'weight';
     protected string $shiftOpenMileageColumn = 'open_mileage';
     protected string $shiftCloseMileageColumn = 'close_mileage';

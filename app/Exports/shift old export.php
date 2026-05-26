@@ -61,6 +61,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $this->bootLoadingPoints();
         $this->bootColumns();
     }
+    
 
     public function title(): string
     {
@@ -72,28 +73,20 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         return 'A7';
     }
 
-    public function drawings()
+        public function drawings()
     {
         $drawing = new Drawing();
-
-        $company = Auth::user()?->employee?->company;
-
-        $drawing->setName($company?->name ?? 'Company');
-        $drawing->setDescription(($company?->name ?? 'Company') . ' Logo');
-
-        $logoPath = public_path('/images/uploads/logo.png');
-
-        if ($company && !empty($company->logo)) {
-            $candidate = public_path('/images/uploads/' . $company->logo);
-            if (file_exists($candidate)) {
-                $logoPath = $candidate;
-            }
+        if (isset(Auth::user()->employee->company)) {
+        $drawing->setName(Auth::user()->employee->company->name);
+        $drawing->setDescription(Auth::user()->employee->company->name . 'Logo');
+      if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
+            $drawing->setPath(public_path('/images/uploads/'.Auth::user()->employee->company->logo));
+        }else{
+            $drawing->setPath(public_path('/images/uploads/logo.png'));
         }
-
-        $drawing->setPath($logoPath);
+        } 
         $drawing->setHeight(90);
         $drawing->setCoordinates('A2');
-
         return $drawing;
     }
 
