@@ -68,7 +68,7 @@ class Index extends Component
     public $horse_id;
     public $container;
     public $container_id;
-    public $type = NULL;
+    public $type = "Horse";
     public $attach_fuel_request = False;
     public $fuel_requests;
     public $selectedFuelRequest;
@@ -110,10 +110,16 @@ class Index extends Component
     public $selected_vehicle;
     public $net_profit;
     public $fuel_type;
+    public $is_full_tank;
 
     public $search;
     public $searchRequest;
-    protected $queryString = ['search','searchRequest'];
+    public $searchTrip;
+    public $searchHorse;
+    public $searchEmployee;
+    public $searchVehicle;
+    public $searchAsset;
+    protected $queryString = ['search','searchRequest','searchTrip'];
     public $fuel_filter;
     public $from;
     public $to;
@@ -146,18 +152,171 @@ class Index extends Component
 
         $this->horses = Horse::orderBy('registration_number','asc')->get();
         $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
-        $this->assets = Asset::latest()->get();
+        $this->assets = Asset::query()
+            ->join('products', 'assets.product_id', '=', 'products.id')
+            ->select('assets.*')
+            ->orderBy('products.name', 'asc')
+            ->orderBy('assets.created_at', 'desc')
+            ->get();
         $this->fillup = 1;
         $this->categories = Category::latest()->get();
         $this->fuel_requests = FuelRequest::where('authorization','approved')->doesntHave('fuel')->orderBy('created_at','desc')->get();
         $this->category_values = collect();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->employees = Employee::orderBy('name','asc')->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->trips = collect();
         $this->containers = Container::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
     
 
+    }
+
+    public function updatedSearchHorse()
+    {
+        $term = trim((string) $this->searchHorse);
+
+        $query = Horse::query()
+            ->with('horse_make:id,name', 'horse_model:id,name')
+            ->where('registration_number', 'like', "%{$term}%")
+            ->where('archive', 0);
+            // Order by registration number
+            $this->horses = $query
+                ->orderBy('registration_number', 'asc')
+                ->get();
+    }
+
+    public function updatedSearchVehicle()
+    {
+        $term = trim((string) $this->searchVehicle);
+
+        $query = Vehicle::query()
+            ->with('vehicle_make:id,name', 'vehicle_model:id,name')
+            ->where('registration_number', 'like', "%{$term}%")
+            ->where('archive', 0);
+            // Order by registration number (ascending)
+            $this->vehicles = $query
+                ->orderBy('registration_number', 'asc')
+                ->get();
+    }
+    public function updatedSearchEmployee()
+    {
+        $term = trim((string) $this->searchEmployee);
+
+        $query = Employee::query()
+            ->where('archive', 0);
+
+        // Flexible search: name, surname, or "name surname"
+        if ($term !== '') {
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                    ->orWhere('surname', 'like', "%{$term}%")
+                    ->orWhereRaw("CONCAT(name, ' ', surname) LIKE ?", ["%{$term}%"])
+                    ->orWhere('employee_number', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('phonenumber', 'like', "%{$term}%");
+            });
+        }
+
+        $this->employees = $query
+            ->orderBy('name', 'asc')
+            ->orderBy('surname', 'asc')
+            ->get();
+    }
+
+    public function updatedSearchAsset()
+    {
+        $term = trim((string) $this->searchAsset);
+
+        $query = Asset::query()
+            ->with([
+                'product.brand',
+            ])
+            ->join('products', 'assets.product_id', '=', 'products.id') // for sorting
+            ->select('assets.*') // avoid column conflicts
+            ->where('assets.archive', 0);
+
+        // Optional category filter
+        if (!empty($this->selectedCategory)) {
+            $query->where('assets.category_id', $this->selectedCategory);
+        }
+
+        // Flexible search
+        if ($term !== '') {
+
+            $search = "%{$term}%";
+
+            $query->where(function ($q) use ($search) {
+
+                // Asset serial number
+                $q->where('assets.serial_number', 'like', $search)
+
+                    // Product name / identification number / brand
+                    ->orWhereHas('product', function ($productQuery) use ($search) {
+
+                        $productQuery->where('name', 'like', $search)
+
+                            ->orWhere('identification_number', 'like', $search)
+
+                            ->orWhereHas('brand', function ($brandQuery) use ($search) {
+                                $brandQuery->where('name', 'like', $search);
+                            });
+
+                    });
+
+            });
+        }
+
+        $this->assets = $query
+            ->orderBy('products.name', 'asc')
+            ->get();
+    }
+
+    public function updatedSearchTrip()
+    {
+        $search = '%' . $this->searchTrip . '%';
+
+        $this->trips = Trip::query()
+            ->with([
+                'customer:id,name',
+                'horse:id,registration_number',
+                'vehicle:id,registration_number',
+                'loading_point:id,name',
+                'offloading_point:id,name',
+            ])
+
+            ->when($this->selectedHorse, function ($query) {
+                $query->where('horse_id', $this->selectedHorse);
+            })
+
+            ->when($this->selectedVehicle, function ($query) {
+                $query->where('vehicle_id', $this->selectedVehicle);
+            })
+
+            ->where(function ($query) use ($search) {
+
+                $query->where('trip_number', 'like', $search)
+                    ->orWhere('trip_ref', 'like', $search)
+
+                    ->orWhereHas('horse', function ($horseQuery) use ($search) {
+                        $horseQuery->where('registration_number', 'like', $search);
+                    })
+
+                    ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        $vehicleQuery->where('registration_number', 'like', $search);
+                    })
+
+                    ->orWhereHas('loading_point', function ($loadingPointQuery) use ($search) {
+                        $loadingPointQuery->where('name', 'like', $search);
+                    })
+
+                    ->orWhereHas('offloading_point', function ($offloadingPointQuery) use ($search) {
+                        $offloadingPointQuery->where('name', 'like', $search);
+                    });
+
+            })
+
+            ->orderBy('start_date', 'desc')
+            ->get();
     }
 
     public function updatedSearchRequest($value){
@@ -452,6 +611,7 @@ class Index extends Component
         $fuel->employee_id = $this->employee_id;
         $fuel->fuel_request_id = $this->selectedFuelRequest;
         $fuel->fuel_type = $this->fuel_type;
+        $fuel->is_full_tank = $this->is_full_tank;
 
         if (isset($this->selectedTrip)) {
             $trip = Trip::find($this->selectedTrip);
@@ -623,6 +783,7 @@ class Index extends Component
     $this->selectedHorse = $fuel->horse_id;
     $this->employee_id = $fuel->employee_id;
     $this->selectedVehicle = $fuel->vehicle_id;
+    $this->is_full_tank = $fuel->is_full_tank;
     $this->selectedTrip = $fuel->trip_id;
     $this->fuel_type = $fuel->fuel_type;
     $this->trips = Trip::where('trip_status','!=','Cancelled')->orderBy('created_at','desc')->orderBy('created_at','desc')->get();
@@ -696,6 +857,7 @@ class Index extends Component
             $fuel->vehicle_id = Null;
         }
            
+            $fuel->is_full_tank = $this->is_full_tank;
             $fuel->container_id = $this->selectedContainer;
             $fuel->date = $this->date;
             $fuel->fuel_request_id = $this->selectedFuelRequest;

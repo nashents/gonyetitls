@@ -12,6 +12,9 @@ class ReportController extends Controller
     public function incomeStatement(){
         return view('reports.income_statements.index');
     }
+    public function fuelConsumption(){
+        return view('reports.fuel_consumption');
+    }
     public function cashflow(){
         return view('reports.cashflows.index');
     }

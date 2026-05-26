@@ -84,6 +84,9 @@ class User extends Authenticatable implements Auditable
     {
         return $this->hasMany(Application::class);
     }
+     public function budgets(){
+        return $this->hasMany('App\Models\Budget');
+    }
     public function created_candidates()
     {
         return $this->hasMany(RecruitmentCandidate::class, 'created_by');

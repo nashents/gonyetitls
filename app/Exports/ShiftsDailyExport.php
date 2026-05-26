@@ -1,12 +1,12 @@
 <?php
 
-
 namespace App\Exports;
 
 use Carbon\Carbon;
 use App\Models\Shift;
 use App\Models\Trip;
 use App\Models\Fuel;
+use App\Models\Budget;
 use App\Models\LoadingPoint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,40 +28,35 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle, WithDrawings, WithCustomStartCell
 {
-    // ✅ Adjust if your schema uses different names
-    protected string $shiftDateColumn            = 'shift_start_time';
-    protected string $tripWeightColumn           = 'weight';
-    protected string $shiftOpenMileageColumn     = 'open_mileage';
-    protected string $shiftCloseMileageColumn    = 'close_mileage';
+    protected string $shiftDateColumn = 'shift_start_time';
+    protected string $shiftTypeColumn = 'type';
+    protected string $tripWeightColumn = 'weight';
+    protected string $shiftOpenMileageColumn = 'open_mileage';
+    protected string $shiftCloseMileageColumn = 'close_mileage';
     protected string $shiftFuelConsumptionColumn = 'fuel_consumption_mileage';
 
-    /**
-     * Dynamic Loading Points (names) and map (name => id)
-     */
     protected array $lpNames = [];
-    protected array $lpMap   = [];
+    protected array $lpMap = [];
 
-    /**
-     * Column bookkeeping (so styling is dynamic)
-     */
     protected string $yStartCol = 'B';
-    protected string $sepCol    = 'J';
+    protected string $sepCol = 'J';
     protected string $mStartCol = 'K';
-    protected string $lastCol   = 'R';
+    protected string $lastCol = 'R';
+
+    protected array $budgetMap = [];
 
     public function __construct(
         protected string $periodTitle = 'Key Operating Metrics - ',
         protected ?Carbon $asAt = null,
-        protected array $budgets = [],
-        protected array $loadingPointFilterNames = [] // optional: pass specific LP names
+        protected array $loadingPointFilterNames = []
     ) {
         $this->periodTitle = $this->periodTitle . date('M - d');
         $this->asAt = $this->asAt ?: now();
 
         $this->bootLoadingPoints();
         $this->bootColumns();
+        $this->bootBudgets();
     }
-    
 
     public function title(): string
     {
@@ -73,39 +68,63 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         return 'A7';
     }
 
-        public function drawings()
+    public function drawings()
     {
         $drawing = new Drawing();
+
         if (isset(Auth::user()->employee->company)) {
-        $drawing->setName(Auth::user()->employee->company->name);
-        $drawing->setDescription(Auth::user()->employee->company->name . 'Logo');
-      if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
-            $drawing->setPath(public_path('/images/uploads/'.Auth::user()->employee->company->logo));
-        }else{
+            $drawing->setName(Auth::user()->employee->company->name);
+            $drawing->setDescription(Auth::user()->employee->company->name . ' Logo');
+
+            if (file_exists(public_path('/images/uploads/' . Auth::user()->employee->company->logo))) {
+                $drawing->setPath(public_path('/images/uploads/' . Auth::user()->employee->company->logo));
+            } else {
+                $drawing->setPath(public_path('/images/uploads/logo.png'));
+            }
+        } else {
             $drawing->setPath(public_path('/images/uploads/logo.png'));
         }
-        } 
+
         $drawing->setHeight(90);
         $drawing->setCoordinates('A2');
+
         return $drawing;
     }
 
-    /**
-     * Load LPs dynamically.
-     * Tweak the query to match your schema (company scoping, active flag, sort order etc.)
-     */
+    protected function bootBudgets(): void
+    {
+        $companyId = Auth::user()->employee->company->id ?? Auth::user()->company_id ?? null;
+
+        $budgets = Budget::query()
+            ->where('module', 'Shifts')
+            ->where('status', 1)
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->get();
+
+        foreach ($budgets as $budget) {
+            $key = $this->budgetKey($budget->name, $budget->period);
+            $this->budgetMap[$key] = (float) $budget->value;
+        }
+    }
+
+    protected function budgetKey(?string $name, ?string $period): string
+    {
+        return strtolower(trim((string) $name)) . '|' . strtolower(trim((string) $period));
+    }
+
+    protected function getBudget(string $metricName, string $period): ?float
+    {
+        $key = $this->budgetKey($metricName, $period);
+
+        return $this->budgetMap[$key] ?? null;
+    }
+
     protected function bootLoadingPoints(): void
     {
         $q = LoadingPoint::query();
 
-        // Example scoping (uncomment if you have these columns)
-        // $companyId = Auth::user()?->employee?->company_id;
-        // if ($companyId) $q->where('company_id', $companyId);
-
-        // if you have "active" flag
         $q->where('status', true);
 
-        // Optional: keep the old behavior by allowing caller to pass a list of names
         if (!empty($this->loadingPointFilterNames)) {
             $q->whereIn('name', $this->loadingPointFilterNames);
         }
@@ -117,26 +136,16 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 
         $this->lpNames = array_keys($this->lpMap);
 
-        // Safety: if DB returns none, avoid breaking the sheet
         if (count($this->lpNames) === 0) {
             $this->lpNames = ['(No Loading Points)'];
-            $this->lpMap   = [];
+            $this->lpMap = [];
         }
     }
 
-    /**
-     * Determine the dynamic columns based on number of LPs.
-     *
-     * Layout:
-     * A = metric label
-     * B.. ? = Yesterday block: (LPs...) + Loads + Actual + Budget + Var
-     * sep col (purple)
-     * then MTD block same shape
-     */
     protected function bootColumns(): void
     {
         $lpCount = count($this->lpNames);
-        $blockCols = $lpCount + 4; // + Loads, Actual, Budget, Var
+        $blockCols = $lpCount + 4;
 
         $this->yStartCol = 'B';
         $yEndCol = $this->colAdd($this->yStartCol, $blockCols - 1);
@@ -153,24 +162,20 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     {
         $asAt = $this->asAt->copy();
 
-        // reporting cutoff: today @ 01:00
-        $reportTo = $asAt->copy()->startOfDay()->addHour(); // 01:00 today
+        $reportTo = $asAt->copy()->startOfDay()->addHour();
 
-        // Yesterday Production window: day before @ 02:00  -> today @ 01:00
-        $yFrom = $asAt->copy()->subDay()->startOfDay()->addHours(2); // 02:00 yesterday
-        $yTo   = $reportTo;                                          // 01:00 today
+        $yFrom = $asAt->copy()->subDay()->startOfDay()->addHours(2);
+        $yTo = $reportTo;
 
-        // MTD window: start of month @ 02:00 -> today @ 01:00
         $mFrom = $asAt->copy()->startOfMonth()->startOfDay()->addHours(2);
-        $mTo   = $reportTo;
+        $mTo = $reportTo;
 
         $y = $this->computePeriod($yFrom, $yTo, $this->lpMap);
         $m = $this->computePeriod($mFrom, $mTo, $this->lpMap);
 
-        $b = fn(string $bucket, string $key) => $this->budgets[$bucket][$key] ?? null;
+        $yShiftStats = $this->shiftBreakdown($yFrom, $yTo);
+        $mShiftStats = $this->shiftBreakdown($mFrom, $mTo);
 
-        // Build header row 2 dynamically:
-        // ['', LP1, LP2, ... , Loads, Actual, Budget, Var, '', LP1.., Loads, Actual, Budget, Var]
         $header2 = array_merge(
             [''],
             $this->lpNames,
@@ -180,237 +185,405 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ['Loads', 'Actual', 'Budget', 'Var']
         );
 
-        // Prebuild helper to output LP counts in correct order
-        $lpVals = function(array $lpCounts): array {
+        $lpVals = function (array $lpCounts): array {
             $out = [];
+
             foreach ($this->lpNames as $name) {
-                $out[] = (int)($lpCounts[$name] ?? 0);
+                $out[] = (int) ($lpCounts[$name] ?? 0);
             }
+
             return $out;
         };
 
-        // Build each metric row using dynamic LP columns
-        $rowOreLong = array_merge(
-            ['Total Ore Hauled - Long-haul'],
+        $rowOreLong = $this->buildLpMetricRow(
+            'Total Ore Hauled - Long-haul',
             $lpVals($y['ore_long']['lp'] ?? []),
-            [
-                $y['ore_long']['loads'] ?? 0,
-                $y['ore_long']['actual'] ?? 0,
-                $b('yesterday', 'ore_long'),
-                $this->variance($y['ore_long']['actual'] ?? null, $b('yesterday','ore_long')),
-            ],
-            [''],
+            $y['ore_long']['loads'] ?? 0,
+            $y['ore_long']['actual'] ?? 0,
+            'Daily',
             $lpVals($m['ore_long']['lp'] ?? []),
-            [
-                $m['ore_long']['loads'] ?? 0,
-                $m['ore_long']['actual'] ?? 0,
-                $b('mtd', 'ore_long'),
-                $this->variance($m['ore_long']['actual'] ?? null, $b('mtd','ore_long')),
-            ]
+            $m['ore_long']['loads'] ?? 0,
+            $m['ore_long']['actual'] ?? 0,
+            'Monthly'
         );
 
-        $rowFuelLong = array_merge(
-            ['Total Fuel Used – Long-haul'],
-            array_fill(0, count($this->lpNames), ''), // no LP breakdown
-            ['', $y['fuel_long'] ?? 0, $b('yesterday', 'fuel_long'), $this->variance($y['fuel_long'] ?? null, $b('yesterday','fuel_long'))],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $m['fuel_long'] ?? 0, $b('mtd', 'fuel_long'), $this->variance($m['fuel_long'] ?? null, $b('mtd','fuel_long'))]
+        $rowFuelLong = $this->buildPlainMetricRow(
+            'Total Fuel Used – Long-haul',
+            $y['fuel_long'] ?? 0,
+            'Daily',
+            $m['fuel_long'] ?? 0,
+            'Monthly'
         );
 
-        $rowKmLong = array_merge(
-            ['Total Kilometres - Long-haul'],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $y['km_long'] ?? 0, $b('yesterday', 'km_long'), $this->variance($y['km_long'] ?? null, $b('yesterday','km_long'))],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $m['km_long'] ?? 0, $b('mtd', 'km_long'), $this->variance($m['km_long'] ?? null, $b('mtd','km_long'))]
+        $rowKmLong = $this->buildPlainMetricRow(
+            'Total Kilometres - Long-haul',
+            $y['km_long'] ?? 0,
+            'Daily',
+            $m['km_long'] ?? 0,
+            'Monthly'
         );
 
-        $rowConsLong = array_merge(
-            ['Fuel Consumption - Long Haul'],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $y['cons_long'] ?? null, $b('yesterday', 'cons_long'), $this->variance($y['cons_long'] ?? null, $b('yesterday','cons_long'))],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $m['cons_long'] ?? null, $b('mtd', 'cons_long'), $this->variance($m['cons_long'] ?? null, $b('mtd','cons_long'))]
+        $rowConsLong = $this->buildPlainMetricRow(
+            'Fuel Consumption - Long Haul',
+            $y['cons_long'] ?? null,
+            'Daily',
+            $m['cons_long'] ?? null,
+            'Monthly'
         );
 
-        $rowOreShort = array_merge(
-            ['Total Ore Hauled – Short-haul'],
+        $rowOreShort = $this->buildLpMetricRow(
+            'Total Ore Hauled – Short-haul',
             $lpVals($y['ore_short']['lp'] ?? []),
-            [
-                $y['ore_short']['loads'] ?? 0,
-                $y['ore_short']['actual'] ?? 0,
-                $b('yesterday', 'ore_short'),
-                $this->variance($y['ore_short']['actual'] ?? null, $b('yesterday','ore_short')),
-            ],
-            [''],
+            $y['ore_short']['loads'] ?? 0,
+            $y['ore_short']['actual'] ?? 0,
+            'Daily',
             $lpVals($m['ore_short']['lp'] ?? []),
-            [
-                $m['ore_short']['loads'] ?? 0,
-                $m['ore_short']['actual'] ?? 0,
-                $b('mtd', 'ore_short'),
-                $this->variance($m['ore_short']['actual'] ?? null, $b('mtd','ore_short')),
-            ]
+            $m['ore_short']['loads'] ?? 0,
+            $m['ore_short']['actual'] ?? 0,
+            'Monthly'
         );
 
-        $rowFuelShort = array_merge(
-            ['Total Fuel Used – Short-haul'],
+        $rowFuelShort = $this->buildPlainMetricRow(
+            'Total Fuel Used – Short-haul',
+            $y['fuel_short'] ?? 0,
+            'Daily',
+            $m['fuel_short'] ?? 0,
+            'Monthly'
+        );
+
+        $rowKmShort = $this->buildPlainMetricRow(
+            'Total Kilometres - Short-haul',
+            $y['km_short'] ?? 0,
+            'Daily',
+            $m['km_short'] ?? 0,
+            'Monthly'
+        );
+
+        $rowConsShort = $this->buildPlainMetricRow(
+            'Fuel Consumption - Short Haul',
+            $y['cons_short'] ?? null,
+            'Daily',
+            $m['cons_short'] ?? null,
+            'Monthly'
+        );
+
+        $rowConc = $this->buildPlainMetricRow(
+            'Total Concentrates Hauled',
+            $y['conc']['actual'] ?? 0,
+            'Daily',
+            $m['conc']['actual'] ?? 0,
+            'Monthly',
+            $y['conc']['loads'] ?? 0,
+            $m['conc']['loads'] ?? 0
+        );
+
+        $rowFuelConc = $this->buildPlainMetricRow(
+            'Total Fuel Used – Concentrates',
+            $y['fuel_conc'] ?? 0,
+            'Daily',
+            $m['fuel_conc'] ?? 0,
+            'Monthly'
+        );
+
+        $rowSection = array_merge(
+            ['SHIFT CAPTURE CONTROL'],
             array_fill(0, count($this->lpNames), ''),
-            ['', $y['fuel_short'] ?? 0, $b('yesterday', 'fuel_short'), $this->variance($y['fuel_short'] ?? null, $b('yesterday','fuel_short'))],
+            ['', '', '', ''],
             [''],
             array_fill(0, count($this->lpNames), ''),
-            ['', $m['fuel_short'] ?? 0, $b('mtd', 'fuel_short'), $this->variance($m['fuel_short'] ?? null, $b('mtd','fuel_short'))]
+            ['', '', '', '']
         );
 
-        $rowKmShort = array_merge(
-            ['Total Kilometres - Short-haul'],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $y['km_short'] ?? 0, $b('yesterday', 'km_short'), $this->variance($y['km_short'] ?? null, $b('yesterday','km_short'))],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $m['km_short'] ?? 0, $b('mtd', 'km_short'), $this->variance($m['km_short'] ?? null, $b('mtd','km_short'))]
+        $rowMorningShifts = $this->buildCaptureRow(
+            'Morning Shifts Captured',
+            $yShiftStats['morning_shifts'],
+            $mShiftStats['morning_shifts']
         );
 
-        $rowConsShort = array_merge(
-            ['Fuel Consumption - Short Haul'],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $y['cons_short'] ?? null, $b('yesterday', 'cons_short'), $this->variance($y['cons_short'] ?? null, $b('yesterday','cons_short'))],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $m['cons_short'] ?? null, $b('mtd', 'cons_short'), $this->variance($m['cons_short'] ?? null, $b('mtd','cons_short'))]
+        $rowNightShifts = $this->buildCaptureRow(
+            'Night Shifts Captured',
+            $yShiftStats['night_shifts'],
+            $mShiftStats['night_shifts']
         );
 
-        $rowConc = array_merge(
-            ['Total Concentrates Hauled'],
-            array_fill(0, count($this->lpNames), ''),
-            [
-                $y['conc']['loads'] ?? 0,
-                $y['conc']['actual'] ?? 0,
-                $b('yesterday', 'conc'),
-                $this->variance($y['conc']['actual'] ?? null, $b('yesterday','conc')),
-            ],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            [
-                $m['conc']['loads'] ?? 0,
-                $m['conc']['actual'] ?? 0,
-                $b('mtd', 'conc'),
-                $this->variance($m['conc']['actual'] ?? null, $b('mtd','conc')),
-            ]
+        $rowBackShifts = $this->buildCaptureRow(
+            'Backshift Shifts Captured',
+            $yShiftStats['backshift_shifts'],
+            $mShiftStats['backshift_shifts']
         );
 
-        $rowFuelConc = array_merge(
-            ['Total Fuel Used – Concentrates'],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $y['fuel_conc'] ?? 0, $b('yesterday', 'fuel_conc'), $this->variance($y['fuel_conc'] ?? null, $b('yesterday','fuel_conc'))],
-            [''],
-            array_fill(0, count($this->lpNames), ''),
-            ['', $m['fuel_conc'] ?? 0, $b('mtd', 'fuel_conc'), $this->variance($m['fuel_conc'] ?? null, $b('mtd','fuel_conc'))]
+        $rowMorningLoads = $this->buildCaptureRow(
+            'Morning Loads Captured',
+            $yShiftStats['morning_loads'],
+            $mShiftStats['morning_loads']
         );
 
-        $colCount = $this->colIndex($this->lastCol); // 1-based count
+        $rowNightLoads = $this->buildCaptureRow(
+            'Night Loads Captured',
+            $yShiftStats['night_loads'],
+            $mShiftStats['night_loads']
+        );
+
+        $rowBackLoads = $this->buildCaptureRow(
+            'Backshift Loads Captured',
+            $yShiftStats['backshift_loads'],
+            $mShiftStats['backshift_loads']
+        );
+
+        $colCount = $this->colIndex($this->lastCol);
+
         return [
-            // Header row 1 (merged later)
             array_pad([$this->periodTitle], $colCount, ''),
-            // Header row 2 (dynamic)
             $header2,
-            // Spacer
             array_fill(0, $colCount, ''),
-            // Data rows
+
             $rowOreLong,
             $rowFuelLong,
             $rowKmLong,
             $rowConsLong,
+
             $rowOreShort,
             $rowFuelShort,
             $rowKmShort,
             $rowConsShort,
+
             $rowConc,
             $rowFuelConc,
+
+            $rowSection,
+            $rowMorningShifts,
+            $rowNightShifts,
+            $rowBackShifts,
+            $rowMorningLoads,
+            $rowNightLoads,
+            $rowBackLoads,
         ];
+    }
+
+    protected function buildLpMetricRow(
+        string $metricName,
+        array $yLpValues,
+        $yLoads,
+        $yActual,
+        string $yBudgetPeriod,
+        array $mLpValues,
+        $mLoads,
+        $mActual,
+        string $mBudgetPeriod
+    ): array {
+        $yBudget = $this->getBudget($metricName, $yBudgetPeriod);
+        $mBudget = $this->getBudget($metricName, $mBudgetPeriod);
+
+        return array_merge(
+            [$metricName],
+            $yLpValues,
+            [
+                $yLoads,
+                $yActual,
+                $yBudget,
+                $this->variance($yActual, $yBudget),
+            ],
+            [''],
+            $mLpValues,
+            [
+                $mLoads,
+                $mActual,
+                $mBudget,
+                $this->variance($mActual, $mBudget),
+            ]
+        );
+    }
+
+    protected function buildPlainMetricRow(
+        string $metricName,
+        $yActual,
+        string $yBudgetPeriod,
+        $mActual,
+        string $mBudgetPeriod,
+        $yLoads = '',
+        $mLoads = ''
+    ): array {
+        $yBudget = $this->getBudget($metricName, $yBudgetPeriod);
+        $mBudget = $this->getBudget($metricName, $mBudgetPeriod);
+
+        return array_merge(
+            [$metricName],
+            array_fill(0, count($this->lpNames), ''),
+            [
+                $yLoads,
+                $yActual,
+                $yBudget,
+                $this->variance($yActual, $yBudget),
+            ],
+            [''],
+            array_fill(0, count($this->lpNames), ''),
+            [
+                $mLoads,
+                $mActual,
+                $mBudget,
+                $this->variance($mActual, $mBudget),
+            ]
+        );
+    }
+
+    protected function buildCaptureRow(string $label, $yActual, $mActual): array
+    {
+        return array_merge(
+            [$label],
+            array_fill(0, count($this->lpNames), ''),
+            [
+                '',
+                $yActual,
+                '',
+                '',
+            ],
+            [''],
+            array_fill(0, count($this->lpNames), ''),
+            [
+                '',
+                $mActual,
+                '',
+                '',
+            ]
+        );
     }
 
     protected function computePeriod(Carbon $from, Carbon $to, array $lpMap): array
     {
-        $shiftBase = Shift::query()->whereBetween($this->shiftDateColumn, [$from, $to]);
+        $shiftBase = Shift::query()
+            ->whereBetween($this->shiftDateColumn, [$from, $to]);
 
         $tripBase = Trip::query()
-            ->whereHas('shift', fn(Builder $q) => $q->whereBetween($this->shiftDateColumn, [$from, $to]));
+            ->whereHas('shift', fn (Builder $q) => $q->whereBetween($this->shiftDateColumn, [$from, $to]));
 
         $oreLongTrips = (clone $tripBase)
             ->where('haulage_type', 'long_haul')
-            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Platinum Ore'));
+            ->whereHas('cargo', fn (Builder $q) => $q->where('name', 'Platinum Ore'));
 
-        $oreLongLoads  = (clone $oreLongTrips)->count();
+        $oreLongLoads = (clone $oreLongTrips)->count();
         $oreLongActual = (clone $oreLongTrips)->sum($this->tripWeightColumn);
-        $oreLongLp     = $this->tripCountsByLoadingPoint(clone $oreLongTrips, $lpMap);
+        $oreLongLp = $this->tripCountsByLoadingPoint(clone $oreLongTrips, $lpMap);
 
         $fuelLong = Fuel::query()
-            ->whereHas('shift', fn(Builder $q) =>
+            ->whereHas('shift', fn (Builder $q) =>
                 $q->whereBetween($this->shiftDateColumn, [$from, $to])
-                  ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'long_haul'))
-            )->sum('quantity');
+                    ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'long_haul'))
+            )
+            ->sum('quantity');
 
         $kmLong = (clone $shiftBase)
-            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'long_haul'))
+            ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'long_haul'))
             ->selectRaw("COALESCE(SUM(COALESCE({$this->shiftCloseMileageColumn},0) - COALESCE({$this->shiftOpenMileageColumn},0)),0) as km")
             ->value('km');
 
         $consLong = (clone $shiftBase)
-            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'long_haul'))
+            ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'long_haul'))
             ->avg($this->shiftFuelConsumptionColumn);
 
         $oreShortTrips = (clone $tripBase)
             ->where('haulage_type', 'short_haul')
-            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Platinum Ore'));
+            ->whereHas('cargo', fn (Builder $q) => $q->where('name', 'Platinum Ore'));
 
-        $oreShortLoads  = (clone $oreShortTrips)->count();
+        $oreShortLoads = (clone $oreShortTrips)->count();
         $oreShortActual = (clone $oreShortTrips)->sum($this->tripWeightColumn);
-        $oreShortLp     = $this->tripCountsByLoadingPoint(clone $oreShortTrips, $lpMap);
+        $oreShortLp = $this->tripCountsByLoadingPoint(clone $oreShortTrips, $lpMap);
 
         $fuelShort = Fuel::query()
-            ->whereHas('shift', fn(Builder $q) =>
+            ->whereHas('shift', fn (Builder $q) =>
                 $q->whereBetween($this->shiftDateColumn, [$from, $to])
-                  ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
-            )->sum('quantity');
+                    ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'short_haul'))
+            )
+            ->sum('quantity');
 
         $kmShort = (clone $shiftBase)
-            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
+            ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'short_haul'))
             ->selectRaw("COALESCE(SUM(COALESCE({$this->shiftCloseMileageColumn},0) - COALESCE({$this->shiftOpenMileageColumn},0)),0) as km")
             ->value('km');
 
         $consShort = (clone $shiftBase)
-            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
+            ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'short_haul'))
             ->avg($this->shiftFuelConsumptionColumn);
 
-       
-        $concTrips = (clone $tripBase)->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Platinum Concentrate'));
-        $concLoads  = (clone $concTrips)->count();
+        $concTrips = (clone $tripBase)
+            ->whereHas('cargo', fn (Builder $q) => $q->where('name', 'Platinum Concentrate'));
+
+        $concLoads = (clone $concTrips)->count();
         $concActual = (clone $concTrips)->sum($this->tripWeightColumn);
 
         $fuelConc = Fuel::query()
-            ->whereHas('shift', fn(Builder $q) =>
+            ->whereHas('shift', fn (Builder $q) =>
                 $q->whereBetween($this->shiftDateColumn, [$from, $to])
-                  ->whereHas('trips', fn(Builder $t) =>
-                      $t->whereHas('cargo', fn(Builder $c) => $c->where('name', 'Platinum Concentrate'))
-                  )
-            )->sum('quantity');
+                    ->whereHas('trips', fn (Builder $t) =>
+                        $t->whereHas('cargo', fn (Builder $c) => $c->where('name', 'Platinum Concentrate'))
+                    )
+            )
+            ->sum('quantity');
 
         return [
-            'ore_long' => ['loads' => (int)$oreLongLoads, 'actual' => (float)$oreLongActual, 'lp' => $oreLongLp],
-            'fuel_long' => (float)$fuelLong,
-            'km_long'   => (float)$kmLong,
-            'cons_long' => $consLong !== null ? round((float)$consLong, 2) : null,
+            'ore_long' => [
+                'loads' => (int) $oreLongLoads,
+                'actual' => (float) $oreLongActual,
+                'lp' => $oreLongLp,
+            ],
+            'fuel_long' => (float) $fuelLong,
+            'km_long' => (float) $kmLong,
+            'cons_long' => $consLong !== null ? round((float) $consLong, 2) : null,
 
-            'ore_short' => ['loads' => (int)$oreShortLoads, 'actual' => (float)$oreShortActual, 'lp' => $oreShortLp],
-            'fuel_short' => (float)$fuelShort,
-            'km_short'   => (float)$kmShort,
-            'cons_short' => $consShort !== null ? round((float)$consShort, 2) : null,
+            'ore_short' => [
+                'loads' => (int) $oreShortLoads,
+                'actual' => (float) $oreShortActual,
+                'lp' => $oreShortLp,
+            ],
+            'fuel_short' => (float) $fuelShort,
+            'km_short' => (float) $kmShort,
+            'cons_short' => $consShort !== null ? round((float) $consShort, 2) : null,
 
-            'conc' => ['loads' => (int)$concLoads, 'actual' => (float)$concActual],
-            'fuel_conc' => (float)$fuelConc,
+            'conc' => [
+                'loads' => (int) $concLoads,
+                'actual' => (float) $concActual,
+            ],
+            'fuel_conc' => (float) $fuelConc,
+        ];
+    }
+
+    protected function shiftBreakdown(Carbon $from, Carbon $to): array
+    {
+        $shifts = Shift::query()
+            ->whereBetween($this->shiftDateColumn, [$from, $to]);
+
+        return [
+            'morning_shifts' => (clone $shifts)
+                ->where($this->shiftTypeColumn, 'Morning')
+                ->count(),
+
+            'night_shifts' => (clone $shifts)
+                ->where($this->shiftTypeColumn, 'Night')
+                ->count(),
+
+            'backshift_shifts' => (clone $shifts)
+                ->where($this->shiftTypeColumn, 'Backshift')
+                ->count(),
+
+            'morning_loads' => Trip::query()
+                ->whereHas('shift', function ($q) use ($from, $to) {
+                    $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                        ->where($this->shiftTypeColumn, 'Morning');
+                })
+                ->count(),
+
+            'night_loads' => Trip::query()
+                ->whereHas('shift', function ($q) use ($from, $to) {
+                    $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                        ->where($this->shiftTypeColumn, 'Night');
+                })
+                ->count(),
+
+            'backshift_loads' => Trip::query()
+                ->whereHas('shift', function ($q) use ($from, $to) {
+                    $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                        ->where($this->shiftTypeColumn, 'Backshift');
+                })
+                ->count(),
         ];
     }
 
@@ -419,47 +592,49 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $ids = array_values($lpMap);
 
         $counts = (clone $tripQuery)
-            ->when(!empty($ids), fn($q) => $q->whereIn('loading_point_id', $ids))
+            ->when(!empty($ids), fn ($q) => $q->whereIn('loading_point_id', $ids))
             ->selectRaw('loading_point_id, COUNT(*) as c')
             ->groupBy('loading_point_id')
             ->pluck('c', 'loading_point_id')
             ->toArray();
 
         $out = [];
+
         foreach ($lpMap as $name => $id) {
-            $out[$name] = (int)($counts[$id] ?? 0);
+            $out[$name] = (int) ($counts[$id] ?? 0);
         }
+
         return $out;
     }
 
     protected function variance($actual, $budget): ?float
     {
-        if ($actual === null || $budget === null || $budget === '') return null;
-        return (float)$actual - (float)$budget;
+        if ($actual === null || $budget === null || $budget === '') {
+            return null;
+        }
+
+        return (float) $actual - (float) $budget;
     }
 
     public function columnWidths(): array
     {
-        // A: metric label
         $widths = ['A' => 34];
 
         $lpCount = count($this->lpNames);
         $blockCols = $lpCount + 4;
 
-        // Yesterday block
         $col = 'B';
+
         for ($i = 0; $i < $blockCols; $i++) {
-            // LP columns narrow; numeric columns wider
-            $isNumericTail = $i >= $lpCount; // Loads/Actual/Budget/Var
+            $isNumericTail = $i >= $lpCount;
             $widths[$col] = $isNumericTail ? 12 : 6;
             $col = $this->colAdd($col, 1);
         }
 
-        // Separator
         $widths[$this->sepCol] = 2;
 
-        // MTD block
         $col = $this->mStartCol;
+
         for ($i = 0; $i < $blockCols; $i++) {
             $isNumericTail = $i >= $lpCount;
             $widths[$col] = $isNumericTail ? 12 : 6;
@@ -473,162 +648,194 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-
                 $sheet = $event->sheet->getDelegate();
 
-                $startRow   = 7;
+                $startRow = 7;
                 $headerRow1 = $startRow;
                 $headerRow2 = $startRow + 1;
-                $spacerRow  = $startRow + 2;
-                $dataStart  = $startRow + 3;
+                $spacerRow = $startRow + 2;
+                $dataStart = $startRow + 3;
 
-                $lastRow    = $sheet->getHighestRow();
-                $rangeAll   = "A{$headerRow1}:{$this->lastCol}{$lastRow}";
+                $lastRow = $sheet->getHighestRow();
+                $rangeAll = "A{$headerRow1}:{$this->lastCol}{$lastRow}";
 
                 $headerFill = 'D9D9D9';
-                $greyFill   = 'BFBFBF';
-                $sepFill    = '7B61A6';
+                $greyFill = 'BFBFBF';
+                $sepFill = '7B61A6';
+                $sectionFill = '305496';
 
-                $yEndCol = $this->colAdd($this->yStartCol, (count($this->lpNames) + 4) - 1);
+                $lpCount = count($this->lpNames);
+                $blockCols = $lpCount + 4;
 
-                // Merge headers
+                $yEndCol = $this->colAdd($this->yStartCol, $blockCols - 1);
+
                 $sheet->mergeCells("A{$headerRow1}:A{$headerRow2}");
                 $sheet->mergeCells("{$this->yStartCol}{$headerRow1}:{$yEndCol}{$headerRow1}");
                 $sheet->mergeCells("{$this->mStartCol}{$headerRow1}:{$this->lastCol}{$headerRow1}");
-
-                // Separator column
                 $sheet->mergeCells("{$this->sepCol}{$headerRow1}:{$this->sepCol}{$lastRow}");
 
                 $sheet->setCellValue("{$this->yStartCol}{$headerRow1}", 'YESTERDAY PRODUCTION');
                 $sheet->setCellValue("{$this->mStartCol}{$headerRow1}", 'MTD PRODUCTION');
 
-                // Header styling
                 $sheet->getStyle("A{$headerRow1}:{$this->lastCol}{$headerRow2}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
-                        'vertical'   => Alignment::VERTICAL_CENTER,
-                        'wrapText'   => true,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                        'wrapText' => true,
                     ],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
-                        'color'    => ['rgb' => $headerFill],
+                        'color' => ['rgb' => $headerFill],
                     ],
                 ]);
 
-                // Title left aligned
-                $sheet->getStyle("A{$headerRow1}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $sheet->getStyle("A{$headerRow1}")
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-                // Purple separator
                 $sheet->getStyle("{$this->sepCol}{$headerRow1}:{$this->sepCol}{$lastRow}")->applyFromArray([
-                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => $sepFill]],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'color' => ['rgb' => $sepFill],
+                    ],
                 ]);
 
-                // Row heights + freeze
                 $sheet->getRowDimension($headerRow1)->setRowHeight(22);
                 $sheet->getRowDimension($headerRow2)->setRowHeight(18);
                 $sheet->getRowDimension($spacerRow)->setRowHeight(6);
 
                 $sheet->freezePane("{$this->yStartCol}{$dataStart}");
 
-                // Borders
                 $sheet->getStyle($rangeAll)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color'       => ['rgb' => '000000'],
+                            'color' => ['rgb' => '000000'],
                         ],
                     ],
                 ]);
 
-                // Number formats:
-                // LP counts + Loads are integers; Actual/Budget/Var are decimals (except consumption maybe)
-                $lpCount = count($this->lpNames);
-                $blockCols = $lpCount + 4;
+                $yLoadsCol = $this->colAdd($this->yStartCol, $lpCount);
+                $yActualCol = $this->colAdd($yLoadsCol, 1);
+                $yBudgetCol = $this->colAdd($yLoadsCol, 2);
+                $yVarCol = $this->colAdd($yLoadsCol, 3);
 
-                $yLoadsCol   = $this->colAdd($this->yStartCol, $lpCount);     // after LPs
-                $yActualCol  = $this->colAdd($yLoadsCol, 1);
-                $yBudgetCol  = $this->colAdd($yLoadsCol, 2);
-                $yVarCol     = $this->colAdd($yLoadsCol, 3);
+                $mLoadsCol = $this->colAdd($this->mStartCol, $lpCount);
+                $mActualCol = $this->colAdd($mLoadsCol, 1);
+                $mBudgetCol = $this->colAdd($mLoadsCol, 2);
+                $mVarCol = $this->colAdd($mLoadsCol, 3);
 
-                $mLoadsCol   = $this->colAdd($this->mStartCol, $lpCount);
-                $mActualCol  = $this->colAdd($mLoadsCol, 1);
-                $mBudgetCol  = $this->colAdd($mLoadsCol, 2);
-                $mVarCol     = $this->colAdd($mLoadsCol, 3);
-
-                // Yesterday integers (LPs + Loads)
                 $sheet->getStyle("{$this->yStartCol}{$dataStart}:{$yLoadsCol}{$lastRow}")
-                      ->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
+                    ->getNumberFormat()
+                    ->setFormatCode(NumberFormat::FORMAT_NUMBER);
 
-                // MTD integers (LPs + Loads)
                 $sheet->getStyle("{$this->mStartCol}{$dataStart}:{$mLoadsCol}{$lastRow}")
-                      ->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
+                    ->getNumberFormat()
+                    ->setFormatCode(NumberFormat::FORMAT_NUMBER);
 
-                // Yesterday money/decimals
                 $sheet->getStyle("{$yActualCol}{$dataStart}:{$yVarCol}{$lastRow}")
-                      ->getNumberFormat()->setFormatCode('#,##0.00');
+                    ->getNumberFormat()
+                    ->setFormatCode('#,##0.00');
 
-                // MTD money/decimals
                 $sheet->getStyle("{$mActualCol}{$dataStart}:{$mVarCol}{$lastRow}")
-                      ->getNumberFormat()->setFormatCode('#,##0.00');
+                    ->getNumberFormat()
+                    ->setFormatCode('#,##0.00');
 
-                // Alignment
-                $sheet->getStyle("A{$dataStart}:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-                $sheet->getStyle("{$this->yStartCol}{$dataStart}:{$yVarCol}{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle("{$this->mStartCol}{$dataStart}:{$mVarCol}{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("A{$dataStart}:A{$lastRow}")
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-                // Bold budgets
-                $sheet->getStyle("{$yBudgetCol}{$dataStart}:{$yBudgetCol}{$lastRow}")->getFont()->setBold(true);
-                $sheet->getStyle("{$mBudgetCol}{$dataStart}:{$mBudgetCol}{$lastRow}")->getFont()->setBold(true);
+                $sheet->getStyle("{$this->yStartCol}{$dataStart}:{$yVarCol}{$lastRow}")
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-                // Grey-out blocks (based on whether the first LP col is blank)
+                $sheet->getStyle("{$this->mStartCol}{$dataStart}:{$mVarCol}{$lastRow}")
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+                $sheet->getStyle("{$yBudgetCol}{$dataStart}:{$yBudgetCol}{$lastRow}")
+                    ->getFont()
+                    ->setBold(true);
+
+                $sheet->getStyle("{$mBudgetCol}{$dataStart}:{$mBudgetCol}{$lastRow}")
+                    ->getFont()
+                    ->setBold(true);
+
                 for ($r = $dataStart; $r <= $lastRow; $r++) {
-                    $yFirst = trim((string)$sheet->getCell("{$this->yStartCol}{$r}")->getValue());
-                    $mFirst = trim((string)$sheet->getCell("{$this->mStartCol}{$r}")->getValue());
+                    $metricName = trim((string) $sheet->getCell("A{$r}")->getValue());
+
+                    if ($metricName === 'SHIFT CAPTURE CONTROL') {
+                        $sheet->getStyle("A{$r}:{$this->lastCol}{$r}")->applyFromArray([
+                            'font' => [
+                                'bold' => true,
+                                'color' => ['rgb' => 'FFFFFF'],
+                            ],
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'color' => ['rgb' => $sectionFill],
+                            ],
+                            'alignment' => [
+                                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            ],
+                        ]);
+                    }
+
+                    $yFirst = trim((string) $sheet->getCell("{$this->yStartCol}{$r}")->getValue());
+                    $mFirst = trim((string) $sheet->getCell("{$this->mStartCol}{$r}")->getValue());
 
                     if ($yFirst === '') {
                         $sheet->getStyle("{$this->yStartCol}{$r}:{$yLoadsCol}{$r}")->applyFromArray([
-                            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => $greyFill]],
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'color' => ['rgb' => $greyFill],
+                            ],
                         ]);
                     }
+
                     if ($mFirst === '') {
                         $sheet->getStyle("{$this->mStartCol}{$r}:{$mLoadsCol}{$r}")->applyFromArray([
-                            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => $greyFill]],
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'color' => ['rgb' => $greyFill],
+                            ],
                         ]);
                     }
                 }
 
-                // Center subheaders row
                 $sheet->getStyle("{$this->yStartCol}{$headerRow2}:{$yVarCol}{$headerRow2}")
-                      ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
                 $sheet->getStyle("{$this->mStartCol}{$headerRow2}:{$mVarCol}{$headerRow2}")
-                      ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
             },
         ];
     }
 
-    /**
-     * Excel column helpers (A, B, ..., Z, AA, AB, ...)
-     */
     protected function colIndex(string $col): int
     {
         $col = strtoupper($col);
         $n = 0;
+
         for ($i = 0; $i < strlen($col); $i++) {
             $n = $n * 26 + (ord($col[$i]) - 64);
         }
+
         return $n;
     }
 
     protected function colFromIndex(int $index): string
     {
         $s = '';
+
         while ($index > 0) {
             $m = ($index - 1) % 26;
             $s = chr(65 + $m) . $s;
             $index = intdiv($index - 1, 26);
         }
+
         return $s;
     }
 

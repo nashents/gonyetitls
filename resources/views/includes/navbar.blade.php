@@ -104,6 +104,7 @@
                                 @if ((in_array('Transport & Logistics', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))
                                     @if (!Auth::user()->driver)
                                         <li><a href="{{ route('trips.reports') }}"><i class="fa fa-plus-square-o"></i>Trips</a></li>
+                                        <li><a href="{{ route('reports.fuel_consumption') }}"><i class="fa fa-plus-square-o"></i>F/Consumption</a></li>
 
                                         <li role="separator" class="divider"></li>
                                         <li><a href="#"><strong>Age Pyramids</strong></a></li>

@@ -311,7 +311,7 @@
                     </div>
                      <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="acknowledgment"   class="line-style" required/>
-                            <label for="one" class="radio-label">I confirm the quantities entered above are correct before transfer.</label>
+                            <label for="one" class="radio-label">I confirm the quantities entered above are correct before transfer<span class="required" style="color: red">*</span>.</label>
                             @error('acknowledgment') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                 </div>

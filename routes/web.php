@@ -806,6 +806,8 @@ Route::get('/horses/{horse}/service','HorseController@service')->name('horses.se
 Route::get('/horses/{horse}/activate','HorseController@activate')->name('horses.activate');
 Route::get('/horses/{horse}/deactivate','HorseController@deactivate')->name('horses.deactivate');
 
+Route::get('/fuel-consumption/report','ReportController@fuelConsumption')->name('reports.fuel_consumption');
+
 Route::get('horses/{selectedFilter?}/report/pdf/','HorseController@horsesReportPDF')->name('horses.report.pdf');
 Route::get('horses/{selectedFilter?}/report/print/','HorseController@horsesReportPrint')->name('horses.report.print');
 Route::get('horses/{selectedFilter?}/report/','HorseController@horsesReportPreview')->name('horses.report.preview');
