@@ -2,13 +2,19 @@
 
 namespace App\Http\Livewire\Budgets;
 
-use Livewire\Component;
-use App\Models\Currency;
 use App\Models\Budget;
+use App\Models\Currency;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+
     public $company_id;
     public $currencies;
 
@@ -184,11 +190,26 @@ class Index extends Component
 
     public function render()
     {
+        $query = Budget::with('currency')
+        ->where('company_id', $this->company_id);
+
+        if (isset($this->search) && $this->search != "") {
+            $query->where(function ($q) {
+                $q->where('module', 'like', '%' . $this->search . '%')
+                    ->orWhere('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('period', 'like', '%' . $this->search . '%')
+                    ->orWhere('value', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('currency', function ($currency) {
+                        $currency->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('symbol', 'like', '%' . $this->search . '%');
+                    });
+            });
+        }
+
+        $budgets = $query->orderBy('name', 'asc')->paginate(10);
+
         return view('livewire.budgets.index', [
-            'budgets' => Budget::with('currency')
-                ->where('company_id', $this->company_id)
-                ->orderBy('name', 'asc')
-                ->get()
+            'budgets' => $budgets,
         ]);
     }
 }

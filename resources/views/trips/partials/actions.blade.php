@@ -37,11 +37,14 @@
                     </li>
                 @endif
                 @if ($trip->status == False)
-                    <li>
-                        <a href="" wire:click.prevent="showCompleted({{$trip->id}})">
-                            <i class="fas fa-check color-success"></i> Mark as completed
-                        </a>
-                    </li>
+                    @if ($trip->status == "Offloaded")
+                        <li>
+                            <a href="" wire:click.prevent="showCompleted({{$trip->id}})">
+                                <i class="fas fa-check color-success"></i> Mark as completed
+                            </a>
+                        </li> 
+                    @endif
+                   
                     <li>
                         <a href="{{ route('trips.edit', $trip->id) }}">
                             <i class="fas fa-edit color-success"></i> Edit

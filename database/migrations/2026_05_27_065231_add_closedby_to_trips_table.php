@@ -14,7 +14,7 @@ class AddClosedbyToTripsTable extends Migration
     public function up()
     {
         Schema::table('trips', function (Blueprint $table) {
-            $table->bigInteger('closed_by')->unsigned()->nullable();
+            $table->text('closed_by')->nullable();
         });
     }
 

@@ -24,8 +24,12 @@
                         </div>
 
                         <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
-
-                            <table id="budgetsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <div class="col-md-5" style="float: right; padding-right:2px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search budgets...">
+                                </div>
+                            </div>
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
 
                                 <thead>
                                     <tr>
@@ -40,7 +44,7 @@
 
                                 <tbody>
 
-                                    @foreach ($budgets as $budget)
+                                    @forelse ($budgets as $budget)
 
                                         <tr>
 
@@ -99,11 +103,29 @@
 
                                         </tr>
 
-                                    @endforeach
+                                    @empty
+                                      <tr>
+                                        <td colspan="6">
+                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                No Budgets Found ....
+                                            </div>
+                                           
+                                        </td>
+                                      </tr> 
+                                      @endforelse
 
                                 </tbody>
 
                             </table>
+                            <nav class="text-center" style="float: right">
+                                    <ul class="pagination rounded-corners">
+                                        @if (isset($budgets))
+                                            @if ($budgets->count()>0)
+                                                {{ $budgets->links() }} 
+                                            @endif
+                                        @endif 
+                                    </ul>
+                                </nav>   
 
                         </div>
 

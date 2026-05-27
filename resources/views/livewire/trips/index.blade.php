@@ -652,9 +652,11 @@
                                                     <span class="label label-{{ $s['badge'] }} label-wide">
                                                         {{ $trip->trip_status }}
                                                         @if($trip->authorization === "approved")
-                                                            <a href="#" wire:click.prevent="$emit('openTripStatusModal', {{ $trip->id }})" class="ms-1">
-                                                                <i class="fa fa-edit" style="color:black"></i>
-                                                            </a>
+                                                            @if ($trip->status == 0)
+                                                                <a href="#" wire:click.prevent="$emit('openTripStatusModal', {{ $trip->id }})" class="ms-1">
+                                                                    <i class="fa fa-edit" style="color:black"></i>
+                                                                </a>
+                                                            @endif
                                                         @endif
                                                     </span>
                                                 </td>

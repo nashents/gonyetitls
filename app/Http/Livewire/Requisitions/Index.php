@@ -82,7 +82,7 @@ class Index extends Component
     public $description;
     public $department_ids;
     public $products;
-    public $date;
+    public $requisition_date;
     public $total;
     public $subtotal;
     public $requisition_items;
@@ -188,7 +188,7 @@ class Index extends Component
         $this->selectedTrip = '';
         $this->employee_id = '';
         $this->department_id = '';
-        $this->date = '';
+        $this->requisition_date = '';
         $this->expense_id = '';
         $this->allowance_id = '';
         $this->selectedAccount = '';
@@ -626,7 +626,7 @@ class Index extends Component
         $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->account_id = $this->selectedAccount;
-        $requisition->date = $this->date;
+        $requisition->date = $this->requisition_date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;
         $requisition->status = "Unpaid";
@@ -888,7 +888,7 @@ class Index extends Component
         $this->department_id = $requisition->department_id;
         $this->requisition_type = $requisition->type ?: "payment_requisition";
         $this->selectedAccount = $requisition->account_id;
-        $this->date = $requisition->date;
+        $this->requisition_date = $requisition->date;
         $this->description = $requisition->description;
         $this->subject = $requisition->subject;
         $this->requisition_id = $requisition->id;
@@ -931,7 +931,7 @@ class Index extends Component
         $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->account_id = $this->selectedAccount;
-        $requisition->date = $this->date;
+        $requisition->date = $this->requisition_date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;
         $requisition->update();

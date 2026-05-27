@@ -38,9 +38,11 @@
                                 <span class="label {{ $labelClass }} label-wide" style="margin-right:5px;">
                                     {{ $trip->trip_status }}
                                     @if ($trip->authorization == 'approved')
-                                        <a href="#" wire:click.prevent="$emit('openTripStatusModal', {{ $trip->id }})" style="margin-left:2px">
-                                            <i class="fa fa-edit" style="color:black"></i>
-                                        </a>
+                                        @if ($trip->status == 0)
+                                            <a href="#" wire:click.prevent="$emit('openTripStatusModal', {{ $trip->id }})" style="margin-left:2px">
+                                                <i class="fa fa-edit" style="color:black"></i>
+                                            </a>
+                                        @endif
                                     @endif
                                 </span>
                                 @if ($trip->trip_status_date)

@@ -132,6 +132,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-budgetModal', event => {
+                $('#budgetModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-budgetModal', event => {
+                $('#budgetModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-budgetEditModal', event => {
+                $('#budgetEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-budgetEditModal', event => {
+                $('#budgetEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-completedModal', event => {
                 $('#completedModal').modal('show');
             })
