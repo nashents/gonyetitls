@@ -37,7 +37,7 @@
                     </li>
                 @endif
                 @if ($trip->status == False)
-                    @if ($trip->status == "Offloaded")
+                    @if ($trip->trip_status == "Offloaded")
                         <li>
                             <a href="" wire:click.prevent="showCompleted({{$trip->id}})">
                                 <i class="fas fa-check color-success"></i> Mark as completed
