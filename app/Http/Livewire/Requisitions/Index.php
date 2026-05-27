@@ -279,6 +279,7 @@ class Index extends Component
             $trip = Trip::with('trip_expenses')->find($id);
            
             if ($trip && $trip->trip_expenses) {
+                
                 $this->reset(['inputs', 'selectedCurrency', 'selected_currency', 'amount', 'qty', 'exchange_rate', 'exchange_amount']);
 
                 $index = 0;
@@ -613,7 +614,6 @@ class Index extends Component
 
     public function store(){
 
-        // try{
         DB::transaction(function () {
 
         $requisition = new Requisition;
@@ -817,14 +817,7 @@ class Index extends Component
             'message'=>"Requisition Created Successfully!!"
         ]);
 
-    //     }
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something goes wrong while creating requisition!!"
-    //     ]);
-    // }
+ 
 
     });
 
@@ -924,8 +917,8 @@ class Index extends Component
 
 
 
-        public function update(){
-        // try{
+    public function update(){
+     
 
         DB::transaction(function () {
 
@@ -992,7 +985,6 @@ class Index extends Component
 
             foreach ($this->qty as $key => $value) {
               
-               
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
 
@@ -1000,7 +992,6 @@ class Index extends Component
     
                 // Handle quantity and amount
                
-
                 $product_id = $this->selectedProduct[$key] ?? Null;
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
@@ -1063,14 +1054,7 @@ class Index extends Component
             'message'=>"Requisition Updated Successfully!!"
         ]);
 
-//     }
-//     catch(\Exception $e){
-//     // Set Flash Message
-//     $this->dispatchBrowserEvent('alert',[
-//         'type'=>'error',
-//         'message'=>"Something goes wrong while creating requisition!!"
-//     ]);
-// }
+
 
     });
 

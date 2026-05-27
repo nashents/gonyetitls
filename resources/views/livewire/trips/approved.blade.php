@@ -414,7 +414,6 @@
                                                         </button>
                                                         <ul class="dropdown-menu">
                                                             <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                            <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
                                                         </ul>
                                                     </div>
                                                 </td>

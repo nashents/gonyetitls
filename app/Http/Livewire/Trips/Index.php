@@ -272,6 +272,7 @@ class Index extends Component
     public $turnover = 0;
     public $cargo_type;
     public $importFile;
+    public $mark_completed;
 
     protected $listeners = ['tripStatusUpdated' => '$refresh'];
 
@@ -299,6 +300,30 @@ class Index extends Component
          $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Filters Cleared Successfully!!"
+        ]);
+    }
+
+    public function showCompleted($id){
+
+        if(is_null($id)){
+            return;
+        }
+
+        $this->trip_id = $id;
+        $this->trip = Trip::find($id);
+        $this->dispatchBrowserEvent('show-completedModal');
+    }
+
+    public function markCompleted(){
+       
+        $trip = Trip::find($this->trip_id);
+        $trip->status = $this->mark_completed;
+        $trip->closed_by = Auth::user()->id;
+        $trip->update();
+        $this->dispatchBrowserEvent('hide-completedModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip Completed Successfully!!"
         ]);
     }
    
@@ -415,6 +440,7 @@ class Index extends Component
     
 
     public function getAuthorizer($id){
+        
         if(is_null($id)){
             return ;
         }

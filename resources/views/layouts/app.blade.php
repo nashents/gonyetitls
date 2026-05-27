@@ -132,6 +132,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-completedModal', event => {
+                $('#completedModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-completedModal', event => {
+                $('#completedModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-goods_returnedModal', event => {
                 $('#goods_returnedModal').modal('show');
             })

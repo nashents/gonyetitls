@@ -629,7 +629,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                        <input type="date" min="1" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required />
+                                        <input type="date" min="1" class="form-control" wire:model.lazy="date" placeholder="Enter Date" required />
                                         @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1273,7 +1273,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                    <input type="date" min="1" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required />
+                                    <input type="date" min="1" class="form-control" wire:model.lazy="date" placeholder="Enter Date" required />
                                     @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>

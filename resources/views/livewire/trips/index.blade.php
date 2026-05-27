@@ -379,6 +379,7 @@
                                                     POD
                                                 </th>
                                                 <th>Auth</th>
+                                                <th>Completion</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -722,7 +723,20 @@
                                                         <br><small><strong style="background-color: orange">Comments: {{ $trip->reason }}</strong></small>
                                                     @endif
                                                 </td>
-
+                                                <td>
+                                                    @if($trip->status == 1)
+                                                        <span class="badge badge-success">
+                                                            <i class="fa fa-check-circle"></i> Completed
+                                                        </span>
+                                                    @else
+                                                        <span class="badge badge-warning">
+                                                            <i class="fa fa-clock"></i> Open
+                                                        </span>
+                                                    @endif
+                                                    @if($trip->closed_by && $trip->status == 1)
+                                                        <br><small><strong style="background-color: orange">ClosedBy: {{ $this->getAuthorizer($trip->closed_by) }}</strong></small>
+                                                    @endif
+                                                </td>
                                                 <td class="w-10 line-height-35 table-dropdown">
                                                     @include('trips.partials.actions', ['trip' => $trip, 'user' => $user, 'employee' => $employee])
                                                 </td>
@@ -752,6 +766,82 @@
             </div>
             <!-- /.container-fluid -->
         </section>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false"
+            class="modal"
+            id="completedModal"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="modal4Label"
+            data-backdrop-color="blue">
+
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modal4Label">
+                            <i class="fas fa-check-circle"></i>
+                            Update Trip Status - {{ $trip ? $trip->trip_number : "" }}
+
+                            <button type="button"
+                                    class="close"
+                                    data-dismiss="modal"
+                                    aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </h4>
+                    </div>
+
+                    <form wire:submit.prevent="markCompleted()">
+
+                        <div class="modal-body">
+
+                            <div class="form-group">
+                                <label>Trip Status</label>
+
+                                <select class="form-control"
+                                        wire:model.debounce.300ms="mark_completed"
+                                        required>
+
+                                    <option value="">Select Status</option>
+                                    <option value="0">Open</option>
+                                    <option value="1">Completed</option>
+
+                                </select>
+
+                                @error('mark_completed')
+                                    <span class="error" style="color:red">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <div class="btn-group" role="group">
+
+                                <button type="button"
+                                        class="btn btn-gray btn-wide btn-rounded"
+                                        data-dismiss="modal">
+                                    <i class="fa fa-times"></i>
+                                    Close
+                                </button>
+
+                                <button type="submit"
+                                        class="btn bg-success btn-wide btn-rounded">
+                                    <i class="fa fa-save"></i>
+                                    Save Changes
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
 
 
         <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="locationsEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
