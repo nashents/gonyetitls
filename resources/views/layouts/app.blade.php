@@ -132,6 +132,37 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-reportsModal', event => {
+                $('#reportsModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reportsModal', event => {
+                $('#reportsModal').modal('hide');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('show-trip_originModal', event => {
+                $('#trip_originModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-trip_originModal', event => {
+                $('#trip_originModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-trip_originEditModal', event => {
+                $('#trip_originEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-trip_originEditModal', event => {
+                $('#trip_originEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-budgetModal', event => {
                 $('#budgetModal').modal('show');
             })

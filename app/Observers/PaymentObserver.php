@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Payment;
 use App\Services\Accounting\PaymentJournalService;
+use Illuminate\Support\Facades\Log;
 
 class PaymentObserver
 {
@@ -15,7 +16,11 @@ class PaymentObserver
      */
     public function created(Payment $payment)
     {
-        app(PaymentJournalService::class)->post($payment);
+        try {
+            app(PaymentJournalService::class)->post($payment);
+        } catch (\Throwable $e) {
+            Log::error('PaymentJournalService failed: ' . $e->getMessage());
+        }
     }
 
     /**

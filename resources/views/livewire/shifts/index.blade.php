@@ -251,8 +251,8 @@
                                 <a href="#" wire:click.prevent="exportShiftsExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click.prevent="exportShiftsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click.prevent="exportShiftsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-
-                                <div class="btn-group">
+                                <a href="" data-toggle="modal" data-target="#reportsModal" class="btn btn-default"><i class="fa fa-download"></i>Other Reports</a>
+                                {{-- <div class="btn-group">
                                     <button type="button" class="btn btn-default border-primary btn-rounded dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <i class="fa fa-download"></i> Production Reports <span class="caret"></span>
                                     </button>
@@ -261,9 +261,9 @@
                                         <li><a href="#" wire:click.prevent="exportMonthlyReport()"><i class="fa fa-file-excel-o"></i> LP Prod Report</a></li>
                                         <li><a href="#" wire:click.prevent="exportDailyShiftActivities()"><i class="fa fa-file-excel-o"></i> Daily Shift Activities Report</a></li>
                                         <li><a href="#" wire:click.prevent="exportMonthlyShiftActivities()"><i class="fa fa-file-excel-o"></i> Monthly Shift Activities Report</a></li>
-                                        {{-- Add more here --}}
+                                      
                                     </ul>
-                                </div>
+                                </div> --}}
                             </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="col-md-5" style="float: right; padding-right:2px">
@@ -2419,6 +2419,51 @@
             </div>
         </div>
     </div>
+
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="reportsModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                     <div class="modal-header">
+                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-line-chart"></i> Generate Custom Range Reports<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="generateReport()" >
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="reason">Reports<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300="report" class="form-control" required>
+                                    <option value="">Select Report</option>
+                                    <option value="Production Report">Production Report</option>
+                                    <option value="LP Prod Report">LP Prod Report</option>
+                                    <option value="Daily Shift Activities Report">Daily Shift Activities Report</option>
+                                    <option value="Monthly Shift Activities Report">Monthly Shift Activities Report</option>
+                                </select>
+                                @error('report') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            @if (isset($report) && $report == "Production Report")
+                                <div class="form-group">
+                                    <label for="reason">As At<span class="required" style="color: red">*</span></label>
+                                    <input type="date" wire:model.debounce.300="asAt" class="form-control" placeholder="asAt Date " required>
+                                    @error('asAt') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                                <small>
+                                    <strong>Reporting Cut-off Logic:</strong>
+                                    The selected As At Date is used as the report cut-off date. <br> Production data is calculated using a reporting day that runs from 02:00 AM of the previous day to 01:00 AM of the selected date. <br> For example, if 31 May 2026 is selected, the report will include data captured between 30 May 2026 02:00 AM and 31 May 2026 01:00 AM.
+                                </small>
+                            @endif
+                            
+                        </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Generate Report</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
 
 
 </div>

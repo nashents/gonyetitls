@@ -532,60 +532,59 @@ class Index extends Component
 
     public function recordPayment(){
 
-         DB::transaction(function () {
+        DB::transaction(function () {
 
-        $account = Account::find($this->account_id);
-        $current_balance = $account->balance;
+            $account = Account::find($this->account_id);
+            $current_balance = $account->balance;
 
-        if (isset($current_balance)) {
+            if (isset($current_balance)) {
            
-        if ($current_balance >= $this->amount ) {
-    
-        $payment = new Payment;
-        $payment->company_id = Auth::user()->employee->company ? Auth::user()->employee->company->id : "";
-        $payment->vendor_id = $this->bill->vendor_id;
-        $payment->transporter_id = $this->bill->transporter_id;
-        $payment->container_id = $this->bill->container_id;
-        $payment->top_up_id = $this->bill->top_up_id;
-        $payment->trip_id = $this->bill->trip_id;
-        $payment->bill_id = $this->bill->id;
-        $payment->transaction_type_id = $this->transaction_type_id;
-        $payment->movement = "Dbt";
-        $payment->description =  $this->bill->notes;
-        $payment->user_id = Auth::user()->id;
-        $payment->currency_id = $this->bill->currency_id;
-        $payment->payment_number = $this->paymentNumber();   
-        $payment->name = $this->name;
-        $payment->surname = $this->surname;
-        $payment->notes = $this->notes;
-        $payment->category = "Bill";
-        $payment->mode_of_payment = $this->mode_of_payment;
-        $payment->reference_code = $this->reference_code;
-        $payment->bank_account_id = $this->bank_account_id;
-        $payment->account_id = $this->account_id;
-        $payment->amount = $this->amount;
-        $payment->exchange_rate = $this->exchange_rate;
-        $payment->exchange_amount = $this->exchange_amount;
-        if (is_numeric($this->bill->balance) && is_numeric($this->amount)) {
-            $this->current_balance = $this->bill->balance - $this->amount;
-        }
-        $payment->balance = $this->current_balance;
+                if ($current_balance >= $this->amount ) {
+                    $payment = new Payment;
+                    $payment->company_id = Auth::user()->employee->company ? Auth::user()->employee->company->id : "";
+                    $payment->vendor_id = $this->bill->vendor_id;
+                    $payment->transporter_id = $this->bill->transporter_id;
+                    $payment->container_id = $this->bill->container_id;
+                    $payment->top_up_id = $this->bill->top_up_id;
+                    $payment->trip_id = $this->bill->trip_id;
+                    $payment->bill_id = $this->bill->id;
+                    $payment->transaction_type_id = $this->transaction_type_id;
+                    $payment->movement = "Dbt";
+                    $payment->description =  $this->bill->notes;
+                    $payment->user_id = Auth::user()->id;
+                    $payment->currency_id = $this->bill->currency_id;
+                    $payment->payment_number = $this->paymentNumber();   
+                    $payment->name = $this->name;
+                    $payment->surname = $this->surname;
+                    $payment->notes = $this->notes;
+                    $payment->category = "Bill";
+                    $payment->mode_of_payment = $this->mode_of_payment;
+                    $payment->reference_code = $this->reference_code;
+                    $payment->bank_account_id = $this->bank_account_id;
+                    $payment->account_id = $this->account_id;
+                    $payment->amount = $this->amount;
+                    $payment->exchange_rate = $this->exchange_rate;
+                    $payment->exchange_amount = $this->exchange_amount;
+                    if (is_numeric($this->bill->balance) && is_numeric($this->amount)) {
+                        $this->current_balance = $this->bill->balance - $this->amount;
+                    }
+                    $payment->balance = $this->current_balance;
 
-        // 1) Build payments subquery
-        $payments = DB::table('payments')
-            ->select([
-                'vendor_id',
-                'currency_id',
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                'payments.date',
-                'payments.created_at',
-                DB::raw("'payment' AS source"),
-                'id',
-            ])
-             ->whereNull('deleted_at') // exclude soft-deleted payments
-            ->where('vendor_id', $this->bill->vendor_id)
-            ->where('currency_id', $this->bill->currency_id)
-        ;
+                    // 1) Build payments subquery
+                    $payments = DB::table('payments')
+                        ->select([
+                            'vendor_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            'payments.date',
+                            'payments.created_at',
+                            DB::raw("'payment' AS source"),
+                            'id',
+                        ])
+                        ->whereNull('deleted_at') // exclude soft-deleted payments
+                        ->where('vendor_id', $this->bill->vendor_id)
+                        ->where('currency_id', $this->bill->currency_id)
+                    ;
 
         // 2) Build bills subquery
         $bills = DB::table('bills')

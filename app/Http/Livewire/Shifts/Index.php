@@ -283,6 +283,8 @@ class Index extends Component
 
     public $year;
     public $month;
+    public $asAt ;
+    public $report;
 
     public $cargo_type = [];
     public $calculation_measurement = [];
@@ -472,6 +474,7 @@ class Index extends Component
 
 
     public function mount(){
+        $this->asAt = now()->format('Y-m-d');
         $this->resetPage();
         $this->reset(['searchHorse','searchDriver','searchVehicle','search']);
         $this->user = Auth::user();
@@ -938,20 +941,34 @@ class Index extends Component
         return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search, $this->filters), 'shifts_'.time().'.xlsx');
     }
 
-    public function exportShiftsDailyCSV(Excel $excel){
+    public function generateReport()
+    {
+        if (is_null($this->report)) {
+            return;
+        }
 
-        return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.csv', Excel::CSV);
-    }
-    public function exportShiftsDailyPDF(Excel $excel){
-        return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.pdf', Excel::DOMPDF);
+        if ($this->report == "Production Report") {
+            return $this->exportShiftsDailyExcel(app(Excel::class));
+        }
+        elseif ($this->report == "LP Prod Report") {
+            return $this->exportMonthlyReport(app(Excel::class));
+        }
+        elseif ($this->report == "Daily Shift Activities Report") {
+            return $this->exportDailyShiftActivities(app(Excel::class));
+        }
+        elseif ($this->report == "Monthly Shift Activities Report") {
+            return $this->exportMonthlyShiftActivities(app(Excel::class));
+        }
     }
     public function exportShiftsDailyExcel(Excel $excel){
-        return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.xlsx');
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new ShiftsDailyExport(asAt: Carbon::parse($this->asAt)), 'shifts_daily_'.$this->asAt.'.xlsx');
     }
 
     public function exportMonthlyReport(Excel $excel)
     {
         $filename = 'loading_point_report_' . $this->year . '_' . str_pad($this->month, 2, '0', STR_PAD_LEFT) . '.xlsx';
+        $this->dispatchBrowserEvent('hide-reportsModal');
         return $excel->download(new MonthlyLoadingPointDailyReportExport($this->year, $this->month), $filename);
     }
 
@@ -964,7 +981,7 @@ class Index extends Component
     public function exportDailyShiftActivities(Excel $excel)
     {
         $date = Carbon::parse($this->date ?? today());
-
+        $this->dispatchBrowserEvent('hide-reportsModal');
         return $excel->download(
             new ShiftActivitiesExport($date),
             'shift_activities_' . $date->format('Y_m_d') . '.xlsx'
@@ -979,7 +996,7 @@ class Index extends Component
     {
         $year  = (int) request('year',  now()->year);
         $month = (int) request('month', now()->month);
-
+        $this->dispatchBrowserEvent('hide-reportsModal');
         return $excel->download(
             new MonthlyShiftActivitiesExport($year, $month),
             'shift_activities_' . $year . '_' . str_pad($month, 2, '0', STR_PAD_LEFT) . '.xlsx'

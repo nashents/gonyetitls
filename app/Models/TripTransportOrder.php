@@ -55,6 +55,9 @@ class TripTransportOrder extends Model
     public function trip_destinations(){
         return $this->hasMany('App\Models\TripDestination');
     }
+    public function trip_origins(){
+        return $this->hasMany('App\Models\TripOrigin');
+    }
 
      public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');

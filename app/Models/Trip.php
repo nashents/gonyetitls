@@ -134,6 +134,9 @@ class Trip extends Model implements Auditable
     public function trip_destinations(){
         return $this->hasMany('App\Models\TripDestination');
     }
+    public function trip_origins(){
+        return $this->hasMany('App\Models\TripOrigin');
+    }
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }

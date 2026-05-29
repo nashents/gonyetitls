@@ -38,6 +38,7 @@
                                                             disabled 
                                                         @endif
                                                         >
+                                                        {{$transport_order->transport_order_number}}
                                                         Customer: {{ $transport_order->customer?->name }} Cargo: {{ $transport_order->cargo?->name }} Weight: {{ $transport_order->weight ? $transport_order->weight."t" : "" }} 
                                                         @if ($transport_order->quantity)
                                                             Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }}
@@ -113,6 +114,7 @@
                                                         disabled 
                                                     @endif
                                                     >
+                                                     {{$transport_order->transport_order_number}}
                                                     Customer: {{ $transport_order->customer?->name }} Cargo: {{ $transport_order->cargo?->name }} Weight: {{ $transport_order->weight ? $transport_order->weight."t" : "" }} 
                                                     @if ($transport_order->quantity)
                                                         Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }}
@@ -806,6 +808,99 @@
                                         </div>
                                     </div>
                                 @else
+                                    @foreach ($trip_origins as $key => $value)
+                                        <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="destination"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">To</a><span class="required" style="color: red">*</span></label>
+                                                        <input type="text" wire:model.debounce.300ms="searchFrom" placeholder="Search destination locations..." class="form-control">
+                                                        <select class="form-control" wire:model.debounce.300ms="destinations_selectedFrom.{{$key}}" size="4" required>
+                                                            <option value="">Select To Location</option>
+                                                            @foreach ($to_destinations as $destination)
+                                                                <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{ucfirst($destination->city)}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('destinations_selectedFrom.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="destination"><a href="{{ route('loading_points.index') }}" target="_blank" style="color: blue">Offloading Point(s)</a></label>
+                                                        <input type="text" wire:model.debounce.300ms="searchLoadingPoint" placeholder="Search offloading points..." class="form-control">
+                                                        <select class="form-control" wire:model.debounce.300ms="destinations_offloading_point_id.{{$key}}" size="4" >
+                                                            <option value="">Select Loading Point</option>
+                                                            @foreach ($loading_points as $loading_point)
+                                                                <option value="{{$loading_point->id}}">{{ucfirst($loading_point->name)}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('destinations_loading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Points</a></small> <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="weight">Loaded Weight(t)</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_weight.{{$key}}" placeholder="Weight" >
+                                                        @error('loaded_weight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                @if ($cargo_type == "Solid")
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="weight">Loaded Quantity</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_quantity.{{$key}}" placeholder="Qty" >
+                                                            @error('loaded_quantity.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="customer">Units Of Measure</label>
+                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                                <option value="">Select Unit Of Measure</option>
+                                                                    @foreach ($units_of_measures as $units_of_measure)
+                                                                        <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
+                                                                    @endforeach
+                                                            </select>
+                                                            @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                @elseif($cargo_type == "Liquid")
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="weight">Litreage @ Ambient</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage.{{$key}}" placeholder="Litreage" >
+                                                            @error('loaded_litreage.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="weight">Litreage @ 20</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage_at_20.{{$key}}" placeholder="Litreage @ 20" >
+                                                            @error('loaded_litreage_at_20.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="weight">Rate</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_rate.{{$key}}" placeholder="Rate" >
+                                                        @error('loaded_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="weight">Freight</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_freight.{{$key}}" placeholder="Freight" >
+                                                        @error('loaded_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                     @foreach ($trip_destinations as $key => $value)
                                         <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                             <div class="row">
@@ -900,12 +995,9 @@
                                         </div>
                                     @endforeach
                                 @endif
-                                
                                 <hr>
                                 @endif
-                                 <h6 class="underline mt-20 mb-20"><strong>Transportation Details</strong></h6>
-                                
-                                
+                                <h6 class="underline mt-20 mb-20"><strong>Transportation Details</strong></h6>
                                 <div class="row">
                                     <div class="col-md-2">
                                         <div class="form-group">

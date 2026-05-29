@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 
+use App\Models\Account;
+use App\Models\AccountType;
 use App\Models\Company;
 use App\Models\Module;
 use App\Models\ModuleGroup;
@@ -57,6 +59,21 @@ class MenuRegistrySeeder extends Seeder
             'description'           => '',
             'hs_code'               => '',
         ]);
+
+        $type = AccountType::where('name', 'Vendor Prepayments & Vendor Credits')->first();
+
+        Account::updateOrCreate(
+            ['name' => 'Vendor Prepayments'],
+            [
+                'account_type_id'       => $type->id,
+                'account_type_group_id' => $type->account_type_group_id,
+                'description'           => 'Advance payments made to vendors before bills are received.',
+                'currency_id'           => null,
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'hs_code'               => '',
+            ]
+        );
 
     
 

@@ -12,33 +12,21 @@ class PaymentJournalService
 {
     public function post(Payment $payment): JournalEntry
     {
-        // Prevent duplicate
         if (JournalEntry::where('payment_id', $payment->id)->exists()) {
             return JournalEntry::where('payment_id', $payment->id)->first();
         }
 
-        $payment->loadMissing(['account', 'customer', 'vendor', 'currency']);
+        $payment->loadMissing(['account', 'customer', 'vendor', 'currency', 'invoice', 'bill']);
 
         $rate   = (float) ($payment->exchange_rate ?? 1);
         $amount = (float) $payment->amount;
 
-        // Resolve control accounts
-        $arAccount        = Account::where('name', 'Accounts Receivable')->firstOrFail();
-        $apAccount        = Account::where('name', 'Accounts Payable')->firstOrFail();
-        $customerDeposits = Account::where('name', 'Customer Deposits')->firstOrFail();
-        $vendorPrepayments = Account::where('name', 'Vendor Prepayments')->firstOrFail();
-
-        // Cash/Bank account selected on the payment form
         $cashBankAccount = $payment->account_id
             ? Account::findOrFail($payment->account_id)
             : Account::where('name', 'Cash on Hand')->firstOrFail();
 
-        return DB::transaction(function () use (
-            $payment, $rate, $amount,
-            $arAccount, $apAccount,
-            $customerDeposits, $vendorPrepayments,
-            $cashBankAccount
-        ) {
+        return DB::transaction(function () use ($payment, $rate, $amount, $cashBankAccount) {
+
             $entry = JournalEntry::create([
                 'company_id'     => $payment->company_id,
                 'payment_id'     => $payment->id,
@@ -53,35 +41,31 @@ class PaymentJournalService
                 'posted_at'      => now(),
             ]);
 
-            if ($payment->category === 'customer') {
-                $this->postCustomerPayment(
-                    $entry, $payment, $amount, $rate,
-                    $cashBankAccount, $arAccount, $customerDeposits
-                );
-            } elseif ($payment->category === 'vendor') {
-                $this->postVendorPayment(
-                    $entry, $payment, $amount, $rate,
-                    $cashBankAccount, $apAccount, $vendorPrepayments
-                );
-            }
+            match (strtolower($payment->category)) {
+                'customer' => $this->postCustomerWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'vendor'   => $this->postVendorWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'invoice'  => $this->postInvoicePayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'bill'     => $this->postBillPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                default    => null,
+            };
 
             return $entry;
         });
     }
 
-    // ── Customer Payment ──────────────────────────────────────────────────────
-    private function postCustomerPayment(
+    // ── 1. Customer Wallet Top-up ─────────────────────────────────────────────
+    // Payments component: source_destination = Customer, category = customer
+    // DR Cash/Bank   CR Customer Deposits
+    private function postCustomerWalletPayment(
         JournalEntry $entry,
         Payment $payment,
         float $amount,
         float $rate,
-        Account $cashBankAccount,
-        Account $arAccount,
-        Account $customerDeposits
+        Account $cashBankAccount
     ): void {
-        $isDeposit = $payment->transaction_category === 'Customer Deposits';
+        
+        $customerDeposits = Account::where('name', 'Customer Deposits')->firstOrFail();
 
-        // DR Cash/Bank — money coming in
         $entry->journal_entry_lines()->create([
             'account_id'      => $cashBankAccount->id,
             'customer_id'     => $payment->customer_id,
@@ -95,82 +79,45 @@ class PaymentJournalService
             'description'     => "Cash receipt - {$payment->payment_number}",
         ]);
 
-        if ($isDeposit) {
-            // CR Customer Deposits (liability) — no invoice yet, hold as deposit
-            $entry->journal_entry_lines()->create([
-                'account_id'      => $customerDeposits->id,
-                'customer_id'     => $payment->customer_id,
-                'vendor_id'       => null,
-                'debit'           => 0,
-                'credit'          => $amount,
-                'exchange_debit'  => 0,
-                'exchange_credit' => $amount * $rate,
-                'currency_id'     => $payment->currency_id,
-                'exchange_rate'   => $rate,
-                'description'     => "Customer deposit - {$payment->payment_number}",
-            ]);
-        } else {
-            // CR Accounts Receivable — clears invoice balance
-            $entry->journal_entry_lines()->create([
-                'account_id'      => $arAccount->id,
-                'customer_id'     => $payment->customer_id,
-                'vendor_id'       => null,
-                'debit'           => 0,
-                'credit'          => $amount,
-                'exchange_debit'  => 0,
-                'exchange_credit' => $amount * $rate,
-                'currency_id'     => $payment->currency_id,
-                'exchange_rate'   => $rate,
-                'description'     => "AR settlement - {$payment->payment_number}",
-            ]);
-        }
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $customerDeposits->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Customer deposit - {$payment->payment_number}",
+        ]);
     }
 
-    // ── Vendor Payment ────────────────────────────────────────────────────────
-    private function postVendorPayment(
+    // ── 2. Vendor Wallet Top-up ───────────────────────────────────────────────
+    // Payments component: source_destination = Vendor, category = vendor
+    // DR Vendor Prepayments   CR Cash/Bank
+    private function postVendorWalletPayment(
         JournalEntry $entry,
         Payment $payment,
         float $amount,
         float $rate,
-        Account $cashBankAccount,
-        Account $apAccount,
-        Account $vendorPrepayments
+        Account $cashBankAccount
     ): void {
-        // Determine if this is a prepayment (no bill linked) or bill settlement
-        $isPrePayment = $payment->transaction_category === 'Vendor Payments'
-            && empty($payment->bill_id);
+        $vendorPrepayments = Account::where('name', 'Vendor Prepayments')->firstOrFail();
 
-        if ($isPrePayment) {
-            // DR Vendor Prepayments (asset) — paid but no bill yet
-            $entry->journal_entry_lines()->create([
-                'account_id'      => $vendorPrepayments->id,
-                'vendor_id'       => $payment->vendor_id,
-                'customer_id'     => null,
-                'debit'           => $amount,
-                'credit'          => 0,
-                'exchange_debit'  => $amount * $rate,
-                'exchange_credit' => 0,
-                'currency_id'     => $payment->currency_id,
-                'exchange_rate'   => $rate,
-                'description'     => "Vendor prepayment - {$payment->payment_number}",
-            ]);
-        } else {
-            // DR Accounts Payable — clears existing bill
-            $entry->journal_entry_lines()->create([
-                'account_id'      => $apAccount->id,
-                'vendor_id'       => $payment->vendor_id,
-                'customer_id'     => null,
-                'debit'           => $amount,
-                'credit'          => 0,
-                'exchange_debit'  => $amount * $rate,
-                'exchange_credit' => 0,
-                'currency_id'     => $payment->currency_id,
-                'exchange_rate'   => $rate,
-                'description'     => "AP settlement - {$payment->payment_number}",
-            ]);
-        }
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $vendorPrepayments->id,
+            'vendor_id'       => $payment->vendor_id,
+            'customer_id'     => null,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Vendor prepayment - {$payment->payment_number}",
+        ]);
 
-        // CR Cash/Bank — money going out
         $entry->journal_entry_lines()->create([
             'account_id'      => $cashBankAccount->id,
             'vendor_id'       => $payment->vendor_id,
@@ -185,19 +132,94 @@ class PaymentJournalService
         ]);
     }
 
+    // ── 3. Direct Invoice Payment ─────────────────────────────────────────────
+    // Invoice component: category = invoice, invoice_id set directly
+    // DR Cash/Bank   CR Accounts Receivable
+    private function postInvoicePayment(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Invoice payment - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $arAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "AR settlement - Invoice #{$payment->invoice?->invoice_number} - {$payment->payment_number}",
+        ]);
+    }
+
+    // ── 4. Direct Bill Payment ────────────────────────────────────────────────
+    // Bill component: category = Bill (capital B), bill_id set directly
+    // DR Accounts Payable   CR Cash/Bank
+    private function postBillPayment(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $apAccount = Account::where('name', 'Accounts Payable')->firstOrFail();
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $apAccount->id,
+            'vendor_id'       => $payment->vendor_id,
+            'customer_id'     => null,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "AP settlement - Bill #{$payment->bill?->bill_number} - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'vendor_id'       => $payment->vendor_id,
+            'customer_id'     => null,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Cash payment - Bill #{$payment->bill?->bill_number} - {$payment->payment_number}",
+        ]);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private function resolveDescription(Payment $payment): string
     {
-        if ($payment->category === 'customer') {
-            $name = $payment->customer?->name ?? 'Customer';
-            return $payment->transaction_category === 'Customer Deposits'
-                ? "Customer Deposit - {$name} - {$payment->payment_number}"
-                : "Customer Payment - {$name} - {$payment->payment_number}";
-        }
-
-        $name = $payment->vendor?->name ?? 'Vendor';
-        $type = empty($payment->bill_id) ? 'Vendor Prepayment' : 'Vendor Payment';
-        return "{$type} - {$name} - {$payment->payment_number}";
+        return match (strtolower($payment->category)) {
+            'customer' => "Customer Deposit - {$payment->customer?->name} - {$payment->payment_number}",
+            'vendor'   => "Vendor Prepayment - {$payment->vendor?->name} - {$payment->payment_number}",
+            'invoice'  => "Invoice Payment - {$payment->customer?->name} - {$payment->payment_number}",
+            'bill'     => "Bill Payment - {$payment->vendor?->name} - {$payment->payment_number}",
+            default    => "Payment - {$payment->payment_number}",
+        };
     }
 
     protected function generateNumber(): string

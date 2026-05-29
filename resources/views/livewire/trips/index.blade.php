@@ -547,14 +547,14 @@
                                                     @php
                                                         $fromRoutes = collect();
 
-                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
-                                                            $fromRoutes = $trip->transport_orders
-                                                                ->map(function ($transportOrder) {
-                                                                    $from = $transportOrder->fromDestination
-                                                                        ? trim(($transportOrder->fromDestination->country?->name ?? '') . ' ' . ($transportOrder->fromDestination->city ?? ''))
+                                                        if ($trip->trip_origins && $trip->trip_origins->count()) {
+                                                            $fromRoutes = $trip->trip_origins
+                                                                ->map(function ($trip_origin) {
+                                                                    $from = $trip_origin->destination
+                                                                        ? trim(($trip_origin->destination->country?->name ?? '') . ' ' . ($trip_origin->destination->city ?? ''))
                                                                         : null;
 
-                                                                    $loadingPoint = $transportOrder->loading_point?->name;
+                                                                    $loadingPoint = $trip_origin->loading_point?->name;
 
                                                                     return [
                                                                         'label' => trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -'),
@@ -598,22 +598,19 @@
                                                 <td>
                                                     @php
                                                         $toRoutes = collect();
+                                                        if ($trip->trip_destinations && $trip->trip_destinations->count()) {
+                                                            $toRoutes = $trip->trip_destinations
+                                                                ->map(function ($trip_destination) {
+                                                                    $to = $trip_destination->destination
+                                                                        ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
+                                                                        : null;
 
-                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
-                                                            $toRoutes = $trip->transport_orders
-                                                                ->flatMap(function ($transport_order) {
-                                                                    return $transport_order->trip_destinations->map(function ($trip_destination) {
-                                                                        $to = $trip_destination->destination
-                                                                            ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
-                                                                            : null;
+                                                                    $offloadingPoint = $trip_destination->offloading_point?->name;
 
-                                                                        $offloadingPoint = $trip_destination->offloading_point?->name;
-
-                                                                        return [
-                                                                            'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
-                                                                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
-                                                                        ];
-                                                                    });
+                                                                    return [
+                                                                        'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
+                                                                        'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                                                                    ];
                                                                 })
                                                                 ->filter(fn ($item) => !empty($item['label']))
                                                                 ->unique('key')

@@ -2,16 +2,16 @@
 
 namespace App\Http\Livewire\TransportOrders;
 
-use App\Models\Trip;
-use App\Models\User;
-use Livewire\Component;
 use App\Models\Destination;
+use App\Models\TransportOrder;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Preview extends Component
 {
     public $company;
-    public $trip;
+    public $transport_order;
     public $origin;
     public $destination;
     public $pattern;
@@ -20,22 +20,25 @@ class Preview extends Component
 
     public function mount($id){
         $this->company = Auth::user()->employee->company;
-        $this->trip = Trip::with([
+
+        $this->transport_order = TransportOrder::with([
         'customer:id,name',
-        'driver.employee',
-        'horse' => function ($q) {
-            $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
-            ->with([
-                'horse_make:id,name',
-                'horse_model:id,name',
-            ]);
-        },
-        'transporter:id,name',
+        'trip_origins.destination.country',
+        'trip_origins.loading_point',
+
+        'trip_destinations.destination.country',
+        'trip_destinations.offloading_point',
+
+        'fromDestination.country',
+        'toDestination.country',
+
+        'loading_point',
+        'offloading_point',
         ])->find($id);
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-        $this->origin = Destination::find($this->trip->from);
-        $this->destination = Destination::find($this->trip->to);
-        $this->authorizer = User::find($this->trip->authorized_by_id);
+        $this->origin = Destination::find($this->transport_order->from);
+        $this->destination = Destination::find($this->transport_order->to);
+        $this->authorizer = User::find($this->transport_order->authorized_by_id);
         
      
     }

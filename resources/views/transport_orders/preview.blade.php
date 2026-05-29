@@ -1,13 +1,14 @@
-@extends('layouts.main')
+@extends('layouts.jobcard')
 @section('extra-css')
 @if (Auth::user()->employee->company)
 <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
 @elseif (Auth::user()->company)
 <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
 @endif
+
 @endsection
 @section('title')
-    Transportation Order | @if (isset(Auth::user()->employee->company))
+    TO Preview | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -17,7 +18,7 @@
 <div class="container">
     <div class="card">
         <div class="card-body">
-            @livewire('transport-orders.preview', ['id' => $id])
+            @livewire('transport-orders.preview',['id' => $id])
         </div>
     </div>
 </div>

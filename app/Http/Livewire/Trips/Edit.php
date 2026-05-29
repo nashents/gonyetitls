@@ -41,6 +41,7 @@ use App\Models\Trip;
 use App\Models\TripDestination;
 use App\Models\TripExpense;
 use App\Models\TripGroup;
+use App\Models\TripOrigin;
 use App\Models\TripTransportOrder;
 use App\Models\TripType;
 use App\Models\TruckStop;
@@ -219,6 +220,17 @@ class Edit extends Component
     public $offloaded_quantity = [];
     public $offloaded_litreage = [];
     public $offloaded_litreage_at_20 = [];
+   
+    public $trip_origins;
+    public $destinations_selectedFrom = [];
+    public $destinations_loading_point_id = [];
+    public $loaded_weight = [];
+    public $loaded_rate = [];
+    public $loaded_freight = [];
+    public $loaded_quantity = [];
+    public $loaded_litreage = [];
+    public $loaded_litreage_at_20 = [];
+
     public $destinations_inputs = [];
     public $d = 1;
     public $e = 1;
@@ -231,6 +243,21 @@ class Edit extends Component
     public function destinationsRemove($d)
     {
         unset($this->destinations_inputs[$d]);
+    }
+
+    public $origins_inputs = [];
+    public $or = 1;
+    public $r = 1;
+
+    public function addOrigin($or)
+    {
+        $or = $or + 1;
+        $this->or = $or;
+        array_push($this->origins_inputs ,$or);
+    }
+    public function removeOrigin($or)
+    {
+        unset($this->origins_inputs[$or]);
     }
 
      
@@ -474,7 +501,7 @@ class Edit extends Component
         }
     }
 
-        public function updatedSelectedTransportOrder($id, $key){
+    public function updatedSelectedTransportOrder($id, $key){
        
         if(is_null($id) && is_null($key) ){
            return ;
@@ -492,6 +519,7 @@ class Edit extends Component
         $this->allocated_litreage[$key] = $transport_order->litreage;
         $this->allocated_quantity[$key] = $transport_order->quantity;
         $this->allocated_units_of_measure_id[$key] = $transport_order->units_of_measure_id ?: Null;
+        
     }
     
     public function updatedSelectedCurrentTransportOrder($id, $key){
@@ -1087,6 +1115,22 @@ class Edit extends Component
             }
         }
         
+       
+        $this->trip_origins = TripOrigin::where('trip_id', $this->trip->id)->get();
+
+        if($this->trip_origins){
+            foreach($this->trip_origins as $trip_origin){
+                $this->loaded_weight[] = $trip_origin->weight;
+                $this->loaded_quantity[] = $trip_origin->quantity;
+                $this->loaded_litreage[] = $trip_origin->litreage;
+                $this->loaded_litreage_at_20[] = $trip_origin->litreage_at_20;
+                $this->destinations_selectedFrom[] = $trip_origin->destination_id;
+                $this->destinations_loading_point_id[] = $trip_origin->loading_point_id;
+                $this->loaded_rate[] = $trip_origin->rate;
+                $this->loaded_freight[] = $trip_origin->freight;
+            }
+        }
+        
         $this->horses = Horse::where('status', 1)
         ->where('service',0)
         ->where('archive',0)
@@ -1308,55 +1352,108 @@ class Edit extends Component
 
     public function addDestinations($trip_transport_order)
     {
+       
+        // Remove old destinations linked to this trip transport order
+        TripDestination::where('trip_id', $trip_transport_order->trip_id)->delete();
+       
+
         if ($this->multiple_destinations == true) {
 
             if (!empty($this->destinations_selectedTo)) {
 
+        
                 foreach ($this->destinations_selectedTo as $key => $destinationId) {
 
                     $offloadingPointId = $this->destinations_offloading_point_id[$key] ?? null;
 
-                    $trip_destination = TripDestination::firstOrNew([
-                        'trip_id'                 => $trip_transport_order->trip_id,
-                        'transport_order_id'      => $trip_transport_order->transport_order_id,
-                        'trip_transport_order_id' => $trip_transport_order->id,
-                        'destination_id'          => $destinationId,
-                        'offloading_point_id'     => $offloadingPointId,
-                    ]);
-
+                    $trip_destination = new TripDestination();
                     $trip_destination->user_id = Auth::id();
-                    $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: Null;
+                    $trip_destination->trip_id = $trip_transport_order->trip_id;
+                    $trip_destination->transport_order_id = $trip_transport_order->transport_order_id;
+                    $trip_destination->trip_transport_order_id = $trip_transport_order->id;
+                    $trip_destination->destination_id = $destinationId;
+                    $trip_destination->offloading_point_id = $offloadingPointId;
+                    $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: null;
                     $trip_destination->weight = $this->offloaded_weight[$key] ?? null;
                     $trip_destination->quantity = $this->offloaded_quantity[$key] ?? null;
                     $trip_destination->litreage = $this->offloaded_litreage[$key] ?? null;
                     $trip_destination->litreage_at_20 = $this->offloaded_litreage_at_20[$key] ?? null;
                     $trip_destination->rate = $this->offloaded_rate[$key] ?? null;
                     $trip_destination->freight = $this->offloaded_freight[$key] ?? null;
-
                     $trip_destination->save();
                 }
             }
 
         } else {
 
-            $trip_destination = TripDestination::firstOrNew([
-                'trip_id'                 => $trip_transport_order->trip_id,
-                'transport_order_id'      => $trip_transport_order->transport_order_id,
-                'trip_transport_order_id' => $trip_transport_order->id,
-                'destination_id'          => $this->selectedTo,
-                'offloading_point_id'     => $this->offloading_point_id,
-            ]);
-
+            $trip_destination = new TripDestination();
             $trip_destination->user_id = Auth::id();
+            $trip_destination->trip_id = $trip_transport_order->trip_id;
+            $trip_destination->transport_order_id = $trip_transport_order->transport_order_id;
+            $trip_destination->trip_transport_order_id = $trip_transport_order->id;
+            $trip_destination->destination_id = $this->selectedTo;
+            $trip_destination->offloading_point_id = $this->offloading_point_id;
             $trip_destination->weight = $this->weight;
             $trip_destination->quantity = $this->quantity;
-            $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: Null;
+            $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: null;
             $trip_destination->litreage = $this->litreage;
             $trip_destination->litreage_at_20 = $this->litreage_at_20;
             $trip_destination->rate = $this->rate;
             $trip_destination->freight = $this->freight;
-
             $trip_destination->save();
+        }
+    }
+    
+    public function addOrigins($trip_transport_order)
+    {
+       
+        // Remove old destinations linked to this trip transport order
+        TripOrigin::where('trip_id', $trip_transport_order->trip_id)->delete();
+       
+
+        if ($this->multiple_destinations == true) {
+
+            if (!empty($this->destinations_selectedFrom)) {
+
+                foreach ($this->destinations_selectedFrom as $key => $destinationId) {
+
+                    $loadingPointId = $this->destinations_loading_point_id[$key] ?? null;
+
+                    $trip_origin = new TripOrigin();
+                    $trip_origin->user_id = Auth::id();
+                    $trip_origin->trip_id = $trip_transport_order->trip_id;
+                    $trip_origin->transport_order_id = $trip_transport_order->transport_order_id;
+                    $trip_origin->trip_transport_order_id = $trip_transport_order->id;
+                    $trip_origin->destination_id = $destinationId;
+                    $trip_origin->offloading_point_id = $loadingPointId;
+                    $trip_origin->units_of_measure_id = $this->units_of_measure_id ?: null;
+                    $trip_origin->weight = $this->loaded_weight[$key] ?? null;
+                    $trip_origin->quantity = $this->loaded_quantity[$key] ?? null;
+                    $trip_origin->litreage = $this->loaded_litreage[$key] ?? null;
+                    $trip_origin->litreage_at_20 = $this->loaded_litreage_at_20[$key] ?? null;
+                    $trip_origin->rate = $this->loaded_rate[$key] ?? null;
+                    $trip_origin->freight = $this->loaded_freight[$key] ?? null;
+                    $trip_origin->save();
+                }
+            }
+
+        } else {
+
+            $trip_origin = new TripOrigin();
+            $trip_origin->user_id = Auth::id();
+            $trip_origin->trip_id = $trip_transport_order->trip_id;
+            $trip_origin->transport_order_id = $trip_transport_order->transport_order_id;
+            $trip_origin->trip_transport_order_id = $trip_transport_order->id;
+            $trip_origin->destination_id = $this->selectedFrom;
+            $trip_origin->offloading_point_id = $this->loading_point_id;
+            $trip_origin->weight = $this->weight;
+            $trip_origin->quantity = $this->quantity;
+            $trip_origin->units_of_measure_id = $this->units_of_measure_id ?: null;
+            $trip_origin->litreage = $this->litreage;
+            $trip_origin->litreage_at_20 = $this->litreage_at_20;
+            $trip_origin->rate = $this->rate;
+            $trip_origin->freight = $this->freight;
+            $trip_origin->save();
         }
     }
 
@@ -1998,10 +2095,8 @@ class Edit extends Component
 
     }
 
-      public function update(){
+    public function update(){
 
-      
- 
         DB::transaction(function () {
 
         $trip = Trip::find($this->trip_id);
@@ -2218,10 +2313,8 @@ class Edit extends Component
                     
 
                     $this->createDeliveryNotes($trip_transport_order);
-                    $this->addDestinations($trip_transport_order);
+                    
                 }
-
-                      
 
                 $trip->litreage = $totalLitreage;
                 $trip->weight = $totalWeight;
@@ -2324,7 +2417,7 @@ class Edit extends Component
                     $totalLitreage += $allocatedLitreage;
 
                     $this->createDeliveryNotes($trip_transport_order);
-                    $this->addDestinations($trip_transport_order);
+                 
                 }
 
                     
@@ -2335,6 +2428,9 @@ class Edit extends Component
                 $this->turnover = $totalFreight;
                 $trip->turnover = $this->turnover;
                 $trip->update();
+
+                $this->addDestinations($trip_transport_order);
+                $this->addOrigins($trip_transport_order);
         }
 
 

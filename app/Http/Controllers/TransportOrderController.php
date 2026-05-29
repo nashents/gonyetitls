@@ -76,24 +76,15 @@ class TransportOrderController extends Controller
 
     public function generatePDF($id){
         $company = Auth::user()->employee->company;
-        $trip = Trip::with([
+        $to = TransportOrder::with([
         'customer:id,name',
-        'driver.employee',
-        'horse' => function ($q) {
-            $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
-            ->with([
-                'horse_make:id,name',
-                'horse_model:id,name',
-            ]);
-        },
-        'transporter:id,name',
         ])->find($id);
         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-        $origin = Destination::find($trip->from);
-        $destination = Destination::find($trip->to);
-        $authorizer = User::find($trip->authorized_by_id);
+        $origin = Destination::find($to->from);
+        $destination = Destination::find($to->to);
+        $authorizer = User::find($to->authorized_by_id);
         $data = [
-            'trip' => $trip,
+            'transport_order' => $to,
             'company' => $company,
             'origin' => $origin,
             'destination' => $destination,

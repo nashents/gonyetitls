@@ -132,7 +132,13 @@ class TripStatusManager extends Component
         $this->trip_status                = $trip->trip_status;
         $this->selectedStatus             = $trip->trip_status;
         $this->currency_id                = $this->toInt($trip->currency_id);
-        $this->freight_calculation        = $trip->freight_calculation     ?? '';
+        $this->freight_calculation = $trip->freight_calculation 
+        ?: $trip->trip_transport_orders()
+            ->with('transport_order')
+            ->first()
+            ?->transport_order
+            ?->freight_calculation 
+        ?: '';
         $this->calculation_measurement    = $trip->calculation_measurement ?? '';
         $this->trip_status_date           = $trip->trip_status_date;
         $this->trip_status_description    = $trip->trip_status_description;
@@ -777,6 +783,16 @@ class TripStatusManager extends Component
         $email   = Trip::find($this->trip_id)?->customer?->email;
         if ($email && $company)
             Mail::to($email)->send(new TripUpdatesMail(Trip::find($this->trip_id), $company));
+    }
+
+    public function updatedSelectedStatus($value){
+        if(is_null($value)){
+            return;
+        }
+
+        $this->trip_status_date = Null;
+        $this->loaded_date = Null;
+        $this->offloaded_date = Null;
     }
 
     public function resetInputFields(): void

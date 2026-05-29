@@ -24,6 +24,7 @@
                             <!-- Nav tabs -->
                             <ul class="nav nav-tabs border-bottom border-primary" role="tablist">
                                 <li role="presentation" class="active"><a class="" href="#trips" aria-controls="trips" role="tab" data-toggle="tab" >Trip Details</a></li>
+                                <li role="presentation" ><a class="" href="#origins" aria-controls="origins" role="tab" data-toggle="tab" >Loading Points</a></li>
                                 <li role="presentation" ><a class="" href="#destinations" aria-controls="destinations" role="tab" data-toggle="tab" >Offloading Points</a></li>
                                 <li role="presentation" ><a class="" href="#documents" aria-controls="documents" role="tab" data-toggle="tab" >Trip Documents</a></li>
                                 <li role="presentation" ><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" >Trip Expenses</a></li>
@@ -382,14 +383,14 @@
                                                                      @php
                                                                         $fromRoutes = collect();
 
-                                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
-                                                                            $fromRoutes = $trip->transport_orders
-                                                                                ->map(function ($transportOrder) {
-                                                                                    $from = $transportOrder->fromDestination
-                                                                                        ? trim(($transportOrder->fromDestination->country?->name ?? '') . ' ' . ($transportOrder->fromDestination->city ?? ''))
+                                                                        if ($trip->trip_origins && $trip->trip_origins->count()) {
+                                                                            $fromRoutes = $trip->trip_origins
+                                                                                ->map(function ($trip_origin) {
+                                                                                    $from = $trip_origin->destination
+                                                                                        ? trim(($trip_origin->destination->country?->name ?? '') . ' ' . ($trip_origin->destination->city ?? ''))
                                                                                         : null;
 
-                                                                                    $loadingPoint = $transportOrder->loading_point?->name;
+                                                                                    $loadingPoint = $trip_origin->loading_point?->name;
 
                                                                                     return [
                                                                                         'label' => trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -'),
@@ -435,22 +436,19 @@
                                                                 <td>
                                                                     @php
                                                                         $toRoutes = collect();
+                                                                        if ($trip->trip_destinations && $trip->trip_destinations->count()) {
+                                                                            $toRoutes = $trip->trip_destinations
+                                                                                ->map(function ($trip_destination) {
+                                                                                    $to = $trip_destination->destination
+                                                                                        ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
+                                                                                        : null;
 
-                                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
-                                                                            $toRoutes = $trip->transport_orders
-                                                                                ->flatMap(function ($transport_order) {
-                                                                                    return $transport_order->trip_destinations->map(function ($trip_destination) {
-                                                                                        $to = $trip_destination->destination
-                                                                                            ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
-                                                                                            : null;
+                                                                                    $offloadingPoint = $trip_destination->offloading_point?->name;
 
-                                                                                        $offloadingPoint = $trip_destination->offloading_point?->name;
-
-                                                                                        return [
-                                                                                            'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
-                                                                                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
-                                                                                        ];
-                                                                                    });
+                                                                                    return [
+                                                                                        'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
+                                                                                        'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                                                                                    ];
                                                                                 })
                                                                                 ->filter(fn ($item) => !empty($item['label']))
                                                                                 ->unique('key')
@@ -1213,13 +1211,33 @@
                                 <!-- /.tab-pane -->
 
 
+                                <div role="tabpanel" class="tab-pane " id="origins">
+                                    <div class="col-md-12 p-n">
+                                        <div class="col-md-12">
+                                            <div class="panel panel-info">
+                                                <div class="panel-heading">
+                                                    <div class="panel-title">
+                                                        <h5>Loading Points</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="panel-body overflow-x-auto">
+                                                   @livewire('trips.origins', ['trip' => $trip])
+                                                </div>
+                                                <!-- /.panel-body -->
+                                            </div>
+                                            <!-- /.panel -->
+
+                                        </div>
+
+                                    </div>
+                                </div>
                                 <div role="tabpanel" class="tab-pane " id="destinations">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
                                                 <div class="panel-heading">
                                                     <div class="panel-title">
-                                                        <h5>Other Offloading Points</h5>
+                                                        <h5>Offloading Points</h5>
                                                     </div>
                                                 </div>
                                                 <div class="panel-body overflow-x-auto">
