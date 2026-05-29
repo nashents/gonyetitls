@@ -6,6 +6,7 @@ namespace App\Http\Livewire\TicketRequests;
 use App\Models\Measurement;
 use App\Models\Product;
 use App\Models\TicketRequest;
+use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -35,12 +36,14 @@ class Index extends Component
     public $employees;
     public $user;
     public $employee;
+    public $units_of_measures;
 
 
  
     public function mount($ticket){
         $this->ticket = $ticket;
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+        $this->qty = 1;
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->reset(['search_products']);
          $this->loadProducts();
         $this->user = Auth::user();
@@ -134,6 +137,21 @@ class Index extends Component
             'message'=>"Item(s) Updated Successfully!!"
         ]);
         
+    }
+
+    public function delete($id){
+        $this->ticket_request_id = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+
+    public function destroy(){
+        $ticket_request = TicketRequest::find($this->ticket_request_id);
+        $ticket_request->delete();
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Request Item Deleted Successfully!!"
+        ]);
     }
 
     private function loadProducts(){

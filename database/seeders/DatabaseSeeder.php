@@ -41,6 +41,7 @@ use Database\Seeders\LossGroupSeeder;
 use Database\Seeders\MeasurementSeeder;
 use Database\Seeders\MenuRegistrySeeder;
 use Database\Seeders\PaymentMethodSeeder;
+use Database\Seeders\PayrollControlAccountSeeder;
 use Database\Seeders\ProblemCategorySeeder;
 use Database\Seeders\PublicHolidaySeeder;
 use Database\Seeders\RankSeeder;
@@ -124,6 +125,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ProblemCategorySeeder::class);
         $this->call(TaxSeeder::class);
         $this->call(MenuRegistrySeeder::class);
+        $this->call(PayrollControlAccountSeeder::class);
      
     }
 }

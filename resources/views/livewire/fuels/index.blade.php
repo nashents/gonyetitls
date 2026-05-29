@@ -290,7 +290,7 @@
                                                                     </a>
                                                                 </li>
                                                             @endif
-                                                            @if($fuel->authorization === 'pending')
+                                                            @if($fuel->authorization === 'pending' || in_array('Super Admin', $role_names))
                                                                 <li>
                                                                     <a href="#" wire:click.prevent="edit({{ $fuel->id }})">
                                                                         <i class="fa fa-edit color-success"></i> Edit

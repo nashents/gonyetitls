@@ -14,7 +14,7 @@ class AddClosedbyToTripsTable extends Migration
     public function up()
     {
         Schema::table('trips', function (Blueprint $table) {
-            // $table->text('closed_by')->nullable();
+            $table->text('closed_by')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AddClosedbyToTripsTable extends Migration
     public function down()
     {
         Schema::table('trips', function (Blueprint $table) {
-            // $table->dropColumn('closed_by');
+            $table->dropColumn('closed_by');
         });
     }
 }

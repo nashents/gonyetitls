@@ -38,11 +38,11 @@ class TaxSeeder extends Seeder
                 'user_id' => Null,
                 'account_id'   => $taxAccount->id,
                 'category'     => 'VAT',
-                'name'         => 'Value Added Tax 15%',
-                'abbreviation' => 'VAT 15%',
+                'name'         => 'Value Added Tax 15.5%',
+                'abbreviation' => 'VAT 15.5%',
                 'rate' => '15',
                 'hs_code'      => '99001000',
-                'description'  => 'Standard VAT rate of 15%',
+                'description'  => 'Standard VAT rate of 15.5%',
             ],
 
             [

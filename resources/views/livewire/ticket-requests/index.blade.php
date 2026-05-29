@@ -118,7 +118,7 @@
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="qty" placeholder="Enter Quantity Requested" required>
+                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="qty" placeholder="Enter Qty Requested" required>
                                                 @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -127,15 +127,9 @@
                                                 <label for="horse">Unit of measure (UOM)<span class="required" style="color: red">*</span></label>
                                                 <select wire:model.debounce.300ms="measurement" class="form-control" required >
                                                    <option value="" selected>Select Unit of Measure</option>
-                                                    <option value="Cubic">Cubic</option>
-                                                    <option value="Each">Each</option>
-                                                    <option value="Item(s)">Item(s)</option>
-                                                    <option value="Kg(s)">Kg(s)</option>
-                                                    <option value="Litre(s)">Litre(s)</option>
-                                                    <option value="Metre(s)">Metre(s)</option>
-                                                    <option value="Piece(s)">Piece(s)</option>
-                                                    <option value="Ton(s)">Ton(s)</option>
-                                                    <option value="Unit(s)">Unit(s)</option>
+                                                   @foreach ($units_of_measures as $uom)
+                                                       <option value="{{ $uom->name }}">{{ $uom->name }} {{ $uom->abbreviation ? "(".$uom->abbreviation.")" : "" }}</option>
+                                                   @endforeach
                                                 </select>
                                                 @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
@@ -184,25 +178,19 @@
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
-                                                <label for="qty">Quantity<span class="required" style="color: red">*</span></label>
-                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="qty" placeholder="Enter Quantity Requested" required>
+                                                <label for="qty">Qty<span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="qty" placeholder="Enter Qty Requested" required>
                                                 @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
-                                                <label for="measurements">Unit of measure<span class="required" style="color: red">*</span></label>
+                                                <label for="horse">Unit of measure (UOM)<span class="required" style="color: red">*</span></label>
                                                 <select wire:model.debounce.300ms="measurement" class="form-control" required >
-                                                    <option value="" selected>Select Unit of Measure</option>
-                                                    <option value="Cubic">Cubic</option>
-                                                    <option value="Each">Each</option>
-                                                    <option value="Item(s)">Item(s)</option>
-                                                    <option value="Kg(s)">Kg(s)</option>
-                                                    <option value="Litre(s)">Litre(s)</option>
-                                                    <option value="Metre(s)">Metre(s)</option>
-                                                    <option value="Piece(s)">Piece(s)</option>
-                                                    <option value="Ton(s)">Ton(s)</option>
-                                                    <option value="Unit(s)">Unit(s)</option>
+                                                   <option value="" selected>Select Unit of Measure</option>
+                                                   @foreach ($units_of_measures as $uom)
+                                                       <option value="{{ $uom->name }}">{{ $uom->name }} {{ $uom->abbreviation ? "(".$uom->abbreviation.")" : "" }}</option>
+                                                   @endforeach
                                                 </select>
                                                 @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
@@ -221,4 +209,23 @@
                             </div>
                         </div>
                     </div>
+                    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content bg-danger">
+                                <div class="modal-body">
+                                <center> <strong>Are you sure you want to delete this Requested Item?</strong> </center>
+                                </div>
+                                <form wire:submit.prevent="destroy()" >
+                                    <div class="modal-footer no-border">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                                            <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                                        </div>
+                                        <!-- /.btn-group -->
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
 </div>

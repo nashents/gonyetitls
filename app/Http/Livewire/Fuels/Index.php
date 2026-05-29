@@ -124,6 +124,10 @@ class Index extends Component
     public $from;
     public $to;
     public $company;
+    
+    public $role_names;
+    public $department_names;
+    public $rank_names;
 
     public $exchange_rate;
     public $exchange_amount;
@@ -145,6 +149,23 @@ class Index extends Component
     }
 
     public function mount(){
+
+        $this->employee = Auth::user()->employee;
+
+         $departments = $this->employee->departments;
+
+         foreach($departments as $department){
+             $this->department_names[] = $department->name;
+         }
+
+         $roles = Auth::user()->roles;
+         foreach($roles as $role){
+             $this->role_names[] = $role->name;
+         }
+         $ranks = $this->employee->ranks;
+         foreach($ranks as $rank){
+             $this->rank_names[] = $rank->name;
+         }
 
         $this->resetPage();
         $this->company = Auth::user()->employee->company;
@@ -385,6 +406,7 @@ class Index extends Component
         $fuel_request = FuelRequest::find($id);
         $this->selectedHorse = $fuel_request->horse_id;
         $this->selectedVehicle = $fuel_request->vehicle_id;
+        $this->employee_id = $fuel_request->employee_id;
         $this->asset_id = $fuel_request->asset_id;
 
         if($this->selectedHorse){
