@@ -123,7 +123,7 @@
             @livewire('modules.index', ['id' => $company->id])
         </div>
         <div role="tabpanel" class="tab-pane" id="settings">
-            @livewire('settings.index', ['id' => $company->id])
+            @livewire('companies.settings', ['id' => $company->id])
         </div>
         <div role="tabpanel" class="tab-pane" id="budgets">
             @livewire('budgets.index', ['id' => $company->id])

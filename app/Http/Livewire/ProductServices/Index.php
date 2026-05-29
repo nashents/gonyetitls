@@ -46,9 +46,9 @@ class Index extends Component
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
     }
     private function resetInputFields(){
         $this->name = '';

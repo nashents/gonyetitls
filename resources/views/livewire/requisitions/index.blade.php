@@ -237,24 +237,83 @@
                                                 <small style="background-color: orange"><strong >Comments: </strong> {{$requisition->completed_comments}}</small>  
                                             @endif 
                                         </td>
-                                        <td>
-                                            <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
-                                
+                                       <td>
+                                            @php
+                                                $isTwoStep = ($requisition->company?->enable_requisition_two_step_authorization ?? false)
+                                                    && $requisition->type == "payment_requisition";
+
+                                                $badgeClass = 'warning';
+                                                $statusText = 'pending';
+
+                                                if ($requisition->authorization == 'approved') {
+                                                    $badgeClass = 'success';
+                                                    $statusText = 'approved';
+                                                } elseif ($requisition->authorization == 'rejected') {
+                                                    $badgeClass = 'danger';
+                                                    $statusText = 'rejected';
+                                                } elseif ($isTwoStep && $requisition->authorization_stage == 1) {
+                                                    $badgeClass = 'info';
+                                                    $statusText = 'first approved';
+                                                }
+                                            @endphp
+
+                                            <span class="badge bg-{{ $badgeClass }}">
+                                                {{ $statusText }}
+                                            </span>
+
                                             @if ($requisition->authorized_by_id)
                                                 @php
-                                                    $user = App\Models\User::find($requisition->authorized_by_id);
+                                                    $firstUser = App\Models\User::find($requisition->authorized_by_id);
                                                 @endphp
                                                 <br>
-                                                 <small style="background-color: orange"><strong >AuthBy: </strong> {{$user?->name}} {{$user?->surname}}</small>  
+                                                <small style="background-color: orange">
+                                                    <strong>1st AuthBy: </strong>
+                                                    {{ $firstUser?->name }} {{ $firstUser?->surname }}
+                                                </small>
                                             @endif
+
                                             @if ($requisition->authorization_date)
                                                 <br>
-                                                 <small style="background-color: orange"><strong >Date: </strong> {{$requisition->authorization_date}}</small>  
+                                                <small style="background-color: orange">
+                                                    <strong>1st Date: </strong>
+                                                    {{ $requisition->authorization_date }}
+                                                </small>
                                             @endif
+
                                             @if ($requisition->reason)
                                                 <br>
-                                                <small style="background-color: orange"><strong >Comments: </strong> {{$requisition->reason}}</small>  
-                                            @endif 
+                                                <small style="background-color: orange">
+                                                    <strong>1st Comments: </strong>
+                                                    {{ $requisition->reason }}
+                                                </small>
+                                            @endif
+
+                                            @if ($isTwoStep && $requisition->second_authorized_by_id)
+                                                @php
+                                                    $secondUser = App\Models\User::find($requisition->second_authorized_by_id);
+                                                @endphp
+                                                <br>
+                                                <small style="background-color: #87ceeb">
+                                                    <strong>2nd AuthBy: </strong>
+                                                    {{ $secondUser?->name }} {{ $secondUser?->surname }}
+                                                </small>
+                                            @endif
+
+                                            @if ($isTwoStep && $requisition->second_authorization_date)
+                                                <br>
+                                                <small style="background-color: #87ceeb">
+                                                    <strong>2nd Date: </strong>
+                                                    {{ $requisition->second_authorization_date }}
+                                                </small>
+                                            @endif
+
+                                            @if ($isTwoStep && $requisition->second_authorization_comments)
+                                                <br>
+                                                <small style="background-color: #87ceeb">
+                                                    <strong>2nd Comments: </strong>
+                                                    {{ $requisition->second_authorization_comments }}
+                                                </small>
+                                            @endif
                                         </td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">

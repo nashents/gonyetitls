@@ -84,99 +84,227 @@ class Pending extends Component
         $this->dispatchBrowserEvent('show-authorizationModal');
       }
 
-      public function update(){
 
-          DB::transaction(function () {
-          
-            $requisition = Requisition::find($this->requisition_id);
-            $requisition->authorized_by_id = Auth::user()->id;
-            $requisition->authorization = $this->authorize;
-            $requisition->authorization_date = now();
-            $requisition->reason = $this->comments;
-            $requisition->update();
 
-            $company =  Auth::user()->employee->company;
-            $user = $requisition->user;
-            $email = $user?->email ?? null;
-            $notification = "Requisition Authorization";
-            if($email){
-                Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $requisition));
-            }
+    public function update()
 
-        if ($this->authorize == "approved") {
+    {
+        DB::transaction(function () {
 
-            if ($requisition->type == "payment_requisition" && ($requisition->trip_id == Null && $requisition->booking_id == Null && $requisition->purchase_id == Null)) {
+            $requisition = Requisition::with(['user', 'requisition_items'])
+                ->findOrFail($this->requisition_id);
 
-                $requisition_items = $requisition->requisition_items;
-                if($requisition_items){
-                    foreach ($requisition_items as $requisition_item) {
-                        $requisition = $requisition_item->requisition;
-                        $bill = new Bill;
-                        $bill->user_id = Auth::user()->id;
-                        $bill->bill_number = $this->billNumber();
-                        $bill->requisition_id = $requisition?->id;
-                        $bill->category = "Requisition";
-                        $bill->bill_date = $requisition?->date;
-                        $bill->notes = $requisition?->description;
-                        $account_type = Account::find($requisition?->account_id) ? Account::find($requisition?->account_id)->account_type : Null;
-                        $bill->account_id = $requisition->account_id ?? null;
-                        if ($account_type) {
-                            $bill->account_type_id = $account_type->id;
-                        }
-                        $bill->currency_id = $requisition_item->currency_id;
-                        $bill->authorized_by_id = Auth::user()->id;
-                        $bill->authorization = $this->authorize;
-                        $bill->comments = $this->comments;
-                        $bill->total = $requisition_item->subtotal;
-                        $bill->exchange_rate = $requisition_item->exchange_rate;
-                        $bill->exchange_amount = $requisition_item->exchange_amount;
-                        $bill->balance = $requisition_item->subtotal;
-                        $bill->to_be_paid = True;
-                        $bill->save();
+            $company = Auth::user()->employee->company;
 
-                        $bill_expense = new BillExpense;
-                        $bill_expense->bill_id = $bill->id;
-                        $bill_expense->currency_id = $bill->currency_id;
-                        $account_type = Account::find($requisition->account_id) ? Account::find($requisition->account_id)->account_type : Null;
-                        $bill_expense->account_id = $requisition->account_id ?? null;
-                        if (isset($account_type)) {
-                            $bill_expense->account_type_id = $account_type->id;
-                        }
-                        $bill_expense->product_id = $requisition_item->product_id;
-                        $bill_expense->qty = $requisition_item->qty;
-                        $bill_expense->amount = $requisition_item->amount;
-                        $bill_expense->subtotal = $requisition_item->subtotal;
-                        $bill_expense->subtotal_incl = $requisition_item->subtotal;
-                        $bill_expense->save();
+            $twoStepEnabled = ($company->enable_requisition_two_step_authorization ?? false)
+                && $requisition->type == "payment_requisition";
 
-                    }
+            /*
+            |--------------------------------------------------------------------------
+            | REJECTION
+            |--------------------------------------------------------------------------
+            */
+            if ($this->authorize == "rejected") {
+
+                if ($twoStepEnabled && $requisition->authorization_stage == 1) {
+                    $requisition->second_authorized_by_id = Auth::id();
+                    $requisition->second_authorization_date = now();
+                    $requisition->second_authorization_comments = $this->comments;
+                } else {
+                    $requisition->authorized_by_id = Auth::id();
+                    $requisition->authorization_date = now();
+                    $requisition->reason = $this->comments;
                 }
-                
-                
 
+                $requisition->authorization = "rejected";
+                $requisition->save();
+
+                $this->sendRequisitionAuthorizationEmail($company, $requisition);
+
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => "Requisition Rejected Successfully"
+                ]);
+
+                return redirect()->route('requisitions.rejected');
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | ONE STEP AUTHORIZATION
+            |--------------------------------------------------------------------------
+            */
+            if (!$twoStepEnabled) {
 
-          
+                $requisition->authorized_by_id = Auth::id();
+                $requisition->authorization = "approved";
+                $requisition->authorization_date = now();
+                $requisition->reason = $this->comments;
+                $requisition->authorization_stage = 2;
+                $requisition->save();
 
-            $this->dispatchBrowserEvent('hide-authorizationModal');
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Requisition Approved Successfully"
-            ]);
-            return redirect()->route('requisitions.approved');
-        }else {
-            $this->dispatchBrowserEvent('hide-authorizationModal');
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Requisition Rejected Successfully"
-            ]);
-            return redirect()->route('requisitions.rejected');
+                $this->createBillFromRequisition($requisition);
+                $this->sendRequisitionAuthorizationEmail($company, $requisition);
+
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => "Requisition Approved Successfully"
+                ]);
+
+                return redirect()->route('requisitions.approved');
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | TWO STEP AUTHORIZATION - FIRST APPROVAL
+            |--------------------------------------------------------------------------
+            */
+            if ($twoStepEnabled && ($requisition->authorization_stage == 0 || $requisition->authorization_stage == null)) {
+
+                $requisition->authorized_by_id = Auth::id();
+                $requisition->authorization = "pending";
+                $requisition->authorization_date = now();
+                $requisition->reason = $this->comments;
+                $requisition->authorization_stage = 1;
+                $requisition->save();
+
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => "First Authorization Captured. Awaiting Second Authorization."
+                ]);
+
+                return redirect()->route('requisitions.pending');
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | TWO STEP AUTHORIZATION - SECOND APPROVAL GUARD
+            |--------------------------------------------------------------------------
+            */
+            if (
+                $twoStepEnabled &&
+                $requisition->authorization_stage == 1 &&
+                $requisition->authorized_by_id == Auth::id()
+            ) {
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'error',
+                    'message' => "Dual authorization requires two different users."
+                ]);
+
+                return;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | TWO STEP AUTHORIZATION - SECOND APPROVAL
+            |--------------------------------------------------------------------------
+            */
+            if ($twoStepEnabled && $requisition->authorization_stage == 1) {
+
+                $requisition->second_authorized_by_id = Auth::id();
+                $requisition->second_authorization_date = now();
+                $requisition->second_authorization_comments = $this->comments;
+                $requisition->authorization = "approved";
+                $requisition->authorization_stage = 2;
+                $requisition->save();
+
+                $this->createBillFromRequisition($requisition);
+                $this->sendRequisitionAuthorizationEmail($company, $requisition);
+
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => "Requisition Fully Approved Successfully"
+                ]);
+
+                return redirect()->route('requisitions.approved');
+            }
+
+        });
+    }
+
+    private function sendRequisitionAuthorizationEmail($company, $requisition)
+    {
+        $user = $requisition->user;
+        $email = $user?->email ?? null;
+
+        if ($email) {
+            Mail::to($email)->send(
+                new AuthorizationNotificationMail(
+                    $company,
+                    "Requisition Authorization",
+                    $user,
+                    $requisition
+                )
+            );
+        }
+    }
+
+    private function createBillFromRequisition($requisition)
+    {
+        if (
+            $requisition->type != "payment_requisition" ||
+            $requisition->trip_id != null ||
+            $requisition->booking_id != null ||
+            $requisition->purchase_id != null
+        ) {
+            return;
         }
 
-    });
+        if (!$requisition->requisition_items || $requisition->requisition_items->count() == 0) {
+            return;
+        }
 
-      }
+        foreach ($requisition->requisition_items as $requisition_item) {
+
+            $account = Account::find($requisition->account_id);
+            $account_type = $account ? $account->account_type : null;
+
+            $bill = new Bill;
+            $bill->user_id = Auth::id();
+            $bill->bill_number = $this->billNumber();
+            $bill->requisition_id = $requisition->id;
+            $bill->category = "Requisition";
+            $bill->bill_date = $requisition->date;
+            $bill->notes = $requisition->description;
+            $bill->account_id = $requisition->account_id ?? null;
+
+            if ($account_type) {
+                $bill->account_type_id = $account_type->id;
+            }
+
+            $bill->currency_id = $requisition_item->currency_id;
+            $bill->authorized_by_id = Auth::id();
+            $bill->authorization = "approved";
+            $bill->comments = $this->comments;
+            $bill->total = $requisition_item->subtotal;
+            $bill->exchange_rate = $requisition_item->exchange_rate;
+            $bill->exchange_amount = $requisition_item->exchange_amount;
+            $bill->balance = $requisition_item->subtotal;
+            $bill->to_be_paid = true;
+            $bill->save();
+
+            $bill_expense = new BillExpense;
+            $bill_expense->bill_id = $bill->id;
+            $bill_expense->currency_id = $bill->currency_id;
+            $bill_expense->account_id = $requisition->account_id ?? null;
+
+            if ($account_type) {
+                $bill_expense->account_type_id = $account_type->id;
+            }
+
+            $bill_expense->product_id = $requisition_item->product_id;
+            $bill_expense->qty = $requisition_item->qty;
+            $bill_expense->amount = $requisition_item->amount;
+            $bill_expense->subtotal = $requisition_item->subtotal;
+            $bill_expense->subtotal_incl = $requisition_item->subtotal;
+            $bill_expense->save();
+        }
+    }
 
 
       public function updatingSearch()

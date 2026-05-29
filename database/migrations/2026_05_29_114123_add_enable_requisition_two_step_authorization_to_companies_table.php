@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddClosedbyToTripsTable extends Migration
+class AddEnableRequisitionTwoStepAuthorizationToCompaniesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddClosedbyToTripsTable extends Migration
      */
     public function up()
     {
-        Schema::table('trips', function (Blueprint $table) {
-            // $table->text('closed_by')->nullable();
+        Schema::table('companies', function (Blueprint $table) {
+            $table->boolean('enable_requisition_two_step_authorization')->default(false);
         });
     }
 
@@ -25,10 +25,8 @@ class AddClosedbyToTripsTable extends Migration
      */
     public function down()
     {
-        Schema::table('trips', function (Blueprint $table) {
-            // $table->dropColumn('closed_by');
+        Schema::table('companies', function (Blueprint $table) {
+            $table->dropColumn('enable_requisition_two_step_authorization');
         });
     }
 }
-
-
