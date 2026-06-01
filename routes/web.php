@@ -703,6 +703,7 @@ Route::resource('truck_stops','TruckStopController');
 Route::resource('incidents','IncidentController');
 Route::resource('bank_accounts','BankAccountController');
 Route::resource('incomes','IncomeController');
+Route::resource('deals','DealController');
 Route::resource('corridors','CorridorController');
 Route::resource('clearing_agents','ClearingAgentController');
 Route::resource('borders','BorderController');

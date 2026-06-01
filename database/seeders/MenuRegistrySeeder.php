@@ -1681,6 +1681,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             ['Borders','borders.index','fas fa-bars', null],
             ['Brokers','brokers.index','fas fa-list', null],
             ['Cargos','cargos.index','fas fa-truck-loading', null],
+            ['Deals','deals.index','fas fa-list', null],
             ['Clearing Agents','clearing_agents.index','fas fa-building', null],
             ['Countries','countries.index','fas fa-globe-africa', null],
             ['Consignees','consignees.index','fas fa-users', null],
