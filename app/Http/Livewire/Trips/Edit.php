@@ -1425,7 +1425,7 @@ class Edit extends Component
                     $trip_origin->transport_order_id = $trip_transport_order->transport_order_id;
                     $trip_origin->trip_transport_order_id = $trip_transport_order->id;
                     $trip_origin->destination_id = $destinationId;
-                    $trip_origin->offloading_point_id = $loadingPointId;
+                    $trip_origin->loading_point_id = $loadingPointId;
                     $trip_origin->units_of_measure_id = $this->units_of_measure_id ?: null;
                     $trip_origin->weight = $this->loaded_weight[$key] ?? null;
                     $trip_origin->quantity = $this->loaded_quantity[$key] ?? null;
@@ -1445,7 +1445,7 @@ class Edit extends Component
             $trip_origin->transport_order_id = $trip_transport_order->transport_order_id;
             $trip_origin->trip_transport_order_id = $trip_transport_order->id;
             $trip_origin->destination_id = $this->selectedFrom;
-            $trip_origin->offloading_point_id = $this->loading_point_id;
+            $trip_origin->loading_point_id = $this->loading_point_id;
             $trip_origin->weight = $this->weight;
             $trip_origin->quantity = $this->quantity;
             $trip_origin->units_of_measure_id = $this->units_of_measure_id ?: null;
