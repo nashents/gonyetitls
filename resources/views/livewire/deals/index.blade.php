@@ -34,6 +34,8 @@
                                         <th>Cargo</th>
                                         <th>Allocation</th>
                                         <th>Timeline</th>
+                                        <th>Ccy</th>
+                                        <th>Freight</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
@@ -72,6 +74,14 @@
                                                     <strong>End:</strong>
                                                     {{ $deal->end_date ? \Carbon\Carbon::parse($deal->end_date)->format('d M Y H:i') : 'N/A' }}
                                                 </td>
+                                                <td>{{$deal->currency?->name}}</td>
+                                                 <td>
+                                                    <strong>Rate:</strong>
+                                                        {{$deal->currency?->symbol}}{{ $deal->rate }}
+                                                    <br>
+                                                    <strong>Freight:</strong>
+                                                        {{$deal->currency?->symbol}}{{ $deal->freight }}
+                                                </td>
                                                 <td>
                                                     @if ($deal->status == 1)
                                                         <span class="badge bg-success">Active</span>
@@ -92,14 +102,13 @@
                                                                 </a>
                                                             </li>
                                                             <li>
-                                                                <a href="#" data-toggle="modal" data-target="#dealDeleteModal{{ $deal->id }}">
+                                                                <a href="#" wire:click.prevent="delete({{ $deal->id }})">
                                                                     <i class="fa fa-trash color-danger"></i> Delete
                                                                 </a>
                                                             </li>
                                                         </ul>
                                                     </div>
 
-                                                    @include('deals.delete')
                                                 </td>
                                             </tr>
                                         @empty
@@ -134,6 +143,25 @@
             </div>
         </div>
     </section>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                    <center><strong>Are you sure you want to delete this Deal?</strong></center> 
+                </div>
+                <form wire:submit.prevent="destroy()">
+                    <div class="modal-footer no-border">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     {{-- CREATE MODAL --}}
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="dealModal" tabindex="-1" role="dialog" data-backdrop-color="blue">
@@ -203,43 +231,6 @@
         </div>
     </div>
 
-    {{-- IMPORT MODAL --}}
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="dealsImportModal" tabindex="-1" role="dialog" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form action="{{ route('deals.import') }}" method="POST" enctype="multipart/form-data">
-                    {{ csrf_field() }}
-
-                    <div class="modal-header">
-                        <h4 class="modal-title">
-                            <i class="fa fa-upload"></i> Import Deals
-                            <button type="button" class="close" data-dismiss="modal">
-                                <span>×</span>
-                            </button>
-                        </h4>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label>Upload Deals Excel File</label>
-                            <input type="file" class="form-control" name="file">
-                            @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
-                                <i class="fa fa-times"></i> Close
-                            </button>
-                            <button class="btn bg-success btn-wide btn-rounded">
-                                <i class="fa fa-upload"></i> Upload
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+   
 
 </div>

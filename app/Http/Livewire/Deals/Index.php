@@ -3,9 +3,10 @@
 namespace App\Http\Livewire\deals;
 
 
-use App\Models\Deal;
-use App\Models\Customer;
 use App\Models\Cargo;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Models\Deal;
 use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -34,19 +35,60 @@ class Index extends Component
     public $end_date;
     public $deal_number;
     public $reference;
+    public $cargo_type;
+    public $rate;
+    public $freight;
+    public $currency_id;
     public $status = 1;
 
     public $customers = [];
     public $cargos = [];
+    public $currencies = [];
     public $units_of_measures = [];
 
     public function mount()
     {
-        $this->company_id = Auth::user()->employee->company_id ?? Auth::user()->company_id ?? null;
+        $this->cargo_type = "Solid"; 
+        $this->company_id = Auth::user()->employee->company_id ?? null;
 
         $this->customers = Customer::orderBy('name', 'asc')->get();
+        $this->currencies = Currency::orderBy('name', 'asc')->get();
         $this->cargos = Cargo::orderBy('name', 'asc')->get();
         $this->units_of_measures = UnitsOfMeasure::orderBy('name', 'asc')->get();
+    }
+
+    public function dealNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $deal = Deal::latest()->orderBy('id','desc')->first();
+
+        if (!$deal) {
+            $deal_number =  $initials .'D'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $deal->id + 1;
+            $deal_number =  $initials .'D'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $deal_number;
+
+
     }
 
 
@@ -60,6 +102,9 @@ class Index extends Component
     {
         $this->deal_id = null;
         $this->customer_id = null;
+        $this->currency_id = null;
+        $this->rate = null;
+        $this->freight = null;
         $this->cargo_id = null;
         $this->units_of_measure_id = null;
         $this->weight = null;
@@ -75,29 +120,40 @@ class Index extends Component
     protected function rules()
     {
         return [
-            'customer_id' => 'nullable|exists:customers,id',
-            'cargo_id' => 'nullable|exists:cargos,id',
+            'customer_id' => 'required|exists:customers,id',
+            'cargo_id' => 'required|exists:cargos,id',
+            'currency_id' => 'nullable|exists:cargos,id',
             'units_of_measure_id' => 'nullable|exists:units_of_measures,id',
+            'rate' => 'nullable|numeric|min:0',
+            'freight' => 'nullable|numeric|min:0',
             'weight' => 'nullable|numeric|min:0',
             'litreage' => 'nullable|numeric|min:0',
             'quantity' => 'nullable|numeric|min:0',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'deal_number' => 'required|string|min:2|unique:deals,deal_number,' . $this->deal_id . ',id,deleted_at,NULL',
             'reference' => 'nullable|string|max:255',
             'status' => 'required|boolean',
         ];
     }
 
+    public function updatedCargoId($id){
+        if(is_null($id)){
+            return;
+        }
+
+        $this->cargo_type = Cargo::find($id)?->type;
+    }
+
     public function store()
     {
-        try {
+       
             $this->validate();
 
             $deal = new Deal;
             $deal->user_id = Auth::id();
             $deal->company_id = $this->company_id;
             $deal->customer_id = $this->customer_id;
+            $deal->currency_id = $this->currency_id;
             $deal->cargo_id = $this->cargo_id;
             $deal->units_of_measure_id = $this->units_of_measure_id;
             $deal->weight = $this->weight;
@@ -105,8 +161,10 @@ class Index extends Component
             $deal->quantity = $this->quantity;
             $deal->start_date = $this->start_date;
             $deal->end_date = $this->end_date;
-            $deal->deal_number = $this->deal_number;
+            $deal->deal_number = $this->dealNumber();
             $deal->reference = $this->reference;
+            $deal->rate = $this->rate;
+            $deal->freight = $this->freight;
             $deal->status = $this->status;
             $deal->save();
 
@@ -117,12 +175,7 @@ class Index extends Component
                 'type' => 'success',
                 'message' => 'Deal Created Successfully!!'
             ]);
-        } catch (\Exception $e) {
-            $this->dispatchBrowserEvent('alert', [
-                'type' => 'error',
-                'message' => 'Something went wrong while creating deal!!'
-            ]);
-        }
+     
     }
 
     public function edit($id)
@@ -136,10 +189,13 @@ class Index extends Component
             ]);
             return;
         }
-
+        $this->cargo_type = Cargo::find($deal->cargo_id)?->type;
         $this->deal_id = $deal->id;
         $this->user_id = $deal->user_id;
         $this->company_id = $deal->company_id;
+        $this->currency_id = $deal->currency_id;
+        $this->rate = $deal->rate;
+        $this->freight = $deal->freight;
         $this->customer_id = $deal->customer_id;
         $this->cargo_id = $deal->cargo_id;
         $this->units_of_measure_id = $deal->units_of_measure_id;
@@ -158,7 +214,7 @@ class Index extends Component
     public function update()
     {
         if ($this->deal_id) {
-            try {
+         
                 $this->validate();
 
                 $deal = Deal::find($this->deal_id);
@@ -176,8 +232,11 @@ class Index extends Component
                 $deal->cargo_id = $this->cargo_id;
                 $deal->units_of_measure_id = $this->units_of_measure_id;
                 $deal->weight = $this->weight;
+                $deal->currency_id = $this->currency_id;
                 $deal->litreage = $this->litreage;
                 $deal->quantity = $this->quantity;
+                $deal->rate = $this->rate;
+                $deal->freight = $this->freight;
                 $deal->start_date = $this->start_date;
                 $deal->end_date = $this->end_date;
                 $deal->deal_number = $this->deal_number;
@@ -192,13 +251,24 @@ class Index extends Component
                     'type' => 'success',
                     'message' => 'Deal Updated Successfully!!'
                 ]);
-            } catch (\Exception $e) {
-                $this->dispatchBrowserEvent('alert', [
-                    'type' => 'error',
-                    'message' => 'Something went wrong while updating deal!!'
-                ]);
-            }
+          
         }
+    }
+
+    public function delete($id){
+        $this->deal_id  = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+
+    public function destroy(){
+
+        $deal = Deal::find($this->deal_id);
+        $deal->destroy();
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Deal Deleted Successfully!!'
+        ]);
     }
 
     public function render()
@@ -214,7 +284,12 @@ class Index extends Component
                 $q->where(function ($w) use ($search) {
                     $w->where('deal_number', 'like', "%{$search}%")
                         ->orWhere('reference', 'like', "%{$search}%")
+                        ->orWhere('rate', 'like', "%{$search}%")
+                        ->orWhere('freight', 'like', "%{$search}%")
                         ->orWhereHas('customer', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('currency', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%");
                         })
                         ->orWhereHas('cargo', function ($query) use ($search) {

@@ -1386,6 +1386,7 @@ class Edit extends Component
 
         } else {
 
+
             $trip_destination = new TripDestination();
             $trip_destination->user_id = Auth::id();
             $trip_destination->trip_id = $trip_transport_order->trip_id;

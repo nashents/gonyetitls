@@ -132,6 +132,30 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-dealModal', event => {
+                $('#dealModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('hide-dealModal', event => {
+                $('#dealModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('show-dealEditModal', event => {
+                $('#dealEditModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('hide-dealEditModal', event => {
+                $('#dealEditModal').modal('hide');
+            })
+    </script>
+    
+    <script type="text/javascript">
             window.addEventListener('show-reportsModal', event => {
                 $('#reportsModal').modal('show');
             })

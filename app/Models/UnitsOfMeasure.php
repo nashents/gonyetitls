@@ -16,6 +16,9 @@ class UnitsOfMeasure extends Model
     public function trip_origins(){
         return $this->hasMany('App\Models\TripOrigin');
     }
+       public function deals(){
+        return $this->hasMany('App\Models\Deal');
+    }
     public function trip_transport_orders(){
         return $this->hasMany('App\Models\TripTransportOrder');
     }
