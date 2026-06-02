@@ -144,7 +144,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                     @foreach ($invoice_items as $invoice_item)
                                          <tr>
                                             @php
-                                                $tax = App\Models\Account::find($invoice_item->tax_id);
+                                                $tax = $invoice_item->tax;
                                             @endphp
                                             <td class="unit text-center"> 
                                                 @if ($tax && $tax->hs_code)

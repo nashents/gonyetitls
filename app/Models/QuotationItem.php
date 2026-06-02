@@ -18,4 +18,7 @@ class QuotationItem extends Model implements Auditable
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }
+    public function tax(){
+        return $this->belongsTo('App\Models\Tax');
+    }
 }

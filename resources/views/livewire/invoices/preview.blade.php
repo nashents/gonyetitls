@@ -279,7 +279,7 @@
                                 @foreach ($invoice_items as $invoice_item)
                                     <tr>
                                         @php
-                                            $tax = App\Models\Account::find($invoice_item->tax_id);
+                                            $tax = $invoice_item->tax;
                                         @endphp
                                        
                                         @if ($company->hide_description == False)

@@ -94,7 +94,7 @@
                                         @foreach ($quotation->quotation_items as $item)
                                         <tr>
                                             @php
-                                                $tax = App\Models\Account::find($item->tax_id);
+                                                $tax = $item->tax;
                                             @endphp
                                             <td class="unit text-center"> 
                                                 @if ($tax && $tax->hs_code)

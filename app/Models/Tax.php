@@ -12,6 +12,12 @@ class Tax extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function quotation_items(){
+        return $this->hasMany('App\Models\QuotationItem');
+    }
+    public function quotation_products(){
+        return $this->hasMany('App\Models\QuotationProduct');
+    }
     public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');
     }

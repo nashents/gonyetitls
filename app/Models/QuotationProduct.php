@@ -17,6 +17,9 @@ class QuotationProduct extends Model implements Auditable
     public function cargo(){
         return $this->belongsTo('App\Models\Cargo');
     }
+    public function tax(){
+        return $this->belongsTo('App\Models\Tax');
+    }
     public function loading_point(){
         return $this->belongsTo('App\Models\LoadingPoint');
     }
