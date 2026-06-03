@@ -75,12 +75,19 @@ class Rejected extends Component
 
         if ($this->decision == "approved") {
             $employee =  $leave->employee;
-            $employee->leave_days =  $employee->leave_days - $leave->days;
-            $employee->update();
-            if ($employee->personal_email) {
-                 Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
+            if ($employee) {
+
+                $leave_type = $leave->leave_type;
+                
+                if ($leave_type->name == "Annual") {
+                    $employee->leave_days =  $employee->leave_days - $leave->days;
+                    $employee->update();
+                }
+
+                if ($employee->personal_email) {
+                    Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
+                }
             }
-           
         }
 
         }elseif ($this->category == "hod") {

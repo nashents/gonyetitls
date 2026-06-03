@@ -527,7 +527,7 @@ class Create extends Component
                 $this->description[$key] = $product->description;
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                         $this->hs_code[$key] = $tax->hs_code;
@@ -549,7 +549,7 @@ class Create extends Component
             $this->description[$key] = $product->description;
             if ($product->tax_id) {
                 $this->selectedTax[$key] = $product->tax_id;
-                $tax = Account::find($product->tax_id);
+                $tax = Tax::find($product->tax_id);
                 if (isset($tax)) {
                     $this->tax_rate[$key] = $tax->rate;
                     $this->hs_code[$key] = $tax->hs_code;
@@ -1220,7 +1220,7 @@ class Create extends Component
                 $this->description[$this->item_key] = $product->description;
                 if ($product->tax_id) {
                     $this->selectedTax[$this->item_key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$this->item_key] = $tax->rate;
                         $this->hs_code[$this->item_key] = $tax->hs_code;
@@ -1359,7 +1359,7 @@ class Create extends Component
                            
                             if(!is_null($this->selectedMultiTax)){
                                 
-                                $tax = Account::find($this->selectedMultiTax);
+                                $tax = Tax::find($this->selectedMultiTax);
                                 $invoice_item->tax_rate = $tax?->rate;
                                 $tax_rate = $tax?->rate;
                                 $invoice_item->hs_code = $tax?->hs_code;
@@ -1495,7 +1495,7 @@ class Create extends Component
                            
                             if(!is_null($this->selectedMultiTax)){
                                 
-                                $tax = Account::find($this->selectedMultiTax);
+                                $tax = Tax::find($this->selectedMultiTax);
                                 $invoice_item->tax_rate = $tax?->rate;
                                 $tax_rate = $tax?->rate;
                                 $invoice_item->hs_code = $tax?->hs_code;

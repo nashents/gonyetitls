@@ -459,7 +459,7 @@ class Index extends Component
                 $this->qty[$key] = 1;
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                     }

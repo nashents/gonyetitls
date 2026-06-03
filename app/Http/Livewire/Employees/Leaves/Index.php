@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Employees\Leaves;
 use App\Exports\EmployeesLeaveExport;
 use App\Models\Employee;
 use App\Models\Leave;
+use App\Models\LeaveType;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -84,14 +85,25 @@ class Index extends Component
         }
     }
 
-    public function getLeavesTaken($id){
-      
-        $this->leave_count = Leave::where('employee_id',$id)
-                        ->whereYear('from',date('Y'))
-                        ->where('hod_decision','approved')
-                        ->where('management_decision','approved')->sum('days');
+    public function getLeavesTaken($employeeId)
+    {
+        $taken = Leave::query()
+            ->where('employee_id', $employeeId)
+            ->whereYear('from', date('Y'))
+            ->where('hod_decision', 'approved')
+            ->where('management_decision', 'approved')
+            ->selectRaw('leave_type_id, SUM(days) as total_days')
+            ->groupBy('leave_type_id')
+            ->pluck('total_days', 'leave_type_id');
 
-        return $this->leave_count;
+        return LeaveType::all()
+            ->map(function ($leave_type) use ($taken) {
+                return [
+                    'leave_type_id' => $leave_type->id,
+                    'leave_type'    => $leave_type->name,
+                    'days_taken'    => (float) ($taken[$leave_type->id] ?? 0),
+                ];
+            });
     }
 
     public function updatingSearch()

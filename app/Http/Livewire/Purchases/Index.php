@@ -323,7 +323,7 @@ class Index extends Component
 
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                     }
@@ -357,7 +357,7 @@ class Index extends Component
 
                 if ($product->tax_id) {
                     $this->selectedCurrentTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->current_tax_rate[$key] = $tax->rate;
                     }
@@ -370,7 +370,7 @@ class Index extends Component
 
     public function updatedSelectedCurrentTax($id, $key){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->current_tax_rate[$key] = $tax->rate;
             }

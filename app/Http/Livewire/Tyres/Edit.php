@@ -169,7 +169,7 @@ class Edit extends Component
         $this->life_span = $tyre->life_span;
         $this->aspect_ratio = $tyre->aspect_ratio;
         $this->selectedTax = $tyre->tax_id;
-        $tax = Account::find($this->selectedTax);
+        $tax = Tax::find($this->selectedTax);
         if (isset($tax)) {
             $this->tax_rate = $tax->rate;
         }else{
@@ -274,7 +274,7 @@ class Edit extends Component
                
                 if($purchase_product->tax_id){
                     $this->selectedTax = $purchase_product->tax_id;
-                    $tax = Account::find($purchase_product->tax_id);
+                    $tax = Tax::find($purchase_product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }
@@ -325,7 +325,7 @@ class Edit extends Component
 
                 if($transfer_item->tax_id){
                     $this->selectedTax = $transfer_item->tax_id;
-                    $tax = Account::find($transfer_item->tax_id);
+                    $tax = Tax::find($transfer_item->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }
@@ -363,7 +363,7 @@ class Edit extends Component
             $this->measurement = $product->unit_of_measure; 
             if ($product->tax_id) {
                 $this->selectedTax = $product->tax_id;
-                $tax = Account::find($product->tax_id);
+                $tax = Tax::find($product->tax_id);
                 if (isset($tax)) {
                     $this->tax_rate = $tax->rate;
                 }

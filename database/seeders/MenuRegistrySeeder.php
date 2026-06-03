@@ -3,14 +3,12 @@
 namespace Database\Seeders;
 
 
-use App\Models\Account;
-use App\Models\AccountType;
+
 use App\Models\Company;
+use App\Models\LeaveType;
 use App\Models\Module;
 use App\Models\ModuleGroup;
-use App\Models\ProblemCategory;
 use App\Models\SubModule;
-use App\Models\Tax;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -19,482 +17,369 @@ class MenuRegistrySeeder extends Seeder
 {
 
 
-    private function seedAccount(array $data)
-    {
-        return \App\Models\Account::updateOrCreate(
-
-            [
-                'name' => $data['name'],
-            ],
-
-            [
-                'currency_id'          => $data['currency_id'] ?? null,
-                'account_type_group_id'=> $data['account_type_group_id'],
-                'account_type_id'      => $data['account_type_id'],
-                'name'                 => $data['name'],
-                'abbreviation'         => $data['abbreviation'] ?? null,
-                'rate'                 => $data['rate'] ?? null,
-                'description'          => $data['description'] ?? null,
-                'hs_code'              => $data['hs_code'] ?? null,
-            ]
-        );
-    }
- 
+   
 
     public function run(): void
     {
 
-    $taxAccount = Account::where('name', 'Value Added Tax')->first();
-
-        if (!$taxAccount) {
-            return;
-        }
-
-        $taxes = [
-
-            [   
-                'user_id' => Null,
-                'account_id'   => $taxAccount->id,
-                'category'     => 'VAT',
-                'name'         => 'Value Added Tax 15.5%',
-                'abbreviation' => 'VAT 15.5%',
-                'rate' => '15',
-                'hs_code'      => '99001000',
-                'description'  => 'Standard VAT rate of 15.5%',
-            ],
-
+        $leaveTypes = [
             [
-                'account_id'   => $taxAccount->id,
-                'category'     => 'VAT',
-                'name'         => 'Value Added Tax 0%',
-                'abbreviation' => 'VAT 0%',
-                'rate' => '0',
-                'hs_code'      => '99002000',
-                'description'  => 'Zero rated VAT',
+                'name' => 'Annual',
+                'code' => 'AL',
+                'entitlement' => 30,
+                'is_paid' => true,
+                'is_accruable' => true,
+                'monthly_accrual_rate' => 2.5,
+                'carry_forward_allowed' => true,
+                'max_carry_forward_days' => 30,
+                'active' => true,
+                'description' => 'Employee annual vacation leave.',
             ],
-
             [
-                'account_id'   => $taxAccount->id,
-                'category'     => 'VAT',
-                'name'         => 'Value Added Tax Exempt',
-                'abbreviation' => 'VAT Exempt',
-                'rate' => '0',
-                'hs_code'      => '99003000',
-                'description'  => 'VAT exempt supplies',
+                'name' => 'Sick',
+                'code' => 'SL',
+                'entitlement' => 90,
+                'is_paid' => true,
+                'requires_medical_report' => true,
+                'active' => true,
+                'description' => 'Medical illness leave.',
             ],
-
+            [
+                'name' => 'Casual',
+                'code' => 'CL',
+                'entitlement' => 12,
+                'is_paid' => true,
+                'active' => true,
+                'description' => 'Short personal leave.',
+            ],
+            [
+                'name' => 'Maternity',
+                'code' => 'ML',
+                'entitlement' => 98,
+                'is_paid' => true,
+                'requires_attachment' => true,
+                'active' => true,
+                'description' => 'Maternity leave entitlement.',
+            ],
+            [
+                'name' => 'Paternity',
+                'code' => 'PL',
+                'entitlement' => 5,
+                'is_paid' => true,
+                'active' => true,
+                'description' => 'Paternity leave entitlement.',
+            ],
+            [
+                'name' => 'Compassionate',
+                'code' => 'COL',
+                'entitlement' => 5,
+                'is_paid' => true,
+                'active' => true,
+                'description' => 'Bereavement or funeral leave.',
+            ],
+            [
+                'name' => 'Study',
+                'code' => 'STL',
+                'entitlement' => 10,
+                'is_paid' => true,
+                'active' => true,
+                'description' => 'Approved examinations and studies.',
+            ],
+            [
+                'name' => 'Special',
+                'code' => 'SPL',
+                'entitlement' => 30,
+                'is_paid' => true,
+                'active' => true,
+                'description' => 'Special approved leave.',
+            ],
+            [
+                'name' => 'Unpaid',
+                'code' => 'UPL',
+                'entitlement' => 365,
+                'is_paid' => false,
+                'active' => true,
+                'description' => 'Leave without pay.',
+            ],
+            [
+                'name' => 'Time Off In Lieu',
+                'code' => 'TOIL',
+                'entitlement' => 0,
+                'is_paid' => true,
+                'is_accruable' => true,
+                'monthly_accrual_rate' => 0,
+                'active' => false,
+                'description' => 'Compensatory leave earned from overtime.',
+            ],
+            [
+                'name' => 'Marriage',
+                'code' => 'MAR',
+                'entitlement' => 5,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Leave granted when an employee gets married.',
+            ],
+            [
+                'name' => 'Adoption',
+                'code' => 'ADP',
+                'entitlement' => 30,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Leave granted for child adoption.',
+            ],
+            [
+                'name' => 'Family Responsibility',
+                'code' => 'FRL',
+                'entitlement' => 5,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Leave for urgent family responsibilities.',
+            ],
+            [
+                'name' => 'Sabbatical',
+                'code' => 'SAB',
+                'entitlement' => 90,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Extended approved leave from work.',
+            ],
+            [
+                'name' => 'Jury Duty',
+                'code' => 'JUR',
+                'entitlement' => 30,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Leave for court or civic duty.',
+            ],
+            [
+                'name' => 'Training',
+                'code' => 'TRN',
+                'entitlement' => 15,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Leave for approved training.',
+            ],
+            [
+                'name' => 'Suspension',
+                'code' => 'SUS',
+                'entitlement' => 365,
+                'is_paid' => false,
+                'active' => false,
+                'description' => 'Administrative leave due to suspension.',
+            ],
+            [
+                'name' => 'Public Holiday Adjustment',
+                'code' => 'PHA',
+                'entitlement' => 10,
+                'is_paid' => true,
+                'active' => false,
+                'description' => 'Adjustment leave for public holiday work.',
+            ],
         ];
 
-        foreach ($taxes as $tax) {
+        $clientConfigurableFields = [
+            'entitlement',
+            'monthly_accrual_rate',
+            'max_carry_forward_days',
+            'max_consecutive_days',
+        ];
 
-            Tax::updateOrCreate(
+        foreach ($leaveTypes as $leaveTypeData) {
+            $leaveType = LeaveType::withTrashed()->firstOrNew([
+                'name' => $leaveTypeData['name'],
+            ]);
+
+            foreach ($leaveTypeData as $field => $value) {
+                if (
+                    $leaveType->exists &&
+                    in_array($field, $clientConfigurableFields) &&
+                    !is_null($leaveType->{$field}) &&
+                    $leaveType->{$field} !== ''
+                ) {
+                    continue;
+                }
+
+                $leaveType->{$field} = $value;
+            }
+
+            if ($leaveType->trashed()) {
+                $leaveType->restore();
+            }
+
+            $leaveType->save();
+        }
+
+        // ---------------------------------
+        // Helpers: visibility builders
+        // ---------------------------------
+        $all = fn(array $flags) => ['all_flags' => $flags];
+        $any = fn(array $clauses) => ['any' => $clauses];
+
+        // Common vis shortcuts
+                $vInFinanceOrSuper = $any([
+                    $all(['inFinance']),
+                    $all(['isSuperAdmin']),
+                ]);
+                $vInFinanceStoresOrSuper = $any([
+                    $all(['inFinance']),
+                    $all(['inStores']),
+                    $all(['isSuperAdmin']),
+                ]);
+
+                $vInHROrSuper = $any([
+                    $all(['inHR']),
+                    $all(['isSuperAdmin']),
+                ]);
+
+                $vInTransportOrSuper = $any([
+                    $all(['inTransport']),
+                    $all(['isSuperAdmin']),
+                ]);
+
+                $vInHSEQOrSuper = $any([
+                    $all(['inHSEQ']),
+                    $all(['isSuperAdmin']),
+                ]);
+
+                $vInSecurityOrSuper = $any([
+                    $all(['inSecurity']),
+                    $all(['isSuperAdmin']),
+                ]);
+
+        // ---------------------------------
+        // Helpers: preserve is_active if customized
+        // ---------------------------------
+        $finalIsActive = function (?object $existing, bool $seededIsActive): bool {
+            return ($existing && (bool) $existing->is_customized)
+                ? (bool) $existing->is_active
+                : (bool) $seededIsActive;
+        };
+
+        // sort_order fallback: if not provided, use index
+        $finalSortOrder = function (array $data, int $indexSort = 0): int {
+            return array_key_exists('sort_order', $data)
+                ? (int) $data['sort_order']
+                : (int) $indexSort;
+        };
+
+        // ---------------------------------
+        // Index counters (imperative seeder-friendly)
+        // ---------------------------------
+        $gIndex = 0;                     // group index
+        $mIndex = [];                    // module index per group slug
+        $sIndex = [];                    // submodule index per module key (groupSlug::moduleSlug)
+
+        // ---------------------------------
+        // Upserts
+        // ---------------------------------
+        $upsertGroup = function (array $g, ?int $indexSort = null) use (
+            &$gIndex, &$mIndex, $finalIsActive, $finalSortOrder
+        ) {
+            $slug = $g['slug'] ?? Str::slug($g['name']);
+
+            $existing = ModuleGroup::where('slug', $slug)->first();
+
+            $seededIsActive = (bool) ($g['is_active'] ?? true);
+            $isActive       = $finalIsActive($existing, $seededIsActive);
+
+            // index fallback if sort_order not provided
+            $indexSort = $indexSort ?? (++$gIndex * 10);
+
+            $group = ModuleGroup::updateOrCreate(
+                ['slug' => $slug],
                 [
-                    'name' => $tax['name'],
-                ],
-                $tax
+                    'name'       => $g['name'],
+                    'icon'       => $g['icon'] ?? null,
+                    'sort_order' => $finalSortOrder($g, $indexSort),
+                    'is_active'  => $isActive,
+                    'visibility' => $g['visibility'] ?? null,
+                ]
             );
-        }
 
-        $sales_taxes = \App\Models\AccountType::where('name', 'Sales Taxes')->first();
+            // reset module indexing for this group
+            $mIndex[$slug] = 0;
 
-        if (!$sales_taxes) {
-            throw new \Exception('Sales Taxes account type not found.');
-        }
+            return $group;
+        };
 
-        $this->seedAccount([
-            'currency_id'           => null,
-            'account_type_group_id' => $sales_taxes->account_type_group->id,
-            'account_type_id'       => $sales_taxes->id,
-            'name'                  => 'Value Added Tax',
-            'abbreviation'          => 'VAT',
-            'rate'                  => null,
-            'description'           => '',
-            'hs_code'               => '',
-        ]);
+        $upsertModule = function (ModuleGroup $group, array $m, ?int $indexSort = null) use (
+            &$mIndex, &$sIndex, $finalIsActive, $finalSortOrder
+        ) {
+            $slug = $m['slug'] ?? Str::slug($m['name']);
 
-        $type = AccountType::where('name', 'Vendor Prepayments & Vendor Credits')->first();
+            $existing = Module::where('module_group_id', $group->id)
+                ->where('slug', $slug)
+                ->first();
 
-        Account::updateOrCreate(
-            ['name' => 'Vendor Prepayments'],
-            [
-                'account_type_id'       => $type->id,
-                'account_type_group_id' => $type->account_type_group_id,
-                'description'           => 'Advance payments made to vendors before bills are received.',
-                'currency_id'           => null,
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'hs_code'               => '',
-            ]
-        );
+            $seededIsActive = (bool) ($m['is_active'] ?? true);
+            $isActive       = $finalIsActive($existing, $seededIsActive);
 
-         // Resolve account types
-        $dueForPayroll  = AccountType::where('name', 'Due for Payroll')->firstOrFail();
-        $payrollExpense = AccountType::where('name', 'Payroll Expense')->firstOrFail();
+            $groupSlug = $group->slug ?? (ModuleGroup::find($group->id)?->slug);
+            $mIndex[$groupSlug] = ($mIndex[$groupSlug] ?? 0) + 1;
 
-        $accounts = [
+            // index fallback if sort_order not provided
+            $indexSort = $indexSort ?? ($mIndex[$groupSlug] * 10);
 
-            // ── Payroll Liabilities (Due for Payroll) ─────────────────────
-            [
-                'name'                  => 'Salaries & Wages Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'Net salaries owed to employees pending bank transfer.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'PAYE Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'Pay As You Earn tax withheld from employee salaries, payable to ZIMRA.',
-                'abbreviation'          => 'PAYE',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'NSSA Employee Contribution Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'Employee portion of NSSA contributions withheld from salary.',
-                'abbreviation'          => 'NSSA EE',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'NSSA Employer Contribution Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'Employer portion of NSSA contributions payable to NSSA.',
-                'abbreviation'          => 'NSSA ER',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'NEC Levy Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'National Employment Council levy payable.',
-                'abbreviation'          => 'NEC',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'AIDS Levy Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'AIDS levy withheld from employee salaries, payable to ZIMRA.',
-                'abbreviation'          => 'AIDS',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'Pension Payable',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'Employee and employer pension contributions payable to pension fund.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'Payroll Suspense',
-                'account_type_id'       => $dueForPayroll->id,
-                'account_type_group_id' => $dueForPayroll->account_type_group_id,
-                'description'           => 'Clearing account used during payroll processing. Should net to zero after payroll is fully posted.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-
-            // ── Payroll Expenses ──────────────────────────────────────────
-            [
-                'name'                  => 'Salaries & Wages Expense',
-                'account_type_id'       => $payrollExpense->id,
-                'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Gross salaries and wages expense for all employees.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'NSSA Employer Contribution Expense',
-                'account_type_id'       => $payrollExpense->id,
-                'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of NSSA contributions.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'NEC Employer Contribution Expense',
-                'account_type_id'       => $payrollExpense->id,
-                'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of NEC levy contributions.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-            [
-                'name'                  => 'Pension Employer Contribution Expense',
-                'account_type_id'       => $payrollExpense->id,
-                'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of pension fund contributions.',
-                'abbreviation'          => '',
-                'rate'                  => '',
-                'currency_id'           => null,
-                'hs_code'               => '',
-            ],
-        ];
-
-        foreach ($accounts as $account) {
-            Account::firstOrCreate(
-                ['name' => $account['name']],
-                $account
+            $module = Module::updateOrCreate(
+                ['module_group_id' => $group->id, 'slug' => $slug],
+                [
+                    'module_group_id' => $group->id,
+                    'name'            => $m['name'],
+                    'icon'            => $m['icon'] ?? null,
+                    'route_name'      => $m['route_name'] ?? null,
+                    'url'             => $m['url'] ?? null,
+                    'route_params'    => $m['route_params'] ?? null,
+                    'badge_key'       => $m['badge_key'] ?? null,
+                    'sort_order'      => $finalSortOrder($m, $indexSort),
+                    'is_active'       => $isActive,
+                    'visibility'      => $m['visibility'] ?? null,
+                ]
             );
-        }
 
-    
+            // reset submodule index for this module
+            $sKey = ($groupSlug ?? 'group') . '::' . $slug;
+            $sIndex[$sKey] = 0;
 
-      $categories = [
-            // Suspension & Steering
-            ['name' => 'Suspension', 'description' => 'Suspension system failures including springs, shock absorbers and linkages'],
-            ['name' => 'Steering', 'description' => 'Steering system faults including rack, column and power steering'],
+            return $module;
+        };
 
-            // Brakes
-            ['name' => 'Brakes', 'description' => 'Brake system issues including pads, discs, drums and hydraulics'],
-            ['name' => 'ABS System', 'description' => 'Anti-lock braking system faults'],
+        $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
+            &$sIndex, $finalIsActive, $finalSortOrder
+        ) {
+            $slug = $s['slug'] ?? Str::slug($s['name']);
 
-            // Drivetrain
-            ['name' => 'Gearbox', 'description' => 'Transmission and gearbox faults'],
-            ['name' => 'Clutch', 'description' => 'Clutch plate, pressure plate and release bearing failures'],
-            ['name' => 'Differential', 'description' => 'Differential and axle faults'],
-            ['name' => 'Driveshaft', 'description' => 'Driveshaft, CV joints and propshaft failures'],
+            $existing = SubModule::where('module_id', $module->id)
+                ->where('slug', $slug)
+                ->first();
 
-            // Engine
-            ['name' => 'Engine', 'description' => 'General engine faults, overheating and internal failures'],
-            ['name' => 'Fuel System', 'description' => 'Fuel pump, injectors, filters and fuel line issues'],
-            ['name' => 'Turbo', 'description' => 'Turbocharger and intercooler faults'],
-            ['name' => 'Exhaust', 'description' => 'Exhaust system leaks, DPF and emissions faults'],
+            $seededIsActive = (bool) ($s['is_active'] ?? true);
+            $isActive       = $finalIsActive($existing, $seededIsActive);
 
-            // Electrical
-            ['name' => 'Electrical', 'description' => 'General electrical faults, wiring and battery issues'],
-            ['name' => 'Alternator', 'description' => 'Alternator and charging system faults'],
-            ['name' => 'Starter Motor', 'description' => 'Starter motor and ignition system faults'],
-            ['name' => 'Lights', 'description' => 'Headlights, indicators, brake lights and interior lighting'],
+            // build a stable module key for indexing
+            $parent = $module->module_group_id . '::' . $module->id;
+            $sIndex[$parent] = ($sIndex[$parent] ?? 0) + 1;
 
-            // Cooling
-            ['name' => 'Cooling System', 'description' => 'Radiator, coolant leaks, thermostat and water pump faults'],
+            // index fallback if sort_order not provided
+            $indexSort = $indexSort ?? ($sIndex[$parent] * 10);
 
-            // Tyres & Wheels
-            ['name' => 'Tyres', 'description' => 'Tyre wear, punctures and wheel alignment'],
-            ['name' => 'Wheels & Rims', 'description' => 'Wheel bearing, hub and rim damage'],
+            return SubModule::updateOrCreate(
+                ['module_id' => $module->id, 'slug' => $slug],
+                [
+                    'module_id'     => $module->id,
+                    'name'          => $s['name'],
+                    'icon'          => $s['icon'] ?? null,
+                    'route_name'    => $s['route_name'] ?? null,
+                    'url'           => $s['url'] ?? null,
+                    'route_params'  => $s['route_params'] ?? null,
+                    'badge_key'     => $s['badge_key'] ?? null,
+                    'sort_order'    => $finalSortOrder($s, $indexSort),
+                    'is_active'     => $isActive,
 
-            // Body & Cab
-            ['name' => 'Body Damage', 'description' => 'Panel damage, cab repairs and structural bodywork'],
-            ['name' => 'Windscreen', 'description' => 'Windscreen chips, cracks and wiper faults'],
-            ['name' => 'Doors & Locks', 'description' => 'Door hinges, locks and seals'],
-
-            // Service & Scheduled
-            ['name' => 'Scheduled Service', 'description' => 'Routine oil, filter and service intervals'],
-            ['name' => 'Pre-trip Inspection', 'description' => 'Defects identified during pre-trip vehicle checks'],
-
-            // Other
-            ['name' => 'Accident Damage', 'description' => 'Repairs resulting from road traffic accidents'],
-            ['name' => 'Other', 'description' => 'Miscellaneous workshop jobs not covered by other categories'],
-        ];
-
-        foreach ($categories as $category) {
-            ProblemCategory::firstOrCreate(
-                ['name' => $category['name']],
-                ['description' => $category['description']]
+                    // null means inherit
+                    'visibility'    => $s['visibility'] ?? null,
+                ]
             );
-        }
-   
-
-       
-// ---------------------------------
-// Helpers: visibility builders
-// ---------------------------------
-$all = fn(array $flags) => ['all_flags' => $flags];
-$any = fn(array $clauses) => ['any' => $clauses];
-
- // Common vis shortcuts
-        $vInFinanceOrSuper = $any([
-            $all(['inFinance']),
-            $all(['isSuperAdmin']),
-        ]);
-        $vInFinanceStoresOrSuper = $any([
-            $all(['inFinance']),
-            $all(['inStores']),
-            $all(['isSuperAdmin']),
-        ]);
-
-        $vInHROrSuper = $any([
-            $all(['inHR']),
-            $all(['isSuperAdmin']),
-        ]);
-
-        $vInTransportOrSuper = $any([
-            $all(['inTransport']),
-            $all(['isSuperAdmin']),
-        ]);
-
-        $vInHSEQOrSuper = $any([
-            $all(['inHSEQ']),
-            $all(['isSuperAdmin']),
-        ]);
-
-        $vInSecurityOrSuper = $any([
-            $all(['inSecurity']),
-            $all(['isSuperAdmin']),
-        ]);
-
-// ---------------------------------
-// Helpers: preserve is_active if customized
-// ---------------------------------
-$finalIsActive = function (?object $existing, bool $seededIsActive): bool {
-    return ($existing && (bool) $existing->is_customized)
-        ? (bool) $existing->is_active
-        : (bool) $seededIsActive;
-};
-
-// sort_order fallback: if not provided, use index
-$finalSortOrder = function (array $data, int $indexSort = 0): int {
-    return array_key_exists('sort_order', $data)
-        ? (int) $data['sort_order']
-        : (int) $indexSort;
-};
-
-// ---------------------------------
-// Index counters (imperative seeder-friendly)
-// ---------------------------------
-$gIndex = 0;                     // group index
-$mIndex = [];                    // module index per group slug
-$sIndex = [];                    // submodule index per module key (groupSlug::moduleSlug)
-
-// ---------------------------------
-// Upserts
-// ---------------------------------
-$upsertGroup = function (array $g, ?int $indexSort = null) use (
-    &$gIndex, &$mIndex, $finalIsActive, $finalSortOrder
-) {
-    $slug = $g['slug'] ?? Str::slug($g['name']);
-
-    $existing = ModuleGroup::where('slug', $slug)->first();
-
-    $seededIsActive = (bool) ($g['is_active'] ?? true);
-    $isActive       = $finalIsActive($existing, $seededIsActive);
-
-    // index fallback if sort_order not provided
-    $indexSort = $indexSort ?? (++$gIndex * 10);
-
-    $group = ModuleGroup::updateOrCreate(
-        ['slug' => $slug],
-        [
-            'name'       => $g['name'],
-            'icon'       => $g['icon'] ?? null,
-            'sort_order' => $finalSortOrder($g, $indexSort),
-            'is_active'  => $isActive,
-            'visibility' => $g['visibility'] ?? null,
-        ]
-    );
-
-    // reset module indexing for this group
-    $mIndex[$slug] = 0;
-
-    return $group;
-};
-
-$upsertModule = function (ModuleGroup $group, array $m, ?int $indexSort = null) use (
-    &$mIndex, &$sIndex, $finalIsActive, $finalSortOrder
-) {
-    $slug = $m['slug'] ?? Str::slug($m['name']);
-
-    $existing = Module::where('module_group_id', $group->id)
-        ->where('slug', $slug)
-        ->first();
-
-    $seededIsActive = (bool) ($m['is_active'] ?? true);
-    $isActive       = $finalIsActive($existing, $seededIsActive);
-
-    $groupSlug = $group->slug ?? (ModuleGroup::find($group->id)?->slug);
-    $mIndex[$groupSlug] = ($mIndex[$groupSlug] ?? 0) + 1;
-
-    // index fallback if sort_order not provided
-    $indexSort = $indexSort ?? ($mIndex[$groupSlug] * 10);
-
-    $module = Module::updateOrCreate(
-        ['module_group_id' => $group->id, 'slug' => $slug],
-        [
-            'module_group_id' => $group->id,
-            'name'            => $m['name'],
-            'icon'            => $m['icon'] ?? null,
-            'route_name'      => $m['route_name'] ?? null,
-            'url'             => $m['url'] ?? null,
-            'route_params'    => $m['route_params'] ?? null,
-            'badge_key'       => $m['badge_key'] ?? null,
-            'sort_order'      => $finalSortOrder($m, $indexSort),
-            'is_active'       => $isActive,
-            'visibility'      => $m['visibility'] ?? null,
-        ]
-    );
-
-    // reset submodule index for this module
-    $sKey = ($groupSlug ?? 'group') . '::' . $slug;
-    $sIndex[$sKey] = 0;
-
-    return $module;
-};
-
-$upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
-    &$sIndex, $finalIsActive, $finalSortOrder
-) {
-    $slug = $s['slug'] ?? Str::slug($s['name']);
-
-    $existing = SubModule::where('module_id', $module->id)
-        ->where('slug', $slug)
-        ->first();
-
-    $seededIsActive = (bool) ($s['is_active'] ?? true);
-    $isActive       = $finalIsActive($existing, $seededIsActive);
-
-    // build a stable module key for indexing
-    $parent = $module->module_group_id . '::' . $module->id;
-    $sIndex[$parent] = ($sIndex[$parent] ?? 0) + 1;
-
-    // index fallback if sort_order not provided
-    $indexSort = $indexSort ?? ($sIndex[$parent] * 10);
-
-    return SubModule::updateOrCreate(
-        ['module_id' => $module->id, 'slug' => $slug],
-        [
-            'module_id'     => $module->id,
-            'name'          => $s['name'],
-            'icon'          => $s['icon'] ?? null,
-            'route_name'    => $s['route_name'] ?? null,
-            'url'           => $s['url'] ?? null,
-            'route_params'  => $s['route_params'] ?? null,
-            'badge_key'     => $s['badge_key'] ?? null,
-            'sort_order'    => $finalSortOrder($s, $indexSort),
-            'is_active'     => $isActive,
-
-            // null means inherit
-            'visibility'    => $s['visibility'] ?? null,
-        ]
-    );
-};
+        };
 
         // ----------------------------
         // GROUP: Main Category

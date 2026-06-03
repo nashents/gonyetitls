@@ -70,31 +70,33 @@ class Pending extends Component
 
         if ($this->category == "hr") {
 
-        $leave->management_id = Auth::user()->id;
-        $leave->management_decision = $this->decision;
-        $leave->management_reply = $this->reason;
-        if ($leave->hod_id == Null) {
-            $leave->hod_id = Auth::user()->id;
-            $leave->hod_decision = $this->decision;
-            $leave->hod_reply = $this->reason;
-        }
-        $leave->status = $this->decision;
-        $leave->update();
+            $leave->management_id = Auth::user()->id;
+            $leave->management_decision = $this->decision;
+            $leave->management_reply = $this->reason;
+            if ($leave->hod_id == Null) {
+                $leave->hod_id = Auth::user()->id;
+                $leave->hod_decision = $this->decision;
+                $leave->hod_reply = $this->reason;
+            }
+            $leave->status = $this->decision;
+            $leave->update();
 
-        if ($this->decision == "approved") {
-            $employee =  $leave->employee;
-            if ($employee && $employee->leave_days) {
-                $employee->leave_days =  $employee->leave_days - $leave->days;
-                $employee->update();
-                if ($employee->personal_email) {
-                 Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
+            if ($this->decision == "approved") {
+                $employee =  $leave->employee;
+                if ($employee) {
+
+                    $leave_type = $leave->leave_type;
+                    
+                    if ($leave_type->name == "Annual") {
+                        $employee->leave_days =  $employee->leave_days - $leave->days;
+                        $employee->update();
+                    }
+
+                    if ($employee->personal_email) {
+                        Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
+                    }
                 }
             }
-            
-           
-            
-           
-        }
 
         }elseif ($this->category == "hod") {
             $leave->hod_id = Auth::user()->id;

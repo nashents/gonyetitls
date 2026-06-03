@@ -76,7 +76,7 @@ class Index extends Component
         $this->selected_employee = Auth::user()->employee;
         $this->departments = $this->selected_employee->departments;
         $this->available_leave_days =  $this->selected_employee->leave_days;
-        $this->leave_types = LeaveType::orderBy('name','asc')->get();
+        $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
         $user = Auth::user();
         $employee = $user->employee;
         $company = $employee->company;
@@ -88,7 +88,7 @@ class Index extends Component
     public function refresh($category){
 
         if($category == "leave_types"){
-            $this->leave_types = LeaveType::orderBy('name','asc')->get();
+            $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Leave Types Refreshed Successfully!!."

@@ -265,7 +265,7 @@ class Edit extends Component
                 $this->description[$key] = $product->description;
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                         $this->hs_code[$key] = $tax->hs_code;
@@ -288,7 +288,7 @@ class Edit extends Component
             $this->description[$key] = $product->description;
             if ($product->tax_id) {
                 $this->selectedTax[$key] = $product->tax_id;
-                $tax = Account::find($product->tax_id);
+                $tax = Tax::find($product->tax_id);
                 if (isset($tax)) {
                     $this->tax_rate[$key] = $tax->rate;
                     $this->hs_code[$key] = $tax->hs_code;
@@ -639,7 +639,7 @@ class Edit extends Component
             $this->current_description[$key] = $product->description;
             if ($product->tax_id) {
                 $this->selectedCurrentTax[$key] = $product->tax_id;
-                $tax = Account::find($product->tax_id);
+                $tax = Tax::find($product->tax_id);
                 if (isset($tax)) {
                     $this->current_tax_rate[$key] = $tax->rate;
                     $this->current_hs_code[$key] = $tax->hs_code;
@@ -661,7 +661,7 @@ class Edit extends Component
 
                 if ($product->tax_id) {
                     $this->selectedCurrentTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->current_tax_rate[$key] = $tax->rate;
                         $this->current_hs_code[$key] = $tax->hs_code;
@@ -675,7 +675,7 @@ class Edit extends Component
 
     public function updatedselectedCurrentTax($id, $key){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->current_tax_rate[$key] = $tax->rate;
                 $this->current_hs_code[$key] = $tax->hs_code;
@@ -1282,7 +1282,7 @@ class Edit extends Component
                            
                             if(!is_null($this->selectedMultiTax)){
                                 
-                                $tax = Account::find($this->selectedMultiTax);
+                                $tax = Tax::find($this->selectedMultiTax);
                                 $invoice_item->tax_rate = $tax?->rate;
                                 $tax_rate = $tax?->rate;
                                 $invoice_item->hs_code = $tax?->hs_code;
@@ -1484,7 +1484,7 @@ class Edit extends Component
                            
                             if(!is_null($this->selectedMultiTax)){
                                 
-                                $tax = Account::find($this->selectedMultiTax);
+                                $tax = Tax::find($this->selectedMultiTax);
                                 $invoice_item->tax_rate = $tax?->rate;
                                 $tax_rate = $tax?->rate;
                                 $invoice_item->hs_code = $tax?->hs_code;

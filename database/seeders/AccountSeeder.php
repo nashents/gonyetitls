@@ -35,8 +35,200 @@ class AccountSeeder extends Seeder
 
     }
 
+    private function seedAccount(array $data)
+    {
+        return Account::updateOrCreate(
+
+            [
+                'name' => $data['name'],
+            ],
+
+            [
+                'currency_id'          => $data['currency_id'] ?? null,
+                'account_type_group_id'=> $data['account_type_group_id'],
+                'account_type_id'      => $data['account_type_id'],
+                'name'                 => $data['name'],
+                'abbreviation'         => $data['abbreviation'] ?? null,
+                'rate'                 => $data['rate'] ?? null,
+                'description'          => $data['description'] ?? null,
+                'hs_code'              => $data['hs_code'] ?? null,
+            ]
+        );
+    }
+
     public function run()
     {
+
+        $sales_taxes = \App\Models\AccountType::where('name', 'Sales Taxes')->first();
+
+        if (!$sales_taxes) {
+            throw new \Exception('Sales Taxes account type not found.');
+        }
+
+        $this->seedAccount([
+            'currency_id'           => null,
+            'account_type_group_id' => $sales_taxes->account_type_group->id,
+            'account_type_id'       => $sales_taxes->id,
+            'name'                  => 'Value Added Tax',
+            'abbreviation'          => 'VAT',
+            'rate'                  => null,
+            'description'           => '',
+            'hs_code'               => '',
+        ]);
+
+        $type = AccountType::where('name', 'Vendor Prepayments & Vendor Credits')->first();
+
+        Account::updateOrCreate(
+            ['name' => 'Vendor Prepayments'],
+            [
+                'account_type_id'       => $type->id,
+                'account_type_group_id' => $type->account_type_group_id,
+                'description'           => 'Advance payments made to vendors before bills are received.',
+                'currency_id'           => null,
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'hs_code'               => '',
+            ]
+        );
+
+
+         // Resolve account types
+        $dueForPayroll  = AccountType::where('name', 'Due for Payroll')->firstOrFail();
+        $payrollExpense = AccountType::where('name', 'Payroll Expense')->firstOrFail();
+
+        $accounts = [
+
+            // ── Payroll Liabilities (Due for Payroll) ─────────────────────
+            [
+                'name'                  => 'Salaries & Wages Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'Net salaries owed to employees pending bank transfer.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'PAYE Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'Pay As You Earn tax withheld from employee salaries, payable to ZIMRA.',
+                'abbreviation'          => 'PAYE',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NSSA Employee Contribution Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'Employee portion of NSSA contributions withheld from salary.',
+                'abbreviation'          => 'NSSA EE',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NSSA Employer Contribution Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'Employer portion of NSSA contributions payable to NSSA.',
+                'abbreviation'          => 'NSSA ER',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Levy Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'National Employment Council levy payable.',
+                'abbreviation'          => 'NEC',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'AIDS Levy Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'AIDS levy withheld from employee salaries, payable to ZIMRA.',
+                'abbreviation'          => 'AIDS',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Payable',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'Employee and employer pension contributions payable to pension fund.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Payroll Suspense',
+                'account_type_id'       => $dueForPayroll->id,
+                'account_type_group_id' => $dueForPayroll->account_type_group_id,
+                'description'           => 'Clearing account used during payroll processing. Should net to zero after payroll is fully posted.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+
+            // ── Payroll Expenses ──────────────────────────────────────────
+            [
+                'name'                  => 'Salaries & Wages Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Gross salaries and wages expense for all employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NSSA Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of NSSA contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of NEC levy contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+        ];
+
+        foreach ($accounts as $account) {
+            Account::firstOrCreate(
+                ['name' => $account['name']],
+                $account
+            );
+        }
         
         
         $cash_bank = AccountType::where('name','Cash & Bank')->get()->first();
@@ -125,6 +317,38 @@ class AccountSeeder extends Seeder
            
         ];
 
-           Account::insert($accounts);
+        Account::insert($accounts);
+
+        $sales_taxes = \App\Models\AccountType::where('name', 'Sales Taxes')->first();
+
+        if (!$sales_taxes) {
+            throw new \Exception('Sales Taxes account type not found.');
+        }
+
+        $this->seedAccount([
+            'currency_id'           => null,
+            'account_type_group_id' => $sales_taxes->account_type_group->id,
+            'account_type_id'       => $sales_taxes->id,
+            'name'                  => 'Value Added Tax',
+            'abbreviation'          => 'VAT',
+            'rate'                  => null,
+            'description'           => '',
+            'hs_code'               => '',
+        ]);
+
+        $type = AccountType::where('name', 'Vendor Prepayments & Vendor Credits')->first();
+
+        Account::updateOrCreate(
+            ['name' => 'Vendor Prepayments'],
+            [
+                'account_type_id'       => $type->id,
+                'account_type_group_id' => $type->account_type_group_id,
+                'description'           => 'Advance payments made to vendors before bills are received.',
+                'currency_id'           => null,
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'hs_code'               => '',
+            ]
+        );
     }
 }

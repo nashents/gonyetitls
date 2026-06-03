@@ -92,7 +92,7 @@ class Manage extends Component
         ->orderBy('name', 'asc')
         ->orderBy('surname', 'asc')
         ->get();
-        $this->leave_types = LeaveType::orderBy('name','asc')->get();
+        $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
         $this->employee_departments = collect();
 
         $user = Auth::user();
@@ -295,7 +295,7 @@ class Manage extends Component
     public function refresh($category){
 
         if($category == "leave_types"){
-            $this->leave_types = LeaveType::orderBy('name','asc')->get();
+            $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Leave Types Refreshed Successfully!!."

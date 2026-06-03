@@ -51,6 +51,11 @@ class Edit extends Component
     public $customer;
     public $product_name;
     public $product_description;
+    public $credit_note;
+    public $invoice;
+    public $credit_note_id;
+    public $invoice_amount;
+    public $invoice_balance;
 
     public function mount($id){
 

@@ -241,7 +241,7 @@ class Edit extends Component
               
                 if($purchase_product->tax_id){
                     $this->selectedTax = $purchase_product->tax_id;
-                    $tax = Account::find($purchase_product->tax_id);
+                    $tax = Tax::find($purchase_product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }
@@ -264,7 +264,7 @@ class Edit extends Component
             
                 if ($product->tax_id) {
                     $this->selectedTax = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }

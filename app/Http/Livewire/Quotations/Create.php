@@ -3,26 +3,27 @@
 namespace App\Http\Livewire\Quotations;
 
 
-use Carbon\Carbon;
-use App\Models\Cargo;
 use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
+use App\Models\AdditionalCost;
+use App\Models\BankAccount;
+use App\Models\Cargo;
 use App\Models\CostItem;
 use App\Models\Currency;
 use App\Models\Customer;
-use App\Models\Discount;
-use App\Models\Quotation;
-use App\Models\BankAccount;
 use App\Models\Destination;
+use App\Models\Discount;
 use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
-use App\Models\QuotationItem;
-use App\Models\AdditionalCost;
 use App\Models\OffloadingPoint;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\Quotation;
+use App\Models\QuotationItem;
+use App\Models\Tax;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
 
 class Create extends Component
 {
@@ -292,7 +293,7 @@ public function updatedSelectedCargo($id){
             ]);
         }
         elseif($category == 'taxes'){
-             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+             $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
             })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -372,7 +373,7 @@ public function quotationNumber(){
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -437,7 +438,7 @@ public function quotationNumber(){
 
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                         $this->hs_code[$key] = $tax->hs_code;
@@ -451,7 +452,7 @@ public function quotationNumber(){
 
    public function updatedSelectedTax($id, $key){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
                 $this->hs_code[$key] = $tax->hs_code;
@@ -595,7 +596,7 @@ public function quotationNumber(){
                 $this->description[$this->item_key] = $product->description;
                 if ($product->tax_id) {
                     $this->selectedTax[$this->item_key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$this->item_key] = $tax->rate;
                         $this->hs_code[$this->item_key] = $tax->hs_code;
@@ -959,7 +960,7 @@ public function quotationNumber(){
 
         }
 
-           $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+           $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
 
@@ -975,7 +976,7 @@ public function quotationNumber(){
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {

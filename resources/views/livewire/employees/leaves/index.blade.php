@@ -56,7 +56,13 @@
                                                     <strong>Post: </strong>{{ucfirst($employee->post)}}
                                                 </small>
                                             </td>
-                                            <td>{{$this->getLeavesTaken($employee->id)}}</td>
+                                            <td>
+                                                @foreach($this->getLeavesTaken($employee->id) as $leave)
+                                                    <div>
+                                                        <strong>{{ $leave['leave_type'] }}</strong>: {{ $leave['days_taken'] }}
+                                                    </div>
+                                                @endforeach
+                                            </td>
                                             <td>{{$employee->leave_days}}</td>
                                             <td>{{$employee->accrual_rate}}</td>
                                             <td>{{$employee->maximum_leave_days}}</td>
@@ -70,7 +76,6 @@
                                                         <li><a href="#" wire:click.prevent="showLeave({{$employee->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     </ul>
                                                 </div>
-                                            
                                         </td>
                                           </tr>
                                     

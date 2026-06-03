@@ -9,6 +9,7 @@ use App\Models\Currency;
 use App\Models\Expense;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\Tax;
 use App\Models\TicketExpense;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
@@ -124,7 +125,7 @@ class Index extends Component
 
     public function updatedSelectedTax($id){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->tax_rate = $tax->rate;
             }
@@ -172,7 +173,7 @@ class Index extends Component
                 }
                 if ($product->tax_id) {
                     $this->selectedTax = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }
@@ -407,11 +408,10 @@ class Index extends Component
         $product = Product::find($this->selectedProduct);
         if ($product->tax_id) {
             $this->selectedTax = $product->tax_id;
-            $tax = Account::find($product->tax_id);
+            $tax = Tax::find($product->tax_id);
             if (isset($tax)) {
                 $this->tax_rate = $tax->rate;
             }
-            
         }  
 
         $this->dispatchBrowserEvent('show-ticket_expenseEditModal');

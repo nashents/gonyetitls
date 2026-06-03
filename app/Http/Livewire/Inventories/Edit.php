@@ -238,7 +238,7 @@ class Edit extends Component
         $this->residual_value = $inventory->residual_value;
         $this->purchase_type = $inventory->purchase_type;
         $this->selectedTax = $inventory->tax_id;
-        $tax = Account::find($inventory->tax_id);
+        $tax = Tax::find($inventory->tax_id);
         if (isset($tax)) {
             $this->tax_rate = $tax->rate;
         }
@@ -294,7 +294,7 @@ class Edit extends Component
                 $this->measurement = $purchase_product->product->unit_of_measure;
                 if($purchase_product->tax_id){
                     $this->selectedTax = $purchase_product->tax_id;
-                    $tax = Account::find($purchase_product->tax_id);
+                    $tax = Tax::find($purchase_product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }
@@ -345,7 +345,7 @@ class Edit extends Component
 
                 if($transfer_item->tax_id){
                     $this->selectedTax = $transfer_item->tax_id;
-                    $tax = Account::find($transfer_item->tax_id);
+                    $tax = Tax::find($transfer_item->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }
@@ -369,7 +369,7 @@ class Edit extends Component
           
                 if ($product->tax_id) {
                     $this->selectedTax = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate = $tax->rate;
                     }

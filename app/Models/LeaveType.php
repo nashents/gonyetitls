@@ -16,7 +16,21 @@ class LeaveType extends Model implements Auditable
         return $this->hasMany('App\Models\Leave');
     }
     protected $fillable = [
+        'user_id',
         'name',
+        'code',
         'entitlement',
+        'is_paid',
+        'is_accruable',
+        'requires_medical_report',
+        'requires_attachment',
+        'carry_forward_allowed',
+        'monthly_accrual_rate',
+        'max_carry_forward_days',
+        'max_consecutive_days',
+        'requires_hod_approval',
+        'requires_management_approval',
+        'active',
+        'description',
     ];
 }

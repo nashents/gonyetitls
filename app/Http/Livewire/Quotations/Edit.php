@@ -2,27 +2,28 @@
 
 namespace App\Http\Livewire\Quotations;
 
-use Carbon\Carbon;
-use App\Models\Cargo;
 use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
+use App\Models\AdditionalCost;
+use App\Models\BankAccount;
+use App\Models\Cargo;
 use App\Models\CostItem;
 use App\Models\Currency;
 use App\Models\Customer;
-use App\Models\Discount;
-use App\Models\Quotation;
-use App\Models\BankAccount;
 use App\Models\Destination;
+use App\Models\Discount;
 use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
-use App\Models\QuotationItem;
-use App\Models\AdditionalCost;
 use App\Models\OffloadingPoint;
+use App\Models\Product;
+use App\Models\Quotation;
+use App\Models\QuotationItem;
 use App\Models\QuotationProduct;
-use Illuminate\Support\Facades\DB;
+use App\Models\Tax;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
 
 class Edit extends Component
 {
@@ -262,7 +263,7 @@ class Edit extends Component
             ]);
         }
         elseif($category == 'taxes'){
-             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+             $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -362,7 +363,7 @@ class Edit extends Component
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -434,7 +435,7 @@ class Edit extends Component
                 $this->current_qty[$key] = 1;
                 if ($product->tax_id) {
                     $this->currentSelectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->current_tax_rate[$key] = $tax->rate;
                         $this->current_hs_code[$key] = $tax->hs_code;
@@ -448,7 +449,7 @@ class Edit extends Component
 
     public function updatedCurrentSelectedTax($id, $key){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->current_tax_rate[$key] = $tax->rate;
                 $this->current_hs_code[$key] = $tax->hs_code;
@@ -471,7 +472,7 @@ class Edit extends Component
 
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                         $this->hs_code[$key] = $tax->hs_code;
@@ -485,7 +486,7 @@ class Edit extends Component
 
    public function updatedSelectedTax($id, $key){
         if(!is_null($id)){
-            $tax = Account::find($id);
+            $tax = Tax::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
                 $this->hs_code[$key] = $tax->hs_code;
@@ -564,7 +565,7 @@ class Edit extends Component
                     $this->current_description[$this->item_key] = $product->description;
                     if ($product->tax_id) {
                         $this->selectedCurrentTax[$this->item_key] = $product->tax_id;
-                        $tax = Account::find($product->tax_id);
+                        $tax = Tax::find($product->tax_id);
                         if (isset($tax)) {
                             $this->current_tax_rate[$this->item_key] = $tax->rate;
                             $this->current_hs_code[$this->item_key] = $tax->hs_code;
@@ -583,7 +584,7 @@ class Edit extends Component
                     $this->description[$this->item_key] = $product->description;
                     if ($product->tax_id) {
                         $this->selectedTax[$this->item_key] = $product->tax_id;
-                        $tax = Account::find($product->tax_id);
+                        $tax = Tax::find($product->tax_id);
                         if (isset($tax)) {
                             $this->tax_rate[$this->item_key] = $tax->rate;
                             $this->hs_code[$this->item_key] = $tax->hs_code;
@@ -1244,7 +1245,7 @@ class Edit extends Component
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {

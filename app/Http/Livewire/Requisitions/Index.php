@@ -428,7 +428,7 @@ class Index extends Component
             $this->selectedTax[$key] = $product->tax_id;
 
             if ($product->tax_id) {
-                $tax = Account::find($product->tax_id);
+                $tax = Tax::find($product->tax_id);
                 $this->tax_rate[$key] = $tax?->rate ?? 0;
             } else {
                 $this->tax_rate[$key] = 0;
@@ -585,7 +585,7 @@ class Index extends Component
                 }
                 if ($product->tax_id) {
                     $this->selectedTax[$this->item_key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$this->item_key] = $tax->rate;
                     }

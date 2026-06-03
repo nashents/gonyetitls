@@ -278,7 +278,7 @@ class Create extends Component
           
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
+                    $tax = Tax::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                     }
@@ -301,7 +301,7 @@ class Create extends Component
              
                 if($purchase_product->tax_id){
                     $this->selectedTax[$key] = $purchase_product->tax_id;
-                    $tax = Account::find($purchase_product->tax_id);
+                    $tax = Tax::find($purchase_product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                     }
@@ -352,7 +352,7 @@ class Create extends Component
 
                 if($transfer_item->tax_id){
                     $this->selectedTax[$key] = $transfer_item->tax_id;
-                    $tax = Account::find($transfer_item->tax_id);
+                    $tax = Tax::find($transfer_item->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
                     }
