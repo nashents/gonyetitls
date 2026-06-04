@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\EmployeeLeave;
+use App\Models\JournalEntryLine;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Employee extends Model implements Auditable
 {
@@ -19,6 +21,10 @@ class Employee extends Model implements Auditable
     public function journal_entry_lines()
     {
         return $this->hasMany(JournalEntryLine::class);
+    }
+    public function employee_leaves()
+    {
+        return $this->hasMany(EmployeeLeave::class);
     }
     public function goods_receiveds(){
         return $this->hasMany('App\Models\GoodsReceived');

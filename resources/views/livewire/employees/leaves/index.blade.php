@@ -121,7 +121,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Leave Days Data <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                        <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Annual Leave Days Data <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                     </div>
                     <form action="{{route('employees.leaves.import')}}" method="POST" enctype="multipart/form-data">
                         {{ csrf_field() }}
@@ -148,7 +148,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Leave Details <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Annual Leave Details <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                     </div>
                     <form wire:submit.prevent="update()" >
                     <div class="modal-body">

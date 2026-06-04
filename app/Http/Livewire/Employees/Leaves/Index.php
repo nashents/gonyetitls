@@ -87,21 +87,21 @@ class Index extends Component
 
     public function getLeavesTaken($employeeId)
     {
-        $taken = Leave::query()
+        return Leave::query()
+            ->with('leave_type:id,name')
             ->where('employee_id', $employeeId)
             ->whereYear('from', date('Y'))
             ->where('hod_decision', 'approved')
             ->where('management_decision', 'approved')
             ->selectRaw('leave_type_id, SUM(days) as total_days')
             ->groupBy('leave_type_id')
-            ->pluck('total_days', 'leave_type_id');
-
-        return LeaveType::all()
-            ->map(function ($leave_type) use ($taken) {
+            ->havingRaw('SUM(days) > 0')
+            ->get()
+            ->map(function ($leave) {
                 return [
-                    'leave_type_id' => $leave_type->id,
-                    'leave_type'    => $leave_type->name,
-                    'days_taken'    => (float) ($taken[$leave_type->id] ?? 0),
+                    'leave_type_id' => $leave->leave_type_id,
+                    'leave_type'    => $leave->leave_type?->name,
+                    'days_taken'    => (float) $leave->total_days,
                 ];
             });
     }

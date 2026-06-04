@@ -2,13 +2,14 @@
 
 namespace App\Http\Livewire\Leaves;
 
-use App\Models\Leave;
-use Livewire\Component;
-use Livewire\WithPagination;
-use App\Models\DepartmentHead;
 use App\Mail\LeaveApplicationMail;
+use App\Models\DepartmentHead;
+use App\Models\EmployeeLeave;
+use App\Models\Leave;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Pending extends Component
 {
@@ -82,19 +83,41 @@ class Pending extends Component
             $leave->update();
 
             if ($this->decision == "approved") {
-                $employee =  $leave->employee;
-                if ($employee) {
 
-                    $leave_type = $leave->leave_type;
-                    
-                    if ($leave_type->name == "Annual") {
-                        $employee->leave_days =  $employee->leave_days - $leave->days;
-                        $employee->update();
-                    }
+                $employee = $leave->employee;
+                $leaveType = $leave->leave_type;
 
-                    if ($employee->personal_email) {
-                        Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
-                    }
+                if ($employee && $leaveType) {
+
+                    $employeeLeave = EmployeeLeave::where('employee_id', $employee->id)
+                        ->where('leave_type_id', $leaveType->id)
+                        ->first();
+
+                        if ($employeeLeave && is_numeric($leave->days)) {
+
+                            $employeeLeave->available_leave_days = max(
+                                0,
+                                ($employeeLeave->available_leave_days ?? 0) - $leave->days
+                            );
+
+                            $employeeLeave->save();
+                        }
+
+                        // Backward compatibility
+                        if (strtolower(trim($leaveType->name)) === 'annual') {
+
+                            $employee->leave_days = max(
+                                0,
+                                ($employee->leave_days ?? 0) - $leave->days
+                            );
+
+                            $employee->save();
+                        }
+
+                        if ($employee->personal_email) {
+                            Mail::to($employee->personal_email)
+                                ->send(new LeaveApplicationMail($this->company, $leave));
+                        }
                 }
             }
 

@@ -17,6 +17,11 @@ class Leave extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+
+    public function employee_leaves()
+    {
+        return $this->hasMany(EmployeeLeave::class);
+    }
     public function department(){
         return $this->belongsTo('App\Models\Department');
     }
