@@ -119,38 +119,6 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         return $this->budgetMap[$key] ?? null;
     }
 
-    protected function getMtdBudget(string $metricName, int $mtdDays): ?float
-    {
-        /*
-         * MTD budget rule:
-         * - For normal metrics: Daily Budget × MTD Days
-         * - For Fuel Consumption metrics: use the Daily Budget as-is
-         *   because consumption is a ratio/target, not an accumulated value.
-         */
-
-        $dailyBudget = $this->getBudget($metricName, 'Daily');
-
-        if ($dailyBudget === null) {
-            return null;
-        }
-
-        if ($this->isFuelConsumptionMetric($metricName)) {
-            return $dailyBudget;
-        }
-
-        return $dailyBudget * $mtdDays;
-    }
-
-    protected function isFuelConsumptionMetric(string $metricName): bool
-    {
-        return str_contains(strtolower($metricName), 'fuel consumption');
-    }
-
-    protected function mtdBudgetDays(Carbon $mFrom, Carbon $mTo): int
-    {
-        return max(1, $mFrom->copy()->startOfDay()->diffInDays($mTo->copy()->startOfDay()) + 1);
-    }
-
     protected function bootLoadingPoints(): void
     {
         $q = LoadingPoint::query();
@@ -202,8 +170,6 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $mFrom = $asAt->copy()->startOfMonth()->startOfDay()->addHours(2);
         $mTo = $reportTo;
 
-        $mtdBudgetDays = $this->mtdBudgetDays($mFrom, $mTo);
-
         $y = $this->computePeriod($yFrom, $yTo, $this->lpMap);
         $m = $this->computePeriod($mFrom, $mTo, $this->lpMap);
 
@@ -238,8 +204,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $lpVals($m['ore_long']['lp'] ?? []),
             $m['ore_long']['loads'] ?? 0,
             $m['ore_long']['actual'] ?? 0,
-            'Monthly',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowFuelLong = $this->buildPlainMetricRow(
@@ -247,10 +212,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['fuel_long'] ?? 0,
             'Daily',
             $m['fuel_long'] ?? 0,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowKmLong = $this->buildPlainMetricRow(
@@ -258,10 +220,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['km_long'] ?? 0,
             'Daily',
             $m['km_long'] ?? 0,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowConsLong = $this->buildPlainMetricRow(
@@ -269,10 +228,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['cons_long'] ?? null,
             'Daily',
             $m['cons_long'] ?? null,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowOreShort = $this->buildLpMetricRow(
@@ -284,8 +240,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $lpVals($m['ore_short']['lp'] ?? []),
             $m['ore_short']['loads'] ?? 0,
             $m['ore_short']['actual'] ?? 0,
-            'Monthly',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowFuelShort = $this->buildPlainMetricRow(
@@ -293,10 +248,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['fuel_short'] ?? 0,
             'Daily',
             $m['fuel_short'] ?? 0,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowKmShort = $this->buildPlainMetricRow(
@@ -304,10 +256,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['km_short'] ?? 0,
             'Daily',
             $m['km_short'] ?? 0,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowConsShort = $this->buildPlainMetricRow(
@@ -315,10 +264,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['cons_short'] ?? null,
             'Daily',
             $m['cons_short'] ?? null,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowConc = $this->buildPlainMetricRow(
@@ -328,8 +274,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $m['conc']['actual'] ?? 0,
             'Monthly',
             $y['conc']['loads'] ?? 0,
-            $m['conc']['loads'] ?? 0,
-            $mtdBudgetDays
+            $m['conc']['loads'] ?? 0
         );
 
         $rowFuelConc = $this->buildPlainMetricRow(
@@ -337,10 +282,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             $y['fuel_conc'] ?? 0,
             'Daily',
             $m['fuel_conc'] ?? 0,
-            'Monthly',
-            '',
-            '',
-            $mtdBudgetDays
+            'Monthly'
         );
 
         $rowSection = array_merge(
@@ -353,37 +295,37 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         );
 
         $rowMorningShifts = $this->buildCaptureRow(
-            'Driver Attendance At Morning Shift',
+            'Morning Shifts Captured',
             $yShiftStats['morning_shifts'],
             $mShiftStats['morning_shifts']
         );
 
         $rowNightShifts = $this->buildCaptureRow(
-            'Driver Attendance At Night Shift',
+            'Night Shifts Captured',
             $yShiftStats['night_shifts'],
             $mShiftStats['night_shifts']
         );
 
         $rowBackShifts = $this->buildCaptureRow(
-            'Driver Attendance At Backshift Shift',
+            'Backshift Shifts Captured',
             $yShiftStats['backshift_shifts'],
             $mShiftStats['backshift_shifts']
         );
 
         $rowMorningLoads = $this->buildCaptureRow(
-            'Total Loads Captured At Morning Shift',
+            'Morning Loads Captured',
             $yShiftStats['morning_loads'],
             $mShiftStats['morning_loads']
         );
 
         $rowNightLoads = $this->buildCaptureRow(
-            'Total Loads Captured At Night Shift',
+            'Night Loads Captured',
             $yShiftStats['night_loads'],
             $mShiftStats['night_loads']
         );
 
         $rowBackLoads = $this->buildCaptureRow(
-            'Total Loads Captured At Backshift Shift',
+            'Backshift Loads Captured',
             $yShiftStats['backshift_loads'],
             $mShiftStats['backshift_loads']
         );
@@ -427,14 +369,10 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         array $mLpValues,
         $mLoads,
         $mActual,
-        string $mBudgetPeriod,
-        int $mtdBudgetDays = 1
+        string $mBudgetPeriod
     ): array {
         $yBudget = $this->getBudget($metricName, $yBudgetPeriod);
-
-        $mBudget = $mBudgetPeriod === 'Monthly'
-            ? $this->getMtdBudget($metricName, $mtdBudgetDays)
-            : $this->getBudget($metricName, $mBudgetPeriod);
+        $mBudget = $this->getBudget($metricName, $mBudgetPeriod);
 
         return array_merge(
             [$metricName],
@@ -463,14 +401,10 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $mActual,
         string $mBudgetPeriod,
         $yLoads = '',
-        $mLoads = '',
-        int $mtdBudgetDays = 1
+        $mLoads = ''
     ): array {
         $yBudget = $this->getBudget($metricName, $yBudgetPeriod);
-
-        $mBudget = $mBudgetPeriod === 'Monthly'
-            ? $this->getMtdBudget($metricName, $mtdBudgetDays)
-            : $this->getBudget($metricName, $mBudgetPeriod);
+        $mBudget = $this->getBudget($metricName, $mBudgetPeriod);
 
         return array_merge(
             [$metricName],
