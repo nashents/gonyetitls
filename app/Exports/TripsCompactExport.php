@@ -513,6 +513,83 @@ WithCustomStartCell
             $fuel = $trip->fuels->where('quantity','!=','')->where('quantity','!=',Null)->sum('quantity');
             $fuel_amount = $trip->fuels->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
 
+            $fromRoutes = collect();
+            if ($trip->trip_origins && $trip->trip_origins->count()) {
+                $fromRoutes = $trip->trip_origins
+                    ->map(function ($trip_origin) {
+                        $from = $trip_origin->destination
+                            ? trim(($trip_origin->destination->country?->name ?? '') . ' ' . ($trip_origin->destination->city ?? ''))
+                            : null;
+
+                        $loadingPoint = $trip_origin->loading_point?->name;
+
+                        return [
+                            'label' => trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -'),
+                            'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                        ];
+                    })
+                    ->filter(fn ($item) => !empty($item['label']))
+                    ->unique('key')
+                    ->values();
+            } else {
+                $from = $trip->fromDestination
+                    ? trim(($trip->fromDestination->country?->name ?? '') . ' ' . ($trip->fromDestination->city ?? ''))
+                    : null;
+
+                $loadingPoint = $trip->loading_point?->name;
+
+                $label = trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -');
+
+                if (!empty($label)) {
+                    $fromRoutes = collect([
+                        [
+                            'label' => $label,
+                            'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                        ]
+                    ]);
+                }
+            }
+
+            $toRoutes = collect();
+            if ($trip->trip_destinations && $trip->trip_destinations->count()) {
+                $toRoutes = $trip->trip_destinations
+                    ->map(function ($trip_destination) {
+                        $to = $trip_destination->destination
+                            ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
+                            : null;
+
+                        $offloadingPoint = $trip_destination->offloading_point?->name;
+
+                        return [
+                            'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
+                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                        ];
+                    })
+                    ->filter(fn ($item) => !empty($item['label']))
+                    ->unique('key')
+                    ->values();
+            } else {
+                $to = $trip->toDestination
+                    ? trim(($trip->toDestination->country?->name ?? '') . ' ' . ($trip->toDestination->city ?? ''))
+                    : null;
+
+                $offloadingPoint = $trip->offloading_point?->name;
+
+                $label = trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -');
+
+                if (!empty($label)) {
+                    $toRoutes = collect([
+                        [
+                            'label' => $label,
+                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                        ]
+                    ]);
+                }
+            }
+
+            $fromRouteLabels = $fromRoutes->pluck('label')->implode("\n");
+            $toRouteLabels   = $toRoutes->pluck('label')->implode("\n");
+
                 return   [
                     $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
                     $trip->transporter ? $trip->transporter->name : "",
@@ -522,8 +599,8 @@ WithCustomStartCell
                     $loading_date,
                     $offloading_date,
                     $trip->customer ? $trip->customer->name : "",
-                    $trip->loading_point ? $trip->loading_point->name : "",
-                    $trip->offloading_point ? $trip->offloading_point->name : "",
+                    $fromRouteLabels ?: "",
+                    $toRouteLabels ?: "",
                     $starting_mileage." - ".$ending_mileage ,
                     $distance,
                     $fuel,
@@ -553,8 +630,8 @@ WithCustomStartCell
                 'Date Loaded',
                 'Date Offloaded',
                 'Customer',
-                'Loading Point',
-                'Offloading Point',
+                'From',
+                'To',
                 'Mileage',
                 'Distance',
                 'Fuel',

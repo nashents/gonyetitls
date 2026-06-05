@@ -753,6 +753,83 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             }
         }
 
+        $fromRoutes = collect();
+            if ($trip->trip_origins && $trip->trip_origins->count()) {
+                $fromRoutes = $trip->trip_origins
+                    ->map(function ($trip_origin) {
+                        $from = $trip_origin->destination
+                            ? trim(($trip_origin->destination->country?->name ?? '') . ' ' . ($trip_origin->destination->city ?? ''))
+                            : null;
+
+                        $loadingPoint = $trip_origin->loading_point?->name;
+
+                        return [
+                            'label' => trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -'),
+                            'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                        ];
+                    })
+                    ->filter(fn ($item) => !empty($item['label']))
+                    ->unique('key')
+                    ->values();
+            } else {
+                $from = $trip->fromDestination
+                    ? trim(($trip->fromDestination->country?->name ?? '') . ' ' . ($trip->fromDestination->city ?? ''))
+                    : null;
+
+                $loadingPoint = $trip->loading_point?->name;
+
+                $label = trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -');
+
+                if (!empty($label)) {
+                    $fromRoutes = collect([
+                        [
+                            'label' => $label,
+                            'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                        ]
+                    ]);
+                }
+            }
+
+            $toRoutes = collect();
+            if ($trip->trip_destinations && $trip->trip_destinations->count()) {
+                $toRoutes = $trip->trip_destinations
+                    ->map(function ($trip_destination) {
+                        $to = $trip_destination->destination
+                            ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
+                            : null;
+
+                        $offloadingPoint = $trip_destination->offloading_point?->name;
+
+                        return [
+                            'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
+                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                        ];
+                    })
+                    ->filter(fn ($item) => !empty($item['label']))
+                    ->unique('key')
+                    ->values();
+            } else {
+                $to = $trip->toDestination
+                    ? trim(($trip->toDestination->country?->name ?? '') . ' ' . ($trip->toDestination->city ?? ''))
+                    : null;
+
+                $offloadingPoint = $trip->offloading_point?->name;
+
+                $label = trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -');
+
+                if (!empty($label)) {
+                    $toRoutes = collect([
+                        [
+                            'label' => $label,
+                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                        ]
+                    ]);
+                }
+            }
+
+            $fromRouteLabels = $fromRoutes->pluck('label')->implode("\n");
+            $toRouteLabels   = $toRoutes->pluck('label')->implode("\n");
+
         return [
             $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
             $trip->trip_status,
@@ -773,10 +850,8 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $commission_percentage,
             $symbol . number_format($commission_amount ? $commission_amount : 0, 2),
             $trip->broker ? $trip->broker->name : "",
-            trim($from_country . ' ' . $from_city),
-            trim($to_country . ' ' . $to_city),
-            $trip->loading_point ? $trip->loading_point->name : "",
-            $trip->offloading_point ? $trip->offloading_point->name : "",
+            $fromRouteLabels ?: "",
+            $toRouteLabels ?: "",
             $trip->route ? $trip->route->name : "",
             $truck_stop_list,
             $trip->trip_fuel ? $trip->trip_fuel . ' L' : "",
@@ -857,8 +932,6 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             'Broker',
             'From',
             'To',
-            'Loading Point',
-            'Offloading Point',
             'Route',
             'Truck Stop(s)',
             'Approximate Fuel',

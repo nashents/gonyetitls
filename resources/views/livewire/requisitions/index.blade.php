@@ -99,7 +99,14 @@
                                     @if (isset($requisitions))
                                     <tbody>
                                         @forelse ($requisitions as $requisition)
-                                      <tr>
+                                      <tr  
+                                            @if($requisition->type == 'po_requisition')
+                                                style="background-color:#e8f4fd;border-left:6px solid #17a2b8;"
+                                            @elseif($requisition->type == 'payment_requisition')
+                                                style="background-color:#eafaf1; border-left:6px solid #28a745;"
+                                            @endif
+                                            
+                                        >
                                         <td>
                                             {{ucfirst($requisition->requisition_number)}} <br>
                                            

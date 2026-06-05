@@ -160,6 +160,7 @@
                                 'waste_collections' => ['label' => 'Waste Collection', 'route' => 'waste_collections.pending', 'icon'  => 'fa-recycle'],
                                 'waste_disposals' => ['label' => 'Waste Disposal', 'route' => 'waste_disposals.pending', 'icon'  => 'fa-trash'],
                                 'requisitions' => ['label' => 'Requisition', 'route' => 'requisitions.pending', 'icon'  => 'fa-list-alt'],
+                                'payment_requisitions' => ['label' => 'Payment Requisition', 'route' => 'requisitions.pending', 'icon'  => 'fa-list-alt'],
                                 'payrolls' => ['label' => 'Payroll', 'route' => 'payrolls.pending', 'icon'  => 'fa-money'],
                                 'loans' => ['label' => 'Loan', 'route' => 'loans.pending', 'icon'  => 'fa-credit-card'],
                                 'leaves' => ['label' => 'Leave', 'route' => 'leaves.pending', 'icon'  => 'fa-plane'],
@@ -173,7 +174,7 @@
                             // Departments are ONLY for visibility (not data filtering)
                             $deptKeys = [
                                 'Human Resource' => ['leaves', 'attendances', 'payrolls', 'loans'],
-                                'Finance' => ['bills', 'invoices', 'credit_notes', 'requisitions'],
+                                'Finance' => ['bills', 'invoices', 'credit_notes', 'requisitions','payment_requisitions'],
                                 'Transport & Logistics' => ['trips', 'bookings', 'gate_passes', 'topups', 'recoveries' , 'fuel_requests','fuels'],
                                 'Stores' => ['purchases', 'transfers', 'dispatches', 'retreads', 'topups' , 'fuel_requests','fuels'],
                                 'Workshop' => ['bookings','overdue_tickets'],
@@ -243,7 +244,10 @@
                                                     }
                                                     if ($key === 'overdue_tickets') {
                                                         $routeParams['overdue'] = 1;
-                                                    }else {
+                                                    }elseif ($key === 'payment_requisitions') {
+                                                        $routeParams['payment_notifications'] = 1;
+                                                    }
+                                                    else {
                                                         $routeParams['notifications'] = 1;
                                                     }
                                                 @endphp

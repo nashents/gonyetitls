@@ -25,6 +25,11 @@ class MenuRegistrySeeder extends Seeder
     public function run(): void
     {
 
+
+        SubModule::where('name', 'Waste Collection')->delete();
+        SubModule::where('name', 'Waste Disposal')->delete();
+
+        Module::where('name', 'Waste Management')->delete();
        
 
         $leaveTypes = [

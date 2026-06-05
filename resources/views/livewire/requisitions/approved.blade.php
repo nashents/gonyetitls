@@ -64,11 +64,9 @@
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search requisitions...">
                                     </div>
                                 </div>
-                                <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
-                                         <th class="th-sm">Requisition#
-                                        </th>
-                                        <th class="th-sm">CreatedBy
+                                        <th class="th-sm">Requisition#
                                         </th>
                                         <th class="th-sm">RequestedBy
                                         </th>
@@ -88,14 +86,33 @@
                                         </th>
                                         <th class="th-sm">Actions
                                         </th>
+
                                       </tr>
                                     </thead>
                                     @if (isset($requisitions))
                                     <tbody>
                                         @forelse ($requisitions as $requisition)
-                                      <tr>
-                                                       <td>{{ucfirst($requisition->requisition_number)}}</td>
-                                        <td>{{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}}</td>
+                                        <tr  
+                                            @if($requisition->type == 'po_requisition')
+                                                style="background-color:#e8f4fd;border-left:6px solid #17a2b8;"
+                                            @elseif($requisition->type == 'payment_requisition')
+                                                style="background-color:#eafaf1; border-left:6px solid #28a745;"
+                                            @endif
+                                        >
+                                        <td>
+                                            {{ucfirst($requisition->requisition_number)}} <br>
+                                           
+                                            <small class="text-muted">
+                                                <strong>Type:</strong> 
+                                                @if ($requisition->type == "po_requisition")
+                                                    PO Requisition
+                                                @else
+                                                    Payment Requisition
+                                                @endif <br>
+                                                <strong>CreatedBy:</strong> {{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}} <br>
+                                                <strong>CreatedOn:</strong> {{$requisition->created_at}}
+                                            </small>
+                                        </td>
                                         <td>
                                             {{ucfirst($requisition->employee ? $requisition->employee->name : "")}} {{ucfirst($requisition->employee ? $requisition->employee->surname : "")}}
                                             <br>
@@ -103,22 +120,35 @@
                                         </td>
                                         <td>
                                              @if ($requisition->requisition_items)
-                                            @foreach ($requisition->requisition_items as $requisition_item)
-                                                @if ($requisition_item->expense)
-                                                    {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
-                                                         @elseif($requisition_item->allowance)
-                                                    {{ $requisition_item->allowance ? $requisition_item->allowance->name : ""}}
-                                                @elseif($requisition_item->product)
-                                                    {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
-                                                @elseif($requisition_item->inventory)
-                                                    {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
-                                                @endif
-                                                    @ @if ($requisition_item->amount)
-                                                    {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
-                                                @endif
-                                                @if (!$loop->last), @endif
-                                            @endforeach
-                                        @endif
+                                             <small>
+                                                @php   
+                                                    $count = 1;
+                                                @endphp
+                                                    @foreach ($requisition->requisition_items as $requisition_item)
+                                                    <strong>{{$count++}}) </strong>
+                                                    @if ($requisition_item->expense)
+                                                        {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
+                                                    @elseif($requisition_item->allowance)
+                                                        {{ $requisition_item->allowance ? $requisition_item->allowance->name : ""}}
+                                                    @elseif($requisition_item->product)
+                                                        {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
+                                                    @elseif($requisition_item->inventory)
+                                                        {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
+                                                    @endif
+                                                    {{$requisition_item->qty ? " X (".$requisition_item->qty.")" : ""}}
+                                                    @if ($requisition_item->amount)
+                                                         @ {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
+                                                         @if ($requisition_item->currency_id != $company->currency_id)
+                                                            {{ " (".$company->currency->symbol.number_format($requisition_item->exchange_amount,2).")" }} at {{$requisition_item->exchange_rate}}
+                                                             
+                                                         @endif
+                                                    @endif
+                                                    {{$requisition_item->payment_method ? $requisition_item->payment_method->name : ""}}
+                                                    @if (!$loop->last), @endif <br>
+                                                @endforeach
+                                             </small>
+                                               
+                                            @endif
                                            
                                         </td>
                                         <td>
@@ -178,19 +208,111 @@
                                             @else
                                                 <span class="label label-info">No payment</span>  
                                             @endif
+                                             @if ($requisition->paid_by_id)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >MarkedBy: </strong> {{$this->findUser($requisition->paid_by_id)}}</small>  
+                                            @endif
+                                            @if ($requisition->paid_on)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >Date: </strong> {{$requisition->paid_on}}</small>  
+                                            @endif
+                                            @if ($requisition->paid_comments)
+                                                <br>
+                                                <small style="background-color: orange"><strong >Comments: </strong> {{$requisition->paid_comments}}</small>  
+                                            @endif 
                                         </td>
-                                         <td><span class="label label-{{($requisition->is_completed == False ? 'warning' : 'success') }}">{{ $requisition->is_completed == False ? "inprogress" : "completed" }}</span></td>
                                         <td>
-                                            <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            <span class="label label-{{($requisition->is_completed == False ? 'warning' : 'success') }}">{{ $requisition->is_completed == False ? "inprogress" : "completed" }}</span>
+                                            @if ($requisition->completed_by_id)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >MarkedBy: </strong> {{$this->findUser($requisition->completed_by_id)}}</small>  
+                                            @endif
+                                            @if ($requisition->completed_on)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >Date: </strong> {{$requisition->completed_on}}</small>  
+                                            @endif
+                                            @if ($requisition->completed_comments)
+                                                <br>
+                                                <small style="background-color: orange"><strong >Comments: </strong> {{$requisition->completed_comments}}</small>  
+                                            @endif 
+                                        </td>
+                                       <td>
+                                            @php
+                                                $isTwoStep = ($requisition->company?->enable_requisition_two_step_authorization ?? false)
+                                                    && $requisition->type == "payment_requisition";
+
+                                                $badgeClass = 'warning';
+                                                $statusText = 'pending';
+
+                                                if ($requisition->authorization == 'approved') {
+                                                    $badgeClass = 'success';
+                                                    $statusText = 'approved';
+                                                } elseif ($requisition->authorization == 'rejected') {
+                                                    $badgeClass = 'danger';
+                                                    $statusText = 'rejected';
+                                                } elseif ($isTwoStep && $requisition->authorization_stage == 1) {
+                                                    $badgeClass = 'info';
+                                                    $statusText = 'first approved';
+                                                }
+                                            @endphp
+
+                                            <span class="badge bg-{{ $badgeClass }}">
+                                                {{ $statusText }}
+                                            </span>
+
+                                            @if ($requisition->authorized_by_id)
+                                                @php
+                                                    $firstUser = App\Models\User::find($requisition->authorized_by_id);
+                                                @endphp
+                                                <br>
+                                                <small style="background-color: orange">
+                                                    <strong>1st AuthBy: </strong>
+                                                    {{ $firstUser?->name }} {{ $firstUser?->surname }}
+                                                </small>
+                                            @endif
+
                                             @if ($requisition->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$requisition->authorization_date}}</strong></small>  
-                                               
+                                                <small style="background-color: orange">
+                                                    <strong>1st Date: </strong>
+                                                    {{ $requisition->authorization_date }}
+                                                </small>
                                             @endif
+
                                             @if ($requisition->reason)
                                                 <br>
-                                                <small><strong style="background-color: orange">Comments: {{$requisition->reason}}</strong></small>  
-                                            @endif 
+                                                <small style="background-color: orange">
+                                                    <strong>1st Comments: </strong>
+                                                    {{ $requisition->reason }}
+                                                </small>
+                                            @endif
+
+                                            @if ($isTwoStep && $requisition->second_authorized_by_id)
+                                                @php
+                                                    $secondUser = App\Models\User::find($requisition->second_authorized_by_id);
+                                                @endphp
+                                                <br>
+                                                <small style="background-color: #87ceeb">
+                                                    <strong>2nd AuthBy: </strong>
+                                                    {{ $secondUser?->name }} {{ $secondUser?->surname }}
+                                                </small>
+                                            @endif
+
+                                            @if ($isTwoStep && $requisition->second_authorization_date)
+                                                <br>
+                                                <small style="background-color: #87ceeb">
+                                                    <strong>2nd Date: </strong>
+                                                    {{ $requisition->second_authorization_date }}
+                                                </small>
+                                            @endif
+
+                                            @if ($isTwoStep && $requisition->second_authorization_comments)
+                                                <br>
+                                                <small style="background-color: #87ceeb">
+                                                    <strong>2nd Comments: </strong>
+                                                    {{ $requisition->second_authorization_comments }}
+                                                </small>
+                                            @endif
                                         </td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -199,11 +321,10 @@
                                                     <span class="caret"></span>
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li><a href="{{ route('requisitions.show', $requisition->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                    {{-- <li><a href="#" wire:click="authorize({{$requisition->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li> --}}
+                                                    <li><a href="{{route('requisitions.show', $requisition->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                 </ul>
                                             </div>
-                                            @include('requisitions.delete')
+                                           
 
                                     </td>
                                       </tr>
@@ -211,7 +332,7 @@
                                         <tr>
                                             <td colspan="10">
                                                 <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                                    No Requisitions Found ....
+                                                    No Approved Requisitions Found ....
                                                 </div>
                                                
                                             </td>

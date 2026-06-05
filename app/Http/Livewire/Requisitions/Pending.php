@@ -22,7 +22,8 @@ class Pending extends Component
     protected $paginationTheme = 'bootstrap';
     public $search;
     public bool $notificationsOnly = false;
-    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
+    public bool $paymentNotificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false], 'paymentNotificationsOnly' => ['as' => 'payment_notifications', 'except' => false]];
     public $from;
     public $to;
     public $requisition_filter;
@@ -38,6 +39,7 @@ class Pending extends Component
     public function mount(){
 
         $this->notificationsOnly = request()->boolean('notifications', false);
+        $this->paymentNotificationsOnly = request()->boolean('payment_notifications', false);
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = 'created_at';
         $this->resetPage();
@@ -319,7 +321,9 @@ class Pending extends Component
         ->where('authorization', 'pending');
         
         if ($this->notificationsOnly) {
-            $query->whereYear('created_at', now()->year);
+             $query->where('type','po_requisition')->whereYear('created_at', now()->year); 
+        }elseif($this->paymentNotificationsOnly){
+            $query->where('type','payment_requisition')->whereYear('created_at', now()->year);
         }else{
              // 1. Date range / default period
             if (!empty($this->from) && !empty($this->to)) {

@@ -58,8 +58,8 @@ class NavbarComposer
             'gate_passes'      => GatePass::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'waste_collections'=> WasteCollection::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'waste_disposals'  => WasteDisposal::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            
-            'requisitions'     => Requisition::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'requisitions'     => Requisition::where('type','po_requisition')->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'payment_requisitions'     => Requisition::where('type','payment_requisition')->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'payrolls'         => Payroll::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'fuels'         => Fuel::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'fuel_requests'         => FuelRequest::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
@@ -283,6 +283,7 @@ class NavbarComposer
                 'waste_collections' => $pendingCounts['waste_collections'] ?? 0,
                 'waste_disposals'   => $pendingCounts['waste_disposals'] ?? 0,
                 'requisitions'      => $pendingCounts['requisitions'] ?? 0,
+                'payment_requisitions'      => $pendingCounts['payment_requisitions'] ?? 0,
                 'payrolls'          => $pendingCounts['payrolls'] ?? 0,
                 'fuels'          => $pendingCounts['fuels'] ?? 0,
                 'fuel_requests'          => $pendingCounts['fuel_requests'] ?? 0,
