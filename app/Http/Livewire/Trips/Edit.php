@@ -1103,7 +1103,9 @@ class Edit extends Component
         $this->trip_destinations = TripDestination::where('trip_id', $this->trip->id)->get();
 
         if($this->trip_destinations){
+
             foreach($this->trip_destinations as $trip_destination){
+
                 $this->offloaded_weight[] = $trip_destination->weight;
                 $this->offloaded_quantity[] = $trip_destination->quantity;
                 $this->offloaded_litreage[] = $trip_destination->litreage;
@@ -1112,7 +1114,9 @@ class Edit extends Component
                 $this->destinations_offloading_point_id[] = $trip_destination->offloading_point_id;
                 $this->offloaded_rate[] = $trip_destination->rate;
                 $this->offloaded_freight[] = $trip_destination->freight;
+                
             }
+
         }
         
        
@@ -1247,7 +1251,9 @@ class Edit extends Component
          $this->arrive_lp = $this->trip->arrive_loading_point;
          $this->depart_lp = $this->trip->depart_loading_point;
          $this->attach_transport_order = $this->trip->attach_transport_order;
+         
          $this->multiple_destinations = $this->trip->multiple_destinations ?? False;
+       
          $this->arrive_op = $this->trip->arrive_offloading_point;
          $this->depart_op = $this->trip->depart_offloading_point;
          $this->selectedHorse = $this->trip->horse_id;
@@ -1357,7 +1363,7 @@ class Edit extends Component
         TripDestination::where('trip_id', $trip_transport_order->trip_id)->delete();
        
 
-        if ($this->multiple_destinations == true) {
+        if ($this->multiple_destinations === true) {
 
             if (!empty($this->destinations_selectedTo)) {
 
@@ -1412,7 +1418,7 @@ class Edit extends Component
         TripOrigin::where('trip_id', $trip_transport_order->trip_id)->delete();
        
 
-        if ($this->multiple_destinations == true) {
+        if ($this->multiple_destinations === true) {
 
             if (!empty($this->destinations_selectedFrom)) {
 
@@ -2213,6 +2219,8 @@ class Edit extends Component
         
 
         if (!empty($this->current_selectedTransportOrder)) {
+
+              
           
                 foreach ($this->current_selectedTransportOrder as $key => $id) {
                    
@@ -2314,6 +2322,10 @@ class Edit extends Component
                     
 
                     $this->createDeliveryNotes($trip_transport_order);
+                    $this->addDestinations($trip_transport_order);
+                    $this->addOrigins($trip_transport_order);
+                    
+                    
                     
                 }
 
@@ -2327,7 +2339,6 @@ class Edit extends Component
 
         if (!empty($this->selectedTransportOrder)) {
 
-           
                 foreach ($this->selectedTransportOrder as $key => $id) {
 
                     $transport_order = TransportOrder::find($id);
@@ -2418,6 +2429,11 @@ class Edit extends Component
                     $totalLitreage += $allocatedLitreage;
 
                     $this->createDeliveryNotes($trip_transport_order);
+
+                    $this->addDestinations($trip_transport_order);
+                    $this->addOrigins($trip_transport_order);
+
+                   
                  
                 }
 
@@ -2430,9 +2446,9 @@ class Edit extends Component
                 $trip->turnover = $this->turnover;
                 $trip->update();
 
-                $this->addDestinations($trip_transport_order);
-                $this->addOrigins($trip_transport_order);
         }
+
+           
 
 
           $this->calculateFuelConsumption($trip->id);

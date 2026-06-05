@@ -69,5 +69,9 @@ class TransportOrder extends Model implements Auditable
         return $this->belongsTo(\App\Models\Destination::class, 'to');
     }
 
+    protected $casts = [
+        'multiple_destinations'      => 'boolean',
+    ];
+
 
 }

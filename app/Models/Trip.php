@@ -30,6 +30,7 @@ class Trip extends Model implements Auditable
     'litreage_at_20'   => 'float',
     'transporter_agreement' => 'boolean',
     'customer_updates'      => 'boolean',
+    'multiple_destinations'      => 'boolean',
 ];
     
     public function invoices()

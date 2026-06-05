@@ -443,7 +443,7 @@ class Index extends Component
 
         $userId = Auth::id();
 
-        if ($this->multiple_destinations == true) {
+        if ($this->multiple_destinations === true) {
 
             if (!empty($this->destinations_selectedTo)) {
 
@@ -499,7 +499,7 @@ class Index extends Component
 
         $userId = Auth::id();
 
-        if ($this->multiple_destinations == true) {
+        if ($this->multiple_destinations === true) {
 
             if (!empty($this->destinations_selectedFrom)) {
 

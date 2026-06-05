@@ -745,7 +745,7 @@
                                 <h6 class="underline mt-20 mb-20"><strong>Location Details</strong></h6>
                                 <div class="mb-15 mt-15">
                                    <input type="checkbox" wire:model.debounce.300ms="multiple_destinations"   class="line-style" />
-                                   <label for="one" class="radio-label">Add multiple offloading points</label>
+                                   <label for="one" class="radio-label">Add multiple loading / offloading points</label>
                                    @error('multiple_destinations') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                                 @if ($multiple_destinations == False)

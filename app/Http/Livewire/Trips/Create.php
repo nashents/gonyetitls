@@ -1503,7 +1503,7 @@ class Create extends Component
 
         $userId = Auth::id();
 
-        if ($this->multiple_destinations == true) {
+        if ($this->multiple_destinations === true) {
 
             if (!empty($this->destinations_selectedTo)) {
 
@@ -1559,7 +1559,7 @@ class Create extends Component
 
         $userId = Auth::id();
 
-        if ($this->multiple_destinations == true) {
+        if ($this->multiple_destinations === true) {
 
             if (!empty($this->destinations_selectedFrom)) {
 
