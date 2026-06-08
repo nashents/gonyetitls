@@ -2,17 +2,18 @@
 
 namespace App\Http\Livewire\Requisitions;
 
-use Carbon\Carbon;
-use App\Models\Bill;
+use App\Mail\AuthorizationNotificationMail;
 use App\Models\Account;
-use Livewire\Component;
+use App\Models\Bill;
 use App\Models\BillExpense;
 use App\Models\Requisition;
-use Livewire\WithPagination;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\AuthorizationNotificationMail;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Pending extends Component
 {
@@ -314,6 +315,13 @@ class Pending extends Component
           $this->resetPage();
       }
 
+       public function findUser($id){
+        $user = User::find($id);
+        $name = $user?->name;
+        $surname = $user?->surname;
+        return $name ." ". $surname;
+    }
+    
     public function render()
     {
         $query = Requisition::query()

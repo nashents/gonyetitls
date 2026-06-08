@@ -2,10 +2,11 @@
 
 namespace App\Http\Livewire\Requisitions;
 
-use Livewire\Component;
 use App\Models\Requisition;
-use Livewire\WithPagination;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Approved extends Component
 {
@@ -37,6 +38,13 @@ class Approved extends Component
     public function updatingSearch()
     {
         $this->resetPage();
+    }
+
+     public function findUser($id){
+        $user = User::find($id);
+        $name = $user?->name;
+        $surname = $user?->surname;
+        return $name ." ". $surname;
     }
 
     public function render()
