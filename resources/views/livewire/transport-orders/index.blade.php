@@ -297,6 +297,11 @@
                                                         <br>
                                                         <small><strong>BillOfEntry#: {{$transport_order->bill_of_entry}}</strong></small>
                                                     @endif
+                                                    @if ($transport_order->deal)
+                                                        <br>
+                                                        <small><strong>Deal#</strong> {{$transport_order->deal?->deal_number}}{{$transport_order->deal?->reference ? "/".$transport_order->deal?->reference : ""}}</small>
+                                                    @endif
+                                                    
                                                 </td>
                                                 <td>
                                                     {{ $formatDate($transport_order->start_date) }}

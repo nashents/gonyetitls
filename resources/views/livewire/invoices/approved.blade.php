@@ -91,7 +91,13 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('invoices.show',$invoice->id)}}"  ><i class="fas fa-eye color-default"></i> View</a></li>
                                                 @if ($invoice->authorization == "approved")
-                                                <li><a href="{{route('invoices.preview',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @if ($company->invoice_template == "classic")
+                                                        <li><a href="{{route('invoices.classic',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @elseif ($company->invoice_template == "transport")     
+                                                        <li><a href="{{route('invoices.transport',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @elseif ($company->invoice_template == "modern")     
+                                                        <li><a href="{{route('invoices.modern',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @endif
                                                 @endif
                                             </ul>
                                         </div>

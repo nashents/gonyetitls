@@ -27,7 +27,7 @@ class BillJournalService
         return DB::transaction(function () use ($bill, $apAccount, $vatAccount, $rate) {
 
             $entry = JournalEntry::create([
-                'company_id'     => $bill->company_id,
+                'company_id'     => $bill->company_id ? $bill->company_id : Auth::user()->employee->company_id,
                 'bill_id'        => $bill->id,
                 'journal_number' => $this->generateNumber(),
                 'date'           => $bill->bill_date,

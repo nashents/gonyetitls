@@ -68,9 +68,13 @@ class TransportOrder extends Model implements Auditable
     {
         return $this->belongsTo(\App\Models\Destination::class, 'to');
     }
+     public function deal(){
+        return $this->belongsTo('App\Models\Deal');
+    }
 
     protected $casts = [
         'multiple_destinations'      => 'boolean',
+        'deal_id' => 'integer',
     ];
 
 

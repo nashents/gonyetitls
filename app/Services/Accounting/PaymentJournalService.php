@@ -28,7 +28,7 @@ class PaymentJournalService
         return DB::transaction(function () use ($payment, $rate, $amount, $cashBankAccount) {
 
             $entry = JournalEntry::create([
-                'company_id'     => $payment->company_id,
+               'company_id'     => $payment->company_id ? $payment->company_id : Auth::user()->employee->company_id,
                 'payment_id'     => $payment->id,
                 'journal_number' => $this->generateNumber(),
                 'date'           => $payment->date,

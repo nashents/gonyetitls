@@ -234,20 +234,30 @@ class Index extends Component
         $deal = Deal::find($id);
         $this->customer_id = $deal->customer_id;
         $this->selectedCargo = $deal->cargo_id;
+        $cargo = Cargo::find($deal->cargo_id);
+        $this->cargo_type = $cargo?->type;
         $this->weight = $deal->weight;
         $this->litreage = $deal->litreage;
         $this->quantity = $deal->quantity;
+        $this->selectedCurrency = $deal->currency_id;
+        $this->rate = $deal->rate;
+        $this->freight = $deal->freight;
         $this->units_of_measure_id = $deal->units_of_measure_id;
     }
 
     public function updatedWithDeal($value){
         if($value == False){
+            $this->selectedDeal = Null;
             $this->customer_id = Null;
             $this->selectedCargo = Null;
+            $this->cargo_type = Null;
             $this->weight = Null;
             $this->litreage = Null;
             $this->quantity = Null;
             $this->units_of_measure_id =Null;
+            $this->selectedCurrency =Null;
+            $this->rate =Null;
+            $this->freight =Null;
         }
     }
 
@@ -307,7 +317,7 @@ class Index extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->driver =  $this->employee->driver;
-        $this->deals = Deal::where('end_date', '<=', now())
+        $this->deals = Deal::where('end_date', '>=', now())
                         ->where('status', 1)
                         ->where('is_closed', 0)
                         ->get();

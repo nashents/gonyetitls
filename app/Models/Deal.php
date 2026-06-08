@@ -17,6 +17,14 @@ class Deal extends Model
     {
         return $this->belongsTo(Currency::class);
     }
+    public function transport_orders()
+    {
+        return $this->hasMany(TransportOrder::class);
+    }
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
+    }
     public function customer()
     {
         return $this->belongsTo(Customer::class);

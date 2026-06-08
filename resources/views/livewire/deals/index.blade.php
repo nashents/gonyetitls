@@ -37,6 +37,7 @@
                                         <th>Ccy</th>
                                         <th>Freight</th>
                                         <th>Status</th>
+                                        <th>Closure</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -67,12 +68,25 @@
                                                         N/A
                                                     @endif
                                                 </td>
-                                                <td>
+                                              <td>
                                                     <strong>Start:</strong>
                                                     {{ $deal->start_date ? \Carbon\Carbon::parse($deal->start_date)->format('d M Y H:i') : 'N/A' }}
                                                     <br>
+
                                                     <strong>End:</strong>
                                                     {{ $deal->end_date ? \Carbon\Carbon::parse($deal->end_date)->format('d M Y H:i') : 'N/A' }}
+
+                                                    @if($deal->end_date)
+                                                        <br>
+
+                                                        @if(!$deal->is_closed && \Carbon\Carbon::parse($deal->end_date)->lt(now()))
+                                                            <span class="badge bg-danger">Expired</span>
+                                                        @elseif($deal->is_closed)
+                                                            <span class="badge bg-secondary">Closed</span>
+                                                        @else
+                                                            <span class="badge bg-success">Valid</span>
+                                                        @endif
+                                                    @endif
                                                 </td>
                                                 <td>{{$deal->currency?->name}}</td>
                                                  <td>
@@ -89,6 +103,19 @@
                                                         <span class="badge bg-danger">Inactive</span>
                                                     @endif
                                                 </td>
+                                                <td>
+                                                    @if($deal->is_closed)
+                                                        <span class="badge bg-danger">Closed</span>
+                                                        @if($deal->closed_at)
+                                                            <br>
+                                                            <small>
+                                                                {{ \Carbon\Carbon::parse($deal->closed_at)->format('d M Y H:i') }}
+                                                            </small>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge bg-success">Open</span>
+                                                    @endif
+                                                </td>
                                                 <td class="w-10 line-height-35 table-dropdown">
                                                     <div class="dropdown">
                                                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
@@ -103,7 +130,7 @@
                                                             </li>
                                                             <li>
                                                                 <a href="#" wire:click.prevent="close({{ $deal->id }})">
-                                                                    <i class="fa fa-cancel color-success"></i> Close
+                                                                    <i class="fa fa-remove color-success"></i> Close
                                                                 </a>
                                                             </li>
                                                             <li>

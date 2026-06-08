@@ -28,7 +28,7 @@ class InvoiceJournalService
         return DB::transaction(function () use ($invoice, $arAccount, $salesAccount, $discountAccount, $vatAccount, $rate) {
 
             $entry = JournalEntry::create([
-                'company_id'     => $invoice->company_id,
+                'company_id'     => $invoice->company_id ? $invoice->company_id : Auth::user()->employee->company_id,
                 'invoice_id'     => $invoice->id,
                 'journal_number' => $this->generateNumber(),
                 'date'           => $invoice->date,

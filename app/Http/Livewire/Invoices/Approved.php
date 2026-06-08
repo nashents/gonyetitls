@@ -34,8 +34,10 @@ class Approved extends Component
     public $delivery_point;
     public $trip;
     public $invoice;
+    public $company;
 
     public function mount(){
+        $this->company = Auth::user()->employee->company;
         $period = Auth::user()->employee->company->period;
         if (isset( $period)) {
             if ($period != "all") {

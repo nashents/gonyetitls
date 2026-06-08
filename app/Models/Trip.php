@@ -31,6 +31,7 @@ class Trip extends Model implements Auditable
     'transporter_agreement' => 'boolean',
     'customer_updates'      => 'boolean',
     'multiple_destinations'      => 'boolean',
+    'deal_id' => 'integer',
 ];
     
     public function invoices()
@@ -67,6 +68,9 @@ class Trip extends Model implements Auditable
         ->withTimestamps();
     }
 
+    public function deal(){
+        return $this->belongsTo('App\Models\Deal');
+    }
     public function units_of_measure(){
         return $this->belongsTo('App\Models\UnitsOfMeasure');
     }
