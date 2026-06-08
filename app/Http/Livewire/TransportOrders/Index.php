@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Deal;
 use App\Models\Destination;
 use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
@@ -205,6 +206,9 @@ class Index extends Component
     public $company;
     public $employee;
     public $user;
+    public $deals;
+    public $selectedDeal;
+    public $with_deal;
  
 
     public function updatedSelectedCurrency($id){
@@ -220,6 +224,30 @@ class Index extends Component
                     $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
                 }
             }
+        }
+    }
+
+    public function updatedSelectedDeal($id){
+        if(is_null($id)){
+            return;
+        }
+        $deal = Deal::find($id);
+        $this->customer_id = $deal->customer_id;
+        $this->selectedCargo = $deal->cargo_id;
+        $this->weight = $deal->weight;
+        $this->litreage = $deal->litreage;
+        $this->quantity = $deal->quantity;
+        $this->units_of_measure_id = $deal->units_of_measure_id;
+    }
+
+    public function updatedWithDeal($value){
+        if($value == False){
+            $this->customer_id = Null;
+            $this->selectedCargo = Null;
+            $this->weight = Null;
+            $this->litreage = Null;
+            $this->quantity = Null;
+            $this->units_of_measure_id =Null;
         }
     }
 
@@ -273,12 +301,16 @@ class Index extends Component
 
 
     public function mount(){
-
+        $this->with_deal = False;
         $this->transport_order_filter = 'created_at';
         $this->freight_calculation = 'flat_rate';
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->driver =  $this->employee->driver;
+        $this->deals = Deal::where('end_date', '<=', now())
+                        ->where('status', 1)
+                        ->where('is_closed', 0)
+                        ->get();
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->quotations = Quotation::with('customer')
                                     ->whereYear('date', date('Y'))
@@ -352,6 +384,7 @@ class Index extends Component
         $this->selectedCargo = Null;
         $this->selectedCurrency = Null;
         $this->selectedFrom = Null;
+        $this->selectedDeal = Null;
         $this->selectedTo = Null;
         $this->weight = Null;
         $this->units_of_measure_id = Null;
@@ -575,6 +608,7 @@ public function getAuthorizer($id){
                 $transport_order->consignee_id = $this->consignee_id ?: null;
                 $transport_order->freight_calculation = $this->freight_calculation;
                 $transport_order->calculation_measurement = $this->calculation_measurement;
+                $transport_order->deal_id = $this->selectedDeal;
                 $transport_order->currency_id = $this->selectedCurrency ?: null;
                 $transport_order->cargo_id = $this->selectedCargo;
                 $transport_order->trip_type_id = $this->selectedTripType;
@@ -666,6 +700,11 @@ public function getAuthorizer($id){
         $this->start_date = $transport_order->start_date;
         $this->end_date = $transport_order->end_date;
 
+        $this->selectedDeal = $transport_order->deal_id;
+        if($transport_order->deal_id){
+            $this->with_deal = True;
+        }
+
         // Cargo
         $this->cargo_details = $transport_order->cargo_details;
         $this->multiple_destinations = $transport_order->multiple_destinations;
@@ -745,6 +784,7 @@ public function getAuthorizer($id){
                 $transport_order->customer_id = $this->customer_id ?: null;
                 $transport_order->consignee_id = $this->consignee_id ?: null;
                 $transport_order->freight_calculation = $this->freight_calculation;
+                $transport_order->deal_id = $this->selectedDeal;
                 $transport_order->calculation_measurement = $this->calculation_measurement;
                 $transport_order->currency_id = $this->selectedCurrency ?: null;
                 $transport_order->cargo_id = $this->selectedCargo;
@@ -1077,6 +1117,16 @@ public function getAuthorizer($id){
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Customers Refreshed Successfully!!."
+            ]);
+        }
+        if($category == 'deals'){
+           $this->deals = Deal::where('end_date', '<=', now())
+                        ->where('status', 1)
+                        ->where('is_closed', 0)
+                        ->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Deals Refreshed Successfully!!."
             ]);
         }
         elseif($category == 'consignees'){

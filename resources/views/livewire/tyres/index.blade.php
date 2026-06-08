@@ -115,21 +115,71 @@
                                             @endif  
                                         @endif
                                     </td>
-                                       <td>
-                                            <small><strong>Acquisition: </strong> {{Carbon\Carbon::parse($tyre->purchase_date)->format('d M Y')}}</small><br>
-                                            <small><strong>Age: </strong> {{ $tyre->age ?? '-' }}</small>
-                                        @if ($assignment)
+                                    <td>
+                                        <small>
+                                            <strong>Acquisition: </strong>
+                                            {{
+                                                !empty($tyre->purchase_date)
+                                                    ? \Carbon\Carbon::parse($tyre->purchase_date)->format('d M Y')
+                                                    : '-'
+                                            }}
+                                        </small>
+                                        <br>
+
+                                        <small>
+                                            <strong>Age: </strong>
+                                            {{ $tyre->age ?? '-' }}
+                                        </small>
+
+                                        @if($assignment)
                                             <br>
-                                            <small><strong>Fitted: </strong> {{ number_format($assignment->starting_odometer) }}</small> <br>
-                                            <small><strong>Current: </strong> {{ $assignment->ending_odometer ? number_format($assignment->ending_odometer) : number_format($assignment->horse->mileage ?? 0) }}</small> <br>
-                                            <small><strong>Travelled: </strong> {{ number_format($assignment->travelled_km ?? 0) }} km</small> <br>
-                                            <small><strong>Life(Standard): </strong> {{ number_format($tyre->life_span ?? 0) }} km</small> <br>
-                                            <small><strong>Remaining: </strong>
-                                                @php $rem = $assignment->remaining_km; $pct = $assignment->remaining_pct; @endphp
-                                                    {{ is_null($rem) ? '-' : number_format($rem) . ' km' }}
-                                                @if(!is_null($pct))
-                                                    ({{ $pct }}%)
-                                                @endif</small> <br>
+
+                                            <small>
+                                                <strong>Fitted: </strong>
+                                                {{ is_numeric($assignment->starting_odometer) ? number_format((float)$assignment->starting_odometer) : '-' }}
+                                            </small>
+                                            <br>
+
+                                            <small>
+                                                <strong>Current: </strong>
+                                                {{
+                                                    is_numeric($assignment->ending_odometer)
+                                                        ? number_format((float)$assignment->ending_odometer)
+                                                        : (
+                                                            is_numeric($assignment->horse?->mileage)
+                                                                ? number_format((float)$assignment->horse->mileage)
+                                                                : '-'
+                                                        )
+                                                }}
+                                            </small>
+                                            <br>
+
+                                            <small>
+                                                <strong>Travelled: </strong>
+                                                {{ is_numeric($assignment->travelled_km) ? number_format((float)$assignment->travelled_km) : '0' }} km
+                                            </small>
+                                            <br>
+
+                                            <small>
+                                                <strong>Life(Standard): </strong>
+                                                {{ is_numeric($tyre->life_span) ? number_format((float)$tyre->life_span) : '0' }} km
+                                            </small>
+                                            <br>
+
+                                            <small>
+                                                <strong>Remaining: </strong>
+                                                @php
+                                                    $rem = $assignment->remaining_km;
+                                                    $pct = $assignment->remaining_pct;
+                                                @endphp
+
+                                                {{ is_numeric($rem) ? number_format((float)$rem).' km' : '-' }}
+
+                                                @if(is_numeric($pct))
+                                                    ({{ number_format((float)$pct, 2) }}%)
+                                                @endif
+                                            </small>
+                                            <br>
                                         @endif
                                     </td>
                                     <td>

@@ -556,6 +556,27 @@
                 <form wire:submit.prevent="store()" >
                     <div class="modal-body">
                         <div class="mb-10">
+                            <input type="checkbox" wire:model.debounce.300ms="with_deal"   class="line-style" />
+                            <label for="one" class="radio-label">Attach a deal to this transport order</label>
+                            @error('with_deal') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
+                        @if (!is_null($with_deal) && $with_deal == True)
+                            <div class="form-group">
+                                <label for="trip_type">
+                                    <a href="{{ route('deals.index') }}" target="_blank" style="color: blue">Deals</a>
+                                    <span class="required text-danger">*</span>
+                                </label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedDeal" required size="4">
+                                    <option value="">Select Deal</option>
+                                    @foreach ($deals as $deal)
+                                        <option value="{{ $deal->id }}">{{ $deal->deal_number }} {{ $deal->reference }} {{ $deal->customer?->name }} {{ $deal->cargo?->name }}  {{ $deal->weight ? "Weight:".$deal->weight."t" : "" }} {{ $deal->litreage ? "Litreage:".$deal->litreage."l" : "" }} Qty: {{ $deal->quantity }} {{ $deal->units_of_measure?->name }} Start Date :{{ $deal->start_date }} Expiry Date: {{ $deal->end_date }}</option>
+                                    @endforeach
+                                </select>
+                                 <small><a href="{{ route('deals.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deal</a></small> <a href="#" wire:click.prevent="refresh('deals')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                @error('selectedDeal') <span class="text-danger error">{{ $message }}</span> @enderror
+                            </div>
+                        @endif
+                        <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="with_quotation"   class="line-style" />
                             <label for="one" class="radio-label">Attach a quotation</label>
                             @error('with_quotation') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -617,7 +638,7 @@
                         </div>
                       
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="customer_id" required>
@@ -630,7 +651,7 @@
                                     <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name"><a href="{{route('consignees.index')}}" style="color: blue" target="_blank">Consignees</a></label>
                                     <select class="form-control" wire:model.debounce.300ms="consignee_id">
@@ -643,6 +664,7 @@
                                     @error('consignee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            
                         </div>
                         <h5 class="underline mt-30">Cargo Details</h5>
                         <div class="row">
@@ -1373,6 +1395,27 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
+                        <div class="mb-10">
+                            <input type="checkbox" wire:model.debounce.300ms="with_deal"   class="line-style" />
+                            <label for="one" class="radio-label">Attach a deal to this transport order</label>
+                            @error('with_deal') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
+                        @if (!is_null($with_deal) && $with_deal == True)
+                            <div class="form-group">
+                                <label for="trip_type">
+                                    <a href="{{ route('deals.index') }}" target="_blank" style="color: blue">Deals</a>
+                                    <span class="required text-danger">*</span>
+                                </label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedDeal" required size="4">
+                                    <option value="">Select Deal</option>
+                                    @foreach ($deals as $deal)
+                                        <option value="{{ $deal->id }}">{{ $deal->deal_number }} {{ $deal->reference }} {{ $deal->customer?->name }} {{ $deal->cargo?->name }}  {{ $deal->weight ? "Weight:".$deal->weight."t" : "" }} {{ $deal->litreage ? "Litreage:".$deal->litreage."l" : "" }} Qty: {{ $deal->quantity }} {{ $deal->units_of_measure?->name }} Start Date :{{ $deal->start_date }} Expiry Date: {{ $deal->end_date }}</option>
+                                    @endforeach
+                                </select>
+                                 <small><a href="{{ route('deals.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deal</a></small> <a href="#" wire:click.prevent="refresh('deals')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                @error('selectedDeal') <span class="text-danger error">{{ $message }}</span> @enderror
+                            </div>
+                        @endif
                         <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="with_quotation"   class="line-style" />
                             <label for="one" class="radio-label">Attach a quotation</label>
