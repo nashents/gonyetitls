@@ -263,8 +263,8 @@ class Edit extends Component
             ]);
         }
         elseif($category == 'taxes'){
-             $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+             $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -363,8 +363,8 @@ class Edit extends Component
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+       $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -1245,9 +1245,7 @@ class Edit extends Component
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->orderBy('name','asc')->get();
+      
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();

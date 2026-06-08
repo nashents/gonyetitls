@@ -293,8 +293,8 @@ public function updatedSelectedCargo($id){
             ]);
         }
         elseif($category == 'taxes'){
-             $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+            $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
             })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -373,8 +373,8 @@ public function quotationNumber(){
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -960,9 +960,7 @@ public function quotationNumber(){
 
         }
 
-           $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->get();
+          
 
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
@@ -976,9 +974,7 @@ public function quotationNumber(){
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Tax::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->orderBy('name','asc')->get();
+       
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();

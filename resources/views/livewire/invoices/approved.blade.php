@@ -14,32 +14,30 @@
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
-                                  
-                                  <tr>
-
-                                    <th class="th-sm">Invoice#
-                                    </th>
-                                    <th class="th-sm">InvoiceTo
-                                    </th>
-                                    <th class="th-sm">Date
-                                    </th>
-                                    <th class="th-sm">Payment Due
-                                    </th>
-                                    <th class="th-sm">Status
-                                    </th>  
-                                    <th class="th-sm">Currency
-                                    </th>
-                                    <th class="th-sm">Total
-                                    </th>
-                                    <th class="th-sm">Paid
-                                    </th>
-                                    <th class="th-sm">Amount Due
-                                    </th>
-                                    <th class="th-sm">Authorization
-                                    </th>
-                                    <th class="th-sm">Action
-                                    </th>
-                                  </tr>
+                                    <tr>
+                                        <th class="th-sm">Invoice#
+                                        </th>
+                                        <th class="th-sm">InvoiceTo
+                                        </th>
+                                        <th class="th-sm">Date
+                                        </th>
+                                        <th class="th-sm">Payment Due
+                                        </th>
+                                        <th class="th-sm">Status
+                                        </th>  
+                                        <th class="th-sm">Currency
+                                        </th>
+                                        <th class="th-sm">Total
+                                        </th>
+                                        <th class="th-sm">Paid
+                                        </th>
+                                        <th class="th-sm">Amount Due
+                                        </th>
+                                        <th class="th-sm">Authorization
+                                        </th>
+                                        <th class="th-sm">Action
+                                        </th>
+                                    </tr>
                                 </thead>
                                 @if ($invoices->count()>0)
                                 <tbody>
@@ -116,7 +114,6 @@
 
             </div>
             <!-- /.row -->
-
         </div>
         <!-- /.container-fluid -->
     </section>
