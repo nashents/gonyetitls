@@ -982,10 +982,13 @@ class Edit extends Component
             }elseif($item->trip_details){
                 $this->current_description[] = $item->trip_details;
             }
-            
-            $this->current_tax_rate[] = $item->tax_rate;
-            $this->current_hs_code[] = $item->hs_code;
-            $this->selectedCurrentTax[] = $item->tax_id;
+            $tax = Tax::find($item->tax_id);
+            if($tax){
+                $this->current_tax_rate[] = $tax->rate;
+                $this->current_hs_code[] = $tax->hs_code;
+                $this->selectedCurrentTax[] = $tax->id;
+            }
+           
            }
         }
     

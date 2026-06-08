@@ -40,7 +40,7 @@ class TaxSeeder extends Seeder
                 'category'     => 'VAT',
                 'name'         => 'Value Added Tax 15.5%',
                 'abbreviation' => 'VAT 15.5%',
-                'rate' => '15',
+                'rate' => '15.5',
                 'hs_code'      => '99001000',
                 'description'  => 'Standard VAT rate of 15.5%',
             ],
