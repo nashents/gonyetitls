@@ -24,10 +24,7 @@ class InvoiceController extends Controller
     {
         return view('invoices.index');
     }
-    public function trinitas()
-    {
-        return view('invoices.templates.trinitas');
-    }
+   
     public function customerStatements()
     {
         return view('customer_statements.index');
@@ -313,11 +310,31 @@ class InvoiceController extends Controller
         return view('invoices.deleted');
     }
 
-    public function preview($id){
+    public function previewClassic($id){
         $invoice = Invoice::find($id);
         $company = $invoice->company;
         $invoice_items = $invoice->invoice_items;
-        return view('invoices.preview')->with([
+        return view('invoices.classic')->with([
+            'invoice' => $invoice,
+            'company' => $company,
+            'invoice_items' => $invoice_items,
+            ]);
+    }
+    public function previewModern($id){
+        $invoice = Invoice::find($id);
+        $company = $invoice->company;
+        $invoice_items = $invoice->invoice_items;
+        return view('invoices.modern')->with([
+            'invoice' => $invoice,
+            'company' => $company,
+            'invoice_items' => $invoice_items,
+            ]);
+    }
+    public function previewTransport($id){
+        $invoice = Invoice::find($id);
+        $company = $invoice->company;
+        $invoice_items = $invoice->invoice_items;
+        return view('invoices.transport')->with([
             'invoice' => $invoice,
             'company' => $company,
             'invoice_items' => $invoice_items,

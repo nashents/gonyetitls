@@ -127,10 +127,9 @@
                                     <th class="th-sm">Item(s)
                                     </th>
                                      <th class="th-sm">
-                                            Date
-                                            <hr style="margin-top:2px; margin-bottom:2px">
-                                            Due
-
+                                        Date
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Due
                                     </th>
                                     <th class="th-sm">Status
                                     </th>  
@@ -201,7 +200,6 @@
                                                         @endforeach
                                                     @endif
                                             </small>
-                                        
                                         </td>
                                         <td>
                                             {{$invoice->date}}
@@ -273,7 +271,6 @@
                                             <small style="background-color: orange"><strong >Comments: </strong> {{$invoice->comments}}</small>  
                                         @endif 
                                     </td>
-                                   
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -282,12 +279,20 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('invoices.show',$invoice->id)}}"  ><i class="fas fa-eye color-default"></i> View</a></li>
+
                                                 @if ($invoice->authorization == "approved")
-                                                    <li><a href="{{route('invoices.preview',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @if ($company->invoice_template == "classic")
+                                                        <li><a href="{{route('invoices.classic',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @elseif ($company->invoice_template == "transport")     
+                                                        <li><a href="{{route('invoices.transport',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @elseif ($company->invoice_template == "modern")     
+                                                        <li><a href="{{route('invoices.modern',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @endif
                                                     @if ($invoice->balance > 0 )
                                                         <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
                                                     @endif
                                                 @endif
+
                                                 {{-- @if ($invoice->payments->isEmpty()) --}}
                                                 <li><a href="{{route('invoices.edit',$invoice->id)}}"  ><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#invoiceDeleteModal{{ $invoice->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li> 
@@ -295,7 +300,7 @@
                                             </ul>
                                         </div>
                                         @include('invoices.delete')
-                                </td>
+                                    </td>
                                   </tr>
                                   @empty
                                   <tr>

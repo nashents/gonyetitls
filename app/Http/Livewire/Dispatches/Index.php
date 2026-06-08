@@ -201,11 +201,7 @@ class Index extends Component
         $this->buy = False;
     }
 
-    public function updatedAttach($value){
-        if($value == true){
-            $this->tickets = Ticket::query()->with(['booking','service_type','horse','vehicle','trailer'])->whereYear('in_date',date('Y'))->where('status',1)->orderBy('in_date','desc')->get();
-        }
-    }
+    
 
     public function removeExpense($e)
     {
@@ -388,6 +384,36 @@ class Index extends Component
            
         }
     }
+
+    public function updatedAttach($value){
+        if($value == true){
+            $this->tickets = Ticket::query()->with(['booking','service_type','horse','vehicle','trailer'])->whereYear('in_date',date('Y'))->where('status',1)->orderBy('in_date','desc')->get();
+        }else {
+            $this->tickets = collect();
+            $this->ticket = Null;
+            $this->ticket_requests = [];
+            $this->horse_id = Null;
+            $this->vehicle_id = Null;
+            $this->trailer_id = Null;
+        }
+    }
+
+    public function updatedExpand($value){
+        if (is_null($value)) {
+            return ;
+        }
+
+        if($value == False){
+            $this->inventories = collect();
+            $this->tyres = collect();
+            $this->assets = collect();
+            $this->selectedTyre = [];
+            $this->selectedInventory = [];
+            $this->selectedAsset = [];
+        }
+    }
+
+   
 
     public function updatedSelectedInventory($id, $key){
         if (!is_null($id)) {

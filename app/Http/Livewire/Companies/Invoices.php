@@ -29,6 +29,7 @@ class Invoices extends Component
     public $allowable_loss_percentage;
     public $website;
     public $city;
+    public $invoice_template;
     public $suburb;
     public $fiscalize;
     public $street_address;
@@ -91,6 +92,7 @@ class Invoices extends Component
         $this->street_address = $company->street_address;
         $this->color = $company->color;
         $this->fiscalize = $company->fiscalize;
+        $this->invoice_template = $company->invoice_template;
         $this->website = $company->website;
         $this->vat = $company->vat;
         $this->currencies = Currency::orderBy('name','asc')->get();
@@ -138,6 +140,7 @@ class Invoices extends Component
         $company->currency_id = $this->currency_id;
         $company->website = $this->website;
         $company->fiscalize = $this->fiscalize;
+        $company->invoice_template = $this->invoice_template;
         $company->vat_number = $this->vat_number;
         $company->tin_number = $this->tin_number;
         $company->allowable_loss_percentage = $this->allowable_loss_percentage;

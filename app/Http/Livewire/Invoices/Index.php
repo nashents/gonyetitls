@@ -122,6 +122,8 @@ class Index extends Component
     public $expires_at;
     public $title;
     public $file;
+    
+    public $company;
 
 
     public $inputs = [];
@@ -147,6 +149,7 @@ class Index extends Component
         $this->resetPage();
         $this->invoice_filter = "created_at";
         $this->tax_status = "all";
+        $this->company = Auth::user()->employee->company;
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::orderBy('name','asc')->get()->sortBy('account_name');
         $this->customers = Customer::orderBy('name','asc')->get();

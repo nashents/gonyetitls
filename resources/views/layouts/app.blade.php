@@ -132,6 +132,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-closeModal', event => {
+                $('#closeModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-closeModal', event => {
+                $('#closeModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-dealModal', event => {
                 $('#dealModal').modal('show');
             })
@@ -139,7 +149,7 @@
     
     <script type="text/javascript">
             window.addEventListener('hide-dealModal', event => {
-                $('#dealModal').modal('show');
+                $('#dealModal').modal('hide');
             })
     </script>
     

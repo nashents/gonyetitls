@@ -238,13 +238,13 @@
         <div style="flex:1">
             <div class="fiscal-title">FISCAL TAX INVOICE</div>
             <div class="fiscal-text">
-                <strong>Receipt Counter:</strong> 4/935 &nbsp;&nbsp;
-                <strong>Fiscal Day No:</strong> 318<br>
-                Invoice No: 4106 &nbsp;&nbsp;
-                Date: 28/04/2026 14:05<br>
-                Device Serial: 02ZIM10001014 &nbsp;&nbsp;
-                Fiscal Device Id: 10276<br>
-                Verification Code: 3843-341A-6238-88D0<br>
+                <strong>Receipt Counter:</strong> 7/412 &nbsp;&nbsp;
+                <strong>Fiscal Day No:</strong> 205<br>
+                Invoice No: 2089 &nbsp;&nbsp;
+                Date: 12/06/2025 09:30<br>
+                Device Serial: 02ZIM20005067 &nbsp;&nbsp;
+                Fiscal Device Id: 30841<br>
+                Verification Code: A1B2-CD34-EF56-7890<br>
                 You can verify receipt manually at
                 <a href="https://fdms.zimra.co.zw" target="_blank" style="color:#0057b7">https://fdms.zimra.co.zw</a>
             </div>
@@ -254,23 +254,23 @@
     {{-- HEADER --}}
     <div class="header-row">
         <div class="company-block">
-            <div class="company-name">Trinitas Distributors</div>
-            <p>1817 Usselby Road,</p>
-            <p>Waterfalls</p>
+            <div class="company-name">Gonyeti Transport Ltd</div>
+            <p>123 Samora Machel Avenue,</p>
+            <p>Workington,</p>
             <p>Harare</p>
-            <p>Tel: 08644 068 714 / 0864 202 362</p>
-            <p>Cell: 0785 677 691 / 0788 829 894</p>
-            <p><a href="mailto:sales@trinitaszw.com">sales@trinitaszw.com</a></p>
+            <p>Tel: 08644 100 200 / 0864 300 400</p>
+            <p>Cell: 0771 234 567 / 0782 345 678</p>
+            <p><a href="mailto:info@gonyetitransport.co.zw">info@gonyetitransport.co.zw</a></p>
         </div>
 
         <div class="invoice-meta">
-            <div class="invoice-number">INVOICE No. 4106</div>
+            <div class="invoice-number">INVOICE No. 2089</div>
             <table>
-                <tr><td>DATE:</td><td>28/04/2026</td></tr>
+                <tr><td>DATE:</td><td>12/06/2025</td></tr>
                 <tr><td>INVOICE CURRENCY:</td><td>USD</td></tr>
-                <tr><td>VAT No:</td><td>220149113</td></tr>
-                <tr><td>TIN No:</td><td>2000619633</td></tr>
-                <tr><td>PO No:</td><td>4700797253</td></tr>
+                <tr><td>VAT No:</td><td>100123456</td></tr>
+                <tr><td>TIN No:</td><td>3000987654</td></tr>
+                <tr><td>PO No:</td><td>PO-2025-00781</td></tr>
             </table>
         </div>
     </div>
@@ -280,15 +280,15 @@
         <table>
             <tr>
                 <td>Customer Name:</td>
-                <td class="customer-name-value">World Food Programme, Country Office</td>
+                <td class="customer-name-value">Harare Grain Millers (Pvt) Ltd</td>
             </tr>
             <tr>
                 <td>Customer House No:</td>
-                <td>Block 1, Arundel Office Park, Norfolk Rd,</td>
+                <td>Plot 45, Coventry Road,</td>
             </tr>
             <tr>
                 <td>Customer Street:</td>
-                <td>Mt Pleasant,</td>
+                <td>Graniteside,</td>
             </tr>
             <tr>
                 <td>Customer Province:</td>
@@ -296,23 +296,23 @@
             </tr>
             <tr>
                 <td>Customer Email:</td>
-                <td>harare.supplychaininvoicing@wfp.org</td>
+                <td>accounts@hgm.co.zw</td>
             </tr>
             <tr>
                 <td>Customer Phone:</td>
-                <td>+263 08677000805</td>
+                <td>+263 077 456 7890</td>
             </tr>
             <tr>
                 <td>Customer VAT:</td>
-                <td>10091435</td>
+                <td>20045678</td>
             </tr>
             <tr>
                 <td>Customer TIN:</td>
-                <td>6000000416</td>
+                <td>5000112233</td>
             </tr>
             <tr>
                 <td>Customer Bp No:</td>
-                <td>300012191</td>
+                <td>400078932</td>
             </tr>
         </table>
     </div>
@@ -339,18 +339,33 @@
         <tbody>
             <tr>
                 <td>87042290</td>
-                <td>14/03/2026</td>
-                <td>14111</td>
-                <td>7700783200</td>
-                <td class="text-left">DORMERVALE MARONDERA</td>
-                <td class="text-left">MASVINGO</td>
-                <td>AGJ 2320</td>
+                <td>02/06/2025</td>
+                <td>WB-50021</td>
+                <td>LTI-8800112200</td>
+                <td class="text-left">GRAIN MARKETING BOARD HARARE</td>
+                <td class="text-left">MUTARE</td>
+                <td>ABX 1234</td>
+                <td>28.00</td>
+                <td>27.5</td>
+                <td>265</td>
+                <td>0.12</td>
+                <td>50.00</td>
+                <td>924.00</td>
+            </tr>
+            <tr>
+                <td>87042290</td>
+                <td>05/06/2025</td>
+                <td>WB-50034</td>
+                <td>LTI-8800112244</td>
+                <td class="text-left">GRAIN MARKETING BOARD HARARE</td>
+                <td class="text-left">GWERU</td>
+                <td>ACZ 5678</td>
                 <td>30.00</td>
                 <td>30.0</td>
-                <td>399</td>
-                <td>0.11</td>
-                <td></td>
-                <td>1,316.70</td>
+                <td>280</td>
+                <td>0.12</td>
+                <td>50.00</td>
+                <td>986.00</td>
             </tr>
         </tbody>
     </table>
@@ -360,15 +375,15 @@
         <table class="totals-table">
             <tr>
                 <td>Total VAT Exc</td>
-                <td>1,316.70</td>
+                <td>1,910.00</td>
             </tr>
             <tr>
                 <td>VAT 15.5%</td>
-                <td>204.09</td>
+                <td>296.05</td>
             </tr>
             <tr class="total-final">
                 <td>Total VAT Inc</td>
-                <td>1,520.79</td>
+                <td>2,206.05</td>
             </tr>
         </table>
     </div>
@@ -378,20 +393,20 @@
         <div class="footer-grid">
             <div>
                 <div class="section-label">Prepared By</div>
-                <p>Tawanda Dafana (0788829894)</p>
+                <p>Chiedza Moyo (0771234567)</p>
                 <br>
                 <div class="section-label">Company Stamp</div>
                 <div class="stamp-box">Company Stamp (Date)</div>
             </div>
             <div>
                 <div class="section-label">Banking Details</div>
-                <p><strong>Account Name:</strong> TRINITAS INVESTMENTS PRIVATE LIMITED</p>
-                <p><strong>Bank:</strong> ECOBANK ZIMBABWE LIMITED</p>
-                <p><strong>Branch:</strong> JOINA CITY</p>
-                <p><strong>Sort Code:</strong> 26000</p>
-                <p><strong>Account No ZWL:</strong> 5722100001146</p>
-                <p><strong>Account No USD:</strong> 5783600018539</p>
-                <p><strong>Swift Code:</strong> ECOCZWHX</p>
+                <p><strong>Account Name:</strong> GONYETI TRANSPORT LIMITED</p>
+                <p><strong>Bank:</strong> CBZ BANK LIMITED</p>
+                <p><strong>Branch:</strong> JASON MOYO AVENUE</p>
+                <p><strong>Sort Code:</strong> 06000</p>
+                <p><strong>Account No ZWL:</strong> 0122056789001</p>
+                <p><strong>Account No USD:</strong> 0122056789002</p>
+                <p><strong>Swift Code:</strong> COBZZWHAXXX</p>
             </div>
         </div>
     </div>

@@ -476,7 +476,8 @@ Route::get('goods-receireturnedved/assets/','GoodsReturnedController@assets')->n
 
 Route::get('reminders/copy/','ReminderController@copy')->name('reminders.copy');
 
-Route::get('invoices/templates/trinitas','InvoiceController@trinitas')->name('invoices.trinitas');
+Route::get('invoices/templates/a','InvoiceController@templateA')->name('invoices.templates.a');
+Route::get('invoices/templates/b','InvoiceController@templateB')->name('invoices.templates.b');
 
 //Transportation Order Routes
 Route::get('order','TransportOrderController@order')->name('order');
@@ -734,7 +735,11 @@ Route::get('quotations/delete','QuotationController@delete')->name('quotations.d
 
 Route::get('invoices/{id}/email','InvoiceController@email')->name('invoices.email');
 Route::get('invoices/{id}/print','InvoiceController@print')->name('invoices.print');
-Route::get('invoices/{id}/preview','InvoiceController@preview')->name('invoices.preview');
+
+Route::get('invoices/classic/{id}/preview','InvoiceController@previewClassic')->name('invoices.classic');
+Route::get('invoices/transport/{id}/preview','InvoiceController@previewTransport')->name('invoices.transport');
+Route::get('invoices/modern/{id}/preview','InvoiceController@previewModern')->name('invoices.modern');
+
 Route::get('invoices/{invoice}/export-to-pdf','InvoiceController@generatePdf')->name('invoices.pdf');
 
 Route::get('purchases/{id}/print','PurchaseController@print')->name('purchases.print');

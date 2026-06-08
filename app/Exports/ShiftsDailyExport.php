@@ -50,7 +50,10 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         protected ?Carbon $asAt = null,
         protected array $loadingPointFilterNames = []
     ) {
-        $this->periodTitle = $this->periodTitle . date('M - d');
+        $reportDate = ($this->asAt ?: now())->copy()->subDay();
+
+        $this->periodTitle = $this->periodTitle .
+            $reportDate->format('M - d, Y');
         $this->asAt = $this->asAt ?: now();
 
         $this->bootLoadingPoints();
@@ -146,9 +149,16 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         return str_contains(strtolower($metricName), 'fuel consumption');
     }
 
-    protected function mtdBudgetDays(Carbon $mFrom, Carbon $mTo): int
+   
+
+    protected function mtdBudgetDays(Carbon $asAt): int
     {
-        return max(1, $mFrom->copy()->startOfDay()->diffInDays($mTo->copy()->startOfDay()) + 1);
+        return max(
+            1,
+            $asAt->copy()
+                ->subDay()
+                ->day
+        );
     }
 
     protected function bootLoadingPoints(): void
@@ -202,7 +212,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $mFrom = $asAt->copy()->startOfMonth()->startOfDay()->addHours(2);
         $mTo = $reportTo;
 
-        $mtdBudgetDays = $this->mtdBudgetDays($mFrom, $mTo);
+        $mtdBudgetDays = $this->mtdBudgetDays($asAt);
 
         $y = $this->computePeriod($yFrom, $yTo, $this->lpMap);
         $m = $this->computePeriod($mFrom, $mTo, $this->lpMap);

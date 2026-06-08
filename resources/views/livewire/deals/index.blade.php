@@ -102,6 +102,11 @@
                                                                 </a>
                                                             </li>
                                                             <li>
+                                                                <a href="#" wire:click.prevent="close({{ $deal->id }})">
+                                                                    <i class="fa fa-cancel color-success"></i> Close
+                                                                </a>
+                                                            </li>
+                                                            <li>
                                                                 <a href="#" wire:click.prevent="delete({{ $deal->id }})">
                                                                     <i class="fa fa-trash color-danger"></i> Delete
                                                                 </a>
@@ -113,7 +118,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8">
+                                                <td colspan="10">
                                                     <div style="text-align:center; color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                         No Deals Found ....
                                                     </div>
@@ -155,6 +160,25 @@
                         <div class="btn-group" role="group">
                             <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
                             <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+   
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="closeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                    <center><strong>Mark Deal {{$deal?->deal_number}}{{$deal?->reference ? "/".$deal?->reference : ""}} as closed.</strong></center> 
+                </div>
+                <form wire:submit.prevent="markClosed()">
+                    <div class="modal-footer no-border">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>

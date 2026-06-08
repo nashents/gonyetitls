@@ -22,6 +22,7 @@ class Index extends Component
     public $search;
     protected $queryString = ['search'];
 
+    public $deal;
     public $deal_id;
     public $user_id;
     public $company_id;
@@ -39,6 +40,7 @@ class Index extends Component
     public $rate;
     public $freight;
     public $currency_id;
+    public $notes;
     public $status = 1;
 
     public $customers = [];
@@ -91,7 +93,28 @@ class Index extends Component
 
     }
 
+    public function close($id){
+        if(is_null($id)){
+            return;
+        }
+        $this->deal_id = $id;
+        $this->deal = Deal::find($id);
+        $this->dispatchBrowserEvent('show-closeModal');
+    }
 
+    public function markClosed(){
+        $deal =  Deal::find($this->deal_id);
+        $deal->status = False;
+        $deal->update();
+
+        $this->dispatchBrowserEvent('hide-closeModal');
+        $this->resetInputFields();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Deal Closed Successfully!!'
+        ]);
+    }
 
     public function updated($value)
     {
@@ -114,6 +137,7 @@ class Index extends Component
         $this->end_date = null;
         $this->deal_number = null;
         $this->reference = null;
+        $this->notes = null;
         $this->status = 1;
     }
 
@@ -165,6 +189,7 @@ class Index extends Component
             $deal->reference = $this->reference;
             $deal->rate = $this->rate;
             $deal->freight = $this->freight;
+            $deal->notes = $this->notes;
             $deal->status = $this->status;
             $deal->save();
 
@@ -206,6 +231,7 @@ class Index extends Component
         $this->end_date = $deal->end_date ? date('Y-m-d\TH:i', strtotime($deal->end_date)) : null;
         $this->deal_number = $deal->deal_number;
         $this->reference = $deal->reference;
+        $this->notes = $deal->notes;
         $this->status = $deal->status;
 
         $this->dispatchBrowserEvent('show-dealEditModal');
@@ -242,6 +268,7 @@ class Index extends Component
                 $deal->deal_number = $this->deal_number;
                 $deal->reference = $this->reference;
                 $deal->status = $this->status;
+                $deal->notes = $this->notes;
                 $deal->update();
 
                 $this->dispatchBrowserEvent('hide-dealEditModal');

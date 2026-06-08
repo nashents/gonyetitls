@@ -127,4 +127,11 @@
             @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
         </div>
     </div>
+    
+
+</div>
+<div class="form-group">
+    <label>Additional Notes</label>
+    <textarea class="form-control" wire:model.debounce.300ms="notes" placeholder="Additional Notes eg Loading & Offloading Details" cols="30" rows="3"></textarea>
+    @error('notes') <span class="error" style="color:red">{{ $message }}</span> @enderror
 </div>

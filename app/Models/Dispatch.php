@@ -56,4 +56,9 @@ class Dispatch extends Model implements Auditable
         return $this->hasMany('App\Models\TicketInventory');
     }
 
+    protected $casts = [
+        'expand'      => 'boolean',
+    ];
+
+
 }
