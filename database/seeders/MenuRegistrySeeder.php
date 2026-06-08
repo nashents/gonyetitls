@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 
 
+use App\Models\Account;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmployeeLeave;
@@ -12,6 +13,7 @@ use App\Models\LeaveType;
 use App\Models\Module;
 use App\Models\ModuleGroup;
 use App\Models\SubModule;
+use App\Models\Tax;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -24,6 +26,57 @@ class MenuRegistrySeeder extends Seeder
 
     public function run(): void
     {
+
+        $taxAccount = Account::where('name', 'Value Added Tax')->first();
+
+        if (!$taxAccount) {
+            return;
+        }
+
+        $taxes = [
+
+            [   
+                'user_id' => Null,
+                'account_id'   => $taxAccount->id,
+                'category'     => 'VAT',
+                'name'         => 'Value Added Tax 15.5%',
+                'abbreviation' => 'VAT 15.5%',
+                'rate' => '15.5',
+                'hs_code'      => '99001000',
+                'description'  => 'Standard VAT rate of 15.5%',
+            ],
+
+            [
+                'account_id'   => $taxAccount->id,
+                'category'     => 'VAT',
+                'name'         => 'Value Added Tax 0%',
+                'abbreviation' => 'VAT 0%',
+                'rate' => '0',
+                'hs_code'      => '99002000',
+                'description'  => 'Zero rated VAT',
+            ],
+
+            [
+                'account_id'   => $taxAccount->id,
+                'category'     => 'VAT',
+                'name'         => 'Value Added Tax Exempt',
+                'abbreviation' => 'VAT Exempt',
+                'rate' => '0',
+                'hs_code'      => '99003000',
+                'description'  => 'VAT exempt supplies',
+            ],
+
+        ];
+
+        foreach ($taxes as $tax) {
+
+            Tax::updateOrCreate(
+                [
+                    'name' => $tax['name'],
+                ],
+                $tax
+            );
+        }
 
 
         SubModule::where('name', 'Waste Collection')->delete();
