@@ -320,6 +320,7 @@ class InvoiceController extends Controller
             'invoice_items' => $invoice_items,
             ]);
     }
+
     public function previewModern($id){
         $invoice = Invoice::find($id);
         $company = $invoice->company;
@@ -330,6 +331,7 @@ class InvoiceController extends Controller
             'invoice_items' => $invoice_items,
             ]);
     }
+    
     public function previewTransport($id){
         $invoice = Invoice::find($id);
         $company = $invoice->company;

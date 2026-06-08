@@ -15,7 +15,7 @@ Invoice Preview | {{Auth::user()->employee->company->name}}
     <div class="container">
         <div class="card">
             <div class="card-body">
-                @livewire('invoices.preview', [
+                @livewire('invoices.templates.classic', [
                     'invoice' => $invoice,
                     'company' => $company,
                     'invoice_items' => $invoice_items,])
