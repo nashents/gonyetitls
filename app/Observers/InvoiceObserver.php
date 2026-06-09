@@ -15,7 +15,9 @@ class InvoiceObserver
      */
     public function created(Invoice $invoice)
     {
-        //
+        if ($invoice->isDirty('authorization') && $invoice->authorization === 'approved') {
+            app(InvoiceJournalService::class)->post($invoice);
+        }
     }
 
     /**

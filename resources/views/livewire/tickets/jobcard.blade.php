@@ -362,32 +362,24 @@
                 @php
                   $currentGroup = null;
                   $i = 1;
+                  $grouped = $inspection_services->groupBy(fn($row) => optional($row->inspection_group)->name ?? 'Ungrouped');
                 @endphp
 
-                @foreach ($inspection_services as $row)
-                  @php
-                    $group = optional($row->inspection_group)->name ?? 'Ungrouped';
-                  @endphp
-
-                  @if ($group !== $currentGroup)
-                    {{-- @if (!is_null($currentGroup))
-                      spacer between groups (optional)
-                      <tr class="group-spacer"><td colspan="6"></td></tr>
-                    @endif --}}
-                    <tr class="group-row">
-                      <td colspan="6"><strong>{{ $group }}</strong></td>
-                    </tr>
-                    @php $currentGroup = $group; @endphp
-                  @endif
-
-                  <tr>
-                    <td class="center">{{ $i++ }}</td>
-                    <td>{{ optional($row->inspection_type)->name }}</td>
-                    <td></td>
-                    <td class="center"></td>
-                    <td class="center"></td>
-                    <td class="center"></td>
+                @foreach ($grouped as $group => $rows)
+                  <tr class="group-row">
+                    <td colspan="6"><strong>{{ $group }}</strong></td>
                   </tr>
+
+                  @foreach ($rows as $row)
+                    <tr>
+                      <td class="center">{{ $i++ }}</td>
+                      <td>{{ optional($row->inspection_type)->name }}</td>
+                      <td></td>
+                      <td class="center"></td>
+                      <td class="center"></td>
+                      <td class="center"></td>
+                    </tr>
+                  @endforeach
                 @endforeach
               </tbody>
           </table>

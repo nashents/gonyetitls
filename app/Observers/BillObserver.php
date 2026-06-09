@@ -15,7 +15,9 @@ class BillObserver
      */
     public function created(Bill $bill)
     {
-        //
+        if ($bill->isDirty('authorization') && $bill->authorization === 'approved') {
+            app(BillJournalService::class)->post($bill);
+        }
     }
 
     /**
