@@ -32,7 +32,7 @@ class BillJournalService
                 'journal_number' => $this->generateNumber(),
                 'date'           => $bill->bill_date,
                 'reference'      => $bill->bill_number,
-                'description'    => "Bill {$bill->bill_number} - {$bill->vendor->name}",
+                'description'    => "Bill {$bill->bill_number} - {$bill->vendor?->name}",
                 'is_manual'      => false,
                 'status'         => 'posted',
                 'created_by_id'  => Auth::id(),
@@ -60,7 +60,7 @@ class BillJournalService
                     'exchange_credit' => 0,
                     'currency_id'     => $bill->currency_id,
                     'exchange_rate'   => $rate,
-                    'description'     => $expense->description ?? "Bill {$bill->bill_number} - {$expense->account->name}",
+                    'description'     => $expense->description ?? "Bill {$bill->bill_number} - {$expense->account?->name}",
                 ]);
             }
 

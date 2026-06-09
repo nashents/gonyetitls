@@ -33,7 +33,7 @@ class InvoiceJournalService
                 'journal_number' => $this->generateNumber(),
                 'date'           => $invoice->date,
                 'reference'      => $invoice->invoice_number,
-                'description'    => "Invoice {$invoice->invoice_number} - {$invoice->customer->name}",
+                'description'    => "Invoice {$invoice->invoice_number} - {$invoice->customer?->name}",
                 'is_manual'      => false,
                 'status'         => 'posted',
                 'created_by_id'  => Auth::id(),
