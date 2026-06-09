@@ -24,6 +24,7 @@
                                     @error('attach_transport_order') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                                 @if ($attach_transport_order == True)
+
                                 <div class="mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                     <div class="form-group">
                                         <label for="trip_type">
@@ -275,6 +276,30 @@
                                     </div>
                                 </div>
                                 @elseif($attach_transport_order == False)
+
+                                <div class="mb-10">
+                                    <input type="checkbox" wire:model.debounce.300ms="with_deal"   class="line-style" />
+                                    <label for="one" class="radio-label">Attach a deal to this transport order</label>
+                                    <br>
+                                    <small style="color: green">A Deal is a transport allocation, contract, or movement commitment awarded by a customer to a transporter</small>
+                                    @error('with_deal') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                                @if (!is_null($with_deal) && $with_deal == True)
+                                    <div class="form-group">
+                                        <label for="trip_type">
+                                            <a href="{{ route('deals.index') }}" target="_blank" style="color: blue">Deals</a>
+                                            <span class="required text-danger">*</span>
+                                        </label>
+                                        <select class="form-control" wire:model.debounce.300ms="selectedDeal" required size="4">
+                                            <option value="">Select Deal</option>
+                                            @foreach ($deals as $deal)
+                                                <option value="{{ $deal->id }}">{{ $deal->deal_number }} {{ $deal->reference }} {{ $deal->customer?->name }} {{ $deal->cargo?->name }}  {{ $deal->weight ? "Weight:".$deal->weight."t" : "" }} {{ $deal->litreage ? "Litreage:".$deal->litreage."l" : "" }} Qty: {{ $deal->quantity }} {{ $deal->units_of_measure?->name }} Start Date :{{ $deal->start_date }} Expiry Date: {{ $deal->end_date }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small><a href="{{ route('deals.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deal</a></small> <a href="#" wire:click.prevent="refresh('deals')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('selectedDeal') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
 
                                      <div class="mb-10">
                                     <input type="checkbox" wire:model.debounce.300ms="with_quotation"   class="line-style" />

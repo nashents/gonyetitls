@@ -563,6 +563,8 @@
                         <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="with_deal"   class="line-style" />
                             <label for="one" class="radio-label">Attach a deal to this transport order</label>
+                            <br>
+                            <small style="color: green">A Deal is a transport allocation, contract, or movement commitment awarded by a customer to a transporter</small>
                             @error('with_deal') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                         @if (!is_null($with_deal) && $with_deal == True)
@@ -1403,6 +1405,8 @@
                         <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="with_deal"   class="line-style" />
                             <label for="one" class="radio-label">Attach a deal to this transport order</label>
+                            <br>
+                            <small style="color: green">A Deal is a transport allocation, contract, or movement commitment awarded by a customer to a transporter</small>
                             @error('with_deal') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                         @if (!is_null($with_deal) && $with_deal == True)

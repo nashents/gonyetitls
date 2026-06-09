@@ -18,6 +18,7 @@ use App\Models\Consignee;
 use App\Models\Container;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Deal;
 use App\Models\DeliveryNote;
 use App\Models\Destination;
 use App\Models\Driver;
@@ -374,6 +375,10 @@ class Create extends Component
     public $exchange_rate;
     public $exchange_customer_freight;
     public $exchange_transporter_freight;
+
+    public $deals;
+    public $selectedDeal;
+    public $with_deal;
     
     //rates
     public $with_customer_rates;
@@ -1107,6 +1112,40 @@ class Create extends Component
     }
 
 
+    public function updatedSelectedDeal($id){
+        if(is_null($id)){
+            return;
+        }
+        $deal = Deal::find($id);
+        $this->customer_id = $deal->customer_id;
+        $this->selectedCargo = $deal->cargo_id;
+        $cargo = Cargo::find($deal->cargo_id);
+        $this->cargo_type = $cargo?->type;
+        $this->selectedCurrency = $deal->currency_id;
+    }
+
+    public function updatedWithDeal($value){
+        if($value == True){
+              $this->deals = Deal::where('end_date', '>=', now())
+                        ->where('status', 1)
+                        ->where('is_closed', 0)
+                        ->get();
+        }
+        elseif($value == False){
+            $this->selectedDeal = Null;
+            $this->customer_id = Null;
+            $this->selectedCargo = Null;
+            $this->cargo_type = Null;
+            $this->weight = Null;
+            $this->litreage = Null;
+            $this->quantity = Null;
+            $this->units_of_measure_id =Null;
+            $this->selectedCurrency =Null;
+            $this->rate =Null;
+            $this->freight =Null;
+        }
+    }
+
 
 
     public function mount(){
@@ -1122,6 +1161,7 @@ class Create extends Component
                                     ->whereDate('expiry', '>=', now())
                                     ->latest()
                                     ->get();
+        $this->deals = collect();
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all(); 
         $this->emptyrun_destination = False;
@@ -1666,6 +1706,7 @@ class Create extends Component
                 $transport_order->custom_ref = $this->trip_ref;
                 $transport_order->bill_of_entry = $this->bill_of_entry;
                 $transport_order->user_id =  $this->user->id ?: null;
+                $transport_order->deal_id =  $this->selectedDeal ?: null;
                 $transport_order->company_id = $this->company->id ?: null;
                 $transport_order->quotation_id = $this->selectedQuotation ?: null;
                 $transport_order->with_customer_rates = $this->with_customer_rates;
@@ -1797,7 +1838,7 @@ class Create extends Component
 
                 if($this->attach_transport_order == False){
                     
-                    
+                    $trip->deal_id = $this->selectedDeal ?: Null;
                     $trip->agent_id = $this->agent_id ?: null;
                     $trip->quotation_id = $this->selectedQuotation ?: null;
                     $trip->with_customer_rates = $this->with_customer_rates;
@@ -1887,6 +1928,7 @@ class Create extends Component
                             $trip_transport_order->allocated_weight    = $weight;
                             $trip_transport_order->allocated_litreage  = $litreage;
                             $trip_transport_order->allocated_freight  = $freight;
+                            $trip_transport_order->deal_id  = $transport_order->deal_id;
                             $trip_transport_order->allocated_rate  = $rate;
                             $trip_transport_order->units_of_measure_id = $units_of_measure_id;
                             $trip_transport_order->exchange_rate = $exchange_rate;
@@ -1903,6 +1945,7 @@ class Create extends Component
                                 $trip_transport_order->allocated_weight    = $transport_order->weight;
                                 $trip_transport_order->allocated_litreage  = $transport_order->litreage;
                                 $trip_transport_order->allocated_freight  = $transport_order->freight;
+                                $trip_transport_order->deal_id  = $transport_order->deal_id;
                                 $trip_transport_order->allocated_rate  = $transport_order->rate;
                                 $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id ?: Null;
                                 $trip_transport_order->currency_id = $transport_order->currency_id;
@@ -2898,7 +2941,16 @@ class Create extends Component
                 'message'=>"Trip Tracking Groups Refreshed Successfully!!."
             ]);
         }
-       
+        elseif($category == 'deals'){
+            $this->deals = Deal::where('end_date', '<=', now())
+                            ->where('status', 1)
+                            ->where('is_closed', 0)
+                            ->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Deals Refreshed Successfully!!."
+                ]);
+            }
         elseif($category == "transport_orders"){
             $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
             $this->dispatchBrowserEvent('alert',[

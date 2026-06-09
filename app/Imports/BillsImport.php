@@ -3,12 +3,15 @@
 namespace App\Imports;
 
 use App\Models\Account;
+use App\Models\AccountType;
+use App\Models\AccountTypeGroup;
 use App\Models\Asset;
 use App\Models\Bill;
 use App\Models\BillExpense;
 use App\Models\Currency;
 use App\Models\Driver;
 use App\Models\Horse;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Trailer;
 use App\Models\Transporter;
@@ -43,43 +46,48 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
 
     public function collection(Collection $rows)
     {
-        foreach ($rows as $index => $row) {
-
+        foreach ($rows as $row) {
 
             DB::transaction(function () use ($row) {
 
-            
+                $vendor_name     = $row->get('vendor_name');
+                $bill_for        = $row->get('bill_for');
+                $value           = $row->get('value');
+                $bill_date       = $row->get('bill_date');
+                $item_name       = $row->get('items');
+                $qty             = $row->get('qty');
+                $currency        = $row->get('currency');
+                $unit_price      = $row->get('unit_price');
+                $total           = $row->get('total');
+                $notes           = $row->get('notes');
+                $expense_account = $row->get('expense_account');
 
-                  $vendor_name  = $row->get('vendor_name');
-                $currency     = $row->get('currency');
-                $account_name = $row->get('account_name');
-                $bill_for     = $row->get('bill_for');
-                $number       = $row->get('number');
-                $items        = $row->get('items');
+                // Skip entirely empty rows
+                if (!$vendor_name && !$currency && !$item_name) return;
 
-                // Skip entirely empty rows (happens when Excel has trailing blank rows)
-                if (!$vendor_name && !$currency && !$items) return;
-
-                throw_if(!$vendor_name,  \Exception::class, "Missing vendor_name on a row.");
-                throw_if(!$currency,     \Exception::class, "Missing currency on a row.");
-                throw_if(!$bill_for,     \Exception::class, "Missing bill_for on a row.");
-                throw_if(!$number,       \Exception::class, "Missing number on a row.");
-                throw_if(!$items,        \Exception::class, "Missing items on a row.");
+                throw_if(!$vendor_name,     \Exception::class, "Missing vendor_name on a row.");
+                throw_if(!$currency,        \Exception::class, "Missing currency on a row.");
+                throw_if(!$item_name,       \Exception::class, "Missing items on a row.");
+                throw_if(!$qty,             \Exception::class, "Missing qty on a row.");
+                throw_if(!$unit_price,      \Exception::class, "Missing unit_price on a row.");
 
                 $vendorId                  = $this->resolveVendor($vendor_name);
                 $currencyId                = $this->resolveCurrency($currency);
-                $accountId                 = $this->resolveAccount($account_name ?? '');
-                [$entityColumn, $entityId] = $this->resolveEntity($bill_for, $number);
+                $accountId                 = $this->resolveAccount($expense_account ?? '');
+                [$entityColumn, $entityId] = $this->resolveEntity($bill_for, $value);
+
+                $line_subtotal = (float) $qty * (float) $unit_price;
+                $line_total    = $total ? (float) $total : $line_subtotal;
 
                 $bill                     = new Bill();
                 $bill->user_id            = Auth::id();
                 $bill->vendor_id          = $vendorId;
-                $bill->bill_for           = $row->get('bill_for');
-                $bill->category           = $row->get('bill_for');
+                $bill->bill_for           = $bill_for;
+                $bill->category           = $bill_for;
                 $bill->currency_id        = $currencyId;
                 $bill->bill_number        = $this->billNumber();
-                $bill->bill_date          = $row->get('bill_date');
-                $bill->notes              = $row->get('notes');
+                $bill->bill_date          = $bill_date;
+                $bill->notes              = $notes;
                 $bill->transporter_id     = null;
                 $bill->horse_id           = null;
                 $bill->driver_id          = null;
@@ -87,45 +95,157 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
                 $bill->trailer_id         = null;
                 $bill->asset_id           = null;
                 $bill->{$entityColumn}    = $entityId;
+                $bill->subtotal           = $line_subtotal;
+                $bill->tax_amount         = 0;
+                $bill->total              = $line_total;
+                $bill->balance            = 0;
+                $bill->status             = 'Paid';
                 $bill->authorization      = 'approved';
                 $bill->authorization_date = now();
                 $bill->authorized_by_id   = Auth::id();
                 $bill->save();
 
-                $subtotal = 0;
-                $total    = 0;
-                $account  = Account::find($accountId);
+                $paymentsSubquery = DB::table('payments')
+                    ->select([
+                        'vendor_id', 'currency_id',
+                        DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                        DB::raw('DATE(`date`) AS txn_date'),
+                        'created_at',
+                        DB::raw("'payment' AS source"),
+                        DB::raw('0 AS source_priority'),
+                        'id',
+                    ])
+                    ->whereNull('deleted_at')
+                    ->where('vendor_id', $bill->vendor_id)
+                    ->where('currency_id', $currencyId)
+                    ->whereNotNull('accrual_balance');
 
-                foreach ($this->parseItems($row->get('items')) as $item) {
-                    $productId = $this->resolveProduct($item['name']);
+                $billsSubquery = DB::table('bills')
+                    ->select([
+                        'vendor_id', 'currency_id',
+                        DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                        DB::raw('DATE(`bill_date`) AS txn_date'),
+                        'created_at',
+                        DB::raw("'bill' AS source"),
+                        DB::raw('1 AS source_priority'),
+                        'id',
+                    ])
+                    ->where('authorization', 'approved')
+                    ->where('vendor_id', $bill->vendor_id)
+                    ->where('currency_id', $currencyId)
+                    ->whereNotNull('accrual_balance')
+                    ->whereNull('deleted_at')
+                    ->where('id', '<>', $bill->id);
 
-                    $line_subtotal = $item['qty'] * $item['unit_price'];
+                $lastAccrual = DB::query()
+                    ->fromSub($paymentsSubquery->unionAll($billsSubquery), 't')
+                    ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
+                    ->orderByDesc('t.created_at')
+                    ->orderBy('t.source_priority')
+                    ->orderByDesc('t.id')
+                    ->first();
 
-                    $expense                  = new BillExpense();
-                    $expense->bill_id         = $bill->id;
-                    $expense->currency_id     = $currencyId;
-                    $expense->product_id      = $productId;
-                    $expense->description     = $item['name'];
-                    $expense->qty             = $item['qty'];
-                    $expense->amount          = $item['unit_price'];
-                    $expense->subtotal        = $line_subtotal;
-                    $expense->subtotal_incl   = $line_subtotal;
-                    $expense->account_id      = $accountId;
-                    $expense->account_type_id = $account?->account_type?->id;
-                    $expense->save();
-
-                    $subtotal += $line_subtotal;
-                    $total    += $line_subtotal;
-                }
-
-                $bill->subtotal   = $subtotal;
-                $bill->tax_amount = 0;
-                $bill->total      = $total;
-                $bill->balance    = 0;
-                $bill->status    = "Paid";
+                $previousBalance      = ($lastAccrual && is_numeric($lastAccrual->accrual_balance))
+                                            ? (float) $lastAccrual->accrual_balance
+                                            : 0.0;
+                $bill->accrual_balance = $previousBalance + (float) $bill->total;
                 $bill->save();
+
+                $this->recordPayment($bill, $currencyId, $accountId, $line_total);
+
+                $account = Account::find($accountId);
+
+                $expense                  = new BillExpense();
+                $expense->bill_id         = $bill->id;
+                $expense->currency_id     = $currencyId;
+                $expense->product_id      = $this->resolveProduct($item_name);
+                $expense->description     = $item_name;
+                $expense->qty             = (float) $qty;
+                $expense->amount          = (float) $unit_price;
+                $expense->subtotal        = $line_subtotal;
+                $expense->subtotal_incl   = $line_subtotal;
+                $expense->account_id      = $accountId;
+                $expense->account_type_id = $account?->account_type?->id;
+                $expense->save();
+
+               
             });
         }
+    }
+
+    protected function recordPayment(Bill $bill, int $currencyId, int $accountId, float $amount): void
+    {
+        $account = Account::find($accountId);
+
+        $payments = DB::table('payments')
+            ->select([
+                'vendor_id', 'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'payments.date', 'payments.created_at',
+                DB::raw("'payment' AS source"), 'id',
+            ])
+            ->whereNull('deleted_at')
+            ->where('vendor_id', $bill->vendor_id)
+            ->where('currency_id', $currencyId);
+
+        $bills = DB::table('bills')
+            ->select([
+                'vendor_id', 'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                DB::raw('bills.bill_date AS date'),
+                'bills.created_at',
+                DB::raw("'bill' AS source"), 'id',
+            ])
+            ->where('authorization', 'approved')
+            ->whereNull('deleted_at')
+            ->where('vendor_id', $bill->vendor_id)
+            ->where('currency_id', $currencyId);
+
+        $latest = DB::query()
+            ->fromSub($payments->unionAll($bills), 'u')
+            ->orderByDesc('date')
+            ->orderByDesc('created_at')
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC")
+            ->first();
+
+        $payment                      = new Payment();
+        $payment->vendor_id           = $bill->vendor_id;
+        $payment->bill_id             = $bill->id;
+        $payment->movement            = 'Dbt';
+        $payment->description         = $bill->notes;
+        $payment->user_id             = Auth::id();
+        $payment->currency_id         = $currencyId;
+        $payment->payment_number      = $this->paymentNumber();
+        $payment->category            = 'Bill';
+        $payment->account_id          = $accountId;
+        $payment->amount              = $amount;
+        $payment->balance             = 0;
+        $payment->date                = $bill->bill_date;
+        $payment->accrual_balance     = ($latest && is_numeric($latest->accrual_balance))
+                                            ? (float) bcsub((string) $latest->accrual_balance, (string) $amount, 2)
+                                            : 0;
+        $payment->save();
+
+        if ($account) {
+            $account->balance = ($account->balance ?? 0) - $amount;
+            $account->save();
+        }
+    }
+
+    protected function paymentNumber(): string
+    {
+        $user = Auth::user();
+
+        $str = "";
+        $str = $user->employee->company?->name;
+
+        $words    = explode(' ', $str);
+        $initials = isset($words[1][0]) ? $words[0][0] . $words[1][0] : $words[0][0];
+
+        $last   = Payment::latest()->orderBy('id', 'desc')->first();
+        $number = $last ? $last->id + 1 : 1;
+
+        return $initials . 'P' . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
 
     // ── Bill number generator ─────────────────────────────────────────────
@@ -133,15 +253,9 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
     protected function billNumber(): string
     {
         $user = Auth::user();
-
-        if (isset($user->company)) {
-            $str = $user->company->name;
-        } elseif (isset($user->employee->company)) {
-            $str = $user->employee->company->name;
-        } else {
-            $str = 'XX';
-        }
-
+        $str = "";
+        $str = $user->employee->company?->name;
+            
         $words    = explode(' ', $str);
         $initials = isset($words[1][0]) ? $words[0][0] . $words[1][0] : $words[0][0];
 
@@ -149,31 +263,6 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
         $number = $last ? $last->id + 1 : 1;
 
         return $initials . 'B' . str_pad($number, 5, '0', STR_PAD_LEFT);
-    }
-
-    // ── Items parser ──────────────────────────────────────────────────────
-    // Format: "Air Filter*2:20.00, Engine Oil*4:12.50"
-
-    protected function parseItems(string $items_string): array
-    {
-        $parsed = [];
-
-        foreach (explode(',', $items_string) as $segment) {
-            $segment = trim($segment);
-            if (empty($segment)) continue;
-
-            $colon_pos  = strrpos($segment, ':');
-            $unit_price = (float) trim(substr($segment, $colon_pos + 1));
-            $left       = trim(substr($segment, 0, $colon_pos));
-
-            $asterisk_pos = strrpos($left, '*');
-            $qty          = (float) trim(substr($left, $asterisk_pos + 1));
-            $name         = trim(substr($left, 0, $asterisk_pos));
-
-            $parsed[] = compact('name', 'qty', 'unit_price');
-        }
-
-        return $parsed;
     }
 
     // ── Lookup helpers ────────────────────────────────────────────────────
@@ -211,34 +300,41 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
     {
         $key = strtolower(trim($name));
         if (!isset($this->accountCache[$key])) {
-            $id = Account::whereRaw('LOWER(name) = ?', [$key])->value('id');
+            $expenseGroup = AccountTypeGroup::where('name', 'Expenses')->first();
+            $operatingExpense = AccountType::where('name', 'Operating Expense')->first();
 
-            if (!$id) {
-                $id = Account::whereRaw('LOWER(name) = ?', ['uncategorized expense'])->value('id');
-                throw_if(!$id, \Exception::class, "Account '{$name}' not found and 'Uncategorized Expense' fallback does not exist.");
-            }
+            $account = Account::firstOrCreate(
+                ['name' => $name],
+                [
+                    'account_type_group_id' => $expenseGroup?->id,
+                    'account_type_id'       => $operatingExpense?->id,
+                ]
+            );
 
-            $this->accountCache[$key] = $id;
+            $this->accountCache[$key] = $account->id;
         }
         return $this->accountCache[$key];
     }
-
-    protected function resolveEntity(string $bill_for, string $number): array
+    protected function resolveEntity(string $bill_for, string $value): array
     {
-        $cache_key = strtolower("{$bill_for}:{$number}");
+        $cache_key = strtolower("{$bill_for}:{$value}");
 
         if (!isset($this->entityCache[$cache_key])) {
             [$column, $id] = match ($bill_for) {
-                'Horse'       => ['horse_id',       Horse::whereRaw('LOWER(registration_number) = ?',      [strtolower($number)])->value('id')],
-                'Trailer'     => ['trailer_id',     Trailer::whereRaw('LOWER(registration_number) = ?',    [strtolower($number)])->value('id')],
-                'Vehicle'     => ['vehicle_id',     Vehicle::whereRaw('LOWER(registration_number) = ?',    [strtolower($number)])->value('id')],
-                'Driver'      => ['driver_id',      Driver::whereRaw('LOWER(driver_number) = ?',           [strtolower($number)])->value('id')],
-                'Transporter' => ['transporter_id', Transporter::whereRaw('LOWER(transporter_number) = ?', [strtolower($number)])->value('id')],
-                'Asset'       => ['asset_id',       Asset::whereRaw('LOWER(asset_number) = ?',             [strtolower($number)])->value('id')],
+                'Horse'       => ['horse_id',       Horse::whereRaw('LOWER(registration_number) = ?',   [strtolower($value)])->value('id')],
+                'Trailer'     => ['trailer_id',     Trailer::whereRaw('LOWER(registration_number) = ?', [strtolower($value)])->value('id')],
+                'Vehicle'     => ['vehicle_id',     Vehicle::whereRaw('LOWER(registration_number) = ?', [strtolower($value)])->value('id')],
+                'Transporter' => ['transporter_id', Transporter::whereRaw('LOWER(name) = ?',            [strtolower($value)])->value('id')],
+                'Driver' => ['driver_id', Driver::whereHas('employee', function ($q) use ($value) {
+                                $q->whereRaw("LOWER(CONCAT(name, ' ', surname)) = ?", [strtolower($value)]);
+                            })->value('id')],
+                'Asset'  => ['asset_id',  Asset::whereHas('product', function ($q) use ($value) {
+                                                $q->whereRaw('LOWER(name) = ?', [strtolower($value)]);
+                                            })->value('id')],
                 default       => throw new \Exception("Unknown bill_for: {$bill_for}"),
             };
 
-            throw_if(!$id, \Exception::class, "{$bill_for} not found: {$number}");
+            throw_if(!$id, \Exception::class, "{$bill_for} not found: {$value}");
             $this->entityCache[$cache_key] = [$column, $id];
         }
 
@@ -249,14 +345,6 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
 
     public function rules(): array
     {
-        return [
-            // '*.vendor_name'  => 'required|string',
-            // '*.bill_for'     => 'required|in:Transporter,Horse,Asset,Driver,Trailer,Vehicle',
-            // '*.number'       => 'required|string',
-            // '*.bill_date'    => 'required|date',
-            // '*.currency'     => 'required|string',
-            // '*.items'        => 'required|string',
-            // '*.account_name' => 'required|string',
-        ];
+        return [];
     }
 }

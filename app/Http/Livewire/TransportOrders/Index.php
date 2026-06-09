@@ -246,7 +246,13 @@ class Index extends Component
     }
 
     public function updatedWithDeal($value){
-        if($value == False){
+        if($value == True){
+              $this->deals = Deal::where('end_date', '>=', now())
+                        ->where('status', 1)
+                        ->where('is_closed', 0)
+                        ->get();
+        }
+        elseif($value == False){
             $this->selectedDeal = Null;
             $this->customer_id = Null;
             $this->selectedCargo = Null;
@@ -317,10 +323,7 @@ class Index extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->driver =  $this->employee->driver;
-        $this->deals = Deal::where('end_date', '>=', now())
-                        ->where('status', 1)
-                        ->where('is_closed', 0)
-                        ->get();
+        $this->deals = collect();
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->quotations = Quotation::with('customer')
                                     ->whereYear('date', date('Y'))

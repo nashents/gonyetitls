@@ -462,6 +462,12 @@
                                                     @if($trip->haulage_type)
                                                         <small><strong>{{ $trip->haulage_type == "short_haul" ? "(Short Haul)" : "(Long Haul)"}}</strong></small>
                                                     @endif
+                                                    @if ($trip->trip_transport_orders)
+                                                        @foreach ($trip->trip_transport_orders as $tto)
+                                                            <br>
+                                                            <small><strong>Deal#</strong> {{$tto->deal?->deal_number}}{{$tto->deal?->reference ? "/".$tto->deal?->reference : ""}}</small>
+                                                        @endforeach 
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     {{ $formatDate($trip->start_date) }}

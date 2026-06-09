@@ -17,6 +17,7 @@ use App\Models\Consignee;
 use App\Models\Container;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Deal;
 use App\Models\DeliveryNote;
 use App\Models\Destination;
 use App\Models\Driver;
@@ -337,6 +338,10 @@ class Edit extends Component
     public $commission_id;
 
     public $trip_fuel_locked = false;
+
+    public $deals;
+    public $selectedDeal;
+    public $with_deal;
 
     public $distance;
     public $duration;
@@ -995,6 +1000,46 @@ class Edit extends Component
         return  $fuel_number;
     }
 
+    public function updatedSelectedDeal($id){
+        if(is_null($id)){
+            return;
+        }
+        $deal = Deal::find($id);
+        $this->customer_id = $deal->customer_id;
+        $this->selectedCargo = $deal->cargo_id;
+        $cargo = Cargo::find($deal->cargo_id);
+        $this->cargo_type = $cargo?->type;
+        $this->weight = $deal->weight;
+        $this->litreage = $deal->litreage;
+        $this->quantity = $deal->quantity;
+        $this->selectedCurrency = $deal->currency_id;
+        $this->rate = $deal->rate;
+        $this->freight = $deal->freight;
+        $this->units_of_measure_id = $deal->units_of_measure_id;
+    }
+
+    public function updatedWithDeal($value){
+        if($value == True){
+              $this->deals = Deal::where('end_date', '>=', now())
+                        ->where('status', 1)
+                        ->where('is_closed', 0)
+                        ->get();
+        }
+        elseif($value == False){
+            $this->selectedDeal = Null;
+            $this->customer_id = Null;
+            $this->selectedCargo = Null;
+            $this->cargo_type = Null;
+            $this->weight = Null;
+            $this->litreage = Null;
+            $this->quantity = Null;
+            $this->units_of_measure_id =Null;
+            $this->selectedCurrency =Null;
+            $this->rate =Null;
+            $this->freight =Null;
+        }
+    }
+
     public function mount($id){
 
        
@@ -1223,6 +1268,7 @@ class Edit extends Component
         
 
          $this->with_trailer = $this->trip->with_trailer;
+         $this->selectedDeal = $this->trip->deal_id;
          $this->trip_number = $this->trip->trip_number;
          $this->trip_ref = $this->trip->trip_ref;
          $this->freight_calculation = $this->trip->freight_calculation;
@@ -2122,6 +2168,7 @@ class Edit extends Component
         $trip->vehicle_id = $this->mode_of_transport === "Vehicle" ? $this->selectedVehicle : null;
         $trip->transporter_id = $this->selectedTransporter;
         $trip->trip_group_id = $this->trip_group_id ?: null;
+        $trip->deal_id = $this->selectedDeal ?: null;
         $trip->transporter_agreement = $this->transporter_agreement;
         $trip->temparature = $this->temparature;
         $trip->net_weight = $this->net_weight;
@@ -3502,6 +3549,16 @@ class Edit extends Component
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Borders Refreshed Successfully!!."
+                ]);
+            }
+            elseif($category == 'deals'){
+            $this->deals = Deal::where('end_date', '<=', now())
+                            ->where('status', 1)
+                            ->where('is_closed', 0)
+                            ->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Deals Refreshed Successfully!!."
                 ]);
             }
             elseif($category == "transport_orders"){

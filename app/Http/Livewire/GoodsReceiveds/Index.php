@@ -66,16 +66,25 @@ class Index extends Component
     ];
 
     private function resetInputFields(){
-        $this->vendor_id = '';
-        $this->employee_id = '';
-        $this->date = '';
-        $this->driver_name = '';
-        $this->delivery_date = '';
-        $this->delivery_number = '';
-        $this->comments = '';
-        $this->condition = '';
-        $this->purchase_id = '';
+        $this->vendor_id = Null;
+        $this->employee_id = Null;
+        $this->date = Null;
+        $this->driver_name = Null;
+        $this->delivery_date = Null;
+        $this->delivery_number = Null;
+        $this->comments = Null;
+        $this->condition = Null;
+        $this->purchase_id = Null;
+        $this->attach = False;
     }
+
+    public function updatedAttach($value){
+        if($value == False){
+            $this->purchase_id = NUll;
+        }
+    }
+
+   
 
      public function goodsReceivedNumber(){
 
