@@ -405,7 +405,7 @@
                              <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="country">Grades</label>
-                                    <select wire:model.debounce.300ms="grade_id" class="form-control" multiple>
+                                    <select wire:model.debounce.300ms="grade_id" class="form-control">
                                         <option value="">Select Grade</option>
                                         @foreach ($grades as $grade)
                                         <option value="{{$grade->id}}">{{$grade->grade_name}} {{$grade->grade_code}}</option>
@@ -514,7 +514,7 @@
                              <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="country">Grades</label>
-                                    <select wire:model.debounce.300ms="grade_id" class="form-control" multiple>
+                                    <select wire:model.debounce.300ms="grade_id" class="form-control" >
                                         <option value="">Select Grade</option>
                                         @foreach ($grades as $grade)
                                         <option value="{{$grade->id}}">{{$grade->grade_name}} {{$grade->grade_code}}</option>

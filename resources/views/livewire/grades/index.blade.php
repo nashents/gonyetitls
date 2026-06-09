@@ -204,8 +204,8 @@
                         </div>
                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="name">Grade Job Titles<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="job_title_id" class="form-control" required multiple>
+                                <label for="name">Grade Job Titles</label>
+                                <select wire:model.debounce.300ms="job_title_id" class="form-control" multiple >
                                         <option value="">Select Job Title</option>
                                         @foreach ($job_titles as $job_title)
                                             <option value="{{$job_title->id}}">{{$job_title->title}}</option>
@@ -384,8 +384,8 @@
                         </div>
                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="name">Grade Job Titles<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="job_title_id" class="form-control" required multiple>
+                                <label for="name">Grade Job Titles</label>
+                                <select wire:model.debounce.300ms="job_title_id" class="form-control" multiple>
                                         <option value="">Select Job Title</option>
                                         @foreach ($job_titles as $job_title)
                                             <option value="{{$job_title->id}}">{{$job_title->title}}</option>

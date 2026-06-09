@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Currency;
+use App\Models\Deal;
 use App\Models\DeliveryNote;
 use App\Models\TransportOrder;
 use App\Models\Trip;
@@ -70,6 +71,10 @@ class TripTransportOrder extends Model
     public function transport_order()
     {
         return $this->belongsTo(TransportOrder::class, 'transport_order_id');
+    }
+    public function deal()
+    {
+        return $this->belongsTo(Deal::class, 'deal_id');
     }
     public function currency()
     {

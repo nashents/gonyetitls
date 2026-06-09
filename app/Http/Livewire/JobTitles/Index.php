@@ -76,11 +76,11 @@ class Index extends Component
          
     }
     private function resetInputFields(){
-        $this->title = '';
-        $this->description = '';
-        $this->duties = '';
-        $this->instructions = '';
-        $this->requirements = '';
+        $this->title = Null;
+        $this->description = Null;
+        $this->duties = Null;
+        $this->instructions = Null;
+        $this->requirements = Null;
         $this->department_id = Null;
         $this->grade_id = Null;
         $this->rank_id = Null;
@@ -98,9 +98,7 @@ class Index extends Component
       
     ];
     protected $rules = [
-       
         'title' => 'required|unique:job_titles,title,NULL,id,deleted_at,NULL|string|min:2',
-        'grade_id' => 'nullable|integer|exists:grades,id',
     ];
 
     public function store(){

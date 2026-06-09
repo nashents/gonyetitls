@@ -464,8 +464,10 @@
                                                     @endif
                                                     @if ($trip->trip_transport_orders)
                                                         @foreach ($trip->trip_transport_orders as $tto)
-                                                            <br>
-                                                            <small><strong>Deal#</strong> {{$tto->deal?->deal_number}}{{$tto->deal?->reference ? "/".$tto->deal?->reference : ""}}</small>
+                                                            @if ($tto->deal)
+                                                                <br>
+                                                                <small><strong>Deal#</strong> <a href="{{ route('deals.show',$tto->deal_id) }}" target="_blank" style="color: blue">{{$tto->deal?->deal_number}}{{$tto->deal?->reference ? "/".$tto->deal?->reference : ""}}</a></small>
+                                                            @endif
                                                         @endforeach 
                                                     @endif
                                                 </td>

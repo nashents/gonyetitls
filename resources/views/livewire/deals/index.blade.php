@@ -52,16 +52,16 @@
                                                 <td>{{ $deal->cargo ? $deal->cargo->name : 'N/A' }}</td>
                                                 <td>
                                                     @if ($deal->weight)
-                                                        <strong>Weight:</strong> {{ number_format($deal->weight, 2) }}
-                                                        {{ $deal->units_of_measure ? $deal->units_of_measure->name : '' }}<br>
+                                                        <strong>Weight:</strong> {{ number_format($deal->weight, 2) }}t
+                                                        <br>
                                                     @endif
 
                                                     @if ($deal->litreage)
-                                                        <strong>Litreage:</strong> {{ number_format($deal->litreage, 2) }} L<br>
+                                                        <strong>Litreage:</strong> {{ number_format($deal->litreage, 2) }}l<br>
                                                     @endif
 
                                                     @if ($deal->quantity)
-                                                        <strong>Quantity:</strong> {{ number_format($deal->quantity, 2) }}
+                                                        <strong>Quantity:</strong> {{ number_format($deal->quantity, 2) }} {{ $deal->units_of_measure ? $deal->units_of_measure->name : '' }}
                                                     @endif
 
                                                     @if (!$deal->weight && !$deal->litreage && !$deal->quantity)

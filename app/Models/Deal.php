@@ -25,6 +25,10 @@ class Deal extends Model
     {
         return $this->hasMany(Trip::class);
     }
+    public function trip_transport_orders()
+    {
+        return $this->hasMany(TripTransportOrder::class);
+    }
     public function customer()
     {
         return $this->belongsTo(Customer::class);

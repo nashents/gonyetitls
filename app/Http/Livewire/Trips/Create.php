@@ -1117,11 +1117,12 @@ class Create extends Component
             return;
         }
         $deal = Deal::find($id);
-        $this->customer_id = $deal->customer_id;
-        $this->selectedCargo = $deal->cargo_id;
+        $this->customer_id = $deal->customer_id ?: Null;
+        $this->selectedCargo = $deal->cargo_id ?: Null;
         $cargo = Cargo::find($deal->cargo_id);
         $this->cargo_type = $cargo?->type;
-        $this->selectedCurrency = $deal->currency_id;
+        $this->selectedCurrency = $deal->currency_id ?: Null;
+        $this->units_of_measure_id = $deal->units_of_measure_id ?: Null;
     }
 
     public function updatedWithDeal($value){
@@ -1935,6 +1936,7 @@ class Create extends Component
                             $trip_transport_order->exchange_amount = $exchange_amount;
                             $trip_transport_order->bill_of_entry = $boe;
                             $trip_transport_order->currency_id = $currency_id;
+                           
 
                         }else{
                         
