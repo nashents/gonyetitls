@@ -17,7 +17,7 @@
               <tr>
                 <td>
                    
-                    {{$item->product ? $item->product->product_number : ""}} {{$item->product ? $item->product->name : ""}} {{$item->product->brand ? $item->product->brand->name : ""}}
+                    {{$item->product ? $item->product->product_number : ""}} {{$item->product ? $item->product->name : ""}} {{$item->product?->brand ? $item->product?->brand?->name : ""}}
                     @if ($item->inventory)
                         {{$item->inventory ? $item->inventory->serial_number : ""}}
                     @elseif($item->tyre)

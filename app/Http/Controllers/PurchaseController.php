@@ -140,18 +140,12 @@ class PurchaseController extends Controller
      */
     public function destroy(Purchase $purchase)
     {
-        $products = $purchase->purchase_products;
-        $inventories = $purchase->inventories;
-      
-        if (isset($products)) {
-            foreach ($products as $product) {
-                $product->delete();
-            }
-        }
-        if (isset($inventories)) {
-            foreach ($inventories as $inventory) {
-                $inventory->delete();
-            }
+        $purchase->purchase_products()->delete();
+        $purchase->inventories()->delete();
+
+        if ($purchase->bill) {
+            $purchase->bill->bill_expenses()->delete();
+            $purchase->bill()->delete();
         }
        
         $purchase->delete();

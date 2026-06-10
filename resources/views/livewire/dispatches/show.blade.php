@@ -67,8 +67,8 @@
                                         @endif
                                         @if ($dispatch->employee)
                                             Employee: {{$dispatch->employee ? $dispatch->employee->name : ""}} {{$dispatch->employee ? $dispatch->employee->surname : ""}}
-                                                @if ($dispatch->department)
-                                                    Department: {{$dispatch->department ? $dispatch->department->name : ""}}
+                                                @if ($department)
+                                                    Department: {{$department->name}}
                                                 @endif
                                                 @if ($dispatch->branch)
                                                     Branch: {{$dispatch->branch ? $dispatch->branch->name : ""}}

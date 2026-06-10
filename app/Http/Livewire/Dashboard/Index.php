@@ -993,7 +993,7 @@ class Index extends Component
         $this->service_count = Service::all()->count();
         $this->inventory_count = Inventory::where('disposed',0)->where('status',1)->get()->count();
         $this->product_count = Product::where('buy',True)->where('department','inventory')->where('status',1)->get()->count();
-        $this->inventory_dispatches_count = Dispatch::whereYear('date',date('Y'))->where('department','inventory')->get()->count();
+        $this->inventory_dispatches_count = Dispatch::whereYear('date',date('Y'))->get()->count();
         $this->inventory_purchases_count = Purchase::whereYear('date',date('Y'))->where('department','inventory')->get()->count();
         $this->booking_count = Booking::where('authorization','approved')->whereYear('created_at', date('Y'))->count();
         $this->ticket_count = Ticket::whereYear('created_at', date('Y'))->count();

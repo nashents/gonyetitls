@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Inventory;
 use App\Models\CategoryValue;
+use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -84,13 +85,18 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
             $rack = Rack::firstOrCreate(['rack_number' => trim($row->get('rack_number'))], ['status' => 1]);
             $bin = Bin::firstOrCreate(['bin_number' => trim($row->get('bin_number'))], ['status' => 1]);
             $currency = Currency::firstOrCreate(['name' => trim($row->get('currency'))], ['status' => 1]);
+            $name = ucfirst(strtolower(trim($row->get('unit_of_measure'))));
+            $uom = UnitsOfMeasure::firstOrCreate(
+                ['name' => $name],
+                ['status' => 1]
+            );
 
             $product = Product::firstOrNew(['name' => $row->get('product_name')]);
 
             if (!$product->exists) {
                 $product->fill([
                     'user_id' => Auth::id(),
-                    'unit_of_measure' => $row->get('unit_of_measure'),
+                    'unit_of_measure' => $uom->name,
                     'category_id' => $category->id,
                     'category_value_id' => $subCategory->id,
                     'brand_id' => $brand->id,
@@ -109,10 +115,8 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
             if (is_numeric($unitPrice) && is_numeric($quantity)) {
                 $subtotal = $unitPrice * $quantity;
             }
-          
-
-
-           
+        
+            
                 $inventory = new Inventory;
                 $inventory->fill([
                     'user_id' => Auth::id(),
@@ -129,7 +133,7 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
                     'store_id' => $store->id,
                     'purchase_date' => $this->parseExcelDate($row->get('purchase_date')),
                     'weight' => $row->get('item_contents') ?: 1,
-                    'balance' => $row->get('balance') ?: 1,
+                    'balance' => $row->get('balance') ?: $quantity,
                     'status' => 1,
                 ])->save();
            

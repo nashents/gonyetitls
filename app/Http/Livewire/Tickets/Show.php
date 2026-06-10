@@ -353,7 +353,7 @@ class Show extends Component
         foreach($this->roles as $role){
             $this->role_names[] = $role->name;
         }
-        $this->ranks = $employee->ranks;
+        $this->ranks = $this->employee->ranks;
         foreach($this->ranks as $rank){
             $this->rank_names[] = $rank->name;
         }

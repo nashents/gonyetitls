@@ -2,8 +2,9 @@
 
 namespace App\Http\Livewire\Dispatches;
 
-use Livewire\Component;
+use App\Models\Department;
 use App\Models\Dispatch;
+use Livewire\Component;
 
 class Show extends Component
 {
@@ -13,7 +14,7 @@ class Show extends Component
     public function mount($id){
        
         $this->dispatch = Dispatch::find($id);
-        $this->department = $this->dispatch->department;
+        $this->department = Department::find($this->dispatch->department_id);
     }
 
     public function render()

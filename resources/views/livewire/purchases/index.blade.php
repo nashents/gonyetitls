@@ -235,7 +235,7 @@
                                                          <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-check color-secondary"></i> Mark as sent</a></li>
                                                     @endif
                                                     @endif
-                                                    @if ($purchase->authorization != "approved" || Auth::user()->is_admin())
+                                                    @if ($purchase->authorization == "pending" || Auth::user()->is_admin() || Auth::user()->id == $purchase->authorized_by_id)
                                                     <li><a href="#"  wire:click="edit({{$purchase->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#purchaseDeleteModal{{ $purchase->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endif

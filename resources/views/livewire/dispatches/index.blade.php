@@ -46,7 +46,7 @@
                                     </div>
                                 </div>
                                 <a href="#" data-toggle="modal" data-target="#dispatchModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Dispatch</a>
-                                {{-- <a href="#" data-toggle="modal" data-target="#ticket_expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>None Inventory Item(s) Dispatch</a> --}}
+                                <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                 <a href="#" wire:click="exportDispatchesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportDispatchesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportDispatchesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -108,34 +108,47 @@
                                     </td>
                                     <td>
                                         @if ($dispatch->ticket)
-                                           <strong>Ticket#: </strong><a href="">{{$dispatch->ticket ? $dispatch->ticket->ticket_number : ""}}</a>
+                                           <strong>Ticket#: </strong><a href="{{route('tickets.show',$dispatch->ticket_id)}}" target="_blank" style="color: blue">{{$dispatch->ticket ? $dispatch->ticket->ticket_number : ""}}</a>
                                         @endif
-                                        @if ($dispatch->horse)
-                                           <strong>Horse: </strong><a href="">{{$dispatch->horse ? $dispatch->horse->registration_number : ""}} {{$dispatch->horse->fleet_number ? "(".$dispatch->horse->fleet_number.")" : ""}} 
+                                        @if ($dispatch->horse) 
+                                            <br>
+                                           <strong>Horse: </strong><a href="{{route('horses.show',$dispatch->horse_id)}}" target="_blank" style="color: blue">{{$dispatch->horse ? $dispatch->horse->registration_number : ""}} {{$dispatch->horse->fleet_number ? "(".$dispatch->horse->fleet_number.")" : ""}} 
                                             @if ($dispatch->horse->horse_make)
                                                 {{$dispatch->horse->horse_make ? $dispatch->horse->horse_make->name : ""}} {{$dispatch->horse->horse_model ? $dispatch->horse->horse_model->name : ""}}       
-                                           @endif
+                                            @endif
                                         </a>
                                         @endif
                                         @if ($dispatch->vehicle)
-                                            <strong>Vehicle: </strong><a href="">{{$dispatch->vehicle ? $dispatch->vehicle->registration_number : ""}} {{$dispatch->vehicle->fleet_number ? "(".$dispatch->vehicle->fleet_number.")" : ""}}</a>
+                                          <br>
+                                            <strong>Vehicle: </strong><a href="{{route('vehicles.show',$dispatch->vehicle_id)}}" target="_blank" style="color: blue">{{$dispatch->vehicle ? $dispatch->vehicle->registration_number : ""}} {{$dispatch->vehicle->fleet_number ? "(".$dispatch->vehicle->fleet_number.")" : ""}}</a>
+                                            @if ($dispatch->vehicle->vehicle_make)
+                                                {{$dispatch->vehicle->vehicle_make ? $dispatch->vehicle->vehicle_make->name : ""}} {{$dispatch->vehicle->vehicle_model ? $dispatch->vehicle->vehicle_model->name : ""}}       
+                                            @endif
                                         @endif
                                         @if ($dispatch->trailer)
-                                           <strong></strong>  Trailer:<a href="">{{$dispatch->trailer ? $dispatch->trailer->registration_number : ""}} {{$dispatch->trailer->fleet_number ? "(".$dispatch->trailer->fleet_number.")" : ""}}</a>
+                                          <br>
+                                           <strong></strong>  Trailer:<a href="{{route('trailers.show',$dispatch->trailer_id)}}" target="_blank" style="color: blue">{{$dispatch->trailer ? $dispatch->trailer->registration_number : ""}} {{$dispatch->trailer->fleet_number ? "(".$dispatch->trailer->fleet_number.")" : ""}}</a>
+                                            @if ($dispatch->trailer->make)
+                                                {{$dispatch->trailer->make}} {{$dispatch->trailer->model}}       
+                                            @endif
                                         @endif
                                                 @if ($dispatch->employee)
+                                                  <br>
                                                     <strong>Employee:</strong> {{$dispatch->employee ? $dispatch->employee->name : ""}} {{$dispatch->employee ? $dispatch->employee->surname : ""}} <br>
                                                 @php
                                                     $asset_department = App\Models\Department::find($dispatch->department_id);
                                                 @endphp
                                                 @if ( $asset_department )
+                                                  <br>
                                                     <strong>Department:</strong> {{ $asset_department->name}} <br>
                                                 @endif
                                                 @if ($dispatch->branch)
+                                                  <br>
                                                     <strong>Branch:</strong> {{$dispatch->branch ? $dispatch->branch->name : ""}}
                                                 @endif
                                         @endif
                                          @if ($dispatch->vendor)
+                                           <br>
                                             <strong>Vendor: </strong>{{$dispatch->vendor ? $dispatch->vendor->name : ""}}
                                         @endif
                                     </td>
@@ -2525,6 +2538,31 @@
         </div>
     </div>
 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="importModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Inventory Dispatches <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+            </div>
+            <form wire:submit.prevent="importDispatches()"  enctype="multipart/form-data">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="name">Upload Inventory Issued Excel File<span class="required" style="color: red">*</span></label>
+                    <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Bills File" required>
+                    @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit"  class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div><!-- Modal -->
  
    
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Dispatches;
 
+use App\Imports\DispatchesImport;
 use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
 use App\Models\Asset;
@@ -27,11 +28,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel as ExcelFacade;
+use Maatwebsite\Excel\Validators\ValidationException ;
 
 class Index extends Component
 {
 
+    use WithFileUploads;
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -111,6 +116,7 @@ class Index extends Component
     public $expense_account_id;
     public $sell = False;
     public $buy = True;
+    public $importFile;
 
     public $inputs = [];
     public int $i = 1;
@@ -348,6 +354,128 @@ class Index extends Component
        
     }
 
+    
+    public function importDispatches()
+    {
+        $this->validate([
+            'importFile' => 'required|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $import = new DispatchesImport();
+
+            ExcelFacade::import($import, $this->importFile->getRealPath());
+
+            $failures = $import->failures();
+            $errors   = $import->errors();
+
+            if ($failures->isNotEmpty()) {
+                foreach ($failures as $failure) {
+                    $this->addError(
+                        'importFile',
+                        "Row {$failure->row()}: " . implode(', ', $failure->errors())
+                    );
+                }
+                return;
+            }
+
+            if ($errors->isNotEmpty()) {
+                foreach ($errors as $error) {
+                    $this->addError('importFile', $error->getMessage());
+                }
+                return;
+            }
+
+            $this->importFile = null;
+            $this->dispatchBrowserEvent('hide-importModal');
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Dispatches imported successfully!',
+            ]);
+
+        } catch (ValidationException $e) {
+            foreach ($e->failures() as $failure) {
+                $this->addError(
+                    'importFile',
+                    "Row {$failure->row()}: " . implode(', ', $failure->errors())
+                );
+            }
+        } catch (\Exception $e) {
+            $this->addError('importFile', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 2. Download blank template (add this method too)
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    public function downloadDispatchTemplate()
+    {
+        $headers = [
+            'date', 'dispatch_for', 'department',
+            'employee_name', 'horse', 'trailer', 'vehicle',
+            'store_name', 'branch_name', 'department_name',
+            'currency', 'vendor_name', 'description', 'items',
+        ];
+
+        $example_inventory = [
+            '2025-06-01', 'inventory', 'inventory',
+            'John Doe', 'AAA 1234', '', '',
+            'Main Store', '', '',
+            'USD', '', 'Workshop stock out',
+            'Engine Oil*5, Air Filter*2',
+        ];
+
+        $example_expenses = [
+            '2025-06-01', 'expenses', 'inventory',
+            'John Doe', 'AAA 1234', '', '',
+            '', '', '',
+            'ZWG', 'FuelCo Pvt Ltd', 'Fuel expense',
+            'Diesel*50:2.80:VAT 15%, Labour*1:150.00',
+        ];
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Headers
+        foreach ($headers as $col => $heading) {
+            $sheet->setCellValueByColumnAndRow($col + 1, 1, $heading);
+            $sheet->getColumnDimensionByColumn($col + 1)->setAutoSize(true);
+            $sheet->getStyleByColumnAndRow($col + 1, 1)->getFont()->setBold(true);
+        }
+
+        // Example rows
+        foreach ($example_inventory as $col => $val) {
+            $sheet->setCellValueByColumnAndRow($col + 1, 2, $val);
+        }
+        foreach ($example_expenses as $col => $val) {
+            $sheet->setCellValueByColumnAndRow($col + 1, 3, $val);
+        }
+
+        // dispatch_for dropdown
+        $validation = $sheet->getCell('B2')->getDataValidation();
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validation->setFormula1('"inventory,expenses"');
+        $validation->setShowDropDown(false);
+        $validation->setSqref('B2:B1000');
+
+        // department dropdown
+        $validation2 = $sheet->getCell('C2')->getDataValidation();
+        $validation2->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validation2->setFormula1('"inventory,tyre,asset"');
+        $validation2->setShowDropDown(false);
+        $validation2->setSqref('C2:C1000');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        $filename = 'dispatches_import_template.xlsx';
+        $path = storage_path('app/' . $filename);
+        $writer->save($path);
+
+        return response()->download($path, $filename)->deleteFileAfterSend(true);
+    }
+
     public function updatedDispatchFor($value){
         if(!is_null($value)){
             if($value == "expenses"){
@@ -497,7 +625,7 @@ class Index extends Component
     }
 
      public function dispatchNumber(){
-
+        $initials  = "";
         if (isset(Auth::user()->company)) {
             $str = Auth::user()->company->name;
             $words = explode(' ', $str);
