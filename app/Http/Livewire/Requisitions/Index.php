@@ -91,6 +91,7 @@ class Index extends Component
     public $paid_comments;
     public $paid_date;
    
+    public $user;
     public $company;
     public $item_totals = 0;
 
@@ -115,6 +116,10 @@ class Index extends Component
     public $current_allowance_id = [];
     public $current_qty = [];
     public $current_amount = [];
+
+    public $role_names = [];
+    public $department_names = [];
+    public $rank_names = [];
 
     public $item_name;
     public $item_description;
@@ -453,6 +458,22 @@ class Index extends Component
 
 
     public function mount(){
+
+        $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+      
+        $this->company = $this->employee->company;
+         foreach($this->employee->departments as $department) {
+            $this->department_names[] = $department->name;
+        }
+    
+        foreach($this->user->roles as $role) {
+            $this->role_names[] = $role->name;
+        }
+    
+        foreach($this->employee->ranks as $rank) {
+            $this->rank_names[] = $rank->name;
+        }
       
         $this->resetPage();
         $this->reset(['search', 'searchTrip', 'searchBooking', 'searchPurchase']);
@@ -1287,6 +1308,17 @@ class Index extends Component
     // Non-finance/non-super: restrict to their departments
     if (! $isFinanceOrSuper) {
         $base->whereIn('department_id', (array) $this->department_ids);
+    }
+
+    $canViewPaymentRequisitions =
+    (
+        in_array('Finance', $departmentNames)
+        && in_array('Admin', $roleNames)
+    )
+    || in_array('Super Admin', $roleNames);
+
+    if (!$canViewPaymentRequisitions) {
+        $base->where('type', '!=', 'payment_requisition');
     }
 
   

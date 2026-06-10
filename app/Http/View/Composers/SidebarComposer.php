@@ -61,7 +61,9 @@ class SidebarComposer
         ])->get()->keyBy('name');
 
       
-
+        $department_head     = $employee 
+        ? DepartmentHead::where('employee_id', $employee->id)->first()
+        : null;
         $hrdepartment   = $departments->get('Human Resources');
         $hrdepartment_head     = $employee && $hrdepartment
             ? DepartmentHead::where('department_id', $hrdepartment->id)
@@ -662,6 +664,7 @@ class SidebarComposer
             'hasStoresDeptHead'    => (bool) $stdepartment_head,
             'hasWorkshopDeptHead'    => (bool) $wsdepartment_head,
             'hasHRDeptHead'    => (bool) $hrdepartment_head,
+            'hasDeptHead'    => (bool) $department_head,
             'hasHSEQDeptHead'    => (bool) $hseqdepartment_head,
             'hasTLDeptHead'    => (bool) $tldepartment_head,
             'hasFinanceDeptHead'    => (bool) $fndepartment_head,
@@ -909,6 +912,7 @@ class SidebarComposer
             'isDirector'     => $isDirector,
             'companyColor'          => $companyColor,
             'hseqdepartment_head'        => $hseqdepartment_head,
+            'department_head'          => $department_head,
             'hrdepartment_head'          => $hrdepartment_head,
             'tldepartment_head'          => $tldepartment_head,
             'fndepartment_head'          => $fndepartment_head,

@@ -1094,9 +1094,9 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Manage Requisitions','slug'=>'manage-requisitions','icon'=>'fas fa-list','route_name'=>'requisitions.index','sort_order'=>10]);
 
         $reqManageVis = $any([
-            $all(['hasFinanceDeptHead']),
+            $all(['hasDeptHead']),
             $all(['isAdmin','inFinance']),
-            $all(['isAdmin','inStores']),
+            // $all(['isAdmin','inStores']),
             $all(['isSuperAdmin']),
         ]);
         $upsertSub($m, ['name'=>'Pending Requisitions','slug'=>'pending-requisitions','icon'=>'fas fa-clock','route_name'=>'requisitions.pending','sort_order'=>20,'badge_key'=>'requisitions_pending_count','visibility'=>$reqManageVis]);
