@@ -29,8 +29,15 @@ class Approved extends Component
     public $comments;
     public $requisition;
     public $company;
+    public $department_ids;
 
     public function mount(){
+
+        $employee_departments = Auth::user()->employee->departments;
+        foreach ($employee_departments as $department) {
+            $this->department_ids[] = $department->id;
+        }
+        
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = 'created_at';
         $this->resetPage();

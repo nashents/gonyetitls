@@ -50,7 +50,7 @@
                                                 
                                                     @endforeach
                                                 </select>
-                                                <small>  <a href="{{ route('inventory_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
+                                                <small>  <a href="{{ route('tyre_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small><a href="#" wire:click.prevent="refresh('tyre_purchases')" style="float: right" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                 <br>
                                                 <small style="color: green">NB: All fully / partially received purchase orders will appear in orange</small>
                                                 @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror

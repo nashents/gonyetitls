@@ -782,8 +782,16 @@ class Create extends Component
                 'type'=>'success',
                 'message'=>"Bins Refreshed Successfully!!."
             ]);
-        }elseif($category == "goods_receiveds"){
+        }
+        elseif($category == "goods_receiveds"){
             $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "tyre_purchases"){
+            $this->purchases = Purchase::where('department','tyre')->where('authorization','approved')->orderBy('created_at','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"GRVs Refreshed Successfully!!."

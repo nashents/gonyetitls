@@ -36,8 +36,14 @@ class Pending extends Component
     public $comments;
     public $requisition;
     public $company;
+    public $department_ids;
 
     public function mount(){
+
+        $employee_departments = Auth::user()->employee->departments;
+        foreach ($employee_departments as $department) {
+            $this->department_ids[] = $department->id;
+        }
 
         $this->notificationsOnly = request()->boolean('notifications', false);
         $this->paymentNotificationsOnly = request()->boolean('payment_notifications', false);
