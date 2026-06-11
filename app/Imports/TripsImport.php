@@ -218,6 +218,39 @@ WithBatchInserts
         return null;
     }
 
+    // ──────────────────────────────────────────────
+    // Find by fuzzy name match, create if missing
+    // ──────────────────────────────────────────────
+    protected $lookupCache = [];
+
+    protected function resolveOrCreate(string $modelClass, $name, array $extra = [])
+    {
+        $name = is_string($name) ? trim($name) : $name;
+
+        if (!$name) {
+            return null;
+        }
+
+        $cacheKey = $modelClass . '|' . strtolower($name);
+
+        if (isset($this->lookupCache[$cacheKey])) {
+            return $this->lookupCache[$cacheKey];
+        }
+
+        // 1️⃣ Fuzzy match first (same behaviour as before)
+        $record = $modelClass::where('name', 'LIKE', '%' . $name . '%')->first();
+
+        // 2️⃣ Create if not found
+        if (!$record) {
+            $record = $modelClass::create(array_merge([
+                'name'    => $name,
+                'user_id' => Auth::id(),
+            ], $extra));
+        }
+
+        return $this->lookupCache[$cacheKey] = $record;
+    }
+
     public function limit(): int
     {
         return 2500;
@@ -272,13 +305,28 @@ WithBatchInserts
                 $horse = Horse::where('registration_number', 'LIKE', '%' . trim($row->get('horse_registration_number')) . '%')->first();
                 $vehicle = $horse?->vehicle;
 
-                $customer = Customer::where('name', 'LIKE', '%' . trim($row->get('customer')) . '%')->first();
-                $loading_point = LoadingPoint::where('name', 'LIKE', '%' . trim($row->get('loading_point')) . '%')->first();
-                $offloading_point = OffloadingPoint::where('name', 'LIKE', '%' . trim($row->get('offloading_point')) . '%')->first();
-                $cargo = Cargo::where('name', 'LIKE', '%' . trim($row->get('cargo')) . '%')->first();
-                $transporter = Transporter::where('name', 'LIKE', '%' . trim($row->get('transporter')) . '%')->first();
-                $trip_type = TripType::where('name', 'LIKE', '%' . trim($row->get('trip_type')) . '%')->first();
-                $currency = Currency::where('name', 'LIKE', '%' . trim($row->get('currency')) . '%')->first();
+                $customer = $this->resolveOrCreate(Customer::class, $row->get('customer'), [
+                    'company_id' => $company_id,
+                    'status'     => 1,
+                ]);
+
+                $loading_point = $this->resolveOrCreate(LoadingPoint::class, $row->get('loading_point'));
+
+                $offloading_point = $this->resolveOrCreate(OffloadingPoint::class, $row->get('offloading_point'));
+
+                $cargo = $this->resolveOrCreate(Cargo::class, $row->get('cargo'), [
+                    'type' => 'Solid', // default for auto-created cargo
+                ]);
+
+                $transporter = $this->resolveOrCreate(Transporter::class, $row->get('transporter'), [
+                    'company_id' => $company_id,
+                    'status'     => 1,
+                ]);
+
+                $trip_type = $this->resolveOrCreate(TripType::class, $row->get('trip_type'));
+
+                // Fallback to company currency if blank/unknown
+                $currency = $this->resolveOrCreate(Currency::class, $row->get('currency')) ?? $this->currency;
 
                 // Trailer IDs
                 $trailer_ids = [];
@@ -434,7 +482,7 @@ WithBatchInserts
                         }
                     }
                 }
-
+                
                 // ──────────────────────────────────────────────
                 // Delivery Note (linked to the TTO)
                 // ──────────────────────────────────────────────
