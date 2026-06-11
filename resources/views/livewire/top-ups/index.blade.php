@@ -24,9 +24,11 @@
                                     </th>
                                     <th class="th-sm">Fuel Type
                                     </th>
-                                    <th class="th-sm">Qty
+                                     <th class="th-sm">Ccy
                                     </th>
-                                    <th class="th-sm">Currency
+                                    <th class="th-sm">Acc Amt
+                                    </th>
+                                    <th class="th-sm">Qty
                                     </th>
                                     <th class="th-sm">Rate
                                     </th>
@@ -50,8 +52,13 @@
                                     <td>{{$top_up->container ? $top_up->container->name : ""}}</td>
                                     <td>{{$top_up->date}}</td>
                                     <td>{{$top_up->fuel_type}}</td>
-                                    <td>{{$top_up->quantity ? $top_up->quantity." Litres" : ""}}</td>
                                     <td>{{$top_up->currency ? $top_up->currency->name : ""}}</td>
+                                    <td>
+                                        @if ($top_up->account_amount)
+                                             {{$top_up->currency ? $top_up->currency->symbol : ""}}{{number_format($top_up->account_amount,2)}}
+                                        @endif
+                                    </td>
+                                    <td>{{$top_up->quantity ? $top_up->quantity."l" : ""}}</td>
                                     <td>
                                         @if ($top_up->rate)
                                              {{$top_up->currency ? $top_up->currency->symbol : ""}}{{number_format($top_up->rate,2)}}

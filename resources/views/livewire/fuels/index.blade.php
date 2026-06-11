@@ -567,7 +567,11 @@
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             @if (isset($container_balance))
                                                 <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                            @endif
+                                             @if (isset($account_balance))
+                                                <br>
+                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                             @endif
                                         @endif 
                                     @endif
@@ -589,7 +593,11 @@
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             @if (isset($container_balance))
                                                 <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                            @endif
+                                             @if (isset($account_balance))
+                                                <br>
+                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                             @endif
                                         @endif 
                                     @endif
@@ -597,6 +605,18 @@
                             </div>
                         @endif
                     </div>
+                    @if (isset($selected_container) && $selected_container->purchase_type = "Bulk Buy")
+                        <div class="form-group">
+                            <label for="exampleInputEmail13">Select where to deduct from<span class="required" style="color: red">*</span></label>
+                            <div class="mb-10">
+                                <input type="radio" wire:model.debounce.300ms="top_up_to" value="deduct_from"  class="line-style"  required/>
+                                <label for="one" class="radio-label">Account Balance($)</label>
+                                <input type="radio" wire:model.debounce.300ms="deduct_from" value="quantity"  class="line-style"  required/>
+                                <label for="one" class="radio-label">Quantity Balance(l)</label>
+                            </div>     
+                        </div>
+                    @endif
+                    
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -952,7 +972,11 @@
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             @if (isset($container_balance))
                                                 <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                            @endif
+                                             @if (isset($account_balance))
+                                                <br>
+                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                             @endif
                                         @endif 
                                     @endif
@@ -974,7 +998,11 @@
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             @if (isset($container_balance))
                                                 <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                            @endif
+                                             @if (isset($account_balance))
+                                                <br>
+                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                             @endif
                                         @endif 
                                     @endif
@@ -1226,7 +1254,11 @@
                                     @if ($selected_container->purchase_type == "Bulk Buy")
                                         @if (isset($container_balance))
                                             <br>
-                                            <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                            <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                        @endif
+                                         @if (isset($account_balance))
+                                            <br>
+                                            <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                         @endif
                                     @endif 
                                 @endif
@@ -1416,7 +1448,11 @@
                                     @if ($selected_container->purchase_type == "Bulk Buy")
                                         @if (isset($container_balance))
                                             <br>
-                                            <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                            <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                        @endif
+                                         @if (isset($account_balance))
+                                            <br>
+                                            <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                         @endif
                                     @endif 
                                 @endif
@@ -1597,7 +1633,11 @@
                                 @if ($selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance))
                                         <br>
-                                        <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                        <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                                    @endif
+                                     @if (isset($account_balance))
+                                        <br>
+                                        <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                                     @endif
                                 @endif 
                             @endif
@@ -1654,6 +1694,7 @@
                                         @if ($container_balance < $quantity)
                                         <small style="color: red">Fuel order exceeds {{ $container_balance }} litres, which is the fueling station balance.</small>
                                         @endif
+                                        
                                     @endif
                                 @endif
                                
@@ -1733,7 +1774,11 @@
                         @if ($selected_container->purchase_type == "Bulk Buy")
                             @if (isset($container_balance))
                                 <br>
-                                <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
+                            @endif
+                            @if (isset($account_balance))
+                                <br>
+                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
                             @endif
                         @endif 
                     @endif

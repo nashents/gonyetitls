@@ -123,11 +123,11 @@ class Pending extends Component
                     $container = Container::find($this->container_id);
 
                     if($container){
-                        if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
+                        if(($container && is_numeric($container->balance)) && ($this->top_up->quantity && is_numeric($this->top_up->quantity))){
                             $container->balance = $container->balance + $this->top_up->quantity;
                         }
-                        if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
-                            $container->account_balance = $container->account_balance + $this->top_up->amount;
+                        if(($container && is_numeric($container->account_balance)) && ($this->top_up->account_amount && is_numeric($this->top_up->account_amount))){
+                            $container->account_balance = $container->account_balance + $this->top_up->account_amount;
                         }
                     
                         $container->update();
@@ -135,10 +135,10 @@ class Pending extends Component
 
                   
 
-                    if (isset($top_up->amount) && $top_up->amount > 0) {
+                   if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
 
                         $account = Account::where('name','Fuel')->get()->first();
-
+                         $billAmount = $top_up->amount ? $top_up->amount : $top_up->account_amount;
                         $bill = new Bill;
                         $bill->user_id = Auth::user()->id;
                         $bill->bill_number = $this->billNumber();
@@ -152,9 +152,9 @@ class Pending extends Component
                         $bill->category = "Fuel Station Fuel Topup";
                         $bill->bill_date = date("Y-m-d");
                         $bill->currency_id =  $top_up->currency_id;
-                        $bill->subtotal =  $top_up->amount;
-                        $bill->total =  $top_up->amount;
-                        $bill->balance =  $top_up->amount;
+                        $bill->subtotal =  $billAmount;
+                        $bill->total =  $billAmount;
+                        $bill->balance =  $billAmount;
                         $bill->exchange_rate = $top_up->exchange_rate;
                         $bill->exchange_amount = $top_up->exchange_amount;
                         $bill->authorized_by_id = $top_up->authorized_by_id;
@@ -176,9 +176,9 @@ class Pending extends Component
                             $bill_expense->account_type_id = $account->account_type->id;
                         }
                         $bill_expense->qty = 1;
-                        $bill_expense->amount = $top_up->amount;
-                        $bill_expense->subtotal = $top_up->amount;
-                        $bill_expense->subtotal_incl = $top_up->amount;
+                        $bill_expense->amount = $billAmount;
+                        $bill_expense->subtotal = $billAmount;
+                        $bill_expense->subtotal_incl = $billAmount;
                         $bill_expense->save();
 
                     }
@@ -247,20 +247,20 @@ class Pending extends Component
 
         $container = Container::find($this->container_id);
             if($container){
-                if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
+                if(($container && is_numeric($container->balance)) && ($this->top_up->quantity && is_numeric($this->top_up->quantity))){
                     $container->balance = $container->balance + $this->top_up->quantity;
                 }
-                if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
-                    $container->account_balance = $container->account_balance + $this->top_up->amount;
+                if(($container && is_numeric($container->account_balance)) && ($this->top_up->account_amount && is_numeric($this->top_up->account_amount))){
+                    $container->account_balance = $container->account_balance + $this->top_up->account_amount;
                 }
                 $container->update();
             }
        
 
-        if (isset($top_up->amount) && $top_up->amount > 0) {
+        if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
 
             $account = Account::where('name','Fuel')->get()->first();
-
+            $billAmount = $top_up->amount ? $top_up->amount : $top_up->account_amount;
             $bill = new Bill;
             $bill->user_id = Auth::user()->id;
             $bill->bill_number = $this->billNumber();
@@ -274,9 +274,9 @@ class Pending extends Component
             $bill->category = "Fuel Station Fuel Topup";
             $bill->bill_date = date("Y-m-d");
             $bill->currency_id =  $top_up->currency_id;
-            $bill->subtotal =  $top_up->amount;
-            $bill->total =  $top_up->amount;
-            $bill->balance =  $top_up->amount;
+            $bill->subtotal =  $billAmount;
+            $bill->total =  $billAmount;
+            $bill->balance =  $billAmount;
             $bill->exchange_rate = $top_up->exchange_rate;
             $bill->exchange_amount = $top_up->exchange_amount;
             $bill->authorized_by_id = $top_up->authorized_by_id;
@@ -298,9 +298,9 @@ class Pending extends Component
                 $bill_expense->account_type_id = $account->account_type->id;
             }
             $bill_expense->qty = 1;
-            $bill_expense->amount = $top_up->amount;
-            $bill_expense->subtotal = $top_up->amount;
-            $bill_expense->subtotal_incl = $top_up->amount;
+            $bill_expense->amount = $billAmount;
+            $bill_expense->subtotal = $billAmount;
+            $bill_expense->subtotal_incl = $billAmount;
             $bill_expense->save();
 
         }

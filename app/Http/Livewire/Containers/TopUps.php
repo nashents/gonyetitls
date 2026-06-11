@@ -29,6 +29,10 @@ class TopUps extends Component
     public $rate;
     public $amount;
     public $balance;
+    public $name;
+    public $email;
+    public $phonenumber;
+    public $address;
 
 
     public function mount($id){

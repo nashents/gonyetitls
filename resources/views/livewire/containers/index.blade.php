@@ -28,8 +28,6 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Station#
-                                    </th>
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">Purchase Type
@@ -38,11 +36,11 @@
                                     </th>
                                     <th class="th-sm">Currency
                                     </th>
-                                    <th class="th-sm">Acc Bal
+                                    <th class="th-sm">Acc Bal($)
                                     </th>
                                     <th class="th-sm">Capacity(l)
                                     </th>
-                                    <th class="th-sm">Balance(l)
+                                    <th class="th-sm">Qty Bal(l)
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -52,21 +50,17 @@
                                 <tbody>
                                     @forelse ($containers as $container)
                                   <tr>
-
-                                    <td>{{$container->container_number}}</td>
                                     <td>{{$container->name}}</td>
                                     <td>{{$container->purchase_type}}</td>
                                     <td>{{$container->fuel_type}}</td>
                                     <td>{{$container->currency ? $container->currency->name : ""}}</td>
                                     <td>
-                                        @if (isset($container->account_balance) && is_numeric($container->account_balance))
-                                            {{$container->currency ? $container->currency->symbol : ""}}{{number_format($container->account_balance,2)}}        
-                                        @endif
+                                       {{$container->currency ? $container->currency->symbol : ""}}{{number_format($container->account_balance ? $container->account_balance : 0,2)}}        
                                     </td>
                                     <td>
-                                        {{$container->capacity ? $container->capacity." Litres" : ""}}         
+                                        {{$container->capacity}}         
                                     </td>
-                                    <td>{{$container->balance ? $container->balance." Litres" : ""}}</td>
+                                    <td>{{$container->balance}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -117,27 +111,38 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="top_upModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-gas-pump"></i>Fuel TopUp <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-gas-pump"></i>Topup to {{$selected_container?->name}} fuel station <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="topup()" >
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="container_id">Fueling Station<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="container_id" class="form-control" required disabled>
-                                   <option value="">Select Station</option>
-                                   @foreach ($containers as $container)
-                                    <option value="{{$container->id}}">{{$container->name}}</option>
-                                   @endforeach
-                               </select>
-                                @error('container_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="attach_po"   class="line-style" />
+                        <label for="one" class="radio-label">Attach a purchase order to this top up</label>
+                        @error('attach_po') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if (!is_null($attach_po) && $attach_po == True)
+                        <div class="form-group">
+                            <label for="country">Purchase Orders</label>
+                            <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search with order#, vendor, currency..." class="form-control">
+                                <select wire:model.debounce.300ms="selectedPurchase" class="form-control" size="8">
+                                    <option value="">Select Purchase Order</option>
+                                    @foreach ($purchases as $purchase)
+                                        <option value="{{ $purchase->id }}">{{ $purchase->purchase_number }} | 
+                                            {{ $purchase->date}} |
+                                            {{ $purchase->vendor ? $purchase->vendor->name : "" }} |
+                                            {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{ number_format($purchase->total ? $purchase->total : 0,2)}}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
+                    @endif
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="vendor_id">Vendors</label>
@@ -151,16 +156,25 @@
                                 @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
+                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name"> Date<span class="required" style="color: red">*</span></label>
                                 <input type="date"  class="form-control" wire:model.debounce.300ms="date" placeholder="Enter TopUp date" required >
                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label for="exampleInputEmail13">Select what to top up<span class="required" style="color: red">*</span></label>
+                            <div class="mb-10">
+                                <input type="radio" wire:model.debounce.300ms="top_up_to" value="account"  class="line-style"  required/>
+                                <label for="one" class="radio-label">Account Bal($)</label>
+                                <input type="radio" wire:model.debounce.300ms="top_up_to" value="quantity"  class="line-style"  required/>
+                                <label for="one" class="radio-label">Quantity Bal(l)</label>
+                            </div>     
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="fuel_type">Fuel Type<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="fuel_type" class="form-control" required disabled>
@@ -174,7 +188,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="currency_id">Currency<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
+                               <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required {{$top_up_to == "account" ? "disabled" : ""}}>
                                    <option value="">Select Currency</option>
                                    @foreach ($currencies as $currency)
                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -196,39 +210,49 @@
                                     @endif
                                 @endif
                         </div>
+                        
                     </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Account Topup Amount</label>
+                                <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="account_amount" {{$top_up_to == "quantity" ? "disabled" : ""}} {{isset($selectedPurchase) ? "disabled" : ""}} placeholder="Enter Account Top Up Amount"  >
+                                @error('account_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if (isset($capacity) && $capacity > 0)
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="quantity">Top Up Qty</label>
+                                    <input type="number" step="any" min="0" max="{{ $capacity }}" class="form-control" wire:model.debounce.300ms="quantity" {{$top_up_to == "account" ? "disabled" : ""}} placeholder="Enter Top Up Quantity"/>
+                                    @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    @if ($total_fuel > $capacity)
+                                        <small style="color: red" >Quantity + Balance exceeds station capacity</small>
+                                    @endif
+                                </div>
+                            </div>
+                        @else 
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="quantity">Top Up Qty</label>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Top Up Quantity" {{$top_up_to == "account" ? "disabled" : ""}}/>
+                                    @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        @endif    
+                   </div>
                    <div class="row">
-                    @if (isset($capacity) && $capacity > 0)
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" step="any" min="0" max="{{ $capacity }}" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Fuel Quantity"/>
-                            @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            @if ($total_fuel > $capacity)
-                                <small style="color: red" >Quantity + Balance exceeds station capacity</small>
-                            @endif
-                        </div>
-                    </div>
-                    @else 
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Fuel Quantity" required/>
-                            @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    @endif
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="rate">Rate</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="rate" placeholder="Enter Rate" >
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="rate" placeholder="Enter Unit Price" {{$top_up_to == "account" ? "disabled" : ""}}>
                                 @error('rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
-                                <label for="amount">Amount</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount">
+                                <label for="amount">Total</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount" {{$top_up_to == "account" ? "disabled" : ""}}>
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -247,7 +271,7 @@
     </div>
   
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Transfer Fuel Between Stations <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -327,7 +351,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="containerModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Fueling Station <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -335,17 +359,17 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name"> Name<span class="required" style="color: red">*</span></label>
-                        <input type="text"  class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Station Name" required />
+                        <label for="name">Name<span class="required" style="color: red">*</span></label>
+                        <input type="text"  class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Station / Tank Name" required />
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        <small style="color: green">Name Example: Zuva Msasa (Diesel)</small>
+                        <small style="color: green">Enter a descriptive name eg: Zuva(Diesel) / Zuva Msasa Diesel</small>
                     </div>
-                   
+                    <h5 class="underline mt-15">Location & Contact Details</h5>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="text"  class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Station Email"  />
+                                <input type="text" class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Station Email"  />
                                 @error('email') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -357,7 +381,6 @@
                             </div>
                         </div>
                     </div>
-                  
                     <div class="form-group">
                         <label for="address">Address</label>
                         <input type="text"  class="form-control" wire:model.debounce.300ms="address" placeholder="Enter Station Address" />
@@ -388,13 +411,20 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
-                       
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
-                                <label for="currency_id">Currencies</label>
-                               <select wire:model.debounce.300ms="container_currency_id" class="form-control"  >
+                                <label for="capacity">Fuel Tank Capacity</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="capacity" placeholder="Enter Tank Capacity" />
+                                @error('capacity') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="currency_id">Account Currency @if (isset($account_balance))
+                                    <span class="required" style="color: red">*</span>
+                                @endif</label>
+                               <select wire:model.debounce.300ms="container_currency_id" class="form-control" {{isset($account_balance) ? "required" : ""}} >
                                    <option value="">Select Currency</option>
                                    @foreach ($currencies as $currency)
                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -403,42 +433,21 @@
                                 @error('container_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="capacity">Account Balance</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="account_balance" placeholder="Enter Account Balance" />
-                                @error('account_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="capacity">Capacity</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="capacity" placeholder="Enter Tank Capacity" />
-                                @error('capacity') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
                     </div>
-                    <h5 class="underline mt-30">Initial Deposit / Current Fuel Balance Details</h5>
+                    <h5 class="underline mt-30">Sitting Account ($) Balance / Fuel Quantity(l) Balance Details</h5>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="vendor_id">Vendors</label>
-                               <select wire:model.debounce.300ms="vendor_id" class="form-control"  >
-                                   <option value="">Select Vendor</option>
-                                   @foreach ($vendors as $vendor)
-                                    <option value="{{$vendor->id}}">{{$vendor->name}}</option>
-                                   @endforeach
-                               </select>
-                                @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small><a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh"></i></a>
+                                <label for="capacity">Account Balance($)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="account_balance" placeholder="Enter Sitting Account Amount" />
+                                @error('account_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                      
                         @if (isset($capacity) && $capacity > 0)
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="quantity">Quantity <span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0" max="{{ $capacity }}" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Initial Fuel Deposit Quantity" required/>
+                                <label for="quantity">Quantity Balance(l)</label>
+                                <input type="number" step="any" min="0" max="{{ $capacity }}" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Sitting Quantity"/>
                                 @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 @if ($quantity > $capacity)
                                     <small style="color: red" >Quantity exceeds station capacity</small>
@@ -448,36 +457,14 @@
                         @else 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="quantity">Quantity</label>
+                                <label for="quantity">Quantity(l)</label>
                                 <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Initial Fuel Deposit Quantity" />
                                 @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         @endif
-                        
                     </div>
-                  
-                  <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="rate">Rate</label>
-                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="rate" placeholder="Enter Fuel Rate" />
-                            @error('rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="amount">Amount</label>
-                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Account Balance" />
-                            @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                  </div>
-                  {{-- <div class="form-group">
-                    <label for="balance">Balance</label>
-                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="balance" disabled />
-                    @error('balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                </div> --}}
+                    
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -492,7 +479,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="containerEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Fueling Station <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -500,17 +487,17 @@
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name"> Name<span class="required" style="color: red">*</span></label>
-                        <input type="text"  class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Station Name" required />
+                        <label for="name">Name<span class="required" style="color: red">*</span></label>
+                        <input type="text"  class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Station / Tank Name" required />
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        <small style="color: green">Name Example: Zuva Msasa (Diesel)</small>
+                        <small style="color: green">Enter a descriptive name eg: Zuva(Diesel) / Zuva Msasa Diesel</small>
                     </div>
-                   
+                    <h5 class="underline mt-15">Location & Contact Details</h5>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="text"  class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Station Email"  />
+                                <input type="text" class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Station Email"  />
                                 @error('email') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -522,21 +509,19 @@
                             </div>
                         </div>
                     </div>
-                  
-                  
                     <div class="form-group">
-                        <label for="address">Address<span class="required" style="color: red">*</span></label>
-                        <input type="text"  class="form-control" wire:model.debounce.300ms="address" placeholder="Enter Station Address" required />
+                        <label for="address">Address</label>
+                        <input type="text"  class="form-control" wire:model.debounce.300ms="address" placeholder="Enter Station Address" />
                         @error('address') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="fuel_type">Purchase Type<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="purchase_type" class="form-control" required>
                                    <option value="">Select Purchase Type</option>
-                                    <option value="Bulk Buy">Bulk Buy</option>
+                                   <option value="Bulk Buy">Bulk Buy</option>
                                     <option value="Once Off Buy">Once Off Buy</option>
                                </select>
                                 @error('purchase_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -554,30 +539,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="row">
-                       
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="currency_id">Currency</label>
-                               <select wire:model.debounce.300ms="container_currency_id" class="form-control"  >
-                                   <option value="">Select Currency</option>
-                                   @foreach ($currencies as $currency)
-                                   <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                   @endforeach
-                               </select>
-                                @error('container_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="capacity">Account Balance</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="account_balance" placeholder="Enter Account Balance" />
-                                @error('account_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                  
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -587,25 +548,51 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            @if (isset($capacity) && $capacity > 0)
                             <div class="form-group">
-                              <label for="balance">Fuel Balance</label>
-                              <input type="number" step="any" min="0" max="{{ $capacity }}" class="form-control" wire:model.debounce.300ms="balance" />
-                              @error('balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                              </div>
-                              @else   
-                              <div class="form-group">
-                                  <label for="balance">Fuel Balance</label>
-                                  <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="balance" />
-                                  @error('balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                  @if ($balance > $capacity)
-                                    <small style="color: red" >Balance exceeds station capacity</small>
-                                  @endif
-                              </div>
-                            @endif
+                                <label for="currency_id">Account Currency @if (isset($account_balance))
+                                    <span class="required" style="color: red">*</span>
+                                @endif</label>
+                               <select wire:model.debounce.300ms="container_currency_id" class="form-control" {{isset($account_balance) ? "required" : ""}} >
+                                   <option value="">Select Currency</option>
+                                   @foreach ($currencies as $currency)
+                                   <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                   @endforeach
+                               </select>
+                                @error('container_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     </div>
-                  
+                    <h5 class="underline mt-30">Account ($) Balance / Fuel Quantity(l) Balance Details</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="capacity">Account Balance($)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="account_balance" placeholder="Enter Account Amount" />
+                                @error('account_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if (isset($capacity) && $capacity > 0)
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="quantity">Quantity Balance(l)</label>
+                                <input type="number" step="any" min="0" max="{{ $capacity }}" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Station Quantity"/>
+                                @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if ($quantity > $capacity)
+                                    <small style="color: red" >Quantity exceeds station capacity</small>
+                                @endif
+                            </div>
+                        </div>
+                        @else 
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="quantity">Quantity Balance(l)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Station Quantity" />
+                                @error('quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                   
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

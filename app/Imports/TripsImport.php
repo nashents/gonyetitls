@@ -195,7 +195,10 @@ WithBatchInserts
 
                 // Trailer IDs
                 $trailer_ids = [];
-                $trailer_regs = explode(',', trim($row->get('trailer_reg_numbers') ?? ''));
+                $trailer_regs = array_map(
+                        'trim',
+                        preg_split('/[,\/]+/', $row->get('trailer_reg_numbers') ?? '', -1, PREG_SPLIT_NO_EMPTY)
+                    );
                 foreach ($trailer_regs as $reg) {
                     $trailer = Trailer::where('registration_number', 'LIKE', '%' . trim($reg) . '%')->first();
                     if ($trailer) {

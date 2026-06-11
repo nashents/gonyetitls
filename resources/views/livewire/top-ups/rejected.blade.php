@@ -16,15 +16,22 @@
                             <table id="ordersTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">
+                                        <input type="checkbox" wire:model.debounce.300ms="selectPageRows" >
+                                    </th>
+                                    <th class="th-sm">Fuel Station#
+                                    </th>
                                     <th class="th-sm">Station
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
                                     <th class="th-sm">Fuel Type
                                     </th>
-                                    <th class="th-sm">Qty
+                                     <th class="th-sm">Ccy
                                     </th>
-                                    <th class="th-sm">Ccy
+                                    <th class="th-sm">Acc Amt
+                                    </th>
+                                    <th class="th-sm">Qty
                                     </th>
                                     <th class="th-sm">Rate
                                     </th>
@@ -40,15 +47,22 @@
                                 <tbody>
                                     @forelse ($top_ups as $top_up)
                                   <tr>
-                                    <td>
+                                    <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $top_up->id }}" value="{{ $top_up->id }}"></td>
+                                     <td>
                                         @if ($top_up->container)
-                                             <a href="{{ route('containers.show',$top_up->container->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{$top_up->container ? $top_up->container->name : ""}}</a>
+                                             <a href="{{ route('containers.show',$top_up->container->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $top_up->container ? $top_up->container->container_number : "" }}</a>
                                         @endif
                                     </td>
+                                    <td>{{$top_up->container ? $top_up->container->name : ""}}</td>
                                     <td>{{$top_up->date}}</td>
                                     <td>{{$top_up->fuel_type}}</td>
-                                    <td>{{$top_up->quantity ? $top_up->quantity." Litres" : ""}}</td>
                                     <td>{{$top_up->currency ? $top_up->currency->name : ""}}</td>
+                                    <td>
+                                        @if ($top_up->account_amount)
+                                             {{$top_up->currency ? $top_up->currency->symbol : ""}}{{number_format($top_up->account_amount,2)}}
+                                        @endif
+                                    </td>
+                                    <td>{{$top_up->quantity ? $top_up->quantity."l" : ""}}</td>
                                     <td>
                                         @if ($top_up->rate)
                                              {{$top_up->currency ? $top_up->currency->symbol : ""}}{{number_format($top_up->rate,2)}}

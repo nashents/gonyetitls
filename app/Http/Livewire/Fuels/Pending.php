@@ -276,18 +276,20 @@ class Pending extends Component
                     
                    if($container->purchase_type == "Bulk Buy"){
                        
-                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
-                            if($container->balance >= $fuel->quantity){
-                                $container->balance = $container->balance - $fuel->quantity;
-                            } 
-                        }
-                    
-                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
-                            if($container->account_balance >= $fuel->amount){
-                                $container->account_balance = $container->account_balance - $fuel->amount;
+                        if ($fuel->deduct_from == "quantity") {
+                            if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
+                                if($container->balance >= $fuel->quantity){
+                                    $container->balance = $container->balance - $fuel->quantity;
+                                } 
+                            }
+                        }elseif($fuel->deduct_from == "account"){
+                            if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                                if($container->account_balance >= $fuel->amount){
+                                    $container->account_balance = $container->account_balance - $fuel->amount;
+                                }
                             }
                         }
-                    
+                        
                         $container->update();
                     }
                     
@@ -551,20 +553,21 @@ class Pending extends Component
                     }
             
                     if($container->purchase_type == "Bulk Buy"){
-                            
-                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
-                            if($container->balance >= $fuel->quantity){
-                                $container->balance = $container->balance - $fuel->quantity;
-                            } 
-                        }
-                    
-                    
-                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
-                            if($container->account_balance >= $fuel->amount){
-                                $container->account_balance = $container->account_balance - $fuel->amount;
+                       
+                        if ($fuel->deduct_from == "quantity") {
+                            if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
+                                if($container->balance >= $fuel->quantity){
+                                    $container->balance = $container->balance - $fuel->quantity;
+                                } 
+                            }
+                        }elseif($fuel->deduct_from == "account"){
+                            if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                                if($container->account_balance >= $fuel->amount){
+                                    $container->account_balance = $container->account_balance - $fuel->amount;
+                                }
                             }
                         }
-                    
+                        
                         $container->update();
                     }
             

@@ -56,6 +56,7 @@ class Index extends Component
     public $employees;
     public $employee;
     public $employee_id;
+    public $deduct_from;
     public $horse;
     public $horses;
     public $selectedHorse;
@@ -94,6 +95,7 @@ class Index extends Component
     public $user_id;
     public $selectedContainer;
     public $container_balance;
+    public $account_balance;
     public $selectedCategory;
     public $selectedCategoryValue;
     public $selectedTrip;
@@ -149,7 +151,7 @@ class Index extends Component
     }
 
     public function mount(){
-
+        $this->deduct_from = "quantity";
         $this->employee = Auth::user()->employee;
 
          $departments = $this->employee->departments;
@@ -503,6 +505,7 @@ class Index extends Component
             }
         
             $this->container_balance = $this->container ? $this->container->balance : "";
+            $this->account_balance = $this->container ? $this->container->account_balance : "";
             $this->fuel_type = $this->container?->fuel_type;
            
             $this->selectedCurrency = $this->container->currency_id;
@@ -567,6 +570,7 @@ class Index extends Component
         $this->selectedVehicle = Null;
         $this->selectedHorse = Null;
         $this->selectedTrip = Null;
+        $this->deduct_from = "quantity";
         $this->selectedContainer = Null;
         $this->selectedCategory = Null;
         $this->selectedFuelRequest = Null;
@@ -631,6 +635,7 @@ class Index extends Component
         $fuel->user_id = Auth::user()->id;
         $fuel->order_number = $this->orderNumber();
         $fuel->employee_id = $this->employee_id;
+        $fuel->deduct_from = $this->deduct_from;
         $fuel->fuel_request_id = $this->selectedFuelRequest;
         $fuel->fuel_type = $this->fuel_type;
         $fuel->is_full_tank = $this->is_full_tank;
@@ -803,6 +808,7 @@ class Index extends Component
     $this->fuel_requests = FuelRequest::where('authorization','approved')->orderBy('created_at','desc')->get();
     $this->user_id = $fuel->user_id;
     $this->selectedHorse = $fuel->horse_id;
+    $this->deduct_from = $fuel->deduct_from;
     $this->employee_id = $fuel->employee_id;
     $this->selectedVehicle = $fuel->vehicle_id;
     $this->is_full_tank = $fuel->is_full_tank;
@@ -881,6 +887,7 @@ class Index extends Component
            
             $fuel->is_full_tank = $this->is_full_tank;
             $fuel->container_id = $this->selectedContainer;
+            $fuel->deduct_from = $this->deduct_from;
             $fuel->date = $this->date;
             $fuel->fuel_request_id = $this->selectedFuelRequest;
             $fuel->unit_price = $this->unit_price;

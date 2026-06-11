@@ -2,33 +2,35 @@
 
 namespace App\Http\Livewire\Containers;
 
-use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\TopUp;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Expense;
-use Livewire\Component;
-use App\Models\CashFlow;
-use App\Models\Currency;
-use App\Models\Transfer;
-use App\Models\Container;
+use App\Models\Bill;
 use App\Models\BillExpense;
-use Illuminate\Support\Str;
-use App\Models\ExchangeRate;
-use Livewire\WithPagination;
+use App\Models\CashFlow;
+use App\Models\Container;
 use App\Models\ContainerCount;
+use App\Models\Currency;
+use App\Models\ExchangeRate;
+use App\Models\Expense;
+use App\Models\Purchase;
+use App\Models\TopUp;
+use App\Models\Transfer;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
 
     use WithPagination;
-
+    public $searchPurchase;
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    protected $queryString = ['search','searchPurchase'];
     public $from;
     public $to;
 
@@ -48,7 +50,6 @@ class Index extends Component
     public $purchase_type;
     public $address;
     public $total_fuel;
-    public $total_amount;
     public $vendors;
     public $capacity;
     public $quantity;
@@ -57,10 +58,16 @@ class Index extends Component
     public $amount;
     public $balance;
     public $account_balance;
+    public $account_amount;
     public $selected_currency;
     public $company;
     public $exchange_rate;
     public $exchange_amount;
+    public $top_up_to;
+    public $selected_container;
+    public $purchases;
+    public $selectedPurchase;
+    public $attach_po = False;
 
     public $reason;
     public $from_station;
@@ -74,10 +81,13 @@ class Index extends Component
     public $user_id;
 
     public function mount(){
+
+        $this->top_up_to = "quantity";
         $this->resetPage();
         $this->company = Auth::user()->employee->company;
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
+         $this->purchases = collect();
     }
     public function containerNumber(){
        
@@ -111,6 +121,60 @@ class Index extends Component
         return  $container_number;
 
 
+    }
+
+    public function updatedAttachPo($value){
+        if($value == False){
+            $this->selectedPurchase = Null;
+        }else{
+            $purchaseQuery = Purchase::query()
+                    ->with(['vendor', 'currency'])
+                    ->where('authorization', 'approved')
+                    ->where('department', 'inventory')
+                    ->where('status', true);
+
+                     // Date range filter (replaces whereYear)
+                    if (filled($this->search_from) && filled($this->search_to)) {
+                        $purchaseQuery->whereBetween($this->filter, [$this->search_from, $this->search_to]);
+                    } elseif (filled($this->search_from)) {
+                        $purchaseQuery->whereDate($this->filter, '>=', $this->search_from);
+                    } elseif (filled($this->search_to)) {
+                        $purchaseQuery->whereDate($this->filter, '<=', $this->search_to);
+                    } else {
+                        // Fallback: current year if both are cleared
+                        $purchaseQuery->whereYear($this->filter, date('Y'))->whereMonth($this->filter, date('m'));
+                    }
+
+
+                if (filled($this->searchPurchase)) {
+                    $term = '%'.$this->searchPurchase.'%';
+
+                    $purchaseQuery->where(function ($q) use ($term) {
+                        $q->where('purchase_number', 'like', $term)
+                        ->orWhere('date', 'like', $term)
+                        ->orWhere('total', 'like', $term)
+                        ->orWhereHas('vendor', function ($qq) use ($term) {
+                            $qq->where('name', 'like', $term);
+                        })
+                        ->orWhereHas('currency', function ($qq) use ($term) {
+                            $qq->where('name', 'like', $term);
+                        });
+                    });
+                }
+
+                $this->purchases = $purchaseQuery
+                    ->orderBy($this->filter, 'desc')
+                    ->get();
+        }
+    }
+
+    public function updatedSelectedPurchaseOrder($id){
+        if(is_null($id)){
+            return ;
+        }
+
+        $purchase = Purchase::find($id);
+        $this->vendor_id = $purchase?->vendor_id;
     }
 
     public function orderNumber(){
@@ -147,8 +211,19 @@ class Index extends Component
 
     }
 
+    public function updatedTopUpTo($value){
+        if($value == "quantity"){
+            $this->account_amount = Null;
+        }else{
+            $this->quantity = Null;
+            $this->rate = Null;
+            $this->amount = Null;
+        }
+    }
+
     public function transferFuel(){
 
+     DB::transaction(function () {
 
         $this->validate([
             'from_station' => 'required',
@@ -194,6 +269,7 @@ class Index extends Component
 
             }
         }
+     });
     }
 
     public function updated($value){
@@ -223,36 +299,39 @@ class Index extends Component
 
     private function resetTransferInputFields(){
 
-        $this->transfer_quantity = "";
-        $this->transfer_date = "";
-        $this->from_station = "";
-        $this->to_station = "";
-        $this->reason = "";
-        $this->acknowledgment = "";
+        $this->transfer_quantity = Null;
+        $this->transfer_date = Null;
+        $this->from_station = Null;
+        $this->to_station = Null;
+        $this->reason = Null;
+        $this->acknowledgment = Null;
       
     }
  
     private function resetInputFields(){
-
-        $this->balance = "";
-        $this->account_balance = "";
-        $this->vendor_id = "";
-        $this->name = "";
-        $this->email = "";
-        $this->container_currency_id = "";
-        $this->phonenumber = "";
-        $this->address = "";
-        $this->purchase_type = "";
-        $this->selectedCurrency = "";
-        $this->fuel_type = "";
-        $this->capacity = "";
-        $this->quantity = "";
-        $this->rate = "";
-        $this->amount = "";
+        
+        $this->account_amount = Null;
+        $this->balance = Null;
+        $this->account_balance = Null;
+        $this->vendor_id = Null;
+        $this->name = Null;
+        $this->email = Null;
+        $this->container_currency_id = Null;
+        $this->phonenumber = Null;
+        $this->address = Null;
+        $this->purchase_type = Null;
+        $this->selectedCurrency = Null;
+        $this->fuel_type = Null;
+        $this->capacity = Null;
+        $this->quantity = Null;
+        $this->top_up_to = "quantity";
+        $this->rate = Null;
+        $this->amount = Null;
     }
     public function showTopUpModal($id){
         $this->container_id = $id;
         $container = Container::find($id);
+        $this->selected_container = $container;
         $this->fuel_type = $container->fuel_type;
         $this->capacity = $container->capacity;
         $this->balance = $container->balance;
@@ -278,17 +357,20 @@ class Index extends Component
 
     public function topup(){
 
-    
+        DB::transaction(function () {
+
         $container = Container::find($this->container_id);
         $top_up = new TopUp;
         $top_up->user_id = Auth::user()->id;
         $top_up->order_number = $this->orderNumber();
+        $top_up->purchase_id = $this->selectedPurchase ?: NULL;
         $top_up->container_id = $container->id ? $container->id : NULL;
         $top_up->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
         $top_up->date = $this->date;
         $top_up->currency_id = $this->selectedCurrency ? $this->selectedCurrency : NULL;
         $top_up->fuel_type = $container->fuel_type;
         $top_up->quantity = $this->quantity;
+        $top_up->account_amount = $this->account_amount;
         $top_up->rate = $this->rate;
         $top_up->amount = $this->amount;
         $top_up->exchange_amount = $this->exchange_amount;
@@ -300,6 +382,8 @@ class Index extends Component
         $this->resetInputFields();
         Session::flash('success','Fuel Top Up Created Successfully!!');
         return redirect(route('top_ups.manage',$this->container_id));
+
+        });
     }
 
     public function billNumber(){
@@ -338,6 +422,8 @@ class Index extends Component
 
 
     public function store(){
+
+     DB::transaction(function () {
     
         $existing_container = Container::where('name',$this->name)->get()->first();
         if (!$existing_container) {
@@ -354,29 +440,11 @@ class Index extends Component
         $container->fuel_type = $this->fuel_type;
         $container->capacity = $this->capacity;
         $container->balance = $this->quantity;
-        $container->account_balance = $this->amount;
+        $container->account_balance = $this->account_balance;
         $container->save();
 
         $this->container_id = $container->id;
         
-        if(isset($this->quantity) && $this->quantity > 0){
-            $top_up = new TopUp;
-            $top_up->user_id = Auth::user()->id;
-            $top_up->order_number = $this->orderNumber();
-            $top_up->container_id = $container->id ? $container->id : NULL;
-            $top_up->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
-            $top_up->date = date('Y-m-d');
-            $top_up->currency_id = $this->container_currency_id;
-            $top_up->fuel_type = $container->fuel_type;
-            $top_up->quantity = $this->quantity;
-            $top_up->rate = $this->rate;
-            $top_up->amount = $this->amount;
-            $top_up->exchange_amount = $this->exchange_amount;
-            $top_up->exchange_rate = $this->exchange_rate;
-            $top_up->save();
-        }
-       
-
         $this->dispatchBrowserEvent('hide-containerModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -394,7 +462,7 @@ class Index extends Component
                 ]);
             }
 
-       
+     });
 
     }
 
@@ -409,7 +477,7 @@ class Index extends Component
     $this->fuel_type = $container->fuel_type;
     $this->container_currency_id = $container->currency_id;
     $this->capacity = $container->capacity;
-    $this->balance = $container->balance;
+    $this->quantity = $container->balance;
     $this->account_balance = $container->account_balance;
     $this->container_id = $container->id;
     $this->dispatchBrowserEvent('show-containerEditModal');
@@ -419,6 +487,7 @@ class Index extends Component
 
     public function update()
     {
+         DB::transaction(function () {
         if ($this->container_id) {
        
             $container = container::find($this->container_id);
@@ -430,7 +499,7 @@ class Index extends Component
             $container->phonenumber = $this->phonenumber;
             $container->address = $this->address;
             $container->capacity = $this->capacity;
-            $container->balance = $this->balance;
+            $container->balance = $this->quantity;
             $container->account_balance = $this->account_balance;
             $container->update();
 
@@ -442,6 +511,7 @@ class Index extends Component
             ]);
            
         }
+         });
     }
 
     public function updatingSearch()
@@ -458,18 +528,16 @@ class Index extends Component
             $this->amount = $this->quantity * $this->rate;
         }
 
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
+        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0  || isset($this->account_amount) && $this->account_amount > 0 ) ) {
 
-            $this->exchange_amount = $this->exchange_rate * $this->amount;
+            $this->exchange_amount = $this->exchange_rate * $this->amount ? $this->amount : $this->account_amount;
 
         }
 
         if ((isset($this->quantity) && $this->quantity != null)  && (isset($this->balance) && $this->balance != null)) {
             $this->total_fuel = $this->quantity + $this->balance;
         }
-        if ((isset($this->amount) && $this->amount != null)  && (isset($this->account_balance) && $this->account_balance != null)) {
-            $this->total_amount = $this->amount + $this->account_balance;
-        }
+       
 
         $this->vendors = Vendor::orderBy('name','asc')->get();
    
@@ -489,7 +557,6 @@ class Index extends Component
                 ->orderBy('name','asc')->paginate(10),
                 'amount' => $this->amount,
                 'total_fuel' => $this->total_fuel,
-                'total_amount' => $this->total_amount,
                 'quantity' => $this->quantity,
                 'vendors' => $this->vendors,
             ]);
@@ -500,7 +567,6 @@ class Index extends Component
                 'containers' => Container::query()->with('vendor','currency')->orderBy('name','asc')->paginate(10),
                 'amount' => $this->amount,
                 'total_fuel' => $this->total_fuel,
-                'total_amount' => $this->total_amount,
                 'vendors' => $this->vendors,
             ]);
           

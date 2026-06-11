@@ -12,6 +12,7 @@ class BillExpense extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+   
     public function bill(){
         return $this->belongsTo('App\Models\Bill');
     }

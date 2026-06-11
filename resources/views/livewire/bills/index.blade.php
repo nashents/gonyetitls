@@ -296,6 +296,10 @@
                                             @foreach ($bill->bill_expenses as $bill_expense)
                                                 @if ($bill_expense->expense)
                                                     {{$bill_expense->expense ? $bill_expense->expense->name : ""}}
+                                                @elseif ($bill_expense->bill->fuel)
+                                                    Fuel Order : {{$bill_expense->bill->fuel ? $bill_expense->bill->fuel->order_number : ""}}
+                                                @elseif ($bill_expense->bill->top_up)
+                                                    Fuel Station Top UP {{$bill_expense->bill->top_up ? $bill_expense->bill->top_up->order_number : ""}}
                                                 @elseif($bill_expense->product)
                                                     {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
                                                 @elseif($bill_expense->inventory)
