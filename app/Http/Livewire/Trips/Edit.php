@@ -535,7 +535,7 @@ class Edit extends Component
 
         $transport_order = TransportOrder::find($id);
         $cargo = Cargo::find($transport_order->cargo_id);
-        $this->current_cargo_type[$key] = $cargo->type;
+        $this->current_cargo_type[$key] = $cargo?->type;
         $this->current_allocated_freight[$key] = $transport_order->freight;
         $this->current_allocated_rate[$key] = $transport_order->rate;
         $this->current_allocated_exchange_rate[$key] = $transport_order->exchange_rate;
