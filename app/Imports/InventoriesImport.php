@@ -90,6 +90,7 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
                 ['name' => $name],
                 ['status' => 1]
             );
+            $unitPrice = $row->get('unit_price');
 
             $product = Product::firstOrNew(['name' => $row->get('product_name')]);
 

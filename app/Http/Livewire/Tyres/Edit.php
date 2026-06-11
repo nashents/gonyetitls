@@ -407,6 +407,13 @@ public function updatedSelectedTax($id){
                 'message'=>"GRVs Refreshed Successfully!!."
             ]);
         }
+         elseif($category == "tyre_purchases"){
+            $this->purchases = Purchase::where('department','tyre')->where('authorization','approved')->orderBy('created_at','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Purchase Orders Refreshed Successfully!!."
+            ]);
+        }
         elseif($category == "products"){
             $this->products = Product::with('brand')
             ->where('department', 'tyre')

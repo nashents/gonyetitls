@@ -794,7 +794,7 @@ class Create extends Component
             $this->purchases = Purchase::where('department','tyre')->where('authorization','approved')->orderBy('created_at','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"GRVs Refreshed Successfully!!."
+                'message'=>"Purchase Orders Refreshed Successfully!!."
             ]);
         }
         elseif($category == "products"){

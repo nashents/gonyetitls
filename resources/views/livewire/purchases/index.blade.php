@@ -183,7 +183,7 @@
                                             {{$purchase->currency ? $purchase->currency->symbol : ""}}0.00
                                             @endif
                                         </td>
-                                        <td>{{$purchase->purchase_products->count()}}</td>
+                                        <td>{{ $purchase->purchase_products->sum('qty') }}</td>
                                         <td>
 
                                             @if ($department == "tyre")
