@@ -324,51 +324,93 @@ class Pending extends Component
     
     public function render()
     {
-        $query = Requisition::query()
-        ->with('employee', 'department', 'trip', 'currency', 'payments')
-        ->where('authorization', 'pending');
-        
-        if ($this->notificationsOnly) {
-             $query->where('type','po_requisition')->whereYear('created_at', now()->year); 
+           // ✅ Force an Eloquent user model instance
+        $user = User::query()
+            ->with(['employee.departments', 'roles', 'employee.ranks'])
+            ->findOrFail(Auth::id());
+
+        $employee        = $user->employee;
+
+        $departmentNames = $employee?->departments?->pluck('name')->all() ?? [];
+        $roleNames       = $user->roles->pluck('name')->all();
+
+        $isFinanceOrSuper = in_array('Finance', $departmentNames, true)
+            || in_array('Super Admin', $roleNames, true);
+
+        $base = Requisition::query()
+            ->with(['employee', 'department', 'trip', 'currency', 'payments'])
+            ->where('authorization','pending')
+            ->orderBy($this->requisition_filter, 'desc');
+
+        // Non-finance/non-super: restrict to their departments
+        if (! $isFinanceOrSuper) {
+            $base->whereIn('department_id', (array) $this->department_ids);
+        }
+
+        $canViewPaymentRequisitions =
+        (
+            in_array('Finance', $departmentNames)
+            && in_array('Admin', $roleNames)
+        )
+        || in_array('Super Admin', $roleNames);
+
+        if (!$canViewPaymentRequisitions) {
+            $base->where('type', '!=', 'payment_requisition');
+        }
+
+
+       if ($this->notificationsOnly) {
+             $base->where('type','po_requisition')->whereYear('created_at', now()->year); 
         }elseif($this->paymentNotificationsOnly){
-            $query->where('type','payment_requisition')->whereYear('created_at', now()->year);
+            $base->where('type','payment_requisition')->whereYear('created_at', now()->year);
         }else{
              // 1. Date range / default period
             if (!empty($this->from) && !empty($this->to)) {
                 // Use the selected column in $this->requisition_filter
-                $query->whereBetween($this->requisition_filter, [$this->from, $this->to]);
+                $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
             } else {
                 // Default to current month & year on created_at
-                $query->whereMonth('created_at', now()->month)
+                $base->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year);
             }
         }
-       
+        // Search (GROUPED OR CONDITIONS) — critical fix
+        if (filled($this->search)) {
+            $term = trim($this->search);
 
-        // 2. Search block (applied on top of whatever date filter is active)
-        if (!empty($this->search)) {
-            $search = $this->search;
+            $base->where(function ($q) use ($term) {
+                $like = "%{$term}%";
 
-            $query->where(function ($q) use ($search) {
-                $q->where('requisition_number', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhere('date', 'like', "%{$search}%")
-                ->orWhereHas('trip', function ($tripQ) use ($search) {
-                    $tripQ->where('trip_number', 'like', "%{$search}%");
+                $q->where('requisition_number', 'like', $like)
+                ->orWhere('subject', 'like', $like)
+                ->orWhere('description', 'like', $like)
+                ->orWhere('status', 'like', $like)
+                ->orWhere('date', 'like', $like)
+                ->orWhere('total', 'like', $like)
+
+                ->orWhereHas('requisition_items.expense', function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like);
                 })
-                ->orWhereHas('currency', function ($currencyQ) use ($search) {
-                    $currencyQ->where('name', 'like', "%{$search}%");
+
+                ->orWhereHas('trip', function ($qq) use ($like) {
+                    $qq->where('trip_number', 'like', $like)
+                        ->orWhereHas('horse', function ($hhh) use ($like) {
+                            $hhh->where('registration_number', 'like', $like);
+                        });
+                })
+
+                ->orWhereHas('employee', function ($qq) use ($term) {
+                    $qq->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%{$term}%");
+                })
+
+                ->orWhereHas('currency', function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like);
                 });
             });
         }
 
-        // 3. Final query
-        $requisitions = $query
-            ->orderBy('requisition_number', 'desc')
-            ->paginate(10);
-
         return view('livewire.requisitions.pending', [
-            'requisitions'        => $requisitions,
+            'requisitions'        => $base->paginate(10),
             'requisition_filter'  => $this->requisition_filter,
         ]);
     }

@@ -23,6 +23,11 @@ class Manage extends Component
     public $fuel_type;
     public $amount;
     public $balance;
+    public $top_up;
+    public $container;
+    public $role_names = [];
+    public $rank_names = [];
+    public $department_names = [];
 
 
 
@@ -59,6 +64,25 @@ class Manage extends Component
         $this->amount = "";
     }
 
+    public function delete($id){
+        $this->top_up_id = $id;
+        $this->top_up = TopUp::find($id);
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+   
+    public function destroy(){
+
+        $topup = TopUp::find($this->top_up_id);
+        $topup->delete();
+        
+        $this->dispatchBrowserEvent('show-deleteModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Top Up Approved Successfully!!"
+        ]);
+
+    }
+
 
 
     public function edit($id){
@@ -81,6 +105,7 @@ class Manage extends Component
     {
         if ($this->top_up_id) {
             try{
+
             $top_up = TopUp::find($this->top_up_id);
             $top_up->update([
                 'user_id' => Auth::user()->id,
@@ -115,17 +140,17 @@ class Manage extends Component
     {
         $departments = Auth::user()->employee->departments;
         foreach($departments as $department){
-            $department_names[] = $department->name;
+            $this->department_names[] = $department->name;
         }
         $roles = Auth::user()->roles;
         foreach($roles as $role){
-            $role_names[] = $role->name;
+            $this->role_names[] = $role->name;
         }
         $ranks = Auth::user()->employee->ranks;
         foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
+            $this->rank_names[] = $rank->name;
         }
-        if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
+        if (in_array('Admin', $this->role_names) || in_array('Super Admin', $this->role_names)) {
             $this->top_ups = TopUp::where('container_id', $this->container_id)->latest()->get();
         } else {
             $this->top_ups = TopUp::where('user_id',Auth::user()->id)

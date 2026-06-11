@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Requisitions;
 use App\Models\Requisition;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -50,57 +51,89 @@ class Approved extends Component
     public function render()
     {
   
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                return view('livewire.requisitions.approved',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','approved')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                    ->where('requisition_number','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('requisition_number','desc')->paginate(10),
-                    'requisition_filter' => $this->requisition_filter,
-                ]);
-            }else {
-                return view('livewire.requisitions.approved',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','approved')->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy('requisition_number','desc')->paginate(10),
-                    'requisition_filter' => $this->requisition_filter,
-                ]);
-            }
-           
+           // ✅ Force an Eloquent user model instance
+        $user = User::query()
+            ->with(['employee.departments', 'roles', 'employee.ranks'])
+            ->findOrFail(Auth::id());
+
+        $employee        = $user->employee;
+
+        $departmentNames = $employee?->departments?->pluck('name')->all() ?? [];
+        $roleNames       = $user->roles->pluck('name')->all();
+
+        $isFinanceOrSuper = in_array('Finance', $departmentNames, true)
+            || in_array('Super Admin', $roleNames, true);
+
+        $base = Requisition::query()
+            ->with(['employee', 'department', 'trip', 'currency', 'payments'])
+            ->where('authorization','approved')
+            ->orderBy($this->requisition_filter, 'desc');
+
+        // Non-finance/non-super: restrict to their departments
+        if (! $isFinanceOrSuper) {
+            $base->whereIn('department_id', (array) $this->department_ids);
         }
-        elseif (isset($this->search)) {
-           
-            return view('livewire.requisitions.approved',[
-                'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','approved')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
-                ->where('requisition_number','like', '%'.$this->search.'%')
-                ->orWhere('status','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhereHas('trip', function ($query) {
-                    return $query->where('trip_number', 'like', '%'.$this->search.'%');
+
+        $canViewPaymentRequisitions =
+        (
+            in_array('Finance', $departmentNames)
+            && in_array('Admin', $roleNames)
+        )
+        || in_array('Super Admin', $roleNames);
+
+        if (!$canViewPaymentRequisitions) {
+            $base->where('type', '!=', 'payment_requisition');
+        }
+
+
+        // 1. Date range / default period
+        if (!empty($this->from) && !empty($this->to)) {
+            // Use the selected column in $this->requisition_filter
+            $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
+        } else {
+            // Default to current month & year on created_at
+            $base->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year);
+        }
+        // Search (GROUPED OR CONDITIONS) — critical fix
+        if (filled($this->search)) {
+            $term = trim($this->search);
+
+            $base->where(function ($q) use ($term) {
+                $like = "%{$term}%";
+
+                $q->where('requisition_number', 'like', $like)
+                ->orWhere('subject', 'like', $like)
+                ->orWhere('description', 'like', $like)
+                ->orWhere('status', 'like', $like)
+                ->orWhere('date', 'like', $like)
+                ->orWhere('total', 'like', $like)
+
+                ->orWhereHas('requisition_items.expense', function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like);
                 })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
+
+                ->orWhereHas('trip', function ($qq) use ($like) {
+                    $qq->where('trip_number', 'like', $like)
+                        ->orWhereHas('horse', function ($hhh) use ($like) {
+                            $hhh->where('registration_number', 'like', $like);
+                        });
                 })
-                ->orderBy('requisition_number','desc')->paginate(10),
-                'requisition_filter' => $this->requisition_filter,
-            ]);
+
+                ->orWhereHas('employee', function ($qq) use ($term) {
+                    $qq->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%{$term}%");
+                })
+
+                ->orWhereHas('currency', function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like);
+                });
+            });
         }
-        else {
-           
-            return view('livewire.requisitions.approved',[
-                'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','approved')->whereMonth('created_at', date('m'))
-                ->whereYear($this->requisition_filter, date('Y'))->orderBy('requisition_number','desc')->paginate(10),
-                'requisition_filter' => $this->requisition_filter,
-            ]);
-          
-        }
+
+        return view('livewire.requisitions.approved', [
+            'requisitions'        => $base->paginate(10),
+            'requisition_filter'  => $this->requisition_filter,
+        ]);
        
     }
 }

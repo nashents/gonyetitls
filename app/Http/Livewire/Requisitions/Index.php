@@ -1310,18 +1310,6 @@ class Index extends Component
         $base->whereIn('department_id', (array) $this->department_ids);
     }
 
-    $canViewPaymentRequisitions =
-    (
-        in_array('Finance', $departmentNames)
-        && in_array('Admin', $roleNames)
-    )
-    || in_array('Super Admin', $roleNames);
-
-    if (!$canViewPaymentRequisitions) {
-        $base->where('type', '!=', 'payment_requisition');
-    }
-
-  
      // Date filter: range OR default current month/year
         if (filled($this->from) && filled($this->to)) {
             $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);

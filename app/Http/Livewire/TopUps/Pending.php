@@ -245,7 +245,8 @@ class Pending extends Component
 
         if ($this->authorize == "approved") {
 
-        $container = Container::find($this->container_id);
+            $container = Container::find($this->container_id);
+
             if($container){
                 if(($container && is_numeric($container->balance)) && ($this->top_up->quantity && is_numeric($this->top_up->quantity))){
                     $container->balance = $container->balance + $this->top_up->quantity;
@@ -260,11 +261,12 @@ class Pending extends Component
         if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
 
             $account = Account::where('name','Fuel')->get()->first();
+            
             $billAmount = $top_up->amount ? $top_up->amount : $top_up->account_amount;
             $bill = new Bill;
             $bill->user_id = Auth::user()->id;
             $bill->bill_number = $this->billNumber();
-            $bill->container_id = $container->id;
+            $bill->container_id = $container?->id;
             $bill->top_up_id = $top_up->id;
             $bill->vendor_id = $top_up->vendor_id;
             if (isset($account)) {

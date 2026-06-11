@@ -2,24 +2,22 @@
 
 namespace App\Exports;
 
-use Carbon\Carbon;
+use App\Models\Budget;
+use App\Models\Company;
+use App\Models\Fuel;
+use App\Models\LoadingPoint;
 use App\Models\Shift;
 use App\Models\Trip;
-use App\Models\Fuel;
-use App\Models\Budget;
-use App\Models\LoadingPoint;
-use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
-
+use Maatwebsite\Excel\Concerns\WithDrawings;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -74,13 +72,14 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     public function drawings()
     {
         $drawing = new Drawing();
+        $company  = Company::where('is_active',True)->orderBy('created_at','asc')->first();
 
-        if (isset(Auth::user()->employee->company)) {
-            $drawing->setName(Auth::user()->employee->company->name);
-            $drawing->setDescription(Auth::user()->employee->company->name . ' Logo');
+        if ($company) {
+            $drawing->setName($company->name);
+            $drawing->setDescription($company->name . ' Logo');
 
-            if (file_exists(public_path('/images/uploads/' . Auth::user()->employee->company->logo))) {
-                $drawing->setPath(public_path('/images/uploads/' . Auth::user()->employee->company->logo));
+            if (file_exists(public_path('/images/uploads/' . $company->logo))) {
+                $drawing->setPath(public_path('/images/uploads/' . $company->logo));
             } else {
                 $drawing->setPath(public_path('/images/uploads/logo.png'));
             }
