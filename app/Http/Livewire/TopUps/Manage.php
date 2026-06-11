@@ -23,7 +23,7 @@ class Manage extends Component
     public $fuel_type;
     public $amount;
     public $balance;
-    public $top_up;
+    public $selected_top_up;
     public $container;
     public $role_names = [];
     public $rank_names = [];
@@ -66,7 +66,7 @@ class Manage extends Component
 
     public function delete($id){
         $this->top_up_id = $id;
-        $this->top_up = TopUp::find($id);
+        $this->selected_top_up = TopUp::find($id);
         $this->dispatchBrowserEvent('show-deleteModal');
     }
    
@@ -75,10 +75,10 @@ class Manage extends Component
         $topup = TopUp::find($this->top_up_id);
         $topup->delete();
         
-        $this->dispatchBrowserEvent('show-deleteModal');
+        $this->dispatchBrowserEvent('hide-deleteModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Top Up Approved Successfully!!"
+            'message'=>"Top Up Deleted Successfully!!"
         ]);
 
     }

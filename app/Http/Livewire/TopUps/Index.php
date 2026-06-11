@@ -29,6 +29,7 @@ class Index extends Component
     public $amount;
     public $balance;
     public $company;
+    public $selected_top_up;
 
 
 
@@ -52,7 +53,28 @@ class Index extends Component
         'quantity' => 'required',
         'fuel_type' => 'required',
         'rate' => 'required',
-    ];
+    
+        ];
+
+    public function delete($id){
+        $this->top_up_id = $id;
+        $this->selected_top_up = TopUp::find($id);
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+   
+    public function destroy(){
+
+        $topup = TopUp::find($this->top_up_id);
+        $topup->delete();
+        
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Top Up Deleted Successfully!!"
+        ]);
+
+    }
+
     private function resetInputFields(){
 
 

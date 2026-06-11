@@ -16,7 +16,7 @@
                             <table id="ordersTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Fuel Station#
+                                    <th class="th-sm">TopUp#
                                     </th>
                                     <th class="th-sm">Station
                                     </th>
@@ -45,11 +45,14 @@
                                     @foreach ($top_ups as $top_up)
                                   <tr>
                                     <td>
-                                        @if ($top_up->container)
-                                             <a href="{{ route('containers.show',$top_up->container->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $top_up->container ? $top_up->container->container_number : "" }}</a>
-                                        @endif
+                                        {{$top_up->order_number}} 
+                                        <br>
+                                        <small>
+                                            <strong>CreatedBy: {{$top_up->user?->name}} {{$top_up->user?->surname}}</strong> <br>
+                                            <strong>CreatedOn: {{$top_up->created_at}}</strong>
+                                        </small>
                                     </td>
-                                    <td>{{$top_up->container ? $top_up->container->name : ""}}</td>
+                                    <td><a href="{{ route('containers.show',$top_up->container?->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{$top_up->container ? $top_up->container->name : ""}}</a></td>
                                     <td>{{$top_up->date}}</td>
                                     <td>{{$top_up->fuel_type}}</td>
                                     <td>{{$top_up->currency ? $top_up->currency->name : ""}}</td>
@@ -69,7 +72,22 @@
                                             {{$top_up->currency ? $top_up->currency->symbol : ""}}{{number_format($top_up->amount,2)}}        
                                         @endif
                                     </td>
-                                    <td><span class="badge bg-{{($top_up->authorization == 'approved') ? 'success' : (($top_up->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($top_up->authorization == 'approved') ? 'approved' : (($top_up->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                        <span class="badge bg-{{($top_up->authorization == 'approved') ? 'success' : (($top_up->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($top_up->authorization == 'approved') ? 'approved' : (($top_up->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        @if($top_up->authorized_by_id)
+                                            <br>
+                                            @php $authorizer = App\Models\User::find($top_up->authorized_by_id); @endphp
+                                            <small class="auth-meta"><strong>Auth By:</strong> {{ optional($authorizer)->name }} {{ optional($authorizer)->surname }}</small>
+                                        @endif
+                                        @if($top_up->authorization_date)
+                                            <br>
+                                            <small class="auth-meta"><strong>Date:</strong> {{ $top_up->authorization_date }}</small>
+                                        @endif
+                                        @if($top_up->reason)
+                                            <br>
+                                            <small class="auth-meta"><strong>Comments:</strong> {{ $top_up->reason }}</small>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -78,8 +96,12 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('top_ups.show',$top_up->id)}}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                @if ($top_up->authorization == "pending")
-                                                    <li><a href="#" wire:click.prevent="delete({{$top_up->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if (!in_array($top_up->authorization, ['approved', 'rejected']))
+                                                    <li>
+                                                        <a href="#" wire:click.prevent="delete({{$top_up->id}})">
+                                                            <i class="fa fa-trash color-danger"></i>Delete
+                                                        </a>
+                                                    </li>
                                                 @endif
                                             </ul>
                                         </div>
@@ -109,7 +131,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">
-                <center> <strong>Are you sure you want to delete this TopUp {{$top_up?->order_number}} Record?</strong> </center> 
+                <center> <strong>Are you sure you want to delete this TopUp {{$selected_top_up?->order_number}} Record?</strong> </center> 
                 </div>
                 <form wire:submit.prevent="destroy()" >
                 <div class="modal-footer no-border">
