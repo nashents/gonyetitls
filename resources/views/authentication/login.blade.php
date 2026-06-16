@@ -16,8 +16,8 @@
                         <div class="login-box">
                             <div class="panel-heading">
                                 <div class="panel-title text-center">
-                                    <a href="{{route('login')}}"><img src="{{asset('images/gonyeti-mini.png')}}" alt="Gonyeti TLS" style="margin-bottom: -50px"></a>
-                                    <h4>Gonyeti TLS Login</h4>
+                                    <img src="{{asset('images/logo.png')}}" style="width:50%; height:50%" alt="Gonyeti TLS" >
+                                    <h4 style="margin-top: -3%">Transport Management System</h4>
                                 </div>
                                 @include('includes.messages')
                             </div>
@@ -47,7 +47,7 @@
 
                             <hr>
 
-                            <p class="text-muted text-center mb-n"><small>Copyright © Gonyeti TLS {{date('Y')}}</small></p>
+                            <p class="text-muted text-center mb-n"><small>Copyright © Gonyeti ERP {{date('Y')}}</small></p>
                         </div>
                         <!-- /.login-box -->
                     </div>

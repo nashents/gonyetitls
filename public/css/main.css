@@ -5717,10 +5717,11 @@ div.tagsinput span.tag a {
 # LOGIN
 --------------------------------------------------------------*/
 .login-bg {
-  background-image: url("../images/photo-2.jpg");
-  background-size: cover;
-  background-attachment: fixed;
-  min-height: 100vh;
+    background-image: url("../images/photo-2.jpg");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    min-height: 100vh;
 }
 
 .login-bg .login-box {

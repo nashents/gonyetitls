@@ -534,7 +534,6 @@ class Expenses extends Component
             }
         }
 
-
         public function showDelete($id){
             $this->trip_expense_id = $id;
             $this->trip_expense = TripExpense::find($id);

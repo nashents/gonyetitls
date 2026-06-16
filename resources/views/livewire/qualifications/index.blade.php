@@ -149,8 +149,8 @@
                     </div> 
                     @if ($is_expiring && $is_expiring == True)
                         <div class="form-group">
-                            <label for="qualification_number">Validity</label>
-                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="validity_months" placeholder="Qualification Validity in months">
+                            <label for="qualification_number">Validity<span class="required" style="color: red">*</span></label>
+                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="validity_months" placeholder="Qualification Validity in months" required>
                             @error('validity_months') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>  
                     @endif

@@ -25,25 +25,24 @@
                             </div>
                             <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead >
-                                    <th class="th-sm">Reminder
-                                    </th>
-                                    <th class="th-sm">Issued @
-                                    </th>
-                                    <th class="th-sm">Expires At
-                                    </th>
-                                    <th class="th-sm">1st Reminder @
-                                    </th>
-                                    <th class="th-sm">2nd Reminder @
-                                    </th>
-                                    <th class="th-sm">3rd Reminder @
-                                    </th>
-                                    <th class="th-sm">Status
-                                    </th>
-                                    <th class="th-sm">CC
-                                    </th>
-                                    <th class="th-sm">Action
-                                    </th>
-                                  </tr>
+                                    <tr>
+                                        <th class="th-sm">Item
+                                        </th>
+                                        <th class="th-sm">Issued
+                                        </th>
+                                        <th class="th-sm">Expires
+                                        </th>
+                                        <th><i class="fa fa-bell text-warning"></i> 1st</th>
+                                        <th><i class="fa fa-bell text-warning"></i> 2nd</th>
+                                        <th><i class="fa fa-bell text-warning"></i> 3rd</th>
+                                        <th  style="width: 10%"><i class="fa fa-bell text-danger"></i> 4th</th>
+                                        <th class="th-sm">Status
+                                        </th>
+                                        <th class="th-sm">CC
+                                        </th>
+                                        <th class="th-sm">Action
+                                        </th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($reminders as $reminder)
@@ -109,6 +108,7 @@
                                     <td>{{ $fmt($reminder->first_reminder_at) }}</td>
                                     <td>{{ $fmt($reminder->second_reminder_at) }}</td>
                                     <td>{{ $fmt($reminder->third_reminder_at) }}</td>
+                                    <td>{{ $fmt($reminder->fourth_reminder_at) }}</td>
                                     <td>
                                         @if ($reminder->expires_at >= now()->toDateTimeString())
                                         <span class="badge bg-success">Valid</span>
@@ -266,7 +266,10 @@
                                         <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
+                                <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small>
+                                <a href="#" wire:click.prevent="refresh('reminder_items')" style="float: right">
+                                    <i class="fa fa-refresh"></i>
+                                </a> 
                                 @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         @endif
@@ -387,7 +390,10 @@
                                             <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
                                         @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
+                                        <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small>
+                                         <a href="#" wire:click.prevent="refresh('reminder_items')" style="float: right">
+                                            <i class="fa fa-refresh"></i>
+                                        </a> 
                                         @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -402,6 +408,9 @@
                                     @endforeach
                                 </select>
                                 <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
+                                 <a href="#" wire:click.prevent="refresh('reminder_items')" style="float: right">
+                                    <i class="fa fa-refresh"></i>
+                                </a>
                                 @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         @endif

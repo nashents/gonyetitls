@@ -154,10 +154,13 @@ class Index extends Component
     }
 
 
-     public function updated($value){
+    public function updated($value){
         $this->validateOnly($value);
     }
+
+
     private function resetInputFields(){
+
         $this->date = "";
         $this->notes = "";
         $this->source = "";
@@ -223,9 +226,10 @@ class Index extends Component
    
 
 
-    protected $rules = [
-        'date' => 'required', 
-    ];
+        protected $rules = [
+            'date' => 'required', 
+        ];
+
 
        public function applicationNumber(){
        
@@ -380,7 +384,6 @@ class Index extends Component
                 $certificate_path = $this->certificate_path[$key] ?? Null;
                 $status = $this->qualification_status[$key] ?? Null;
                
-            
                 $recruitment_qualification = new RecruitmentQualification;
                 $recruitment_qualification->candidate_id = $this->recruitment_candidate_id;
                 $recruitment_qualification->qualification_id = $quali_id;
@@ -423,6 +426,7 @@ class Index extends Component
 
       public function showEditQualifications($id){
 
+
         $this->recruitment_candidate_id = $id;
         $candidate = RecruitmentCandidate::find($id);
         $this->existing_qualifications = $candidate->qualifications;
@@ -433,7 +437,6 @@ class Index extends Component
                 $this->current_date_awarded[] = $qualification->date_awarded;
                 $this->current_expires_at[] = $qualification->expires_at;
                 $this->current_qualification_status[] = $qualification->status;
-                $this->current_certificate_path[] = $qualification->certificate_path;
                 $this->old_certificate[] = $qualification->certificate_path;
             }
         }
@@ -442,9 +445,10 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-qualificationEditModal');
     }
     
-    public function updateQualificaitions(){
+    public function updateQualifications(){
 
         if(isset($this->existing_qualifications)){
+
             foreach ($this->existing_qualifications as $key => $existing_qualification) {
 
                 $qualification_id = $this->current_qualification_id[$key] ?? Null;;
@@ -456,7 +460,7 @@ class Index extends Component
 
                 $recruitment_qualification = RecruitmentQualification::find($existing_qualification->id);
                 $recruitment_qualification->candidate_id = $this->recruitment_candidate_id;
-                $recruitment_qualification->qualification_id = $this->qualification_id;
+                $recruitment_qualification->qualification_id = $qualification_id;
                 $recruitment_qualification->verified_by = Auth::user()->id;
                 $recruitment_qualification->verified_at = now();
                 $recruitment_qualification->level = $level;
@@ -484,49 +488,7 @@ class Index extends Component
             }
         }
       
-        if(isset($this->qualification_id)){
-            foreach ($this->qualification_id as $key => $id) {
-
-                $qualification_id = $id;
-                $level = $this->level[$key] ?? Null;
-                $date_awarded = $this->date_awarded[$key] ?? Null;
-                $expires_at = $this->expires_at[$key] ?? Null;
-                $certificate_path = $this->certificate_path[$key] ?? Null;
-                $status = $this->qualification_status[$key] ?? Null;
-             
-
-                $recruitment_qualification = new RecruitmentQualification;
-                $recruitment_qualification->candidate_id = $this->recruitment_candidate_id;
-                $recruitment_qualification->qualification_id = $qualification_id;
-                $recruitment_qualification->verified_by = Auth::user()->id;
-                $recruitment_qualification->verified_at = now();
-                $recruitment_qualification->level = $level;
-                $recruitment_qualification->date_awarded = $date_awarded;
-                $recruitment_qualification->expires_at = $expires_at;
-                $recruitment_qualification->status = $status;
-                if($certificate_path){
-
-                    $file = $certificate_path;
-                    // get file with ext
-                    $fileNameWithExt = $file->getClientOriginalName();
-                    //get filename
-                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                    //get extention
-                    $extention = $file->getClientOriginalExtension();
-                    //file name to store
-                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
-                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
-
-                    $recruitment_qualification->certificate_path = $fileNameToStore;
-                }
-
-                $recruitment_qualification->save();
-                  
-               
-                
-            }
-
-        }
+      
 
         $this->dispatchBrowserEvent('hide-qualificationEditModal');
                 $this->resetInputFields();
@@ -852,7 +814,6 @@ class Index extends Component
                 $this->current_check_name[] = $check->type;
                 $this->current_result[] = $check->result;
                 $this->current_comments[] = $check->comment;
-                $this->current_check_attachment[] = $check->attachment_path;
                 $this->old_attachment[] = $check->attachment_path;
             }
         }
@@ -863,43 +824,7 @@ class Index extends Component
 
     public function updateChecks(){
 
-        if(isset($this->check_name)){
-
-            foreach ($this->check_name as $key => $name) {
-
-                $type = $name;
-                $result = $this->result[$key] ?? Null;
-                $comments = $this->comments[$key] ?? Null;
-                $attachment = $this->check_attachment[$key] ?? Null;
-
-                $recruitment_check = new RecruitmentCheck;
-                $recruitment_check->candidate_id = $this->recruitment_candidate_id;
-                $recruitment_check->checked_by = Auth::user()->id;
-                $recruitment_check->type = $type;
-                $recruitment_check->result = $result;
-                $recruitment_check->checked_at = now();
-                $recruitment_check->comment = $comments;
-               
-                if($attachment){
-                    $file = $attachment;
-                    // get file with ext
-                    $fileNameWithExt = $file->getClientOriginalName();
-                    //get filename
-                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                    //get extention
-                    $extention = $file->getClientOriginalExtension();
-                    //file name to store
-                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
-                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
-
-                    $recruitment_check->attachment_path = $fileNameToStore;
-                }
-
-                $recruitment_check->save();
-                 
-            }
-
-        }
+    
         if(isset($this->existing_checks)){
 
             foreach ($this->existing_checks as $key => $check) {

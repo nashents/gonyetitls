@@ -115,10 +115,10 @@ class Create extends Component
     public function refresh($category){
 
         if($category == "checklist_categories"){
-            $this->checklists = Checklist::orderBy('name','asc')->get();
+            $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Trip Tracking Groups Refreshed Successfully!!."
+                'message'=>"Checklist Categories Refreshed Successfully!!."
             ]);
         }
        

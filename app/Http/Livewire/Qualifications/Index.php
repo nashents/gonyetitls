@@ -50,14 +50,9 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:qualifications,name,NULL,id,deleted_at,NULL',
-        'code' => 'required|unique:qualifications,code,NULL,id,deleted_at,NULL',
     ];
 
-    public function updatedName($value){
-        if ($this->code == "") {
-            $this->code = Str::slug($value);
-        }
-    }
+    
 
     public function store(){
 
@@ -65,8 +60,8 @@ class Index extends Component
 
         $qualification = new Qualification;
         $qualification->user_id = Auth::user()->id;
-        $qualification->code = $this->code;
         $qualification->name = $this->name;
+        $qualification->code = $this->code ?? Str::slug($this->name);
         $qualification->category = $this->category;
         $qualification->level = $this->level;
         $qualification->is_expiring = $this->is_expiring;

@@ -50,7 +50,11 @@
                 </td>
                 <td>
                     @if ($trip_expense->expense)
-                    {{$trip_expense->expense ? $trip_expense->expense->name : ""}}
+                        {{$trip_expense->expense ? $trip_expense->expense->name : ""}} 
+                        @if ($trip_expense->fuel)
+                            <br>
+                            <small><strong>Fuel Order: </strong><a href="{{route('fuels.show',$trip_expense->fuel?->id)}}" style="color: blue" target="_blank">{{$trip_expense->fuel ? $trip_expense->fuel->order_number : ""}}</a></small>
+                        @endif
                     @elseif($trip_expense->allowance)
                     {{$trip_expense->allowance ? $trip_expense->allowance->name : ""}}
                     @endif
@@ -77,13 +81,15 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
-                            @if ($trip_expense->user_id == Auth::user()->id)
-                                @if (!$trip_expense->fuel)
-                                    <li><a href="#" wire:click="edit({{$trip_expense->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                            @if ($trip_expense->bill->payments->count() == 0)
+                                @if ($trip_expense->user_id == Auth::user()->id)
+                                    @if (!$trip_expense->fuel)
+                                        <li><a href="#" wire:click="edit({{$trip_expense->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                    @endif
+                                        <li><a href="#" wire:click="showDelete({{$trip_expense->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                 @endif
-                                    <li><a href="#" wire:click="showDelete({{$trip_expense->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                             @endif
-                            
+                           
                         </ul>
                     </div>
                     @include('trips.expenses.delete')

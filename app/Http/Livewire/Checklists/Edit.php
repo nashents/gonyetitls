@@ -189,6 +189,19 @@ class Edit extends Component
         }
     }
 
+      public function refresh($category){
+
+        if($category == "checklist_categories"){
+            $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Checklist Categories Refreshed Successfully!!."
+            ]);
+        }
+       
+        
+    }
+
     private function resetInputFields(){
         $this->date = '';
         $this->horse_id = '';

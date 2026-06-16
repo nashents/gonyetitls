@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Horses;
 
-use App\Models\Trailer;
+
 use App\Models\Horse;
 use Livewire\Component;
 use App\Models\HorseImage;
@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 class Images extends Component
 {
     use WithFileUploads;
+
+
     public $images = [];
     public $horse_images;
     public $image_id;
@@ -27,20 +29,14 @@ class Images extends Component
     public function updated($value){
         $this->validateOnly($value);
     }
-    protected $messages =[
 
-      'title.*.required' => 'You need to upload at least one image',
-      'title.*.image' => 'Your file needs to be an image',
-
-  ];
     protected $rules = [
-        'images.*' => 'required|image',
-
+        'images.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
     ];
 
 
     public function store(){
-        // try{
+        
         if (isset($this->images)) {
 
             foreach ($this->images as $image) {
@@ -66,13 +62,29 @@ class Images extends Component
                 'message'=>"Image(s) Uploaded Successfully!!"
             ]);
         }
-    // }catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something went wrong while uploading image(s)!!"
-    //     ]);
-    // }
+   
+    }
+
+    public function deleteImage($id)
+    {
+        $image = HorseImage::find($id);
+
+        if (!$image) {
+            return;
+        }
+
+        $path = public_path('images/uploads/' . $image->filename);
+
+        if (file_exists($path)) {
+            unlink($path);
+        }
+
+        $image->delete();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Image deleted successfully.'
+        ]);
     }
 
     public function render()

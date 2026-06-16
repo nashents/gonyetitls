@@ -542,28 +542,164 @@ class Index extends Component
 
 
 
-    public function updated($value){
-        $this->validateOnly($value);
+    public function updated($propertyName)
+    {
+        $this->calculateFuelTotals();
+        $this->validateOnly($propertyName, $this->rules());
     }
 
-    protected $rules = [
-        'selectedVehicle' => 'required',
-        'selectedHorse' => 'required',
-        // 'driver_id' => 'required',
-        'selectedContainer' => 'required',
-        // 'selectedTrip' => 'required',
-        'selectedCategory' => 'required',
-        'asset_id' => 'required',
-        'date' => 'required',
-        'mileage' => 'required',
-        'quantity' => 'required',
-        'amount' => 'required',
-        'fillup' => 'required',
-        'type' => 'required',
-        'invoice_number' => 'nullable',
-        'file' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-        'comments' => 'nullable',
-    ];
+    protected function rules()
+    {
+        $rules = [
+            'type' => 'required|in:Horse,Vehicle,Asset,Other',
+            'selectedContainer' => 'required',
+            'selectedCurrency' => 'required',
+            'date' => 'required',
+            'quantity' => 'required|numeric|min:0.01',
+            'unit_price' => 'nullable|numeric|min:0',
+            'amount' => 'required|numeric|min:0.01',
+            'fillup' => 'required|in:0,1',
+            'is_full_tank' => 'required|in:0,1',
+            'deduct_from' => $this->isBulkBuy ? 'required|in:account,quantity' : 'nullable',
+            'invoice_number' => 'nullable',
+            'file' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+            'comments' => 'nullable',
+        ];
+
+        if ($this->type == 'Horse') {
+            $rules['selectedHorse'] = 'required';
+            $rules['employee_id'] = 'required';
+            $rules['mileage'] = 'required|numeric|min:0';
+        }
+
+        if ($this->type == 'Vehicle') {
+            $rules['selectedVehicle'] = 'required';
+            $rules['employee_id'] = 'required';
+            $rules['mileage'] = 'required|numeric|min:0';
+        }
+
+        if ($this->type == 'Asset') {
+            $rules['asset_id'] = 'required';
+        }
+
+        if ($this->attach_fuel_request == true || $this->attach_fuel_request == 'True') {
+            $rules['selectedFuelRequest'] = 'required';
+        }
+
+        if ($this->selectedCurrency && $this->company && $this->selectedCurrency != $this->company->currency_id) {
+            $rules['exchange_rate'] = 'required|numeric|min:0.0001';
+        }
+
+        return $rules;
+    }
+
+    public function getIsBulkBuyProperty()
+    {
+        return isset($this->selected_container)
+            && $this->selected_container
+            && $this->selected_container->purchase_type == 'Bulk Buy';
+    }
+
+    public function getEffectiveContainerBalanceProperty()
+    {
+        $balance = (float) ($this->container_balance ?? 0);
+
+        if ($this->fuel_id && $this->deduct_from == 'quantity') {
+            $fuel = Fuel::find($this->fuel_id);
+
+            if ($fuel && $fuel->authorization == 'approved' && $fuel->container_id == $this->selectedContainer && $fuel->deduct_from == 'quantity') {
+                $balance += (float) ($this->previous_quantity ?? $fuel->quantity ?? 0);
+            }
+        }
+
+        return $balance;
+    }
+
+    public function getEffectiveAccountBalanceProperty()
+    {
+        $balance = (float) ($this->account_balance ?? 0);
+
+        if ($this->fuel_id && $this->deduct_from == 'account') {
+            $fuel = Fuel::find($this->fuel_id);
+
+            if ($fuel && $fuel->authorization == 'approved' && $fuel->container_id == $this->selectedContainer && $fuel->deduct_from == 'account') {
+                $balance += (float) ($fuel->amount ?? 0);
+            }
+        }
+
+        return $balance;
+    }
+
+    public function getFuelOrderIssuesProperty()
+    {
+        $issues = [];
+        $quantity = (float) ($this->quantity ?? 0);
+        $amount = (float) ($this->amount ?? 0);
+
+        if ($quantity <= 0) {
+            $issues[] = 'Quantity must be greater than zero.';
+        }
+
+        if ($amount <= 0) {
+            $issues[] = 'Total amount must be greater than zero.';
+        }
+
+        if ($this->isBulkBuy) {
+            if (!$this->deduct_from) {
+                $issues[] = 'Select whether to deduct from account balance or quantity balance.';
+            }
+
+            if ($this->deduct_from == 'quantity' && $quantity > $this->effectiveContainerBalance) {
+                $issues[] = 'Fuel quantity exceeds available fueling station quantity balance.';
+            }
+
+            if ($this->deduct_from == 'account' && $amount > $this->effectiveAccountBalance) {
+                $issues[] = 'Fuel total exceeds available fueling station account balance.';
+            }
+        }
+
+        if (isset($this->fuel_tank_capacity) && (float) $this->fuel_tank_capacity > 0 && $quantity > (float) $this->fuel_tank_capacity) {
+            $issues[] = 'Fuel quantity exceeds the selected unit fuel tank capacity.';
+        }
+
+        return $issues;
+    }
+
+    public function getFuelOrderBlockedProperty()
+    {
+        return count($this->fuelOrderIssues) > 0;
+    }
+
+    private function calculateFuelTotals()
+    {
+        if ($this->unit_price !== null && $this->unit_price !== '' && $this->quantity !== null && $this->quantity !== '') {
+            $this->amount = round((float) $this->unit_price * (float) $this->quantity, 2);
+        }
+
+        if ($this->exchange_rate !== null && $this->exchange_rate !== '' && (float) $this->exchange_rate > 0 && (float) ($this->amount ?? 0) > 0) {
+            $this->exchange_amount = round((float) $this->exchange_rate * (float) $this->amount, 2);
+        }
+    }
+
+    private function guardFuelOrderBeforeSave()
+    {
+        $this->calculateFuelTotals();
+
+        if (!$this->fuelOrderBlocked) {
+            return true;
+        }
+
+        foreach ($this->fuelOrderIssues as $issue) {
+            $this->addError('fuel_guard', $issue);
+        }
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'error',
+            'message' => 'Fuel order cannot be saved. Please correct the highlighted balance or validation issues.'
+        ]);
+
+        return false;
+    }
 
     private function resetInputFields(){
 
@@ -581,10 +717,15 @@ class Index extends Component
         $this->unit_price = Null;
         $this->mileage = Null;
         $this->hours = Null;
-        $this->fillup = Null; 
+        $this->fillup = 1; 
         $this->attach_fuel_request = False; 
-        $this->type = Null;
+        $this->type = "Horse";
         $this->invoice_number = Null;
+        $this->amount = 0;
+        $this->exchange_rate = Null;
+        $this->exchange_amount = Null;
+        $this->is_full_tank = Null;
+        $this->comments = Null;
     }
     public function orderNumber(){
 
@@ -628,6 +769,12 @@ class Index extends Component
 
 
     public function store(){
+
+    $this->validate($this->rules());
+
+    if (!$this->guardFuelOrderBeforeSave()) {
+        return;
+    }
 
     DB::transaction(function () {
 
@@ -808,9 +955,11 @@ class Index extends Component
     $this->fuel_requests = FuelRequest::where('authorization','approved')->orderBy('created_at','desc')->get();
     $this->user_id = $fuel->user_id;
     $this->selectedHorse = $fuel->horse_id;
-    $this->deduct_from = $fuel->deduct_from;
+    $this->horse_id = $fuel->horse_id;
+    $this->deduct_from = $fuel->deduct_from ?: "quantity";
     $this->employee_id = $fuel->employee_id;
     $this->selectedVehicle = $fuel->vehicle_id;
+    $this->vehicle_id = $fuel->vehicle_id;
     $this->is_full_tank = $fuel->is_full_tank;
     $this->selectedTrip = $fuel->trip_id;
     $this->fuel_type = $fuel->fuel_type;
@@ -821,6 +970,7 @@ class Index extends Component
     $this->container = Container::find($fuel->container_id);
     $this->selected_container = Container::find($fuel->container_id);
     $this->container_balance = $this->container ? $this->container->balance : "";
+    $this->account_balance = $this->container ? $this->container->account_balance : "";
     $this->driver_id = $fuel->driver_id;
     $this->date = $fuel->date;
     $this->selectedFuelRequest = $fuel->fuel_request_id;
@@ -851,6 +1001,12 @@ class Index extends Component
 
     public function update()
     {
+        $this->validate($this->rules());
+
+        if (!$this->guardFuelOrderBeforeSave()) {
+            return;
+        }
+
         try{
 
         if ($this->fuel_id) {
@@ -918,7 +1074,7 @@ class Index extends Component
                     if (isset($fuel_expense)) {
                         $trip_expense->expense_id = $fuel_expense->id;
                     }
-                    $trip_expense->currency_id = $fuel->currency;
+                    $trip_expense->currency_id = $fuel->currency_id;
                     $trip_expense->category = $this->fuel_category;
                     $trip_expense->amount = $fuel->amount;
                     $trip_expense->exchange_rate = $this->exchange_rate;
@@ -934,7 +1090,7 @@ class Index extends Component
                     if (isset($fuel_expense)) {
                         $trip_expense->expense_id = $fuel_expense->id;
                     }
-                    $trip_expense->currency_id = $fuel->currency;
+                    $trip_expense->currency_id = $fuel->currency_id;
                     $trip_expense->category = $this->fuel_category;
                     $trip_expense->amount = $fuel->amount;
                     $trip_expense->exchange_rate = $this->exchange_rate;
@@ -1057,8 +1213,8 @@ class Index extends Component
                 if ($fuel->vehicle) {
                     $vehicle = Vehicle::find($fuel->vehicle_id);
                     $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
-                    $current_mileage = $horse->hours - $this->previous_mileage;
-                    $current_hours = $horse->hours - $this->previous_hours;
+                    $current_mileage = $vehicle->mileage - $this->previous_mileage;
+                    $current_hours = $vehicle->hours - $this->previous_hours;
                     if ($fuel->odometer >  $current_mileage) {
                         $vehicle->mileage = $fuel->odometer;
                     }
@@ -1143,18 +1299,12 @@ class Index extends Component
     public function render()
     {
 
-        if(($this->unit_price != null) && ($this->quantity != null)){
-            $this->amount = $this->unit_price * $this->quantity;
-        }
-       
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
-            $this->exchange_amount = $this->exchange_rate * $this->amount;
-        }
+        $this->calculateFuelTotals();
 
        
 
        
-        $this->selected_horse = Horse::find($this->horse_id);
+        $this->selected_horse = Horse::find($this->horse_id ?: $this->selectedHorse);
         if ( $this->selected_horse) {
             $this->fuel_tank_capacity = $this->selected_horse->fuel_tank_capacity;
           

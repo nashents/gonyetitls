@@ -50,11 +50,13 @@ class Fitness extends Model  implements Auditable
         'first_reminder_at'        => 'datetime',
         'second_reminder_at'       => 'datetime',
         'third_reminder_at'        => 'datetime',
+        'fourth_reminder_at'        => 'datetime',
         // 'issued_at'          => 'datetime',
 
         'first_reminder_at_status' => 'boolean',
         'second_reminder_at_status'=> 'boolean',
         'third_reminder_at_status' => 'boolean',
+        'fourth_reminder_at_status' => 'boolean',
         'closed'                   => 'boolean',
         'cc'                       => 'boolean',
     ];
@@ -74,9 +76,11 @@ class Fitness extends Model  implements Auditable
         'first_reminder_at',
         'second_reminder_at',
         'third_reminder_at',
+        'fourth_reminder_at',
         'first_reminder_at_status',
         'second_reminder_at_status',
         'third_reminder_at_status',
+        'fourth_reminder_at_status',
         'closed',
         'cc',
     ];

@@ -173,10 +173,10 @@
                 <div class="invoice-meta">
                     <div class="invoice-number">INVOICE No. {{ $invoice->invoice_number }}</div>
                     <table>
-                        <tr><td>DATE:</td><td>{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y') }}</td></tr>
-                        <tr><td>INVOICE CURRENCY:</td><td>{{ $invoice->currency }}</td></tr>
-                        <tr><td>VAT No:</td><td>{{ $company->vat_number }}</td></tr>
-                        <tr><td>TIN No:</td><td>{{ $company->tin_number }}</td></tr>
+                        <tr><td>Date:</td><td>{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y') }}</td></tr>
+                        <tr><td>Currecy:</td><td>{{ $invoice->currency?->name }}</td></tr>
+                        <tr><td>VAT#:</td><td>{{ $company->vat_number }}</td></tr>
+                        <tr><td>TIN#:</td><td>{{ $company->tin_number }}</td></tr>
                         @if($invoice->po_number)
                         <tr><td>PO No:</td><td>{{ $invoice->po_number }}</td></tr>
                         @endif
@@ -191,30 +191,25 @@
                         <td>Customer Name:</td>
                         <td class="customer-name-value">{{ $invoice->customer->name }}</td>
                     </tr>
-                    @if($invoice->customer->house_number)
-                    <tr><td>Customer House No:</td><td>{{ $invoice->customer->house_number }}</td></tr>
+                    @if($invoice->customer->street_address)
+                    <tr><td>Customer Address:</td><td>{{ $invoice->customer->street_address }}</td></tr>
                     @endif
-                    @if($invoice->customer->street)
-                    <tr><td>Customer Street:</td><td>{{ $invoice->customer->street }}</td></tr>
-                    @endif
-                    @if($invoice->customer->province)
-                    <tr><td>Customer Province:</td><td>{{ $invoice->customer->province }}</td></tr>
+                    @if($invoice->customer->city)
+                    <tr><td>Customer Street:</td><td>{{ $invoice->customer->city }}{{ $invoice->customer->country ? ", ".$invoice->customer->country : "" }}</td></tr>
                     @endif
                     @if($invoice->customer->email)
-                    <tr><td>Customer Email:</td><td>{{ $invoice->customer->email }}</td></tr>
+                        <tr><td>Customer Email:</td><td>{{ $invoice->customer?->email }}</td></tr>
                     @endif
-                    @if($invoice->customer->phone)
-                    <tr><td>Customer Phone:</td><td>{{ $invoice->customer->phone }}</td></tr>
+                    @if($invoice->customer->phonenumber)
+                        <tr><td>Customer Phone:</td><td>{{ $invoice->customer?->phonenumber }}</td></tr>
                     @endif
                     @if($invoice->customer->vat_number)
-                    <tr><td>Customer VAT:</td><td>{{ $invoice->customer->vat_number }}</td></tr>
+                        <tr><td>Customer VAT:</td><td>{{ $invoice->customer?->vat_number }}</td></tr>
                     @endif
                     @if($invoice->customer->tin_number)
-                    <tr><td>Customer TIN:</td><td>{{ $invoice->customer->tin_number }}</td></tr>
+                        <tr><td>Customer TIN:</td><td>{{ $invoice->customer?->tin_number }}</td></tr>
                     @endif
-                    @if($invoice->customer->bp_number)
-                    <tr><td>Customer Bp No:</td><td>{{ $invoice->customer->bp_number }}</td></tr>
-                    @endif
+                   
                 </table>
             </div>
 
@@ -241,8 +236,12 @@
                     @foreach($invoice_items as $item)
                     <tr>
                         <td>{{ $item->hs_code }}</td>
-                        <td>{{ \Carbon\Carbon::parse($item->trip_date)->format('d/m/Y') }}</td>
-                        <td>{{ $item->waybill_number }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->trip?->start_date)->format('d/m/Y') }}</td>
+                        <td>
+                            @foreach ($item->trip->trip_transport_orders as $tto)
+                                {{$tto->delivery_note?->document_number}}
+                            @endforeach
+                        </td>
                         <td>{{ $item->lti_number }}</td>
                         <td class="text-left">{{ $item->origin }}</td>
                         <td class="text-left">{{ $item->destination }}</td>

@@ -58,6 +58,8 @@ class Index extends Component
         $this->resetPage();
     }
 
+   
+
 
     public function updatedJobTitleId($id){
         if (is_null($id)) {
@@ -107,7 +109,7 @@ class Index extends Component
 
     }
 
-    public function refresh($category){
+     public function refresh($category){
 
         if($category == "job_titles"){
             $this->job_titles = JobTitle::orderBy('title','asc')->get();
@@ -116,10 +118,19 @@ class Index extends Component
                 'message'=>"Job Titles Refreshed Successfully!!."
             ]);
         }
+        if($category == "grades"){
+            $this->grades  = Grade::orderBy('grade_code','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
        
       
     }
 
+
+   
      private function resetInputFields(){
         $this->due_date = '';
         $this->start_date = '';

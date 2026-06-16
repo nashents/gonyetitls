@@ -108,6 +108,17 @@ class Index extends Component
        
 
     }
+
+    public function refresh($category){
+
+        if($category == "reminder_items"){
+           $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Reminder Items Refreshed Successfully!!."
+            ]);
+        }
+    }
    
     public function store()
     {

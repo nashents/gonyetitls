@@ -2,23 +2,24 @@
 
 namespace App\Http\Livewire\Horses;
 
+use App\Exports\HorseBillsExport;
+use App\Exports\HorseBookingExport;
+use App\Exports\HorseFuelExport;
 use App\Models\Bill;
-use App\Models\Fuel;
-use App\Models\Trip;
-use App\Models\Horse;
 use App\Models\Booking;
+use App\Models\Fuel;
+use App\Models\Horse;
+use App\Models\Trip;
+use App\Models\TyreAssignment;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Models\TyreAssignment;
-use App\Exports\HorseFuelExport;
-use App\Exports\HorseBillsExport;
-use App\Models\ChecklistCategory;
-use App\Exports\HorseBookingExport;
-use App\Exports\HorseTyreAssignmentExport;
 
 class Show extends Component
 {
+
+    use WithFileUploads;
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 

@@ -1,4 +1,20 @@
 <div>
+    <style id="fuel-orders-ui-polish">
+        .fuel-toolbar { margin-bottom: 15px; }
+        .fuel-toolbar .input-group { margin-bottom: 8px; }
+        .fuel-meta, .auth-meta { display: block; color: #6c757d; line-height: 1.35; }
+        .fuel-balance-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; background: #f9fafb; margin-top: 8px; }
+        .fuel-balance-card strong { display: block; font-size: 12px; color: #6c757d; text-transform: uppercase; }
+        .fuel-balance-card span { font-size: 16px; font-weight: 700; }
+        .fuel-form-section { border: 1px solid #e5e7eb; border-radius: 6px; padding: 15px; margin-bottom: 15px; background: #fff; }
+        .fuel-form-section-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #2f3640; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .fuel-table th { white-space: nowrap; }
+        .fuel-table td { vertical-align: top !important; }
+        .row-fillup-initial { border-left: 4px solid #28a745; }
+        .row-fillup-topup { border-left: 4px solid #ffc107; }
+        .amount-cell, .qty-cell { text-align: right; white-space: nowrap; }
+        .guard-alert ul { margin-bottom: 0; padding-left: 20px; }
+    </style>
     <section class="section">
         <x-loading/>
         <div class="container-fluid">
@@ -97,10 +113,15 @@
                                
                             </div>
                             <br>
-                           
+                            {{-- Legend --}}
+                            <div class="mb-10" style="font-size:12px;">
+                                <span class="badge badge-success">&nbsp;</span> Initial fill
+                                &nbsp;&nbsp;
+                                <span class="badge badge-warning">&nbsp;</span> Top Up
+                            </div>
 
-                            <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                                <thead>
+                            <table class="table table-hover table-bordered table-sm align-middle" cellspacing="0" width="100%">
+                                <thead class="thead-light">
                                     <tr>
                                         <th>FOrder#</th>
                                         <th>Fuel Request</th>
@@ -108,10 +129,10 @@
                                         <th>Order For</th>
                                         <th>Station</th>
                                         <th>Fill Up</th>
-                                        <th>Qty(l)</th>
-                                        <th>Amt</th>
+                                        <th class="text-right">Qty (l)</th>
+                                        <th class="text-right">Amount</th>
                                         <th>Auth</th>
-                                        <th>Action</th>
+                                        <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -119,8 +140,10 @@
                                         @forelse($fuels as $fuel)
                                             @php
                                                 $isInitial   = $fuel->fillup == 1;
-                                                $rowClass    = $isInitial ? 'row-fillup-initial' : 'row-fillup-topup';
+                                                $rowAccent    = $isInitial ? '#E8F5E9' : '#FFF8E1'; // light green / light amber
+                                                $borderAccent = $isInitial ? '#2E7D32' : '#F57C00'; // darker green / darker amber
                                                 $fillupLabel = $isInitial ? 'Initial' : 'Top Up';
+                                                $fillupBadge = $isInitial ? 'success' : 'warning';
 
                                                 $datePattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
                                                 $formattedDate = preg_match($datePattern, $fuel->date)
@@ -130,14 +153,16 @@
                                                 $fuelRequest = $fuel->fuel_request ?? null;
                                             @endphp
 
-                                            <tr class="{{ $rowClass }}" style="background-color: {{ $isInitial ? '#4CAF50' : '#FFC107' }} !important;">
+                                            <tr 
+                                                style="background-color:{{ $rowAccent }}; border-left: 6px solid {{ $borderAccent }};"
+                                            >
 
                                                 {{-- FOrder# --}}
                                                 <td>
-                                                    {{ $fuel->order_number }} <br>
-                                                    <div class="fuel-meta">
-                                                        <small><strong>Created By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small> <br>
-                                                        <small><strong>Created On:</strong> {{ $fuel->created_at }}</small>
+                                                    <strong>{{ $fuel->order_number }}</strong>
+                                                    <div class="fuel-meta text-muted">
+                                                        <small><strong>By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small><br>
+                                                        <small><strong>On:</strong> {{ $fuel->created_at }}</small>
                                                     </div>
                                                 </td>
 
@@ -146,10 +171,9 @@
                                                     @if($fuelRequest)
                                                         <a href="{{ route('fuel_requests.show', $fuelRequest->id) }}" target="_blank">
                                                             {{ $fuelRequest->request_number }}
-                                                        </a> <br>
-                                                        <div class="fuel-meta">
-                                                            <small><strong>Requested By:</strong> {{ optional($fuelRequest->employee)->name }} {{ optional($fuelRequest->employee)->surname }}</small>
-                                                            <br>
+                                                        </a><br>
+                                                        <div class="fuel-meta text-muted">
+                                                            <small><strong>Requested By:</strong> {{ optional($fuelRequest->employee)->name }} {{ optional($fuelRequest->employee)->surname }}</small><br>
                                                             <small>
                                                                 <strong>Requested For:</strong>
                                                                 @if($fuelRequest->horse) <br>
@@ -164,87 +188,82 @@
                                                                 @else
                                                                     Other
                                                                 @endif
-                                                            </small> <br>
-                                                            <small><strong>Fuel Type:</strong> {{ $fuelRequest->fuel_type }}</small> <br>
+                                                            </small><br>
+                                                            <small><strong>Fuel Type:</strong> {{ $fuelRequest->fuel_type }}</small><br>
                                                             <small><strong>Requested Qty:</strong> {{ $fuelRequest->quantity ? $fuelRequest->quantity . 'l' : '-' }}</small>
                                                         </div>
                                                     @else
-                                                        —
+                                                        <span class="text-muted">—</span>
                                                     @endif
                                                 </td>
 
                                                 {{-- Date --}}
-                                                <td>{{ $formattedDate }}</td>
+                                                <td><small>{{ $formattedDate }}</small></td>
 
                                                 {{-- Order For --}}
                                                 <td>
                                                     @if($fuel->type === 'Horse' && isset($fuel->horse))
-                                                        Horse | {{ $fuel->horse->registration_number }}
+                                                        <span class="badge badge-info">Horse</span>
+                                                        {{ $fuel->horse->registration_number }}
                                                         {{ $fuel->horse->fleet_number ? '(' . $fuel->horse->fleet_number . ')' : '' }}
                                                     @elseif($fuel->type === 'Vehicle' && isset($fuel->vehicle))
-                                                        Vehicle | {{ $fuel->vehicle->registration_number }}
+                                                        <span class="badge badge-info">Vehicle</span>
+                                                        {{ $fuel->vehicle->registration_number }}
                                                         {{ $fuel->vehicle->fleet_number ? '(' . $fuel->vehicle->fleet_number . ')' : '' }}
                                                     @elseif($fuel->type === 'Asset' && isset($fuel->asset))
-                                                        Asset | {{ optional($fuel->asset->product->brand)->name }}
+                                                        <span class="badge badge-info">Asset</span>
+                                                        {{ optional($fuel->asset->product->brand)->name }}
                                                         {{ optional($fuel->asset->product)->name }}
                                                     @elseif($fuel->type === 'Other')
-                                                        Other
+                                                        <span class="badge badge-secondary">Other</span>
                                                     @endif
 
                                                     @if(in_array($fuel->type, ['Horse', 'Vehicle']) && isset($fuel->trip))
                                                         @php
                                                             $from = App\Models\Destination::find($fuel->trip->from);
-                                                            $to   = App\Models\Destination::find($fuel->trip->to); // ← bug fix: was ->from
+                                                            $to   = App\Models\Destination::find($fuel->trip->to);
                                                         @endphp
-                                                        <br>
-                                                        Trip | {{ $fuel->trip->trip_number }}{{ $fuel->trip->trip_ref ? '/' . $fuel->trip->trip_ref : '' }}
-                                                        {{ optional($from?->country)->name }} {{ $from?->city }} -
-                                                        {{ optional($to?->country)->name }} {{ $to?->city }}
+                                                        <div class="fuel-meta text-muted">
+                                                            <small><strong>Trip:</strong> {{ $fuel->trip->trip_number }}{{ $fuel->trip->trip_ref ? '/' . $fuel->trip->trip_ref : '' }}
+                                                            {{ optional($from?->country)->name }} {{ $from?->city }} —
+                                                            {{ optional($to?->country)->name }} {{ $to?->city }}</small>
+                                                        </div>
                                                     @endif
                                                     @if ($fuel->comments)
-                                                        <small>
-                                                            <strong>Comments:</strong>{{ $fuel->comments }}
-                                                        </small>
+                                                        <div class="fuel-meta text-muted">
+                                                            <small><strong>Comments:</strong> {{ $fuel->comments }}</small>
+                                                        </div>
                                                     @endif
-                                                    
                                                 </td>
 
                                                 {{-- Station --}}
                                                 <td>
                                                     {{ ucfirst(optional($fuel->container)->name) }}
-                                                    <div class="fuel-meta">
+                                                    <div class="fuel-meta text-muted">
                                                         <small><strong>Fuel Type:</strong> {{ $fuel->container->fuel_type ?? '' }}</small>
                                                     </div>
                                                 </td>
 
                                                 {{-- Fill Up --}}
-                                                <td>{{ $fillupLabel }}</td>
+                                                <td><span class="badge badge-{{ $fillupBadge }}">{{ $fillupLabel }}</span></td>
 
                                                 {{-- Qty --}}
-                                                <td>
-                                                    <div class="d-flex flex-column">
-                                                        
-                                                        <span class="font-weight-bold">
-                                                            {{ number_format($fuel->quantity, 2) }}
-                                                        </span>
-
+                                                <td class="text-right">
+                                                    <span class="font-weight-bold">{{ number_format($fuel->quantity, 2) }}</span>
+                                                    <div>
                                                         @if($fuel->is_full_tank)
-                                                            <span class="badge badge-success mt-1">
-                                                                Full Tank
-                                                            </span>
+                                                            <span class="badge badge-success mt-1">Full Tank</span>
                                                         @else
-                                                            <span class="badge badge-warning mt-1">
-                                                                Partial Refill
-                                                            </span>
+                                                            <span class="badge badge-warning mt-1">Partial</span>
                                                         @endif
-
                                                     </div>
                                                 </td>
 
-                                               
-
                                                 {{-- Amount --}}
-                                                <td>{{ optional($fuel->currency)->name }} {{ optional($fuel->currency)->symbol }}{{ number_format($fuel->amount, 2) }}</td>
+                                                <td class="text-right">
+                                                    {{ optional($fuel->currency)->symbol }}{{ number_format($fuel->amount, 2) }}
+                                                    <div class="fuel-meta text-muted"><small>{{ optional($fuel->currency)->name }}</small></div>
+                                                </td>
 
                                                 {{-- Authorization --}}
                                                 <td>
@@ -256,28 +275,28 @@
                                                             default    => 'warning',
                                                         };
                                                     @endphp
-                                                    <span class="badge bg-{{ $badgeClass }}">{{ ucfirst($authStatus ?? 'pending') }}</span>
+                                                    <span class="badge badge-{{ $badgeClass }}">{{ ucfirst($authStatus ?? 'pending') }}</span>
 
                                                     @if($fuel->authorized_by_id)
                                                         @php $authorizer = App\Models\User::find($fuel->authorized_by_id); @endphp
-                                                        <small class="auth-meta"><strong>Auth By:</strong> {{ optional($authorizer)->name }} {{ optional($authorizer)->surname }}</small>
+                                                        <div class="fuel-meta text-muted"><small><strong>Auth By:</strong> {{ optional($authorizer)->name }} {{ optional($authorizer)->surname }}</small></div>
                                                     @endif
                                                     @if($fuel->authorization_date)
-                                                        <small class="auth-meta"><strong>Date:</strong> {{ $fuel->authorization_date }}</small>
+                                                        <div class="fuel-meta text-muted"><small><strong>Date:</strong> {{ $fuel->authorization_date }}</small></div>
                                                     @endif
                                                     @if($fuel->reason)
-                                                        <small class="auth-meta"><strong>Comments:</strong> {{ $fuel->reason }}</small>
+                                                        <div class="fuel-meta text-muted"><small><strong>Comments:</strong> {{ $fuel->reason }}</small></div>
                                                     @endif
                                                 </td>
 
                                                 {{-- Actions --}}
-                                                <td class="w-10 line-height-35 table-dropdown">
+                                                <td class="text-center line-height-35 table-dropdown">
                                                     <div class="dropdown">
-                                                        <button class="btn btn-default dropdown-toggle" type="button"
+                                                        <button class="btn btn-default btn-sm dropdown-toggle" type="button"
                                                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                             <i class="fa fa-bars"></i>
                                                         </button>
-                                                        <ul class="dropdown-menu">
+                                                        <ul class="dropdown-menu dropdown-menu-right">
                                                             <li>
                                                                 <a href="{{ route('fuels.show', $fuel->id) }}">
                                                                     <i class="fa fa-eye color-default"></i> View
@@ -315,14 +334,14 @@
 
                                         @empty
                                             <tr>
-                                                <td colspan="12" class="text-center text-muted py-3" style="font-size: 17px;">
+                                                <td colspan="10" class="text-center text-muted py-3" style="font-size: 17px;">
                                                     No Fuel Orders Found.
                                                 </td>
                                             </tr>
                                         @endforelse
                                     @else
                                         <tr>
-                                            <td colspan="12" class="text-center">
+                                            <td colspan="10" class="text-center">
                                                 <img src="{{ asset('images/nodata.png') }}" alt="No data" style="max-width: 300px; padding: 2rem 0;">
                                             </td>
                                         </tr>
@@ -484,8 +503,8 @@
                                                 @endif
                                                 |
                                                 @php
-                                                    $from = App\Models\Destination::find($trip->from);
-                                                    $to = App\Models\Destination::find($trip->to);
+                                                    $from = $trip->fromDestination ?? App\Models\Destination::find($trip->from);
+                                                    $to = $trip->toDestination ?? App\Models\Destination::find($trip->to);
                                                 @endphp
                                                 From: {{$from ? $from->country->name : ""}} {{$from ? $from->city : ""}} {{$trip->loading_point ? $trip->loading_point->name : ""}} To: {{$to ? $to->country->name : ""}} {{$to ? $to->city : ""}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
                                             @endforeach
@@ -565,14 +584,16 @@
                                     <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
-                                            @if (isset($container_balance))
-                                                <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                            @endif
-                                             @if (isset($account_balance))
-                                                <br>
-                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                            @endif
+                                            <div class="fuel-balance-card">
+                                                @if (isset($container_balance))
+                                                    <strong>Quantity Balance</strong>
+                                                    <span>{{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} L</span>
+                                                @endif
+                                                @if (isset($account_balance))
+                                                    <strong class="mt-1">Account Balance</strong>
+                                                    <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
+                                                @endif
+                                            </div>
                                         @endif 
                                     @endif
                                 </div>
@@ -591,25 +612,27 @@
                                     <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
-                                            @if (isset($container_balance))
-                                                <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                            @endif
-                                             @if (isset($account_balance))
-                                                <br>
-                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                            @endif
+                                            <div class="fuel-balance-card">
+                                                @if (isset($container_balance))
+                                                    <strong>Quantity Balance</strong>
+                                                    <span>{{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} L</span>
+                                                @endif
+                                                @if (isset($account_balance))
+                                                    <strong class="mt-1">Account Balance</strong>
+                                                    <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
+                                                @endif
+                                            </div>
                                         @endif 
                                     @endif
                                 </div>
                             </div>
                         @endif
                     </div>
-                    @if (isset($selected_container) && $selected_container->purchase_type = "Bulk Buy")
+                    @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                         <div class="form-group">
                             <label for="exampleInputEmail13">Select where to deduct from<span class="required" style="color: red">*</span></label>
                             <div class="mb-10">
-                                <input type="radio" wire:model.debounce.300ms="top_up_to" value="deduct_from"  class="line-style"  required/>
+                                <input type="radio" wire:model.debounce.300ms="deduct_from" value="account"  class="line-style"  required/>
                                 <label for="one" class="radio-label">Account Balance($)</label>
                                 <input type="radio" wire:model.debounce.300ms="deduct_from" value="quantity"  class="line-style"  required/>
                                 <label for="one" class="radio-label">Quantity Balance(l)</label>
@@ -678,8 +701,8 @@
                               
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance) && isset($quantity))
-                                        @if ($container_balance < $quantity)
-                                        <small style="color: red">Fuel order exceeds {{ $container_balance }} litres, which is the fueling station balance.</small>
+                                        @if (($this->effectiveContainerBalance ?? $container_balance) < $quantity)
+                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance, 2) }} litres, which is the fueling station balance.</small>
                                         @endif
                                     @endif
                                 @endif
@@ -754,6 +777,13 @@
                                 <label for="amount">Total</label>
                                 <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="amount" placeholder="Enter Fillup Total">
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy" && $deduct_from == "account")
+                                    @if (isset($account_balance) && isset($amount))
+                                        @if ($account_balance < $amount)
+                                        <small class="text-danger">Fuel total amount exceeds {{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance, 2) }}, which is the fueling station money account balance.</small>
+                                        @endif
+                                    @endif
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -765,9 +795,22 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    @if($this->fuelOrderBlocked)
+                        <div class="alert alert-danger guard-alert text-left" style="width:100%;">
+                            <strong>Cannot save fuel order:</strong>
+                            <ul>
+                                @foreach($this->fuelOrderIssues as $issue)
+                                    <li>{{ $issue }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    @error('fuel_guard')
+                        <div class="alert alert-danger text-left" style="width:100%;">{{ $message }}</div>
+                    @enderror
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="store" @if($this->fuelOrderBlocked) disabled @endif><i class="fa fa-save"></i>Save</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>
@@ -889,8 +932,8 @@
                                                 @endif
                                                 |
                                                 @php
-                                                    $from = App\Models\Destination::find($trip->from);
-                                                    $to = App\Models\Destination::find($trip->to);
+                                                    $from = $trip->fromDestination ?? App\Models\Destination::find($trip->from);
+                                                    $to = $trip->toDestination ?? App\Models\Destination::find($trip->to);
                                                 @endphp
                                                 From: {{$from ? $from->country->name : ""}} {{$from ? $from->city : ""}} {{$trip->loading_point ? $trip->loading_point->name : ""}} To: {{$to ? $to->country->name : ""}} {{$to ? $to->city : ""}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
                                             @endforeach
@@ -970,14 +1013,16 @@
                                     <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
-                                            @if (isset($container_balance))
-                                                <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                            @endif
-                                             @if (isset($account_balance))
-                                                <br>
-                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                            @endif
+                                            <div class="fuel-balance-card">
+                                                @if (isset($container_balance))
+                                                    <strong>Quantity Balance</strong>
+                                                    <span>{{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} L</span>
+                                                @endif
+                                                @if (isset($account_balance))
+                                                    <strong class="mt-1">Account Balance</strong>
+                                                    <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
+                                                @endif
+                                            </div>
                                         @endif 
                                     @endif
                                 </div>
@@ -996,14 +1041,16 @@
                                     <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
-                                            @if (isset($container_balance))
-                                                <br>
-                                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                            @endif
-                                             @if (isset($account_balance))
-                                                <br>
-                                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                            @endif
+                                            <div class="fuel-balance-card">
+                                                @if (isset($container_balance))
+                                                    <strong>Quantity Balance</strong>
+                                                    <span>{{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} L</span>
+                                                @endif
+                                                @if (isset($account_balance))
+                                                    <strong class="mt-1">Account Balance</strong>
+                                                    <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
+                                                @endif
+                                            </div>
                                         @endif 
                                     @endif
                                 </div>
@@ -1071,8 +1118,8 @@
                               
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance) && isset($quantity))
-                                        @if ($container_balance < $quantity)
-                                        <small style="color: red">Fuel order exceeds {{ $container_balance }} litres, which is the fueling station balance.</small>
+                                        @if (($this->effectiveContainerBalance ?? $container_balance) < $quantity)
+                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance, 2) }} litres, which is the fueling station balance.</small>
                                         @endif
                                     @endif
                                 @endif
@@ -1147,6 +1194,13 @@
                                 <label for="amount">Total</label>
                                 <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="amount" placeholder="Enter Fillup Total">
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy" && $deduct_from == "account")
+                                    @if (isset($account_balance) && isset($amount))
+                                        @if ($account_balance < $amount)
+                                        <small class="text-danger">Fuel total amount exceeds {{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance, 2) }}, which is the fueling station money account balance.</small>
+                                        @endif
+                                    @endif
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -1158,9 +1212,22 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    @if($this->fuelOrderBlocked)
+                        <div class="alert alert-danger guard-alert text-left" style="width:100%;">
+                            <strong>Cannot update fuel order:</strong>
+                            <ul>
+                                @foreach($this->fuelOrderIssues as $issue)
+                                    <li>{{ $issue }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    @error('fuel_guard')
+                        <div class="alert alert-danger text-left" style="width:100%;">{{ $message }}</div>
+                    @enderror
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="update" @if($this->fuelOrderBlocked) disabled @endif><i class="fa fa-refresh"></i>Update</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>
@@ -1251,17 +1318,19 @@
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
-                                    @if ($selected_container->purchase_type == "Bulk Buy")
-                                        @if (isset($container_balance))
-                                            <br>
-                                            <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                        @endif
-                                         @if (isset($account_balance))
-                                            <br>
-                                            <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                        @endif
-                                    @endif 
-                                @endif
+                                        @if ($selected_container->purchase_type == "Bulk Buy")
+                                            <div class="fuel-balance-card">
+                                                @if (isset($container_balance))
+                                                    <strong>Quantity Balance</strong>
+                                                    <span>{{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} L</span>
+                                                @endif
+                                                @if (isset($account_balance))
+                                                    <strong class="mt-1">Account Balance</strong>
+                                                    <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
+                                                @endif
+                                            </div>
+                                        @endif 
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -1445,17 +1514,19 @@
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
-                                    @if ($selected_container->purchase_type == "Bulk Buy")
-                                        @if (isset($container_balance))
-                                            <br>
-                                            <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                        @endif
-                                         @if (isset($account_balance))
-                                            <br>
-                                            <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                        @endif
-                                    @endif 
-                                @endif
+                                        @if ($selected_container->purchase_type == "Bulk Buy")
+                                            <div class="fuel-balance-card">
+                                                @if (isset($container_balance))
+                                                    <strong>Quantity Balance</strong>
+                                                    <span>{{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} L</span>
+                                                @endif
+                                                @if (isset($account_balance))
+                                                    <strong class="mt-1">Account Balance</strong>
+                                                    <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
+                                                @endif
+                                            </div>
+                                        @endif 
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -1630,18 +1701,18 @@
                                 @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                                 @if (!is_null($selectedContainer) && isset($selected_container) )
-                                @if ($selected_container->purchase_type == "Bulk Buy")
-                                    @if (isset($container_balance))
-                                        <br>
-                                        <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                                    @endif
-                                     @if (isset($account_balance))
-                                        <br>
-                                        <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                                    @endif
-                                @endif 
-                            @endif
-                            </div>
+                                    @if ($selected_container->purchase_type == "Bulk Buy")
+                                        @if (isset($container_balance))
+                                            <br>
+                                            <small style="color:green">Available fuel balance is {{ number_format($container_balance ?? 0 , 2) }}ltrs</small>    
+                                        @endif
+                                        @if (isset($account_balance))
+                                            <br>
+                                            <small style="color:green">Available account balance is {{$selected_container->currency?->symbol}}{{ number_format($account_balance ?? 0 , 2) }}</small>    
+                                        @endif
+                                    @endif 
+                                @endif
+                        </div>
                         </div>
                     </div>
                     <div class="row">
@@ -1691,8 +1762,8 @@
                               
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance) && isset($quantity))
-                                        @if ($container_balance < $quantity)
-                                        <small style="color: red">Fuel order exceeds {{ $container_balance }} litres, which is the fueling station balance.</small>
+                                        @if (($this->effectiveContainerBalance ?? $container_balance) < $quantity)
+                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance, 2) }} litres, which is the fueling station balance.</small>
                                         @endif
                                         
                                     @endif
@@ -1771,17 +1842,17 @@
                         @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
                         @if (!is_null($selectedContainer) && isset($selected_container) )
-                        @if ($selected_container->purchase_type == "Bulk Buy")
-                            @if (isset($container_balance))
-                                <br>
-                                <small style="color:green">Available fuel balance is {{ $container_balance }}l</small>    
-                            @endif
-                            @if (isset($account_balance))
-                                <br>
-                                <small style="color:green">Available account balance is {{ $account_balance }}l</small>    
-                            @endif
-                        @endif 
-                    @endif
+                            @if ($selected_container->purchase_type == "Bulk Buy")
+                                @if (isset($container_balance))
+                                    <br>
+                                    <small style="color:green">Available fuel balance is {{ number_format($container_balance ?? 0 , 2) }}ltrs</small>    
+                                @endif
+                                @if (isset($account_balance))
+                                    <br>
+                                    <small style="color:green">Available account balance is {{$selected_container->currency?->symbol}}{{ number_format($account_balance ?? 0 , 2) }}</small>    
+                                @endif
+                            @endif 
+                        @endif
                     </div>
                         <div class="row">
                             <div class="col-md-6">
@@ -1900,9 +1971,22 @@
                     @endif
                 </div>
                 <div class="modal-footer">
+                    @if($this->fuelOrderBlocked)
+                        <div class="alert alert-danger guard-alert text-left" style="width:100%;">
+                            <strong>Cannot save fuel order:</strong>
+                            <ul>
+                                @foreach($this->fuelOrderIssues as $issue)
+                                    <li>{{ $issue }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    @error('fuel_guard')
+                        <div class="alert alert-danger text-left" style="width:100%;">{{ $message }}</div>
+                    @enderror
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="store" @if($this->fuelOrderBlocked) disabled @endif><i class="fa fa-save"></i>Save</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>

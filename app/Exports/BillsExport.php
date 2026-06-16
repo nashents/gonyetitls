@@ -246,9 +246,9 @@ class BillsExport implements
         $symbol   = $bill->currency ? $bill->currency->symbol : "";
         $currency = $bill->currency ? $bill->currency->name : "";
 
-        $subtotal    = number_format($bill->subtotal ? $bill->subtotal : 0, 2);
-        $tax_amount  = number_format($bill->tax_amount ? $bill->tax_amount : 0, 2);
-        $total       = number_format($bill->total, 2);
+        $subtotal    = number_format($bill?->subtotal ??  0, 2);
+        $tax_amount  = number_format($bill?->tax_amount ?? 0, 2);
+        $total       = number_format($bill?->total ?? 0, 2);
 
         if (isset($bill->payments)) {
             $payments = number_format($bill->payments->sum('amount'), 2);

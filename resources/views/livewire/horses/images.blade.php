@@ -1,48 +1,179 @@
 <div>
-    <section class="section">
-        <div class="container-fluid">
-    <a href="" data-toggle="modal" data-target="#imageModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Image(s)</a>
-    <br>
-    <br>
-    <x-loading/>
-    {{-- <blockquote class="blockquote-reverse mt-20"> --}}
-        <section></section>
-        @if ($horse_images->count()>0)
-        @foreach ($horse_images as $image)
-        <div class="col-md-4">
-            <a href="{{asset('images/uploads/'.$image->filename)}}"><img src="{{asset('images/uploads/'.$image->filename)}}" alt="horse Avatar" class="img-responsive" style="width:100% ; height:100% ;"></a>
-        </div>
-        @endforeach
-        @else
-        <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-        @endif
-    </div>
-    </section>
-    {{-- </blockquote> --}}
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-image"></i> Add Horse Images(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>
+        <i class="fa fa-image text-primary"></i>
+        Horse Images
+        <span class="badge badge-primary">{{ $horse_images->count() }}</span>
+    </h5>
+
+    <button data-toggle="modal"
+            data-target="#imageModal"
+            class="btn btn-primary btn-sm">
+        <i class="fa fa-plus"></i> Upload Images
+    </button>
+</div>
+
+@if($horse_images->count())
+
+<div class="row">
+    @foreach($horse_images as $image)
+    <div class="col-md-4 col-lg-3 mb-4 mt-10">
+        <div class="card shadow-sm">
+
+            <div style="height:220px; overflow:hidden;">
+                <a href="{{ asset('images/uploads/'.$image->filename) }}"
+                   target="_blank">
+
+                    <img src="{{ asset('images/uploads/'.$image->filename) }}"
+                         class="img-fluid"
+                         style="width:100%;height:220px;object-fit:cover;transition:0.3s;">
+                </a>
+            </div>
+
+            <div class="card-body p-2">
+
+                <small class="text-muted d-block">
+                    Uploaded:
+                    {{ $image->created_at ? $image->created_at->format('d M Y') : '' }}
+                </small>
+
+                <div class="mt-2 d-flex justify-content-between">
+
+                    <a href="{{ asset('images/uploads/'.$image->filename) }}"
+                       target="_blank"
+                       class="btn btn-info btn-xs">
+                        <i class="fa fa-eye"></i> View
+                    </a>
+
+                    <button
+                        wire:click="deleteImage({{ $image->id }})"
+                        onclick="confirm('Delete this image?') || event.stopImmediatePropagation()"
+                        class="btn btn-danger btn-xs">
+
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+
                 </div>
-                <form wire:submit.prevent="store()" >
-                <div class="modal-body">
-                        <div class="form-group">
-                            <label for="file">Upload File</label>
-                            <input type="file" accept="image" wire:model.debounce.300ms="images" class="form-control" multiple required>
-                            @error('images') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
-                    </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
+
             </div>
         </div>
     </div>
+    @endforeach
+</div>
+
+@else
+
+<div class="text-center p-5">
+    <img src="{{ asset('images/nodata.png') }}"
+         style="max-width:250px;"
+         class="img-fluid">
+
+    <h5 class="mt-3 text-muted">
+        No horse images uploaded
+    </h5>
+
+    <button data-toggle="modal"
+            data-target="#imageModal"
+            class="btn btn-primary">
+        <i class="fa fa-upload"></i> Upload First Image
+    </button>
+</div>
+
+@endif
+
+<div wire:ignore.self
+     class="modal fade"
+     id="imageModal"
+     tabindex="-1"
+     role="dialog">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fa fa-image"></i>
+                    Upload Horse Images
+                </h5>
+
+                <button type="button"
+                        class="close text-white"
+                        data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <form wire:submit.prevent="store">
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+
+                        <label>
+                            Select Images
+                        </label>
+
+                        <input type="file"
+                               wire:model="images"
+                               class="form-control"
+                               accept="image/jpeg,image/png,image/webp,image/jpg"
+                               multiple>
+
+                        <small class="text-muted">
+                            Allowed formats: JPG, PNG, WEBP
+                        </small>
+
+                        @error('images')
+                        <span class="text-danger d-block">
+                            {{ $message }}
+                        </span>
+                        @enderror
+                    </div>
+
+                    <div wire:loading wire:target="images">
+                        <div class="alert alert-info">
+                            <i class="fa fa-spinner fa-spin"></i>
+                            Uploading images...
+                        </div>
+                    </div>
+
+                    @if($images)
+                    <div class="row mt-3">
+                        @foreach($images as $photo)
+                        <div class="col-md-3 mb-3">
+                            <img src="{{ $photo->temporaryUrl() }}"
+                                 class="img-thumbnail"
+                                 style="height:150px;width:100%;object-fit:cover;">
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal">
+                        Close
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-success"
+                            wire:loading.attr="disabled">
+
+                        <i class="fa fa-save"></i>
+                        Save Images
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 
 </div>
