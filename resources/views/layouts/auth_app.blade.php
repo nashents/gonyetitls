@@ -39,6 +39,22 @@
         <style>
             .modal { overflow: auto !important; }
         </style>
+
+        @php
+            $backgroundImage = file_exists(public_path('images/background_images/background-image.jpg'))
+                ? asset('images/background_images/background-image.jpg')
+                : asset('images/photo-2.jpg');
+        @endphp
+
+        <style>
+            .login-bg {
+                background-image: url('{{ $backgroundImage }}');
+                background-size: 100%;
+                background-repeat: no-repeat;
+                background-position: center;
+                min-height: 100vh;
+            }
+        </style>
        
 
     </head>
