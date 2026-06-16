@@ -9,11 +9,7 @@
   <title>@yield('title')</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
   <script src="https://kit.fontawesome.com/0154e08647.js" crossorigin="anonymous"></script>
-    @if (isset(Auth::user()->employee->company))
-    <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
-    @elseif (Auth::user()->company)
-    <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
-    @endif
+   <link rel="shortcut icon" type = "image/png" href="{!! asset('images/favicon.png')!!}">
 
 </head>
 <style>

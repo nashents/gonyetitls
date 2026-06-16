@@ -10,11 +10,7 @@
   <link rel="stylesheet" href="{{asset('css/font-awesome.min.css')}}" media="screen" > --}}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
   <script src="https://kit.fontawesome.com/0154e08647.js" crossorigin="anonymous"></script>
-    @if (Auth::user()->employee->company)
-        <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
-    @elseif (Auth::user()->company)
-        <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
-    @endif
+     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/favicon.png')!!}">
     {{-- <link rel="stylesheet" href="{{asset('css/layout.css')}}"> --}}
     <style>
         .table-bordered {

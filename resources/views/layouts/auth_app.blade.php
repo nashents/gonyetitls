@@ -26,7 +26,7 @@
         <link rel="stylesheet" href="{{asset('css/main.css')}}" media="screen" >
         <!-- ========== MODERNIZR ========== -->
         <script src="{{asset('js/modernizr/modernizr.min.js')}}"></script>
-        <link rel="shortcut icon" type = "image/png" href="{!! asset('images/basilmark-favicon.png')!!}">
+         <link rel="shortcut icon" type = "image/png" href="{!! asset('images/favicon.png')!!}">
         <link rel="stylesheet" href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.min.css">
         <script src="https://cdn.ckeditor.com/ckeditor5/38.1.1/classic/ckeditor.js"></script>
         @livewireStyles
