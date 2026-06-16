@@ -13,12 +13,12 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+
+/public/images/uploads/
+/public/myfiles/documents/
 /public/images/background_images/*
 !/public/images/background_images/.gitkeep
-# /public/images/**
-# /public/myfiles/documents/**
-# !public/images/.gitkeep
-# !/public/myfiles/documents/.gitkeep
+
 *.zip
 *.7z
 *.tar
