@@ -81,18 +81,25 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
-                            @if ($trip_expense->bill->payments->count() == 0)
-                                @if ($trip_expense->user_id == Auth::user()->id)
-                                    @if (!$trip_expense->fuel)
-                                        <li><a href="#" wire:click="edit({{$trip_expense->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                    @endif
-                                        <li><a href="#" wire:click="showDelete({{$trip_expense->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                @endif
+                           @if ($trip_expense->can_edit)
+                                <li>
+                                    <a href="#" wire:click="edit({{ $trip_expense->id }})">
+                                        <i class="fa fa-edit color-success"></i> Edit
+                                    </a>
+                                </li>
+                            @endif
+
+                            @if ($trip_expense->can_delete)
+                                <li>
+                                    <a href="#" wire:click="showDelete({{ $trip_expense->id }})">
+                                        <i class="fa fa-trash color-danger"></i> Delete
+                                    </a>
+                                </li>
                             @endif
                            
                         </ul>
                     </div>
-                    @include('trips.expenses.delete')
+                 
 
             </td>
             @endif

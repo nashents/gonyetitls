@@ -37,6 +37,17 @@ class TripExpense extends Model implements Auditable
         return $this->hasOne('App\Models\Bill');
     }
 
+    public function getCanDeleteAttribute()
+    {
+        return $this->bill->payments->isEmpty()
+            && $this->user_id == auth()->id();
+    }
+
+    public function getCanEditAttribute()
+    {
+        return $this->can_delete && !$this->fuel;
+    }
+
     protected $fillable = [
         'user_id',
         'currency_id',

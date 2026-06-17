@@ -781,16 +781,16 @@ class Index extends Component
         $fuel = new Fuel;
         $fuel->user_id = Auth::user()->id;
         $fuel->order_number = $this->orderNumber();
-        $fuel->employee_id = $this->employee_id;
+        $fuel->employee_id = $this->employee_id ?? Null;
         $fuel->deduct_from = $this->deduct_from;
-        $fuel->fuel_request_id = $this->selectedFuelRequest;
+        $fuel->fuel_request_id = $this->selectedFuelRequest ?? Null;
         $fuel->fuel_type = $this->fuel_type;
         $fuel->is_full_tank = $this->is_full_tank;
 
         if (isset($this->selectedTrip)) {
             $trip = Trip::find($this->selectedTrip);
             $fuel->trip_id = $trip?->id;
-            $fuel->driver_id = $trip->driver_id ? $trip->driver_id : Null;
+            $fuel->driver_id = $trip->driver_id ?? Null;
         }
 
         if ($this->type == "Horse") {
@@ -815,11 +815,11 @@ class Index extends Component
             $fuel->vehicle_id = Null;
         }
       
-        $fuel->container_id = $this->selectedContainer;
+        $fuel->container_id = $this->selectedContainer ?? Null;
         $fuel->date = $this->date;
         $fuel->unit_price = $this->unit_price;
         $fuel->quantity = $this->quantity;
-        $fuel->currency_id = $this->selectedCurrency;
+        $fuel->currency_id = $this->selectedCurrency ?? Null;
         $fuel->amount = $this->amount;
         $fuel->exchange_rate = $this->exchange_rate;
         $fuel->exchange_amount = $this->exchange_amount;
@@ -1011,26 +1011,25 @@ class Index extends Component
 
         if ($this->fuel_id) {
             $fuel = Fuel::find($this->fuel_id);
-            $fuel->employee_id = $this->employee_id;
-
+            $fuel->employee_id = $this->employee_id ?? Null;
             if (isset($this->selectedTrip)) {
             $trip = Trip::find($this->selectedTrip);
             $fuel->trip_id = $trip->id;
-            $fuel->driver_id = $trip->driver_id ? $trip->driver_id : Null;
+            $fuel->driver_id = $trip->driver_id ?? Null;
         }
 
         if ($this->type == "Horse") {
-            $fuel->horse_id = $this->selectedHorse;
+            $fuel->horse_id = $this->selectedHorse ?? Null;
             $fuel->vehicle_id = Null;
             $fuel->asset_id = Null;
         }
         elseif($this->type == "Vehicle"){
-            $fuel->vehicle_id = $this->selectedVehicle;
+            $fuel->vehicle_id = $this->selectedVehicle ?? Null;
             $fuel->asset_id = Null;
             $fuel->horse_id = Null;
         }
         elseif($this->type == "Asset"){
-            $fuel->asset_id = $this->asset_id;
+            $fuel->asset_id = $this->asset_id ?? Null;
             $fuel->horse_id = Null;
             $fuel->vehicle_id = Null;
             
@@ -1042,15 +1041,15 @@ class Index extends Component
         }
            
             $fuel->is_full_tank = $this->is_full_tank;
-            $fuel->container_id = $this->selectedContainer;
+            $fuel->container_id = $this->selectedContainer ?? Null;
             $fuel->deduct_from = $this->deduct_from;
             $fuel->date = $this->date;
-            $fuel->fuel_request_id = $this->selectedFuelRequest;
+            $fuel->fuel_request_id = $this->selectedFuelRequest ?? Null;
             $fuel->unit_price = $this->unit_price;
             $fuel->fuel_type = $this->fuel_type;
             
             $fuel->quantity = $this->quantity;
-            $fuel->currency_id = $this->selectedCurrency;
+            $fuel->currency_id = $this->selectedCurrency ?? Null;
             $fuel->amount = $this->amount;
             $fuel->exchange_rate = $this->exchange_rate;
             $fuel->exchange_amount = $this->exchange_amount;

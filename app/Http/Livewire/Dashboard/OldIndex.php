@@ -52,8 +52,6 @@ use Livewire\Component;
 
 class Index extends Component
 {
-
-   
     private const MONTH_ABBR = [
         1 => 'jan', 2 => 'feb', 3 => 'mar', 4 => 'apr', 5 => 'may', 6 => 'jun',
         7 => 'jul', 8 => 'aug', 9 => 'sep', 10 => 'oct', 11 => 'nov', 12 => 'dec',
@@ -64,7 +62,6 @@ class Index extends Component
     // ── Context ─────────────────────────────────────────────────────────────
     public $user, $employee, $driver, $company, $company_currency;
     public $selectedCurrency, $currency_name, $currencies;
-    public $last_refreshed_at;
     public $year;
     public $chartData;
 
@@ -229,11 +226,9 @@ class Index extends Component
         $this->selectedCurrency = $this->company_currency->id ?? 1;
         $this->currency_name    = $this->company_currency->name ?? 'USD';
         $this->year             = now()->year;
-        $this->last_refreshed_at = now()->format('d M Y H:i');
 
         $this->loadAllKpis();
         $this->loadChart();
-       
     }
 
     public function updatedYear(): void
@@ -249,7 +244,7 @@ class Index extends Component
     private function loadAllKpis(): void
     {
         $companyId = $this->company->id ?? null;
-        $cacheKey  = "dashboard_kpis_{$companyId}_{$this->selectedCurrency}_" . now()->format('YmdH') . floor(now()->minute / 10);
+        $cacheKey  = "dashboard_kpis_{$companyId}_{$this->selectedCurrency}";
 
         $kpis = Cache::remember($cacheKey, 600, function () use ($companyId) {
             return $this->computeAllKpis($companyId);

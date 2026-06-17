@@ -1,2233 +1,532 @@
 <div>
-    <section class="section">
-        <div class="container-fluid">
+    <section class="section gonyeti-dashboard">
+        <div class="container-fluid dashboard-shell">
             @php
-            $departments = Auth::user()->employee->departments;
-            foreach($departments as $department){
-                $department_names[] = $department->name;
-            }
-            $roles = Auth::user()->roles;
-            foreach($roles as $role){
-                $role_names[] = $role->name;
-            }
-            $ranks = Auth::user()->employee->ranks;
-            foreach($ranks as $rank){
-                $rank_names[] = $rank->name;
-            }
+                $department_names = optional(Auth::user()->employee)->departments ? Auth::user()->employee->departments->pluck('name')->toArray() : [];
+                $role_names       = Auth::user()->roles ? Auth::user()->roles->pluck('name')->toArray() : [];
+                $isSuper          = in_array('Super Admin', $role_names);
+                $canSee = function(array $departments) use ($department_names, $isSuper) {
+                    return $isSuper || count(array_intersect($departments, $department_names)) > 0;
+                };
+                $fmt = fn($value, $decimals = 0) => is_numeric($value) ? number_format((float) $value, $decimals) : $value;
+                $money = fn($value) => ($currency_name ?? 'USD').' '.$this->formatCurrency((float) $value);
+                $alertTotal = ($overdue_invoices_count ?? 0) + ($expired_documents_count ?? 0) + ($docs_expiring_7d ?? 0) + ($vehicles_on_breakdown_count ?? 0) + ($trips_overdue_count ?? 0) + ($pending_authorizations_count ?? 0);
             @endphp
 
+            <style>
+                .gonyeti-dashboard{--gd-blue:#123bdc;--gd-blue-dark:#071b3a;--gd-orange:#ff7a00;--gd-orange-soft:#fff1e4;--gd-cyan:#0d8ecf;background:#f4f7fb;min-height:calc(100vh - 70px);padding:8px 0 18px 0;}
+                .dashboard-shell{max-width:100%;}
+                .gd-hero{background:linear-gradient(135deg,#061632 0%,#082963 46%,#123bdc 100%);border-radius:16px;padding:14px 18px;color:#fff;margin-bottom:12px;box-shadow:0 10px 26px rgba(6,22,50,.24);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.16);}
+                .gd-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.52),rgba(0,0,0,.28),rgba(255,122,0,.10));z-index:0;}
+                .gd-hero:after{content:"";position:absolute;right:-80px;top:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,122,0,.18);z-index:0;}
+                .gd-title{font-size:21px;font-weight:900;margin:0 0 3px 0;letter-spacing:.25px;color:#fff;text-shadow:0 3px 10px rgba(0,0,0,.65);line-height:1.15;}
+                .gd-subtitle{font-size:12px;color:#f5f8ff;margin:0;text-shadow:0 2px 6px rgba(0,0,0,.55);}
+                .gd-toolbar{text-align:right;position:relative;z-index:2;}
+                .gd-pill{display:inline-block;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.34);backdrop-filter:blur(8px);border-radius:20px;padding:6px 10px;font-size:11px;margin-left:6px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45);}
+                .gd-alert-strip{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
+                .gd-alert{min-width:165px;background:#fff;border-radius:10px;border-left:4px solid #d9534f;padding:10px 12px;box-shadow:0 4px 14px rgba(15,39,83,.08);color:#26384f;text-decoration:none!important;}
+                .gd-alert.warning{border-left-color:#f0ad4e}.gd-alert.info{border-left-color:#337ab7}.gd-alert.success{border-left-color:#5cb85c}
+                .gd-alert .num{font-size:20px;font-weight:800;line-height:1}.gd-alert .label{font-size:11px;text-transform:uppercase;color:#6b7788;margin-top:4px;display:block;}
+                .gd-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:start;}
+                .gd-panel{grid-column:span 6;background:#fff;border:1px solid #e4ebf5;border-radius:14px;box-shadow:0 5px 18px rgba(15,39,83,.07);overflow:hidden;}
+                .gd-panel.wide{grid-column:span 12}.gd-panel.third{grid-column:span 4}.gd-panel.small{grid-column:span 3}
+                .gd-panel-head{padding:12px 14px;border-bottom:1px solid #edf2f8;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,#fff,#fbfdff);}
+                .gd-panel-title{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#102a56;}
+                .gd-panel-note{font-size:11px;color:#7c8798;}
+                .gd-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:0;}
+                .gd-kpi{padding:12px 12px;border-right:1px solid #edf2f8;border-bottom:1px solid #edf2f8;min-height:82px;position:relative;color:#26384f;text-decoration:none!important;background:#fff;}
+                .gd-kpi:nth-child(4n){border-right:0;}
+                .gd-kpi:hover{background:#f7fbff;}
+                .gd-kpi .icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#eaf2ff;color:var(--gd-blue);margin-bottom:7px;font-size:14px;}
+                .gd-kpi:nth-child(2n) .icon{background:var(--gd-orange-soft);color:var(--gd-orange);}
+                .gd-kpi .value{font-size:20px;font-weight:850;color:#0d2240;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+                .gd-kpi .name{font-size:11px;color:#637083;text-transform:uppercase;letter-spacing:.35px;margin-top:5px;display:block;}
+                .gd-kpi.good .icon{background:#e9f8f0;color:#1f9b59}.gd-kpi.warn .icon{background:#fff6e5;color:#c77a00}.gd-kpi.danger .icon{background:#fdecea;color:#c0392b}.gd-kpi.dark .icon{background:#eef1f6;color:#34495e}
 
-        @if ($driver)
-               <div class="row">
-                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-primary" href="{{route('trips.index')}}">
-                            <span class="number counter">{{$driver_trips}}</span>
-                            <span class="name">Trips</span>
-                            <span class="bg-icon"><i class="fa fa-road"></i></span>
-                        </a>
+                .gd-module-count-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;padding:12px 14px 14px 14px;}
+                .gd-module-count-card{background:#fff;border:1px solid rgba(18,59,220,.13);border-left:4px solid var(--gd-orange);border-radius:12px;padding:10px 11px;color:#0d2240;text-decoration:none!important;box-shadow:0 4px 13px rgba(15,39,83,.055);transition:all .18s ease;min-height:78px;display:flex;flex-direction:column;justify-content:space-between;}
+                .gd-module-count-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,39,83,.12);color:var(--gd-blue);}
+                .gd-module-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+                .gd-module-icon{width:28px;height:28px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:#eaf2ff;color:var(--gd-blue);font-size:13px;flex:0 0 28px;}
+                .gd-module-count-card:nth-child(2n) .gd-module-icon{background:var(--gd-orange-soft);color:var(--gd-orange);}
+                .gd-module-value{font-size:22px;font-weight:900;line-height:1;color:#0d2240;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+                .gd-module-label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.45px;color:#637083;margin-top:8px;line-height:1.2;}
+                .gd-module-badge{display:inline-block;font-size:9px;font-weight:800;color:#fff;background:var(--gd-blue);border-radius:20px;padding:2px 6px;margin-left:4px;vertical-align:middle;}
+                .gd-mini-list{padding:10px 14px;}
+                .gd-mini-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf2f8;padding:8px 0;font-size:12px;}
+                .gd-mini-row:last-child{border-bottom:0;}.gd-mini-row strong{color:#172b4d}.gd-mini-row span{color:#6b7788;}
+                .gd-progress{height:7px;background:#e9eef6;border-radius:10px;overflow:hidden;margin-top:7px;}.gd-progress b{display:block;height:100%;background:linear-gradient(90deg,var(--gd-blue),var(--gd-orange));border-radius:10px;}
+                .gd-chart-wrap{padding:12px 14px 16px 14px;}
+                .gd-chart{width:100%;height:260px;}
+                .gd-chart.tall{height:320px;}
+                .gd-chart.short{height:220px;}
+                .gd-chart-toolbar{padding:8px 14px;border-bottom:1px solid #edf2f8;background:#fbfdff;display:flex;gap:8px;align-items:center;justify-content:flex-end;}
+                .gd-chart-toolbar select{height:30px;border:1px solid #dbe5f1;border-radius:7px;padding:4px 8px;font-size:12px;background:#fff;}
+                .gd-logo-box{height:46px;min-width:142px;background:#fff;border-radius:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.65);}
+                .gd-logo-mark{height:34px;max-width:150px;object-fit:contain;filter:none;}
+                .gd-title-row{display:flex;align-items:center;gap:12px;position:relative;z-index:2;}
+                .gd-title-text{background:rgba(0,0,0,.42);border-left:4px solid var(--gd-orange);border-radius:12px;padding:9px 14px;box-shadow:0 6px 16px rgba(0,0,0,.16);}
+                @media (max-width:1199px){.gd-panel,.gd-panel.third,.gd-panel.small{grid-column:span 12}.gd-kpi-grid{grid-template-columns:repeat(3,1fr)}.gd-kpi:nth-child(4n){border-right:1px solid #edf2f8}.gd-kpi:nth-child(3n){border-right:0}}
+                @media (max-width:767px){.gd-toolbar{text-align:left;margin-top:10px}.gd-kpi-grid{grid-template-columns:repeat(2,1fr)}.gd-kpi:nth-child(3n){border-right:1px solid #edf2f8}.gd-kpi:nth-child(2n){border-right:0}.gd-hero{padding:14px}.gd-panel{border-radius:10px}}
+            </style>
+
+            <div class="gd-hero">
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="gd-title-row">
+                            <div class="gd-logo-box"><img class="gd-logo-mark" src="{{ asset('images/uploads/logo.png') }}" alt="Gonyeti ERP"></div>
+                            <div class="gd-title-text">
+                                <h4 class="gd-title">Gonyeti ERP Command Dashboard</h4>
+                                <p class="gd-subtitle">Grouped operational, financial and compliance KPIs for {{ now()->format('d M Y') }}.</p>
+                            </div>
+                        </div>
                     </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-danger" href="{{route('driver.inspections',$driver->id)}}">
-                            <span class="number counter">{{$driver_inspections}}</span>
-                            <span class="name">Inspections</span>
-                            <span class="bg-icon"><i class="fa fa-search"></i></span>
-                        </a>
+                    <div class="col-md-5 gd-toolbar">
+                        <span class="gd-pill"><i class="fa fa-building"></i> {{ $company->name ?? 'Company' }}</span>
+                        <span class="gd-pill"><i class="fa fa-money"></i> {{ $currency_name ?? 'USD' }}</span>
+                        <span class="gd-pill"><i class="fa fa-refresh"></i> {{ $last_refreshed_at ?? now()->format('d M Y H:i') }}</span>
                     </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-success" href="{{route('driver.breakdowns',$driver->id)}}">
-                            <span class="number counter">{{$driver_breakdowns}}</span>
-                            <span class="name">Breakdown Reports</span>
-                            <span class="bg-icon"><i class="fa fa-wrench"></i></span>
-                        </a>
-                        <!-- /.dashboard-stat -->
-                        <!-- /.src-code -->
-                    </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-warning" href="{{route('driver.recoveries',$driver->id)}}">
-                            <span class="number counter">{{$driver_recoveries}}</span>
-                            <span class="name">Recoveries</span>
-                            <span class="bg-icon"><i class="fas fa-list"></i></span>
-                        </a>
-                        <!-- /.dashboard-stat -->
-                        <!-- /.src-code -->
-                    </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
+                </div>
             </div>
-            <br>
-        @endif
-            
-        @if ((in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names)))
-            <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('employees.index')}}">
-                        <span class="number counter">{{$employee_count}}</span>
-                        <span class="name">Employees</span>
-                        <span class="bg-icon"><i class="fa fa-users"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
 
-
-                    <!-- /.src-code -->
+            @if ($alertTotal > 0)
+                <div class="gd-alert-strip">
+                    @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="{{ route('fitnesses.index') }}"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file-times"></i> Expired documents</span></a>@endif
+                    @if (($docs_expiring_7d ?? 0) > 0)<a class="gd-alert warning" href="{{ route('fitnesses.index') }}"><span class="num">{{ $docs_expiring_7d }}</span><span class="label"><i class="fa fa-clock-o"></i> Expiring in 7 days</span></a>@endif
+                    @if (($overdue_invoices_count ?? 0) > 0)<a class="gd-alert" href="{{ route('invoices.index') }}"><span class="num">{{ $overdue_invoices_count }}</span><span class="label"><i class="fa fa-exclamation-circle"></i> Overdue invoices</span></a>@endif
+                    @if (($vehicles_on_breakdown_count ?? 0) > 0)<a class="gd-alert" href="{{ route('breakdowns.index') }}"><span class="num">{{ $vehicles_on_breakdown_count }}</span><span class="label"><i class="fa fa-wrench"></i> Vehicles on breakdown</span></a>@endif
+                    @if (($trips_overdue_count ?? 0) > 0)<a class="gd-alert warning" href="{{ route('trips.index') }}"><span class="num">{{ $trips_overdue_count }}</span><span class="label"><i class="fa fa-road"></i> Overdue trips</span></a>@endif
+                    @if (($pending_authorizations_count ?? 0) > 0)<a class="gd-alert info" href="#pending-auth"><span class="num">{{ $pending_authorizations_count }}</span><span class="label"><i class="fa fa-hourglass-half"></i> Pending approvals</span></a>@endif
                 </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('drivers.index')}}">
-                        <span class="number counter">{{$driver_count}}</span>
-                        <span class="name">Drivers</span>
-                        <span class="bg-icon"><i class="fas fa-users"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('leaves.manage')}}">
-                        <span class="number counter">{{$leave_count}}</span>
-                        <span class="name">Leave Applications</span>
-                        <span class="bg-icon"><i class="fas fa-file"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('attendances.index')}}">
-                        <span class="number counter">{{$attendance_count}}</span>
-                        <span class="name">Attendance</span>
-                        <span class="bg-icon"><i class="fas fa-tasks"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-            </div>
-            <br>
             @endif
 
-            @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
-            <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('customers.index')}}">
-                        <span class="number counter">{{$customer_count}}</span>
-                        <span class="name">Customers</span>
-                        <span class="bg-icon"><i class="fa fa-building"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
 
-
-                    <!-- /.src-code -->
-                </div>   
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('invoices.index')}}">
-                        <span class="number counter">{{$invoice_count}}</span>
-                        <span class="name">Invoices</span>
-                        <span class="bg-icon"><i class="fa fa-list"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-
-
-                    <!-- /.src-code -->
-                </div>   
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('vendors.index')}}">
-                        <span class="number counter">{{$vendor_count}}</span>
-                        <span class="name">Vendors</span>
-                        <span class="bg-icon"><i class="fas fa-building"></i></span>
-                    </a>
-
+            {{-- Compact legacy-style module counts. These use the existing loadCounts() properties, where YTD counts are already year-filtered in the Livewire component. --}}
+            <div class="gd-panel wide" style="margin-bottom:12px;">
+                <div class="gd-panel-head">
+                    <h5 class="gd-panel-title"><i class="fa fa-th-large"></i> Module Quick Counts</h5>
+                    <span class="gd-panel-note">Clickable year-to-date and master record totals</span>
                 </div>
+                <div class="gd-module-count-grid">
+                    @if ($canSee(['Transport & Logistics','Operations','Management']))
+                        <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Transport Orders <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('trips.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-road"></i></span><strong class="gd-module-value">{{ $fmt($trip_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Trips <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('shifts.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-clock-o"></i></span><strong class="gd-module-value">{{ $fmt($shift_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Shifts <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('horses.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-truck"></i></span><strong class="gd-module-value">{{ $fmt($horse_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Horses Active</span>
+                        </a>
+                        <a href="{{ route('trailers.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-columns"></i></span><strong class="gd-module-value">{{ $fmt($trailer_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Trailers Active</span>
+                        </a>
+                        <a href="{{ route('drivers.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-id-badge"></i></span><strong class="gd-module-value">{{ $fmt($driver_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Drivers Active</span>
+                        </a>
+                    @endif
 
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('bills.index')}}">
-                        <span class="number counter">{{$bill_count}}</span>
-                        <span class="name">Bills</span>
-                        <span class="bg-icon"><i class="fa fa-list"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
+                    @if ($canSee(['Finance','Management']))
+                        <a href="{{ route('customers.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($customer_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Customers Active</span>
+                        </a>
+                        <a href="{{ route('invoices.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text"></i></span><strong class="gd-module-value">{{ $fmt($invoice_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Invoices <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('bills.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file"></i></span><strong class="gd-module-value">{{ $fmt($bill_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Bills <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                    @endif
 
+                    @if ($canSee(['Fuel','Transport & Logistics','Operations','Management']))
+                        <a href="{{ route('fuels.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-tint"></i></span><strong class="gd-module-value">{{ $fmt($fuel_order_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Fuel Issues <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                    @endif
 
-                    <!-- /.src-code -->
-                </div>  
-            </div>
-        
+                    @if ($canSee(['Workshop','Operations','Management']))
+                        <a href="{{ route('bookings.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-wrench"></i></span><strong class="gd-module-value">{{ $fmt($booking_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Job Cards <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('tickets.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-ticket"></i></span><strong class="gd-module-value">{{ $fmt($ticket_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Workshop Tickets <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                    @endif
 
-            @endif 
-        <br>
+                    @if ($canSee(['Stores','Inventory','Operations','Management']))
+                        <a href="{{ route('inventories.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-cubes"></i></span><strong class="gd-module-value">{{ $fmt($inventory_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Inventory Items</span>
+                        </a>
+                        <a href="{{ route('inventory_purchases.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-shopping-cart"></i></span><strong class="gd-module-value">{{ $fmt($inventory_purchases_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Inventory Purchases <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('inventory_dispatches.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-send"></i></span><strong class="gd-module-value">{{ $fmt($inventory_dispatches_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Dispatches <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                        <a href="{{ route('tyres.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-circle-o"></i></span><strong class="gd-module-value">{{ $fmt($tyre_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Active Tyres</span>
+                        </a>
+                    @endif
 
-        @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
-        @if (!Auth::user()->driver)
-            <div class="row">
-                 <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('transporters.index')}}">
-                        <span class="number counter">{{$transporter_count}}</span>
-                        <span class="name">Transporters</span>
-                        <span class="bg-icon"><i class="fa fa-building-o"></i></span>
-                    </a>
-
-                    <!-- /.src-code -->
-                </div>
-                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('horses.index')}}">
-                        <span class="number counter">{{$horse_count}}</span>
-                        <span class="name">Horses</span>
-                        <span class="bg-icon"><i class="fas fa-truck"></i></span>
-                    </a>
-
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-                  <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('assignments.index')}}">
-                        <span class="number counter">{{$assignment_count}}</span>
-                        <span class="name">Assignments</span>
-                        <span class="bg-icon"><i class="fa fa-tasks"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-
-
-                    <!-- /.src-code -->
-                </div>
-
-                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('trailers.index')}}">
-                        <span class="number counter">{{$trailer_count}}</span>
-                        <span class="name">Trailers</span>
-                        <span class="bg-icon"><i class="fa fa-trailer"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-info" href="{{route('vehicles.index')}}">
-                        <span class="number counter">{{$vehicle_count}}</span>
-                        <span class="name">Vehicles</span>
-                        <span class="bg-icon"><i class="fa fa-car"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-
-
-                    <!-- /.src-code -->
-                </div>
-              
-                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-secondary" href="{{route('checklists.index')}}">
-                        <span class="number counter">{{$inspection_count}}</span>
-                        <span class="name">Fleet Inspections</span>
-                        <span class="bg-icon"><i class="fa fa-search"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-               
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-            </div>
-            <br>
-            <div class="row">
-                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('transport_orders.index')}}">
-                        <span class="number counter">{{$transport_order_count}}</span>
-                        <span class="name">Transport Orders</span>
-                        <span class="bg-icon"><i class="fas fa-tasks"></i></span>
-                    </a>
-                </div>
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('trips.index')}}">
-                        <span class="number counter">{{$trip_count}}</span>
-                        <span class="name">Trips</span>
-                        <span class="bg-icon"><i class="fas fa-road"></i></span>
-                    </a>
-                </div>
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('shifts.index')}}">
-                        <span class="number counter">{{$shift_count}}</span>
-                        <span class="name">Shifts</span>
-                        <span class="bg-icon"><i class="fa fa-clock"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
-                
-               
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('fuels.index')}}">
-                        <span class="number counter">{{$fuel_order_count}}</span>
-                        <span class="name">Fuel Orders</span>
-                        <span class="bg-icon"><i class="fas fa-list"></i></span>
-                    </a>
-                </div>
-               
-            </div>
-           
-            <br>
-            @endif
-            @endif
-          
-        @if (in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
-            <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('tyres.index')}}">
-                        <span class="number counter">{{$tyre_count}}</span>
-                        <span class="name">Tyres</span>
-                        <span class="bg-icon"><i class="fas fa-ring"></i></span>
-                    </a>
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('inventory_products.index')}}">
-                        <span class="number counter">{{$product_count}}</span>
-                        <span class="name">Inventory Products</span>
-                        <span class="bg-icon"><i class="fas fa-warehouse"></i></span>
-                    </a>
-                </div>
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('inventory_purchases.index')}}">
-                        <span class="number counter">{{$inventory_purchases_count}}</span>
-                        <span class="name">Inventory POs</span>
-                        <span class="bg-icon"><i class="fas fa-list"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('inventory_dispatches.index')}}">
-                        <span class="number counter">{{$inventory_dispatches_count}}</span>
-                        <span class="name">Inventory Dispatches</span>
-                        <span class="bg-icon"><i class="fas fa-list"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
+                    @if ($canSee(['Human Resources','Human Resource','Management']))
+                        <a href="{{ route('employees.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-user"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Employees Active</span>
+                        </a>
+                        <a href="{{ route('leaves.manage') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-plane"></i></span><strong class="gd-module-value">{{ $fmt($leave_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Leave Records <span class="gd-module-badge">YTD</span></span>
+                        </a>
+                    @endif
                 </div>
             </div>
-            
-            @endif
 
-            @if (in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
-
-            <br>
-            <div class="row">
-                @if ((in_array('Workshop', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-primary" href="{{route('bookings.index')}}">
-                            <span class="number counter">{{$booking_count}}</span>
-                            <span class="name">Bookings</span>
-                            <span class="bg-icon"><i class="fas fa-edit"></i></span>
-                        </a>
-                        <!-- /.dashboard-stat -->
-                        <!-- /.src-code -->
-                    </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-danger" href="{{route('tickets.index')}}">
-                            <span class="number counter">{{$ticket_count}}</span>
-                            <span class="name">Tickets</span>
-                            <span class="bg-icon"><i class="fas fa-tasks"></i></span>
-                        </a>
-                        <!-- /.src-code -->
-                    </div>
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-success" href="{{route('inspections.index')}}">
-                            <span class="number counter">{{$inspection_count}}</span>
-                            <span class="name">Inspections</span>
-                            <span class="bg-icon"><i class="fas fa-tasks"></i></span>
-                        </a>
-                        <!-- /.src-code -->
-                    </div>
-                @else
-                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-primary" href="{{route('tickets.cards', Auth::user()->employee->id)}}">
-                            <span class="number counter">{{$my_tickets_count}}</span>
-                            <span class="name">My Tickets</span>
-                            <span class="bg-icon"><i class="fas fa-file"></i></span>
-                        </a>
-                        <!-- /.src-code -->
-                    </div>
-                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-danger" href="{{route('inspections.my-inspections', Auth::user()->employee->id)}}">
-                            <span class="number counter">{{$my_inspections_count}}</span>
-                            <span class="name">My Inspections</span>
-                            <span class="bg-icon"><i class="fas fa-search"></i></span>
-                        </a>
-                        <!-- /.src-code -->
+            <div class="gd-grid">
+                @if ($canSee(['Finance','Management','Operations']))
+                    <div class="gd-panel wide">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-line-chart"></i> Executive Finance</h5><span class="gd-panel-note">Revenue, cash, receivables and payables</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-dollar"></i></span><div class="value">{{ $money($revenue_today ?? 0) }}</div><span class="name">Revenue Today</span></a>
+                            <a class="gd-kpi {{ ($revenue_mtd_change_pct ?? 0) >= 0 ? 'good' : 'danger' }}" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-line-chart"></i></span><div class="value">{{ $money($revenue_mtd ?? 0) }}</div><span class="name">Revenue MTD · {{ ($revenue_mtd_change_pct ?? 0) > 0 ? '+' : '' }}{{ $revenue_mtd_change_pct ?? 0 }}%</span></a>
+                            <a class="gd-kpi" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-calendar"></i></span><div class="value">{{ $money($revenue_ytd ?? 0) }}</div><span class="name">Revenue YTD</span></a>
+                            <a class="gd-kpi {{ ($gross_margin_pct ?? 0) >= 20 ? 'good' : (($gross_margin_pct ?? 0) >= 10 ? 'warn' : 'danger') }}" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-percent"></i></span><div class="value">{{ $gross_margin_pct ?? 0 }}%</div><span class="name">Gross Margin MTD</span></a>
+                            <a class="gd-kpi {{ ($outstanding_invoices_value ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-inbox"></i></span><div class="value">{{ $money($outstanding_invoices_value ?? 0) }}</div><span class="name">Receivables · {{ $outstanding_invoices_count ?? 0 }}</span></a>
+                            <a class="gd-kpi {{ ($overdue_invoices_value ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-exclamation-circle"></i></span><div class="value">{{ $money($overdue_invoices_value ?? 0) }}</div><span class="name">Overdue Receivables</span></a>
+                            <a class="gd-kpi {{ ($outstanding_bills_value ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('bills.index') }}"><span class="icon"><i class="fa fa-send"></i></span><div class="value">{{ $money($outstanding_bills_value ?? 0) }}</div><span class="name">Payables</span></a>
+                            <a class="gd-kpi {{ ($cash_position ?? 0) >= 0 ? 'good' : 'danger' }}" href="#"><span class="icon"><i class="fa fa-bank"></i></span><div class="value">{{ $money($cash_position ?? 0) }}</div><span class="name">Net Cash MTD</span></a>
+                        </div>
                     </div>
                 @endif
-            </div>
-            @endif
 
-          
+                @if ($canSee(['Transport & Logistics','Operations','Management']))
+                    <div class="gd-panel">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-road"></i> Transport Operations</h5><span class="gd-panel-note">Today & MTD</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-calendar-check-o"></i></span><div class="value">{{ $trips_planned_today ?? 0 }}</div><span class="name">Planned Today</span></a>
+                            <a class="gd-kpi" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-location-arrow"></i></span><div class="value">{{ $trips_in_progress ?? 0 }}</div><span class="name">In Progress</span></a>
+                            <a class="gd-kpi good" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-check-circle"></i></span><div class="value">{{ $trips_completed_today ?? 0 }}</div><span class="name">Completed Today</span></a>
+                            <a class="gd-kpi {{ ($trips_overdue_count ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-clock-o"></i></span><div class="value">{{ $trips_overdue_count ?? 0 }}</div><span class="name">Overdue</span></a>
+                            <a class="gd-kpi" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-balance-scale"></i></span><div class="value">{{ $fmt($tonnes_today ?? 0,1) }}t</div><span class="name">Tonnes Today</span></a>
+                            <a class="gd-kpi" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-balance-scale"></i></span><div class="value">{{ $this->formatCurrency($tonnes_mtd ?? 0,0) }}t</div><span class="name">Tonnes MTD</span></a>
+                            <a class="gd-kpi" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-tachometer"></i></span><div class="value">{{ $this->formatCurrency($km_mtd ?? 0,0) }}</div><span class="name">KM MTD</span></a>
+                            <a class="gd-kpi {{ ($transport_orders_pending ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('transport_orders.index') }}"><span class="icon"><i class="fa fa-clipboard"></i></span><div class="value">{{ $transport_orders_pending ?? 0 }}</div><span class="name">Pending TOs</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($canSee(['Fleet','Transport & Logistics','Operations','Management']))
+                    <div class="gd-panel">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-truck"></i> Fleet Status</h5><span class="gd-panel-note">Availability and compliance</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi good" href="{{ route('horses.index') }}"><span class="icon"><i class="fa fa-truck"></i></span><div class="value">{{ $fleet_active ?? 0 }}</div><span class="name">Active / On Road</span></a>
+                            <a class="gd-kpi" href="{{ route('horses.index') }}"><span class="icon"><i class="fa fa-pause-circle"></i></span><div class="value">{{ $fleet_idle ?? 0 }}</div><span class="name">Idle / Available</span></a>
+                            <a class="gd-kpi {{ ($fleet_in_workshop ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-wrench"></i></span><div class="value">{{ $fleet_in_workshop ?? 0 }}</div><span class="name">In Workshop</span></a>
+                            <a class="gd-kpi {{ ($fleet_on_breakdown ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('breakdowns.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $fleet_on_breakdown ?? 0 }}</div><span class="name">Breakdown</span></a>
+                            <a class="gd-kpi" href="{{ route('horses.index') }}"><span class="icon"><i class="fa fa-pie-chart"></i></span><div class="value">{{ $fleet_utilization_pct ?? 0 }}%</div><span class="name">Horse Utilization</span></a>
+                            <a class="gd-kpi" href="{{ route('trailers.index') }}"><span class="icon"><i class="fa fa-columns"></i></span><div class="value">{{ $trailers_active ?? 0 }}</div><span class="name">Trailers Active</span></a>
+                            <a class="gd-kpi {{ ($docs_expiring_30d ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('fitnesses.index') }}"><span class="icon"><i class="fa fa-id-card"></i></span><div class="value">{{ $docs_expiring_30d ?? 0 }}</div><span class="name">Docs Expiring 30d</span></a>
+                            <a class="gd-kpi {{ ($vehicles_overdue_service ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('services.index') }}"><span class="icon"><i class="fa fa-cogs"></i></span><div class="value">{{ $vehicles_overdue_service ?? 0 }}</div><span class="name">Service Overdue</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($canSee(['Fuel','Transport & Logistics','Operations','Management']))
+                    <div class="gd-panel third">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-tint"></i> Fuel</h5><span class="gd-panel-note">Issue, cost and stock</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi" href="{{ route('fuels.index') }}"><span class="icon"><i class="fa fa-tint"></i></span><div class="value">{{ $fmt($fuel_issued_today ?? 0) }} L</div><span class="name">Issued Today</span></a>
+                            <a class="gd-kpi" href="{{ route('fuels.index') }}"><span class="icon"><i class="fa fa-bar-chart"></i></span><div class="value">{{ $this->formatCurrency($fuel_issued_mtd ?? 0,0) }} L</div><span class="name">Issued MTD</span></a>
+                            <a class="gd-kpi warn" href="{{ route('fuels.index') }}"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($fuel_cost_mtd ?? 0) }}</div><span class="name">Cost MTD</span></a>
+                            <a class="gd-kpi {{ ($fuel_exceptions_count ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('fuels.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $fuel_exceptions_count ?? 0 }}</div><span class="name">Exceptions</span></a>
+                            <a class="gd-kpi" href="{{ route('containers.index') }}"><span class="icon"><i class="fa fa-database"></i></span><div class="value">{{ $fmt($diesel_balance_litres ?? 0) }} L</div><span class="name">Diesel Stock</span></a>
+                            <a class="gd-kpi" href="{{ route('containers.index') }}"><span class="icon"><i class="fa fa-database"></i></span><div class="value">{{ $fmt($petrol_balance_litres ?? 0) }} L</div><span class="name">Petrol Stock</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($canSee(['Workshop','Operations','Management']))
+                    <div class="gd-panel third">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-wrench"></i> Workshop</h5><span class="gd-panel-note">Jobs and repair risk</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi {{ ($open_job_cards ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-wrench"></i></span><div class="value">{{ $open_job_cards ?? 0 }}</div><span class="name">Open Jobs</span></a>
+                            <a class="gd-kpi {{ ($overdue_repairs_count ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $overdue_repairs_count ?? 0 }}</div><span class="name">Overdue Repairs</span></a>
+                            <a class="gd-kpi good" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-check"></i></span><div class="value">{{ $completed_job_cards_mtd ?? 0 }}</div><span class="name">Completed MTD</span></a>
+                            <a class="gd-kpi warn" href="{{ route('bills.index') }}"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($workshop_spend_mtd ?? 0) }}</div><span class="name">Spend MTD</span></a>
+                            <a class="gd-kpi {{ ($breakdowns_mtd ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('breakdowns.index') }}"><span class="icon"><i class="fa fa-exclamation-circle"></i></span><div class="value">{{ $breakdowns_mtd ?? 0 }}</div><span class="name">Breakdowns MTD</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($canSee(['Stores','Inventory','Operations','Management']))
+                    <div class="gd-panel third">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-cubes"></i> Inventory & Stores</h5><span class="gd-panel-note">Stock and procurement</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi" href="{{ route('inventories.index') }}"><span class="icon"><i class="fa fa-cubes"></i></span><div class="value">{{ $money($inventory_total_value ?? 0) }}</div><span class="name">Stock Value</span></a>
+                            <a class="gd-kpi {{ ($low_stock_count ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('inventories.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $low_stock_count ?? 0 }}</div><span class="name">Low Stock</span></a>
+                            <a class="gd-kpi {{ ($pending_pos_count ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('inventory_purchases.index') }}"><span class="icon"><i class="fa fa-shopping-cart"></i></span><div class="value">{{ $pending_pos_count ?? 0 }}</div><span class="name">Pending POs</span></a>
+                            <a class="gd-kpi {{ ($pending_requisitions ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('requisitions.index') }}"><span class="icon"><i class="fa fa-list-alt"></i></span><div class="value">{{ $pending_requisitions ?? 0 }}</div><span class="name">Requisitions</span></a>
+                            <a class="gd-kpi" href="{{ route('tyres.index') }}"><span class="icon"><i class="fa fa-circle-o"></i></span><div class="value">{{ $active_tyres ?? 0 }}</div><span class="name">Active Tyres</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($canSee(['Human Resources','Human Resource','Management']))
+                    <div class="gd-panel">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-users"></i> Human Resources</h5><span class="gd-panel-note">People, drivers and payroll</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi" href="{{ route('employees.index') }}"><span class="icon"><i class="fa fa-users"></i></span><div class="value">{{ $active_employees ?? 0 }}</div><span class="name">Active Staff</span></a>
+                            <a class="gd-kpi" href="{{ route('drivers.index') }}"><span class="icon"><i class="fa fa-id-badge"></i></span><div class="value">{{ $active_drivers ?? 0 }}</div><span class="name">Active Drivers</span></a>
+                            <a class="gd-kpi" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $employees_on_leave ?? 0 }}</div><span class="name">On Leave Today</span></a>
+                            <a class="gd-kpi {{ ($pending_leave_requests ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-hourglass-half"></i></span><div class="value">{{ $pending_leave_requests ?? 0 }}</div><span class="name">Pending Leave</span></a>
+                            <a class="gd-kpi warn" href="{{ route('payrolls.index') }}"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($payroll_cost_mtd ?? 0) }}</div><span class="name">Payroll Cost MTD</span></a>
+                            <a class="gd-kpi {{ ($outstanding_loans ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('loans.index') }}"><span class="icon"><i class="fa fa-credit-card"></i></span><div class="value">{{ $money($outstanding_loans ?? 0) }}</div><span class="name">Outstanding Loans</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if (($pending_authorizations_count ?? 0) > 0 && $canSee(['Management','Operations']))
+                    <div id="pending-auth" class="gd-panel">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-check-square-o"></i> Pending Authorizations</h5><span class="gd-panel-note">Grouped approvals queue</span></div>
+                        <div class="gd-kpi-grid">
+                            @if (($pending_trips_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-road"></i></span><div class="value">{{ $pending_trips_auth }}</div><span class="name">Trips</span></a>@endif
+                            @if (($pending_invoices_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-file-text"></i></span><div class="value">{{ $pending_invoices_auth }}</div><span class="name">Invoices</span></a>@endif
+                            @if (($pending_bills_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bills.index') }}"><span class="icon"><i class="fa fa-file"></i></span><div class="value">{{ $pending_bills_auth }}</div><span class="name">Bills</span></a>@endif
+                            @if (($pending_fuel_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('fuels.index') }}"><span class="icon"><i class="fa fa-tint"></i></span><div class="value">{{ $pending_fuel_auth }}</div><span class="name">Fuel</span></a>@endif
+                            @if (($pending_requisitions_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('requisitions.index') }}"><span class="icon"><i class="fa fa-list-alt"></i></span><div class="value">{{ $pending_requisitions_auth }}</div><span class="name">Requisitions</span></a>@endif
+                            @if (($pending_leave_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $pending_leave_auth }}</div><span class="name">Leave</span></a>@endif
+                            @if (($pending_purchase_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('inventory_purchases.index') }}"><span class="icon"><i class="fa fa-shopping-cart"></i></span><div class="value">{{ $pending_purchase_auth }}</div><span class="name">Purchases</span></a>@endif
+                            @if (($pending_bookings_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-wrench"></i></span><div class="value">{{ $pending_bookings_auth }}</div><span class="name">Workshop</span></a>@endif
+                        </div>
+                    </div>
+                @endif
+
+                @if (($top_drivers ?? collect())->count() || ($top_horses ?? collect())->count())
+                    <div class="gd-panel wide">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-trophy"></i> Performance Snapshot</h5><span class="gd-panel-note">Current month leaders</span></div>
+                        <div class="row" style="margin:0;">
+                            <div class="col-md-6 gd-mini-list">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Top Drivers</h6>
+                                @forelse (($top_drivers ?? collect()) as $driverRow)
+                                    <div class="gd-mini-row"><strong>{{ trim(($driverRow->employee->name ?? '').' '.($driverRow->employee->surname ?? '')) ?: 'Driver' }}</strong><span>{{ $driverRow->trips_count ?? 0 }} trips · {{ $money($driverRow->total_revenue ?? 0) }}</span></div>
+                                @empty
+                                    <div class="gd-mini-row"><span>No driver performance data yet.</span></div>
+                                @endforelse
+                            </div>
+                            <div class="col-md-6 gd-mini-list">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Top Horses</h6>
+                                @forelse (($top_horses ?? collect()) as $horseRow)
+                                    <div class="gd-mini-row"><strong>{{ $horseRow->registration_number ?? $horseRow->horse_number ?? 'Horse' }}</strong><span>{{ $horseRow->trips_count ?? 0 }} trips · {{ $fmt($horseRow->fuel_usage ?? 0) }} L</span></div>
+                                @empty
+                                    <div class="gd-mini-row"><span>No horse performance data yet.</span></div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Charts retained from the previous dashboard and restyled using Gonyeti blue/orange palette --}}
+                <div class="gd-panel wide">
+                    <div class="gd-panel-head">
+                        <h5 class="gd-panel-title"><i class="fa fa-area-chart"></i> Analytics & Graphs</h5>
+                        <span class="gd-panel-note">Financial, trips, fuel, workshop and performance trends</span>
+                    </div>
+                    <div class="gd-chart-toolbar">
+                        <label style="font-size:12px;color:#637083;margin:0;">Reporting Year</label>
+                        <select wire:model="year">
+                            @for ($yr = now()->year; $yr >= 2021; $yr--)
+                                <option value="{{ $yr }}">{{ $yr }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div class="row" style="margin:0;">
+                        @if ($canSee(['Finance','Management','Operations']))
+                            <div class="col-md-6 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Income vs Expenses</h6>
+                                <div id="gd_finance_chart" class="gd-chart"></div>
+                            </div>
+                        @endif
+                        @if ($canSee(['Transport & Logistics','Operations','Management']))
+                            <div class="col-md-6 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Monthly Trips</h6>
+                                <div id="gd_trips_chart" class="gd-chart"></div>
+                            </div>
+                        @endif
+                        @if ($canSee(['Fuel','Transport & Logistics','Operations','Management']))
+                            <div class="col-md-6 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Fuel Stock Split</h6>
+                                <div id="gd_fuel_stock_chart" class="gd-chart short"></div>
+                            </div>
+                            <div class="col-md-6 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Fuel Initial vs Top-up</h6>
+                                <div id="gd_fuel_movement_chart" class="gd-chart short"></div>
+                            </div>
+                        @endif
+                        @if ($canSee(['Workshop','Operations','Management']))
+                            <div class="col-md-6 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Workshop Bookings</h6>
+                                <div id="gd_bookings_chart" class="gd-chart short"></div>
+                            </div>
+                        @endif
+                        @if ($canSee(['Human Resources','Human Resource','Management']))
+                            <div class="col-md-6 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Employee Gender Mix</h6>
+                                <div id="gd_gender_chart" class="gd-chart short"></div>
+                            </div>
+                        @endif
+                        @if ($canSee(['Transport & Logistics','Operations','Management']))
+                            <div class="col-md-12 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Driver Weight Performance</h6>
+                                <div id="gd_driver_weight_chart" class="gd-chart tall"></div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+            </div>
         </div>
-        <!-- /.container-fluid -->
-    </section>
-    <!-- /.section -->
-
-   
-
-      @if ((in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
-    <section class="section pt-10">
-        <div class="container-fluid">
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Income & Expenses {{$currency_name}} / Month</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-
-                            <div id="sales_expenses" class="op-chart"></div>
-                            <!-- /.col-md-12 -->
-                        </div>
-                    </div>
-                    <!-- /.panel -->
-                </div>
-                <div class="col-md-6">
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Income & Expenses {{$currency_name}} / Year</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-
-                            <div id="sales_expenses_year" class="op-chart"></div>
-                            <!-- /.col-md-12 -->
-                        </div>
-                    </div>
-                    <!-- /.panel -->
-                </div>
-              
-                <!-- /.col-md-12 -->
-            </div>
-    
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
-    </section>
-@endif
-
-@if (Auth::user()->driver)
-<section class="section ">
-    <div class="container-fluid">
-        <div class="row">
-
-            <div class="col-md-12">
-                <div class="panel panel-danger">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>My Trips</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body overflow-x-auto" style="height:550px;">
-                        <div class="panel-title">
-                            <h5>{{Auth::user()->name}} {{Auth::user()->surname}} Trips ({{date('Y')}})</h5>
-                        </div>
-                        @livewire('dashboard.driver-trips')
-                    </div>
-                    <!-- /.panel-body -->
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.panel -->
-            </div>
-
-        </div>
-        <!-- /.row -->
-    </div>
-    <!-- /.container-fluid -->
-</section>
-    
-@endif
-
-@if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
-@if (!Auth::user()->driver)
-<section class="section ">
-    <div class="container-fluid">
-        <div class="row">
-
-            <div class="col-md-6">
-                <div class="panel panel-danger">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Trips</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body overflow-x-auto" style="height:550px;">
-                        <div class="panel-title">
-                            <h5>Latest 5 records</h5>
-                        </div>
-                        @livewire('dashboard.trips')
-                    </div>
-                    <!-- /.panel-body -->
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.panel -->
-            </div>
-
-            
-          
-            <div class="col-md-6">
-                <div class="panel">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Total trips per month</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body p-20">
-
-                        <div id="total_trips" class="op-chart"></div>
-
-           
-                        <!-- /.col-md-12 -->
-                    </div>
-                </div>
-                <!-- /.panel -->
-            </div>
-            <!-- /.col-md-8 -->
-
-         
-        </div>
-        <!-- /.row -->
-    </div>
-    <!-- /.container-fluid -->
-</section>
-
-
-<section class="section ">
-    <div class="container-fluid">
-        <div class="row">
-
-            <div class="col-md-6">
-                <div class="panel panel-danger">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Top 5 perfoming drivers in {{date('F')}}</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body overflow-x-auto">
-                        <div class="panel-title">
-                            <h5>Top 5 records</h5>
-                        </div>
-                      
-                        <table class="table table-striped">
-                        <thead>
-                            <tr>
-                            <th>Employee#</th>
-                            <th>Fullname</th>
-                            <th>Total Trips</th>
-                            <th>Total Revenue</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($top_drivers as $driver)
-                            <tr>
-                                <td>{{ $driver->employee?->employee_number }}</td>
-                                <td>{{ trim(($driver->employee?->name ?? '').' '.($driver->employee?->surname ?? '')) }}</td>
-                                <td>{{ $driver->trips_count ? $driver->trips_count . ' Trip(s)' : '' }}</td>
-                                <td>
-                                @if($company_currency)
-                                    {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($driver->total_revenue, 2) }}
-                                @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                        </table>
-                    </div>
-                    <!-- /.panel-body -->
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.panel -->
-            </div>
-
-            <div class="col-md-6">
-                <div class="panel panel-danger">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Top 5 perfoming horses in {{date('F')}}</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body overflow-x-auto">
-                        <div class="panel-title">
-                            <h5>Top 5 records</h5>
-                        </div>
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                <th>Horse#</th>
-                                <th>HRN</th>
-                                <th>Total Trips</th>
-                                <th>Fuel Usage</th>
-                                <th>Total Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($top_horses as $horse)
-                                <tr>
-                                    <td>{{ $horse->horse_number ?? '' }}</td>
-
-                                    <td>
-                                    {{ $horse->horse_make?->name ?? '' }}
-                                    {{ $horse->horse_model?->name ?? '' }}
-                                    {{ $horse->registration_number ?? '' }}
-                                    {{ $horse->fleet_number ? '(' . $horse->fleet_number . ')' : '' }}
-                                    </td>
-
-                                    <td>{{ $horse->trips_count ? $horse->trips_count . ' Trip(s)' : '' }}</td>
-
-                                    <td>{{ $horse->fuel_usage ? number_format($horse->fuel_usage, 2) . ' Litre(s)' : '' }}</td>
-
-                                    <td>
-                                    @if($company_currency && $horse->total_revenue)
-                                        {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($horse->total_revenue, 2) }}
-                                    @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                            </table>
-                    </div>
-                    <!-- /.panel-body -->
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.panel -->
-            </div>
-            <!-- /.col-md-8 -->
-        </div>
-        <!-- /.row -->
-    </div>
-    <!-- /.container-fluid -->
-</section>
-
-<section class="section ">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="panel border-primary no-border border-3-top">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Distance Travelled / Month</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div id="kilometers_moved" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
-                        <!-- /.src-code -->
-                    </div>
-                </div>
-                <!-- /.panel -->
-            </div>
-
-            <div class="col-md-6">
-                <div class="panel border-primary no-border border-3-top">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Volume & Tonnage Moved / Month</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div id="volume_tonnage" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
-                        <!-- /.src-code -->
-                    </div>
-                </div>
-                <!-- /.panel -->
-            </div>
-
-            <!-- /.col-md-8 -->
-
-            <!-- /.col-md-4 -->
-        </div>
-        <!-- /.row -->
-    </div>
-    <!-- /.container-fluid -->
-</section>
-
-<section class="section ">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="panel border-primary no-border border-3-top">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Volume & Tonnage Loss / Month</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div id="trip_loss" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
-                        <!-- /.src-code -->
-                    </div>
-                </div>
-                <!-- /.panel -->
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-danger">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <h5>Transporters</h5>
-                        </div>
-                    </div>
-                    <div class="panel-body overflow-x-auto">
-                        <div class="panel-title">
-                            <h5>Latest 5 records</h5>
-                        </div>
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Transporter#</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phonenumber</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($transporters as $transporter)
-                                <tr>
-                                    <td>{{$transporter->transporter_number}}</td>
-                                    <td>{{$transporter->name}}</td>
-                                    <td>{{$transporter->email}}</td>
-                                    <td>{{$transporter->phonenumber}}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- /.panel-body -->
-
-                    <!-- /.src-code -->
-                </div>
-                <!-- /.panel -->
-            </div>
-          
-
-            <!-- /.col-md-8 -->
-
-         
-        </div>
-        <!-- /.row -->
-    </div>
-    <!-- /.container-fluid -->
-</section>
-
-
-
-@endif
-@endif
-@if (in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names))
-    <section class="section ">
-        <div class="container-fluid">
-            <div class="row">
-
-                <div class="col-md-8">
-                    <div class="panel panel-danger">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Employees</h5>
-                             
-                            </div>
-                        </div>
-                        <div class="panel-body overflow-x-auto">
-                            <div class="panel-title">
-                                <h5>Latest 5 records</h5>
-                            </div>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Employee#</th>
-                                        <th>Name</th>
-                                        <th>Surname</th>
-                                        <th>Job Title</th>
-                                        <th>Department</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($recent_employees as $employee)
-                                    <tr>
-                                        <td>{{$employee->employee_number}}</td>
-                                        <td>{{$employee->name}}</td>
-                                        <td>{{$employee->surname}}</td>
-                                        <td>{{$employee->post}}</td>
-                                        <td>
-                                            @if ($employee->departments->count()>0)
-                                            {{$employee->departments->first()->name}}     
-                                            @endif
-                                           
-                                           </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- /.panel-body -->
-
-                        <!-- /.src-code -->
-                    </div>
-                    <!-- /.panel -->
-                </div>
-
-                <!-- /.col-md-8 -->
-
-              
-
-                <div class="col-md-4">
-                    <div class="panel panel-danger">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Department Heads</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body overflow-x-auto">
-                            @if ($hods->count()>0)
-                            @foreach ($hods as $hod)
-                            @php
-                                $employee = App\Models\Employee::find($hod->employee_id);
-                                $department = App\Models\Department::find($hod->department_id);
-                            @endphp
-                            <div class="col-xs-12 p-n">
-                                <div class="col-xs-6 p-n">
-                                    {{$employee ? $employee->name : "Eployee Record Not Found"}} {{$employee ? $employee->surname : ""}}
-                                </div>
-                                <!-- /.col-md-6 -->
-                                <div class="col-xs-6 p-n">
-                                   {{$department ? $department->name : ""}}
-                                </div>
-                            </div>
-                            @endforeach
-                            @endif
-
-                        <!-- /.col-xs-12 -->
-
-                        <!-- /.col-xs-12 -->
-
-                        <!-- /.col-xs-12 -->
-
-                        <!-- /.col-xs-12 -->
-
-                            <!-- /.col-xs-12 -->
-                        </div>
-                        <!-- /.panel-body -->
-                    </div>
-                </div>
-                <!-- /.col-md-4 -->
-            </div>
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
-    </section>
-
-   
-
-
-
-
-    <section class="section ">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Employee Labour Turnover</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-
-                            <div id="labour_tunover" class="op-chart"></div>
-                            <!-- /.col-md-12 -->
-                        </div>
-                    </div>
-                    <!-- /.panel -->
-                </div>
-
-                <!-- /.col-md-8 -->
-
-                <div class="col-md-6">
-
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Employee Gender Ratio</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-
-                            <div id="gender" class="op-chart"></div>
-                        </div>
-                    </div>
-                </div>
-
-     
-                <!-- /.col-md-4 -->
-            </div>
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
-    </section>
-    @endif
-    @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
-    @if (!Auth::user()->driver)
-    <section class="section">
-        <div class="container-fluid">
-            <div class="row">
-
-                <div class="col-md-6">
-                    <div class="panel panel-danger">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Fuel Orders</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body overflow-x-auto" style="overflow-x:auto; width:100%; height:540px;">
-                            <div class="panel-title">
-                                <h5>Latest 5 records</h5>
-                            </div>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Order#</th>
-                                        <th>Date</th>
-                                        <th>Category</th>
-                                        <th >Station
-                                        </th>
-                                        <th >FillUp
-                                        </th>
-                                        <th >Quantity
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($fuel_orders as $fuel)
-                                    <tr>
-                                        <td>{{$fuel->order_number}}</td>
-                                        <td>
-                                            @php
-                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            @endphp
-                                            @if ((preg_match($pattern, $fuel->date)) )
-                                                {{ \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$fuel->date}}
-                                            @endif    
-                                           </td>
-                                        <td>
-                                            @if ($fuel->horse)
-                                            Horse | {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse ? "| ".$fuel->horse->fleet_number : ""}} | {{$fuel->horse->horse_make ? $fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}} 
-                                            @if (isset($fuel->trip))
-                                            <br>
-                                                @php
-                                                    $from = App\Models\Destination::find($fuel->trip->from);
-                                                    $to = App\Models\Destination::find($fuel->trip->from);
-                                                @endphp
-                                                  Trip | {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
-                                                @if (isset($from))
-                                                    {{$from->country ? $from->country->name : ""}}   {{$from->city}} - 
-                                                @endif
-                                                @if (isset($to))
-                                                    {{$to->country ? $from->country->name : ""}} {{$to->city}}
-                                                @endif
-                                        
-                                            @endif
-                                            @elseif($fuel->asset)
-                                                Asset | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
-                                            @elseif($fuel->vehicle) 
-                                                Vehicle | {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : ""}} {{$fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : ""}} 
-                                            @endif
-                                          </td>
-                                          <td>{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
-                                          <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
-                                          <td>{{$fuel->quantity}}Litres</td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- /.panel-body -->
-
-                        <!-- /.src-code -->
-                    </div>
-                    <!-- /.panel -->
-                </div>
-
-                <div class="col-md-6">
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Fuel Distribution</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-
-                            <div id="fuel_chart" class="op-chart"></div>
-
-                            <!-- /.col-md-12 -->
-                        </div>
-                    </div>
-                </div>
-
-              
-
-            </div>
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
-    </section>
-
-    <section class="section ">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Fuel Orders (Initial & Topup)</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-    
-                            <div id="chart6" class="op-chart"></div>
-    
-                            <!-- /.col-md-12 -->
-                        </div>
-                    </div>
-                    <!-- /.panel -->
-                </div>
-                <div class="col-md-4">
-                    <div class="panel panel-danger">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Fuel Stations Balances</h5>
-                             
-                            </div>
-                        </div>
-                        <div class="panel-body overflow-x-auto" style="overflow-x:auto; width:100%; height:540px;">
-                            <div class="panel-title">
-                                <h5>Latest 5 records</h5>
-                            </div>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Station</th>
-                                        <th>Purchase Type</th>
-                                        <th>Capacity</th>
-                                        <th>Balance</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($containers as $container)
-                                    <tr>
-                                        <td>{{$container->name}}</td>
-                                        <td>{{$container->purchase_type}}</td>
-                                        <td>{{$container->capacity ? $container->capacity."l" : ""}}</td>
-                                        <td>{{$container->balance ? $container->balance."l" : ""}}</td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- /.panel-body -->
-    
-                        <!-- /.src-code -->
-                    </div>
-                    <!-- /.panel -->
-                </div>
-              
-            </div>
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
-    </section>
-
-    @endif
-    @endif
-
-    @if (in_array('Stores', $department_names) || in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
-
-    <section class="section ">
-        <div class="container-fluid">
-            <div class="row">
-
-                <div class="col-md-6">
-                    <div class="panel panel-danger">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Garage Bookings</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body overflow-x-auto" >
-                            <div class="panel-title">
-                                <h5>Latest 5 records</h5>
-                            </div>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th class="th-sm">Booking#
-                                        </th>
-                                        <th class="th-sm">Booking For
-                                        </th>
-                                        <th class="th-sm">Service Type
-                                        </th>
-                                        <th class="th-sm">Date
-                                        </th>
-                                        <th class="th-sm">Status
-                                        </th>
-                                      </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($bookings as $booking)
-                                    <tr>
-                                        <td>{{ucfirst($booking->booking_number)}}</td>
-                                        <td>
-                                            @if (isset($booking->horse))
-                                            Horse | {{ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "")}} {{ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" )}} {{ucfirst($booking->horse ? $booking->horse->registration_number : "")}} {{ucfirst($booking->horse ? "| ".$booking->horse->fleet_number : "")}}
-                                            @elseif(isset($booking->vehicle))
-                                            Vehicle | {{ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "")}} {{ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "")}} {{ucfirst($booking->vehicle ? $booking->vehicle->registration_number : "")}} {{ucfirst($booking->vehicle ? "| ".$booking->vehicle->fleet_number : "")}}
-                                            @elseif(isset($booking->trailer))
-                                            Trailer | {{ucfirst($booking->trailer ? $booking->trailer->make : "")}} {{ucfirst($booking->trailer ? $booking->trailer->model : "")}} {{ucfirst($booking->trailer ? $booking->trailer->registration_number : "")}} {{ucfirst($booking->trailer ? "| ".$booking->trailer->fleet_number : "")}}
-                                            @endif
-                                        </td>
-                                        <td>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}}</td>
-                                        <td>{{$booking->in_date}} @ {{$booking->in_time}}</td>
-                                        <td><span class="badge bg-{{$booking->status == 1 ? "warning" : "success"}}">{{$booking->status == 1 ? "Open" : "Closed"}}</span></td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- /.panel-body -->
-                       
-                        <!-- /.src-code -->
-                    </div>
-                    <!-- /.panel -->
-                </div>
-              
-                <div class="col-md-6">
-                    <div class="panel">
-                        <div class="panel-heading">
-                            <div class="panel-title">
-                                <h5>Garage Bookings Status</h5>
-                            </div>
-                        </div>
-                        <div class="panel-body p-20">
-
-                            <div id="bookings_chart" class="op-chart"></div>
-                            <!-- /.col-md-12 -->
-                        </div>
-                    </div>
-                    <!-- /.panel -->
-                </div>
-              
-                
-
-                <!-- /.col-md-8 -->
-
-                <!-- /.col-md-4 -->
-            </div>
-            
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
-    </section>
-
-    @endif
-
-    
-
-                <!-- /.col-md-8 -->
-
-                <!-- /.col-md-4 -->
-            </div>
-            <!-- /.row -->
-        </div>
-        <!-- /.container-fluid -->
     </section>
 </div>
 
-@section('extra-js')
 
+@section('extra-js')
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/highcharts-3d.js"></script>
-<script src="https://code.highcharts.com/modules/funnel.js"></script>
-<script src="https://code.highcharts.com/highcharts-more.js"></script>
-
-
-<script src="{{asset('js/prism/prism.js')}}"></script>
-<script src="{{asset('js/amcharts/amcharts.js')}}"></script>
-<script src="{{asset('js/amcharts/serial.js')}}"></script>
-<script src="{{asset('js/amcharts/pie.js')}}"></script>
-<script src="{{asset('js/amcharts/plugins/animate/animate.min.js')}}"></script>
-<script src="{{asset('js/amcharts/plugins/export/export.min.js')}}"></script>
-<link rel="stylesheet" href="{{asset('js/amcharts/plugins/export/export.css')}}" type="text/css" media="all" />
-<script src="{{asset('js/amcharts/themes/light.js')}}"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.js"></script>
-<script src="{{asset('js/chartjs/utils.js')}}"></script>
-<script src="{{asset('js/chartjs/globalchartjs.js')}}"></script>
-
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        renderGonyetiDashboardCharts();
+    });
 
-var MONTHSbar = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        var color = Chart.helpers.color;
-        var barChartData = {
-            labels: ["January", "February", "March", "April", "May", "June", "July"],
-            datasets: [{
-                label: 'Dataset 1',
-                backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
-                borderColor: window.chartColors.red,
-                borderWidth: 1,
-                data: [
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor()
+    document.addEventListener('livewire:load', function () {
+        Livewire.on('drivers-weight-updated', function () {
+            setTimeout(renderGonyetiDashboardCharts, 150);
+        });
+    });
+
+    function gdValue(value) {
+        var n = parseFloat(value || 0);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function renderGonyetiDashboardCharts() {
+        if (typeof Highcharts === 'undefined') return;
+
+        var blue = '#123bdc';
+        var blueDark = '#071b3a';
+        var orange = '#ff7a00';
+        var cyan = '#0d8ecf';
+        var green = '#1f9b59';
+        var red = '#c0392b';
+        var grid = '#e8eef7';
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        Highcharts.setOptions({
+            chart: { style: { fontFamily: 'Poppins, Arial, sans-serif' }, backgroundColor: 'transparent' },
+            title: { text: null },
+            credits: { enabled: false },
+            exporting: { enabled: true },
+            colors: [blue, orange, cyan, green, blueDark, red],
+            xAxis: { lineColor: grid, tickColor: grid, labels: { style: { color: '#637083', fontSize: '10px' } } },
+            yAxis: { gridLineColor: grid, title: { style: { color: '#637083' } }, labels: { style: { color: '#637083', fontSize: '10px' } } },
+            legend: { itemStyle: { color: '#26384f', fontSize: '11px' } },
+            tooltip: { borderColor: blue, borderRadius: 8, shadow: true }
+        });
+
+        if (document.getElementById('gd_finance_chart')) {
+            Highcharts.chart('gd_finance_chart', {
+                chart: { type: 'column' },
+                xAxis: { categories: months },
+                yAxis: { title: { text: '{{ $currency_name ?? "USD" }}' } },
+                plotOptions: { column: { borderRadius: 4, groupPadding: 0.12 } },
+                series: [
+                    { name: 'Income', data: [gdValue({{ $jan ?? 0 }}),gdValue({{ $feb ?? 0 }}),gdValue({{ $mar ?? 0 }}),gdValue({{ $apr ?? 0 }}),gdValue({{ $may ?? 0 }}),gdValue({{ $jun ?? 0 }}),gdValue({{ $jul ?? 0 }}),gdValue({{ $aug ?? 0 }}),gdValue({{ $sep ?? 0 }}),gdValue({{ $oct ?? 0 }}),gdValue({{ $nov ?? 0 }}),gdValue({{ $dec ?? 0 }})] },
+                    { name: 'Expenses', data: [gdValue({{ $jan_expense ?? 0 }}),gdValue({{ $feb_expense ?? 0 }}),gdValue({{ $mar_expense ?? 0 }}),gdValue({{ $apr_expense ?? 0 }}),gdValue({{ $may_expense ?? 0 }}),gdValue({{ $jun_expense ?? 0 }}),gdValue({{ $jul_expense ?? 0 }}),gdValue({{ $aug_expense ?? 0 }}),gdValue({{ $sep_expense ?? 0 }}),gdValue({{ $oct_expense ?? 0 }}),gdValue({{ $nov_expense ?? 0 }}),gdValue({{ $dec_expense ?? 0 }})] }
                 ]
-            }, {
-                label: 'Dataset 2',
-                backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
-                borderColor: window.chartColors.blue,
-                borderWidth: 1,
-                data: [
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor(),
-                    randomScalingFactor()
+            });
+        }
+
+        if (document.getElementById('gd_trips_chart')) {
+            Highcharts.chart('gd_trips_chart', {
+                chart: { type: 'areaspline' },
+                xAxis: { categories: months },
+                yAxis: { title: { text: 'Trips' } },
+                plotOptions: { areaspline: { fillOpacity: 0.18, marker: { radius: 3 } } },
+                series: [{ name: 'Trips', data: [gdValue({{ $jan_trips ?? 0 }}),gdValue({{ $feb_trips ?? 0 }}),gdValue({{ $mar_trips ?? 0 }}),gdValue({{ $apr_trips ?? 0 }}),gdValue({{ $may_trips ?? 0 }}),gdValue({{ $jun_trips ?? 0 }}),gdValue({{ $jul_trips ?? 0 }}),gdValue({{ $aug_trips ?? 0 }}),gdValue({{ $sep_trips ?? 0 }}),gdValue({{ $oct_trips ?? 0 }}),gdValue({{ $nov_trips ?? 0 }}),gdValue({{ $dec_trips ?? 0 }})] }]
+            });
+        }
+
+        if (document.getElementById('gd_fuel_stock_chart')) {
+            Highcharts.chart('gd_fuel_stock_chart', {
+                chart: { type: 'pie' },
+                tooltip: { pointFormat: '<b>{point.y:,.0f} L</b> ({point.percentage:.1f}%)' },
+                plotOptions: { pie: { innerSize: '58%', dataLabels: { enabled: true, format: '{point.name}: {point.y:,.0f}L', style: { fontSize: '10px' } } } },
+                series: [{ name: 'Fuel', data: [{ name: 'Diesel', y: gdValue({{ $diesel_quantity ?? $diesel_balance_litres ?? 0 }}), color: blue }, { name: 'Petrol', y: gdValue({{ $petrol_quantity ?? $petrol_balance_litres ?? 0 }}), color: orange }] }]
+            });
+        }
+
+        if (document.getElementById('gd_fuel_movement_chart')) {
+            Highcharts.chart('gd_fuel_movement_chart', {
+                chart: { type: 'column' },
+                xAxis: { categories: months },
+                yAxis: { title: { text: 'Litres' } },
+                plotOptions: { column: { stacking: 'normal', borderRadius: 3 } },
+                series: [
+                    { name: 'Initial', data: [gdValue({{ $jan_initial_fuel ?? 0 }}),gdValue({{ $feb_initial_fuel ?? 0 }}),gdValue({{ $mar_initial_fuel ?? 0 }}),gdValue({{ $apr_initial_fuel ?? 0 }}),gdValue({{ $may_initial_fuel ?? 0 }}),gdValue({{ $jun_initial_fuel ?? 0 }}),gdValue({{ $jul_initial_fuel ?? 0 }}),gdValue({{ $aug_initial_fuel ?? 0 }}),gdValue({{ $sep_initial_fuel ?? 0 }}),gdValue({{ $oct_initial_fuel ?? 0 }}),gdValue({{ $nov_initial_fuel ?? 0 }}),gdValue({{ $dec_initial_fuel ?? 0 }})] },
+                    { name: 'Top-up', data: [gdValue({{ $jan_topup_fuel ?? 0 }}),gdValue({{ $feb_topup_fuel ?? 0 }}),gdValue({{ $mar_topup_fuel ?? 0 }}),gdValue({{ $apr_topup_fuel ?? 0 }}),gdValue({{ $may_topup_fuel ?? 0 }}),gdValue({{ $jun_topup_fuel ?? 0 }}),gdValue({{ $jul_topup_fuel ?? 0 }}),gdValue({{ $aug_topup_fuel ?? 0 }}),gdValue({{ $sep_topup_fuel ?? 0 }}),gdValue({{ $oct_topup_fuel ?? 0 }}),gdValue({{ $nov_topup_fuel ?? 0 }}),gdValue({{ $dec_topup_fuel ?? 0 }})] }
                 ]
-            }]
-
-        };
-
-
-
-        document.getElementById('randomizeDataBar').addEventListener('click', function() {
-            var zero = Math.random() < 0.2 ? true : false;
-            barChartData.datasets.forEach(function(dataset) {
-                dataset.data = dataset.data.map(function() {
-                    return zero ? 0.0 : randomScalingFactor();
-                });
-
             });
-            window.myBar.update();
-        });
+        }
 
-        var colorNamesbar = Object.keys(window.chartColors);
-        document.getElementById('addDatasetBar').addEventListener('click', function() {
-            var colorName = colorNamesbar[barChartData.datasets.length % colorNamesbar.length];;
-            var dsColor = window.chartColors[colorName];
-            var newDataset = {
-                label: 'Dataset ' + barChartData.datasets.length,
-                backgroundColor: color(dsColor).alpha(0.5).rgbString(),
-                borderColor: dsColor,
-                borderWidth: 1,
-                data: []
-            };
-
-            for (var index = 0; index < barChartData.labels.length; ++index) {
-                newDataset.data.push(randomScalingFactor());
-            }
-
-            barChartData.datasets.push(newDataset);
-            window.myBar.update();
-        });
-
-        document.getElementById('addData').addEventListener('click', function() {
-            if (barChartData.datasets.length > 0) {
-                var month = MONTHSbar[barChartData.labels.length % MONTHSbar.length];
-                barChartData.labels.push(month);
-
-                for (var index = 0; index < barChartData.datasets.length; ++index) {
-                    //window.myBar.addData(randomScalingFactor(), index);
-                    barChartData.datasets[index].data.push(randomScalingFactor());
-                }
-
-                window.myBar.update();
-            }
-        });
-
-        document.getElementById('removeDataset').addEventListener('click', function() {
-            barChartData.datasets.splice(0, 1);
-            window.myBar.update();
-        });
-
-        document.getElementById('removeData').addEventListener('click', function() {
-            barChartData.labels.splice(-1, 1); // remove the label first
-
-            barChartData.datasets.forEach(function(dataset, datasetIndex) {
-                dataset.data.pop();
+        if (document.getElementById('gd_bookings_chart')) {
+            Highcharts.chart('gd_bookings_chart', {
+                chart: { type: 'column' },
+                xAxis: { categories: months },
+                yAxis: { min: 0, title: { text: 'Bookings' } },
+                plotOptions: { column: { stacking: 'normal', borderRadius: 3 } },
+                series: [
+                    { name: 'Closed', data: [gdValue({{ $jan_closed_bookings ?? 0 }}),gdValue({{ $feb_closed_bookings ?? 0 }}),gdValue({{ $mar_closed_bookings ?? 0 }}),gdValue({{ $apr_closed_bookings ?? 0 }}),gdValue({{ $may_closed_bookings ?? 0 }}),gdValue({{ $jun_closed_bookings ?? 0 }}),gdValue({{ $jul_closed_bookings ?? 0 }}),gdValue({{ $aug_closed_bookings ?? 0 }}),gdValue({{ $sep_closed_bookings ?? 0 }}),gdValue({{ $oct_closed_bookings ?? 0 }}),gdValue({{ $nov_closed_bookings ?? 0 }}),gdValue({{ $dec_closed_bookings ?? 0 }})] },
+                    { name: 'Open', data: [gdValue({{ $jan_open_bookings ?? 0 }}),gdValue({{ $feb_open_bookings ?? 0 }}),gdValue({{ $mar_open_bookings ?? 0 }}),gdValue({{ $apr_open_bookings ?? 0 }}),gdValue({{ $may_open_bookings ?? 0 }}),gdValue({{ $jun_open_bookings ?? 0 }}),gdValue({{ $jul_open_bookings ?? 0 }}),gdValue({{ $aug_open_bookings ?? 0 }}),gdValue({{ $sep_open_bookings ?? 0 }}),gdValue({{ $oct_open_bookings ?? 0 }}),gdValue({{ $nov_open_bookings ?? 0 }}),gdValue({{ $dec_open_bookings ?? 0 }})] }
+                ]
             });
+        }
 
-            window.myBar.update();
-        });
-
-
-
-</script>
-
-<script>
-
-      $(function($) {
-
-        var bookings_chart = AmCharts.makeChart("bookings_chart", {
-                    "type": "serial",
-                	"theme": "light",
-                    "fontFamily": "Poppins",
-                    "legend": {
-                        "horizontalGap": 10,
-                        "maxColumns": 1,
-                        "position": "right",
-                		"useGraphSettings": true,
-                		"markerSize": 10
-                    },
-                    "dataProvider": [
-                        {
-                        "month": "Jan",
-                        "open": {{$jan_open_bookings}},
-                        "closed": {{$jan_closed_bookings}},
-                    },
-                        {
-                        "month": "Feb",
-                        "open": {{$feb_open_bookings}},
-                        "closed": {{$feb_closed_bookings}},
-                    },
-                        {
-                        "month": "Mar",
-                        "open": {{$mar_open_bookings}},
-                        "closed": {{$mar_closed_bookings}},
-                    },
-                        {
-                        "month": "Apr",
-                        "open": {{$apr_open_bookings}},
-                        "closed": {{$apr_closed_bookings}},
-                    },
-                        {
-                        "month": "May",
-                        "open": {{$may_open_bookings}},
-                        "closed": {{$may_closed_bookings}},
-                    },
-                        {
-                        "month": "Jun",
-                        "open": {{$jun_open_bookings}},
-                        "closed": {{$jun_closed_bookings}},
-                    },
-                        {
-                        "month": "Jul",
-                        "open": {{$jul_open_bookings}},
-                        "closed": {{$jul_closed_bookings}},
-                    },
-                        {
-                        "month": "Aug",
-                        "open": {{$aug_open_bookings}},
-                        "closed": {{$aug_closed_bookings}},
-                    },
-                        {
-                        "month": "Sept",
-                        "open": {{$sep_open_bookings}},
-                        "closed": {{$sep_closed_bookings}},
-                    },
-                        {
-                        "month": "Oct",
-                        "open": {{$oct_open_bookings}},
-                        "closed": {{$oct_closed_bookings}},
-                    },
-                        {
-                        "month": "Nov",
-                        "open": {{$nov_open_bookings}},
-                        "closed": {{$nov_closed_bookings}},
-                    },
-                        {
-                        "month": "Dec",
-                        "open": {{$dec_open_bookings}},
-                        "closed": {{$dec_closed_bookings}},
-                    },
-                ],
-                    "valueAxes": [{
-                        "stackType": "regular",
-                        "axisAlpha": 0.3,
-                        "gridAlpha": 0
-                    }],
-                    "graphs": [{
-                        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
-                        "fillAlphas": 0.8,
-                        "labelText": "[[value]]",
-                        "lineAlpha": 0.3,
-                        "title": "Closed",
-                        "type": "column",
-                		"color": "#000000",
-                        "valueField": "closed"
-                    }, {
-                        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
-                        "fillAlphas": 0.8,
-                        "labelText": "[[value]]",
-                        "lineAlpha": 0.3,
-                        "title": "Open",
-                        "type": "column",
-                		"color": "#000000",
-                        "valueField": "open"
-                    },],
-                    "categoryField": "month",
-                    "categoryAxis": {
-                        "gridPosition": "start",
-                        "axisAlpha": 0,
-                        "gridAlpha": 0,
-                        "position": "left"
-                    },
-                    "export": {
-                    	"enabled": true
-                     }
-
-                });
-
-
-        var chart6 = AmCharts.makeChart("chart6", {
-                    "theme": "light",
-                    "type": "serial",
-                    "fontFamily": "Poppins",
-                    "dataProvider": [{
-                        "month": "Jan",
-                        "topup": {{$jan_topup_fuel}},
-                        "initial": {{$jan_initial_fuel}}
-                       
-                    }, 
-                    {
-                        "month": "Feb",
-                        "topup": {{$feb_topup_fuel}},
-                        "initial": {{$feb_initial_fuel}}
-                       
-                    }, {
-                        "month": "Mar",
-                        "topup": {{$mar_topup_fuel}},
-                        "initial": {{$mar_initial_fuel}}
-                        
-                    }, {
-                        "month": "Apr",
-                        "topup": {{$apr_topup_fuel}},
-                        "initial": {{$apr_initial_fuel}}
-                       
-                    }, {
-                        "month": "May",
-                        "topup": {{$may_topup_fuel}},
-                        "initial": {{$may_initial_fuel}}
-                       
-                    }, {
-                        "month": "Jun",
-                        "topup": {{$jun_topup_fuel}},
-                        "initial": {{$jun_initial_fuel}}
-                       
-                    }, {
-                        "month": "Jul",
-                        "topup": {{$jul_topup_fuel}},
-                        "initial": {{$jul_initial_fuel}}
-                       
-                    }, {
-                        "month": "Aug",
-                        "topup": {{$aug_topup_fuel}},
-                        "initial": {{$aug_initial_fuel}}
-                       
-                    }, 
-                    {
-                        "month": "Sep",
-                        "topup": {{$sep_topup_fuel}},
-                        "initial": {{$sep_initial_fuel}}
-                      
-                    },
-                    {
-                        "month": "Oct",
-                        "topup": {{$oct_topup_fuel}},
-                        "initial": {{$oct_initial_fuel}}
-                       
-                    },
-                    {
-                        "month": "Nov",
-                        "topup": {{$nov_topup_fuel}},
-                        "initial": {{$nov_initial_fuel}}
-                      
-                    },
-                    {
-                        "month": "Dec",
-                        "topup": {{$dec_topup_fuel}},
-                        "initial": {{$dec_initial_fuel}}
-                       
-                    },
-                ],
-                    "valueAxes": [{
-                        "stackType": "3d",
-                        // "unit": "L",
-                        "position": "left",
-                        "title": "Fuel Quantity in Litres",
-                    }],
-                    "startDuration": 1,
-                    "graphs": [
-                        {
-                        "balloonText": "Topup Fuel Quantity [[category]]: <b>[[value]]</b>",
-                        "fillAlphas": 0.9,
-                        "lineAlpha": 0.2,
-                        "title": "Topup",
-                        "type": "column",
-                        "valueField": "topup"
-                    },
-                        {
-                        "balloonText": "Initial Fuel Quantity [[category]]: <b>[[value]]</b>",
-                        "fillAlphas": 0.9,
-                        "lineAlpha": 0.2,
-                        "title": "Initial",
-                        "type": "column",
-                        "valueField": "initial"
-                    } ],
-                    "plotAreaFillAlphas": 0.1,
-                    "depth3D": 60,
-                    "angle": 30,
-                    "categoryField": "month",
-                    "categoryAxis": {
-                        "gridPosition": "start"
-                    },
-                    "export": {
-                    	"enabled": true
-                     }
-                });
-
-        var sales_expenses_year = AmCharts.makeChart( "sales_expenses_year", {
-                  "type": "serial",
-                  "addClassNames": true,
-                  "theme": "light",
-                  "autoMargins": false,
-                  "marginLeft": 80,
-                  "marginRight": 8,
-                  "marginTop": 10,
-                  "marginBottom": 56,
-                  "fontFamily": "Poppins",
-                  "balloon": {
-                    "adjustBorderColor": false,
-                    "horizontalPadding": 10,
-                    "verticalPadding": 8,
-                    "color": "#ffffff"
-                  },
-
-                  "dataProvider": [ 
-                    {
-                    "year": 2021,
-                    "income": {{$income_2021}},
-                    "expenses": {{$expenses_2021}}
-                  }, 
-                    {
-                    "year": 2022,
-                    "income": {{$income_2022}},
-                    "expenses": {{$expenses_2022}}
-                  }, 
-                    {
-                    "year": 2023,
-                    "income": {{$income_2023}},
-                    "expenses": {{$expenses_2023}}
-                  }, 
-                    {
-                    "year": 2024,
-                    "income": {{$income_2024}},
-                    "expenses": {{$expenses_2024}},
-                    "dashLengthLine": 5
-                  },
-                  {
-                    "year": 2025,
-                    "income": {{$income_2025}},
-                    "expenses": {{$expenses_2025}},
-                    "dashLengthLine": 5
-                  }, 
-                  {
-                    "year": 2026,
-                    "income": {{$income_2026}},
-                    "expenses": {{$expenses_2026}},
-                    "dashLengthLine": 5
-                  } 
-                  ],
-                  "valueAxes": [ {
-                    "axisAlpha": 0,
-                    "position": "left",
-                    "title": "Amount"
-                  } ],
-                  "startDuration": 1,
-                  "graphs": [ {
-                    "alphaField": "alpha",
-                    "balloonText": "<span style='font-size:12px;'>[[title]] in [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
-                    "fillAlphas": 1,
-                    "title": "Income",
-                    "type": "column",
-                    "valueField": "income",
-                    "dashLengthField": "dashLengthColumn"
-                  }, {
-                    "id": "graph2",
-                    "balloonText": "<span style='font-size:12px;'>[[title]] in [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
-                    "bullet": "round",
-                    "lineThickness": 3,
-                    "bulletSize": 7,
-                    "bulletBorderAlpha": 1,
-                    "bulletColor": "#FFFFFF",
-                    "useLineColorForBulletBorder": true,
-                    "bulletBorderThickness": 3,
-                    "fillAlphas": 0,
-                    "lineAlpha": 1,
-                    "title": "Expenses",
-                    "valueField": "expenses",
-                    "dashLengthField": "dashLengthLine"
-                  } ],
-                  "categoryField": "year",
-                  "categoryAxis": {
-                    "gridPosition": "start",
-                    "axisAlpha": 0,
-                    "tickLength": 0,
-                     "title": "Months"
-                  },
-                  "export": {
-                    "enabled": true
-                  }
-                } );
-
-
-          var sales_expenses = AmCharts.makeChart( "sales_expenses", {
-                  "type": "serial",
-                  "addClassNames": true,
-                  "theme": "light",
-                  "autoMargins": false,
-                  "marginLeft": 80,
-                  "marginRight": 8,
-                  "marginTop": 10,
-                  "marginBottom": 56,
-                  "fontFamily": "Poppins",
-                  "balloon": {
-                    "adjustBorderColor": false,
-                    "horizontalPadding": 10,
-                    "verticalPadding": 8,
-                    "color": "#ffffff"
-                  },
-
-                  "dataProvider": [ 
-                    {
-                    "month": 'Jan',
-                    "income": {{$jan}},
-                    "expenses": {{$jan_expense}}
-                  },
-                    {
-                    "month": 'Feb',
-                    "income": {{$feb}},
-                    "expenses": {{$feb_expense}}
-                  },
-                    {
-                    "month": 'Mar',
-                    "income": {{$mar}},
-                    "expenses": {{$mar_expense}}
-                  },
-                    {
-                    "month": 'Apr',
-                    "income": {{$apr}},
-                    "expenses": {{$apr_expense}}
-                  },
-                    {
-                    "month": 'May',
-                    "income": {{$may}},
-                    "expenses": {{$may_expense}}
-                  },
-                   
-                    {
-                    "month": 'Jun',
-                    "income": {{$jun}},
-                    "expenses": {{$jun_expense}}
-                  },
-                    {
-                    "month": 'Jul',
-                    "income": {{$jul}},
-                    "expenses": {{$jul_expense}}
-                  },
-                    {
-                    "month": 'Aug',
-                    "income": {{$aug}},
-                    "expenses": {{$aug_expense}}
-                  },
-                    {
-                    "month": 'Sep',
-                    "income": {{$sep}},
-                    "expenses": {{$sep_expense}}
-                  },
-                    {
-                    "month": 'Oct',
-                    "income": {{$oct}},
-                    "expenses": {{$oct_expense}}
-                  },
-                    {
-                    "month": 'Nov',
-                    "income": {{$nov}},
-                    "expenses": {{$nov_expense}}
-                  },
-                    {
-                    "month": 'Dec',
-                    "income": {{$dec}},
-                    "expenses": {{$dec_expense}}
-                  },
-                
-                ],
-                  "valueAxes": [ {
-                    "axisAlpha": 0,
-                    "position": "left",
-                     "title": "Amount"
-                  } ],
-                  "startDuration": 1,
-                  "graphs": [ {
-                    "alphaField": "alpha",
-                    "balloonText": "<span style='font-size:12px;'>[[title]] in [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
-                    "fillAlphas": 1,
-                    "title": "Income",
-                    "type": "column",
-                    "valueField": "income",
-                    "dashLengthField": "dashLengthColumn"
-                  }, {
-                    "id": "graph2",
-                    "balloonText": "<span style='font-size:12px;'>[[title]] in [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
-                    "bullet": "round",
-                    "lineThickness": 3,
-                    "bulletSize": 7,
-                    "bulletBorderAlpha": 1,
-                    "bulletColor": "#FFFFFF",
-                    "useLineColorForBulletBorder": true,
-                    "bulletBorderThickness": 3,
-                    "fillAlphas": 0,
-                    "lineAlpha": 1,
-                    "title": "Expenses",
-                    "valueField": "expenses",
-                    "dashLengthField": "dashLengthLine"
-                  } ],
-                  "categoryField": "month",
-                  "categoryAxis": {
-                    "gridPosition": "start",
-                    "axisAlpha": 0,
-                    "tickLength": 0,
-                     "title": "Months"
-                  },
-                  "export": {
-                    "enabled": true
-                  }
-                } );
-
-
-
-                var labour_tunover = AmCharts.makeChart("labour_tunover", {
-                    "type": "serial",
-                    "theme": "light",
-                    "fontFamily": "Poppins",
-                    "marginTop":0,
-                    "marginRight": 80,
-                    "dataProvider": [{
-                        "year": "2022",
-                        "value": {{$resignation_2022}}
-                    }, 
-                    {
-                        "year": "2023",
-                        "value": {{$resignation_2023}}
-                    },
-                    {
-                        "year": "2024",
-                        "value": {{$resignation_2024}}
-                    },
-                    {
-                        "year": "2025",
-                        "value": {{$resignation_2025}}
-                    }
-                ],
-                    "valueAxes": [{
-                        "axisAlpha": 0,
-                        "position": "left"
-                    }],
-                    "graphs": [{
-                        "id":"g1",
-                        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]]</span></b>",
-                        "bullet": "round",
-                        "bulletSize": 8,
-                        "lineColor": "#d1655d",
-                        "lineThickness": 2,
-                        "negativeLineColor": "#637bb6",
-                        "type": "smoothedLine",
-                        "valueField": "value"
-                    }],
-                    "chartScrollbar": {
-                        "graph":"g1",
-                        "gridAlpha":0,
-                        "color":"#888888",
-                        "scrollbarHeight":55,
-                        "backgroundAlpha":0,
-                        "selectedBackgroundAlpha":0.1,
-                        "selectedBackgroundColor":"#888888",
-                        "graphFillAlpha":0,
-                        "autoGridCount":true,
-                        "selectedGraphFillAlpha":0,
-                        "graphLineAlpha":0.2,
-                        "graphLineColor":"#c2c2c2",
-                        "selectedGraphLineColor":"#888888",
-                        "selectedGraphLineAlpha":1
-
-                    },
-                    "chartCursor": {
-                        "categoryBalloonDateFormat": "YYYY",
-                        "cursorAlpha": 0,
-                        "valueLineEnabled":true,
-                        "valueLineBalloonEnabled":true,
-                        "valueLineAlpha":0.5,
-                        "fullWidth":true
-                    },
-                    "dataDateFormat": "YYYY",
-                    "categoryField": "year",
-                    "categoryAxis": {
-                        "minPeriod": "YYYY",
-                        "parseDates": true,
-                        "minorGridAlpha": 0.1,
-                        "minorGridEnabled": true
-                    },
-                    "export": {
-                        "enabled": true
-                    }
-
-                });
-                labour_tunover.addListener("rendered", zoomChart);
-                if(labour_tunover.zoomChart){
-                	labour_tunover.zoomChart();
-                }
-
-                function zoomChart(){
-                    labour_tunover.zoomToIndexes(Math.round(labour_tunover.dataProvider.length * 0.1), Math.round(labour_tunover.dataProvider.length * 0.8));
-                }        
-                
-
-    var gender = AmCharts.makeChart( "gender", {
-                  "type": "pie",
-                  "theme": "light",
-                  "fontFamily": "Poppins",
-                  "dataProvider": [ {
-                    "gender": "Male",
-                    "value": {{$males}}
-                  }, {
-                    "gender": "Female",
-                    "value": {{$females}}
-                  },  ],
-                  "valueField": "value",
-                  "titleField": "gender",
-                  "outlineAlpha": 0.4,
-                  "depth3D": 15,
-                  "balloonText": "[[title]]<br><span style='font-size:14px'><b>[[value]]</b> ([[percents]]%)</span>",
-                  "angle": 30,
-                  "export": {
-                    "enabled": true
-                  }
-                } );
-
-
-    var chart = AmCharts.makeChart("total_trips", {
-                  "type": "serial",
-                  "theme": "light",
-                  "fontFamily": "Poppins",
-                  "marginRight": 70,
-                  "dataProvider": [{
-                    "month": "Jan",
-                    "trips": {{$jan_trips}},
-                    "color": "#FF0F00"
-                  }, {
-                    "month": "Feb",
-                    "trips": {{$feb_trips}},
-                    "color": "#FF6600"
-                  }, {
-                    "month": "Mar",
-                    "trips": {{$mar_trips}},
-                    "color": "#FF9E01"
-                  }, {
-                    "month": "Apr",
-                    "trips": {{$apr_trips}},
-                    "color": "#FCD202"
-                  }, {
-                    "month": "May",
-                    "trips": {{$may_trips}},
-                    "color": "#F8FF01"
-                  }, {
-                    "month": "Jun",
-                    "trips": {{$jun_trips}},
-                    "color": "#B0DE09"
-                  }, {
-                    "month": "Jul",
-                    "trips": {{$jul_trips}},
-                    "color": "#04D215"
-                  }, {
-                    "month": "Aug",
-                    "trips": {{$aug_trips}},
-                    "color": "#0D8ECF"
-                  }, {
-                    "month": "Sep",
-                    "trips": {{$sep_trips}},
-                    "color": "#0D52D1"
-                  }, {
-                    "month": "Oct",
-                    "trips": {{$oct_trips}},
-                    "color": "#2A0CD0"
-                  }, {
-                    "month": "Nov",
-                    "trips": {{$nov_trips}},
-                    "color": "#8A0CCF"
-                  }, {
-                    "month": "Dec",
-                    "trips": {{$dec_trips}},
-                    "color": "#CD0D74"
-                  }],
-                  "valueAxes": [{
-                    "axisAlpha": 0,
-                    "position": "left",
-                    "title": "Total trips per month"
-                  }],
-                  "startDuration": 1,
-                  "graphs": [{
-                    "balloonText": "<b>[[category]]: [[value]]</b>",
-                    "fillColorsField": "color",
-                    "fillAlphas": 0.9,
-                    "lineAlpha": 0.2,
-                    "type": "column",
-                    "valueField": "trips"
-                  }],
-                  "chartCursor": {
-                    "categoryBalloonEnabled": false,
-                    "cursorAlpha": 0,
-                    "zoomable": false
-                  },
-                  "categoryField": "month",
-                  "categoryAxis": {
-                    "gridPosition": "start",
-                    "labelRotation": 45
-                  },
-                  "export": {
-                    "enabled": true
-                  }
-
-                });
-
-                var fuel_chart = AmCharts.makeChart("fuel_chart", {
-                    "type": "pie",
-                    "theme": "light",
-                    "fontFamily": "Poppins",
-                    "innerRadius": "40%",
-                    "gradientRatio": [-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, 0, 0.1, 0.2, 0.1, 0, -0.2, -0.5],
-                    "dataProvider": [{
-                        "Fuel Type": "Petrol",
-                        "litres": {{$petrol_quantity}}
-                    }, {
-                        "Fuel Type": "Diesel",
-                        "litres": {{$diesel_quantity}}
-                    }],
-                    "balloonText": "[[value]]",
-                    "valueField": "litres",
-                    "titleField": "Fuel Type",
-                    "balloon": {
-                        "drop": true,
-                        "adjustBorderColor": false,
-                        "color": "#FFFFFF",
-                        "fontSize": 16
-                    },
-                    "export": {
-                        "enabled": true
-                    }
-                });
-
+        if (document.getElementById('gd_gender_chart')) {
+            Highcharts.chart('gd_gender_chart', {
+                chart: { type: 'pie' },
+                tooltip: { pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)' },
+                plotOptions: { pie: { innerSize: '58%', dataLabels: { enabled: true, format: '{point.name}: {point.y}', style: { fontSize: '10px' } } } },
+                series: [{ name: 'Employees', data: [{ name: 'Male', y: gdValue({{ $males ?? 0 }}), color: blue }, { name: 'Female', y: gdValue({{ $females ?? 0 }}), color: orange }] }]
             });
-</script>
+        }
 
-
-<script>
-    Highcharts.setOptions({
-    global: {
-        useUTC: false
-    },
-    chart: {
-        style: {
-            fontFamily: 'Poppins'
+        if (document.getElementById('gd_driver_weight_chart')) {
+            Highcharts.chart('gd_driver_weight_chart', {
+                chart: { type: 'bar' },
+                xAxis: { type: 'category' },
+                yAxis: { title: { text: 'Weight' } },
+                plotOptions: { bar: { borderRadius: 4, colorByPoint: false } },
+                series: [{ name: 'Total Weight', data: @json($chartData ?? []) }]
+            });
         }
     }
-});
-
-
-Highcharts.chart('kilometers_moved', {
-    chart: {
-        zoomType: 'xy'
-    },
-    title: {
-        text: 'Monthly Distance Travelled (Kms)'
-    },
-   
-    xAxis: [{
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        crosshair: true
-    }],
-    yAxis: [{ // Primary yAxis
-        labels: {
-            format: '{value} Kms',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        },
-        title: {
-            text: 'Distance (Kms)',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        }
-    }],
-    tooltip: {
-        shared: true
-    },
-    legend: {
-        layout: 'vertical',
-        align: 'left',
-        x: 120,
-        verticalAlign: 'top',
-        y: 100,
-        floating: true,
-        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
-    },
-    series: [ {
-        name: 'Kilometers',
-        type: 'spline',
-        data: [
-            {{$jan_distance}},
-            {{$feb_distance}},
-            {{$mar_distance}},
-            {{$apr_distance}},
-            {{$may_distance}},
-            {{$jun_distance}},
-            {{$jul_distance}},
-            {{$aug_distance}},
-            {{$sep_distance}},
-            {{$oct_distance}},
-            {{$nov_distance}},
-            {{$dec_distance}},
-          ],
-        tooltip: {
-            valueSuffix: 'Kms'
-        }
-    }]
-});
-
-Highcharts.chart('volume_tonnage', {
-    chart: {
-        zoomType: 'xy'
-    },
-    title: {
-        text: 'Monthly Volume & Tonnage Moved'
-    },
-    
-    xAxis: [{
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        crosshair: true
-    }],
-    yAxis: [{ // Primary yAxis
-        labels: {
-            format: '{value} Litres',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        },
-        title: {
-            text: 'Volume',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        }
-    }, { // Secondary yAxis
-        title: {
-            text: 'Tonnage',
-            style: {
-                color: Highcharts.getOptions().colors[0]
-            }
-        },
-        labels: {
-            format: '{value} Tons',
-            style: {
-                color: Highcharts.getOptions().colors[0]
-            }
-        },
-        opposite: true
-    }],
-    tooltip: {
-        shared: true
-    },
-    legend: {
-        layout: 'vertical',
-        align: 'left',
-        x: 120,
-        verticalAlign: 'top',
-        y: 100,
-        floating: true,
-        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
-    },
-    series: [{
-        name: 'Tonnage',
-        type: 'column',
-        yAxis: 1,
-        data: [
-            {{$jan_weight}},
-            {{$feb_weight}},
-            {{$mar_weight}},
-            {{$apr_weight}},
-            {{$may_weight}},
-            {{$jun_weight}},
-            {{$jul_weight}},
-            {{$aug_weight}},
-            {{$sep_weight}},
-            {{$oct_weight}},
-            {{$nov_weight}},
-            {{$dec_weight}},
-        ],
-        tooltip: {
-            valueSuffix: ' Tons'
-        }
-
-    }, {
-        name: 'Volume',
-        type: 'spline',
-        data: [
-            {{$jan_litreage}},
-            {{$feb_litreage}},
-            {{$mar_litreage}},
-            {{$apr_litreage}},
-            {{$may_litreage}},
-            {{$jun_litreage}},
-            {{$jul_litreage}},
-            {{$aug_litreage}},
-            {{$sep_litreage}},
-            {{$oct_litreage}},
-            {{$nov_litreage}},
-            {{$dec_litreage}},
-        ],
-        tooltip: {
-            valueSuffix: ' Litres'
-        }
-    }]
-});
-
-
-Highcharts.chart('trip_loss', {
-    chart: {
-        zoomType: 'xy'
-    },
-    title: {
-        text: 'Monthly Volume & Tonnage Loss'
-    },
-    
-    xAxis: [{
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        crosshair: true
-    }],
-    yAxis: [{ // Primary yAxis
-        labels: {
-            format: '{value} Litres',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        },
-        title: {
-            text: 'Volume',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        }
-    }, { // Secondary yAxis
-        title: {
-            text: 'Tonnage',
-            style: {
-                color: Highcharts.getOptions().colors[0]
-            }
-        },
-        labels: {
-            format: '{value} Tons',
-            style: {
-                color: Highcharts.getOptions().colors[0]
-            }
-        },
-        opposite: true
-    }],
-    tooltip: {
-        shared: true
-    },
-    legend: {
-        layout: 'vertical',
-        align: 'left',
-        x: 120,
-        verticalAlign: 'top',
-        y: 100,
-        floating: true,
-        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
-    },
-    series: [{
-        name: 'Tonnage',
-        type: 'column',
-        yAxis: 1,
-        data: [
-            {{$jan_weight_loss}},
-            {{$feb_weight_loss}},
-            {{$mar_weight_loss}},
-            {{$apr_weight_loss}},
-            {{$may_weight_loss}},
-            {{$jun_weight_loss}},
-            {{$jul_weight_loss}},
-            {{$aug_weight_loss}},
-            {{$sep_weight_loss}},
-            {{$oct_weight_loss}},
-            {{$nov_weight_loss}},
-            {{$dec_weight_loss}},
-        ],
-        tooltip: {
-            valueSuffix: ' Tons'
-        }
-
-    }, {
-        name: 'Volume',
-        type: 'spline',
-        data: [
-            {{$jan_litreage_loss}},
-            {{$feb_litreage_loss}},
-            {{$mar_litreage_loss}},
-            {{$apr_litreage_loss}},
-            {{$may_litreage_loss}},
-            {{$jun_litreage_loss}},
-            {{$jul_litreage_loss}},
-            {{$aug_litreage_loss}},
-            {{$sep_litreage_loss}},
-            {{$oct_litreage_loss}},
-            {{$nov_litreage_loss}},
-            {{$dec_litreage_loss}},
-        ],
-        tooltip: {
-            valueSuffix: ' Litres'
-        }
-    }]
-});
-
-
 </script>
-
-
-
 @endsection
