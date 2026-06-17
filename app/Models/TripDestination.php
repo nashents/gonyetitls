@@ -44,12 +44,13 @@ class TripDestination extends Model implements Auditable
 
     protected $fillable = [
         'user_id',
-        'transport_order_id',
+        'trip_id',
         'destination_id',
+        'offloading_date',
         'offloading_point_id',
-        'units_of_measure_id',
         'weight',
         'quantity',
+        'units_of_measure_id',
         'litreage',
         'litreage_at_20',
         'rate',

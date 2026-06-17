@@ -39,14 +39,20 @@ class TripOrigin extends Model implements Auditable
         return $this->belongsTo('App\Models\User');
     }
 
+    public function trip_origins()
+    {
+        return $this->hasMany(TripOrigin::class);
+    }
+
     protected $fillable = [
         'user_id',
-        'transport_order_id',
-        'destination_id',
+        'trip_id',
+        'loading_date',
         'loading_point_id',
-        'units_of_measure_id',
+        'destination_id',
         'weight',
         'quantity',
+        'units_of_measure_id',
         'litreage',
         'litreage_at_20',
         'rate',

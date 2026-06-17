@@ -107,6 +107,7 @@
                     <h5 class="gd-panel-title"><i class="fa fa-th-large"></i> Module Quick Counts</h5>
                     <span class="gd-panel-note">Clickable year-to-date and master record totals</span>
                 </div>
+
                 <div class="gd-module-count-grid">
                     @if ($canSee(['Transport & Logistics','Operations','Management']))
                         <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
@@ -124,6 +125,10 @@
                         <a href="{{ route('horses.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-truck"></i></span><strong class="gd-module-value">{{ $fmt($horse_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Horses Active</span>
+                        </a>
+                        <a href="{{ route('vehicles.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-car"></i></span><strong class="gd-module-value">{{ $fmt($vehicle_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Vehicles Active</span>
                         </a>
                         <a href="{{ route('trailers.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-columns"></i></span><strong class="gd-module-value">{{ $fmt($trailer_count ?? 0) }}</strong></div>
@@ -189,8 +194,12 @@
 
                     @if ($canSee(['Human Resources','Human Resource','Management']))
                         <a href="{{ route('employees.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-user"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Employees Active</span>
+                        </a>
+                        <a href="{{ route('drivers.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($driver_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Drivers Active</span>
                         </a>
                         <a href="{{ route('leaves.manage') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-plane"></i></span><strong class="gd-module-value">{{ $fmt($leave_count ?? 0) }}</strong></div>

@@ -157,8 +157,10 @@ class TripStatusManager extends Component
         $this->tto_ids = $trip->trip_transport_orders->pluck('id')->toArray();
 
         if ($this->useTtoPath) {
+           
             $this->loadTtoPath($trip);
         } else {
+            
             $this->loadLegacyPath($trip);
         }
 
@@ -171,10 +173,14 @@ class TripStatusManager extends Component
 
     private function loadTtoPath(Trip $trip): void
     {
+
+      
+
         $destinationTotals   = $this->aggregateDestinationTotals($trip);
         $this->deliveryNotes = [];
 
         foreach ($trip->trip_transport_orders as $tto) {
+
             $dn = $this->resolveDeliveryNote($trip, $tto);
 
             if (! $dn->exists) {
@@ -198,6 +204,8 @@ class TripStatusManager extends Component
                 $dn->save();
 
             } else {
+               
+
                 $needsSave = false;
                 if (is_null($dn->trip_transport_order_id)) {
                     $dn->trip_transport_order_id = $tto->id;
@@ -210,6 +218,8 @@ class TripStatusManager extends Component
                 }
                 if ($needsSave) $dn->save();
             }
+
+           
 
             $this->deliveryNotes[$tto->id] = [
                 'delivery_note_id'              => $dn->id,
@@ -697,6 +707,7 @@ class TripStatusManager extends Component
 
     private function resolveDeliveryNote(Trip $trip, $tto): DeliveryNote
     {
+      
         $dn = DeliveryNote::where('trip_id', $trip->id)
             ->where(function ($q) use ($tto) {
                 $q->where('trip_transport_order_id', $tto->id)
@@ -707,6 +718,8 @@ class TripStatusManager extends Component
             })
             ->latest()
             ->first();
+
+        
 
         if (! $dn) {
             $dn = new DeliveryNote();

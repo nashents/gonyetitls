@@ -33,8 +33,8 @@ class Origins extends Component
     public $old_litreage_at_20;
     public $units_of_measures;
     public $units_of_measure_id;
-    public $trip_destination_id;
-    public $trip_destination;
+    public $trip_origin_id;
+    public $trip_origin;
 
 
     public $inputs = [];
@@ -86,142 +86,145 @@ class Origins extends Component
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
     }
 
-    public function store(){
-
+    public function store()
+    {
         $this->validate();
 
         DB::transaction(function () {
-        
-            if (isset($this->destination_id)) {
 
-                foreach ($this->destination_id as $key => $value) {
+            $rows = [];
 
-                    $trip_origin = new TripOrigin;
-                    $trip_origin->user_id = Auth::user()->id;
-                    $trip_origin->trip_id = $this->trip_id;
-                    if (isset($this->loading_date[$key])) {
-                        $trip_origin->loading_date = $this->loading_date[$key];
-                    }
-                    if (isset($this->loading_point_id[$key])) {
-                        $trip_origin->loading_point_id = $this->loading_point_id[$key];
-                    }
-                    if (isset($this->destination_id[$key])) {
-                        $trip_origin->destination_id = $this->destination_id[$key];
-                    }
-                    if (isset($this->weight[$key])) {
-                        $trip_origin->weight = $this->weight[$key];
-                    }
-                    if (isset($this->quantity[$key])) {
-                        $trip_origin->quantity = $this->quantity[$key];
-                    }
-                    if (isset($this->units_of_measure_id[$key])) {
-                        $trip_origin->units_of_measure_id = $this->units_of_measure_id[$key];
-                    }
-                    if (isset($this->litreage[$key])) {
-                        $trip_origin->litreage = $this->litreage[$key];
-                    }
-                    if (isset($this->litreage_at_20[$key])) {
-                        $trip_origin->litreage_at_20 = $this->litreage_at_20[$key];
-                    }
-                    if (isset($this->rate[$key])) {
-                        $trip_origin->rate = $this->rate[$key];
-                    }
-                    if (isset($this->freight[$key])) {
-                        $trip_origin->freight = $this->freight[$key];
-                    }
-                
-                    $trip_origin->save();
+            if (!empty($this->destination_id) && is_array($this->destination_id)) {
 
+                foreach ($this->destination_id as $key => $destinationId) {
+
+                    // Skip empty rows
+                    if (blank($destinationId) && blank($this->loading_point_id[$key] ?? null)) {
+                        continue;
+                    }
+
+                    $rows[] = [
+                        'user_id'             => Auth::id(),
+                        'trip_id'             => $this->trip_id ?: null,
+                        'loading_date'        => $this->loading_date[$key] ?? null,
+                        'loading_point_id'    => $this->loading_point_id[$key] ?? null,
+                        'destination_id'      => $destinationId ?: null,
+                        'weight'              => $this->weight[$key] ?? null,
+                        'quantity'            => $this->quantity[$key] ?? null,
+                        'units_of_measure_id' => $this->units_of_measure_id[$key] ?? null,
+                        'litreage'            => $this->litreage[$key] ?? null,
+                        'litreage_at_20'      => $this->litreage_at_20[$key] ?? null,
+                        'rate'                => $this->rate[$key] ?? null,
+                        'freight'             => $this->freight[$key] ?? null,
+                        'created_at'          => now(),
+                        'updated_at'          => now(),
+                    ];
                 }
-
             }
-       
+
+            if (!empty($rows)) {
+                TripOrigin::insert($rows);
+            }
+
             $this->dispatchBrowserEvent('hide-trip_originModal');
+
             $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Loading Point(s) Added Successfully!!"
+
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Loading point(s) added successfully.',
             ]);
-
         });
-
     }
+    public function edit($id)
+    {
+        $tripOrigin = TripOrigin::with('trip.delivery_note')->findOrFail($id);
 
-    public function edit($id){
+        $this->trip_origin_id = $tripOrigin->id;
+        $this->trip_origin    = $tripOrigin;
 
-        $this->trip_destination_id = $id;
-        $this->trip_destination = TripOrigin::find($id);
-        $this->trip_id = $this->trip_destination->trip_id;
-        $this->trip = $this->trip_destination->trip;
-        $this->loading_point_id = $this->trip_destination->loading_point_id;
-        $this->destination_id = $this->trip_destination->destination_id;
-        $this->units_of_measure_id = $this->trip_destination->units_of_measure_id;
-        $this->loading_date = $this->trip_destination->loading_date;
-        $this->weight = $this->trip_destination->weight;
-        $this->rate = $this->trip_destination->rate;
-        $this->freight = $this->trip_destination->freight;
-        $this->old_weight = $this->trip_destination->weight;
-        $this->quantity = $this->trip_destination->quantity;
-        $this->old_quantity = $this->trip_destination->quantity;
-        $this->litreage = $this->trip_destination->litreage;
-        $this->old_litreage = $this->trip_destination->litreage;
-        $this->litreage_at_20 = $this->trip_destination->litreage_at_20;
-        $this->old_litreage_at_20 = $this->trip_destination->litreage_at_20;
+        $this->trip_id = $tripOrigin->trip_id;
+        $this->trip    = $tripOrigin->trip;
+
+        $this->loading_point_id    = $tripOrigin->loading_point_id;
+        $this->destination_id      = $tripOrigin->destination_id;
+        $this->units_of_measure_id = $tripOrigin->units_of_measure_id;
+        $this->loading_date        = $tripOrigin->loading_date;
+
+        $this->weight     = $tripOrigin->weight;
+        $this->quantity   = $tripOrigin->quantity;
+        $this->litreage   = $tripOrigin->litreage;
+        $this->litreage_at_20 = $tripOrigin->litreage_at_20;
+
+        $this->rate    = $tripOrigin->rate;
+        $this->freight = $tripOrigin->freight;
+
         $this->dispatchBrowserEvent('show-trip_originEditModal');
-
     }
 
-    public function update(){
+    public function update()
+    {
+        $this->validate([
+            'trip_origin_id'        => 'required|exists:trip_origins,id',
+            'destination_id'        => 'nullable|exists:destinations,id',
+            'loading_point_id'      => 'nullable|exists:loading_points,id',
+            'units_of_measure_id'   => 'nullable|exists:units_of_measures,id',
+            'loading_date'          => 'nullable|date',
+            'weight'                => 'nullable|numeric|min:0',
+            'quantity'              => 'nullable|numeric|min:0',
+            'litreage'              => 'nullable|numeric|min:0',
+            'litreage_at_20'        => 'nullable|numeric|min:0',
+            'rate'                  => 'nullable|numeric|min:0',
+            'freight'               => 'nullable|numeric|min:0',
+        ]);
 
         DB::transaction(function () {
-            if (isset($this->trip_destination_id)) {
-                $trip_destination =  TripOrigin::find($this->trip_destination_id);
-                $trip_destination->destination_id = $this->destination_id;
-                $trip_destination->loading_point_id = $this->loading_point_id;
-                $trip_destination->weight = $this->weight;
-                $trip_destination->litreage = $this->litreage;
-                $trip_destination->loading_date = $this->loading_date;
-                $trip_destination->litreage_at_20 = $this->litreage_at_20;
-                $trip_destination->quantity = $this->quantity;
-                $trip_destination->units_of_measure_id = $this->units_of_measure_id;
-                $trip_destination->freight = $this->freight;
-                $trip_destination->rate = $this->rate;
-                $trip_destination->update();
 
-                $delivery_note = $this->trip->delivery_note;
-                if (isset($delivery_note)) {
-                    if ((!is_null($delivery_note->loaded_weight) && $delivery_note->loaded_weight != "") && ($this->weight != null && $this->weight != "")) {
-                        $delivery_note->loaded_weight = ($delivery_note->loaded_weight - $this->old_weight ? $this->old_weight : 0) + $this->weight ? $this->weight : 0;
-                    }else {
-                        $delivery_note->loaded_weight = $this->weight;
-                    }
-                    if ((!is_null($delivery_note->loaded_quantity) && $delivery_note->loaded_quantity != "") && ($this->quantity != null && $this->quantity != "") ) {
-                        $delivery_note->loaded_quantity = ($delivery_note->loaded_quantity - $this->old_quantity ? $this->old_quantity : 0) +  $this->quantity ? $this->quantity : 0;
-                    }else {
-                        $delivery_note->loaded_quantity = $this->quantity;
-                    }
-                    if ((!is_null($delivery_note->loaded_litreage) && $delivery_note->loaded_litreage != "") && ($this->litreage != null && $this->litreage != "") ) {
-                        $delivery_note->loaded_litreage = ($delivery_note->loaded_litreage - $this->old_litreage ? $this->old_litreage : 0) + $this->litreage ? $this->litreage : 0;
-                    }else {
-                        $delivery_note->loaded_litreage = $this->litreage;
-                    }
-                    if ((!is_null($delivery_note->loaded_litreage_at_20) && $delivery_note->loaded_litreage_at_20 != "" ) && ($this->litreage_at_20 != null && $this->litreage_at_20 != "") ) {
-                        $delivery_note->loaded_litreage = ($delivery_note->loaded_litreage - $this->old_litreage_at_20 ? $this->old_litreage_at_20 : 0) + $this->litreage_at_20 ? $this->litreage_at_20 : 0;
-                    }else {
-                        $delivery_note->loaded_litreage_at_20 = $this->litreage_at_20;
-                    }   
-                    $delivery_note->update();
-                }
+            $tripOrigin = TripOrigin::with('trip.delivery_note')
+                ->findOrFail($this->trip_origin_id);
 
-                $this->dispatchBrowserEvent('hide-trip_originEditModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Loading Points(s) Updated Successfully!!"
-                ]);
+            $tripOrigin->update([
+                'destination_id'        => $this->destination_id ?: null,
+                'loading_point_id'      => $this->loading_point_id ?: null,
+                'units_of_measure_id'   => $this->units_of_measure_id ?: null,
+                'loading_date'          => $this->loading_date ?: null,
+                'weight'                => $this->weight ?: null,
+                'quantity'              => $this->quantity ?: null,
+                'litreage'              => $this->litreage ?: null,
+                'litreage_at_20'        => $this->litreage_at_20 ?: null,
+                'rate'                  => $this->rate ?: null,
+                'freight'               => $this->freight ?: null,
+            ]);
+
+            $deliveryNote = optional($tripOrigin->trip)->delivery_note;
+
+            if ($deliveryNote) {
+                $this->recalculateLoadedDeliveryNoteTotals($tripOrigin->trip, $deliveryNote);
             }
-        });
 
+            $this->dispatchBrowserEvent('hide-trip_originEditModal');
+
+            $this->resetInputFields();
+
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Loading point updated successfully.',
+            ]);
+        });
+    }
+
+    private function recalculateLoadedDeliveryNoteTotals($trip, $deliveryNote)
+    {
+        if (!$trip || !$deliveryNote) {
+            return;
+        }
+
+        $deliveryNote->update([
+            'loaded_weight'           => $trip->trip_origins()->sum('weight'),
+            'loaded_quantity'         => $trip->trip_origins()->sum('quantity'),
+            'loaded_litreage'         => $trip->trip_origins()->sum('litreage'),
+            'loaded_litreage_at_20'   => $trip->trip_origins()->sum('litreage_at_20'),
+        ]);
     }
 
     public function refresh($category){

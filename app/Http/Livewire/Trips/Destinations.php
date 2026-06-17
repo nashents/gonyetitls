@@ -94,44 +94,29 @@ class Destinations extends Component
        
         DB::transaction(function () {
 
-        if (isset($this->destination_id)) {
-            foreach ($this->destination_id as $key => $value) {
-                $trip_destination = new TripDestination;
-                $trip_destination->user_id = Auth::user()->id;
-                $trip_destination->trip_id = $this->trip_id;
-                if (isset($this->offloading_date[$key])) {
-                    $trip_destination->offloading_date = $this->offloading_date[$key];
-                }
-                if (isset($this->offloading_point_id[$key])) {
-                    $trip_destination->offloading_point_id = $this->offloading_point_id[$key];
-                }
-                if (isset($this->destination_id[$key])) {
-                    $trip_destination->destination_id = $this->destination_id[$key];
-                }
-                if (isset($this->weight[$key])) {
-                    $trip_destination->weight = $this->weight[$key];
-                }
-                if (isset($this->quantity[$key])) {
-                    $trip_destination->quantity = $this->quantity[$key];
-                }
-                if (isset($this->units_of_measure_id[$key])) {
-                    $trip_destination->units_of_measure_id = $this->units_of_measure_id[$key];
-                }
-                if (isset($this->litreage[$key])) {
-                    $trip_destination->litreage = $this->litreage[$key];
-                }
-                if (isset($this->litreage_at_20[$key])) {
-                    $trip_destination->litreage_at_20 = $this->litreage_at_20[$key];
-                }
-                if (isset($this->rate[$key])) {
-                    $trip_destination->rate = $this->rate[$key];
-                }
-                if (isset($this->freight[$key])) {
-                    $trip_destination->freight = $this->freight[$key];
-                }
-               
-                $trip_destination->save();
+        if (!empty($this->destination_id) && is_array($this->destination_id)) {
 
+            foreach ($this->destination_id as $key => $destinationId) {
+
+                // Skip empty destination rows
+                if (blank($destinationId)) {
+                    continue;
+                }
+
+                TripDestination::create([
+                    'user_id'              => Auth::id(),
+                    'trip_id'              => $this->trip_id ?: null,
+                    'destination_id'       => $destinationId ?: null,
+                    'offloading_date'      => $this->offloading_date[$key] ?? null,
+                    'offloading_point_id'  => $this->offloading_point_id[$key] ?? null,
+                    'weight'               => $this->weight[$key] ?? null,
+                    'quantity'             => $this->quantity[$key] ?? null,
+                    'units_of_measure_id'  => $this->units_of_measure_id[$key] ?? null,
+                    'litreage'             => $this->litreage[$key] ?? null,
+                    'litreage_at_20'       => $this->litreage_at_20[$key] ?? null,
+                    'rate'                 => $this->rate[$key] ?? null,
+                    'freight'              => $this->freight[$key] ?? null,
+                ]);
             }
         }
        
@@ -147,81 +132,124 @@ class Destinations extends Component
   
     }
 
-    public function edit($id){
-        $this->trip_destination_id = $id;
-        $this->trip_destination = TripDestination::find($id);
-        $this->trip_id = $this->trip_destination->trip_id;
-        $this->trip = $this->trip_destination->trip;
-        $this->offloading_point_id = $this->trip_destination->offloading_point_id;
-        $this->destination_id = $this->trip_destination->destination_id;
-        $this->units_of_measure_id = $this->trip_destination->units_of_measure_id;
-        $this->offloading_date = $this->trip_destination->offloading_date;
-        $this->weight = $this->trip_destination->weight;
-        $this->rate = $this->trip_destination->rate;
-        $this->freight = $this->trip_destination->freight;
-        $this->old_weight = $this->trip_destination->weight;
-        $this->quantity = $this->trip_destination->quantity;
-        $this->old_quantity = $this->trip_destination->quantity;
-        $this->litreage = $this->trip_destination->litreage;
-        $this->old_litreage = $this->trip_destination->litreage;
-        $this->litreage_at_20 = $this->trip_destination->litreage_at_20;
-        $this->old_litreage_at_20 = $this->trip_destination->litreage_at_20;
+  
+    public function edit($id)
+    {
+        $tripDestination = TripDestination::with('trip.delivery_note')->findOrFail($id);
+
+        $this->trip_destination_id = $tripDestination->id;
+        $this->trip_destination    = $tripDestination;
+
+        $this->trip_id = $tripDestination->trip_id;
+        $this->trip    = $tripDestination->trip;
+
+        $this->destination_id        = $tripDestination->destination_id;
+        $this->offloading_point_id   = $tripDestination->offloading_point_id;
+        $this->units_of_measure_id   = $tripDestination->units_of_measure_id;
+        $this->offloading_date       = $tripDestination->offloading_date;
+
+        $this->weight         = $tripDestination->weight;
+        $this->old_weight     = $tripDestination->weight;
+
+        $this->quantity       = $tripDestination->quantity;
+        $this->old_quantity   = $tripDestination->quantity;
+
+        $this->litreage       = $tripDestination->litreage;
+        $this->old_litreage   = $tripDestination->litreage;
+
+        $this->litreage_at_20     = $tripDestination->litreage_at_20;
+        $this->old_litreage_at_20 = $tripDestination->litreage_at_20;
+
+        $this->rate    = $tripDestination->rate;
+        $this->freight = $tripDestination->freight;
+
         $this->dispatchBrowserEvent('show-trip_destinationEditModal');
     }
 
-    public function update(){
+    public function update()
+    {
+        $this->validate([
+            'trip_destination_id'   => 'required|exists:trip_destinations,id',
+            'destination_id'        => 'nullable|exists:destinations,id',
+            'offloading_point_id'   => 'nullable|exists:offloading_points,id',
+            'units_of_measure_id'   => 'nullable|exists:units_of_measures,id',
+            'offloading_date'       => 'nullable|date',
+            'weight'                => 'nullable|numeric|min:0',
+            'quantity'              => 'nullable|numeric|min:0',
+            'litreage'              => 'nullable|numeric|min:0',
+            'litreage_at_20'        => 'nullable|numeric|min:0',
+            'rate'                  => 'nullable|numeric|min:0',
+            'freight'               => 'nullable|numeric|min:0',
+        ]);
 
         DB::transaction(function () {
 
-        if (isset($this->trip_destination_id)) {
-                $trip_destination =  TripDestination::find($this->trip_destination_id);
-                $trip_destination->destination_id = $this->destination_id;
-                $trip_destination->offloading_point_id = $this->offloading_point_id;
-                $trip_destination->weight = $this->weight;
-                $trip_destination->litreage = $this->litreage;
-                $trip_destination->offloading_date = $this->offloading_date;
-                $trip_destination->litreage_at_20 = $this->litreage_at_20;
-                $trip_destination->quantity = $this->quantity;
-                $trip_destination->units_of_measure_id = $this->units_of_measure_id;
-                $trip_destination->freight = $this->freight;
-                $trip_destination->rate = $this->rate;
-                $trip_destination->update();
+            $tripDestination = TripDestination::with('trip.delivery_note')
+                ->findOrFail($this->trip_destination_id);
 
-                $delivery_note = $this->trip->delivery_note;
-                if (isset($delivery_note)) {
-                    if ((!is_null($delivery_note->offloaded_weight) && $delivery_note->offloaded_weight != "") && ($this->weight != null && $this->weight != "")) {
-                        $delivery_note->offloaded_weight = ($delivery_note->offloaded_weight - $this->old_weight ? $this->old_weight : 0) + $this->weight ? $this->weight : 0;
-                    }else {
-                        $delivery_note->offloaded_weight = $this->weight;
-                    }
-                    if ((!is_null($delivery_note->offloaded_quantity) && $delivery_note->offloaded_quantity != "") && ($this->quantity != null && $this->quantity != "") ) {
-                        $delivery_note->offloaded_quantity = ($delivery_note->offloaded_quantity - $this->old_quantity ? $this->old_quantity : 0) +  $this->quantity ? $this->quantity : 0;
-                    }else {
-                        $delivery_note->offloaded_quantity = $this->quantity;
-                    }
-                    if ((!is_null($delivery_note->offloaded_litreage) && $delivery_note->offloaded_litreage != "") && ($this->litreage != null && $this->litreage != "") ) {
-                        $delivery_note->offloaded_litreage = ($delivery_note->offloaded_litreage - $this->old_litreage ? $this->old_litreage : 0) + $this->litreage ? $this->litreage : 0;
-                    }else {
-                        $delivery_note->offloaded_litreage = $this->litreage;
-                    }
-                    if ((!is_null($delivery_note->offloaded_litreage_at_20) && $delivery_note->offloaded_litreage_at_20 != "" ) && ($this->litreage_at_20 != null && $this->litreage_at_20 != "") ) {
-                        $delivery_note->offloaded_litreage = ($delivery_note->offloaded_litreage - $this->old_litreage_at_20 ? $this->old_litreage_at_20 : 0) + $this->litreage_at_20 ? $this->litreage_at_20 : 0;
-                    }else {
-                        $delivery_note->offloaded_litreage_at_20 = $this->litreage_at_20;
-                    }   
-                    $delivery_note->update();
-                }
+            $tripDestination->update([
+                'destination_id'        => $this->destination_id ?: null,
+                'offloading_point_id'   => $this->offloading_point_id ?: null,
+                'units_of_measure_id'   => $this->units_of_measure_id ?: null,
+                'offloading_date'       => $this->offloading_date ?: null,
+                'weight'                => $this->weight ?: null,
+                'quantity'              => $this->quantity ?: null,
+                'litreage'              => $this->litreage ?: null,
+                'litreage_at_20'        => $this->litreage_at_20 ?: null,
+                'rate'                  => $this->rate ?: null,
+                'freight'               => $this->freight ?: null,
+            ]);
 
-                $this->dispatchBrowserEvent('hide-trip_destinationEditModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Destination(s) Updated Successfully!!"
+            $deliveryNote = optional($tripDestination->trip)->delivery_note;
+
+            if ($deliveryNote) {
+
+                
+                $deliveryNote->update([
+                    'offloaded_weight' => $this->adjustDeliveryNoteValue(
+                        $deliveryNote->offloaded_weight,
+                        $this->old_weight,
+                        $this->weight
+                    ),
+
+                    'offloaded_quantity' => $this->adjustDeliveryNoteValue(
+                        $deliveryNote->offloaded_quantity,
+                        $this->old_quantity,
+                        $this->quantity
+                    ),
+
+                    'offloaded_litreage' => $this->adjustDeliveryNoteValue(
+                        $deliveryNote->offloaded_litreage,
+                        $this->old_litreage,
+                        $this->litreage
+                    ),
+
+                    'offloaded_litreage_at_20' => $this->adjustDeliveryNoteValue(
+                        $deliveryNote->offloaded_litreage_at_20,
+                        $this->old_litreage_at_20,
+                        $this->litreage_at_20
+                    ),
                 ]);
-        }
-       
+            }
         });
-        
+
+        $this->dispatchBrowserEvent('hide-trip_destinationEditModal');
+
+        $this->resetInputFields();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => 'Destination updated successfully.',
+        ]);
+    }
+
+    private function adjustDeliveryNoteValue($currentValue, $oldValue, $newValue)
+    {
+        $currentValue = is_numeric($currentValue) ? (float) $currentValue : 0;
+        $oldValue     = is_numeric($oldValue) ? (float) $oldValue : 0;
+        $newValue     = is_numeric($newValue) ? (float) $newValue : 0;
+
+        return ($currentValue - $oldValue) + $newValue;
     }
 
     public function refresh($category){
