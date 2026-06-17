@@ -39,7 +39,11 @@ class TripExpense extends Model implements Auditable
 
     public function getCanDeleteAttribute()
     {
-        return $this->bill->payments->isEmpty()
+        if (!$this->bill) {
+            return false;
+        }
+
+        return !$this->bill->payments()->exists()
             && $this->user_id == auth()->id();
     }
 
