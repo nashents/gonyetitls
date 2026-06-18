@@ -98,7 +98,8 @@ class Index extends Component
     public $suburb;
     public $street_address;
     public $company;
-     public $vendor;
+    public $vendor;
+    public $all_products = False;
 
     public $tax_rate = [];
     public $current_tax_rate = [];
@@ -287,7 +288,13 @@ class Index extends Component
             $this->bookings = Booking::where('authorization','approved')->where('status',1)->whereYear('in_date',date('Y'))->latest()->get();
             $this->requisitions = Requisition::where('authorization','approved')->where('is_completed', False)->whereYear('date',date('Y'))->latest()->get();
             $this->department = $category;
-            $this->products = Product::orderBy('name','asc')->where('department', $this->department)->where('status',True)->where('buy',True)->get();
+            $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
             $this->vendor_types = VendorType::latest()->get();
             $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
             $this->account_types = AccountType::orderBy('name','asc')->get();
@@ -878,6 +885,24 @@ class Index extends Component
 
     }
 
+   
+
+    public function updateStar($id)
+    {
+        $purchase = Purchase::findOrFail($id);
+
+        $purchase->star = !$purchase->star;
+        $purchase->save();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => $purchase->star 
+                ? 'PO Starred Successfully!!' 
+                : 'PO Unstarred Successfully!!'
+        ]);
+    }
+
+    
      public function refresh($category){
 
         if($category == "vendors"){
@@ -888,7 +913,13 @@ class Index extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::where('department', $this->department)->where('status',True)->where('buy',True)->orderBy('name','asc')->get();
+            $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -914,7 +945,13 @@ class Index extends Component
       
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
-        $this->products = Product::where('department', $this->department)->where('status',True)->where('buy',True)->orderBy('name','asc')->get();
+        $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
         
         $query = Purchase::query()
         ->with(['vendor', 'booking', 'purchase_products', 'purchase_products.product'])

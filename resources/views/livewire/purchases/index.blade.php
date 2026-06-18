@@ -229,21 +229,27 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('purchases.show',$purchase->id)}}" ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                    <li>
+                                                        <a href="#" wire:click.prevent="updateStar({{ $purchase->id }})">
+                                                            @if ($purchase->star)
+                                                                <i class="fa fa-star color-warning"></i> Unstar
+                                                            @else
+                                                                <i class="fa fa-star color-default"></i> Star
+                                                            @endif
+                                                        </a>
+                                                    </li>
                                                     @if ($purchase->authorization == "approved" || $purchase->authorization == "rejected")
-                                                    <li><a href="{{route('purchases.preview',$purchase->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
-                                                    @if ($purchase->is_sent == False)
-                                                         <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-check color-secondary"></i> Mark as sent</a></li>
-                                                    @endif
+                                                        <li><a href="{{route('purchases.preview',$purchase->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                        @if ($purchase->is_sent == False)
+                                                            <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-check color-secondary"></i> Mark as sent</a></li>
+                                                        @endif
                                                     @endif
                                                     @if ($purchase->authorization == "pending" || Auth::user()->is_admin() )
-                                                    <li><a href="#"  wire:click="edit({{$purchase->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                        <li><a href="#"  wire:click="edit({{$purchase->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @endif
                                                     @if ($purchase->authorization == "pending" || Auth::user()->is_admin() || Auth::user()->id == $purchase->authorized_by_id)
-                                                    <li><a href="#" data-toggle="modal" data-target="#purchaseDeleteModal{{ $purchase->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                        <li><a href="#" data-toggle="modal" data-target="#purchaseDeleteModal{{ $purchase->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endif
-                                                    
-                                                  
-                                                  
                                                 </ul>
                                             </div>
                                             @include('purchases.delete')
@@ -283,6 +289,27 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="showModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-default">
+                <div class="modal-body">
+                   <center><strong>Mark this PO as star</strong></center>
+                </div>
+                <form wire:submit.prevent="removePurchaseItem()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="purchaseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
@@ -473,6 +500,11 @@
                         <div class="col-md-5">
                             <div class="form-group">
                                 <label for="title">Products<span class="required" style="color: red">*</span></label>
+                                <div class="mb-10">
+                                   <input type="checkbox" wire:model.debounce.300ms="all_products"   class="line-style" />
+                                    <label for="one" class="radio-label">Show all products</label>
+                                   @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                               </div>
                                 <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
                                     <option value="">Select Product</option>
                                     @foreach ($products as $product)
@@ -536,6 +568,11 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="title">Products<span class="required" style="color: red">*</span></label>
+                                     <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="all_products"   class="line-style" />
+                                        <label for="one" class="radio-label">Show all products</label>
+                                        @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
                                     <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
                                         <option value="">Select Product</option>
                                         @foreach ($products as $product)
@@ -878,6 +915,11 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="title">Products<span class="required" style="color: red">*</span></label>
+                                    <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="all_products"   class="line-style" />
+                                            <label for="one" class="radio-label">Show all products</label>
+                                        @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
                                     <select wire:model.debounce.300ms="selectedCurrentProduct.{{$key}}" class="form-control" required>
                                         <option value="">Select Product</option>
                                         @foreach ($products as $product)
@@ -942,6 +984,11 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="title">Products<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="checkbox" wire:model.debounce.300ms="all_products"   class="line-style" />
+                                                <label for="one" class="radio-label">Show all products</label>
+                                            @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
                                         <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
                                             <option value="">Select Product</option>
                                             @foreach ($products as $product)

@@ -66,6 +66,7 @@ class Create extends Component
     public $vendors;
     public $vendor_id;
     public $company;
+    public $all_products = False;
   
     public $purchase_date;
     public $residual_value;
@@ -82,6 +83,7 @@ class Create extends Component
     public $user_id;
     // Items Vars
 
+   
     public $products;
     public $selectedProduct = [];
     public $measurement = [];
@@ -757,15 +759,13 @@ class Create extends Component
             ]);
         }
         elseif($category == "products"){
-           $this->products = Product::with('brand')
-            ->where('department', 'asset')
+           $this->products = Product::query()
             ->where('status', true)
-            ->where('buy', true)
-            ->get()
-            ->sortBy([
-                ['name', 'asc'],          // first sort by product name
-                ['brand.name', 'asc'],    // then sort by brand name
-            ]);
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -793,18 +793,27 @@ class Create extends Component
        
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
        
-        $this->products = Product::with('brand')
-        ->where('department', 'asset')
-        ->where('status', true)
-        ->where('buy', true)
-        ->get()
-        ->sortBy([
-            ['name', 'asc'],          // first sort by product name
-            ['brand.name', 'asc'],    // then sort by brand name
-        ]);
+        $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->purchases = Purchase::where('department','asset')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+
+       $this->purchases = Purchase::where('department', 'asset')
+        ->where('status', 1)
+        ->where('authorization', 'approved')
+        ->where(function ($query) {
+            $query->where('created_at', '>=', Carbon::now()->subMonth())
+                ->orWhere('star', true);
+        })
+        ->orderBy('star', 'desc')          // Starred POs first
+        ->orderBy('created_at', 'desc')
+        ->get();
+        
         return view('livewire.assets.create',[
             'products' => $this->products,
             'stores' => $this->stores,

@@ -46,6 +46,8 @@ class Edit extends Component
   public $date;
   public $purchase_date;
   public $type;
+  public $all_products = False;
+  public $department;
   public $quantity;
   public $residual_value;
   public $life;
@@ -163,6 +165,7 @@ class Edit extends Component
         $this->width = $tyre->width;
         $this->type = $tyre->type;
         
+        $this->department = 'tyre';
         $this->diameter = $tyre->diameter;
         $this->thread_depth = $tyre->thread_depth;
         $this->pressure_psi = $tyre->pressure_psi;
@@ -408,22 +411,29 @@ public function updatedSelectedTax($id){
             ]);
         }
          elseif($category == "tyre_purchases"){
-            $this->purchases = Purchase::where('department','tyre')->where('authorization','approved')->orderBy('created_at','asc')->get();
+            $this->purchases = Purchase::where('department', 'tyre')
+            ->where('status', 1)
+            ->where('authorization', 'approved')
+            ->where(function ($query) {
+                $query->where('created_at', '>=', Carbon::now()->subMonth())
+                    ->orWhere('star', true);
+            })
+            ->orderBy('star', 'desc')          // Starred POs first
+            ->orderBy('created_at', 'desc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Purchase Orders Refreshed Successfully!!."
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::with('brand')
-            ->where('department', 'tyre')
+           $this->products = Product::query()
             ->where('status', true)
-            ->where('buy', true)
-            ->get()
-            ->sortBy([
-                ['name', 'asc'],          // first sort by product name
-                ['brand.name', 'asc'],    // then sort by brand name
-            ]);
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -668,17 +678,24 @@ public function updatedSelectedTax($id){
 
      
        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->products = Product::with('brand')
-        ->where('department', 'tyre')
-        ->where('status', true)
-        ->where('buy', true)
-        ->get()
-        ->sortBy([
-            ['name', 'asc'],          // first sort by product name
-            ['brand.name', 'asc'],    // then sort by brand name
-        ]);
-         $this->transfers = Transfer::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
-       $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+        $this->transfers = Transfer::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->purchases = Purchase::where('department', 'tyre')
+            ->where('status', 1)
+            ->where('authorization', 'approved')
+            ->where(function ($query) {
+                $query->where('created_at', '>=', Carbon::now()->subMonth())
+                    ->orWhere('star', true);
+            })
+            ->orderBy('star', 'desc')          // Starred POs first
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('livewire.tyres.edit',[
           'purchases' => $this->purchases,
           'transfers' => $this->transfers,

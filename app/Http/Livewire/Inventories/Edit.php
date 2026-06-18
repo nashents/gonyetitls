@@ -58,6 +58,8 @@ class Edit extends Component
     public $transfers;
     public $selectedTransfer;
     public $selectedTransferItem;
+    public $all_products = False;
+    public $department;
   
     public $purchase_date;
     public $residual_value;
@@ -191,6 +193,7 @@ class Edit extends Component
 
     public function mount($inventory){
         $this->company = Auth::user()->employee->company;
+        $this->department = 'inventory';
         $this->inventory = $inventory;
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
@@ -413,15 +416,13 @@ class Edit extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::with('brand')
-            ->where('department', 'inventory')
+            $this->products = Product::query()
             ->where('status', true)
-            ->where('buy', true)
-            ->get()
-            ->sortBy([
-                ['name', 'asc'],          // first sort by product name
-                ['brand.name', 'asc'],    // then sort by brand name
-            ]);
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -703,16 +704,23 @@ class Edit extends Component
         
       
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->products = Product::with('brand')
-        ->where('department', 'inventory')
-        ->where('status', true)
-        ->where('buy', true)
-        ->get()
-        ->sortBy([
-            ['name', 'asc'],          // first sort by product name
-            ['brand.name', 'asc'],    // then sort by brand name
-        ]);
-        $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+        $this->purchases = Purchase::where('department', 'inventory')
+        ->where('status', 1)
+        ->where('authorization', 'approved')
+        ->where(function ($query) {
+            $query->where('created_at', '>=', Carbon::now()->subMonth())
+                ->orWhere('star', true);
+        })
+        ->orderBy('star', 'desc')          // Starred POs first
+        ->orderBy('created_at', 'desc')
+        ->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();

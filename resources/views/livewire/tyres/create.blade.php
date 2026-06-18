@@ -271,6 +271,11 @@
                                         @else   
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
+                                                <div class="mb-10">
+                                                    <input type="checkbox" wire:model.debounce.300ms="all_products"   class="line-style" />
+                                                        <label for="one" class="radio-label">Show all products</label>
+                                                    @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
                                                 <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($products as $product)
@@ -443,6 +448,11 @@
                                     @else   
                                         <div class="form-group">
                                             <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
+                                            <div class="mb-10">
+                                                <input type="checkbox" wire:model.debounce.300ms="all_products"   class="line-style" />
+                                                    <label for="one" class="radio-label">Show all products</label>
+                                                @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            </div>
                                             <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
                                                 <option value="">Select Product</option>
                                                 @foreach ($products as $product)

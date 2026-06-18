@@ -59,6 +59,7 @@ class Create extends Component
     public $selected_currency;
     public $date;
     public $weight;
+    public $all_products = False;
     
     public $purchase_date;
     public $type;
@@ -72,6 +73,7 @@ class Create extends Component
     public $selectedPurchase;
     public $purchases;
     public $description;
+   
 
     public $assigned;
 
@@ -179,7 +181,13 @@ class Create extends Component
         $this->trailers = Trailer::where('status', 1)->orderBy('registration_number','asc')->get();
         $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->products = Product::orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get();
+        $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -791,22 +799,29 @@ class Create extends Component
             ]);
         }
         elseif($category == "tyre_purchases"){
-            $this->purchases = Purchase::where('department','tyre')->where('authorization','approved')->orderBy('created_at','asc')->get();
+            $this->purchases = Purchase::where('department', 'tyre')
+            ->where('status', 1)
+            ->where('authorization', 'approved')
+            ->where(function ($query) {
+                $query->where('created_at', '>=', Carbon::now()->subMonth())
+                    ->orWhere('star', true);
+            })
+            ->orderBy('star', 'desc')          // Starred POs first
+            ->orderBy('created_at', 'desc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Purchase Orders Refreshed Successfully!!."
             ]);
         }
         elseif($category == "products"){
-           $this->products = Product::with('brand')
-            ->where('department', 'tyre')
+          $this->products = Product::query()
             ->where('status', true)
-            ->where('buy', true)
-            ->get()
-            ->sortBy([
-                ['name', 'asc'],          // first sort by product name
-                ['brand.name', 'asc'],    // then sort by brand name
-            ]);
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -833,17 +848,24 @@ class Create extends Component
 
         
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-       $this->products = Product::with('brand')
-        ->where('department', 'tyre')
-        ->where('status', true)
-        ->where('buy', true)
-        ->get()
-        ->sortBy([
-            ['name', 'asc'],          // first sort by product name
-            ['brand.name', 'asc'],    // then sort by brand name
-        ]);
+        $this->products = Product::query()
+            ->where('status', true)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('buy', true)->where('department', $this->department);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
           $this->transfers = Transfer::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
-        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->purchases = Purchase::where('department', 'tyre')
+            ->where('status', 1)
+            ->where('authorization', 'approved')
+            ->where(function ($query) {
+                $query->where('created_at', '>=', Carbon::now()->subMonth())
+                    ->orWhere('star', true);
+            })
+            ->orderBy('star', 'desc')          // Starred POs first
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('livewire.tyres.create',[
             'amount' =>   $this->amount,
             'purchases' => $this->purchases,
