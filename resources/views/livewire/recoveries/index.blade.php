@@ -12,7 +12,10 @@
                             </div>
 
                             <div class="panel-title">
-                                <a href="{{route('recoveries.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Recovery</a>
+                                @if (!$driver)
+                                    <a href="{{route('recoveries.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Recovery</a>
+                                @endif
+                                
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -88,14 +91,16 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('recoveries.show',$recovery->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
-                                                @if ($recovery->authorization == "approved")
-                                                <li><a href="#" wire:click="showPayment({{$recovery->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
+                                                @if (!$driver)
+                                                    @if ($recovery->authorization == "approved")
+                                                    <li><a href="#" wire:click="showPayment({{$recovery->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
+                                                    @endif
+                                                    @if ($recovery->payments->count()>0)
+                                                    @else 
+                                                    <li><a href="{{route('recoveries.edit',$recovery->id)}}" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    @endif
+                                                    <li><a href="#" data-toggle="modal" data-target="#recoveryDeleteModal{{ $recovery->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
-                                                @if ($recovery->payments->count()>0)
-                                                @else 
-                                                <li><a href="{{route('recoveries.edit',$recovery->id)}}" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @endif
-                                                <li><a href="#" data-toggle="modal" data-target="#recoveryDeleteModal{{ $recovery->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
                                         @include('recoveries.delete')
@@ -103,7 +108,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="11">
+                                    <td colspan="13">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Recoveries Found ....
                                         </div>

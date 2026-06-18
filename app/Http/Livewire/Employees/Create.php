@@ -2,32 +2,35 @@
 
 namespace App\Http\Livewire\Employees;
 
-use Carbon\Carbon;
+use App\Mail\AccountCreationMail;
+use App\Models\BankAccount;
+use App\Models\Branch;
+use App\Models\Company;
+use App\Models\Count;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Department;
+use App\Models\DepartmentHead;
+use App\Models\Document;
+use App\Models\Employee;
+use App\Models\EmployeeLeave;
+use App\Models\EmployeePosition;
+use App\Models\Grade;
+use App\Models\JobTitle;
+use App\Models\Leave;
+use App\Models\LeaveType;
+use App\Models\Province;
 use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\Count;
-use App\Models\Grade;
-use App\Models\Branch;
-use App\Models\Company;
-use App\Models\Country;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\Document;
-use App\Models\Employee;
-use App\Models\JobTitle;
-use App\Models\Province;
-use App\Models\Department;
-use App\Models\BankAccount;
-use Livewire\WithFileUploads;
-use App\Models\DepartmentHead;
-use App\Models\EmployeePosition;
-use App\Mail\AccountCreationMail;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
@@ -266,6 +269,66 @@ class Create extends Component
         $this->job_titles = JobTitle::where('department_id', $department)->get();
         }
     }
+
+    public function updateLeaveDays($id){
+        
+        $employee = Employee::find($id);
+        
+        $leaveTypes = LeaveType::all();
+
+       
+
+            foreach ($leaveTypes as $leaveType) {
+
+                $maximumDays = is_numeric($leaveType->entitlement)
+                    ? (float) $leaveType->entitlement
+                    : 0;
+
+                $isAnnual = strtolower(trim($leaveType->name)) === 'annual';
+
+                $accrualRate = $isAnnual
+                    ? (
+                        is_numeric($employee->accrual_rate)
+                            ? (float) $employee->accrual_rate
+                            : (float) ($leaveType->monthly_accrual_rate ?? 0)
+                    )
+                    : (float) ($leaveType->monthly_accrual_rate ?? 0);
+
+                $approvedLeaveDaysTaken = Leave::where('employee_id', $employee->id)
+                    ->where('leave_type_id', $leaveType->id)
+                    ->where('hod_decision', 'approved')
+                    ->where('management_decision', 'approved')
+                    ->whereYear('from', date('Y'))
+                    ->sum('days');
+
+                $employeeLeave = EmployeeLeave::firstOrNew([
+                    'employee_id' => $employee->id,
+                    'leave_type_id' => $leaveType->id,
+                ]);
+
+                $employeeLeave->acrual_rate = $employeeLeave->acrual_rate ?? $accrualRate;
+                $employeeLeave->maximum_leave_days = $employeeLeave->maximum_leave_days ?? $maximumDays;
+
+                if (strtolower(trim($leaveType->name)) === 'annual') {
+
+                    $employeeLeave->available_leave_days = is_numeric($employee->leave_days)
+                        ? (float) $employee->leave_days
+                        : max(0, $maximumDays - $approvedLeaveDaysTaken);
+
+                } else {
+
+                    $employeeLeave->available_leave_days = max(
+                        0,
+                        $maximumDays - $approvedLeaveDaysTaken
+                    );
+                }
+
+                $employeeLeave->save();
+            }
+  
+
+    }
+
       public function store(){
 
         DB::transaction(function () {
@@ -346,6 +409,8 @@ class Create extends Component
           $employee->accrual_rate = $this->accrual_rate;
           $employee->branch_id = $this->branch_id;
           $employee->save();
+
+          $this->updateLeaveDays($employee->id);
           
           $employee->departments()->sync($this->selectedDepartment);
           $employee->ranks()->sync($this->rank_id);

@@ -460,7 +460,7 @@ Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-stateme
 Route::get('tickets/{ticket}/job-card','TicketController@jobcard')->name('tickets.jobcard');
 Route::get('tickets/{ticket}/preview','TicketController@preview')->name('tickets.preview');
 Route::get('tickets/{ticket}/print','TicketController@print')->name('tickets.print');
-Route::get('tickets/{ticket}//export-to-pdf','TicketController@generatePDF')->name('tickets.pdf');
+Route::get('tickets/{ticket}/export-to-pdf','TicketController@generatePDF')->name('tickets.pdf');
 
 Route::get('trips/{driver}/driver/','DriverController@trips')->name('driver.trips');
 Route::get('recoveries/{driver}/driver/','DriverController@recoveries')->name('driver.recoveries');

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Leaves;
 use App\Exports\LeavesExport;
 use App\Models\DepartmentHead;
 use App\Models\Employee;
+use App\Models\EmployeeLeave;
 use App\Models\Leave;
 use App\Models\LeaveType;
 use App\Models\PublicHoliday;
@@ -64,12 +65,12 @@ class Manage extends Component
 
     private function resetInputFields(){
        
-        $this->selectedEmployee = '';
-        $this->available_leave_days = '';
-        $this->to = '';
-        $this->from = '';
-        $this->reason = '';
-        $this->leave_type_id = '';
+        $this->selectedEmployee = Null;
+        $this->available_leave_days = 0;
+        $this->to = Null;
+        $this->from = Null;
+        $this->reason = Null;
+        $this->leave_type_id = Null;
         $this->is_backdated = False;
         $this->ignore_public_holidays = False;
     }
@@ -102,11 +103,51 @@ class Manage extends Component
        
     }
 
-    public function updatedSelectedEmployee($id){
+    public function updatedLeaveTypeId($id)
+    {
+        $this->available_leave_days = 0;
+
+        if (is_null($id) || is_null($this->selected_employee?->id)) {
+            return;
+        }
+
+        $leaveType = LeaveType::find($id);
+
+        if (!$leaveType) {
+            return;
+        }
+
+        // Backward compatibility: Annual leave still comes from employees.leave_days
+        if (strtolower($leaveType->name) === 'annual') {
+            $this->available_leave_days = (float) ($this->selected_employee->leave_days ?? 0);
+            return;
+        }
+
+        // Other leave types come from employee_leaves.available_leave_days
+        $employeeLeave = EmployeeLeave::where('employee_id', $this->selected_employee->id)
+            ->where('leave_type_id', $leaveType->id)
+            ->first();
+
+        $this->available_leave_days = (float) ($employeeLeave->available_leave_days ?? 0);
+    }
+
+    public function updatedSelectedEmployee($id)
+    {
+        $this->available_leave_days = 0;
+
         if (!is_null($id)) {
-          $this->selected_employee = Employee::find($id);
-          $this->employee_departments = $this->selected_employee->departments;
-          $this->available_leave_days =  $this->selected_employee->leave_days;
+            $this->selected_employee = Employee::with('departments')->find($id);
+
+            if (!$this->selected_employee) {
+                return;
+            }
+
+            $this->employee_departments = $this->selected_employee->departments;
+
+            // Refresh leave balance based on currently selected leave type
+            if (!is_null($this->leave_type_id)) {
+                $this->updatedLeaveTypeId($this->leave_type_id);
+            }
         }
     }
 

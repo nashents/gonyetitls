@@ -920,17 +920,22 @@ class Index extends Component
         ->with(['vendor', 'booking', 'purchase_products', 'purchase_products.product'])
         ->where('department', $this->department);
 
-        // 🔹 Date range filter (from/to) OR current month/year fallback
+        // Date filter
         if (!empty($this->from) && !empty($this->to)) {
+
             $query->whereBetween($this->purchase_filter, [$this->from, $this->to]);
-        } else {
-            $query->whereYear($this->purchase_filter, date('Y'))
-                ->whereMonth($this->purchase_filter, date('m'));
+
+        } elseif (blank($this->search)) {
+
+            // Default to current month only when not searching
+            $query->whereYear($this->purchase_filter, now()->year)
+                ->whereMonth($this->purchase_filter, now()->month);
         }
 
-        // 🔹 Search filter (properly grouped so ORs don't escape other conditions)
+        // Search filter
         if (filled($this->search)) {
-            $search = '%'.$this->search.'%';
+
+            $search = '%' . $this->search . '%';
 
             $query->where(function ($q) use ($search) {
                 $q->where('purchase_number', 'like', $search)

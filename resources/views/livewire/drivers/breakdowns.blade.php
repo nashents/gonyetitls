@@ -22,7 +22,7 @@
                     </div>
             </div>
             <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-            <caption>Incident Reports</caption>
+            <caption>Incidents Reports</caption>
             <thead >
                 <th class="th-sm">Breakdown#
                 </th>

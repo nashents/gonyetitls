@@ -37,6 +37,7 @@ class Index extends Component
     public $recovery_number;
     public $date;
     public $amount;
+    public $driver;
     public $receipt;
     public $balance;   
     public $bank_accounts;
@@ -83,25 +84,8 @@ class Index extends Component
 
     public function mount(){
      
-        $departments = Auth::user()->employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = Auth::user()->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = Auth::user()->employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-            $this->recoveries = Recovery::orderBy('recovery_number','desc')->paginate(10);
-        } else {
-            $this->recoveries = Recovery::where('user_id',Auth::user()->id)->orderBy('recovery_number','desc')->paginate(10);
-        }
-    
-        $this->currencies = Currency::latest()->get();
+        $this->driver = Auth::user()->employee->driver;
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::latest()->get();
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
     }
@@ -231,9 +215,9 @@ class Index extends Component
              $document->filename = $fileNameToStore;
         }
         if(isset($this->expires_at)){
-            $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+            $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
             $today = now()->toDateTimeString();
-            $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+            $expire = Carbon::create($this->expires_at)->toDateTimeString();
             if ($today <=  $expire) {
                 $document->status = 1;
             }else{
@@ -318,32 +302,29 @@ class Index extends Component
     public function render()
     {
 
-             
-        $departments = Auth::user()->employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = Auth::user()->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = Auth::user()->employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-            $this->recoveries = Recovery::orderBy('recovery_number','desc')->paginate(10);
-        } else {
-            $this->recoveries = Recovery::where('user_id',Auth::user()->id)->orderBy('recovery_number','desc')->paginate(10);
+       
+
+        // Base query
+        $query = Recovery::query()
+        ->with('driver','trip','destination','deduction','currency')
+        ->when($this->driver?->id, function ($q) {
+        $q->where('driver_id', $this->driver->id);
+        });
+
+        // Ordering
+        $query->orderByDesc('recovery_number');
+
+        $recoveries = $query->paginate(10);
+
+        // Current balance
+        $current_balance = null;
+        if ($this->recovery_balance !== "" && $this->amount !== "") {
+            $current_balance = $this->recovery_balance - $this->amount;
         }
 
-        if ($this->recovery_balance != "" && $this->amount != "") {
-            $this->current_balance = $this->recovery_balance - $this->amount;
-        }
-      
-        return view('livewire.recoveries.index',[
-            'recoveries' => $this->recoveries,
-            'current_balance' => $this->current_balance
+        return view('livewire.recoveries.index', [
+            'recoveries'      => $recoveries,
+            'current_balance' => $current_balance,
         ]);
     }
 }

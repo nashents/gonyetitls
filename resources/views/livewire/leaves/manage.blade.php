@@ -198,7 +198,7 @@
 
     <!-- Modal -->
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="leaveModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-60" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Apply Leave <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -207,6 +207,7 @@
                 <div class="modal-body">
                  
                     <div class="row">
+                        
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="leave_type">Employees<span class="required" style="color: red">*</span></label>
@@ -231,14 +232,7 @@
                                 @error('department_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
-                                @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-3">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="leave_type">Leave Type<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="leave_type_id" class="form-control" required >
@@ -249,6 +243,14 @@
                                 </select>
                                 <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small><a href="#" wire:click.prevent="refresh('leave_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                       
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
+                                @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                     </div>
@@ -352,7 +354,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="leaveEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Leave Application <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -384,14 +386,7 @@
                                 @error('department_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
-                                @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-3">
+                          <div class="col-md-3">
                             <div class="form-group">
                                 <label for="leave_type">Leave Type<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="leave_type_id" class="form-control" required >
@@ -404,6 +399,14 @@
                                 @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
+                                @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                      
                     </div>
                     <div class="row">
                         <div class="col-md-6">

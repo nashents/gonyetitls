@@ -20,12 +20,16 @@ class EmployeeLeave extends Model implements Auditable
     public function leave(){
         return $this->belongsTo('App\Models\Leave');
     }
+    
+    public function leave_type(){
+        return $this->belongsTo('App\Models\LeaveType');
+    }
 
     
     protected $fillable = [
         'employee_id',
         'leave_type_id',
-        'accrual_rate',
+        'acrual_rate',
         'available_leave_days',
         'maximum_leave_days',
 

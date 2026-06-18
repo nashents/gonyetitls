@@ -36,6 +36,7 @@ class Index extends Component
     public $vehicle_id;
     public $drivers;
     public $driver_id;
+    public $driver;
     public $employees;
     public $employee_id;
     public $horses;
@@ -43,7 +44,6 @@ class Index extends Component
     public $description;
     public $date;
     public $checklist_filter = "date";
-
     public $available = '1';
     public $notavailable = '0';
     public $comments;
@@ -51,7 +51,7 @@ class Index extends Component
  
 
     public function mount(){
-       
+        $this->driver = Auth::user()->employee->driver;
     }
 
 
@@ -121,7 +121,9 @@ class Index extends Component
          $base = Checklist::query()
                 ->with([
                     'employee','checklist_category','horse','driver','vehicle','trailer',
-                ]);
+                ])->when($this->driver?->id, function ($q) {
+            $q->where('driver_id', $this->driver->id);
+            });
 
             // Date filter: use provided range, else current month
             $base->when(filled($this->from) && filled($this->to), function ($q) {

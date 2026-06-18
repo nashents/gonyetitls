@@ -15,6 +15,9 @@ class LeaveType extends Model implements Auditable
     public function leaves(){
         return $this->hasMany('App\Models\Leave');
     }
+    public function employee_leaves(){
+        return $this->hasMany('App\Models\EmployeeLeave');
+    }
     protected $fillable = [
         'user_id',
         'name',

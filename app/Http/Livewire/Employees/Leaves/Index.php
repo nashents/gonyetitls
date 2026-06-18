@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Employees\Leaves;
 
 use App\Exports\EmployeesLeaveExport;
 use App\Models\Employee;
+use App\Models\EmployeeLeave;
 use App\Models\Leave;
 use App\Models\LeaveType;
 use Illuminate\Support\Facades\DB;
@@ -25,8 +26,12 @@ class Index extends Component
     public $accrual_rate;
     public $maximum_leave_days;
     public $leave_count;
+    public $leave_type_id;
+    public $leave_types ;
+
 
     public function mount(){
+        $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
         $this->resetPage();
     }
 
@@ -51,38 +56,105 @@ class Index extends Component
         'maximum_leave_days' => 'required',
     ];
 
-    private function resetInputFields(){
-        $this->leave_days = '';
-        $this->accrual_rate= '';
-        $this->maximum_leave_days= '';
+    private function resetInputFields()
+    {
+        $this->employee_id = null;
+        $this->employee = null;
+        $this->leave_type_id = null;
+        $this->accrual_rate = null;
+        $this->leave_days = null;
+        $this->maximum_leave_days = null;
     }
 
+    public function showLeave($id)
+    {
+        $this->resetInputFields();
 
-    public function showLeave($id){
         $this->employee_id = $id;
         $this->employee = Employee::find($id);
-        $this->accrual_rate = $this->employee->accrual_rate;
-        $this->leave_days = $this->employee->leave_days;
-        $this->maximum_leave_days = $this->employee->maximum_leave_days;
+
         $this->dispatchBrowserEvent('show-leaveDaysModal');
     }
 
-    public function update(){
-      
-        if (!is_null($this->employee_id)) {
+    public function updatedLeaveTypeId($id)
+    {
+        $this->accrual_rate = 0;
+        $this->leave_days = 0;
+        $this->maximum_leave_days = 0;
 
+        if (is_null($this->employee_id) || is_null($id)) {
+            return;
+        }
+
+        $leaveType = LeaveType::find($id);
+
+        if (!$leaveType) {
+            return;
+        }
+
+        $employeeLeave = EmployeeLeave::where('employee_id', $this->employee_id)
+            ->where('leave_type_id', $id)
+            ->first();
+
+        if ($employeeLeave) {
+            $this->accrual_rate = $employeeLeave->acrual_rate;
+            $this->leave_days = $employeeLeave->available_leave_days;
+            $this->maximum_leave_days = $employeeLeave->maximum_leave_days;
+            return;
+        }
+
+        // Backward compatibility for Annual Leave
+        if (strtolower($leaveType->name) === 'annual') {
             $employee = Employee::find($this->employee_id);
-            $employee->leave_days = $this->leave_days;
-            $employee->accrual_rate = $this->accrual_rate;
-            $employee->maximum_leave_days = $this->maximum_leave_days;
-            $employee->update();
-            $this->dispatchBrowserEvent('hide-leaveDaysModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Leave Details Updated Successfully!!"
+
+            $this->accrual_rate = $employee->accrual_rate ?? 0;
+            $this->leave_days = $employee->leave_days ?? 0;
+            $this->maximum_leave_days = $employee->maximum_leave_days ?? 0;
+        }
+    }
+
+
+    public function update()
+    {
+        $this->validate([
+            'employee_id' => 'required',
+            'leave_type_id' => 'required',
+            'accrual_rate' => 'required|numeric|min:0',
+            'leave_days' => 'required|numeric|min:0',
+            'maximum_leave_days' => 'required|numeric|min:0',
+        ]);
+
+        $leaveType = LeaveType::find($this->leave_type_id);
+
+        EmployeeLeave::updateOrCreate(
+            [
+                'employee_id' => $this->employee_id,
+                'leave_type_id' => $this->leave_type_id,
+            ],
+            [
+                'acrual_rate' => $this->accrual_rate,
+                'available_leave_days' => $this->leave_days,
+                'maximum_leave_days' => $this->maximum_leave_days,
+            ]
+        );
+
+        // Backward compatibility: keep employee table updated for Annual Leave
+        if ($leaveType && strtolower($leaveType->name) === 'annual') {
+            Employee::where('id', $this->employee_id)->update([
+                'accrual_rate' => $this->accrual_rate,
+                'leave_days' => $this->leave_days,
+                'maximum_leave_days' => $this->maximum_leave_days,
             ]);
         }
+
+        $this->dispatchBrowserEvent('hide-leaveDaysModal');
+
+        $this->resetInputFields();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Leave Details Updated Successfully!!'
+        ]);
     }
 
     public function getLeavesTaken($employeeId)
@@ -102,6 +174,26 @@ class Index extends Component
                     'leave_type_id' => $leave->leave_type_id,
                     'leave_type'    => $leave->leave_type?->name,
                     'days_taken'    => (float) $leave->total_days,
+                ];
+            });
+    }
+
+    public function getEmployeeLeaves($employeeId)
+    {
+        return EmployeeLeave::query()
+            ->with('leave_type:id,name,active')
+            ->where('employee_id', $employeeId)
+            ->whereHas('leave_type', function ($query) {
+                $query->where('active', true);
+            })
+            ->get()
+            ->map(function ($leave) {
+                return [
+                    'leave_type_id'         => $leave->leave_type_id,
+                    'leave_type'            => $leave->leave_type?->name ?? 'N/A',
+                    'acrual_rate'           => (float) ($leave->acrual_rate ?? 0),
+                    'available_leave_days'  => (float) ($leave->available_leave_days ?? 0),
+                    'maximum_leave_days'    => (float) ($leave->maximum_leave_days ?? 0),
                 ];
             });
     }

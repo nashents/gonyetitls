@@ -56,6 +56,9 @@
                                                     <strong>Post: </strong>{{ucfirst($employee->post)}}
                                                 </small>
                                             </td>
+                                            @php
+                                                $employeeLeaves = $this->getEmployeeLeaves($employee->id);
+                                            @endphp
                                             <td>
                                                 @foreach($this->getLeavesTaken($employee->id) as $leave)
                                                     <div>
@@ -63,9 +66,27 @@
                                                     </div>
                                                 @endforeach
                                             </td>
-                                            <td>{{$employee->leave_days}}</td>
-                                            <td>{{$employee->accrual_rate}}</td>
-                                            <td>{{$employee->maximum_leave_days}}</td>
+                                            <td>
+                                                @foreach($employeeLeaves as $leave)
+                                                    <div>
+                                                        <strong>{{ $leave['leave_type'] }}</strong>: {{ $leave['available_leave_days'] }}
+                                                    </div>
+                                                @endforeach
+                                            </td>
+                                            <td>
+                                                @foreach($employeeLeaves as $leave)
+                                                    <div>
+                                                        <strong>{{ $leave['leave_type'] }}</strong>: {{ $leave['acrual_rate'] }}
+                                                    </div>
+                                                @endforeach
+                                            </td>
+                                            <td>
+                                                @foreach($employeeLeaves as $leave)
+                                                    <div>
+                                                        <strong>{{ $leave['leave_type'] }}</strong>: {{ $leave['maximum_leave_days'] }}
+                                                    </div>
+                                                @endforeach
+                                            </td>
                                             <td class="w-10 line-height-35 table-dropdown">
                                                 <div class="dropdown">
                                                     <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -145,43 +166,75 @@
         </div>
 
         <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="leaveDaysModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog mw-100 w-50" role="document">
                 <div class="modal-content">
+
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Annual Leave Details <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                        <h4 class="modal-title" id="modal4Label">
+                            <i class="fas fa-edit"></i> Edit Leave Details
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </h4>
                     </div>
-                    <form wire:submit.prevent="update()" >
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Accrual Rate<span class="required" style="color: red">*</span></label>
-                                    <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="accrual_rate" placeholder="Enter Leave Accrual Rate" required>
-                                    @error('accrual_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
+
+                    <form wire:submit.prevent="update">
+                        <div class="modal-body">
+
+                            <div class="form-group">
+                                <label>Leave Type <span class="required" style="color:red">*</span></label>
+                                <select class="form-control" wire:model="leave_type_id" required>
+                                    <option value="">Select Leave Type</option>
+                                    @foreach($leave_types as $leave_type)
+                                        @if($leave_type->active)
+                                            <option value="{{ $leave_type->id }}">
+                                                {{ $leave_type->name }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                @error('leave_type_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Accrual Rate <span class="required" style="color:red">*</span></label>
+                                        <input type="number" step="any" class="form-control" wire:model.defer="accrual_rate" placeholder="Enter leave accrual rate" required>
+                                        @error('accrual_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Available Leave Days <span class="required" style="color:red">*</span></label>
+                                        <input type="number" step="any" class="form-control" wire:model.defer="leave_days" placeholder="Enter available leave days" required>
+                                        @error('leave_days') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Available Leave Days<span class="required" style="color: red">*</span></label>
-                                    <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="leave_days" placeholder="Enter Leave Accrual Rate" required>
-                                    @error('leave_days') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
+
+                            <div class="form-group">
+                                <label>Maximum Leave Days <span class="required" style="color:red">*</span></label>
+                                <input type="number" step="any" class="form-control" wire:model.defer="maximum_leave_days" placeholder="Enter maximum leave days one can accrue" required>
+                                @error('maximum_leave_days') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                                    <i class="fa fa-times"></i> Close
+                                </button>
+
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded">
+                                    <i class="fa fa-refresh"></i> Update
+                                </button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="name">Maximum Leave Days<span class="required" style="color: red">*</span></label>
-                            <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="maximum_leave_days" placeholder="Enter maximum leave days one can acrrue" required>
-                            @error('maximum_leave_days') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
-                        </div>
-                        <!-- /.btn-group -->
-                    </div>
-                </form>
+                    </form>
+
                 </div>
             </div>
         </div>

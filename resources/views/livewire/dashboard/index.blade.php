@@ -2,10 +2,27 @@
     <section class="section gonyeti-dashboard">
         <div class="container-fluid dashboard-shell">
             @php
-                $department_names = optional(Auth::user()->employee)->departments ? Auth::user()->employee->departments->pluck('name')->toArray() : [];
-                $role_names       = Auth::user()->roles ? Auth::user()->roles->pluck('name')->toArray() : [];
+                $authUser         = Auth::user();
+                $employee         = optional($authUser)->employee;
+                $department_names = $employee && $employee->departments ? $employee->departments->pluck('name')->toArray() : [];
+                $role_names       = $authUser && $authUser->roles ? $authUser->roles->pluck('name')->toArray() : [];
+
                 $isSuper          = in_array('Super Admin', $role_names);
-                $canSee = function(array $departments) use ($department_names, $isSuper) {
+                $isAdmin          = in_array('Admin', $role_names);
+                $isDriver         = (bool) ($authUser->driver ?? false) || (bool) ($driver ?? false);
+                $driverRecord     = $driver ?? ($employee->driver ?? null);
+
+                $isWorkshopUser   = in_array('Workshop', $department_names);
+                $isWorkshopAdmin  = $isSuper || ($isWorkshopUser && $isAdmin);
+                $isWorkshopWorker = $isWorkshopUser && !$isWorkshopAdmin;
+
+                // Department KPI blocks are for admin/managerial users only.
+                // Drivers and non-admin workshop employees get their own restricted dashboard below.
+                $canSee = function(array $departments) use ($department_names, $isSuper, $isDriver, $isWorkshopWorker) {
+                    if ($isDriver || $isWorkshopWorker) {
+                        return false;
+                    }
+
                     return $isSuper || count(array_intersect($departments, $department_names)) > 0;
                 };
                 $fmt = fn($value, $decimals = 0) => is_numeric($value) ? number_format((float) $value, $decimals) : $value;
@@ -89,6 +106,81 @@
                 </div>
             </div>
 
+            @if ($isDriver)
+                {{-- DRIVER DASHBOARD: restricted to driver-owned records only. Restores legacy driver widgets in the modern design. --}}
+                <div class="gd-panel wide" style="margin-bottom:12px;">
+                    <div class="gd-panel-head">
+                        <h5 class="gd-panel-title"><i class="fa fa-id-card"></i> My Driver Dashboard</h5>
+                        <span class="gd-panel-note">{{ now()->year }} personal activity only</span>
+                    </div>
+                    <div class="gd-kpi-grid">
+                        <a class="gd-kpi" href="{{ route('trips.index') }}">
+                            <span class="icon"><i class="fa fa-road"></i></span>
+                            <div class="value">{{ $fmt($driver_trips ?? 0) }}</div>
+                            <span class="name">My Trips YTD</span>
+                        </a>
+                        <a class="gd-kpi" href="{{ $driverRecord ? route('checklists.index') : '#' }}">
+                            <span class="icon"><i class="fa fa-search"></i></span>
+                            <div class="value">{{ $fmt($driver_inspections ?? 0) }}</div>
+                            <span class="name">My Inspections YTD</span>
+                        </a>
+                        <a class="gd-kpi danger" href="{{ $driverRecord ? route('driver.breakdowns',$driver->id) : '#' }}">
+                            <span class="icon"><i class="fa fa-wrench"></i></span>
+                            <div class="value">{{ $fmt($driver_breakdowns ?? 0) }}</div>
+                            <span class="name">My Breakdown Reports</span>
+                        </a>
+                        <a class="gd-kpi warn" href="{{ $driverRecord ? route('recoveries.index') : '#' }}">
+                            <span class="icon"><i class="fa fa-list"></i></span>
+                            <div class="value">{{ $fmt($driver_recoveries ?? 0) }}</div>
+                            <span class="name">My Recoveries YTD</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="gd-panel wide">
+                    <div class="gd-panel-head">
+                        <h5 class="gd-panel-title"><i class="fa fa-truck"></i> My Trips</h5>
+                        <span class="gd-panel-note">Latest driver trip records</span>
+                    </div>
+                    <div class="gd-mini-list" style="overflow-x:auto; max-height:550px;">
+                        @livewire('dashboard.driver-trips')
+                    </div>
+                </div>
+
+            @elseif ($isWorkshopWorker)
+                {{-- WORKSHOP NON-ADMIN DASHBOARD: mechanics/technicians see only their assigned work. --}}
+                <div class="gd-panel wide" style="margin-bottom:12px;">
+                    <div class="gd-panel-head">
+                        <h5 class="gd-panel-title"><i class="fa fa-wrench"></i> My Workshop Workbench</h5>
+                        <span class="gd-panel-note">Assigned tickets and inspections only</span>
+                    </div>
+                    <div class="gd-kpi-grid">
+                        <a class="gd-kpi" href="{{ route('tickets.cards', $employee->id) }}">
+                            <span class="icon"><i class="fa fa-ticket"></i></span>
+                            <div class="value">{{ $fmt($my_tickets_count ?? 0) }}</div>
+                            <span class="name">My Tickets YTD</span>
+                        </a>
+                        <a class="gd-kpi" href="{{ route('inspections.my-inspections', $employee->id) }}">
+                            <span class="icon"><i class="fa fa-search"></i></span>
+                            <div class="value">{{ $fmt($my_inspections_count ?? 0) }}</div>
+                            <span class="name">My Inspections YTD</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="gd-panel wide">
+                    <div class="gd-panel-head">
+                        <h5 class="gd-panel-title"><i class="fa fa-lock"></i> Restricted Access</h5>
+                        <span class="gd-panel-note">Admin workshop KPIs are hidden for non-admin users</span>
+                    </div>
+                    <div class="gd-mini-list">
+                        <div class="gd-mini-row"><strong>Tickets</strong><span><a href="{{ route('tickets.cards', $employee->id) }}">Open my ticket cards</a></span></div>
+                        <div class="gd-mini-row"><strong>Inspections</strong><span><a href="{{ route('inspections.my-inspections', $employee->id) }}">Open my inspections</a></span></div>
+                    </div>
+                </div>
+
+            @else
+
             @if ($alertTotal > 0)
                 <div class="gd-alert-strip">
                     @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="{{ route('fitnesses.index') }}"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file-times"></i> Expired documents</span></a>@endif
@@ -107,28 +199,19 @@
                     <h5 class="gd-panel-title"><i class="fa fa-th-large"></i> Module Quick Counts</h5>
                     <span class="gd-panel-note">Clickable year-to-date and master record totals</span>
                 </div>
-
                 <div class="gd-module-count-grid">
                     @if ($canSee(['Transport & Logistics','Operations','Management']))
-                        <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Transport Orders <span class="gd-module-badge">YTD</span></span>
-                        </a>
                         <a href="{{ route('trips.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-road"></i></span><strong class="gd-module-value">{{ $fmt($trip_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Trips <span class="gd-module-badge">YTD</span></span>
                         </a>
-                        <a href="{{ route('shifts.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-clock-o"></i></span><strong class="gd-module-value">{{ $fmt($shift_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Shifts <span class="gd-module-badge">YTD</span></span>
+                        <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Transport Orders <span class="gd-module-badge">YTD</span></span>
                         </a>
                         <a href="{{ route('horses.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-truck"></i></span><strong class="gd-module-value">{{ $fmt($horse_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Horses Active</span>
-                        </a>
-                        <a href="{{ route('vehicles.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-car"></i></span><strong class="gd-module-value">{{ $fmt($vehicle_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Vehicles Active</span>
                         </a>
                         <a href="{{ route('trailers.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-columns"></i></span><strong class="gd-module-value">{{ $fmt($trailer_count ?? 0) }}</strong></div>
@@ -194,12 +277,8 @@
 
                     @if ($canSee(['Human Resources','Human Resource','Management']))
                         <a href="{{ route('employees.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-user"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Employees Active</span>
-                        </a>
-                        <a href="{{ route('drivers.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($driver_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Drivers Active</span>
                         </a>
                         <a href="{{ route('leaves.manage') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-plane"></i></span><strong class="gd-module-value">{{ $fmt($leave_count ?? 0) }}</strong></div>
@@ -410,6 +489,7 @@
                     </div>
                 </div>
 
+            @endif
             </div>
         </div>
     </section>
