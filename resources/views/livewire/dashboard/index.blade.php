@@ -183,12 +183,13 @@
 
             @if ($alertTotal > 0)
                 <div class="gd-alert-strip">
-                    @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="{{ route('fitnesses.index') }}"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file-times"></i> Expired documents</span></a>@endif
-                    @if (($docs_expiring_7d ?? 0) > 0)<a class="gd-alert warning" href="{{ route('fitnesses.index') }}"><span class="num">{{ $docs_expiring_7d }}</span><span class="label"><i class="fa fa-clock-o"></i> Expiring in 7 days</span></a>@endif
+                    @if (($expired_reminders_count ?? 0) > 0)<a class="gd-alert" href="{{ route('fitnesses.index') }}"><span class="num">{{ $expired_reminders_count }}</span><span class="label"><i class="fa fa-bell"></i> Expired reminders</span></a>@endif
+                    @if (($reminders_expiring_7d ?? 0) > 0)<a class="gd-alert warning" href="{{ route('fitnesses.index') }}"><span class="num">{{ $reminders_expiring_7d }}</span><span class="label"><i class="fa fa-clock-o"></i> Expiring in 7 days</span></a>@endif
+                    @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="#"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file"></i> Expired documents</span></a>@endif
                     @if (($overdue_invoices_count ?? 0) > 0)<a class="gd-alert" href="{{ route('invoices.index') }}"><span class="num">{{ $overdue_invoices_count }}</span><span class="label"><i class="fa fa-exclamation-circle"></i> Overdue invoices</span></a>@endif
-                    @if (($vehicles_on_breakdown_count ?? 0) > 0)<a class="gd-alert" href="{{ route('breakdowns.index') }}"><span class="num">{{ $vehicles_on_breakdown_count }}</span><span class="label"><i class="fa fa-wrench"></i> Vehicles on breakdown</span></a>@endif
-                    @if (($trips_overdue_count ?? 0) > 0)<a class="gd-alert warning" href="{{ route('trips.index') }}"><span class="num">{{ $trips_overdue_count }}</span><span class="label"><i class="fa fa-road"></i> Overdue trips</span></a>@endif
-                    @if (($pending_authorizations_count ?? 0) > 0)<a class="gd-alert info" href="#pending-auth"><span class="num">{{ $pending_authorizations_count }}</span><span class="label"><i class="fa fa-hourglass-half"></i> Pending approvals</span></a>@endif
+                    @if (($fleet_in_workshop ?? 0) > 0)<a class="gd-alert" href="{{ route('bookings.index') }}"><span class="num">{{ $fleet_in_workshop }}</span><span class="label"><i class="fa fa-wrench"></i> Fleet in workshop</span></a>@endif
+                    @if (($trips_overdue_count ?? 0) > 0)<a class="gd-alert warning" href="#"><span class="num">{{ $trips_overdue_count }}</span><span class="label"><i class="fa fa-road"></i> Overdue trips</span></a>@endif
+                    @if (($pending_authorizations_count ?? 0) > 0)<a class="gd-alert info" href="#"><span class="num">{{ $pending_authorizations_count }}</span><span class="label"><i class="fa fa-hourglass-half"></i> Pending approvals</span></a>@endif
                 </div>
             @endif
 
@@ -201,13 +202,17 @@
                 </div>
                 <div class="gd-module-count-grid">
                     @if ($canSee(['Transport & Logistics','Operations','Management']))
+                        <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">TOs <span class="gd-module-badge">YTD</span></span>
+                        </a>
                         <a href="{{ route('trips.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-road"></i></span><strong class="gd-module-value">{{ $fmt($trip_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Trips <span class="gd-module-badge">YTD</span></span>
                         </a>
-                        <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Transport Orders <span class="gd-module-badge">YTD</span></span>
+                        <a href="{{ route('shifts.index') }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-clock"></i></span><strong class="gd-module-value">{{ $fmt($shift_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Shifts <span class="gd-module-badge">YTD</span></span>
                         </a>
                         <a href="{{ route('horses.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-truck"></i></span><strong class="gd-module-value">{{ $fmt($horse_count ?? 0) }}</strong></div>
@@ -328,7 +333,7 @@
                             <a class="gd-kpi good" href="{{ route('horses.index') }}"><span class="icon"><i class="fa fa-truck"></i></span><div class="value">{{ $fleet_active ?? 0 }}</div><span class="name">Active / On Road</span></a>
                             <a class="gd-kpi" href="{{ route('horses.index') }}"><span class="icon"><i class="fa fa-pause-circle"></i></span><div class="value">{{ $fleet_idle ?? 0 }}</div><span class="name">Idle / Available</span></a>
                             <a class="gd-kpi {{ ($fleet_in_workshop ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-wrench"></i></span><div class="value">{{ $fleet_in_workshop ?? 0 }}</div><span class="name">In Workshop</span></a>
-                            <a class="gd-kpi {{ ($fleet_on_breakdown ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('breakdowns.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $fleet_on_breakdown ?? 0 }}</div><span class="name">Breakdown</span></a>
+                            <a class="gd-kpi {{ ($fleet_on_breakdown ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('breakdowns.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $fleet_on_breakdown ?? 0 }}</div><span class="name">Breakdowns</span></a>
                             <a class="gd-kpi" href="{{ route('horses.index') }}"><span class="icon"><i class="fa fa-pie-chart"></i></span><div class="value">{{ $fleet_utilization_pct ?? 0 }}%</div><span class="name">Horse Utilization</span></a>
                             <a class="gd-kpi" href="{{ route('trailers.index') }}"><span class="icon"><i class="fa fa-columns"></i></span><div class="value">{{ $trailers_active ?? 0 }}</div><span class="name">Trailers Active</span></a>
                             <a class="gd-kpi {{ ($docs_expiring_30d ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('fitnesses.index') }}"><span class="icon"><i class="fa fa-id-card"></i></span><div class="value">{{ $docs_expiring_30d ?? 0 }}</div><span class="name">Docs Expiring 30d</span></a>

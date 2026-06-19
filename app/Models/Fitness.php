@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Fitness extends Model  implements Auditable
 {
@@ -43,6 +44,21 @@ class Fitness extends Model  implements Auditable
     }
     public function trailer(){
         return $this->belongsTo('App\Models\Trailer');
+    }
+
+    public function scopeVisibleTo($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNotNull('horse_id')
+            ->orWhereNotNull('vehicle_id')
+            ->orWhereNotNull('trailer_id')
+            ->orWhere(function ($q) {
+                $q->whereNull('horse_id')
+                    ->whereNull('vehicle_id')
+                    ->whereNull('trailer_id')
+                    ->where('user_id', Auth::id());
+            });
+        });
     }
 
     protected $casts = [

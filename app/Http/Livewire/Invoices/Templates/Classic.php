@@ -5,8 +5,10 @@ namespace App\Http\Livewire\Invoices\Templates;
 use App\Mail\SendingInvoiceMail;
 use App\Models\FiscalDocument;
 use App\Models\Invoice;
+use App\Models\Tax;
 use App\Services\FiscalHarmonyService;
 use Barryvdh\DomPDF\Facade\PDF;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -110,7 +112,9 @@ class Classic extends Component
 
             // 6. Submit to Fiscal Harmony
             $fiscal = app(FiscalHarmonyService::class);
+
             $result = $fiscal->submitInvoice($payload);
+            
             Log::debug('Fiscal Harmony raw result', $result);
 
             if (! $result['success']) {
@@ -265,7 +269,7 @@ class Classic extends Component
                                 ?? $invoice->purchase_order_number
                                 ?? null,
             'isTaxInclusive' => false,
-            'date'           => \Carbon\Carbon::parse($invoice->date)
+            'date'           => Carbon::parse($invoice->date)
                                     ->setTimezone('Africa/Harare')
                                     ->toIso8601String(),
             'currencyCode'   => strtoupper($invoice->currency?->name ?? 'USD'),
@@ -289,12 +293,13 @@ class Classic extends Component
             ],
 
             'lineItems' => $invoice->invoice_items->map(function ($item) {
-                $tax    = \App\Models\Account::find($item->tax_id);
+                $tax    = Tax::find($item->tax_id);
+                $tax_code = $tax?->abbreviation ?? 'VAT Exempt';
                 $hsCode = $tax?->hs_code ?? '00000000';
 
                 return [
                     'description' => $item->description ?? ($item->product?->name ?? 'Service'),
-                    'taxCode'     => $item->tax_id ? (string) $item->tax_id : 'EXEMPT',
+                    'taxCode'     => $tax_code,
                     'productCode' => $hsCode,
                     'unitAmount'  => (float) ($item->amount   ?? 0),
                     'quantity'    => (float) ($item->qty      ?? 1),

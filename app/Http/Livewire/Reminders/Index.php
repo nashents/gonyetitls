@@ -462,10 +462,11 @@ class Index extends Component
         $term = trim((string) $this->search);
 
         $query = Fitness::query()
-            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee']) // avoid N+1
+            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
             ->where('closed', false)
             ->where('status', true)
-            ->where('user_id', Auth::id())
+            ->visibleTo()
+            // ->where('user_id', Auth::id())
             ->when(filled($term), function ($q) use ($term) {
                 // Optional: if user types a date like 2026-02-03, search dates properly
                 $isDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', $term);

@@ -19,6 +19,7 @@ use App\Models\Department;
 use App\Models\DepartmentHead;
 use App\Models\Destination;
 use App\Models\Dispatch;
+use App\Models\Document;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\Fitness;
@@ -113,6 +114,7 @@ class Index extends Component
     public $overdue_invoices_value        = 0;
     public $expiring_documents_count      = 0;
     public $expired_documents_count       = 0;
+    public $expired_reminders_count       = 0;
     public $trips_overdue_count           = 0;
     public $pending_authorizations_count  = 0;
     public $overdue_services_count        = 0;
@@ -167,7 +169,7 @@ class Index extends Component
     public $trailer_utilization_pct  = 0;
     public $docs_expiring_30d        = 0;
     public $docs_expired             = 0;
-    public $docs_expiring_7d         = 0;
+    public $reminders_expiring_7d         = 0;
     public $vehicles_due_service     = 0;
     public $vehicles_overdue_service = 0;
 
@@ -391,7 +393,7 @@ class Index extends Component
             ->whereBetween('start_date', [$monthStart, $monthEnd])->count();
 
         $kpis['trips_overdue_count'] = Trip::whereNull('deleted_at')
-            ->whereIn('trip_status', ['Enroute','Loaded','In Progress'])
+            ->whereIn('trip_status', ['Started','Loading Point','Loaded','Intransit','Onhold','Offloading Point'])
             ->whereNotNull('end_date')->where('end_date', '<', $today)
             ->count();
 
@@ -434,25 +436,31 @@ class Index extends Component
         $totalHorses = Horse::where('archive', false)->count();
         $kpis['fleet_total'] = $totalHorses;
 
-        $kpis['fleet_in_workshop'] = Horse::where('archive', false)
-            ->whereHas('bookings', fn ($q) => $q->where('authorization','approved')
-                ->where('status',1)->whereNull('out_date'))
-            ->count();
+        
 
-        $kpis['fleet_on_breakdown'] = Breakdown::whereNull('deleted_at')
-            ->where('status',1)->whereNotNull('horse_id')
-            ->distinct('horse_id')->count('horse_id');
+        $baseQuery = Booking::whereNull('deleted_at')
+            ->where('authorization', 'approved');
+        $kpis['fleet_in_workshop'] =
+            (clone $baseQuery)->whereNotNull('horse_id')->distinct('horse_id')->count('horse_id')
+            + (clone $baseQuery)->whereNotNull('vehicle_id')->distinct('vehicle_id')->count('vehicle_id')
+            + (clone $baseQuery)->whereNotNull('trailer_id')->distinct('trailer_id')->count('trailer_id');
+
+        $basebreakdownQuery = Breakdown::query();
+
+        $kpis['fleet_on_breakdown'] =
+            (clone $basebreakdownQuery)->whereNotNull('horse_id')->distinct('horse_id')->count('horse_id')
+            + (clone $basebreakdownQuery)->whereNotNull('vehicle_id')->distinct('vehicle_id')->count('vehicle_id')
+            + (clone $basebreakdownQuery)->whereNotNull('trailer_id')->distinct('trailer_id')->count('trailer_id');
 
         $kpis['vehicles_on_breakdown_count'] = $kpis['fleet_on_breakdown'];
 
         $kpis['fleet_active'] = Trip::whereNull('deleted_at')
-            ->whereIn('trip_status',['Enroute','Loaded','In Progress'])
+            ->whereNotIn('trip_status',['Scheduled','Cancelled','Onhold',])
             ->whereNotNull('horse_id')->distinct('horse_id')->count('horse_id');
 
         $kpis['fleet_idle'] = max(0, $totalHorses
             - $kpis['fleet_active']
-            - $kpis['fleet_in_workshop']
-            - $kpis['fleet_on_breakdown']);
+            - $kpis['fleet_in_workshop']);
 
         $kpis['fleet_utilization_pct'] = $totalHorses > 0
             ? round(($kpis['fleet_active'] / $totalHorses) * 100, 1) : 0;
@@ -473,15 +481,18 @@ class Index extends Component
         $kpis['trailer_utilization_pct'] = $totalTrailers > 0
             ? round(($kpis['trailers_active'] / $totalTrailers) * 100, 1) : 0;
 
-        $kpis['docs_expiring_7d'] = Fitness::whereNull('deleted_at')
+        $kpis['reminders_expiring_7d'] = Fitness::whereNull('deleted_at')
             ->where('closed',0)->whereBetween('expires_at', [$today, $in7d])->count();
         $kpis['docs_expiring_30d'] = Fitness::whereNull('deleted_at')
             ->where('closed',0)->whereBetween('expires_at', [$today, $in30d])->count();
-        $kpis['docs_expired'] = Fitness::whereNull('deleted_at')
+        $kpis['reminders_expired'] = Fitness::whereNull('deleted_at')
             ->where('closed',0)->where('expires_at','<',$today)->count();
+        $kpis['docs_expired'] = Document::whereNull('deleted_at')
+            ->where('expires_at','<',$today)->count();
 
         $kpis['expiring_documents_count'] = $kpis['docs_expiring_30d'];
         $kpis['expired_documents_count']  = $kpis['docs_expired'];
+        $kpis['expired_reminders_count']  = $kpis['reminders_expired'];
 
         $kpis['vehicles_due_service'] = Service::whereNull('deleted_at')
             ->whereBetween('start_date', [$today, $in7d])->count();

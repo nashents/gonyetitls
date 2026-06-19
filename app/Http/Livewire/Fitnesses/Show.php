@@ -176,37 +176,42 @@ class Show extends Component
 
     }
 
-    public function snooze($id){
-      
-        $fitness = Fitness::find($id);
+    public function snooze($id)
+    {
+        $fitness = Fitness::findOrFail($id);
 
-        if ($fitness->first_reminder_at <=  Carbon::today() ) {
-            $fitness->first_reminder_at_status = True;
-           
-        }
-        if ($fitness->second_reminder_at <=  Carbon::today() ) {
-            $fitness->second_reminder_at_status = True;
-            
-        }
-        if ($fitness->third_reminder_at <=  Carbon::today() ) {
-            $fitness->third_reminder_at_status = True;
-           
-        }
-        if ($fitness->fourth_reminder_at <=  Carbon::today() ) {
-            $fitness->fourth_reminder_at_status = True;
-           
-        }
-        $fitness->update();
+        $today = Carbon::today();
 
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Reminder Viewed & Snoozed Successfully!!"
+        if ($fitness->first_reminder_at && Carbon::parse($fitness->first_reminder_at)->lte($today)) {
+            $fitness->first_reminder_at_status = true;
+        }
+
+        if ($fitness->second_reminder_at && Carbon::parse($fitness->second_reminder_at)->lte($today)) {
+            $fitness->second_reminder_at_status = true;
+        }
+
+        if ($fitness->third_reminder_at && Carbon::parse($fitness->third_reminder_at)->lte($today)) {
+            $fitness->third_reminder_at_status = true;
+        }
+
+        if ($fitness->fourth_reminder_at && Carbon::parse($fitness->fourth_reminder_at)->lte($today)) {
+            $fitness->fourth_reminder_at_status = true;
+        }
+
+        // Snooze for 1 day from the exact time button is pressed
+        $fitness->snooze_time = Carbon::now()->addDay();
+
+        $fitness->save();
+
+        $snoozeTime = $fitness->snooze_time;
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Reminder Viewed & Snoozed Successfully until ' . $snoozeTime->format('d M Y H:i') . '!!'
         ]);
 
         return redirect(request()->header('Referer'));
-
     }
-
 
     public function edit($id){
         $fitness = Fitness::find($id);

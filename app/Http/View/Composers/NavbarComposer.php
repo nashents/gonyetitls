@@ -155,31 +155,47 @@ class NavbarComposer
         $today = Carbon::today();
         $now   = now();
 
+        $today = Carbon::today();
+        $now = Carbon::now();
+
         $validRemindersQuery = Fitness::query()
-        ->where('user_id', $user->id)
-        ->where('closed', 0)
-        ->where(function ($q) use ($today, $now) {
-            $q->where(function ($q) use ($today, $now) {
-                $q->whereNotNull('first_reminder_at')
-                ->whereDate('first_reminder_at', '<=', $today)
-                ->where('first_reminder_at_status', false)
-                ->where('expires_at', '>=', $now);
+            ->where('user_id', $user->id)
+            ->where('closed', 0)
+
+            // Exclude reminders still snoozed
+            ->where(function ($q) use ($now) {
+                $q->whereNull('snooze_time')
+                ->orWhere('snooze_time', '<=', $now);
             })
-            ->orWhere(function ($q) use ($today, $now) {
-                $q->whereNotNull('second_reminder_at')
-                ->whereDate('second_reminder_at', '<=', $today)
-                ->where('second_reminder_at_status', false)
-                ->where('expires_at', '>=', $now);
+
+            ->where(function ($q) use ($today, $now) {
+                $q->where(function ($q) use ($today, $now) {
+                    $q->whereNotNull('first_reminder_at')
+                    ->whereDate('first_reminder_at', '<=', $today)
+                    ->where('first_reminder_at_status', false)
+                    ->where('expires_at', '>=', $now);
+                })
+                ->orWhere(function ($q) use ($today, $now) {
+                    $q->whereNotNull('second_reminder_at')
+                    ->whereDate('second_reminder_at', '<=', $today)
+                    ->where('second_reminder_at_status', false)
+                    ->where('expires_at', '>=', $now);
+                })
+                ->orWhere(function ($q) use ($today, $now) {
+                    $q->whereNotNull('third_reminder_at')
+                    ->whereDate('third_reminder_at', '<=', $today)
+                    ->where('third_reminder_at_status', false)
+                    ->where('expires_at', '>=', $now);
+                })
+                ->orWhere(function ($q) use ($today, $now) {
+                    $q->whereNotNull('fourth_reminder_at')
+                    ->whereDate('fourth_reminder_at', '<=', $today)
+                    ->where('fourth_reminder_at_status', false)
+                    ->where('expires_at', '>=', $now);
+                });
             })
-            ->orWhere(function ($q) use ($today, $now) {
-                $q->whereNotNull('third_reminder_at')
-                ->whereDate('third_reminder_at', '<=', $today)
-                ->where('third_reminder_at_status', false)
-                ->where('expires_at', '>=', $now);
-            });
-        })
-        ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
-        ->orderBy('expires_at', 'asc');
+            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
+            ->orderBy('expires_at', 'asc');
 
         $reminders = $validRemindersQuery->get();
 

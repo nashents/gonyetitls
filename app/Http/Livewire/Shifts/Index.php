@@ -1302,7 +1302,6 @@ class Index extends Component
                   
                     if(isset($this->current_trip_ref[$key])){
                         $trip->trip_ref = $this->current_trip_ref[$key];
-
                     }
 
                     $trip->horse_id =  $this->selectedHorse ?: null;
@@ -1332,8 +1331,11 @@ class Index extends Component
                         $trip->offloading_time = $this->calculateTimeDifference($this->current_arrive_op[$key], $this->current_depart_op[$key]);
                     }
                     $cargo_type = Null;
+
                     if(isset($this->current_selectedCargo[$key])){
-                        $trip->cargo_id = $this->current_selectedCargo[$key];
+                        $trip->cargo_id = filled($this->current_selectedCargo[$key] ?? null)
+                                    ? $this->selectedCargo[$key]
+                                    : null;
                         $cargo = Cargo::find($this->current_selectedCargo[$key]);
                         $cargo_type = $cargo?->type;
                     }
@@ -1504,10 +1506,9 @@ class Index extends Component
                         $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op[$key], $this->depart_op[$key]);
                     }
                 
-                    if(isset($this->selectedCargo[$key])){
-                        $trip->cargo_id = $this->selectedCargo[$key];
-
-                    }
+                    $trip->cargo_id = filled($this->selectedCargo[$key] ?? null)
+                                    ? $this->selectedCargo[$key]
+                                    : null;
                     if(isset($this->haulage_type[$key])){
                         $trip->haulage_type = $this->haulage_type[$key];
 
@@ -1762,9 +1763,9 @@ class Index extends Component
         // if($this->for == "Trips") {
             $this->validate([
                 'loading_point_id'        => 'nullable|array',
-                'loading_point_id.*'      => 'integer|exists:loading_points,id',
                 'offloading_point_id'     => 'nullable|array',
-                'offloading_point_id.*'   => 'integer|exists:offloading_points,id',
+                'loading_point_id.*'   => 'nullable|integer|exists:loading_points,id',
+                'offloading_point_id.*'=> 'nullable|integer|exists:offloading_points,id',
                 'selectedCurrency'     => 'nullable',
                 'rate.*'               => 'nullable|numeric|min:0',
                 'weight.*'             => 'nullable|numeric|min:0',
@@ -1773,8 +1774,7 @@ class Index extends Component
                 'ending_mileage.*'     => 'nullable|numeric|min:0',
                 'starting_hours.*'     => 'nullable|numeric|min:0',
                 'ending_hours.*'       => 'nullable|numeric|min:0',
-                'loading_point_id.*'   => 'nullable|integer|exists:loading_points,id',
-                'offloading_point_id.*'=> 'nullable|integer|exists:offloading_points,id',
+          
                 'shift_start_time' => 'required|date_format:Y-m-d\TH:i',
                 'shift_end_time'   => 'required|date_format:Y-m-d\TH:i',
                 'date'   => 'required|date_format:Y-m-d',
