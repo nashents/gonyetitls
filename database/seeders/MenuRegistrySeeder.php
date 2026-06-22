@@ -425,6 +425,7 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 15,
             'route_name' => Null,
             'visibility' => $any([
+                $all(['inTransport']),
                 $all(['inHR']),
                 $all(['isSuperAdmin']),
             ]),

@@ -1042,7 +1042,7 @@ class Edit extends Component
 
     public function mount($id){
 
-       
+      
         $this->trip_id = $id;
         $this->trip = Trip::withTrashed()->with(['fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','vehicle','vehicle.vehicle_make','vehicle.vehicle_model','horse','horse.horse_make','horse.horse_model',
@@ -1298,8 +1298,10 @@ class Edit extends Component
          $this->depart_lp = $this->trip->depart_loading_point;
          $this->attach_transport_order = $this->trip->attach_transport_order;
          
-         $this->multiple_destinations = $this->trip->multiple_destinations ?? False;
-       
+         $this->multiple_destinations = (bool) $this->trip->multiple_destinations ?? False;
+
+        
+    
          $this->arrive_op = $this->trip->arrive_offloading_point;
          $this->depart_op = $this->trip->depart_offloading_point;
          $this->selectedHorse = $this->trip->horse_id;
@@ -1336,6 +1338,7 @@ class Edit extends Component
             
          }
 
+         
          $this->selectedRoute = $this->trip->route_id;
          $this->trip_fuel = $this->trip->trip_fuel;
          $this->cd3_number = $this->trip->cd3_number;

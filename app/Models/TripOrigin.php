@@ -47,6 +47,8 @@ class TripOrigin extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'trip_id',
+        'trip_transport_order_id',
+        'transport_order_id',
         'loading_date',
         'loading_point_id',
         'destination_id',

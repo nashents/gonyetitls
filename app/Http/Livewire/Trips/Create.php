@@ -1511,10 +1511,13 @@ class Create extends Component
     }
 
     public function updateDestinations($trip_transport_order){
-         $trip_destinations = TripDestination::where('transport_order_id', $trip_transport_order->transport_order_id)->get();
+     
+       
+        $trip_destinations = TripDestination::where('transport_order_id', $trip_transport_order->transport_order_id)->get();
+
       
         if(isset($trip_destinations) && $trip_destinations->count() > 0){
-            
+           
             foreach($trip_destinations as $trip_destination){
                 $trip_destination->trip_id = $trip_transport_order->trip_id;
                 $trip_destination->trip_transport_order_id = $trip_transport_order->id;
@@ -1522,8 +1525,10 @@ class Create extends Component
             }
 
         }
+       
     }
     public function updateOrigins($trip_transport_order){
+        
          $trip_origins = TripOrigin::where('transport_order_id', $trip_transport_order->transport_order_id)->get();
       
         if(isset($trip_origins) && $trip_origins->count() > 0){
@@ -1546,8 +1551,10 @@ class Create extends Component
 
         if ($this->multiple_destinations === true) {
 
+             
             if (!empty($this->destinations_selectedTo)) {
 
+                    
                 foreach ($this->destinations_selectedTo as $key => $destinationId) {
 
                     $offloadingPointId = $this->destinations_offloading_point_id[$key] ?? null;

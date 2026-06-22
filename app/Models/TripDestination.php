@@ -45,6 +45,8 @@ class TripDestination extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'trip_id',
+        'transport_order_id',
+        'trip_transport_order_id',
         'destination_id',
         'offloading_date',
         'offloading_point_id',

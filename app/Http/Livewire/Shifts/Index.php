@@ -1334,7 +1334,7 @@ class Index extends Component
 
                     if(isset($this->current_selectedCargo[$key])){
                         $trip->cargo_id = filled($this->current_selectedCargo[$key] ?? null)
-                                    ? $this->selectedCargo[$key]
+                                    ? $this->current_selectedCargo[$key]
                                     : null;
                         $cargo = Cargo::find($this->current_selectedCargo[$key]);
                         $cargo_type = $cargo?->type;
