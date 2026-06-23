@@ -838,35 +838,35 @@
                                                     <div class="form-group">
                                                         <label for="destination"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">To</a><span class="required" style="color: red">*</span></label>
                                                         <input type="text" wire:model.debounce.300ms="searchFrom" placeholder="Search destination locations..." class="form-control">
-                                                        <select class="form-control" wire:model.debounce.300ms="destinations_selectedFrom.{{$key}}" size="4" required>
+                                                        <select class="form-control" wire:model.debounce.300ms="current_destinations_selectedFrom.{{$key}}" size="4" required>
                                                             <option value="">Select To Location</option>
                                                             @foreach ($to_destinations as $destination)
                                                                 <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{ucfirst($destination->city)}}</option>
                                                             @endforeach
                                                         </select>
-                                                        @error('destinations_selectedFrom.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @error('current_destinations_selectedFrom.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label for="destination"><a href="{{ route('loading_points.index') }}" target="_blank" style="color: blue">Offloading Point(s)</a></label>
-                                                        <input type="text" wire:model.debounce.300ms="searchLoadingPoint" placeholder="Search offloading points..." class="form-control">
-                                                        <select class="form-control" wire:model.debounce.300ms="destinations_offloading_point_id.{{$key}}" size="4" >
+                                                        <label for="destination"><a href="{{ route('loading_points.index') }}" target="_blank" style="color: blue">Loading Point(s)</a></label>
+                                                        <input type="text" wire:model.debounce.300ms="searchLoadingPoint" placeholder="Search loading points..." class="form-control">
+                                                        <select class="form-control" wire:model.debounce.300ms="current_destinations_loading_point_id.{{$key}}" size="4" >
                                                             <option value="">Select Loading Point</option>
                                                             @foreach ($loading_points as $loading_point)
                                                                 <option value="{{$loading_point->id}}">{{ucfirst($loading_point->name)}}</option>
                                                             @endforeach
                                                         </select>
-                                                        @error('destinations_loading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @error('current_destinations_loading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Points</a></small> <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
                                                         <label for="weight">Loaded Weight(t)</label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_weight.{{$key}}" placeholder="Weight" >
-                                                        @error('loaded_weight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_loaded_weight.{{$key}}" placeholder="Weight" >
+                                                        @error('current_loaded_weight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                             </div>
@@ -875,50 +875,50 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="weight">Loaded Quantity</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_quantity.{{$key}}" placeholder="Qty" >
-                                                            @error('loaded_quantity.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_loaded_quantity.{{$key}}" placeholder="Qty" >
+                                                            @error('current_loaded_quantity.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="customer">Units Of Measure</label>
-                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                            <select class="form-control" wire:model.debounce.300ms="current_units_of_measure_id" >
                                                                 <option value="">Select Unit Of Measure</option>
                                                                     @foreach ($units_of_measures as $units_of_measure)
                                                                         <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
                                                                     @endforeach
                                                             </select>
-                                                            @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            @error('current_units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                 @elseif($cargo_type == "Liquid")
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="weight">Litreage @ Ambient</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage.{{$key}}" placeholder="Litreage" >
-                                                            @error('loaded_litreage.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_loaded_litreage.{{$key}}" placeholder="Litreage" >
+                                                            @error('current_loaded_litreage.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="weight">Litreage @ 20</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage_at_20.{{$key}}" placeholder="Litreage @ 20" >
-                                                            @error('loaded_litreage_at_20.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_loaded_litreage_at_20.{{$key}}" placeholder="Litreage @ 20" >
+                                                            @error('current_loaded_litreage_at_20.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                 @endif
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="weight">Rate</label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_rate.{{$key}}" placeholder="Rate" >
-                                                        @error('loaded_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_loaded_rate.{{$key}}" placeholder="Rate" >
+                                                        @error('current_loaded_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="weight">Freight</label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_freight.{{$key}}" placeholder="Freight" >
-                                                        @error('loaded_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_loaded_freight.{{$key}}" placeholder="Freight" >
+                                                        @error('current_loaded_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                             </div>
@@ -1130,13 +1130,13 @@
                                                     <div class="form-group">
                                                         <label for="destination"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">To</a><span class="required" style="color: red">*</span></label>
                                                         <input type="text" wire:model.debounce.300ms="searchTo" placeholder="Search destination locations..." class="form-control">
-                                                        <select class="form-control" wire:model.debounce.300ms="destinations_selectedTo.{{$key}}" size="4" required>
+                                                        <select class="form-control" wire:model.debounce.300ms="current_destinations_selectedTo.{{$key}}" size="4" required>
                                                             <option value="">Select To Location</option>
                                                             @foreach ($to_destinations as $destination)
                                                                 <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{ucfirst($destination->city)}}</option>
                                                             @endforeach
                                                         </select>
-                                                        @error('destinations_selectedTo.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @error('current_destinations_selectedTo.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
@@ -1144,21 +1144,21 @@
                                                     <div class="form-group">
                                                         <label for="destination"><a href="{{ route('offloading_points.index') }}" target="_blank" style="color: blue">Offloading Point(s)</a></label>
                                                         <input type="text" wire:model.debounce.300ms="searchOffloadingPoint" placeholder="Search offloading points..." class="form-control">
-                                                        <select class="form-control" wire:model.debounce.300ms="destinations_offloading_point_id.{{$key}}" size="4" >
+                                                        <select class="form-control" wire:model.debounce.300ms="current_destinations_offloading_point_id.{{$key}}" size="4" >
                                                             <option value="">Select Offloading Point</option>
                                                             @foreach ($offloading_points as $offloading_point)
                                                                 <option value="{{$offloading_point->id}}">{{ucfirst($offloading_point->name)}}</option>
                                                             @endforeach
                                                         </select>
-                                                        @error('destinations_offloading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @error('current_destinations_offloading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small> <a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
                                                         <label for="weight">Offloaded Weight(t)</label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_weight.{{$key}}" placeholder="Weight" >
-                                                        @error('offloaded_weight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_offloaded_weight.{{$key}}" placeholder="Weight" >
+                                                        @error('current_offloaded_weight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                             </div>
@@ -1167,55 +1167,56 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="weight">Offloaded Quantity</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_quantity.{{$key}}" placeholder="Qty" >
-                                                            @error('offloaded_quantity.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_offloaded_quantity.{{$key}}" placeholder="Qty" >
+                                                            @error('current_offloaded_quantity.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="customer">Units Of Measure</label>
-                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                            <select class="form-control" wire:model.debounce.300ms="current_units_of_measure_id" >
                                                                 <option value="">Select Unit Of Measure</option>
                                                                     @foreach ($units_of_measures as $units_of_measure)
                                                                         <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
                                                                     @endforeach
                                                             </select>
-                                                            @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            @error('current_units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                 @elseif($cargo_type == "Liquid")
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="weight">Litreage @ Ambient</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_litreage.{{$key}}" placeholder="Litreage" >
-                                                            @error('offloaded_litreage.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_offloaded_litreage.{{$key}}" placeholder="Litreage" >
+                                                            @error('current_offloaded_litreage.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="weight">Litreage @ 20</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_litreage_at_20.{{$key}}" placeholder="Litreage @ 20" >
-                                                            @error('offloaded_litreage_at_20.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_offloaded_litreage_at_20.{{$key}}" placeholder="Litreage @ 20" >
+                                                            @error('current_offloaded_litreage_at_20.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                 @endif
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="weight">Rate</label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_rate.{{$key}}" placeholder="Rate" >
-                                                        @error('offloaded_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_offloaded_rate.{{$key}}" placeholder="Rate" >
+                                                        @error('current_offloaded_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="weight">Freight</label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_freight.{{$key}}" placeholder="Freight" >
-                                                        @error('offloaded_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="current_offloaded_freight.{{$key}}" placeholder="Freight" >
+                                                        @error('current_offloaded_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     @endforeach
+
                                     @if ($trip_destinations->isEmpty())
 
                                         <div class="mt-15 mb-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">

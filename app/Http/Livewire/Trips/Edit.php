@@ -231,11 +231,32 @@ class Edit extends Component
     public $loaded_quantity = [];
     public $loaded_litreage = [];
     public $loaded_litreage_at_20 = [];
+ 
+ 
+    public $current_destinations_selectedTo = [];
+    public $current_destinations_offloading_point_id = [];
+    public $current_offloaded_weight = [];
+    public $current_offloaded_rate = [];
+    public $current_offloaded_freight = [];
+    public $current_offloaded_quantity = [];
+    public $current_offloaded_litreage = [];
+    public $current_offloaded_litreage_at_20 = [];
+   
+   
+    public $current_destinations_selectedFrom = [];
+    public $current_destinations_loading_point_id = [];
+    public $current_loaded_weight = [];
+    public $current_loaded_rate = [];
+    public $current_loaded_freight = [];
+    public $current_loaded_quantity = [];
+    public $current_loaded_litreage = [];
+    public $current_loaded_litreage_at_20 = [];
 
     public $destinations_inputs = [];
     public $d = 1;
     public $e = 1;
-    public function destaintionsAdd($d)
+
+    public function addDestination($d)
     {
         $d = $d + 1;
         $this->d = $d;
@@ -1126,6 +1147,7 @@ class Edit extends Component
         $this->trip_transport_orders = $this->trip->trip_transport_orders;
 
         if($this->trip_transport_orders){
+
             foreach($this->trip_transport_orders as $key => $trip_transport_order){
 
                 $this->current_selectedTransportOrder[$key] = $trip_transport_order->transport_order_id;
@@ -1151,14 +1173,14 @@ class Edit extends Component
 
             foreach($this->trip_destinations as $trip_destination){
 
-                $this->offloaded_weight[] = $trip_destination->weight;
-                $this->offloaded_quantity[] = $trip_destination->quantity;
-                $this->offloaded_litreage[] = $trip_destination->litreage;
-                $this->offloaded_litreage_at_20[] = $trip_destination->litreage_at_20;
-                $this->destinations_selectedTo[] = $trip_destination->destination_id;
-                $this->destinations_offloading_point_id[] = $trip_destination->offloading_point_id;
-                $this->offloaded_rate[] = $trip_destination->rate;
-                $this->offloaded_freight[] = $trip_destination->freight;
+                $this->current_offloaded_weight[] = $trip_destination->weight;
+                $this->current_offloaded_quantity[] = $trip_destination->quantity;
+                $this->current_offloaded_litreage[] = $trip_destination->litreage;
+                $this->current_offloaded_litreage_at_20[] = $trip_destination->litreage_at_20;
+                $this->current_destinations_selectedTo[] = $trip_destination->destination_id;
+                $this->current_destinations_offloading_point_id[] = $trip_destination->offloading_point_id;
+                $this->current_offloaded_rate[] = $trip_destination->rate;
+                $this->current_offloaded_freight[] = $trip_destination->freight;
                 
             }
 
@@ -1169,14 +1191,14 @@ class Edit extends Component
 
         if($this->trip_origins){
             foreach($this->trip_origins as $trip_origin){
-                $this->loaded_weight[] = $trip_origin->weight;
-                $this->loaded_quantity[] = $trip_origin->quantity;
-                $this->loaded_litreage[] = $trip_origin->litreage;
-                $this->loaded_litreage_at_20[] = $trip_origin->litreage_at_20;
-                $this->destinations_selectedFrom[] = $trip_origin->destination_id;
-                $this->destinations_loading_point_id[] = $trip_origin->loading_point_id;
-                $this->loaded_rate[] = $trip_origin->rate;
-                $this->loaded_freight[] = $trip_origin->freight;
+                $this->current_loaded_weight[] = $trip_origin->weight;
+                $this->current_loaded_quantity[] = $trip_origin->quantity;
+                $this->current_loaded_litreage[] = $trip_origin->litreage;
+                $this->current_loaded_litreage_at_20[] = $trip_origin->litreage_at_20;
+                $this->current_destinations_selectedFrom[] = $trip_origin->destination_id;
+                $this->current_destinations_loading_point_id[] = $trip_origin->loading_point_id;
+                $this->current_loaded_rate[] = $trip_origin->rate;
+                $this->current_loaded_freight[] = $trip_origin->freight;
             }
         }
         
@@ -1405,113 +1427,179 @@ class Edit extends Component
        
     }
 
+ 
+
     public function addDestinations($trip_transport_order)
     {
-       
-        // Remove old destinations linked to this trip transport order
-        TripDestination::where('trip_id', $trip_transport_order->trip_id)->delete();
-       
+
+        TripDestination::where('transport_order_id', $trip_transport_order->transport_order_id)->delete();
+
+        $userId = Auth::id();
 
         if ($this->multiple_destinations === true) {
 
+            if (!empty($this->trip_destinations)) {
+
+                foreach ($this->trip_destinations as $key => $td) {
+
+                    $offloadingPointId = $this->current_destinations_offloading_point_id[$key] ?? null;
+                    $destinationId = $this->current_destinations_selectedTo[$key] ?? null;
+
+                    $tripDestination = TripDestination::find($td->id);
+
+                    if ($tripDestination) {
+                        $tripDestination->update([
+                            'destination_id'      => $destinationId,
+                            'offloading_point_id' => $offloadingPointId,
+                            'user_id'             => $userId,
+                            'weight'              => $this->current_offloaded_weight[$key] ?? null,
+                            'quantity'            => $this->current_offloaded_quantity[$key] ?? null,
+                            'units_of_measure_id' => $this->current_units_of_measure_id ?? null,
+                            'litreage'            => $this->current_offloaded_litreage[$key] ?? null,
+                            'rate'                => $this->current_offloaded_rate[$key] ?? null,
+                            'freight'             => $this->current_offloaded_freight[$key] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+             
             if (!empty($this->destinations_selectedTo)) {
 
-        
+                    
                 foreach ($this->destinations_selectedTo as $key => $destinationId) {
 
                     $offloadingPointId = $this->destinations_offloading_point_id[$key] ?? null;
 
-                    $trip_destination = new TripDestination();
-                    $trip_destination->user_id = Auth::id();
-                    $trip_destination->trip_id = $trip_transport_order->trip_id;
-                    $trip_destination->transport_order_id = $trip_transport_order->transport_order_id;
-                    $trip_destination->trip_transport_order_id = $trip_transport_order->id;
-                    $trip_destination->destination_id = $destinationId;
-                    $trip_destination->offloading_point_id = $offloadingPointId;
-                    $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: null;
-                    $trip_destination->weight = $this->offloaded_weight[$key] ?? null;
-                    $trip_destination->quantity = $this->offloaded_quantity[$key] ?? null;
-                    $trip_destination->litreage = $this->offloaded_litreage[$key] ?? null;
-                    $trip_destination->litreage_at_20 = $this->offloaded_litreage_at_20[$key] ?? null;
-                    $trip_destination->rate = $this->offloaded_rate[$key] ?? null;
-                    $trip_destination->freight = $this->offloaded_freight[$key] ?? null;
-                    $trip_destination->save();
+                    TripDestination::updateOrCreate(
+                        [
+                            'trip_transport_order_id'  => $trip_transport_order->id,
+                            'destination_id'      => $destinationId,
+                            'offloading_point_id' => $offloadingPointId,
+                        ],
+                        [
+                            'transport_order_id'  => $trip_transport_order->transport_order_id,
+                            'trip_id'  => $trip_transport_order->trip_id,
+                            'user_id'             => $userId,
+                            'weight'              => $this->offloaded_weight[$key] ?? null,
+                            'quantity'            => $this->offloaded_quantity[$key] ?? null,
+                            'units_of_measure_id' => $this->units_of_measure_id,
+                            'litreage'            => $this->offloaded_litreage[$key] ?? null,
+                            'rate'                => $this->offloaded_rate[$key] ?? null,
+                            'freight'             => $this->offloaded_freight[$key] ?? null,
+                        ]
+                    );
+
                 }
             }
+            
+            
 
         } else {
 
-
-            $trip_destination = new TripDestination();
-            $trip_destination->user_id = Auth::id();
-            $trip_destination->trip_id = $trip_transport_order->trip_id;
-            $trip_destination->transport_order_id = $trip_transport_order->transport_order_id;
-            $trip_destination->trip_transport_order_id = $trip_transport_order->id;
-            $trip_destination->destination_id = $this->selectedTo;
-            $trip_destination->offloading_point_id = $this->offloading_point_id;
-            $trip_destination->weight = $this->weight;
-            $trip_destination->quantity = $this->quantity;
-            $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: null;
-            $trip_destination->litreage = $this->litreage;
-            $trip_destination->litreage_at_20 = $this->litreage_at_20;
-            $trip_destination->rate = $this->rate;
-            $trip_destination->freight = $this->freight;
-            $trip_destination->save();
+            TripDestination::updateOrCreate(
+                [
+                    'trip_transport_order_id'  => $trip_transport_order->id,
+                    'destination_id'      => $this->selectedTo,
+                    'offloading_point_id' => $this->offloading_point_id,
+                ],
+                [
+                    'transport_order_id'  => $trip_transport_order->transport_order_id,
+                    'trip_id'  => $trip_transport_order->trip_id,
+                    'user_id'             => $userId,
+                    'weight'              => $this->weight,
+                    'quantity'            => $this->quantity,
+                    'units_of_measure_id' => $this->units_of_measure_id,
+                    'litreage'            => $this->litreage,
+                    'rate'                => $this->rate,
+                    'freight'             => $this->freight,
+                ]
+            );
         }
     }
     
     public function addOrigins($trip_transport_order)
     {
        
-        // Remove old destinations linked to this trip transport order
-        TripOrigin::where('trip_id', $trip_transport_order->trip_id)->delete();
-       
+        $userId = Auth::id();
 
         if ($this->multiple_destinations === true) {
 
-            if (!empty($this->destinations_selectedFrom)) {
+            if (!empty($this->trip_origins)) {
 
+                foreach ($this->trip_origins as $key => $to) {
+
+                    $loadingPointId = $this->current_destinations_loading_point_id[$key] ?? null;
+                    $destinationId = $this->current_destinations_selectedFrom[$key] ?? null;
+
+                    $tripOrigin = TripOrigin::find($to->id);
+
+                    if ($tripOrigin) {
+                        $tripOrigin->update([
+                            'destination_id'      => $destinationId,
+                            'loading_point_id'    => $loadingPointId,
+                            'user_id'             => $userId,
+                            'weight'              => $this->current_loaded_weight[$key] ?? null,
+                            'quantity'            => $this->current_loaded_quantity[$key] ?? null,
+                            'units_of_measure_id' => $this->current_units_of_measure_id ?? null,
+                            'litreage'            => $this->current_loaded_litreage[$key] ?? null,
+                            'rate'                => $this->current_loaded_rate[$key] ?? null,
+                            'freight'             => $this->current_loaded_freight[$key] ?? null,
+                        ]);
+                    }
+                }
+            }
+          
+            if (!empty($this->destinations_selectedFrom)) {
+                
                 foreach ($this->destinations_selectedFrom as $key => $destinationId) {
 
                     $loadingPointId = $this->destinations_loading_point_id[$key] ?? null;
 
-                    $trip_origin = new TripOrigin();
-                    $trip_origin->user_id = Auth::id();
-                    $trip_origin->trip_id = $trip_transport_order->trip_id;
-                    $trip_origin->transport_order_id = $trip_transport_order->transport_order_id;
-                    $trip_origin->trip_transport_order_id = $trip_transport_order->id;
-                    $trip_origin->destination_id = $destinationId;
-                    $trip_origin->loading_point_id = $loadingPointId;
-                    $trip_origin->units_of_measure_id = $this->units_of_measure_id ?: null;
-                    $trip_origin->weight = $this->loaded_weight[$key] ?? null;
-                    $trip_origin->quantity = $this->loaded_quantity[$key] ?? null;
-                    $trip_origin->litreage = $this->loaded_litreage[$key] ?? null;
-                    $trip_origin->litreage_at_20 = $this->loaded_litreage_at_20[$key] ?? null;
-                    $trip_origin->rate = $this->loaded_rate[$key] ?? null;
-                    $trip_origin->freight = $this->loaded_freight[$key] ?? null;
-                    $trip_origin->save();
+                    TripOrigin::updateOrCreate(
+                        [
+                            'trip_transport_order_id' => $trip_transport_order->id,
+                            'destination_id'          => $destinationId,
+                            'loading_point_id'        => $loadingPointId,
+                        ],
+                        [
+                            'transport_order_id'  => $trip_transport_order->transport_order_id,
+                            'trip_id'  => $trip_transport_order->trip_id,
+                            'user_id'             => $userId,
+                            'weight'              => $this->loaded_weight[$key] ?? null,
+                            'quantity'            => $this->loaded_quantity[$key] ?? null,
+                            'units_of_measure_id' => $this->units_of_measure_id,
+                            'litreage'            => $this->loaded_litreage[$key] ?? null,
+                            'rate'                => $this->loaded_rate[$key] ?? null,
+                            'freight'             => $this->loaded_freight[$key] ?? null,
+                        ]
+                    );
                 }
             }
 
         } else {
 
-            $trip_origin = new TripOrigin();
-            $trip_origin->user_id = Auth::id();
-            $trip_origin->trip_id = $trip_transport_order->trip_id;
-            $trip_origin->transport_order_id = $trip_transport_order->transport_order_id;
-            $trip_origin->trip_transport_order_id = $trip_transport_order->id;
-            $trip_origin->destination_id = $this->selectedFrom;
-            $trip_origin->loading_point_id = $this->loading_point_id;
-            $trip_origin->weight = $this->weight;
-            $trip_origin->quantity = $this->quantity;
-            $trip_origin->units_of_measure_id = $this->units_of_measure_id ?: null;
-            $trip_origin->litreage = $this->litreage;
-            $trip_origin->litreage_at_20 = $this->litreage_at_20;
-            $trip_origin->rate = $this->rate;
-            $trip_origin->freight = $this->freight;
-            $trip_origin->save();
+            TripOrigin::updateOrCreate(
+                [
+                    'trip_transport_order_id'  => $trip_transport_order->transport_order_id,
+                    'destination_id'      => $this->selectedFrom,
+                    'loading_point_id' => $this->loading_point_id,
+                ],
+                [
+                    'transport_order_id'  => $trip_transport_order->transport_order_id,
+                    'trip_id'  => $trip_transport_order->trip_id,
+                    'user_id'             => $userId,
+                    'weight'              => $this->weight,
+                    'quantity'            => $this->quantity,
+                    'units_of_measure_id' => $this->units_of_measure_id,
+                    'litreage'            => $this->litreage,
+                    'rate'                => $this->rate,
+                    'freight'             => $this->freight,
+                ]
+            );
         }
     }
+
 
     
     public function updatedAllVehicles($status){
@@ -2270,10 +2358,7 @@ class Edit extends Component
 
         if (!empty($this->current_selectedTransportOrder)) {
 
-              
-          
                 foreach ($this->current_selectedTransportOrder as $key => $id) {
-                   
 
                     $transport_order = TransportOrder::find($id);
                    
@@ -2374,8 +2459,6 @@ class Edit extends Component
                     $this->createDeliveryNotes($trip_transport_order);
                     $this->addDestinations($trip_transport_order);
                     $this->addOrigins($trip_transport_order);
-                    
-                    
                     
                 }
 
