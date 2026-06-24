@@ -27,7 +27,7 @@
                 };
                 $fmt = fn($value, $decimals = 0) => is_numeric($value) ? number_format((float) $value, $decimals) : $value;
                 $money = fn($value) => ($currency_name ?? 'USD').' '.$this->formatCurrency((float) $value);
-                $alertTotal = ($overdue_invoices_count ?? 0) + ($expired_documents_count ?? 0) + ($docs_expiring_7d ?? 0) + ($vehicles_on_breakdown_count ?? 0) + ($trips_overdue_count ?? 0) + ($pending_authorizations_count ?? 0);
+                $alertTotal = ($overdue_invoices_count ?? 0) + ($expired_reminders_count ?? 0) + ($expired_documents_count ?? 0) + ($docs_expiring_7d ?? 0) + ($vehicles_on_breakdown_count ?? 0) + ($trips_overdue_count ?? 0) + ($pending_authorizations_count ?? 0);
             @endphp
 
             <style>
@@ -183,11 +183,11 @@
 
             @if ($alertTotal > 0)
                 <div class="gd-alert-strip">
-                    @if (($expired_reminders_count ?? 0) > 0)<a class="gd-alert" href="{{ route('fitnesses.index') }}"><span class="num">{{ $expired_reminders_count }}</span><span class="label"><i class="fa fa-bell"></i> Expired reminders</span></a>@endif
+                    @if (($expired_reminders_count ?? 0) > 0)<a class="gd-alert" href="{{ route('fitnesses.index',['expired_reminders' => 1]) }}"><span class="num">{{ $expired_reminders_count }}</span><span class="label"><i class="fa fa-bell"></i> Expired reminders</span></a>@endif
                     @if (($reminders_expiring_7d ?? 0) > 0)<a class="gd-alert warning" href="{{ route('fitnesses.index') }}"><span class="num">{{ $reminders_expiring_7d }}</span><span class="label"><i class="fa fa-clock-o"></i> Expiring in 7 days</span></a>@endif
-                    @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="#"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file"></i> Expired documents</span></a>@endif
+                    @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="{{route('documents.index',['category' => 'all', 'expired_documents' => 1])}}"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file"></i> Expired documents</span></a>@endif
                     @if (($overdue_invoices_count ?? 0) > 0)<a class="gd-alert" href="{{ route('invoices.index') }}"><span class="num">{{ $overdue_invoices_count }}</span><span class="label"><i class="fa fa-exclamation-circle"></i> Overdue invoices</span></a>@endif
-                    @if (($fleet_in_workshop ?? 0) > 0)<a class="gd-alert" href="{{ route('bookings.index') }}"><span class="num">{{ $fleet_in_workshop }}</span><span class="label"><i class="fa fa-wrench"></i> Fleet in workshop</span></a>@endif
+                    @if (($fleet_in_workshop ?? 0) > 0)<a class="gd-alert" href="{{ route('bookings.index') }}"><span class="num">{{ $fleet_in_workshop }}</span><span class="label"><i class="fa fa-wrench"></i> Equipment(s) in workshop</span></a>@endif
                     @if (($trips_overdue_count ?? 0) > 0)<a class="gd-alert warning" href="#"><span class="num">{{ $trips_overdue_count }}</span><span class="label"><i class="fa fa-road"></i> Overdue trips</span></a>@endif
                     @if (($pending_authorizations_count ?? 0) > 0)<a class="gd-alert info" href="#"><span class="num">{{ $pending_authorizations_count }}</span><span class="label"><i class="fa fa-hourglass-half"></i> Pending approvals</span></a>@endif
                 </div>
@@ -219,11 +219,11 @@
                             <span class="gd-module-label">Horses Active</span>
                         </a>
                         <a href="{{ route('trailers.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-columns"></i></span><strong class="gd-module-value">{{ $fmt($trailer_count ?? 0) }}</strong></div>
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-trailer"></i></span><strong class="gd-module-value">{{ $fmt($trailer_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Trailers Active</span>
                         </a>
                         <a href="{{ route('drivers.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-id-badge"></i></span><strong class="gd-module-value">{{ $fmt($driver_count ?? 0) }}</strong></div>
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($driver_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Drivers Active</span>
                         </a>
                     @endif
@@ -257,18 +257,18 @@
                         </a>
                         <a href="{{ route('tickets.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-ticket"></i></span><strong class="gd-module-value">{{ $fmt($ticket_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Workshop Tickets <span class="gd-module-badge">YTD</span></span>
+                            <span class="gd-module-label">Tickets <span class="gd-module-badge">YTD</span></span>
                         </a>
                     @endif
 
                     @if ($canSee(['Stores','Inventory','Operations','Management']))
                         <a href="{{ route('inventories.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-cubes"></i></span><strong class="gd-module-value">{{ $fmt($inventory_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Inventory Items</span>
+                            <span class="gd-module-label">Inventory</span>
                         </a>
                         <a href="{{ route('inventory_purchases.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-shopping-cart"></i></span><strong class="gd-module-value">{{ $fmt($inventory_purchases_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Inventory Purchases <span class="gd-module-badge">YTD</span></span>
+                            <span class="gd-module-label">POs <span class="gd-module-badge">YTD</span></span>
                         </a>
                         <a href="{{ route('inventory_dispatches.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-send"></i></span><strong class="gd-module-value">{{ $fmt($inventory_dispatches_count ?? 0) }}</strong></div>
@@ -282,12 +282,12 @@
 
                     @if ($canSee(['Human Resources','Human Resource','Management']))
                         <a href="{{ route('employees.index') }}" class="gd-module-count-card">
-                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-user"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Employees Active</span>
                         </a>
                         <a href="{{ route('leaves.manage') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-plane"></i></span><strong class="gd-module-value">{{ $fmt($leave_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Leave Records <span class="gd-module-badge">YTD</span></span>
+                            <span class="gd-module-label">Leave Applied <span class="gd-module-badge">YTD</span></span>
                         </a>
                     @endif
                 </div>

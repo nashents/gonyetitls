@@ -98,25 +98,31 @@ class Destinations extends Component
 
             foreach ($this->destination_id as $key => $destinationId) {
 
-                // Skip empty destination rows
-                if (blank($destinationId)) {
+                $offloadingPointId = $this->offloading_point_id[$key] ?? null;
+
+                // Skip empty rows
+                if (blank($destinationId) && blank($offloadingPointId)) {
                     continue;
                 }
 
-                TripDestination::create([
-                    'user_id'              => Auth::id(),
-                    'trip_id'              => $this->trip_id ?: null,
-                    'destination_id'       => $destinationId ?: null,
-                    'offloading_date'      => $this->offloading_date[$key] ?? null,
-                    'offloading_point_id'  => $this->offloading_point_id[$key] ?? null,
-                    'weight'               => $this->weight[$key] ?? null,
-                    'quantity'             => $this->quantity[$key] ?? null,
-                    'units_of_measure_id'  => $this->units_of_measure_id[$key] ?? null,
-                    'litreage'             => $this->litreage[$key] ?? null,
-                    'litreage_at_20'       => $this->litreage_at_20[$key] ?? null,
-                    'rate'                 => $this->rate[$key] ?? null,
-                    'freight'              => $this->freight[$key] ?? null,
-                ]);
+                TripDestination::updateOrCreate(
+                    [
+                        'trip_id'             => $this->trip_id ?: null,
+                        'destination_id'      => $destinationId ?: null,
+                        'offloading_point_id' => $offloadingPointId ?: null,
+                    ],
+                    [
+                        'user_id'             => Auth::id(),
+                        'offloading_date'     => $this->offloading_date[$key] ?? null,
+                        'weight'              => $this->weight[$key] ?? null,
+                        'quantity'            => $this->quantity[$key] ?? null,
+                        'units_of_measure_id' => $this->units_of_measure_id[$key] ?? null,
+                        'litreage'            => $this->litreage[$key] ?? null,
+                        'litreage_at_20'      => $this->litreage_at_20[$key] ?? null,
+                        'rate'                => $this->rate[$key] ?? null,
+                        'freight'             => $this->freight[$key] ?? null,
+                    ]
+                );
             }
         }
        
@@ -268,6 +274,24 @@ class Destinations extends Component
                 'message'=>"Offloading Points Refreshed Successfully!!."
             ]);
         }
+    }
+
+    public function delete($id){
+        $this->trip_destination_id = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+
+    public function destroy(){
+        
+        $destination = TripDestination::find($this->trip_destination_id);
+        $destination->delete();
+
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => 'Offloading Point Deleted Successfully!!',
+        ]);
+
     }
 
 

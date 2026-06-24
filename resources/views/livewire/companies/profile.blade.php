@@ -128,6 +128,9 @@
         <div role="tabpanel" class="tab-pane" id="budgets">
             @livewire('budgets.index', ['id' => $company->id])
         </div>
+        <div role="tabpanel" class="tab-pane" id="integrations">
+            @livewire('company-integrations.index', ['id' => $company->id])
+        </div>
       
       
        

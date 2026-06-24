@@ -14,6 +14,8 @@
                 <tr>
                     <th class="th-sm" style="width: 20%">AddedBy
                     </th>
+                    <th class="th-sm" style="width: 20%">Shipment
+                    </th>
                     <th class="th-sm" style="width: 15%">Date
                     </th>
                     <th class="th-sm">To
@@ -40,48 +42,61 @@
             </thead>
 
             <tbody>
-                @forelse ($trip_origins as $trip_destination)
+                @forelse ($trip_origins as $trip_origin)
               <tr>
                 <td>
-                    {{ $trip_destination->user ? $trip_destination->user->name : '' }} {{ $trip_destination->user ? $trip_destination->user->surname : '' }}
+                    {{ $trip_origin->user ? $trip_origin->user->name : '' }} {{ $trip_origin->user ? $trip_origin->user->surname : '' }}
                     <br>
-                    <small><strong>On: </strong> {{ date('d M, Y', strtotime($trip_destination->created_at)) }}</small>
+                    <small><strong>On: </strong> {{ date('d M, Y', strtotime($trip_origin->created_at)) }}</small>
                 </td>
-                <td>{{$trip_destination->loading_date}}</td>
+                 <td>
+                    <small>
+                        <strong>TO#:</strong>{{$trip_origin->trip_transport_order->transport_order?->transport_order_number}} 
+                        <br>
+                        <strong>TTO#:</strong>{{$trip_origin->trip_transport_order?->id}}
+                    </small>
+                </td>
                 <td>
-                    @if ($trip_destination->destination)
-                        {{$trip_destination->destination->country ? $trip_destination->destination->country->name : ""}} {{$trip_destination->destination ? $trip_destination->destination->city : ""}}        
+                    @if ($trip_origin->loading_date)
+                        {{$trip_origin->loading_date}}
+                    @else
+                        {{$trip_origin->trip_transport_order?->delivery_note?->offloaded_date}}
                     @endif
                 </td>
-                <td>{{$trip_destination->loading_point ? $trip_destination->loading_point->name : ""}}</td>
                 <td>
-                    @if ($trip_destination->weight)
-                        {{number_format($trip_destination->weight,2)}} tons   
+                    @if ($trip_origin->destination)
+                        {{$trip_origin->destination->country ? $trip_origin->destination->country->name : ""}} {{$trip_origin->destination ? $trip_origin->destination->city : ""}}        
+                    @endif
+                </td>
+                <td>{{$trip_origin->loading_point ? $trip_origin->loading_point->name : ""}}</td>
+                <td>
+                    @if ($trip_origin->weight)
+                        {{number_format($trip_origin->weight,2)}} tons   
                     @endif
                 </td>
                 <td>
-                    @if ($trip_destination->quantity)
-                        {{number_format($trip_destination->quantity,2)}} 
+                    @if ($trip_origin->quantity)
+                        {{number_format($trip_origin->quantity,2)}} 
                     @endif
                    </td>
                 <td>
-                    @if ($trip_destination->litreage)
-                        {{number_format($trip_destination->litreage,2)}}   
+                    @if ($trip_origin->litreage)
+                        {{number_format($trip_origin->litreage,2)}}   
                     @endif
                 </td>
                 <td>
-                    @if ($trip_destination->litreage_at_20)
-                        {{number_format($trip_destination->litreage_at_20,2)}} 
+                    @if ($trip_origin->litreage_at_20)
+                        {{number_format($trip_origin->litreage_at_20,2)}} 
                     @endif
                 </td>
                 <td>
-                    @if ($trip_destination->rate)
-                    {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip_destination->rate,2)}} 
+                    @if ($trip_origin->rate)
+                    {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip_origin->rate,2)}} 
                     @endif
                 </td>
                 <td>
-                    @if ($trip_destination->freight)
-                    {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip_destination->freight,2)}} 
+                    @if ($trip_origin->freight)
+                    {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip_origin->freight,2)}} 
                     @endif
                 </td>
                 @if (Auth::user()->category == "employee" || Auth::user()->category == "admin")
@@ -92,13 +107,13 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
-                             @if ($trip_destination->user_id == Auth::user()->id)
-                            <li><a href="#" wire:click="edit({{$trip_destination->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                            <li><a href="#" data-toggle="modal" data-target="#trip_destinationDeleteModal{{$trip_destination->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                             @if ($trip_origin->user_id == Auth::user()->id)
+                            <li><a href="#" wire:click="edit({{$trip_origin->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                            <li><a href="#" wire:click="delete({{$trip_origin->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                             @endif
                         </ul>
                     </div>
-                    @include('trips.destinations.delete')
+                  
 
             </td>
             @endif
@@ -162,8 +177,28 @@
             </tbody>
           </table>
     {{-- </blockquote> --}}
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="trip_originModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-70" role="trip_destination">
+
+    <div  wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="trip_origin">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                <center> <strong>Are you sure you want to delete this Loading Point?</strong> </center>
+                </div>
+                <form wire:submit.prevent="destroy()">
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="createModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-70" role="trip_origin">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Loading Point(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -443,8 +478,8 @@
             </div>
         </div>
     </div>
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="trip_originEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-70" role="trip_destination">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-70" role="trip_origin">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Loading Point<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -584,7 +619,7 @@
 
 @section('extra-js')
 <script>
-    $(trip_destination).ready( function () {
+    $(trip_origin).ready( function () {
         $('#trip_originsTable').DataTable();
     } );
     </script>

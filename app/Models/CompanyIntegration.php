@@ -31,8 +31,18 @@ class CompanyIntegration extends Model
         'last_sync_at' => 'datetime',
     ];
 
-    public function provider()
+      public function company()
     {
-        return $this->belongsTo(IntegrationProvider::class, 'integration_provider_id');
+        return $this->belongsTo(Company::class);
+    }
+
+    public function integration_provider()
+    {
+        return $this->belongsTo(IntegrationProvider::class);
+    }
+
+    public function integration_logs()
+    {
+        return $this->hasMany(IntegrationLog::class);
     }
 }

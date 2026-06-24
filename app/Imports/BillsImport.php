@@ -10,6 +10,7 @@ use App\Models\Bill;
 use App\Models\BillExpense;
 use App\Models\Currency;
 use App\Models\Driver;
+use App\Models\Employee;
 use App\Models\Horse;
 use App\Models\Payment;
 use App\Models\Product;
@@ -91,6 +92,7 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
                 $bill->transporter_id     = null;
                 $bill->horse_id           = null;
                 $bill->driver_id          = null;
+                $bill->employee_id        = null;
                 $bill->vehicle_id         = null;
                 $bill->trailer_id         = null;
                 $bill->asset_id           = null;
@@ -325,6 +327,7 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
                 'Trailer'     => ['trailer_id',     Trailer::whereRaw('LOWER(registration_number) = ?', [strtolower($value)])->value('id')],
                 'Vehicle'     => ['vehicle_id',     Vehicle::whereRaw('LOWER(registration_number) = ?', [strtolower($value)])->value('id')],
                 'Transporter' => ['transporter_id', Transporter::whereRaw('LOWER(name) = ?',            [strtolower($value)])->value('id')],
+                'Employee' => ['employee_id',Employee::whereRaw("LOWER(TRIM(CONCAT(name, ' ', surname))) = ?",[strtolower(trim($value))])->value('id')],
                 'Driver' => ['driver_id', Driver::whereHas('employee', function ($q) use ($value) {
                                 $q->whereRaw("LOWER(CONCAT(name, ' ', surname)) = ?", [strtolower($value)]);
                             })->value('id')],

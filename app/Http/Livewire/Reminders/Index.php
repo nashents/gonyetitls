@@ -22,6 +22,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    public bool $expiredRemindersOnly = false;
     protected $paginationTheme = 'bootstrap';
     public $search;
 
@@ -63,7 +64,7 @@ class Index extends Component
     public $searchEmployee;
     public $cc = false;
     
-    protected $queryString = ['search','searchVehicle','searchHorse','searchTrailer','searchEmployee'];
+    protected $queryString = ['search','searchVehicle','searchHorse','searchTrailer','searchEmployee', 'expiredRemindersOnly' => ['as' => 'expired_reminders', 'except' => false]];
 
     public $inputs = [];
     public $i = 1;
@@ -465,9 +466,14 @@ class Index extends Component
             ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
             ->where('closed', false)
             ->where('status', true)
-            ->visibleTo()
+            ->visibleTo();
+            if ($this->expiredRemindersOnly) {
+                $query->whereNotNull('expires_at')
+                    ->where('expires_at', '<', now());
+            }
+
             // ->where('user_id', Auth::id())
-            ->when(filled($term), function ($q) use ($term) {
+            $query->when(filled($term), function ($q) use ($term) {
                 // Optional: if user types a date like 2026-02-03, search dates properly
                 $isDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', $term);
                 $q->where(function ($q) use ($term, $isDate) {

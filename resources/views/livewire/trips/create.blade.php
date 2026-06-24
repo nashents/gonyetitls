@@ -1041,11 +1041,18 @@
                                                     <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Points</a></small> <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-2">
                                                 <div class="form-group">
                                                     <label for="weight">Weight(t)</label>
                                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_weight.0" placeholder="Loading Weight" >
                                                     @error('loaded_weight.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label for="weight">Loading Date</label>
+                                                    <input type="date"  class="form-control" wire:model.debounce.300ms="loading_date.0" placeholder="Loading Date" >
+                                                    @error('loading_date.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                             </div>
                                         </div>
@@ -1133,11 +1140,18 @@
                                                         <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Points</a></small> <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-2">
                                                     <div class="form-group">
                                                         <label for="weight">Weight(t)</label>
                                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_weight.{{$value}}" placeholder="Loading Weight(t)" >
                                                         @error('loaded_weight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                 <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="weight">Loading Date</label>
+                                                        <input type="date"  class="form-control" wire:model.debounce.300ms="loading_date.{{$value}}" placeholder="Loading Date" >
+                                                        @error('loading_date.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                             </div>
@@ -1238,13 +1252,20 @@
                                                     <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small> <a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-2">
                                                 <div class="form-group">
                                                     <label for="weight">Weight(t)</label>
                                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_weight.0" placeholder="Offloading Weight" >
                                                     @error('offloaded_weight.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                             </div>
+                                             <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="weight">Offloading Date</label>
+                                                        <input type="date"  class="form-control" wire:model.debounce.300ms="offloading_date.0" placeholder="Offloading Date" >
+                                                        @error('offloading_date.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
                                         </div>
                                         <div class="row">
                                             @if ($cargo_type == "Solid")
@@ -1330,11 +1351,18 @@
                                                         <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small> <a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-2">
                                                     <div class="form-group">
                                                         <label for="weight">Weight(t)</label>
                                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_weight.{{$value}}" placeholder="Offloading Weight(t)" >
                                                         @error('offloaded_weight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                 <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="weight">Offloading Date</label>
+                                                        <input type="date"  class="form-control" wire:model.debounce.300ms="offloading_date.{{$value}}" placeholder="Offloading Date" >
+                                                        @error('offloading_date.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                             </div>

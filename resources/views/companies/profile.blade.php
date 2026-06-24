@@ -45,7 +45,7 @@
                             <!-- /.row -->
 
                             <div class="row mt-30">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="panel border-primary no-border border-3-top">
                                         <div class="panel-heading">
                                             <div class="panel-title">
@@ -63,7 +63,7 @@
                                 </div>
                                 <!-- /.col-md-3 -->
 
-                                <div class="col-md-9">
+                                <div class="col-md-10">
                                     @include('includes.messages')
                                     <ul class="nav nav-tabs nav-justified" role="tablist">
                                 		<li role="presentation" class="active"><a href="#personal" aria-controls="personal" role="tab" data-toggle="tab">
@@ -75,9 +75,9 @@
                                         <li role="presentation"><a href="#bank_accounts" aria-controls="bank_accounts" role="tab" data-toggle="tab">Bank Accounts</a></li>
                                         <li role="presentation"><a href="#notifications" aria-controls="notifications" role="tab" data-toggle="tab">Notifications</a></li>
                                         <li role="presentation"><a href="#modules" aria-controls="modules" role="tab" data-toggle="tab">Modules</a></li>
-                                        <li role="presentation"><a href="#settings" aria-controls="modules" role="tab" data-toggle="tab">Settings</a></li>
-                                        <li role="presentation"><a href="#budgets" aria-controls="modules" role="tab" data-toggle="tab">Budgets</a></li>
-                                        
+                                        <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+                                        <li role="presentation"><a href="#budgets" aria-controls="budgtes" role="tab" data-toggle="tab">Budgets</a></li>
+                                        <li role="presentation"><a href="#integrations" aria-controls="integrations" role="tab" data-toggle="tab">Integrations</a></li>
                                     </ul>
                                     @livewire('companies.profile', ['company' => $company])
                                    

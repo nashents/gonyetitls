@@ -321,6 +321,7 @@ class Create extends Component
     public $destinations_selectedTo = [];
     public $destinations_offloading_point_id = [];
     public $offloaded_weight = [];
+    public $offloading_date = [];
     public $offloaded_rate = [];
     public $offloaded_freight = [];
     public $offloaded_quantity = [];
@@ -330,6 +331,7 @@ class Create extends Component
     public $destinations_selectedFrom = [];
     public $destinations_loading_point_id = [];
     public $loaded_weight = [];
+    public $loading_date = [];
     public $loaded_rate = [];
     public $loaded_freight = [];
     public $loaded_quantity = [];
@@ -832,6 +834,7 @@ class Create extends Component
             
             foreach($this->trip_destinations as $trip_destination){
                 $this->offloaded_weight[] = $trip_destination->weight;
+                $this->offloading_date[] = $trip_destination->offloading_date;
                 $this->offloaded_quantity[] = $trip_destination->quantity;
                 $this->offloaded_litreage[] = $trip_destination->litreage;
                 $this->destinations_selectedTo[] = $trip_destination->destination_id;
@@ -847,6 +850,7 @@ class Create extends Component
         if($this->trip_origins){
             foreach($this->trip_origins as $trip_origin){
                 $this->loaded_weight[] = $trip_origin->weight;
+                $this->loading_date[] = $trip_origin->loading_date;
                 $this->loaded_quantity[] = $trip_origin->quantity;
                 $this->loaded_litreage[] = $trip_origin->litreage;
                 $this->destinations_selectedFrom[] = $trip_origin->destination_id;
@@ -1568,6 +1572,7 @@ class Create extends Component
                         [
                             'user_id'             => $userId,
                             'weight'              => $this->offloaded_weight[$key] ?? null,
+                            'offloading_date'              => $this->offloading_date[$key] ?? null,
                             'quantity'            => $this->offloaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->units_of_measure_id,
                             'litreage'            => $this->offloaded_litreage[$key] ?? null,
@@ -1624,6 +1629,7 @@ class Create extends Component
                         [
                             'user_id'             => $userId,
                             'weight'              => $this->loaded_weight[$key] ?? null,
+                            'loading_date'        => $this->loading_date[$key] ?? null,
                             'quantity'            => $this->loaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->units_of_measure_id,
                             'litreage'            => $this->loaded_litreage[$key] ?? null,

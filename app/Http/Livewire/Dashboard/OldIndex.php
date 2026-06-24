@@ -50,7 +50,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
-class Index extends Component
+class OldIndex extends Component
 {
     private const MONTH_ABBR = [
         1 => 'jan', 2 => 'feb', 3 => 'mar', 4 => 'apr', 5 => 'may', 6 => 'jun',

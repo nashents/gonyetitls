@@ -216,6 +216,7 @@ class Edit extends Component
     public $destinations_selectedTo = [];
     public $destinations_offloading_point_id = [];
     public $offloaded_weight = [];
+    public $offloading_date = [];
     public $offloaded_rate = [];
     public $offloaded_freight = [];
     public $offloaded_quantity = [];
@@ -225,6 +226,7 @@ class Edit extends Component
     public $trip_origins;
     public $destinations_selectedFrom = [];
     public $destinations_loading_point_id = [];
+    public $loading_date = [];
     public $loaded_weight = [];
     public $loaded_rate = [];
     public $loaded_freight = [];
@@ -236,6 +238,7 @@ class Edit extends Component
     public $current_destinations_selectedTo = [];
     public $current_destinations_offloading_point_id = [];
     public $current_offloaded_weight = [];
+    public $current_offloading_date = [];
     public $current_offloaded_rate = [];
     public $current_offloaded_freight = [];
     public $current_offloaded_quantity = [];
@@ -246,6 +249,7 @@ class Edit extends Component
     public $current_destinations_selectedFrom = [];
     public $current_destinations_loading_point_id = [];
     public $current_loaded_weight = [];
+    public $current_loading_date = [];
     public $current_loaded_rate = [];
     public $current_loaded_freight = [];
     public $current_loaded_quantity = [];
@@ -1174,6 +1178,7 @@ class Edit extends Component
             foreach($this->trip_destinations as $trip_destination){
 
                 $this->current_offloaded_weight[] = $trip_destination->weight;
+                $this->current_offloading_date[] = $trip_destination->offloading_date;
                 $this->current_offloaded_quantity[] = $trip_destination->quantity;
                 $this->current_offloaded_litreage[] = $trip_destination->litreage;
                 $this->current_offloaded_litreage_at_20[] = $trip_destination->litreage_at_20;
@@ -1192,6 +1197,7 @@ class Edit extends Component
         if($this->trip_origins){
             foreach($this->trip_origins as $trip_origin){
                 $this->current_loaded_weight[] = $trip_origin->weight;
+                $this->current_loading_date[] = $trip_origin->loading_date;
                 $this->current_loaded_quantity[] = $trip_origin->quantity;
                 $this->current_loaded_litreage[] = $trip_origin->litreage;
                 $this->current_loaded_litreage_at_20[] = $trip_origin->litreage_at_20;
@@ -1453,6 +1459,7 @@ class Edit extends Component
                             'offloading_point_id' => $offloadingPointId,
                             'user_id'             => $userId,
                             'weight'              => $this->current_offloaded_weight[$key] ?? null,
+                            'offloading_date'              => $this->current_offloading_date[$key] ?? null,
                             'quantity'            => $this->current_offloaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->current_units_of_measure_id ?? null,
                             'litreage'            => $this->current_offloaded_litreage[$key] ?? null,
@@ -1482,6 +1489,7 @@ class Edit extends Component
                             'trip_id'  => $trip_transport_order->trip_id,
                             'user_id'             => $userId,
                             'weight'              => $this->offloaded_weight[$key] ?? null,
+                            'offloading_date'              => $this->offloading_date[$key] ?? null,
                             'quantity'            => $this->offloaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->units_of_measure_id,
                             'litreage'            => $this->offloaded_litreage[$key] ?? null,
@@ -1540,6 +1548,7 @@ class Edit extends Component
                             'loading_point_id'    => $loadingPointId,
                             'user_id'             => $userId,
                             'weight'              => $this->current_loaded_weight[$key] ?? null,
+                            'loading_date'              => $this->current_loading_date[$key] ?? null,
                             'quantity'            => $this->current_loaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->current_units_of_measure_id ?? null,
                             'litreage'            => $this->current_loaded_litreage[$key] ?? null,
@@ -1567,6 +1576,7 @@ class Edit extends Component
                             'trip_id'  => $trip_transport_order->trip_id,
                             'user_id'             => $userId,
                             'weight'              => $this->loaded_weight[$key] ?? null,
+                            'loading_date'              => $this->loading_date[$key] ?? null,
                             'quantity'            => $this->loaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->units_of_measure_id,
                             'litreage'            => $this->loaded_litreage[$key] ?? null,

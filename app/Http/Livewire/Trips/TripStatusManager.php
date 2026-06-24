@@ -804,8 +804,7 @@ class TripStatusManager extends Component
         }
 
         $this->trip_status_date = Null;
-        $this->loaded_date = Null;
-        $this->offloaded_date = Null;
+       
     }
 
     public function resetInputFields(): void

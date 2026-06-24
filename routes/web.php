@@ -492,6 +492,7 @@ Route::resource('inspection_schedules','InspectionScheduleController');
 Route::resource('maintenance_schedules','MaintenanceScheduleController');
 Route::resource('ticket_requests','TicketRequestController');
 Route::resource('payment_methods','PaymentMethodController');
+Route::resource('company_integrations','CompanyIntegrationController');
 Route::resource('grades','GradeController');
 Route::resource('clusters','ClusterController');
 Route::resource('transport_orders','TransportOrderController');

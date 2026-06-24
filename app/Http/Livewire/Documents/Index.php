@@ -39,94 +39,101 @@ use App\Models\Vendor;
 use App\Models\WasteCollection;
 use App\Models\WasteDisposal;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
+    protected $paginationTheme = 'bootstrap';
+
+    public $perPage = 25;
     public $category;
-    public $retread;
-    public $retread_id;
-    public $application;
-    public $application_id;
-    public $loading_point;
-    public $loading_point_id;
-    public $training;
-    public $training_id;
-    public $ticket;
-    public $ticket_id;
-    public $offloading_point;
-    public $offloading_point_id;
-    public $waste_collection;
-    public $waste_collection_id;
-    public $waste_disposal;
-    public $waste_disposal_id;
-    public $truck_stop;
-    public $truck_stop_id;
-    public $horse;
-    public $horse_id;
-    public $bill;
-    public $bill_id;
-    public $trip;
-    public $trip_id;
-    public $consignee;
-    public $consignee_id;
-    public $incident;
-    public $incident_id;
-    public $route;
-    public $route_id;
-    public $vehicle;
-    public $vehicle_id;
-    public $trailer;
-    public $trailer_id;
-    public $requisition;
-    public $requisition_id;
-    public $employee;
-    public $employee_id;
-    public $cash_flow;
-    public $cash_flow_id;
-    public $company;
-    public $company_id;
-    public $vendor;
-    public $vendor_id;
-    public $recovery;
-    public $recovery_id;
-    public $payment;
-    public $payment_id;
-    public $broker;
-    public $broker_id;
-    public $department;
-    public $department_id;
-    public $clearing_agent;
-    public $clearing_agent_id;
-    public $purchase;
-    public $purchase_id;
-    public $agent;
-    public $agent_id;
     public $item_id;
-    public $asset;
-    public $asset_id;
-    public $inventory;
-    public $inventory_id;
-    public $tyre;
-    public $tyre_id;
-    public $transporter;
-    public $transporter_id;
+
     public $customer;
+    public $employee;
+    public $trip;
+    public $retread;
+    public $application;
+    public $bill;
+    public $consignee;
+    public $department;
+    public $incident;
+    public $truck_stop;
+    public $loading_point;
+    public $offloading_point;
+    public $waste_disposal;
+    public $waste_collection;
+    public $route;
+    public $horse;
+    public $ticket;
+    public $training;
+    public $trailer;
+    public $requisition;
+    public $vehicle;
+    public $company;
+    public $cash_flow;
+    public $recovery;
+    public $payment;
+    public $asset;
+    public $inventory;
+    public $tyre;
+    public $clearing_agent;
+    public $purchase;
+    public $vendor;
+    public $broker;
+    public $transporter;
+    public $agent;
+
     public $customer_id;
+    public $employee_id;
+    public $trip_id;
+    public $retread_id;
+    public $application_id;
+    public $bill_id;
+    public $consignee_id;
+    public $department_id;
+    public $incident_id;
+    public $truck_stop_id;
+    public $loading_point_id;
+    public $offloading_point_id;
+    public $waste_disposal_id;
+    public $waste_collection_id;
+    public $route_id;
+    public $horse_id;
+    public $ticket_id;
+    public $training_id;
+    public $trailer_id;
+    public $requisition_id;
+    public $vehicle_id;
+    public $company_id;
+    public $cash_flow_id;
+    public $recovery_id;
+    public $payment_id;
+    public $asset_id;
+    public $inventory_id;
+    public $tyre_id;
+    public $clearing_agent_id;
+    public $purchase_id;
+    public $vendor_id;
+    public $broker_id;
+    public $transporter_id;
+    public $agent_id;
     public $user_id;
+
     public $document;
-    public $documents;
+    private $documents;
     public $document_id;
     public $folders;
     public $folder;
     public $folder_id;
     public $selectedFolder;
-    public $is_open = FALSE;
+    public $is_open = false;
     public $folder_title;
 
     public $title;
@@ -134,1131 +141,457 @@ class Index extends Component
     public $file;
     public $filename;
     public $rand;
-   
 
+    public bool $expiredDocumentsOnly = false;
 
-    private function resetInputFields(){
-        $this->title = "";
-        $this->document_id = "";
-        $this->folder_title = "";
-        $this->folder_id = "";
-        $this->selectedFolder = "";
-        $this->file = null;
-        $this->rand++;
-        $this->expires_at = "";
-      
+    protected $queryString = [
+        'expiredDocumentsOnly' => ['as' => 'expired_documents', 'except' => false],
+    ];
+
+    protected function rules()
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'file' => $this->document_id ? 'nullable|file|max:10240' : 'required|file|max:10240',
+            'expires_at' => 'nullable|date',
+            'folder_id' => 'nullable|integer',
+        ];
     }
 
-    public function setFolder($id){
-        if ($id == $this->selectedFolder ) {
-            if ($this->is_open == FALSE) {
-                $this->selectedFolder = $id;
-                $this->is_open = TRUE;
-            }else{
-                $this->selectedFolder = NULL;
-                $this->is_open = FALSE;
-            }
-        }else{
-            $this->selectedFolder = $id;
-            $this->is_open = TRUE;
-        }  
+    private function categoryMap(): array
+    {
+        return [
+            'customer' => ['model' => Customer::class, 'property' => 'customer', 'column' => 'customer_id'],
+            'employee' => ['model' => Employee::class, 'property' => 'employee', 'column' => 'employee_id'],
+            'trip' => ['model' => Trip::class, 'property' => 'trip', 'column' => 'trip_id'],
+            'retread' => ['model' => Retread::class, 'property' => 'retread', 'column' => 'retread_id'],
+            'application' => ['model' => Application::class, 'property' => 'application', 'column' => 'application_id'],
+            'bill' => ['model' => Bill::class, 'property' => 'bill', 'column' => 'bill_id'],
+            'consignee' => ['model' => Consignee::class, 'property' => 'consignee', 'column' => 'consignee_id'],
+            'department' => ['model' => Department::class, 'property' => 'department', 'column' => 'department_id'],
+            'incident' => ['model' => Incident::class, 'property' => 'incident', 'column' => 'incident_id'],
+            'truck_stop' => ['model' => TruckStop::class, 'property' => 'truck_stop', 'column' => 'truck_stop_id'],
+            'loading_point' => ['model' => LoadingPoint::class, 'property' => 'loading_point', 'column' => 'loading_point_id'],
+            'offloading_point' => ['model' => OffloadingPoint::class, 'property' => 'offloading_point', 'column' => 'offloading_point_id'],
+            'waste_disposal' => ['model' => WasteDisposal::class, 'property' => 'waste_disposal', 'column' => 'waste_disposal_id'],
+            'waste_collection' => ['model' => WasteCollection::class, 'property' => 'waste_collection', 'column' => 'waste_collection_id'],
+            'route' => ['model' => Route::class, 'property' => 'route', 'column' => 'route_id'],
+            'horse' => ['model' => Horse::class, 'property' => 'horse', 'column' => 'horse_id'],
+            'ticket' => ['model' => Ticket::class, 'property' => 'ticket', 'column' => 'ticket_id'],
+            'training' => ['model' => Training::class, 'property' => 'training', 'column' => 'training_id'],
+            'trailer' => ['model' => Trailer::class, 'property' => 'trailer', 'column' => 'trailer_id'],
+            'requisition' => ['model' => Requisition::class, 'property' => 'requisition', 'column' => 'requisition_id'],
+            'vehicle' => ['model' => Vehicle::class, 'property' => 'vehicle', 'column' => 'vehicle_id'],
+            'company' => ['model' => Company::class, 'property' => 'company', 'column' => 'company_id'],
+            'cash_flow' => ['model' => CashFlow::class, 'property' => 'cash_flow', 'column' => 'cash_flow_id'],
+            'recovery' => ['model' => Recovery::class, 'property' => 'recovery', 'column' => 'recovery_id'],
+            'payment' => ['model' => Payment::class, 'property' => 'payment', 'column' => 'payment_id'],
+            'asset' => ['model' => Asset::class, 'property' => 'asset', 'column' => 'asset_id'],
+            'inventory' => ['model' => Inventory::class, 'property' => 'inventory', 'column' => 'inventory_id'],
+            'tyre' => ['model' => Tyre::class, 'property' => 'tyre', 'column' => 'tyre_id'],
+            'clearing_agent' => ['model' => ClearingAgent::class, 'property' => 'clearing_agent', 'column' => 'clearing_agent_id'],
+            'purchase' => ['model' => Purchase::class, 'property' => 'purchase', 'column' => 'purchase_id'],
+            'vendor' => ['model' => Vendor::class, 'property' => 'vendor', 'column' => 'vendor_id'],
+            'broker' => ['model' => Broker::class, 'property' => 'broker', 'column' => 'broker_id'],
+            'transporter' => ['model' => Transporter::class, 'property' => 'transporter', 'column' => 'transporter_id'],
+            'agent' => ['model' => Agent::class, 'property' => 'agent', 'column' => 'agent_id'],
+        ];
     }
 
-
-    public function mount($id,$category){
-        $this->category = $category;
+    public function mount(?int $id = null, ?string $category = null): void
+    {
+        $this->category = $category ?? 'all';
         $this->item_id = $id;
-    if ($this->category == "customer") {
-        $this->customer = Customer::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('customer_id', $this->customer->id)->latest()->get();
-    }
-    elseif ($this->category == "employee") {
-        $this->employee = Employee::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('employee_id', $this->employee->id)->latest()->get();
-    }
-    elseif ($this->category == "trip") {
-        $this->trip = Trip::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('trip_id', $this->trip->id)->latest()->get();
-    }
-    elseif ($this->category == "retread") {
-        $this->retread = Retread::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('retread_id', $this->retread->id)->latest()->get();
-    }
-    elseif ($this->category == "application") {
-        $this->application = Application::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('application_id', $this->application->id)->latest()->get();
-    }
-    elseif ($this->category == "bill") {
-        $this->bill = Bill::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('bill_id', $this->bill->id)->latest()->get();
-    }
-    elseif ($this->category == "consignee") {
-        $this->consignee = Consignee::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('consignee_id', $this->consignee->id)->latest()->get();
-    }
-    elseif ($this->category == "department") {
-        $this->department = Department::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('department_id', $this->department->id)->latest()->get();
-    }
-    elseif ($this->category == "incident") {
-        $this->incident = Incident::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('incident_id', $this->incident->id)->latest()->get();
-    }
-    elseif ($this->category == "truck_stop") {
-        $this->truck_stop = TruckStop::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('truck_stop_id', $this->truck_stop->id)->latest()->get();
-    }
-    elseif ($this->category == "loading_point") {
-        $this->loading_point = LoadingPoint::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('loading_point_id', $this->loading_point->id)->latest()->get();
-    }
-    elseif ($this->category == "offloading_point") {
-        $this->offloading_point = OffloadingPoint::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('offloading_point_id', $this->offloading_point->id)->latest()->get();
-    }
-    elseif ($this->category == "waste_disposal") {
-        $this->waste_disposal = WasteDisposal::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('waste_disposal_id', $this->waste_disposal->id)->latest()->get();
-    }
-    elseif ($this->category == "waste_collection") {
-        $this->waste_collection = WasteCollection::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('waste_collection_id', $this->waste_collection->id)->latest()->get();
-    }
-    elseif ($this->category == "route") {
-        $this->route = Route::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('route_id', $this->route->id)->latest()->get();
-    }
-    elseif ($this->category == "horse") {
-        $this->horse = Horse::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('horse_id', $this->horse->id)->latest()->get();
-    }
-    elseif ($this->category == "ticket") {
-        $this->ticket = Ticket::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('ticket_id', $this->ticket->id)->latest()->get();
-    }
-    elseif ($this->category == "training") {
-        $this->training = Training::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('training_id', $this->training->id)->latest()->get();
-    }
-    elseif ($this->category == "trailer") {
-        $this->trailer = Trailer::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('trailer_id', $this->trailer->id)->latest()->get();
-    }
-    elseif ($this->category == "requisition") {
-        $this->requisition = Requisition::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('requisition_id', $this->requisition->id)->latest()->get();
-    }
-    elseif ($this->category == "vehicle") {
-        $this->vehicle = Vehicle::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('vehicle_id', $this->vehicle->id)->latest()->get();
-    }
-    elseif ($this->category == "company") {
-        $this->company = Company::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('company_id', $this->company->id)->latest()->get();
-    }
-    elseif ($this->category == "cash_flow") {
-        $this->cash_flow = CashFlow::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('cash_flow_id', $this->cash_flow->id)->latest()->get();
-    }
-    elseif ($this->category == "recovery") {
-        $this->recovery = Recovery::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('recovery_id', $this->recovery->id)->latest()->get();
-    }
-    elseif ($this->category == "payment") {
-        $this->payment = Payment::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('payment_id', $this->payment->id)->latest()->get();
-    }
-    elseif ($this->category == "asset") {
-        $this->asset = Asset::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('asset_id', $this->asset->id)->latest()->get();
-    }
-    elseif ($this->category == "inventory") {
-        $this->inventory = Inventory::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('inventory_id', $this->inventory->id)->latest()->get();
-    }
-    elseif ($this->category == "tyre") {
-        $this->tyre = Tyre::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('tyre_id', $this->tyre->id)->latest()->get();
-    }
-    elseif ($this->category == "clearing_agent") {
-        $this->clearing_agent = ClearingAgent::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('clearing_agent_id', $this->clearing_agent->id)->latest()->get();
-    }
-    elseif ($this->category == "purchase") {
-        $this->purchase = Purchase::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('purchase_id', $this->purchase->id)->latest()->get();
-    }
-    elseif ($this->category == "vendor") {
-        $this->vendor = Vendor::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('vendor_id', $this->vendor->id)->latest()->get();
-    }
-    elseif ($this->category == "broker") {
-        $this->broker = Broker::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('broker_id', $this->broker->id)->latest()->get();
-    }
-    elseif ($this->category == "transporter") {
-        $this->transporter = Transporter::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('transporter_id', $this->transporter->id)->latest()->get();
-    }
-    elseif ($this->category == "agent") {
-        $this->agent = Agent::find($id);
-        $this->folders = Folder::where('category', $this->category)->latest()->get();
-        $this->documents = Document::where('category', $this->category)
-        ->where('agent_id', $this->agent->id)->latest()->get();
-    }
-    
+        $this->rand = rand();
+        $this->folders = collect();
+        $this->documents = collect();
 
+        $this->loadCategoryRecord();
     }
 
-    public function updatedSelectedFolder($selected_folder_id){
+    private function loadCategoryRecord(): void
+    {
+        if ($this->category === 'all') {
+            return;
+        }
 
-        if(!is_null($selected_folder_id)){
-            if ($this->category == "customer") {
-                $this->customer = Customer::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('customer_id', $this->customer->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
+        $map = $this->categoryMap()[$this->category] ?? null;
+
+        if (!$map || !$this->item_id) {
+            return;
+        }
+
+        $this->{$map['property']} = $map['model']::find($this->item_id);
+    }
+
+    private function baseDocumentsQuery(): Builder
+    {
+        $query = Document::query()->with('user');
+
+        if ($this->category !== 'all') {
+            $map = $this->categoryMap()[$this->category] ?? null;
+
+            if ($map) {
+                $query->where('category', $this->category)
+                    ->where($map['column'], $this->item_id);
+            } else {
+                $query->whereRaw('1 = 0');
             }
-            elseif ($this->category == "employee") {
-                $this->employee = Employee::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('employee_id', $this->employee->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "trip") {
-                $this->trip = Trip::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('trip_id', $this->trip->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "department") {
-                $this->department = Department::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('department_id', $this->department->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "retread") {
-                $this->retread = Retread::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('retread_id', $this->retread->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "application") {
-                $this->application = Application::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('application_id', $this->application->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "bill") {
-                $this->bill = Bill::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('bill_id', $this->bill->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "consignee") {
-                $this->consignee = Consignee::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('consignee_id', $this->consignee->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "incident") {
-                $this->incident = Incident::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('incident_id', $this->incident->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "route") {
-                $this->route = Route::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('route_id', $this->route->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "loading_point") {
-                $this->loading_point = LoadingPoint::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('loading_point_id', $this->loading_point->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "offloading_point") {
-                $this->offloading_point = OffloadingPoint::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('offloading_point_id', $this->offloading_point->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "waste_disposal") {
-                $this->waste_disposal = WasteDisposal::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('waste_disposal_id', $this->waste_disposal->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "waste_collection") {
-                $this->waste_collection = WasteCollection::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('waste_collection_id', $this->waste_collection->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "truck_stop") {
-                $this->truck_stop = TruckStop::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('truck_stop_id', $this->truck_stop->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "horse") {
-                $this->horse = Horse::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('horse_id', $this->horse->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "ticket") {
-                $this->ticket = Ticket::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('ticket_id', $this->ticket->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "training") {
-                $this->training = Training::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('training_id', $this->training->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "trailer") {
-                $this->trailer = Trailer::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('trailer_id', $this->trailer->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "requisition") {
-                $this->requisition = Requisition::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('requisition_id', $this->requisition->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "vehicle") {
-                $this->vehicle = Vehicle::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('vehicle_id', $this->vehicle->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "company") {
-                $this->company = Company::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('company_id', $this->company->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "cash_flow") {
-                $this->cash_flow = CashFlow::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('cash_flow_id', $this->cash_flow->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "recovery") {
-                $this->recovery = Recovery::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('recovery_id', $this->recovery->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "payment") {
-                $this->payment = Payment::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('payment_id', $this->payment->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "asset") {
-                $this->asset = Asset::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('asset_id', $this->asset->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "inventory") {
-                $this->inventory = Inventory::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('inventory_id', $this->inventory->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "tyre") {
-                $this->tyre = Tyre::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('tyre_id', $this->tyre->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "clearing_agent") {
-                $this->clearing_agent = ClearingAgent::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('clearing_agent_id', $this->clearing_agent->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "purchase") {
-                $this->purchase = Purchase::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('purchase_id', $this->purchase->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "vendor") {
-                $this->vendor = Vendor::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('vendor_id', $this->vendor->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "broker") {
-                $this->broker = Broker::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('broker_id', $this->broker->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "transporter") {
-                $this->transporter = Transporter::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('transporter_id', $this->transporter->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
-            elseif ($this->category == "agent") {
-                $this->agent = Agent::find($this->item_id);
-                $this->documents = Document::where('category', $this->category)
-                ->where('agent_id', $this->agent->id)
-                ->where('folder_id', $selected_folder_id)
-                ->latest()->get();
-            }
+        }
+
+        if ($this->selectedFolder) {
+            $query->where('folder_id', $this->selectedFolder);
+        }
+
+        if ($this->expiredDocumentsOnly || $this->category === 'all') {
+            $query->whereNotNull('expires_at')
+                ->where('expires_at', '<', now());
+        }
+
+        return $query;
+    }
+
+    private function applyDocumentVisibility($query)
+    {
+        $user = Auth::user();
+
+        $roleNames = $user->roles->pluck('name')->toArray();
+
+        if (in_array('Super Admin', $roleNames) || in_array('Admin', $roleNames)) {
+            return $query;
+        }
+
+        $departmentNames = optional($user->employee)->departments
+            ? $user->employee->departments->pluck('name')->toArray()
+            : [];
+
+        $isHR = in_array('Human Resource', $departmentNames);
+
+        if ($isHR) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('category', '!=', 'employee')
+            ->orWhere('employee_id', optional($user->employee)->id);
+        });
+    }
+
+    private function refreshDocuments(): void
+    {
+        $this->folders = $this->category === 'all'
+            ? collect()
+            : Folder::where('category', $this->category)->latest()->get();
+        
+        $this->documents = $this->applyDocumentVisibility($this->baseDocumentsQuery())->latest()->paginate($this->perPage);
+    }
+
+    private function resetInputFields(): void
+    {
+        $this->title = '';
+        $this->document_id = '';
+        $this->folder_title = '';
+        $this->folder_id = '';
+        $this->selectedFolder = '';
+        $this->file = null;
+        $this->filename = '';
+        $this->expires_at = '';
+        $this->rand = rand();
+    }
+
+    public function setFolder($id): void
+    {
+        if ($id == $this->selectedFolder) {
+            $this->selectedFolder = $this->is_open ? null : $id;
+            $this->is_open = !$this->is_open;
+        } else {
+            $this->selectedFolder = $id;
+            $this->is_open = true;
         }
     }
 
-    public function showDocumentDelete($id){
+    public function updatedSelectedFolder($selectedFolderId): void
+    {
+        $this->selectedFolder = $selectedFolderId;
+        $this->refreshDocuments();
+    }
+
+    public function showDocumentDelete($id): void
+    {
         $this->document_id = $id;
         $this->document = Document::find($id);
         $this->dispatchBrowserEvent('show-documentDeleteModal');
     }
-    
-    public function deleteDocument(){
 
-        $this->document->delete();
+    public function deleteDocument(): void
+    {
+        if ($this->document) {
+            $this->document->delete();
+        }
+
         $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Document Deleted Successfully Successfully!!"
+        $this->refreshDocuments();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Document Deleted Successfully!!',
         ]);
         $this->dispatchBrowserEvent('hide-documentDeleteModal');
     }
 
-    public function showFolderDelete($id){
+    public function showFolderDelete($id): void
+    {
         $this->folder_id = $id;
         $this->folder = Folder::find($id);
         $this->dispatchBrowserEvent('show-folderDeleteModal');
     }
-    public function deleteFolder(){
-        $documents = $this->folder->documents;
-        if (isset($documents)) {
-            foreach ($documents as $document) {
-                $document->delete();
-            }
+
+    public function deleteFolder(): void
+    {
+        if ($this->folder) {
+            $this->folder->documents()->delete();
+            $this->folder->delete();
         }
-        $this->folder->delete();
+
         $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Folder Deleted Successfully Successfully!!"
+        $this->refreshDocuments();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Folder Deleted Successfully!!',
         ]);
         $this->dispatchBrowserEvent('hide-folderDeleteModal');
     }
-    public function showFolder(){
+
+    public function showFolder(): void
+    {
         $this->dispatchBrowserEvent('show-folderModal');
     }
 
-    public function storeFolder(){
-        // try{
-
-            $folder = new Folder;
-            $folder->user_id = Auth::user()->id;
-            $folder->category = $this->category;
-            $folder->title = $this->folder_title;
-            $folder->save();
-
-            $this->folder_id = $folder->id;
-
-            $this->dispatchBrowserEvent('hide-folderModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Folder Created Successfully!!"
+    public function storeFolder(): void
+    {
+        if ($this->category === 'all') {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Folders can only be created from a specific module.',
             ]);
+            return;
+        }
 
-        // }catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while creating folder!!"
-        //     ]);
-        // }
-    }
-   
-    public function updateFolder(){
-        // try{
+        $this->validateOnly('folder_title', [
+            'folder_title' => 'required|string|max:255',
+        ]);
 
-            $folder = Folder::find($this->folder_id);
-            $folder->user_id = Auth::user()->id;
-            $folder->category = $this->category;
-            $folder->title = $this->folder_title;
-            $folder->update();
+        $folder = Folder::create([
+            'user_id' => Auth::id(),
+            'category' => $this->category,
+            'title' => $this->folder_title,
+        ]);
 
-            $this->dispatchBrowserEvent('hide-folderEditModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Folder Updated Successfully!!"
-            ]);
+        $this->folder_id = $folder->id;
+        $this->dispatchBrowserEvent('hide-folderModal');
+        $this->resetInputFields();
+        $this->refreshDocuments();
 
-        // }catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while updating folder!!"
-        //     ]);
-        // }
-    }
-    public function store(){
-        // try{
-
-            if(isset($this->file)){
-                $file = $this->file;
-                // get file with ext
-                $fileNameWithExt = $file->getClientOriginalName();
-                //get filename
-                $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                //get extention
-                $extention = $file->getClientOriginalExtension();
-                //file name to store
-                $fileNameToStore= $filename.'_'.time().'.'.$extention;
-                $file->storeAs('/documents', $fileNameToStore, 'my_files');
-            }
-            $document = new Document;
-
-            if (isset($this->customer)) {
-                $document->customer_id = $this->customer->id;
-            }
-            elseif (isset($this->employee)) {
-                $document->employee_id = $this->employee->id;
-            }
-            elseif (isset($this->retread)) {
-                $document->retread_id = $this->retread->id;
-            }
-            elseif (isset($this->application)) {
-                $document->application_id = $this->application->id;
-            }
-            elseif (isset($this->trip)) {
-                $document->trip_id = $this->trip->id;
-            }
-            elseif (isset($this->route)) {
-                $document->route_id = $this->route->id;
-            }
-            elseif (isset($this->truck_stop)) {
-                $document->truck_stop_id = $this->truck_stop->id;
-            }
-            elseif (isset($this->department)) {
-                $document->department_id = $this->department->id;
-            }
-            elseif (isset($this->bill)) {
-                $document->bill_id = $this->bill->id;
-            }
-            elseif (isset($this->consignee)) {
-                $document->consignee_id = $this->consignee->id;
-            }
-            elseif (isset($this->offloading_point)) {
-                $document->offloading_point_id = $this->offloading_point->id;
-            }
-            elseif (isset($this->waste_disposal)) {
-                $document->waste_disposal_id = $this->waste_disposal->id;
-            }
-            elseif (isset($this->waste_collection)) {
-                $document->waste_collection_id = $this->waste_collection->id;
-            }
-            elseif (isset($this->loading_point)) {
-                $document->loading_point_id = $this->loading_point->id;
-            }
-            elseif (isset($this->incident)) {
-                $document->incident_id = $this->incident->id;
-            }
-            elseif (isset($this->recovery)) {
-                $document->recovery_id = $this->recovery->id;
-            }
-            elseif (isset($this->horse)) {
-                $document->horse_id = $this->horse->id;
-            }
-            elseif (isset($this->training)) {
-                $document->training_id = $this->training->id;
-            }
-            elseif (isset($this->ticket)) {
-                $document->ticket_id = $this->ticket->id;
-            }
-            elseif (isset($this->trailer)) {
-                $document->trailer_id = $this->trailer->id;
-            }
-            elseif (isset($this->requisition)) {
-                $document->requisition_id = $this->requisition->id;
-            }
-            elseif (isset($this->vehicle)) {
-                $document->vehicle_id = $this->vehicle->id;
-            }
-            elseif (isset($this->cash_flow)) {
-                $document->cash_flow_id = $this->cash_flow->id;
-            }
-            elseif (isset($this->company)) {
-                $document->company_id = $this->company->id;
-            }
-            elseif (isset($this->payment)) {
-                $document->payment_id = $this->payment->id;
-            }
-            elseif (isset($this->purchase)) {
-                $document->purchase_id = $this->purchase->id;
-            }
-            elseif (isset($this->asset)) {
-                $document->asset_id = $this->asset->id;
-            }
-            elseif (isset($this->inventory)) {
-                $document->inventory_id = $this->inventory->id;
-            }
-            elseif (isset($this->tyre)) {
-                $document->tyre_id = $this->tyre->id;
-            }
-            elseif (isset($this->transporter)) {
-                $document->transporter_id = $this->transporter->id;
-            }
-            elseif (isset($this->agent)) {
-                $document->agent_id = $this->agent->id;
-            }
-            elseif (isset($this->clearing_agent)) {
-                $document->clearing_agent_id = $this->clearing_agent->id;
-            }
-            elseif (isset($this->broker)) {
-                $document->broker_id = $this->broker->id;
-            }
-            elseif (isset($this->vendor)) {
-                $document->vendor_id = $this->vendor->id;
-            }
-            $document->title = $this->title;
-
-            if (isset($fileNameToStore)) {
-                $document->filename = $fileNameToStore;
-            }
-            if(isset($this->expires_at)){
-                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
-                $today = now()->toDateTimeString();
-                $expire = Carbon::create($this->expires_at)->toDateTimeString();
-                if ($today <=  $expire) {
-                    $document->status = 1;
-                }else{
-                    $document->status = 0;
-                }
-            }else {
-                $document->status = 1;
-              }
-            $document->category = $this->category;
-            $document->folder_id = $this->folder_id;
-            $document->user_id = Auth::user()->id;
-            $document->save();
-
-          
-
-            $this->dispatchBrowserEvent('hide-documentModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Document(s) Uploaded Successfully!!"
-            ]);
-
-        // }catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while uploading document(s)!!"
-        //     ]);
-        // }
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Folder Created Successfully!!',
+        ]);
     }
 
-    public function editFolder($id){
+    public function editFolder($id): void
+    {
         $folder = Folder::find($id);
+
+        if (!$folder) {
+            return;
+        }
+
         $this->category = $folder->category;
         $this->folder_title = $folder->title;
         $this->folder_id = $folder->id;
 
         $this->dispatchBrowserEvent('show-folderEditModal');
+    }
 
+    public function updateFolder(): void
+    {
+        $this->validateOnly('folder_title', [
+            'folder_title' => 'required|string|max:255',
+        ]);
+
+        $folder = Folder::find($this->folder_id);
+
+        if (!$folder) {
+            return;
         }
 
-    public function edit($id){
+        $folder->update([
+            'user_id' => Auth::id(),
+            'category' => $this->category,
+            'title' => $this->folder_title,
+        ]);
 
+        $this->dispatchBrowserEvent('hide-folderEditModal');
+        $this->resetInputFields();
+        $this->refreshDocuments();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Folder Updated Successfully!!',
+        ]);
+    }
+
+    public function store(): void
+    {
+        if ($this->category === 'all') {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Documents can only be uploaded from a specific module.',
+            ]);
+            return;
+        }
+
+        $this->validate();
+
+        $fileNameToStore = null;
+
+        if ($this->file) {
+            $fileNameToStore = $this->storeUploadedFile();
+        }
+
+        $document = new Document;
+        $this->assignCurrentCategoryToDocument($document);
+
+        $document->title = $this->title;
+        $document->filename = $fileNameToStore;
+        $document->expires_at = $this->expires_at ? Carbon::parse($this->expires_at)->toDateTimeString() : null;
+        $document->status = $this->calculateStatus($this->expires_at);
+        $document->category = $this->category;
+        $document->folder_id = $this->folder_id ?: null;
+        $document->user_id = Auth::id();
+        $document->save();
+
+        $this->dispatchBrowserEvent('hide-documentModal');
+        $this->resetInputFields();
+        $this->refreshDocuments();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Document(s) Uploaded Successfully!!',
+        ]);
+    }
+
+    public function edit($id): void
+    {
         $document = Document::find($id);
-        $this->user_id = $document->user_id;
-        $this->purchase_id = $document->purchase_id;
-        $this->asset_id = $document->asset_id;
-        $this->inventory_id = $document->inventory_id;
-        $this->tyre_id = $document->tyre_id;
-        $this->customer_id = $document->customer_id;
-        $this->folder_id = $document->folder_id;
-        $this->offloading_point_id = $document->offloading_point_id;
-        $this->waste_disposal_id = $document->waste_disposal_id;
-        $this->waste_collection_id = $document->waste_collection_id;
-        $this->loading_point_id = $document->loading_point_id;
-        $this->recovery_id = $document->recovery_id;
-        $this->department_id = $document->department_id;
-        $this->trip_id = $document->trip_id;
-        $this->consignee_id = $document->consignee_id;
-        $this->payment_id = $document->payment_id;
-        $this->route_id = $document->route_id;
-        $this->bill_id = $document->bill_id;
-        $this->retread_id = $document->retread_id;
-        $this->application_id = $document->application_id;
-        $this->incident_id = $document->incident_id;
-        $this->truck_stop_id = $document->truck_stop_id;
-        $this->company_id = $document->company_id;
-        $this->vehicle_id = $document->vehicle_id;
-        $this->trailer_id = $document->trailer_id;
-        $this->requisition_id = $document->requisition_id;
-        $this->horse_id = $document->horse_id;
-        $this->ticket_id = $document->ticket_id;
-        $this->training_id = $document->training_id;
-        $this->cash_flow_id = $document->cash_flow_id;
-        $this->employee_id = $document->employee_id;
-        $this->vendor_id = $document->vendor_id;
-        $this->broker_id = $document->broker_id;
-        $this->clearing_agent_id = $document->clearing_agent_id;
-        $this->transporter_id = $document->transporter_id;
-        $this->agent_id = $document->agent_id;
-        $this->title = $document->title;
-        $this->expires_at = $document->expiry_date;
-        $this->filename = $document->filename;
+
+        if (!$document) {
+            return;
+        }
+
+        $this->document = $document;
         $this->document_id = $document->id;
+        $this->user_id = $document->user_id;
+        $this->folder_id = $document->folder_id;
+        $this->title = $document->title;
+        $this->filename = $document->filename;
+        $this->expires_at = $document->expires_at ? Carbon::parse($document->expires_at)->format('Y-m-d') : null;
+
+        foreach ($this->categoryMap() as $map) {
+            $column = $map['column'];
+            $this->{$column} = $document->{$column};
+        }
 
         $this->dispatchBrowserEvent('show-documentEditModal');
+    }
 
+    public function update(): void
+    {
+        if (!$this->document_id) {
+            return;
         }
 
-        public function update()
-        {
-            if ($this->document_id) {
-                try{
-                    if(isset($this->file)){
-                        $file = $this->file;
-                        // get file with ext
-                        $fileNameWithExt = $file->getClientOriginalName();
-                        //get filename
-                        $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                        //get extention
-                        $extention = $file->getClientOriginalExtension();
-                        //file name to store
-                        $fileNameToStore= $filename.'_'.time().'.'.$extention;
-                        $file->storeAs('/documents', $fileNameToStore, 'my_files');
+        $this->validate();
 
-                    }
-                $document = Document::find($this->document_id);
-                $document->title = $this->title;
-                $document->folder_id = $this->folder_id;
-                if (isset($fileNameToStore)) {
-                    $document->filename = $fileNameToStore;
-                }
-                if (isset($this->customer_id)) {
-                    $document->customer_id = $this->customer_id;
-                }
-                elseif (isset($this->purchase_id)) {
-                    $document->purchase_id = $this->purchase_id;
-                }
-                elseif (isset($this->truck_stop_id)) {
-                    $document->truck_stop_id = $this->truck_stop_id;
-                }
-                elseif (isset($this->horse_id)) {
-                    $document->horse_id = $this->horse_id;
-                }
-                elseif (isset($this->training_id)) {
-                    $document->training_id = $this->training_id;
-                }
-                elseif (isset($this->ticket_id)) {
-                    $document->ticket_id = $this->ticket_id;
-                }
-                elseif (isset($this->trip_id)) {
-                    $document->trip_id = $this->trip_id;
-                }
-                elseif (isset($this->retread_id)) {
-                    $document->retread_id = $this->retread_id;
-                }
-                elseif (isset($this->application_id)) {
-                    $document->application_id = $this->application_id;
-                }
-                elseif (isset($this->incident_id)) {
-                    $document->incident_id = $this->incident_id;
-                }
-                elseif (isset($this->trailer_id)) {
-                    $document->trailer_id = $this->trailer_id;
-                }
-                elseif (isset($this->consignee_id)) {
-                    $document->consignee_id = $this->consignee_id;
-                }
-                elseif (isset($this->bill_id)) {
-                    $document->bill_id = $this->bill_id;
-                }
-                elseif (isset($this->route_id)) {
-                    $document->route_id = $this->route_id;
-                }
-                elseif (isset($this->loading_point_id)) {
-                    $document->loading_point_id = $this->loading_point_id;
-                }
-                elseif (isset($this->department_id)) {
-                    $document->department_id = $this->department_id;
-                }
-                elseif (isset($this->offloading_point_id)) {
-                    $document->offloading_point_id = $this->offloading_point_id;
-                }
-                elseif (isset($this->waste_disposal_id)) {
-                    $document->waste_disposal_id = $this->waste_disposal_id;
-                }
-                elseif (isset($this->waste_collection_id)) {
-                    $document->waste_collection_id = $this->waste_collection_id;
-                }
-                elseif (isset($this->requisition_id)) {
-                    $document->requisition_id = $this->requisition_id;
-                }
-                elseif (isset($this->vehicle_id)) {
-                    $document->vehicle_id = $this->vehicle_id;
-                }
-                elseif (isset($this->recovery_id)) {
-                    $document->recovery_id = $this->recovery_id;
-                }
-                elseif (isset($this->payment_id)) {
-                    $document->payment_id = $this->payment_id;
-                }
-                elseif (isset($this->asset_id)) {
-                    $document->asset_id = $this->asset_id;
-                }
-                elseif (isset($this->inventory_id)) {
-                    $document->inventory_id = $this->inventory_id;
-                }
-                elseif (isset($this->tyre_id)) {
-                    $document->tyre_id = $this->tyre_id;
-                }
-                elseif (isset($this->cash_flow_id)) {
-                    $document->cash_flow_id = $this->cash_flow_id;
-                }
-                elseif (isset($this->company_id)) {
-                    $document->company_id = $this->company_id;
-                }
-                elseif (isset($this->employee_id)) {
-                    $document->employee_id = $this->employee_id;
-                }
-                elseif (isset($this->clearing_agent_id)) {
-                    $document->clearing_agent_id = $this->clearing_agent_id;
-                }
-                elseif (isset($this->transporter_id)) {
-                    $document->transporter_id = $this->transporter_id;
-                }
-                elseif (isset($this->broker_id)) {
-                    $document->broker_id = $this->broker_id;
-                }
-                elseif (isset($this->vendor_id)) {
-                    $document->vendor_id = $this->vendor_id;
-                }
-                elseif (isset($this->agent_id)) {
-                    $document->agent_id = $this->agent_id;
-                }
-                if(isset($this->expires_at)){
-                    $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
-                    $today = now()->toDateTimeString();
-                    $expire = Carbon::create($this->expires_at)->toDateTimeString();
-                    if ($today <=  $expire) {
-                        $document->status = 1;
-                    }else{
-                        $document->status = 0;
-                    }
-                }
-                $document->update();
+        try {
+            $document = Document::find($this->document_id);
 
-                
-
-                $this->dispatchBrowserEvent('hide-documentEditModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Document Updated Successfully!!"
-                ]);
-            }catch(\Exception $e){
-                // Set Flash Message
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'error',
-                    'message'=>"Something went wrong while updating document(s)!!"
-                ]);
+            if (!$document) {
+                return;
             }
 
+            $document->title = $this->title;
+            $document->folder_id = $this->folder_id ?: null;
+
+            if ($this->file) {
+                $document->filename = $this->storeUploadedFile();
             }
+
+            foreach ($this->categoryMap() as $map) {
+                $column = $map['column'];
+                if (!empty($this->{$column})) {
+                    $document->{$column} = $this->{$column};
+                }
+            }
+
+            $document->expires_at = $this->expires_at ? Carbon::parse($this->expires_at)->toDateTimeString() : null;
+            $document->status = $this->calculateStatus($this->expires_at);
+            $document->update();
+
+            $this->dispatchBrowserEvent('hide-documentEditModal');
+            $this->resetInputFields();
+            $this->refreshDocuments();
+
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'success',
+                'message' => 'Document Updated Successfully!!',
+            ]);
+        } catch (\Throwable $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Something went wrong while updating document(s)!!',
+            ]);
+        }
+    }
+
+    private function storeUploadedFile(): string
+    {
+        $fileNameWithExt = $this->file->getClientOriginalName();
+        $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+        $extension = $this->file->getClientOriginalExtension();
+        $fileNameToStore = $filename . '_' . time() . '.' . $extension;
+
+        $this->file->storeAs('/documents', $fileNameToStore, 'my_files');
+
+        return $fileNameToStore;
+    }
+
+    private function assignCurrentCategoryToDocument(Document $document): void
+    {
+        $map = $this->categoryMap()[$this->category] ?? null;
+
+        if ($map) {
+            $document->{$map['column']} = $this->item_id;
+        }
+    }
+
+    private function calculateStatus($expiresAt): int
+    {
+        if (!$expiresAt) {
+            return 1;
         }
 
+        return Carbon::parse($expiresAt)->endOfDay()->isPast() ? 0 : 1;
+    }
 
     public function render()
     {
-        if ($this->category == "customer") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('customer_id', $this->customer->id)->latest()->get();
-        }elseif ($this->category == "agent") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('agent_id', $this->agent->id)->latest()->get();
-        }elseif ($this->category == "purchase") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('purchase_id', $this->purchase->id)->latest()->get();
-        }elseif ($this->category == "transporter") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('transporter_id', $this->transporter->id)->latest()->get();
-        }  
-        elseif ($this->category == "employee") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('employee_id', $this->employee->id)->latest()->get();
-        }
-        elseif ($this->category == "trip") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('trip_id', $this->trip->id)->latest()->get();
-        }
-        elseif ($this->category == "retread") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('retread_id', $this->retread->id)->latest()->get();
-        }
-        elseif ($this->category == "application") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('application_id', $this->application->id)->latest()->get();
-        }
-        elseif ($this->category == "bill") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('bill_id', $this->bill->id)->latest()->get();
-        }
-        elseif ($this->category == "consignee") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('consignee_id', $this->consignee->id)->latest()->get();
-        }
-        elseif ($this->category == "department") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('department_id', $this->department->id)->latest()->get();
-        }
-        elseif ($this->category == "incident") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('incident_id', $this->incident->id)->latest()->get();
-        }
-        elseif ($this->category == "loading_point") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('loading_point_id', $this->loading_point->id)->latest()->get();
-        }
-        elseif ($this->category == "offloading_point") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('offloading_point_id', $this->offloading_point->id)->latest()->get();
-        }
-        elseif ($this->category == "waste_disposal") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('waste_disposal_id', $this->waste_disposal->id)->latest()->get();
-        }
-        elseif ($this->category == "waste_collection") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('waste_collection_id', $this->waste_collection->id)->latest()->get();
-        }
-        elseif ($this->category == "truck_stop") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('truck_stop_id', $this->truck_stop->id)->latest()->get();
-        }
-        elseif ($this->category == "route") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('route_id', $this->route->id)->latest()->get();
-        }
-        elseif ($this->category == "cash_flow") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('cash_flow_id', $this->cash_flow->id)->latest()->get();
-        }
-        elseif ($this->category == "recovery") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('recovery_id', $this->recovery->id)->latest()->get();
-        }
-        elseif ($this->category == "company") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('company_id', $this->company->id)->latest()->get();
-        }
-        elseif ($this->category == "payment") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('payment_id', $this->payment->id)->latest()->get();
-        }
-        elseif ($this->category == "asset") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('asset_id', $this->asset->id)->latest()->get();
-        }
-        elseif ($this->category == "inventory") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('inventory_id', $this->inventory->id)->latest()->get();
-        }
-        elseif ($this->category == "tyre") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('tyre_id', $this->tyre->id)->latest()->get();
-        }
-        elseif ($this->category == "horse") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('horse_id', $this->horse->id)->latest()->get();
-        }
-        elseif ($this->category == "ticket") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('ticket_id', $this->ticket->id)->latest()->get();
-        }
-        elseif ($this->category == "training") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('training_id', $this->training->id)->latest()->get();
-        }
-        elseif ($this->category == "trailer") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('trailer_id', $this->trailer->id)->latest()->get();
-        }
-        elseif ($this->category == "requisition") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('requisition_id', $this->requisition->id)->latest()->get();
-        }
-        elseif ($this->category == "vehicle") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('vehicle_id', $this->vehicle->id)->latest()->get();
-        }
-        elseif ($this->category == "vendor") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('vendor_id', $this->vendor->id)->latest()->get();
-        }
-        elseif ($this->category == "broker") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('broker_id', $this->broker->id)->latest()->get();
-        }
-        elseif ($this->category == "clearing_agent") {
-            $this->folders = Folder::where('category', $this->category)->latest()->get();
-            $this->documents = Document::where('category', $this->category)
-            ->where('clearing_agent_id', $this->clearing_agent->id)->latest()->get();
-        }
-     
-        return view('livewire.documents.index',[
-            'documents'=> $this->documents,
-            'folders'=> $this->folders
+        $this->refreshDocuments();
+
+        return view('livewire.documents.index', [
+            'documents' => $this->documents,
+            'folders' => $this->folders,
         ]);
     }
 }

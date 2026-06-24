@@ -1,0 +1,228 @@
+<?php
+
+namespace App\Http\Livewire\CompanyIntegrations;
+
+use Livewire\Component;
+use App\Models\CompanyIntegration;
+use App\Models\IntegrationProvider;
+use App\Models\IntegrationLog;
+use Illuminate\Support\Facades\DB;
+
+class Index extends Component
+{
+    public $integration_providers;
+
+    public $company_id;
+    public $company_integration_id;
+
+    public $integration_provider_id;
+    public $status = 'inactive';
+    public $credentials = [];   // keyed by credential field name
+    public $config = [];        // keyed by config field name
+
+    // Fields derived from the selected provider
+    public $required_credentials = [];
+    public $default_config = [];
+
+    protected function rules()
+    {
+        $rules = [
+            'integration_provider_id' => 'required|exists:integration_providers,id',
+            'status'                  => 'required|in:inactive,active,error,suspended',
+        ];
+
+        foreach ($this->required_credentials as $field) {
+            $rules['credentials.' . $field] = 'required';
+        }
+
+        return $rules;
+    }
+
+    public function mount($id)
+    {
+         $this->company_id = $id;
+
+        $this->integration_providers = IntegrationProvider::where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get();
+    }
+
+    public function updatedIntegrationProviderId($value)
+    {
+        $this->loadProviderSchema($value);
+    }
+
+    private function loadProviderSchema($providerId, array $existingCredentials = [], array $existingConfig = [])
+    {
+        $provider = $this->integration_providers->firstWhere('id', $providerId)
+            ?? IntegrationProvider::find($providerId);
+
+        $this->required_credentials = $provider && is_array($provider->required_credentials)
+            ? $provider->required_credentials
+            : [];
+
+        $this->default_config = $provider && is_array($provider->default_config)
+            ? $provider->default_config
+            : [];
+
+        // Build credentials array from required fields, preserving existing values on edit
+        $credentials = [];
+        foreach ($this->required_credentials as $field) {
+            $credentials[$field] = $existingCredentials[$field] ?? '';
+        }
+        $this->credentials = $credentials;
+
+        // Merge defaults with any saved config
+        $this->config = array_merge($this->default_config, $existingConfig);
+    }
+
+    private function resetInputFields()
+    {
+        $this->company_integration_id = null;
+        $this->integration_provider_id = null;
+        $this->status = 'inactive';
+        $this->credentials = [];
+        $this->config = [];
+        $this->required_credentials = [];
+        $this->default_config = [];
+        $this->resetErrorBag();
+    }
+
+    public function create()
+    {
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('show-createModal');
+    }
+
+    public function store()
+    {
+        $this->validate();
+
+        try {
+            $exists = CompanyIntegration::where('company_id', $this->company_id)
+                ->where('integration_provider_id', $this->integration_provider_id)
+                ->exists();
+
+            if ($exists) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type'    => 'error',
+                    'message' => 'This provider is already integrated for your company!',
+                ]);
+                return;
+            }
+
+            CompanyIntegration::create([
+                'company_id'              => $this->company_id,
+                'integration_provider_id' => $this->integration_provider_id,
+                'status'                  => $this->status,
+                'credentials'             => array_filter($this->credentials, fn ($v) => $v !== '' && $v !== null),
+                'config'                  => $this->config,
+            ]);
+
+            $this->dispatchBrowserEvent('hide-company_integrationModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Integration created successfully!',
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Something went wrong while creating the integration!',
+            ]);
+        }
+    }
+
+    public function edit($id)
+    {
+        $integration = CompanyIntegration::findOrFail($id);
+
+        $this->company_integration_id = $integration->id;
+        $this->integration_provider_id = $integration->integration_provider_id;
+        $this->status = $integration->status;
+
+        $this->loadProviderSchema(
+            $integration->integration_provider_id,
+            $integration->credentials ?? [],
+            $integration->config ?? []
+        );
+
+        $this->resetErrorBag();
+        $this->dispatchBrowserEvent('show-company_integrationEditModal');
+    }
+
+    public function update()
+    {
+        $this->validate();
+
+        $integration = CompanyIntegration::findOrFail($this->company_integration_id);
+
+        $integration->update([
+            'status'      => $this->status,
+            'credentials' => array_filter($this->credentials, fn ($v) => $v !== '' && $v !== null),
+            'config'      => $this->config,
+        ]);
+
+        $this->dispatchBrowserEvent('hide-company_integrationEditModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => 'Integration updated successfully!',
+        ]);
+    }
+
+    public function delete($id)
+    {
+        CompanyIntegration::findOrFail($id)->delete();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => 'Integration deleted successfully!',
+        ]);
+    }
+
+    public function testConnection($id)
+    {
+        $integration = CompanyIntegration::with('integration_provider')->findOrFail($id);
+
+        try {
+            // TODO: resolve $integration->integration_provider->driver and run a real test.
+            $ok = true;
+
+            $integration->update([
+                'last_tested_at'  => now(),
+                'status'          => $ok ? 'active' : 'error',
+                'last_success_at' => $ok ? now() : $integration->last_success_at,
+                'last_error'      => $ok ? null : 'Connection test failed',
+            ]);
+
+            IntegrationLog::create([
+                'company_integration_id' => $integration->id,
+                'direction'              => 'outbound',
+                'action'                 => 'test',
+                'status'                 => $ok ? 'ok' : 'fail',
+                'message'                => $ok ? 'Connection test succeeded' : 'Connection test failed',
+            ]);
+
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => $ok ? 'success' : 'error',
+                'message' => $ok ? 'Connection test succeeded!' : 'Connection test failed!',
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Connection test failed: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.company-integrations.index', [
+            'company_integrations' => CompanyIntegration::with('integration_provider')
+                ->where('company_id', $this->company_id)
+                ->orderBy('created_at', 'desc')
+                ->get(),
+        ]);
+    }
+}

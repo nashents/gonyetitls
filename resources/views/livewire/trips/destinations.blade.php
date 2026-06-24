@@ -14,6 +14,8 @@
                 <tr>
                     <th class="th-sm" style="width: 20%">AddedBy
                     </th>
+                    <th class="th-sm" style="width: 20%">Shipment
+                    </th>
                     <th class="th-sm" style="width: 15%">Date
                     </th>
                     <th class="th-sm">To
@@ -46,7 +48,21 @@
                             <br>
                             <small><strong>On: </strong> {{ date('d M, Y', strtotime($trip_destination->created_at)) }}</small>
                         </td>
-                        <td>{{$trip_destination->offloading_date}}</td>
+                        <td>
+                            <small>
+                                <strong>TO#:</strong>{{$trip_destination->trip_transport_order->transport_order?->transport_order_number}} 
+                                <br>
+                                <strong>TTO#:</strong>{{$trip_destination->trip_transport_order?->id}}
+                            </small>
+                            
+                        </td>
+                        <td>
+                            @if ($trip_destination->offloading_date)
+                                {{$trip_destination->offloading_date}}
+                            @else
+                                {{$trip_destination->trip_transport_order?->delivery_note?->offloaded_date}}
+                            @endif
+                        </td>
                         <td>
                             @if ($trip_destination->destination)
                                 {{$trip_destination->destination->country ? $trip_destination->destination->country->name : ""}} {{$trip_destination->destination ? $trip_destination->destination->city : ""}}        
@@ -91,7 +107,8 @@
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        @if ($trip_destination->user_id == Auth::user()->id)
+                                        
+                                        @if ($trip->authorization == "approved" && $trip_destination->user_id == Auth::user()->id)
                                         <li><a href="#" wire:click="edit({{$trip_destination->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                         <li><a href="#" data-toggle="modal" data-target="#trip_destinationDeleteModal{{$trip_destination->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                         @endif

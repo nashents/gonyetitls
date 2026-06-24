@@ -17,16 +17,13 @@ class CreateCompanyIntegrationsTable extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('integration_provider_id')->constrained('integration_providers')->cascadeOnDelete();
-
             $table->string('status')->default('inactive'); // inactive|active|error|suspended
             $table->json('credentials')->nullable(); // ENCRYPTED cast
             $table->json('config')->nullable();
-
             $table->timestamp('last_tested_at')->nullable();
             $table->timestamp('last_success_at')->nullable();
             $table->timestamp('last_sync_at')->nullable();
             $table->text('last_error')->nullable();
-
             $table->timestamps();
             $table->softDeletes();
 

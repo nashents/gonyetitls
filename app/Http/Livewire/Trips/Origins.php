@@ -98,27 +98,31 @@ class Origins extends Component
 
                 foreach ($this->destination_id as $key => $destinationId) {
 
+                    $loadingPointId = $this->loading_point_id[$key] ?? null;
+
                     // Skip empty rows
-                    if (blank($destinationId) && blank($this->loading_point_id[$key] ?? null)) {
+                    if (blank($destinationId) && blank($loadingPointId)) {
                         continue;
                     }
 
-                    $rows[] = [
-                        'user_id'             => Auth::id(),
-                        'trip_id'             => $this->trip_id ?: null,
-                        'loading_date'        => $this->loading_date[$key] ?? null,
-                        'loading_point_id'    => $this->loading_point_id[$key] ?? null,
-                        'destination_id'      => $destinationId ?: null,
-                        'weight'              => $this->weight[$key] ?? null,
-                        'quantity'            => $this->quantity[$key] ?? null,
-                        'units_of_measure_id' => $this->units_of_measure_id[$key] ?? null,
-                        'litreage'            => $this->litreage[$key] ?? null,
-                        'litreage_at_20'      => $this->litreage_at_20[$key] ?? null,
-                        'rate'                => $this->rate[$key] ?? null,
-                        'freight'             => $this->freight[$key] ?? null,
-                        'created_at'          => now(),
-                        'updated_at'          => now(),
-                    ];
+                    TripOrigin::updateOrCreate(
+                        [
+                            'trip_id'           => $this->trip_id ?: null,
+                            'loading_point_id'  => $loadingPointId ?: null,
+                            'destination_id'    => $destinationId ?: null,
+                        ],
+                        [
+                            'user_id'             => Auth::id(),
+                            'loading_date'        => $this->loading_date[$key] ?? null,
+                            'weight'              => $this->weight[$key] ?? null,
+                            'quantity'            => $this->quantity[$key] ?? null,
+                            'units_of_measure_id' => $this->units_of_measure_id[$key] ?? null,
+                            'litreage'            => $this->litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->litreage_at_20[$key] ?? null,
+                            'rate'                => $this->rate[$key] ?? null,
+                            'freight'             => $this->freight[$key] ?? null,
+                        ]
+                    );
                 }
             }
 
@@ -159,7 +163,7 @@ class Origins extends Component
         $this->rate    = $tripOrigin->rate;
         $this->freight = $tripOrigin->freight;
 
-        $this->dispatchBrowserEvent('show-trip_originEditModal');
+        $this->dispatchBrowserEvent('show-updateModal');
     }
 
     public function update()
@@ -180,21 +184,24 @@ class Origins extends Component
 
         DB::transaction(function () {
 
-            $tripOrigin = TripOrigin::with('trip.delivery_note')
-                ->findOrFail($this->trip_origin_id);
-
-            $tripOrigin->update([
-                'destination_id'        => $this->destination_id ?: null,
-                'loading_point_id'      => $this->loading_point_id ?: null,
-                'units_of_measure_id'   => $this->units_of_measure_id ?: null,
-                'loading_date'          => $this->loading_date ?: null,
-                'weight'                => $this->weight ?: null,
-                'quantity'              => $this->quantity ?: null,
-                'litreage'              => $this->litreage ?: null,
-                'litreage_at_20'        => $this->litreage_at_20 ?: null,
-                'rate'                  => $this->rate ?: null,
-                'freight'               => $this->freight ?: null,
-            ]);
+           $tripOrigin =  TripOrigin::updateOrCreate(
+            [
+                'id' => $this->trip_origin_id,
+            ],
+            [
+                'trip_id'              => $this->trip_id,
+                'destination_id'       => $this->destination_id ?: null,
+                'loading_point_id'     => $this->loading_point_id ?: null,
+                'units_of_measure_id'  => $this->units_of_measure_id ?: null,
+                'loading_date'         => $this->loading_date ?: null,
+                'weight'               => $this->weight ?: null,
+                'quantity'             => $this->quantity ?: null,
+                'litreage'             => $this->litreage ?: null,
+                'litreage_at_20'       => $this->litreage_at_20 ?: null,
+                'rate'                 => $this->rate ?: null,
+                'freight'              => $this->freight ?: null,
+            ]
+        );
 
             $deliveryNote = optional($tripOrigin->trip)->delivery_note;
 
@@ -202,7 +209,7 @@ class Origins extends Component
                 $this->recalculateLoadedDeliveryNoteTotals($tripOrigin->trip, $deliveryNote);
             }
 
-            $this->dispatchBrowserEvent('hide-trip_originEditModal');
+            $this->dispatchBrowserEvent('hide-updateModal');
 
             $this->resetInputFields();
 
@@ -211,6 +218,24 @@ class Origins extends Component
                 'message' => 'Loading point updated successfully.',
             ]);
         });
+    }
+
+    public function delete($id){
+        $this->trip_origin_id = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+
+    public function destroy(){
+
+        $origin = TripOrigin::find($this->trip_origin_id);
+        $origin->delete();
+
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => 'Loading Point Deleted Successfully!!',
+        ]);
+
     }
 
     private function recalculateLoadedDeliveryNoteTotals($trip, $deliveryNote)

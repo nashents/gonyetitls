@@ -15,7 +15,7 @@ class CompanyIntegrationController extends Controller
      */
     public function index()
     {
-        //
+        return view('company_integrations.index');
     }
 
     /**
