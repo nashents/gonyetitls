@@ -11,6 +11,7 @@ use App\Models\Trip;
 use App\Models\TripStatus;
 use App\Models\TripTransportOrder;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -115,6 +116,11 @@ class TripStatusManager extends Component
     // OPEN MODAL
     // ─────────────────────────────────────────────────────────────────────────
 
+    private function toDateTimeLocal($value): ?string
+    {
+        return $value ? Carbon::parse($value)->format('Y-m-d\TH:i') : null;
+    }
+
     public function status(int $id): void
     {
         $trip = Trip::withTrashed()
@@ -140,7 +146,7 @@ class TripStatusManager extends Component
             ?->freight_calculation 
         ?: '';
         $this->calculation_measurement    = $trip->calculation_measurement ?? '';
-        $this->trip_status_date           = $trip->trip_status_date;
+        $this->trip_status_date = $this->toDateTimeLocal($trip->trip_status_date);
         $this->trip_status_description    = $trip->trip_status_description;
         $this->customer_updates           = (bool) ($trip->customer_updates ?? false);
         $this->ending_mileage             = $this->toFloat($trip->ending_mileage);
@@ -225,7 +231,7 @@ class TripStatusManager extends Component
                 'delivery_note_id'              => $dn->id,
                 'units_of_measure_id'           => $this->toInt($dn->units_of_measure_id),
                 'distance'                      => $this->toFloat($dn->distance),
-                'loaded_date'                   => $dn->loaded_date,
+                'loaded_date'                   => $this->toDateTimeLocal($dn->loaded_date),
                 'loaded_quantity'               => $this->toFloat($dn->loaded_quantity),
                 'loaded_litreage'               => $this->toFloat($dn->loaded_litreage),
                 'loaded_litreage_at_20'         => $this->toFloat($dn->loaded_litreage_at_20),
@@ -234,7 +240,7 @@ class TripStatusManager extends Component
                 'loaded_freight'                => $this->toFloat($dn->loaded_freight),
                 'transporter_loaded_rate'       => $this->toFloat($dn->transporter_loaded_rate),
                 'transporter_loaded_freight'    => $this->toFloat($dn->transporter_loaded_freight),
-                'offloaded_date'                => $dn->offloaded_date,
+                'offloaded_date'                => $this->toDateTimeLocal($dn->offloaded_date),
                 'offloaded_quantity'            => $this->toFloat($dn->offloaded_quantity)       ?? $this->toFloat($destinationTotals['quantity']),
                 'offloaded_litreage'            => $this->toFloat($dn->offloaded_litreage)       ?? $this->toFloat($destinationTotals['litreage']),
                 'offloaded_litreage_at_20'      => $this->toFloat($dn->offloaded_litreage_at_20) ?? $this->toFloat($destinationTotals['litreage_at_20']),
@@ -282,7 +288,7 @@ class TripStatusManager extends Component
         $this->legacy_delivery_note_id    = $dn->id;
         $this->units_of_measure_id        = $this->toInt($dn->units_of_measure_id);
         $this->distance                   = $this->toFloat($dn->distance);
-        $this->loaded_date                = $dn->loaded_date;
+        $this->loaded_date                = $this->toDateTimeLocal($dn->loaded_date);;
         $this->loaded_quantity            = $this->toFloat($dn->loaded_quantity);
         $this->loaded_litreage            = $this->toFloat($dn->loaded_litreage);
         $this->loaded_litreage_at_20      = $this->toFloat($dn->loaded_litreage_at_20);
@@ -291,7 +297,7 @@ class TripStatusManager extends Component
         $this->loaded_freight             = $this->toFloat($dn->loaded_freight);
         $this->transporter_loaded_rate    = $this->toFloat($dn->transporter_loaded_rate);
         $this->transporter_loaded_freight = $this->toFloat($dn->transporter_loaded_freight);
-        $this->offloaded_date             = $dn->offloaded_date;
+        $this->offloaded_date             = $this->toDateTimeLocal($dn->offloaded_date);
         $this->offloaded_quantity         = $this->toFloat($dn->offloaded_quantity);
         $this->offloaded_litreage         = $this->toFloat($dn->offloaded_litreage);
         $this->offloaded_litreage_at_20   = $this->toFloat($dn->offloaded_litreage_at_20);

@@ -1,8 +1,8 @@
 <div>
     <style>
-        .modal-lg {
-        max-width: 80%;
-    }
+        .modal-lg { max-width: 80%; }
+        .workflow-locked { opacity: .55; cursor: not-allowed; }
+        .workflow-hint { display:block; color:#777; margin-top:4px; }
     </style>
         <section class="section">
             <x-loading/>
@@ -83,7 +83,13 @@
     <tbody>
         @forelse ($applications as $application)
             @if ($application->recruitment_candidate)
-                @php $candidate = $application->recruitment_candidate; @endphp
+                @php
+                    $candidate = $application->recruitment_candidate;
+                    $hasQualifications = $candidate->qualifications->count() > 0;
+                    $hasChecks = $candidate->checks->count() > 0;
+                    $hasScores = $candidate->scores->count() > 0;
+                    $hasDecisions = $candidate->decisions->count() > 0;
+                @endphp
                 <tr>
 
                     {{-- Application --}}
@@ -141,9 +147,17 @@
 
                     {{-- Checks --}}
                     <td>
-                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showChecks({{ $candidate->id }})">
-                            <i class="fa fa-plus"></i> Add
-                        </button><br>
+                        @if ($hasQualifications)
+                            <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showChecks({{ $candidate->id }})">
+                                <i class="fa fa-plus"></i> Add
+                            </button>
+                        @else
+                            <button type="button" class="btn btn-default btn-rounded btn-xs mb-1 workflow-locked" disabled title="Add qualifications first">
+                                <i class="fa fa-lock"></i> Locked
+                            </button>
+                            <small class="workflow-hint">Qualifications first</small>
+                        @endif
+                        <br>
                         <small>
                             @forelse ($candidate->checks as $check)
                                 {{ $loop->iteration }}) {{ $check->type }}
@@ -163,9 +177,17 @@
 
                     {{-- Scores --}}
                     <td>
-                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showScores({{ $candidate->id }})">
-                            <i class="fa fa-plus"></i> Add
-                        </button><br>
+                        @if ($hasChecks)
+                            <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showScores({{ $candidate->id }})">
+                                <i class="fa fa-plus"></i> Add
+                            </button>
+                        @else
+                            <button type="button" class="btn btn-default btn-rounded btn-xs mb-1 workflow-locked" disabled title="Complete checks first">
+                                <i class="fa fa-lock"></i> Locked
+                            </button>
+                            <small class="workflow-hint">Checks first</small>
+                        @endif
+                        <br>
                         <small>
                             @forelse ($candidate->scores as $score)
                                 {{ $loop->iteration }}) {{ $score->stage }} &mdash; {{ $score->criterion }}
@@ -185,9 +207,17 @@
 
                     {{-- Decision --}}
                     <td>
-                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
-                            <i class="fa fa-plus"></i> Add
-                        </button><br>
+                        @if ($hasScores)
+                            <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
+                                <i class="fa fa-plus"></i> Add
+                            </button>
+                        @else
+                            <button type="button" class="btn btn-default btn-rounded btn-xs mb-1 workflow-locked" disabled title="Score applicant first">
+                                <i class="fa fa-lock"></i> Locked
+                            </button>
+                            <small class="workflow-hint">Scores first</small>
+                        @endif
+                        <br>
                         <small>
                             @forelse ($candidate->decisions as $decision)
                                 {{ $loop->iteration }}) {{ $decision->stage }}
@@ -800,8 +830,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group" >
-                                    <label for="one" class="radio-label">Criterion</label>
-                                    <select wire:model.debounce.300ms="criterion.0" class="form-control" required>
+                                    <label for="one" class="radio-label">Criterion (Optional)</label>
+                                    <select wire:model.debounce.300ms="criterion.0" class="form-control">
                                         <option value="">Select Option</option>
                                         @foreach ($criterions as $criterion)
                                             <option value="{{$criterion->name}}">{{$criterion->name}}</option>
@@ -814,7 +844,7 @@
                             <div class="col-md-3">
                                 <div class="form">
                                     <div class="form-group">
-                                        <label for="description">Criterion Weight</label>
+                                        <label for="description">Criterion Weight (Optional)</label>
                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.0">
                                         @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
@@ -859,8 +889,8 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group" >
-                                        <label for="one" class="radio-label">Criterion</label>
-                                        <select wire:model.debounce.300ms="criterion.{{$value}}" class="form-control" required>
+                                        <label for="one" class="radio-label">Criterion (Optional)</label>
+                                        <select wire:model.debounce.300ms="criterion.{{$value}}" class="form-control">
                                             <option value="">Select Option</option>
                                             @foreach ($criterions as $criterion)
                                                 <option value="{{$criterion->name}}">{{$criterion->name}}</option>
@@ -873,7 +903,7 @@
                                 <div class="col-md-3">
                                     <div class="form">
                                         <div class="form-group">
-                                            <label for="description">Criterion Weight</label>
+                                            <label for="description">Criterion Weight (Optional)</label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.{{$value}}">
                                             @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>

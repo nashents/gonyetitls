@@ -373,17 +373,17 @@ class Index extends Component
             $publicHolidays = PublicHoliday::whereBetween('date', [
                 $startDate->toDateString(),
                 $endDate->toDateString()
-            ])->pluck('date')
+            ])
+            ->pluck('date')
             ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
         }
 
         $days = 0;
-        $weekendIncluded = false;
+        $weekendCountByWeek = [];
 
         foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
             $currentDate = $date->toDateString();
 
-            // Only skip public holidays when they must be excluded
             if (! $ignore_public_holidays && isset($publicHolidays[$currentDate])) {
                 continue;
             }
@@ -395,9 +395,13 @@ class Index extends Component
             } elseif ($daysCalculation === 'one_weekend_day') {
                 if (! $date->isWeekend()) {
                     $days++;
-                } elseif (! $weekendIncluded) {
-                    $days++;
-                    $weekendIncluded = true;
+                } else {
+                    $weekKey = $date->format('o-W');
+
+                    if (($weekendCountByWeek[$weekKey] ?? 0) < 1) {
+                        $days++;
+                        $weekendCountByWeek[$weekKey] = 1;
+                    }
                 }
             } else {
                 $days++;

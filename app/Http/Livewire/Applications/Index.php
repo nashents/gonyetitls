@@ -3,6 +3,14 @@
 namespace App\Http\Livewire\Applications;
 
 use App\Exports\ApplicationsExport;
+use App\Mail\AccountCreationMail;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\EmployeePosition;
+use App\Models\JobTitle;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Application;
 use App\Models\Check;
 use App\Models\Criterion;
@@ -227,7 +235,20 @@ class Index extends Component
 
 
         protected $rules = [
-            'date' => 'required', 
+            'date' => 'required|date',
+            'job_posting_id' => 'nullable|exists:job_postings,id',
+            'name' => 'required|string|max:255',
+            'surname' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phonenumber' => 'nullable|string|max:50',
+            'dob' => 'nullable|date',
+            'gender' => 'nullable|string|max:50',
+            'idnumber' => 'nullable|string|max:100',
+            'license_number' => 'nullable|string|max:100',
+            'years_experience' => 'nullable|numeric|min:0',
+            'source' => 'nullable|string|max:255',
+            'status' => 'nullable|string|max:100',
+            'notes' => 'nullable|string',
         ];
 
 
@@ -337,6 +358,91 @@ class Index extends Component
             'message'=>"Item Deleted Successfully!!"
         ]);
        
+    }
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Recruitment workflow locks
+    // Flow: Qualifications → Checks → Scores → Decisions → Employee/Driver
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private function candidateOrFail($candidateId): RecruitmentCandidate
+    {
+        return RecruitmentCandidate::with(['qualifications', 'checks', 'scores', 'decisions'])
+            ->findOrFail($candidateId);
+    }
+
+    private function workflowCounts($candidateId): array
+    {
+        return [
+            'qualifications' => RecruitmentQualification::where('candidate_id', $candidateId)->count(),
+            'checks'         => RecruitmentCheck::where('candidate_id', $candidateId)->count(),
+            'scores'         => RecruitmentScore::where('candidate_id', $candidateId)->count(),
+            'decisions'      => RecruitmentDecision::where('candidate_id', $candidateId)->count(),
+        ];
+    }
+
+    private function failWorkflow(string $message): void
+    {
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'error',
+            'message' => $message,
+        ]);
+    }
+
+    private function canAddChecks(RecruitmentCandidate $candidate): bool
+    {
+        return RecruitmentQualification::where('candidate_id', $candidate->id)->exists();
+    }
+
+    private function canAddScores(RecruitmentCandidate $candidate): bool
+    {
+        return $this->canAddChecks($candidate)
+            && RecruitmentCheck::where('candidate_id', $candidate->id)->exists();
+    }
+
+    private function canAddDecisions(RecruitmentCandidate $candidate): bool
+    {
+        return $this->canAddScores($candidate)
+            && RecruitmentScore::where('candidate_id', $candidate->id)->exists();
+    }
+
+    private function assertCanAddChecks(RecruitmentCandidate $candidate): bool
+    {
+        if (! $this->canAddChecks($candidate)) {
+            $this->failWorkflow('Add applicant qualifications before recruitment checks.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function assertCanAddScores(RecruitmentCandidate $candidate): bool
+    {
+        if (! $this->assertCanAddChecks($candidate)) {
+            return false;
+        }
+
+        if (! RecruitmentCheck::where('candidate_id', $candidate->id)->exists()) {
+            $this->failWorkflow('Complete recruitment checks before scoring.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function assertCanAddDecisions(RecruitmentCandidate $candidate): bool
+    {
+        if (! $this->assertCanAddScores($candidate)) {
+            return false;
+        }
+
+        if (! RecruitmentScore::where('candidate_id', $candidate->id)->exists()) {
+            $this->failWorkflow('Score the applicant before making a recruitment decision.');
+            return false;
+        }
+
+        return true;
     }
 
      public function showQualifications($id){
@@ -500,52 +606,22 @@ class Index extends Component
     }
      public function showScores($id){
 
+        $candidate = $this->candidateOrFail($id);
+        if (! $this->assertCanAddScores($candidate)) {
+            return;
+        }
+
         $this->recruitment_candidate_id = $id;
-        
-         // Get qualification IDs already linked to this job title
+
         $existingStages = RecruitmentScore::where('candidate_id', $id)
             ->pluck('stage')
             ->toArray();
 
-        // Fetch only qualifications NOT already assigned
         $this->stages = Stage::whereNotIn('name', $existingStages)
             ->orderBy('name', 'asc')
             ->get();
 
         $this->dispatchBrowserEvent('show-stageModal');
-    }
-
-    public function addScores(){
-        if(isset($this->stage_name)){
-            foreach ($this->stage_name as $key => $name) {
-
-                $stage = $name;
-                $criterion = $this->criterion[$key] ?? Null;
-                $comments = $this->comments[$key] ?? Null;
-                $weight = $this->weight[$key] ?? Null;
-                $score = $this->score[$key] ?? Null;
-
-                $recruitment_score = new RecruitmentScore;
-                $recruitment_score->candidate_id = $this->recruitment_candidate_id;
-                $recruitment_score->scored_by = Auth::user()->id;
-                $recruitment_score->stage = $stage;
-                $recruitment_score->criterion = $criterion;
-                $recruitment_score->weight = $weight;
-                $recruitment_score->score_percent = $score;
-                $recruitment_score->comment = $comments;
-                $recruitment_score->save();
-                  
-                $this->dispatchBrowserEvent('hide-stageModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Recruitment Stages Scored Successfully!!"
-                ]);
-                
-            }
-
-        }
-       
     }
 
       public function showEditScores($id){
@@ -578,15 +654,18 @@ class Index extends Component
                 $weight = $this->current_weight[$key] ?? Null;
                 $score = $this->current_score[$key] ?? Null;
 
-                $recruitment_score = RecruitmentScore::find($score->id);
-                $recruitment_score->candidate_id = $this->recruitment_candidate_id;
-                $recruitment_score->scored_by = Auth::user()->id;
-                $recruitment_score->stage = $stage;
-                $recruitment_score->criterion = $criterion;
-                $recruitment_score->weight = $weight;
-                $recruitment_score->score_percent = $score;
-                $recruitment_score->comment = $comments;
-                $recruitment_score->update();
+                $recruitment_score = RecruitmentScore::find($score?->id);
+                if($recruitment_score){
+                    $recruitment_score->candidate_id = $this->recruitment_candidate_id;
+                    $recruitment_score->scored_by = Auth::user()->id;
+                    $recruitment_score->stage = $stage;
+                    $recruitment_score->criterion = $criterion;
+                    $recruitment_score->weight = $weight;
+                    $recruitment_score->score_percent = $score;
+                    $recruitment_score->comment = $comments;
+                    $recruitment_score->update();
+                }
+                
                    
             }
         }
@@ -624,14 +703,17 @@ class Index extends Component
 
     public function showDecisions($id){
 
+        $candidate = $this->candidateOrFail($id);
+        if (! $this->assertCanAddDecisions($candidate)) {
+            return;
+        }
+
         $this->recruitment_candidate_id = $id;
-        
-         // Get qualification IDs already linked to this job title
+
         $existingDecisions = RecruitmentDecision::where('candidate_id', $id)
             ->pluck('stage')
             ->toArray();
 
-        // Fetch only qualifications NOT already assigned
         $this->stages = Stage::whereNotIn('name', $existingDecisions)
             ->orderBy('name', 'asc')
             ->get();
@@ -641,6 +723,10 @@ class Index extends Component
 
        public function addDecisions(){
 
+        $candidate = $this->candidateOrFail($this->recruitment_candidate_id);
+        if (! $this->assertCanAddDecisions($candidate)) {
+            return;
+        }
 
         if(isset($this->stage_name)){
           
@@ -658,6 +744,8 @@ class Index extends Component
                 $recruitment_decision->decision = $decision;
                 $recruitment_decision->comment = $comments;
                 $recruitment_decision->save();
+
+                $this->applyDecisionToCandidate($this->recruitment_candidate_id, $decision);
                   
                 $this->dispatchBrowserEvent('hide-decisionModal');
                 $this->resetInputFields();
@@ -707,6 +795,7 @@ class Index extends Component
                 $recruitment_decision->decision = $decision;
                 $recruitment_decision->comment = $comments;
                 $recruitment_decision->update();
+                $this->applyDecisionToCandidate($this->recruitment_candidate_id, $decision);
                    
             }
         }
@@ -725,6 +814,7 @@ class Index extends Component
                 $recruitment_decision->decision = $decision;
                 $recruitment_decision->comment = $comments;
                 $recruitment_decision->save();
+                $this->applyDecisionToCandidate($this->recruitment_candidate_id, $decision);
                 
             }
 
@@ -741,14 +831,17 @@ class Index extends Component
  
     public function showChecks($id){
 
+        $candidate = $this->candidateOrFail($id);
+        if (! $this->assertCanAddChecks($candidate)) {
+            return;
+        }
+
         $this->recruitment_candidate_id = $id;
-        
-         // Get qualification IDs already linked to this job title
+
         $existingChecks = RecruitmentCheck::where('candidate_id', $id)
             ->pluck('type')
             ->toArray();
 
-        // Fetch only qualifications NOT already assigned
         $this->checks = Check::whereNotIn('name', $existingChecks)
             ->orderBy('name', 'asc')
             ->get();
@@ -757,6 +850,11 @@ class Index extends Component
     }
 
      public function addChecks(){
+        $candidate = $this->candidateOrFail($this->recruitment_candidate_id);
+        if (! $this->assertCanAddChecks($candidate)) {
+            return;
+        }
+
         if(isset($this->check_name)){
             foreach ($this->check_name as $key => $name) {
 
@@ -976,6 +1074,10 @@ class Index extends Component
             $recruitment_candidate->status = $this->status;
             $recruitment_candidate->notes = $this->notes;
             $recruitment_candidate->update();
+
+            if (in_array($recruitment_candidate->status, ['Contracted', 'Hired'])) {
+                $this->createEmployeeOrDriverFromCandidate($recruitment_candidate);
+            }
         }
 
         $this->dispatchBrowserEvent('hide-applicationEditModal');
@@ -986,6 +1088,185 @@ class Index extends Component
         ]);
         
         });
+    }
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Auto onboarding from recruitment
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private function currentCompany()
+    {
+        return Auth::user()->company ?? Auth::user()->employee?->company;
+    }
+
+    private function companyInitials(): string
+    {
+        $company = $this->currentCompany();
+        $name = trim($company?->name ?? 'Company');
+        $words = preg_split('/\s+/', $name);
+        $initials = '';
+
+        foreach ($words as $word) {
+            if ($word !== '') {
+                $initials .= strtoupper(substr($word, 0, 1));
+            }
+            if (strlen($initials) >= 2) {
+                break;
+            }
+        }
+
+        return $initials ?: 'C';
+    }
+
+    private function generatePIN(): string
+    {
+        return (string) random_int(100000, 999999);
+    }
+
+    private function employeeNumber(): string
+    {
+        $number = (Employee::withTrashed()->max('id') ?? 0) + 1;
+        return $this->companyInitials() . 'EMP' . str_pad($number, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function driverNumber(): string
+    {
+        $number = (Driver::withTrashed()->max('id') ?? 0) + 1;
+        return $this->companyInitials() . 'DR' . str_pad($number, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function isDriverCandidate(RecruitmentCandidate $candidate): bool
+    {
+        $application = Application::with('job_posting.job_title')->find($candidate->application_id);
+        $jobTitle = strtolower($application?->job_posting?->job_title?->title ?? '');
+
+        return filled($candidate->drivers_license_number)
+            || str_contains($jobTitle, 'driver')
+            || str_contains($jobTitle, 'chauffeur');
+    }
+
+    private function applyDecisionToCandidate($candidateId, ?string $decision): void
+    {
+        if (! $candidateId || blank($decision)) {
+            return;
+        }
+
+        $candidate = RecruitmentCandidate::find($candidateId);
+        if (! $candidate) {
+            return;
+        }
+
+        $decision = trim($decision);
+
+        if (in_array($decision, ['Contracted', 'Hired'])) {
+            $candidate->status = $decision;
+            $candidate->save();
+            $this->createEmployeeOrDriverFromCandidate($candidate);
+            return;
+        }
+
+        if ($decision === 'Decline') {
+            $candidate->status = 'Declined';
+            $candidate->save();
+            return;
+        }
+
+        if ($decision === 'Engage') {
+            $candidate->status = 'Engaged';
+            $candidate->save();
+        }
+    }
+
+    private function createEmployeeOrDriverFromCandidate(RecruitmentCandidate $candidate): void
+    {
+        $candidate = RecruitmentCandidate::find($candidate->id);
+        if (! $candidate) {
+            return;
+        }
+
+        $existingEmployee = Employee::query()
+            ->when(filled($candidate->email), fn ($q) => $q->where('email', $candidate->email))
+            ->when(filled($candidate->national_id), fn ($q) => $q->orWhere('idnumber', $candidate->national_id))
+            ->first();
+
+        if ($existingEmployee) {
+            return;
+        }
+
+        $isDriver = $this->isDriverCandidate($candidate);
+        $pin = $this->generatePIN();
+        $company = $this->currentCompany();
+
+        $username = filled($candidate->email)
+            ? $candidate->email
+            : (filled($candidate->phone) ? $candidate->phone : 'candidate_'.$candidate->id);
+
+        $user = User::where('username', $username)
+            ->orWhere(function ($q) use ($candidate) {
+                if (filled($candidate->email)) {
+                    $q->where('email', $candidate->email);
+                }
+            })
+            ->first();
+
+        if (! $user) {
+            $user = new User;
+            $user->name = $candidate->first_name;
+            $user->surname = $candidate->last_name;
+            $user->category = $isDriver ? 'driver' : 'employee';
+            $user->email = $candidate->email;
+            $user->phonenumber = $candidate->phone;
+            $user->use_email_as_username = filled($candidate->email);
+            $user->username = $username;
+            $user->password = Hash::make($pin);
+            $user->save();
+        }
+
+        $application = Application::with('job_posting.job_title')->find($candidate->application_id);
+
+        $employee = new Employee;
+        $employee->company_id = $candidate->company_id ?? $company?->id ?? Auth::user()->employee?->company_id;
+        $employee->creator_id = Auth::id();
+        $employee->user_id = $user->id;
+        $employee->employee_number = $this->employeeNumber();
+        $employee->name = $candidate->first_name;
+        $employee->surname = $candidate->last_name;
+        $employee->phonenumber = $candidate->phone;
+        $employee->email = $candidate->email;
+        $employee->personal_email = $candidate->email;
+        $employee->pin = $pin;
+        $employee->gender = $candidate->gender;
+        $employee->dob = $candidate->dob;
+        $employee->idnumber = $candidate->national_id;
+        $employee->post = $application?->job_posting?->job_title?->title;
+        $employee->start_date = now()->toDateString();
+        $employee->save();
+
+        $employeePosition = new EmployeePosition;
+        $employeePosition->employee_id = $employee->id;
+        $employeePosition->job_title_id = JobTitle::where('title', $employee->post)->first()?->id;
+        $employeePosition->start_date = $employee->start_date;
+        $employeePosition->changed_by = Auth::id();
+        $employeePosition->change_reason = 'Appointment';
+        $employeePosition->remarks = 'Initial appointment created automatically from recruitment application';
+        $employeePosition->save();
+
+        if ($isDriver) {
+            $driver = new Driver;
+            $driver->creator_id = Auth::id();
+            $driver->employee_id = $employee->id;
+            $driver->user_id = $user->id;
+            $driver->driver_number = $this->driverNumber();
+            $driver->license_number = $candidate->drivers_license_number;
+            $driver->experience = $candidate->years_experience;
+            $driver->status = 1;
+            $driver->save();
+        }
+
+        if (filled($candidate->email) && filter_var($candidate->email, FILTER_VALIDATE_EMAIL) && $company) {
+            Mail::to($candidate->email)->send(new AccountCreationMail($user, $company, $pin));
+        }
     }
 
     public function delete($id){
@@ -1015,7 +1296,14 @@ class Index extends Component
     {
        $search = trim($this->search);
 
-        $applications = Application::query()->with(['job_posting','recruitment_candidate','recruitment_candidate.checks','recruitment_candidate.decisions'])
+        $applications = Application::query()->with([
+                'user',
+                'job_posting.job_title',
+                'recruitment_candidate.qualifications.qualification',
+                'recruitment_candidate.checks',
+                'recruitment_candidate.scores',
+                'recruitment_candidate.decisions',
+            ])
            
                  // ✅ date filter on date when from/to provided
             ->when($this->from || $this->to, function ($q) {

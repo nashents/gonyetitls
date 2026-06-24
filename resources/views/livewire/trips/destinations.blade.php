@@ -50,7 +50,7 @@
                         </td>
                         <td>
                             <small>
-                                <strong>TO#:</strong>{{$trip_destination->trip_transport_order->transport_order?->transport_order_number}} 
+                                <strong>TO#:</strong>{{$trip_destination->trip_transport_order?->transport_order?->transport_order_number}} 
                                 <br>
                                 <strong>TTO#:</strong>{{$trip_destination->trip_transport_order?->id}}
                             </small>
