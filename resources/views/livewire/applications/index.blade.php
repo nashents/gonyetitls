@@ -1,8 +1,8 @@
 <div>
     <style>
-        .modal-lg { max-width: 80%; }
-        .workflow-locked { opacity: .55; cursor: not-allowed; }
-        .workflow-hint { display:block; color:#777; margin-top:4px; }
+        .modal-lg {
+        max-width: 80%;
+    }
     </style>
         <section class="section">
             <x-loading/>
@@ -72,8 +72,8 @@
             <th style="width:14%">Candidate</th>
             <th>Qualifications</th>
             <th>Checks</th>
-            <th>Scores</th>
-            <th>Decision</th>
+            <th>Interviews</th>
+            {{-- <th>Decision</th> --}}
             <th style="width:8%">Status</th>
             <th style="width:6%">Actions</th>
         </tr>
@@ -85,10 +85,10 @@
             @if ($application->recruitment_candidate)
                 @php
                     $candidate = $application->recruitment_candidate;
-                    $hasQualifications = $candidate->qualifications->count() > 0;
-                    $hasChecks = $candidate->checks->count() > 0;
-                    $hasScores = $candidate->scores->count() > 0;
-                    $hasDecisions = $candidate->decisions->count() > 0;
+                    // Lock flow: qualifications -> checks -> scores -> decisions
+                    $hasQual  = $candidate->qualifications->isNotEmpty();
+                    $hasCheck = $candidate->checks->isNotEmpty();
+                    $hasScore = $candidate->scores->isNotEmpty();
                 @endphp
                 <tr>
 
@@ -123,7 +123,7 @@
                         </small>
                     </td>
 
-                    {{-- Qualifications --}}
+                    {{-- Qualifications (step 1, always open) --}}
                     <td>
                         <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showQualifications({{ $candidate->id }})">
                             <i class="fa fa-plus"></i> Add
@@ -145,17 +145,16 @@
                         </small>
                     </td>
 
-                    {{-- Checks --}}
+                    {{-- Checks (step 2, needs qualifications) --}}
                     <td>
-                        @if ($hasQualifications)
+                        @if ($hasQual)
                             <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showChecks({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button type="button" class="btn btn-default btn-rounded btn-xs mb-1 workflow-locked" disabled title="Add qualifications first">
+                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Add a qualification first">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
-                            <small class="workflow-hint">Qualifications first</small>
                         @endif
                         <br>
                         <small>
@@ -175,22 +174,23 @@
                         </small>
                     </td>
 
-                    {{-- Scores --}}
+                    {{-- Scores (step 3, needs checks) --}}
                     <td>
-                        @if ($hasChecks)
+                        @if ($hasCheck)
                             <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showScores({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button type="button" class="btn btn-default btn-rounded btn-xs mb-1 workflow-locked" disabled title="Complete checks first">
+                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Complete a check first">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
-                            <small class="workflow-hint">Checks first</small>
                         @endif
                         <br>
                         <small>
                             @forelse ($candidate->scores as $score)
-                                {{ $loop->iteration }}) {{ $score->stage }} &mdash; {{ $score->criterion }}
+                                {{ $loop->iteration }}) {{ $score->stage }}  @if($score->criterion)
+                                                                                    &mdash; {{ $score->criterion }}
+                                                                                @endif
                                 @if ($score->score_percent)
                                     <span class="badge bg-info">{{ $score->score_percent }}%</span>
                                 @endif
@@ -205,17 +205,16 @@
                         </small>
                     </td>
 
-                    {{-- Decision --}}
-                    <td>
-                        @if ($hasScores)
+                    {{-- Decision (step 4, needs scores) --}}
+                    {{-- <td>
+                        @if ($hasScore)
                             <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button type="button" class="btn btn-default btn-rounded btn-xs mb-1 workflow-locked" disabled title="Score applicant first">
+                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Score the candidate first">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
-                            <small class="workflow-hint">Scores first</small>
                         @endif
                         <br>
                         <small>
@@ -233,7 +232,7 @@
                                 <span class="text-muted">None added</span>
                             @endforelse
                         </small>
-                    </td>
+                    </td> --}}
 
                     {{-- Status --}}
                     <td class="text-center">
@@ -247,6 +246,9 @@
                         } }}">
                             {{ $candidate->status }}
                         </span>
+                        @if ($candidate->employee_id)
+                            <br><small class="text-success" title="Staff record auto-created"><i class="fa fa-check-circle"></i> Onboarded</small>
+                        @endif
                     </td>
 
                     {{-- Actions --}}
@@ -519,9 +521,9 @@
                                     <label for="one" class="radio-label">Certificate</label>
                                   <small>
                                     Selected File:
-                                    <a href="{{ asset('myfiles/documents/' . ($current_certificate_path[$key] ?? '')) }}"
+                                    <a href="{{ asset('myfiles/documents/' . ($old_certificate[$key] ?? '')) }}"
                                     target="_blank" style="color: blue">
-                                        {{ $old_certificate_path[$key] ?? 'No file selected' }}
+                                        {{ $old_certificate[$key] ?? 'No file selected' }}
                                     </a>
                                 </small>
                                     <input type="file" wire:model.debounce.300ms="current_certificate_path.{{$key}}" class="form-control">
@@ -810,7 +812,7 @@
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Recruitment Score <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Interview Scores <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="addScores()" >
                     <div class="modal-body">
@@ -837,7 +839,7 @@
                                             <option value="{{$criterion->name}}">{{$criterion->name}}</option>
                                         @endforeach
                                     </select>
-                                    <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Criterion</a></small> <a href="#" wire:click.prevent="refresh('criterions')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('criterion.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>   
                             </div>
@@ -855,8 +857,8 @@
                             <div class="col-md-6">
                                 <div class="form">
                                     <div class="form-group">
-                                        <label for="description">Score</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.0" placeholder="Score Percentage">
+                                        <label for="description">Score<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.0" placeholder="Score Percentage" required>
                                         @error('score.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -896,7 +898,7 @@
                                                 <option value="{{$criterion->name}}">{{$criterion->name}}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Criterion</a></small> <a href="#" wire:click.prevent="refresh('criterions')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('criterion.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
                                 </div>
@@ -914,8 +916,8 @@
                                 <div class="col-md-3">
                                     <div class="form">
                                         <div class="form-group">
-                                            <label for="description">Score</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.{{$value}}" placeholder="Score Percentage">
+                                            <label for="description">Score<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.{{$value}}" placeholder="Score Percentage" required>
                                             @error('score.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
@@ -941,7 +943,7 @@
                         <div class="row mt-10">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Check</button>
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Score</button>
                                 </div>
                             </div>
                         </div>
@@ -963,7 +965,7 @@
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Recruitment Scores <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Interview Scores <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="updateScores()" >
                     <div class="modal-body">
@@ -984,21 +986,21 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group" >
-                                    <label for="one" class="radio-label">Criterion</label>
-                                    <select wire:model.debounce.300ms="current_criterion.{{$key}}" class="form-control" required>
+                                    <label for="one" class="radio-label">Criterion (Optional)</label>
+                                    <select wire:model.debounce.300ms="current_criterion.{{$key}}" class="form-control">
                                         <option value="">Select Option</option>
                                         @foreach ($criterions as $criterion)
                                             <option value="{{$criterion->name}}">{{$criterion->name}}</option>
                                         @endforeach
                                     </select>
-                                    <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('criterions')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('current_criterion.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>   
                             </div>
                             <div class="col-md-3">
                                 <div class="form">
                                     <div class="form-group">
-                                        <label for="description">Criterion Weight</label>
+                                        <label for="description">Criterion Weight (Optional)</label>
                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_weight.{{$key}}">
                                         @error('current_weight.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
@@ -1009,8 +1011,8 @@
                             <div class="col-md-5">
                                 <div class="form">
                                     <div class="form-group">
-                                        <label for="description">Score</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_score.{{$key}}" placeholder="Score Percentage">
+                                        <label for="description">Score<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_score.{{$key}}" placeholder="Score Percentage" required>
                                         @error('current_score.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1048,21 +1050,21 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group" >
-                                        <label for="one" class="radio-label">Criterion</label>
-                                        <select wire:model.debounce.300ms="criterion.{{$value}}" class="form-control" required>
+                                        <label for="one" class="radio-label">Criterion (Optional)</label>
+                                        <select wire:model.debounce.300ms="criterion.{{$value}}" class="form-control">
                                             <option value="">Select Option</option>
                                             @foreach ($criterions as $criterion)
                                                 <option value="{{$criterion->name}}">{{$criterion->name}}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('criterions')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('criterion.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form">
                                         <div class="form-group">
-                                            <label for="description">Criterion Weight</label>
+                                            <label for="description">Criterion Weight (Optional)</label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.{{$value}}">
                                             @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
@@ -1073,8 +1075,8 @@
                                 <div class="col-md-3">
                                     <div class="form">
                                         <div class="form-group">
-                                            <label for="description">Score</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.{{$value}}" placeholder="Score Percentage">
+                                            <label for="description">Score<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.{{$value}}" placeholder="Score Percentage" required>
                                             @error('score.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
@@ -1100,7 +1102,7 @@
                         <div class="row mt-10">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Check</button>
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Score</button>
                                 </div>
                             </div>
                         </div>
@@ -1311,7 +1313,7 @@
                                     <div class="form-group">
                                         <label for="description">Attach Document</label>
                                         @if (isset($old_attachment[$key]))
-                                            <small>Attachment: <a href="">{{isset($old_attachment[$key]) ? $old_attachment[$key] : ""}}</a></small>
+                                            <small>Attachment: <a href="{{ asset('myfiles/documents/' . $old_attachment[$key]) }}" target="_blank">{{ $old_attachment[$key] }}</a></small>
                                         @endif
                                         <input type="file" class="form-control" wire:model.debounce.300ms="current_check_attachment.{{$key}}" placeholder="Select Attachement" >
                                         @error('current_check_attachment.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1711,3 +1713,4 @@
 
 
     </div>
+</div>

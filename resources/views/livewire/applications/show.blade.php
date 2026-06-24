@@ -9,10 +9,8 @@
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Application Details</a></li>
                 <li role="presentation"><a href="#qualifications" aria-controls="qualifications" role="tab" data-toggle="tab">Qualifications</a></li>
                 <li role="presentation"><a href="#checks" aria-controls="checks" role="tab" data-toggle="tab">Checks</a></li>
-                <li role="presentation"><a href="#scores" aria-controls="scores" role="tab" data-toggle="tab">Stage Scores</a></li>
-                <li role="presentation"><a href="#decisions" aria-controls="decisions" role="tab" data-toggle="tab">Stage Decisions</a></li>
+                <li role="presentation"><a href="#scores" aria-controls="scores" role="tab" data-toggle="tab">Interview Scores</a></li>
                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
-
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -229,47 +227,7 @@
                         </ul>
                     </nav> 
                 </div> 
-                <div role="tabpanel" class="tab-pane" id="decisions">
-                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                        <thead>
-                            <tr>
-                                <th class="th-sm">Stage</th>
-                                <th class="th-sm">Decision</th>
-                                <th class="th-sm">Comments</th>
-                            </tr>
-                        </thead>
-                        @if (isset($decisions))
-                            <tbody>
-                                @forelse ($decisions as $decision)
-                                    <tr>
-                                        <td>{{$decision->stage}}</td>
-                                        <td>{{$decision->decision}}</td>
-                                        <td>{{$decision->comment}}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="11">
-                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                                No Decisions Found ....
-                                            </div>
-                                        </td>
-                                    </tr> 
-                                @endforelse
-                            </tbody>
-                        @else
-                            <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                        @endif
-                    </table>
-                    <nav class="text-center" style="float: right">
-                        <ul class="pagination rounded-corners">
-                            @if (isset($decisions))
-                                @if ($decisions->count()>0)
-                                    {{ $decisions->links() }} 
-                                @endif
-                            @endif 
-                        </ul>
-                    </nav> 
-                </div> 
+                
                 <div role="tabpanel" class="tab-pane" id="documents">
                   @livewire('documents.index', ['id' => $application->id,'category' => 'application'])
                 </div> 
