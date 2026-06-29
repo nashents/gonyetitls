@@ -579,6 +579,12 @@ Route::resource('trailer_links','TrailerLinkController');
 Route::resource('payslips','PayslipController');
 Route::resource('salary_items','SalaryItemController');
 Route::resource('salaries','SalaryController');
+
+// ── New Payroll Module Routes ───────────────────────────────────────────────
+Route::get('payroll-runs', 'PayrollRunController@index')->name('payroll-runs.index');
+Route::get('payroll-runs/{payrollRun}', 'PayrollRunController@show')->name('payroll-runs.show');
+Route::get('payroll-config', 'PayrollConfigController@index')->name('payroll-config.index');
+Route::get('salary-advances', 'SalaryAdvanceController@index')->name('salary-advances.index');
 Route::resource('folders','FolderController');
 Route::resource('loans','LoanController');
 Route::resource('loan_types','LoanTypeController');

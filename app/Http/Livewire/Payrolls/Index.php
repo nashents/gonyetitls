@@ -158,6 +158,19 @@ class Index extends Component
 
     public function update(){
         $payroll = Payroll::find($this->payroll_id);
+
+        // Lock check: approved payrolls are immutable
+        if ($payroll && $payroll->authorization === 'approved') {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'This payroll has been approved and cannot be edited.',
+            ]);
+            $this->dispatchBrowserEvent('hide-payrollEditModal');
+            return;
+        }
+
+        $this->authorize('update', $payroll);
+
         $payroll->month = $this->month;
         $payroll->year = $this->year;
         $payroll->update();
@@ -213,6 +226,19 @@ class Index extends Component
 
     public function destroy(){
         $payroll = Payroll::find($this->payroll_id);
+
+        // Lock check: approved payrolls cannot be deleted
+        if ($payroll && $payroll->authorization === 'approved') {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Approved payrolls cannot be deleted. Reverse the payroll first.',
+            ]);
+            $this->dispatchBrowserEvent('hide-payrollDeleteModal');
+            return;
+        }
+
+        $this->authorize('delete', $payroll);
+
         $payroll_salaries = $payroll->payroll_salaries;
 
         if ($payroll_salaries) {

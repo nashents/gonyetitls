@@ -69,8 +69,6 @@
                                
                                 <!-- /input-group -->
 
-                        
-
                             </div>
                             @if ($selectedRows)
                             <br>
@@ -99,6 +97,9 @@
                              <table class="table table-hover table-bordered table-sm align-middle" cellspacing="0" width="100%">
                                 <thead class="thead-light">
                                     <tr>
+                                        <th class="th-sm">
+                                            <input type="checkbox" wire:model.debounce.300ms="selectPageRows" >
+                                        </th>
                                         <th>FOrder#</th>
                                         <th>Fuel Request</th>
                                         <th>Date</th>
@@ -134,6 +135,7 @@
                                             >
 
                                                 {{-- FOrder# --}}
+                                                <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $fuel->id }}" value="{{ $fuel->id }}"></td>
                                                 <td>
                                                     <strong>{{ $fuel->order_number }}</strong>
                                                     <div class="fuel-meta text-muted">

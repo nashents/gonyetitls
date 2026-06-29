@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\Concerns\SyncsToSageIntacct;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Vendor extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, SyncsToSageIntacct;
     use \OwenIt\Auditing\Auditable;
 
     public function dispatches(){
@@ -108,5 +109,10 @@ class Vendor extends Model implements Auditable
         'city',
         'suburb',
         'street_address',
+        // Sage Intacct sync state (see SyncsToSageIntacct trait)
+        'sage_intacct_id',
+        'sage_sync_status',
+        'sage_last_synced_at',
+        'sage_sync_error',
     ];
 }

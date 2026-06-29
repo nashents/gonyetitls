@@ -186,14 +186,25 @@ class Index extends Component
         $integration = CompanyIntegration::with('integration_provider')->findOrFail($id);
 
         try {
-            // TODO: resolve $integration->integration_provider->driver and run a real test.
-            $ok = true;
+            // Resolve the provider's driver class (e.g. SageIntacctDriver),
+            // build it from this integration, and run its testConnection().
+            $driverClass = $integration->integration_provider->driver ?? null;
+
+            if (! $driverClass || ! class_exists($driverClass)) {
+                throw new \RuntimeException('No driver is configured for this provider yet.');
+            }
+
+            $driver = new $driverClass($integration);
+            $result = $driver->testConnection();
+
+            $ok    = ! empty($result['success']);
+            $error = $ok ? null : ($result['error'] ?? 'Connection test failed');
 
             $integration->update([
                 'last_tested_at'  => now(),
                 'status'          => $ok ? 'active' : 'error',
                 'last_success_at' => $ok ? now() : $integration->last_success_at,
-                'last_error'      => $ok ? null : 'Connection test failed',
+                'last_error'      => $error,
             ]);
 
             IntegrationLog::create([
@@ -201,12 +212,12 @@ class Index extends Component
                 'direction'              => 'outbound',
                 'action'                 => 'test',
                 'status'                 => $ok ? 'ok' : 'fail',
-                'message'                => $ok ? 'Connection test succeeded' : 'Connection test failed',
+                'message'                => $ok ? 'Connection test succeeded' : $error,
             ]);
 
             $this->dispatchBrowserEvent('alert', [
                 'type'    => $ok ? 'success' : 'error',
-                'message' => $ok ? 'Connection test succeeded!' : 'Connection test failed!',
+                'message' => $ok ? 'Connection test succeeded!' : ('Connection test failed: ' . $error),
             ]);
         } catch (\Exception $e) {
             $this->dispatchBrowserEvent('alert', [

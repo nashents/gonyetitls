@@ -233,7 +233,9 @@ class Create extends Component
     }
 
     public function mount(){
-       
+        // Only HR and Super Admin can create salary records
+        $this->authorize('create', \App\Models\Salary::class);
+
         $this->company = Auth::user()->employee->company;
         $this->selectedCurrency = $this->company->currency_id;
         $this->frequency = "monthly";
@@ -350,8 +352,8 @@ class Create extends Component
 
     
     public function store(){
+        $this->authorize('create', \App\Models\Salary::class);
 
-     
         try {
             // Create Salary Record
 
@@ -387,7 +389,23 @@ class Create extends Component
                    $this->total_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->recovery_amount, $this->selectedRecoveryCurrency, $this->recoveryExchangeRate);
                 }
                 $this->total_allowances = $this->total_earning_recoveries + $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
-                $this->total_deduction_recoveries = $this->total_recoveries + $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
+                // FIX: total_deduction_recoveries is already captured above — do NOT call processSalaryItems
+                // again here with allowance arrays, which was creating duplicate items and wrong totals.
+                $this->total_deduction_recoveries = $this->total_recoveries;
+
+                // Decrement Recovery balances for Loss-type (deduction) recoveries
+                if (!empty($this->selectedRecovery)) {
+                    foreach ($this->selectedRecovery as $key => $recoveryId) {
+                        if (!empty($recoveryId) && isset($this->recovery_amount[$key])) {
+                            $recovery = Recovery::find($recoveryId);
+                            if ($recovery) {
+                                $deducted   = min((float) $this->recovery_amount[$key], (float) $recovery->balance);
+                                $newBalance = max(0, (float) $recovery->balance - $deducted);
+                                $recovery->update(['balance' => $newBalance]);
+                            }
+                        }
+                    }
+                }
               
                 // Process Deductions
                 $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount, $this->selectedDeductionCurrency, $this->deductionExchangeRate);
@@ -397,26 +415,33 @@ class Create extends Component
                 if (!empty($this->selectedLoan)) {
                     foreach ($this->selectedLoan as $key => $loanId) {
                         $loan = Loan::find($loanId);
-                        if ($loan && $loan->balance >= $loan->payment_per_month) {
-                            $exchange_amount = $this->exchange_rate * $loan->payment_per_month;
+                        if ($loan && (float) $loan->balance >= (float) $loan->payment_per_month) {
+                            $installment    = (float) $loan->payment_per_month;
+                            $exchange_amount = $this->exchange_rate * $installment;
                             SalaryItem::create([
-                                'salary_id' => $this->salary_id,
-                                'loan_id' => $loanId,
-                                'amount' => $loan->payment_per_month,
-                                'exchange_rate' => $this->exchange_rate,
-                                'exchange_amount' => $exchange_amount,
+                                'salary_id'      => $this->salary_id,
+                                'loan_id'        => $loanId,
+                                'amount'         => $installment,
+                                'exchange_rate'  => $this->exchange_rate,
+                                'exchange_amount'=> $exchange_amount,
                             ]);
-                            $this->total_deductions += $loan->payment_per_month;
-                        }elseif($loan && ($loan->balance > 0 && $loan->balance < $loan->payment_per_month)){
-                            $exchange_amount = $this->exchange_rate * $loan->balance;
+                            $this->total_deductions += $installment;
+                            // Decrement loan balance
+                            $newBalance = max(0, (float) $loan->balance - $installment);
+                            $loan->update(['balance' => $newBalance]);
+                        } elseif ($loan && (float) $loan->balance > 0 && (float) $loan->balance < (float) $loan->payment_per_month) {
+                            $finalAmount    = (float) $loan->balance;
+                            $exchange_amount = $this->exchange_rate * $finalAmount;
                             SalaryItem::create([
-                                'salary_id' => $this->salary_id,
-                                'loan_id' => $loanId,
-                                'amount' => $loan->balance,
-                                'exchange_rate' => $this->exchange_rate,
-                                'exchange_amount' => $exchange_amount,
+                                'salary_id'      => $this->salary_id,
+                                'loan_id'        => $loanId,
+                                'amount'         => $finalAmount,
+                                'exchange_rate'  => $this->exchange_rate,
+                                'exchange_amount'=> $exchange_amount,
                             ]);
-                            $this->total_deductions += $loan->balance;
+                            $this->total_deductions += $finalAmount;
+                            // Loan fully settled — zero the balance
+                            $loan->update(['balance' => 0]);
                         }
                     }
                 }

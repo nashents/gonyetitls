@@ -21,7 +21,7 @@ class PayrollSalaryController extends Controller
     }
 
     public function preview($id){
-        $payroll_salary = PayrollSalary::find($id);
+        $payroll_salary = PayrollSalary::findOrFail($id);
         $company = Auth::user()->employee->company;
         $payroll_salary_items = $payroll_salary->payroll_salary_items;
         $employee = $payroll_salary->employee;
@@ -38,7 +38,7 @@ class PayrollSalaryController extends Controller
     }
 
     public function print($id){
-        $payroll_salary = PayrollSalary::find($id);
+        $payroll_salary = PayrollSalary::findOrFail($id);
         $company = Auth::user()->employee->company;
         $payroll_salary_items = $payroll_salary->payroll_salary_items;
         $employee = $payroll_salary->employee;
@@ -51,20 +51,43 @@ class PayrollSalaryController extends Controller
     }
 
     public function generatePDF($id){
-      $payroll_salary = PayrollSalary::find($id);
-      $company = Auth::user()->employee->company;
-      $payroll_salary_items = $payroll_salary->payroll_salary_items;
-      $employee = $payroll_salary->employee;
+        // Find or 404 — never silently return null
+        $payroll_salary = PayrollSalary::findOrFail($id);
+
+        // Authorization: employee may only download their own payslip.
+        // HR, Finance, Management and Super Admin may download any.
+        $user       = Auth::user();
+        $employee   = $user->employee;
+        $userRoles  = $user->roles->pluck('name');
+        $userDepts  = $employee?->departments->pluck('name') ?? collect();
+
+        $isPrivileged = $userRoles->contains('Super Admin')
+            || $userRoles->contains('Admin')
+            || $userDepts->contains('Human Resources')
+            || $userDepts->contains('Finance')
+            || $userDepts->contains('Management');
+
+        $isOwnPayslip = $employee?->id === $payroll_salary->employee_id;
+
+        if (!$isPrivileged && !$isOwnPayslip) {
+            abort(403, 'You are not authorised to download this payslip.');
+        }
+
+        $company              = $user->employee->company;
+        $payroll_salary_items = $payroll_salary->payroll_salary_items;
+        $payslipEmployee      = $payroll_salary->employee;
+
         $data = [
-            'payroll_salary' => $payroll_salary,
+            'payroll_salary'       => $payroll_salary,
             'payroll_salary_items' => $payroll_salary_items,
-            'employee' => $employee,
-            'company' => $company,
+            'employee'             => $payslipEmployee,
+            'company'              => $company,
         ];
-        $pdf = PDF::loadView('payroll_salaries.payslip', $data);
 
-        return $pdf->download('payslip.pdf');
+        $pdf      = PDF::loadView('payroll_salaries.payslip', $data);
+        $filename = 'payslip_' . ($payslipEmployee?->payroll_number ?? $payroll_salary->id) . '.pdf';
 
+        return $pdf->download($filename);
     }
 
     /**

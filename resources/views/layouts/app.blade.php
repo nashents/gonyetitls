@@ -581,6 +581,12 @@
                 $('#payrollDeleteModal').modal('hide');
             })
     </script>
+    {{-- Payroll Runs lifecycle confirm modal --}}
+    <script type="text/javascript">
+        window.addEventListener('show-confirm-modal', () => { if($('#confirmModal').length) $('#confirmModal').modal('show'); });
+        window.addEventListener('hide-confirm-modal', () => { if($('#confirmModal').length) $('#confirmModal').modal('hide'); });
+    </script>
+    {{-- @stack('scripts') handler already in layout --}}
     <script type="text/javascript">
             window.addEventListener('show-waste_typeModal', event => {
                 $('#waste_typeModal').modal('show');

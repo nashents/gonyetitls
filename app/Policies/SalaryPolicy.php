@@ -10,85 +10,83 @@ class SalaryPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
-     */
-    public function viewAny(User $user)
+    private function isSuperAdmin(User $user): bool
     {
-        //
+        return $user->roles->pluck('name')->contains('Super Admin')
+            || $user->roles->pluck('name')->contains('Admin');
+    }
+
+    private function isHR(User $user): bool
+    {
+        return $user->employee?->departments->pluck('name')->contains('Human Resources') ?? false;
+    }
+
+    private function isFinance(User $user): bool
+    {
+        return $user->employee?->departments->pluck('name')->contains('Finance') ?? false;
+    }
+
+    private function isManagement(User $user): bool
+    {
+        return $user->employee?->departments->pluck('name')->contains('Management') ?? false;
     }
 
     /**
-     * Determine whether the user can view the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Salary  $salary
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Salary structures are HR-confidential.
      */
-    public function view(User $user, Salary $salary)
+    public function viewAny(User $user): bool
     {
-        //
+        return $this->isSuperAdmin($user)
+            || $this->isHR($user)
+            || $this->isFinance($user)
+            || $this->isManagement($user);
     }
 
     /**
-     * Determine whether the user can create models.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
+     * An employee may view their own salary record only.
+     * Privileged roles may view any.
      */
-    public function create(User $user)
+    public function view(User $user, Salary $salary): bool
     {
-        //
+        return $user->employee?->id === $salary->employee_id
+            || $this->isSuperAdmin($user)
+            || $this->isHR($user)
+            || $this->isFinance($user)
+            || $this->isManagement($user);
     }
 
     /**
-     * Determine whether the user can update the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Salary  $salary
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Only HR and Super Admin can create salary records.
      */
-    public function update(User $user, Salary $salary)
+    public function create(User $user): bool
     {
-        //
+        return $this->isSuperAdmin($user) || $this->isHR($user);
     }
 
     /**
-     * Determine whether the user can delete the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Salary  $salary
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Only HR and Super Admin can update salary records.
+     * Payroll lock enforcement is done at the Livewire component level.
      */
-    public function delete(User $user, Salary $salary)
+    public function update(User $user, Salary $salary): bool
     {
-        //
+        return $this->isSuperAdmin($user) || $this->isHR($user);
     }
 
     /**
-     * Determine whether the user can restore the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Salary  $salary
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Only Super Admin can delete salary records.
      */
-    public function restore(User $user, Salary $salary)
+    public function delete(User $user, Salary $salary): bool
     {
-        //
+        return $this->isSuperAdmin($user);
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Salary  $salary
-     * @return \Illuminate\Auth\Access\Response|bool
-     */
-    public function forceDelete(User $user, Salary $salary)
+    public function restore(User $user, Salary $salary): bool
     {
-        //
+        return $this->isSuperAdmin($user);
+    }
+
+    public function forceDelete(User $user, Salary $salary): bool
+    {
+        return $this->isSuperAdmin($user);
     }
 }

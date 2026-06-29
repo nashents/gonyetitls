@@ -70,6 +70,8 @@ class CustomersImport implements
             $city        = $row->get('city');
             $suburb      = $row->get('suburb');
             $street      = $row->get('streetaddress');
+            // Sage Intacct CUSTOMERID carried by the bulk-from-Sage template.
+            $customRef   = $row->get('custom_ref');
 
 
             $customer = Customer::firstOrNew(['name' => $name]);
@@ -88,6 +90,15 @@ class CustomersImport implements
             $customer->city           = $city;
             $customer->suburb         = $suburb;
             $customer->street_address = $street;
+
+            // A custom_ref means the record came from Sage and already exists
+            // there — mirror it into sage_intacct_id and mark it synced so it
+            // is never pushed back as a duplicate.
+            if (!empty($customRef)) {
+                $customer->custom_ref       = $customRef;
+                $customer->sage_intacct_id  = $customRef;
+                $customer->sage_sync_status = 'synced';
+            }
 
             $customer->save();
         }

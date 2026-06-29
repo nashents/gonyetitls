@@ -34,7 +34,6 @@
                                 <br>
                                 @endif
                             </div>
-
                             <table id="ordersTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>

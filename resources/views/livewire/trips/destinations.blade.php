@@ -138,7 +138,7 @@
                         $total_freight = $trip_destinations->where('freight','!=', null)->where('freight','!=',"")->sum('freight');
                     @endphp
                     <tr>
-                        <th colspan="4"><h5 style="margin-top:-5px;"><strong>Total</strong></h5></th>
+                        <th colspan="5"><h5 style="margin-top:-5px;"><strong>Total</strong></h5></th>
                         <td  >
                             @if (isset($total_weight) && $total_weight > 0)
                             <strong>{{ number_format($total_weight,2) }} Tons </strong> 

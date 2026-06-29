@@ -193,7 +193,9 @@ class Index extends Component
 
     public function store(){
 
-         DB::transaction(function () {
+        $vendor = null;
+
+         DB::transaction(function () use (&$vendor) {
 
         $this->state = "create";
       
@@ -315,7 +317,46 @@ class Index extends Component
         ]);
 
     });
-       
+
+      // Push to Sage Intacct AFTER the transaction commits, so a rolled-back
+      // record is never sent. A Sage outage/error is recorded on the vendor
+      // and surfaced, but never blocks ERP creation.
+      // Queue later by swapping this line for a job dispatch — no other change.
+      if ($vendor) {
+          $this->pushVendorToSage($vendor);
+      }
+    }
+
+    /**
+     * Sync a vendor to Sage Intacct and surface any failure as a warning.
+     */
+    protected function pushVendorToSage(Vendor $vendor): void
+    {
+        $result = app(\App\Services\SageIntacctService::class)->syncVendor($vendor);
+
+        if (isset($result['success']) && $result['success'] === false && empty($result['skipped'])) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Vendor saved, but Sage sync failed: ' . ($result['error'] ?? 'unknown error'),
+            ]);
+        }
+    }
+
+    /**
+     * Retry a failed Sage Intacct sync for a vendor (idempotent — de-duped on
+     * the Sage id so it never creates a duplicate record in Sage).
+     */
+    public function retrySync($id)
+    {
+        $vendor = Vendor::findOrFail($id);
+        $result = app(\App\Services\SageIntacctService::class)->retry($vendor);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : 'error',
+            'message' => ! empty($result['success'])
+                ? 'Vendor synced to Sage Intacct.'
+                : 'Sage sync failed: ' . ($result['error'] ?? 'unknown error'),
+        ]);
     }
 
     public function edit($id){

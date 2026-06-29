@@ -62,6 +62,7 @@ class Pending extends Component
     public $from;
     public $to;
     
+    
 
     public $selectedRows = [];
     public $selectPageRows = false;
@@ -135,7 +136,7 @@ class Pending extends Component
 
     public function showBulkyAuthorize(){
         $this->dispatchBrowserEvent('show-bulkyAuthorizationModal');
-      }
+    }
 
     public function updatedSelectPageRows($value){
 

@@ -626,6 +626,14 @@ class MenuRegistrySeeder extends Seeder
             'sort_order'=>50,
             'visibility' => $any([$all(['isSystemAdmin'])]),
         ]);
+        $upsertSub($m, [
+            'name'=>'Payroll Config',
+            'slug'=>'payroll-config',
+            'icon'=>'fas fa-sliders-h',
+            'route_name'=>'payroll-config.index',
+            'sort_order'=>60,
+            'visibility' => $any([$all(['isAdmin','inHR']), $all(['isSuperAdmin'])]),
+        ]);
 
         // My Payslip (public)
         $upsertModule($g, [
@@ -695,6 +703,33 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Pending Payrolls','slug'=>'pending-payrolls','icon'=>'fas fa-clock','route_name'=>'payrolls.pending','sort_order'=>20,'badge_key'=>'payrolls_pending_count']);
         $upsertSub($m, ['name'=>'Approved Payrolls','slug'=>'approved-payrolls','icon'=>'fas fa-check','route_name'=>'payrolls.approved','sort_order'=>30,'badge_key'=>'payrolls_approved_count']);
         $upsertSub($m, ['name'=>'Rejected Payrolls','slug'=>'rejected-payrolls','icon'=>'fas fa-ban','route_name'=>'payrolls.rejected','sort_order'=>40,'badge_key'=>'payrolls_rejected_count']);
+
+        // Payroll Runs (Admin+HR) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Payroll Runs',
+            'slug' => 'payroll-runs',
+            'icon' => 'fas fa-play-circle',
+            'route_name' => 'payroll-runs.*',
+            'sort_order' => 55,
+            'visibility' => $any([
+                $all(['isAdmin','inHR']),
+                $all(['isManagement','inHR']),
+                $all(['hasHRDeptHead']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'All Runs','slug'=>'all-payroll-runs','icon'=>'fas fa-list','route_name'=>'payroll-runs.index','sort_order'=>10]);
+
+        // Salary Advances (public — employees see own, HR/Finance see all)
+        $m = $upsertModule($g, [
+            'name' => 'Salary Advances',
+            'slug' => 'salary-advances',
+            'icon' => 'fas fa-hand-holding-usd',
+            'route_name' => 'salary-advances.*',
+            'sort_order' => 60,
+            'visibility' => null,
+        ]);
+        $upsertSub($m, ['name'=>'My Advances','slug'=>'my-salary-advances','icon'=>'fas fa-list','route_name'=>'salary-advances.index','sort_order'=>10]);
 
         // ----------------------------
         // GROUP: Sales & Payments

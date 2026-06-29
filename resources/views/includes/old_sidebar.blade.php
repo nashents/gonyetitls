@@ -133,6 +133,9 @@
                             @if ($is_admin)
                                 <li class="{{ request()->routeIs('tax_brackets.index') ? 'active' : '' }}"><a href="{{route('tax_brackets.index')}}"><i class="fas fa-list"></i> <span>Tax Table</span></a></li>
                             @endif
+                            <li class="{{ request()->routeIs('payroll-config.index') ? 'active' : '' }}">
+                                <a href="{{route('payroll-config.index')}}"><i class="fas fa-sliders-h"></i> <span>Payroll Config</span></a>
+                            </li>
                         </ul>
                     </li>
                 @endif
@@ -192,7 +195,25 @@
                             @endif
                         </ul>
                     </li>
+                    {{-- Payroll Runs (lifecycle-driven) --}}
+                    <li class="has-children {{ request()->routeIs('payroll-runs.*') ? 'active' : '' }}">
+                        <a href="javascript:void(0)"><i class="fas fa-tasks"></i> <span>Payroll Runs</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li class="{{ request()->routeIs('payroll-runs.index') ? 'active' : '' }}">
+                                <a href="{{route('payroll-runs.index')}}"><i class="fas fa-list"></i> <span>All Runs</span></a>
+                            </li>
+                        </ul>
+                    </li>
                 @endif
+                {{-- Salary Advances — visible to all employees (own) and HR/Finance --}}
+                <li class="has-children {{ request()->routeIs('salary-advances.*') ? 'active' : '' }}">
+                    <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Salary Advances</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li class="{{ request()->routeIs('salary-advances.index') ? 'active' : '' }}">
+                            <a href="{{route('salary-advances.index')}}"><i class="fas fa-list"></i> <span>My Advances</span></a>
+                        </li>
+                    </ul>
+                </li>
                 @if ($inFinance || $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Sales & Payments</span>

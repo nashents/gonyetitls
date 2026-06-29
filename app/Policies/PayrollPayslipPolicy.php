@@ -10,85 +10,93 @@ class PayrollPayslipPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
-     */
-    public function viewAny(User $user)
+    private function isSuperAdmin(User $user): bool
     {
-        //
+        return $user->roles->pluck('name')->contains('Super Admin')
+            || $user->roles->pluck('name')->contains('Admin');
+    }
+
+    private function isHR(User $user): bool
+    {
+        return $user->employee?->departments->pluck('name')->contains('Human Resources') ?? false;
+    }
+
+    private function isFinance(User $user): bool
+    {
+        return $user->employee?->departments->pluck('name')->contains('Finance') ?? false;
+    }
+
+    private function isManagement(User $user): bool
+    {
+        return $user->employee?->departments->pluck('name')->contains('Management') ?? false;
+    }
+
+    private function isPrivileged(User $user): bool
+    {
+        return $this->isSuperAdmin($user)
+            || $this->isHR($user)
+            || $this->isFinance($user)
+            || $this->isManagement($user);
     }
 
     /**
-     * Determine whether the user can view the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\PayrollPayslip  $payrollPayslip
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Payslips are sensitive. Only HR, Finance, Management and Super Admin can list all.
+     * Employees see only their own via the view check.
      */
-    public function view(User $user, PayrollPayslip $payrollPayslip)
+    public function viewAny(User $user): bool
     {
-        //
+        return $this->isPrivileged($user);
     }
 
     /**
-     * Determine whether the user can create models.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Employee can view their own payslip only. Privileged roles see any.
      */
-    public function create(User $user)
+    public function view(User $user, PayrollPayslip $payslip): bool
     {
-        //
+        return $user->employee?->id === $payslip->employee_id
+            || $this->isPrivileged($user);
     }
 
     /**
-     * Determine whether the user can update the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\PayrollPayslip  $payrollPayslip
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Payslips are system-generated. No one creates them manually.
      */
-    public function update(User $user, PayrollPayslip $payrollPayslip)
+    public function create(User $user): bool
     {
-        //
+        return false;
     }
 
     /**
-     * Determine whether the user can delete the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\PayrollPayslip  $payrollPayslip
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Payslips are immutable once generated. No edits allowed.
      */
-    public function delete(User $user, PayrollPayslip $payrollPayslip)
+    public function update(User $user, PayrollPayslip $payslip): bool
     {
-        //
+        return false;
     }
 
     /**
-     * Determine whether the user can restore the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\PayrollPayslip  $payrollPayslip
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Only Super Admin can delete a payslip (e.g. after reversal).
      */
-    public function restore(User $user, PayrollPayslip $payrollPayslip)
+    public function delete(User $user, PayrollPayslip $payslip): bool
     {
-        //
+        return $this->isSuperAdmin($user);
     }
 
     /**
-     * Determine whether the user can permanently delete the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\PayrollPayslip  $payrollPayslip
-     * @return \Illuminate\Auth\Access\Response|bool
+     * Employee can download their own payslip. Privileged roles can download any.
      */
-    public function forceDelete(User $user, PayrollPayslip $payrollPayslip)
+    public function download(User $user, PayrollPayslip $payslip): bool
     {
-        //
+        return $user->employee?->id === $payslip->employee_id
+            || $this->isPrivileged($user);
+    }
+
+    public function restore(User $user, PayrollPayslip $payslip): bool
+    {
+        return $this->isSuperAdmin($user);
+    }
+
+    public function forceDelete(User $user, PayrollPayslip $payslip): bool
+    {
+        return $this->isSuperAdmin($user);
     }
 }

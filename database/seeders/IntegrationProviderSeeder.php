@@ -55,9 +55,12 @@ class IntegrationProviderSeeder extends Seeder
                 'key'                  => 'sage_intacct',
                 'name'                 => 'Sage Intacct',
                 'type'                 => 'accounting',
+                // Façade that resolves the active driver (xml|rest) from config.
                 'driver'               => 'App\\Integrations\\SageIntacct\\SageIntacctDriver',
-                'required_credentials' => json_encode(['company_id', 'user_id', 'user_password', 'client_id', 'client_secret']),
-                'default_config'       => json_encode(['currency' => 'USD', 'sync_gl' => true, 'timeout' => 60]),
+                // XML Web Services credentials (the default driver). When enabling
+                // the REST driver, add 'client_id' and 'client_secret' here.
+                'required_credentials' => json_encode(['company_id', 'user_id', 'user_password', 'sender_id', 'sender_password']),
+                'default_config'       => json_encode(['driver' => 'xml', 'environment' => 'production', 'currency' => 'USD', 'timeout' => 60]),
                 'is_active'            => true,
             ],
             [

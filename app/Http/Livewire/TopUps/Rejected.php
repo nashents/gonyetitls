@@ -100,15 +100,18 @@ class Rejected extends Component
         if ($this->authorize == "approved") {
 
         $container = Container::find($this->container_id);
-            if($container){
-                if(($container && is_numeric($container->balance)) && ($this->top_up->quantity && is_numeric($this->top_up->quantity))){
-                    $container->balance = $container->balance + $this->top_up->quantity;
+           if ($container) {
+
+                    if (is_numeric($this->top_up->quantity)) {
+                        $container->balance = (float)($container->balance ?: 0) + (float)$this->top_up->quantity;
+                    }
+
+                    if (is_numeric($this->top_up->account_amount)) {
+                        $container->account_balance = (float)($container->account_balance ?: 0) + (float)$this->top_up->account_amount;
+                    }
+
+                    $container->save();
                 }
-                if(($container && is_numeric($container->account_balance)) && ($this->top_up->account_amount && is_numeric($this->top_up->account_amount))){
-                    $container->account_balance = $container->account_balance + $this->top_up->account_amount;
-                }
-                $container->update();
-            }
        
 
         if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {

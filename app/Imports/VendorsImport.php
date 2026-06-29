@@ -73,6 +73,8 @@ class VendorsImport implements
             $city        = $row->get('city');
             $suburb      = $row->get('suburb');
             $street      = $row->get('streetaddress');
+            // Sage Intacct VENDORID carried by the bulk-from-Sage template.
+            $customRef   = $row->get('custom_ref');
 
 
             $vendor = Vendor::firstOrNew(['name' => $name]);
@@ -91,6 +93,15 @@ class VendorsImport implements
             $vendor->city           = $city;
             $vendor->suburb         = $suburb;
             $vendor->street_address = $street;
+
+            // A custom_ref means the record came from Sage and already exists
+            // there — mirror it into sage_intacct_id and mark it synced so it
+            // is never pushed back as a duplicate.
+            if (!empty($customRef)) {
+                $vendor->custom_ref       = $customRef;
+                $vendor->sage_intacct_id  = $customRef;
+                $vendor->sage_sync_status = 'synced';
+            }
 
             $vendor->save();
         }

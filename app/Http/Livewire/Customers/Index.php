@@ -197,8 +197,9 @@ class Index extends Component
     public function store(){
 
        $this->state = "create";
+       $customer = null;
 
-       DB::transaction(function () {
+       DB::transaction(function () use (&$customer) {
 
         $pin = $this->generatePIN();
 
@@ -315,9 +316,49 @@ class Index extends Component
             'message'=>"Customer Created Successfully!!"
         ]);
 
-     
+
 
       });
+
+      // Push to Sage Intacct AFTER the transaction commits, so a rolled-back
+      // record is never sent. A Sage outage/error is recorded on the customer
+      // and surfaced, but never blocks ERP creation.
+      // Queue later by swapping this line for a job dispatch — no other change.
+      if ($customer) {
+          $this->pushCustomerToSage($customer);
+      }
+    }
+
+    /**
+     * Sync a customer to Sage Intacct and surface any failure as a warning.
+     */
+    protected function pushCustomerToSage(Customer $customer): void
+    {
+        $result = app(\App\Services\SageIntacctService::class)->syncCustomer($customer);
+
+        if (isset($result['success']) && $result['success'] === false && empty($result['skipped'])) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Customer saved, but Sage sync failed: ' . ($result['error'] ?? 'unknown error'),
+            ]);
+        }
+    }
+
+    /**
+     * Retry a failed Sage Intacct sync for a customer (idempotent — de-duped
+     * on the Sage id so it never creates a duplicate record in Sage).
+     */
+    public function retrySync($id)
+    {
+        $customer = Customer::findOrFail($id);
+        $result   = app(\App\Services\SageIntacctService::class)->retry($customer);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : 'error',
+            'message' => ! empty($result['success'])
+                ? 'Customer synced to Sage Intacct.'
+                : 'Sage sync failed: ' . ($result['error'] ?? 'unknown error'),
+        ]);
     }
 
     public function edit($id){
