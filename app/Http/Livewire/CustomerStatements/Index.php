@@ -7,8 +7,8 @@ use Livewire\Component;
 use App\Models\Customer;
 use App\Models\Currency;
 use Maatwebsite\Excel\Excel;
-use Illuminate\Support\Facades\DB;
 use App\Exports\CustomerStatementExport;
+use App\Services\CustomerLedgerService;
 
 class Index extends Component
 {
@@ -41,42 +41,10 @@ class Index extends Component
     }
 
     /**
-     * Build a pure Query Builder union ledger for a given customer + currency.
-     * Payments get pay_first = 0 so they win date ties over invoices (pay_first = 1).
-     */
-    private function makeLedger(int $customerId, int $currencyId): \Illuminate\Database\Query\Builder
-    {
-        $inv = DB::table('invoices')
-            ->select([
-                'date',
-                'created_at',
-                DB::raw('1 as pay_first'),
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-            ])
-            ->where('authorization', 'approved')
-            ->where('customer_id', $customerId)
-            ->where('currency_id', $currencyId)
-            ->whereNotNull('accrual_balance')
-            ->whereNull('deleted_at');
-
-        $pay = DB::table('payments')
-            ->select([
-                'date',
-                'created_at',
-                DB::raw('0 as pay_first'),
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-            ])
-            ->where('customer_id', $customerId)
-            ->whereNotNull('accrual_balance')
-            ->where('currency_id', $currencyId)
-            ->whereNull('deleted_at');
-
-        return $inv->unionAll($pay);
-    }
-
-    /**
-     * Compute opening & closing accrual_balance snapshots for every currency
-     * for the selected customer within the selected date range.
+     * Compute opening & closing accrual balances for every currency for the
+     * selected customer within the selected date range. The balance is
+     * derived live from the transaction ledger (invoices, payments, credit
+     * notes) — never read from a stored snapshot column.
      */
     private function computeBalances(): void
     {
@@ -87,28 +55,21 @@ class Index extends Component
             return;
         }
 
+        $service = app(CustomerLedgerService::class);
         $currencies = Currency::all();
 
         foreach ($currencies as $currency) {
-            $ledger = $this->makeLedger((int) $this->selectedCustomer, $currency->id);
+            $this->openingBalances[$currency->id] = $service->openingBalance(
+                (int) $this->selectedCustomer,
+                $currency->id,
+                $this->from
+            );
 
-            // Opening: last transaction strictly BEFORE $from
-            $this->openingBalances[$currency->id] = DB::query()
-                ->fromSub($ledger, 'ledger')
-                ->where('date', '<', $this->from)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->orderBy('pay_first', 'asc')   // 0 (payments) wins ties
-                ->value('accrual_balance') ?? 0.00;
-
-            // Closing: last transaction on or BEFORE $to
-            $this->closingBalances[$currency->id] = DB::query()
-                ->fromSub($this->makeLedger((int) $this->selectedCustomer, $currency->id), 'ledger')
-                ->where('date', '<=', $this->to)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->orderBy('pay_first', 'asc')
-                ->value('accrual_balance') ?? 0.00;
+            $this->closingBalances[$currency->id] = $service->closingBalance(
+                (int) $this->selectedCustomer,
+                $currency->id,
+                $this->to
+            );
         }
     }
 
@@ -169,45 +130,19 @@ class Index extends Component
 
             if (isset($this->from) && isset($this->to)) {
 
-                // Compute opening/closing snapshots
+                // Compute opening/closing balances
                 $this->computeBalances();
 
-                // Invoices leg
-                $invoicesQuery = DB::table('invoices')
-                    ->select(
-                        'invoice_number as number',
-                        'currency_id',
-                        'date as transaction_date',
-                        'total as amount',
-                        'balance',
-                        'accrual_balance',
-                        'created_at'
-                    )
-                    ->where('authorization', 'approved')
-                    ->where('customer_id', $this->selectedCustomer)
-                    ->whereNull('deleted_at')
-                    ->whereBetween('date', [$this->from, $this->to]);
+                $service = app(CustomerLedgerService::class);
 
-                // Payments leg
-                $this->results = DB::table('payments')
-                    ->select(
-                        'payment_number as number',
-                        'currency_id',
-                        'date as transaction_date',
-                        'amount',
-                        'balance',
-                        'accrual_balance',
-                        'created_at'
-                    )
-                    ->where('customer_id', $this->selectedCustomer)
-                    ->whereNull('deleted_at')
-                    ->whereBetween('date', [$this->from, $this->to])
-                    ->union($invoicesQuery)
-                    ->get()
-                    ->sortBy([
-                        ['transaction_date', 'asc'],
-                        ['accrual_balance', 'asc'],
-                    ]);
+                $this->results = Currency::all()
+                    ->flatMap(fn ($currency) => $service->activity(
+                        (int) $this->selectedCustomer,
+                        $currency->id,
+                        $this->from,
+                        $this->to
+                    ))
+                    ->values();
 
                 $this->invoices = $this->results; // used for ->count() check in blade
             }

@@ -308,6 +308,10 @@
                                                 } elseif ($result->transaction_type === 'payment') {
                                                     $payment = App\Models\Payment::where('payment_number', $result->number)
                                                                 ->first();
+                                                } elseif ($result->transaction_type === 'credit_note') {
+                                                    $credit_note = App\Models\CreditNote::where('credit_note_number', $result->number)
+                                                                ->where('authorization', 'approved')
+                                                                ->first();
                                                 }
                                             @endphp
                                             <tr>
@@ -345,6 +349,15 @@
                                                         @endif
                                                         <br>
                                                         {{ $payment->notes }}
+                                                    @elseif ($result->transaction_type === 'credit_note' && isset($credit_note))
+                                                        Credit Note# {{ $result->number }}
+                                                        @if ($credit_note->invoice)
+                                                            for
+                                                            <a href="{{ route('invoices.show', $credit_note->invoice->id) }}"
+                                                               target="_blank" rel="noopener noreferrer" style="color: blue">
+                                                                Invoice# {{ $credit_note->invoice->invoice_number }}
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 </td>
                                                 <td class="text-center">{{ $row_currency->name }}</td>

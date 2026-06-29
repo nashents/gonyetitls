@@ -7,8 +7,8 @@ use App\Models\Invoice;
 use App\Models\Currency;
 use Livewire\Component;
 use App\Models\Customer;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\CustomerLedgerService;
 
 class Preview extends Component
 {
@@ -36,72 +36,28 @@ class Preview extends Component
     }
 
     /**
-     * Build a unionAll ledger (invoices + payments) for a given customer + currency.
-     * Payments get pay_first = 0 so they win date ties over invoices (pay_first = 1).
-     */
-    private function makeLedger(int $currencyId): \Illuminate\Database\Query\Builder
-    {
-        // Excluded invoice IDs that have approved credit notes
-        $excludedInvoiceIds = Invoice::whereHas('credit_notes', function ($q) {
-            $q->where('authorization', 'approved');
-        })->pluck('id')->toArray();
-
-        $inv = DB::table('invoices')
-            ->select([
-                'date',
-                'created_at',
-                DB::raw('1 as pay_first'),
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-            ])
-            ->where('authorization', 'approved')
-            ->where('customer_id', $this->selectedCustomer)
-            ->where('currency_id', $currencyId)
-            ->whereNull('deleted_at')
-            ->when(!empty($excludedInvoiceIds), function ($q) use ($excludedInvoiceIds) {
-                $q->whereNotIn('id', $excludedInvoiceIds);
-            });
-
-        $pay = DB::table('payments')
-            ->select([
-                'date',
-                'created_at',
-                DB::raw('0 as pay_first'),
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-            ])
-            ->where('customer_id', $this->selectedCustomer)
-            ->whereNotNull('accrual_balance')
-            ->where('currency_id', $currencyId)
-            ->whereNull('deleted_at');
-
-        return $inv->unionAll($pay);
-    }
-
-    /**
-     * Compute opening & closing accrual balances for every currency
-     * using the same snapshot logic as the Index blade.
+     * Compute opening & closing accrual balances for every currency. The
+     * balance is derived live from the transaction ledger (invoices,
+     * payments, approved credit notes) — never read from a stored
+     * snapshot column.
      */
     private function computeBalances(): void
     {
+        $service = app(CustomerLedgerService::class);
         $currencies = Currency::all();
 
         foreach ($currencies as $currency) {
-            // Opening: last transaction strictly BEFORE $from
-            $this->openingBalances[$currency->id] = DB::query()
-                ->fromSub($this->makeLedger($currency->id), 'ledger')
-                ->where('date', '<', $this->from)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->orderBy('pay_first', 'asc')   // 0 (payments) wins ties
-                ->value('accrual_balance') ?? 0.00;
+            $this->openingBalances[$currency->id] = $service->openingBalance(
+                (int) $this->selectedCustomer,
+                $currency->id,
+                $this->from
+            );
 
-            // Closing: last transaction on or BEFORE $to
-            $this->closingBalances[$currency->id] = DB::query()
-                ->fromSub($this->makeLedger($currency->id), 'ledger')
-                ->where('date', '<=', $this->to)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->orderBy('pay_first', 'asc')
-                ->value('accrual_balance') ?? 0.00;
+            $this->closingBalances[$currency->id] = $service->closingBalance(
+                (int) $this->selectedCustomer,
+                $currency->id,
+                $this->to
+            );
         }
     }
 
@@ -121,43 +77,19 @@ class Preview extends Component
 
             if (isset($this->from) && isset($this->to)) {
 
-                // Compute opening/closing balances via accrual_balance snapshot
+                // Compute opening/closing balances
                 $this->computeBalances();
 
-                // Invoices leg — note: 'balance' column (not 'total as balance')
-                $invoicesQuery = DB::table('invoices')
-                    ->select(
-                        DB::raw("'invoice' as transaction_type"),
-                        'invoice_number as number',
-                        'currency_id',
-                        'created_at',
-                        'date as transaction_date',
-                        'total as amount',
-                        'total as balance',           // ← real balance column, not total
-                        'accrual_balance'
-                    )
-                    ->where('authorization', 'approved')
-                    ->where('customer_id', $this->selectedCustomer)
-                    ->whereNull('deleted_at')
-                    ->whereBetween('date', [$this->from, $this->to]);
+                $service = app(CustomerLedgerService::class);
 
-                // Payments leg union-ed with invoices
-                $this->results = DB::table('payments')
-                    ->select(
-                        DB::raw("'payment' as transaction_type"),
-                        'payment_number as number',
-                        'currency_id',
-                        'created_at',
-                        'date as transaction_date',
-                        'amount',
-                        'balance',
-                        'accrual_balance'
-                    )
-                    ->where('customer_id', $this->selectedCustomer)
-                    ->whereNull('deleted_at')
-                    ->whereBetween('date', [$this->from, $this->to])
-                    ->union($invoicesQuery)
-                    ->get();
+                $this->results = Currency::all()
+                    ->flatMap(fn ($currency) => $service->activity(
+                        (int) $this->selectedCustomer,
+                        $currency->id,
+                        $this->from,
+                        $this->to
+                    ))
+                    ->values();
             }
         }
 

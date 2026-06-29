@@ -30,7 +30,6 @@ class Pending extends Component
     public $authorize;
     public $comments;
     public $invoice;
-    public $accrual_balance;
     public $from;
     public $to;
     public $invoice_filter;
@@ -90,76 +89,6 @@ class Pending extends Component
                     if($email){
                         Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $invoice));
                     }
-
-                    if ($this->authorize == "approved") {
-
-                        if (isset($invoice->customer_id, $invoice->currency_id)) {
-                if ($invoice->accrual_balance === null) {
-
-                    $customerId = $invoice->customer_id;
-                    $currencyId = $invoice->currency_id;
-
-                    // Payments subquery
-                    $payments = DB::table('payments')
-                        ->select([
-                            'customer_id',
-                            'currency_id',
-                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                            DB::raw('DATE(`date`) AS txn_date'),
-                            'created_at',
-                            DB::raw("'payment' AS source"),
-                            DB::raw('0 AS source_priority'),
-                            'id',
-                        ])
-                         ->whereNull('deleted_at') // exclude soft-deleted payments
-                        ->where('customer_id', $customerId)
-                        ->where('currency_id', $currencyId)
-                        ->whereNotNull('accrual_balance');
-
-                    
-
-                    // Invoices subquery (exclude the current invoice)
-                    $invoices = DB::table('invoices')
-                        ->select([
-                            'customer_id',
-                            'currency_id',
-                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                            DB::raw('DATE(`date`) AS txn_date'),
-                            'created_at',
-                            DB::raw("'invoice' AS source"),
-                            DB::raw('1 AS source_priority'),
-                            'id',
-                        ])
-                        ->where('authorization', 'approved')
-                        ->where('customer_id', $customerId)
-                        ->where('currency_id', $currencyId)
-                        ->whereNotNull('accrual_balance')
-                        ->whereNull('deleted_at') // exclude soft-deleted payments
-                        ->when(isset($invoice->id), function ($q) use ($invoice) {
-                            $q->where('id', '<>', $invoice->id);
-                        });
-
-                    // Union and pick the most recent by our deterministic ordering
-                    $last = DB::query()
-                        ->fromSub($payments->unionAll($invoices), 't')
-                        // prefer real transaction date; if it's null, fall back to created_at
-                        ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
-                        ->orderByDesc('t.created_at')
-                        ->orderBy('t.source_priority')   // payments (0) before invoices (1) on ties
-                        ->orderByDesc('t.id')
-                        ->first();
-
-                  
-                    $previous_balance = ($last && is_numeric($last->accrual_balance))
-                        ? (float) $last->accrual_balance
-                        : 0.0;
-
-                    $invoice->accrual_balance = $previous_balance + (float) $invoice->total;
-                    $invoice->save();
-                }
-            }
-                    }
-        
 
                 }
                 if ($this->authorize == "approved") {
@@ -247,72 +176,6 @@ class Pending extends Component
 
         if ($this->authorize == "approved") {
 
-            if (isset($invoice->customer_id, $invoice->currency_id)) {
-
-
-                if ($invoice->accrual_balance === null) {
-
-                    $customerId = $invoice->customer_id;
-                    $currencyId = $invoice->currency_id;
-
-                    // Payments subquery
-                    $payments = DB::table('payments')
-                        ->select([
-                            'customer_id',
-                            'currency_id',
-                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                            DB::raw('DATE(`date`) AS txn_date'),
-                            'created_at',
-                            DB::raw("'payment' AS source"),
-                            DB::raw('0 AS source_priority'),
-                            'id',
-                        ])
-                        ->whereNull('deleted_at') // exclude soft-deleted payments
-                        ->where('customer_id', $customerId)
-                        ->where('currency_id', $currencyId)
-                        ->whereNotNull('accrual_balance');
-
-                    // Invoices subquery (exclude the current invoice)
-                    $invoices = DB::table('invoices')
-                        ->select([
-                            'customer_id',
-                            'currency_id',
-                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                            DB::raw('DATE(`date`) AS txn_date'),
-                            'created_at',
-                            DB::raw("'invoice' AS source"),
-                            DB::raw('1 AS source_priority'),
-                            'id',
-                        ])
-                        ->where('authorization', 'approved')
-                        ->where('customer_id', $customerId)
-                        ->where('currency_id', $currencyId)
-                        ->whereNotNull('accrual_balance')
-                        ->whereNull('deleted_at') // exclude soft-deleted payments
-                        ->when(isset($invoice->id), function ($q) use ($invoice) {
-                            $q->where('id', '<>', $invoice->id);
-                        });
-
-                    // Union and pick the most recent by our deterministic ordering
-                    $last = DB::query()
-                        ->fromSub($payments->unionAll($invoices), 't')
-                        // prefer real transaction date; if it's null, fall back to created_at
-                        ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
-                        ->orderByDesc('t.created_at')
-                        ->orderBy('t.source_priority')   // payments (0) before invoices (1) on ties
-                        ->orderByDesc('t.id')
-                        ->first();
-
-                  
-                    $previous_balance = ($last && is_numeric($last->accrual_balance))
-                        ? (float) $last->accrual_balance
-                        : 0.0;
-
-                    $invoice->accrual_balance = $previous_balance + (float) $invoice->total;
-                    $invoice->save();
-                }
-            }
-          
             $this->dispatchBrowserEvent('hide-invoiceAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

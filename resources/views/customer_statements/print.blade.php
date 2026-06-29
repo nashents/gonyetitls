@@ -209,62 +209,12 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                     <div class="date" style="padding-bottom: 3px"> <strong>To: </strong>{{ date('F j, Y', strtotime($to)) }}</div>
                                     <hr>
                                                @php
-                                                // $from = new DateTime($from);
-                                                // $to = new DateTime($to);
-                                                                            $customerId = $customer->id;
-                                        $currencyId = $currency->id;
+                                                        // Opening/closing balances are derived live from the ledger by
+                                                        // CustomerLedgerService and passed in from the controller — never
+                                                        // read from a stored snapshot column.
+                                                        $opening_balance = $openingBalances[$currency->id] ?? 0.00;
+                                                        $closing_balance = $closingBalances[$currency->id] ?? 0.00;
 
-                                        // Helper to build a fresh union each time
-                                        $makeLedger = function () use ($customerId, $currencyId) {
-                                            $invoiceLedger = App\Models\Invoice::query()
-                                                ->select([
-                                                    'date',
-                                                    'created_at',
-                                                    // invoices lose the tie-break to payments
-                                                    Illuminate\Support\Facades\DB::raw('1 as pay_first'),
-                                                    // drop CAST(...) if accrual_balance is DECIMAL already
-                                                    Illuminate\Support\Facades\DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                                                ])
-                                                ->where('authorization', 'approved')
-                                                ->where('customer_id', $customerId)
-                                                ->where('currency_id', $currencyId)
-                                                ->whereDoesntHave('credit_notes', function ($q) {
-                                                    $q->where('authorization', 'approved'); // drop this where() if you want to exclude ANY credit note
-                                                });
-
-                                            $paymentLedger =  App\Models\Payment::query()
-                                                ->select([
-                                                    'date',
-                                                    'created_at',
-                                                    // payments win ties
-                                                    Illuminate\Support\Facades\DB::raw('0 as pay_first'),
-                                                    Illuminate\Support\Facades\DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                                                ])
-                                                ->whereNotNull('accrual_balance')
-                                                ->where('customer_id', $customerId)
-                                                ->where('currency_id', $currencyId);
-
-                                            return $invoiceLedger->unionAll($paymentLedger);
-                                        };
-
-                                        // OPENING: last txn strictly before $from  (payments win ties)
-                                        $opening_balance = Illuminate\Support\Facades\DB::query()
-                                            ->fromSub($makeLedger(), 'ledger')
-                                            ->where('date', '<', $from)
-                                            ->orderBy('date', 'desc')
-                                            ->orderBy('created_at', 'desc')
-                                            ->orderBy('pay_first', 'asc')  // 0 (payments) before 1 (invoices)
-                                            ->value('accrual_balance') ?? 0.00;
-
-                                        // CLOSING: last txn on/before $to  (payments win ties)
-                                        $closing_balance = Illuminate\Support\Facades\DB::query()
-                                            ->fromSub($makeLedger(), 'ledger')
-                                            ->where('date', '<=', $to)
-                                            ->orderBy('date', 'desc')
-                                            ->orderBy('created_at', 'desc')
-                                            ->orderBy('pay_first', 'asc')
-                                            ->value('accrual_balance') ?? 0.00;
-        
                                               $invoiced = App\Models\Invoice::where('customer_id',$customer->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('total');
                                                $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('amount');
                                             @endphp
@@ -317,31 +267,38 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                                 $payment = \App\Models\Payment::where('payment_number', $result->number)
                                                                             ->first();
                                                                 // use $payment
+                                                            } elseif ($result->transaction_type === 'credit_note') {
+                                                                $credit_note = \App\Models\CreditNote::where('credit_note_number', $result->number)
+                                                                            ->where('authorization', 'approved')
+                                                                            ->first();
                                                             }
-                                                            
-                                                            $accrual_balance = App\Models\Invoice::where('authorization','approved')->where('customer_id',$customer->id)->where('currency_id', $currency->id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
                                                         @endphp
                                                         @if ($result->transaction_type === 'invoice')
                                                             <a href="{{ route('invoices.show',$invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $result->number }} </a><br>
                                                             Due {{ $invoice->expiry }}
                                                         @elseif ($result->transaction_type === 'payment')
-                                                            <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment 
+                                                            <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment
                                                         @if (isset($payment->invoice))
-                                                            made for <a href="{{ route('invoices.show',$payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice ? $payment->invoice->invoice_number : "" }} </a> 
+                                                            made for <a href="{{ route('invoices.show',$payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice ? $payment->invoice->invoice_number : "" }} </a>
                                                         @else
                                                             @if ($payment->invoice_payments->count()> 0)
                                                                     made for
                                                                     @foreach ($payment->invoice_payments as $invoice_payment)
-                                                                        <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice ? $invoice_payment->invoice->invoice_number : "" }} </a> 
+                                                                        <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice ? $invoice_payment->invoice->invoice_number : "" }} </a>
                                                                         @if (!$loop->last)
                                                                             ,
                                                                         @endif
-                                                                        
+
                                                                     @endforeach
                                                             @endif
                                                         @endif
                                                             <br>
-                                                            {{ $payment->notes }} 
+                                                            {{ $payment->notes }}
+                                                        @elseif ($result->transaction_type === 'credit_note' && $credit_note)
+                                                            Credit Note# {{ $result->number }}
+                                                            @if ($credit_note->invoice)
+                                                                for <a href="{{ route('invoices.show',$credit_note->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $credit_note->invoice->invoice_number }}</a>
+                                                            @endif
                                                         @endif
                                                     </td>
                                                 <td class="text-center">{{ $currency->name}}</td>

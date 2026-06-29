@@ -106,7 +106,6 @@
                                 <a href="{{route('invoices.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Invoice</a>
                                 @if (Auth::user()->is_admin())
                                 <a href="#" wire:click="showBulkInvoices()"  class="btn btn-default"><i class="fa fa-copy"></i>Bulk Invoices</a>
-                                <a href="#" wire:click="showInvoiceUpdate()"  class="btn btn-default"><i class="fa fa-copy"></i>Update Invoice Balances</a>
                                 @endif
                                 <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Invoices Payments</a>
                             </div>
@@ -240,18 +239,6 @@
                                        
                                         {{-- @if ($invoice->balance) --}}
                                         {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->balance ? $invoice->balance : 0,2)}}
-                                        
-                                        @if ($invoice->accrual_balance)
-                                            <br>
-                                            <small>
-                                                <strong>Accrual Bal: </strong>  {{number_format($invoice->accrual_balance,2)}} 
-                                                {{-- @if (Auth::user()->is_admin()) --}}
-                                                    <a href="#" wire:click.prevent="showAccrual({{$invoice->id}})"><i class="fas fa-edit"></i></a>
-                                                {{-- @endif --}}
-                                            </small>
-                                        @endif
-                                       
-                                        {{-- @endif --}}
                                     </td>
                                     <td>
                                         <span class="badge bg-{{($invoice->authorization == 'approved') ? 'success' : (($invoice->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($invoice->authorization == 'approved') ? 'approved' : (($invoice->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
@@ -336,52 +323,6 @@
         </div>
         <!-- /.container-fluid -->
     </section>
-
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="updateInvoicesModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog  mw-100 w-50" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-copy"></i> Update all invoices<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
-                </div>
-                <form wire:submit.prevent="bulkUpdateInvoices()" >
-                <div class="modal-body">
-                    <p>Update all invoices to the current and accurate balances</p>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Update Invoices</button>
-                    </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
-            </div>
-        </div>
-    </div>
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="accrualModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog  mw-100 w-50" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-copy"></i> Update Accrual Balance<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
-                </div>
-                <form wire:submit.prevent="updateAccrualBalance()" >
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="">Accrual Balance<span class="required" style="color: red">*</span></label>
-                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="accrual_balance" placeholder="Enter Accrual Balance" required >
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Update Balance</button>
-                    </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
-            </div>
-        </div>
-    </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bulkInvoicesModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-50" role="document">

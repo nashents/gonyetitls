@@ -227,11 +227,19 @@
                                                         $row_currency = App\Models\Currency::find($result->currency_id);
                                                         $invoice      = App\Models\Invoice::where('invoice_number', $result->number)->where('authorization', 'approved')->first();
                                                         $payment      = App\Models\Payment::where('payment_number', $result->number)->first();
+                                                        $credit_note  = $result->transaction_type === 'credit_note'
+                                                            ? App\Models\CreditNote::where('credit_note_number', $result->number)->where('authorization', 'approved')->first()
+                                                            : null;
                                                     @endphp
                                                     <tr>
                                                         <td>{{ date('F j, Y', strtotime($result->transaction_date)) }}</td>
                                                         <td>
-                                                            @if ($invoice)
+                                                            @if ($credit_note)
+                                                                Credit Note# {{ $result->number }}
+                                                                @if ($credit_note->invoice)
+                                                                    for <a href="{{ route('invoices.show', $credit_note->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $credit_note->invoice->invoice_number }}</a>
+                                                                @endif
+                                                            @elseif ($invoice)
                                                                 <a href="{{ route('invoices.show', $invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">
                                                                     Invoice# {{ $result->number }}
                                                                 </a><br>

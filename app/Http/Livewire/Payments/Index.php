@@ -82,7 +82,6 @@ class Index extends Component
     public $current_balance;
     public $mode_of_payment;
     public $specify_other;
-    public $accrual_balance;
     public $selected_payment;
 
     public $exchange_amount;
@@ -249,25 +248,6 @@ class Index extends Component
         return  $account_number;
 
 
-    }
-
-     public function showAccrual($id){
-        $payment = Payment::find($id);
-        $this->payment_id = $id ; 
-        $this->accrual_balance = $payment->accrual_balance;
-        $this->dispatchBrowserEvent('show-accrualModal');
-    }
-
-    public function updateAccrualBalance(){
-        $payment = Payment::find($this->payment_id);
-        $payment->accrual_balance = $this->accrual_balance;
-        $payment->update();
-
-        $this->dispatchBrowserEvent('hide-accrualModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Accrual Balance Updated Successfully!!"
-        ]);
     }
 
     public function recordPayment()

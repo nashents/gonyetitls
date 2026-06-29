@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Customer;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendCustomerStatementMail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CustomerLedgerService;
 
 class InvoiceController extends Controller
 {
@@ -39,6 +40,33 @@ class InvoiceController extends Controller
             ]);
     }
 
+    /**
+     * Account Activity figures derived live from the transaction ledger
+     * (invoices, payments, approved credit notes) for every currency the
+     * customer has been invoiced in. Never reads a stored balance column.
+     */
+    private function accountActivityData($selectedCustomer, $from, $to): array
+    {
+        $service = app(CustomerLedgerService::class);
+        $currencies = Currency::all();
+
+        $openingBalances = [];
+        $closingBalances = [];
+        $results = collect();
+
+        foreach ($currencies as $currency) {
+            $openingBalances[$currency->id] = $service->openingBalance((int) $selectedCustomer, $currency->id, $from);
+            $closingBalances[$currency->id] = $service->closingBalance((int) $selectedCustomer, $currency->id, $to);
+            $results = $results->merge($service->activity((int) $selectedCustomer, $currency->id, $from, $to));
+        }
+
+        return [
+            'results' => $results,
+            'openingBalances' => $openingBalances,
+            'closingBalances' => $closingBalances,
+        ];
+    }
+
     public function customerStatementsPrint($selectedCustomer = null, $selectedType = null, $from = null, $to = null){
         $company = Auth::user()->employee->company;
         $customer = Customer::find($selectedCustomer);
@@ -62,57 +90,25 @@ class InvoiceController extends Controller
                 ]);
     
         }elseif ( isset($selectedCustomer) && $selectedType == "Account Activity") {
+            $activity = [];
             if (isset($from) && isset($to)) {
-                $invoices = DB::table('invoices')
-                ->select(
-                    DB::raw("'invoice' as transaction_type"),
-                    'invoice_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'total as amount',
-                    'total as balance',
-                    'accrual_balance',
-                    'created_at')
-                ->where('authorization','approved')
-                ->where('customer_id', $selectedCustomer)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] );
-              
-                $results = DB::table('payments')
-                ->select(
-                    DB::raw("'payment' as transaction_type"),
-                    'payment_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'amount',
-                    'balance',
-                    'accrual_balance',
-                    'created_at'
-                    )
-                ->where('customer_id', $selectedCustomer)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] )
-              
-                ->union($invoices)
-                ->get();
-
-                // $results = $invoices->union($payments);
+                $activity = $this->accountActivityData($selectedCustomer, $from, $to);
             }
             return view('customer_statements.print')->with([
                 'selectedCustomer' => $selectedCustomer,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
-                'results' => $results,
+                'invoices' => $activity['results'] ?? null,
+                'results' => $activity['results'] ?? null,
+                'openingBalances' => $activity['openingBalances'] ?? [],
+                'closingBalances' => $activity['closingBalances'] ?? [],
                 'company' => $company,
                 'customer' => $customer,
                 ]);
         }
-       
-   
+
+
     }
 
     public function customerStatementsPDF($selectedCustomer = null, $selectedType = null, $from = null, $to = null){
@@ -137,56 +133,25 @@ class InvoiceController extends Controller
             ];
     
         }elseif ( isset($selectedCustomer) && $selectedType == "Account Activity") {
+            $activity = [];
             if (isset($from) && isset($to)) {
-                $invoices = DB::table('invoices')
-                ->select(
-                    DB::raw("'invoice' as transaction_type"),
-                    'invoice_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'total as amount',
-                     'total as balance',
-                    'accrual_balance',
-                    'created_at')
-                ->where('authorization','approved')
-                ->where('customer_id', $selectedCustomer)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] );
-               
-                $results = DB::table('payments')
-                ->select(
-                    DB::raw("'payment' as transaction_type"),
-                    'payment_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'amount',
-                    'balance',
-                    'accrual_balance',
-                    'created_at'
-                    )
-                ->where('customer_id', $selectedCustomer)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] )
-                ->union($invoices)
-                ->get();
-
-                // $results = $invoices->union($payments);
+                $activity = $this->accountActivityData($selectedCustomer, $from, $to);
             }
             $data = [
                 'selectedCustomer' => $selectedCustomer,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
-                'results' => $results,
+                'invoices' => $activity['results'] ?? null,
+                'results' => $activity['results'] ?? null,
+                'openingBalances' => $activity['openingBalances'] ?? [],
+                'closingBalances' => $activity['closingBalances'] ?? [],
                 'company' => $company,
                 'customer' => $customer,
             ];
-          
+
         }
-       
+
         $pdf = PDF::loadView('customer_statements.customer_statement', $data);
 
         $fileName = 'customer_statement_' . time() . '.pdf';
@@ -229,56 +194,25 @@ class InvoiceController extends Controller
             ];
     
         }elseif ( isset($selectedCustomer) && $selectedType == "Account Activity") {
+            $activity = [];
             if (isset($from) && isset($to)) {
-                $invoices = DB::table('invoices')
-                ->select(
-                    DB::raw("'invoice' as transaction_type"),
-                    'invoice_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'total as amount',
-                      'total as balance',
-                    'accrual_balance',
-                    'created_at')
-                ->where('authorization','approved')
-                ->where('customer_id', $selectedCustomer)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] );
-               
-                $results = DB::table('payments')
-                ->select(
-                    DB::raw("'payment' as transaction_type"),
-                    'payment_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'amount',
-                    'balance',
-                    'accrual_balance',
-                    'created_at'
-                    )
-                ->where('customer_id', $selectedCustomer)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] )
-                ->union($invoices)
-                ->get();
-
-                // $results = $invoices->union($payments);
+                $activity = $this->accountActivityData($selectedCustomer, $from, $to);
             }
             $data = [
                 'selectedCustomer' => $selectedCustomer,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
-                'results' => $results,
+                'invoices' => $activity['results'] ?? null,
+                'results' => $activity['results'] ?? null,
+                'openingBalances' => $activity['openingBalances'] ?? [],
+                'closingBalances' => $activity['closingBalances'] ?? [],
                 'company' => $company,
                 'customer' => $customer,
             ];
-          
+
         }
-       
+
         $pdf = PDF::loadView('customer_statements.customer_statement', $data);
 
         $fileName = 'customer_statement_' . time() . '.pdf';
