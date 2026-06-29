@@ -249,7 +249,7 @@
 
                                                 {{-- Qty --}}
                                                 <td class="text-right">
-                                                    <span class="font-weight-bold">{{ number_format($fuel->quantity, 2) }}</span>
+                                                    <span class="font-weight-bold">{{ number_format(float($fuel->quantity?? 0), 2) }}</span>
                                                     <div>
                                                         @if($fuel->is_full_tank)
                                                             <span class="badge badge-success mt-1">Full Tank</span>
@@ -261,7 +261,7 @@
 
                                                 {{-- Amount --}}
                                                 <td class="text-right">
-                                                    {{ optional($fuel->currency)->symbol }}{{ number_format($fuel->amount, 2) }}
+                                                    {{ optional($fuel->currency)->symbol }}{{ number_format(float($fuel->amount ?? 0), 2) }}
                                                     <div class="fuel-meta text-muted"><small>{{ optional($fuel->currency)->name }}</small></div>
                                                 </td>
 
@@ -702,7 +702,7 @@
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance) && isset($quantity))
                                         @if (($this->effectiveContainerBalance ?? $container_balance) < $quantity)
-                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance, 2) }} litres, which is the fueling station balance.</small>
+                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} litres, which is the fueling station balance.</small>
                                         @endif
                                     @endif
                                 @endif
@@ -780,7 +780,7 @@
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy" && $deduct_from == "account")
                                     @if (isset($account_balance) && isset($amount))
                                         @if ($account_balance < $amount)
-                                        <small class="text-danger">Fuel total amount exceeds {{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance, 2) }}, which is the fueling station money account balance.</small>
+                                        <small class="text-danger">Fuel total amount exceeds {{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}, which is the fueling station money account balance.</small>
                                         @endif
                                     @endif
                                 @endif
@@ -1119,7 +1119,7 @@
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance) && isset($quantity))
                                         @if (($this->effectiveContainerBalance ?? $container_balance) < $quantity)
-                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance, 2) }} litres, which is the fueling station balance.</small>
+                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} litres, which is the fueling station balance.</small>
                                         @endif
                                     @endif
                                 @endif
@@ -1197,7 +1197,7 @@
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy" && $deduct_from == "account")
                                     @if (isset($account_balance) && isset($amount))
                                         @if ($account_balance < $amount)
-                                        <small class="text-danger">Fuel total amount exceeds {{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance, 2) }}, which is the fueling station money account balance.</small>
+                                        <small class="text-danger">Fuel total amount exceeds {{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}, which is the fueling station money account balance.</small>
                                         @endif
                                     @endif
                                 @endif
@@ -1763,7 +1763,7 @@
                                 @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                     @if (isset($container_balance) && isset($quantity))
                                         @if (($this->effectiveContainerBalance ?? $container_balance) < $quantity)
-                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance, 2) }} litres, which is the fueling station balance.</small>
+                                        <small class="text-danger">Fuel order exceeds {{ number_format($this->effectiveContainerBalance ?? $container_balance ?? 0, 2) }} litres, which is the fueling station balance.</small>
                                         @endif
                                         
                                     @endif

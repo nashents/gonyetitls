@@ -38,9 +38,17 @@ class Index extends Component
         return $rules;
     }
 
-    public function mount($id)
+    public function mount($id = null)
     {
-         $this->company_id = $id;
+        // The standalone Integrations page renders this component without an id,
+        // so fall back to the logged-in user's company. company_id is required
+        // (NOT NULL + FK), and a null here is the usual cause of a failed save.
+        $user = auth()->user();
+
+        $this->company_id = $id
+            ?? optional(optional($user)->employee)->company_id
+            ?? optional($user)->company_id
+            ?? optional(optional($user)->company)->id;
 
         $this->integration_providers = IntegrationProvider::where('is_active', true)
             ->orderBy('name', 'asc')
@@ -111,6 +119,16 @@ class Index extends Component
                 return;
             }
 
+            // Guard: company_id is NOT NULL with a FK to companies — a null here
+            // (e.g. page opened without a company context) is the usual failure.
+            if (empty($this->company_id)) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type'    => 'error',
+                    'message' => 'No company context — reload the page from your company profile and try again.',
+                ]);
+                return;
+            }
+
             CompanyIntegration::create([
                 'company_id'              => $this->company_id,
                 'integration_provider_id' => $this->integration_provider_id,
@@ -119,16 +137,21 @@ class Index extends Component
                 'config'                  => $this->config,
             ]);
 
-            $this->dispatchBrowserEvent('hide-company_integrationModal');
+            // The create modal's id is `createModal`; the global handler hides it
+            // on `hide-createModal` (it was dispatching a non-existent modal id).
+            $this->dispatchBrowserEvent('hide-createModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'success',
                 'message' => 'Integration created successfully!',
             ]);
         } catch (\Exception $e) {
+            // Log the real cause so failures aren't silently swallowed.
+            \Illuminate\Support\Facades\Log::error('CompanyIntegration create failed: ' . $e->getMessage());
+
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'error',
-                'message' => 'Something went wrong while creating the integration!',
+                'message' => 'Something went wrong while creating the integration: ' . $e->getMessage(),
             ]);
         }
     }
