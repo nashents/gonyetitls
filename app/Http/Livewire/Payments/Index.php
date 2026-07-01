@@ -468,8 +468,10 @@ class Index extends Component
 
             $payment = Payment::with([
                 'invoice',                    // single invoice mode (if you still use it)
+                'bill',                       // single bill mode (if you still use it)
                 'account',                    // bank/cash account
                 'invoice_payments.invoice',   // allocations (drawdowns)
+                'bill_payments.bill',         // allocations (drawdowns)
                 'denominations',
                 'documents',
                 'receipt',
@@ -513,6 +515,44 @@ class Index extends Component
                         $lockedInvoice->balance = (float) $lockedInvoice->balance + (float) $payment->amount;
                         $lockedInvoice->status  = $this->computeInvoiceStatus($lockedInvoice->balance, $lockedInvoice->total);
                         $lockedInvoice->save();
+                    }
+                }
+            }
+
+            // -----------------------------
+            // 1b) Reverse allocations to bills (mirrors invoice reversal above)
+            // -----------------------------
+            if ($payment->bill_payments && $payment->bill_payments->count() > 0) {
+
+                foreach ($payment->bill_payments as $bill_payment) {
+                    $bl = $bill_payment->bill;
+                    if (! $bl) continue;
+
+                    // IMPORTANT: use the allocation amount, NOT payment amount
+                    $applied = (float) ($bill_payment->amount ?? 0);
+
+                    // Lock bill row to avoid concurrent edits
+                    $lockedBill = \App\Models\Bill::where('id', $bl->id)->lockForUpdate()->first();
+                    if ($lockedBill) {
+                        $lockedBill->balance = (float) $lockedBill->balance + $applied;
+                        $lockedBill->status  = $this->computeInvoiceStatus($lockedBill->balance, $lockedBill->total);
+                        $lockedBill->save();
+                    }
+
+                    // Remove allocation row
+                    $bill_payment->delete();
+                }
+
+            } else {
+                // Fallback: single-bill payment reversal (only if your system uses it)
+                $bill = $payment->bill;
+
+                if ($bill) {
+                    $lockedBill = \App\Models\Bill::where('id', $bill->id)->lockForUpdate()->first();
+                    if ($lockedBill) {
+                        $lockedBill->balance = (float) $lockedBill->balance + (float) $payment->amount;
+                        $lockedBill->status  = $this->computeInvoiceStatus($lockedBill->balance, $lockedBill->total);
+                        $lockedBill->save();
                     }
                 }
             }

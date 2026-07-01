@@ -56,7 +56,8 @@ class BillJournalService
                     'transporter_id'  => $bill->transporter_id,
                     'debit'           => $expense->subtotal,
                     'credit'          => 0,
-                    'exchange_debit'  => $expense->subtotal * $rate,
+                   'exchange_debit' => (is_numeric($expense->subtotal) ? (float) $expense->subtotal : 0)
+                  * (is_numeric($rate) ? (float) $rate : 0),
                     'exchange_credit' => 0,
                     'currency_id'     => $bill->currency_id,
                     'exchange_rate'   => $rate,
@@ -71,7 +72,8 @@ class BillJournalService
                     'vendor_id'       => $bill->vendor_id,
                     'debit'           => $bill->tax_amount,
                     'credit'          => 0,
-                    'exchange_debit'  => $bill->tax_amount * $rate,
+                    'exchange_debit' => (is_numeric($bill->tax_amount) ? (float) $bill->tax_amount : 0)
+                  * (is_numeric($rate) ? (float) $rate : 0),
                     'exchange_credit' => 0,
                     'currency_id'     => $bill->currency_id,
                     'exchange_rate'   => $rate,
@@ -86,7 +88,8 @@ class BillJournalService
                 'debit'           => 0,
                 'credit'          => $bill->total,
                 'exchange_debit'  => 0,
-                'exchange_credit' => $bill->total * $rate,
+                'exchange_credit' => (is_numeric($bill->total) ? (float) $bill->total : 0)
+                  * (is_numeric($rate) ? (float) $rate : 0),
                 'currency_id'     => $bill->currency_id,
                 'exchange_rate'   => $rate,
                 'description'     => "AP - Bill {$bill->bill_number}",

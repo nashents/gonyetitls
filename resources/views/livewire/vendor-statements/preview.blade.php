@@ -184,6 +184,10 @@
                    
                 </main>
                 @elseif ($selectedType == "Account Activity")
+                @php
+                    $data = $statementByCurrency[$currency->id] ?? null;
+                @endphp
+                @if ($data)
                 <main>
                     <div class="row contacts">
                         <div class="col invoice-to" >
@@ -193,7 +197,7 @@
                                 {{$vendor->street_address}}
                                 @if ($vendor->suburb)
                                     {{$vendor->suburb ? $vendor->suburb."," : ""}} <br>
-                                @endif 
+                                @endif
                                 {{$vendor->city ? $vendor->city."," : ""}} {{$vendor->country}}
                             </div>
                             <div class="email"><a href="mailto:{{$vendor->email}}">{{$vendor->email}}</a>
@@ -204,112 +208,21 @@
                             <div class="date" style="padding-bottom: 3px"> <strong>From: </strong>{{ date('F j, Y', strtotime($from)) }}</div>
                             <div class="date" style="padding-bottom: 3px"> <strong>To: </strong>{{ date('F j, Y', strtotime($to)) }}</div>
                             <hr>
-                                 
-                            @php
-                                use Illuminate\Support\Facades\DB;
-                                use Carbon\Carbon;
+                                    <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($data['opening_balance'],2) }}</div>
 
-                                // Normalize bounds
-                                $from = Carbon::parse($from)->startOfDay();
-                                $to   = Carbon::parse($to)->endOfDay();
+                                    <div class="date" style="padding-bottom: 3px" ><strong>Billed({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($data['total_billed'],2) }}</div>
+                                    <div class="date" style="padding-bottom: 3px" ><strong>Paid({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($data['total_paid'],2) }}</div>
 
-                                $vendorId   = $vendor->id;
-                                $currencyId = $currency->id;
+                                        <div class="date" style="padding-bottom: 3px" ><strong>Closing Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($to)) }}</strong> {{$currency->symbol}}{{ number_format($data['closing_balance'],2) }}</div>
 
-                                // Build a unified ledger: bills + payments with consistent columns
-                                $makeLedger = function () use ($vendorId, $currencyId) {
-                                    // Bills side (approved, not soft-deleted)
-                                    $billLedger = App\Models\Bill::query()
-                                        ->select([
-                                            DB::raw('bill_date as date'),
-                                            'created_at',
-                                            DB::raw('1 as pay_first'), // payments win ties
-                                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                                            'id',
-                                        ])
-                                        ->where('authorization', 'approved')
-                                        ->where('vendor_id', $vendorId)
-                                        ->where('currency_id', $currencyId)
-                                        ->whereNotNull('accrual_balance')
-                                        ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                                        ->whereNull('deleted_at');
-
-                                    // Payments side (not soft-deleted)
-                                    $paymentLedger = App\Models\Payment::query()
-                                        ->select([
-                                            'date',
-                                            'created_at',
-                                            DB::raw('0 as pay_first'), // payments first on ties
-                                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                                            'id',
-                                        ])
-                                        ->where('vendor_id', $vendorId)
-                                        ->where('currency_id', $currencyId)
-                                        ->whereNotNull('accrual_balance')
-                                        ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                                        ->whereNull('deleted_at');
-
-                                    return $billLedger->unionAll($paymentLedger);
-                                };
-
-                                // OPENING: last txn strictly before $from (payments win ties)
-                                $opening_balance = DB::query()
-                                    ->fromSub($makeLedger(), 'l')
-                                    ->where('date', '<', $from)
-                                    ->orderBy('date', 'desc')
-                                    ->orderBy('created_at', 'desc')
-                                    ->orderBy('pay_first', 'asc') // 0 (payments) before 1 (bills)
-                                    ->orderBy('id', 'desc')       // final deterministic tie-breaker
-                                    ->value('accrual_balance') ?? 0.00;
-
-                                // CLOSING: last txn on/before $to (payments win ties)
-                                $closing_balance = DB::query()
-                                    ->fromSub($makeLedger(), 'l')
-                                    ->where('date', '<=', $to)
-                                    ->orderBy('date', 'desc')
-                                    ->orderBy('created_at', 'desc')
-                                    ->orderBy('pay_first', 'asc')
-                                    ->orderBy('id', 'desc')
-                                    ->value('accrual_balance') ?? 0.00;
-
-                                // Period totals (respect soft-deletes and numerics)
-                                $billed = App\Models\Bill::query()
-                                    ->where('vendor_id', $vendorId)
-                                    ->where('authorization', 'approved')
-                                    ->where('currency_id', $currencyId)
-                                    ->whereBetween('bill_date', [$from, $to])
-                                    ->whereNull('deleted_at')
-                                    ->whereRaw('total REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                                    ->sum('total');
-
-                                $paid = App\Models\Payment::query()
-                                    ->where('vendor_id', $vendorId)
-                                    ->where('currency_id', $currencyId)
-                                    ->whereBetween('date', [$from, $to])
-                                    ->whereNull('deleted_at')
-                                    ->whereRaw('amount REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                                    ->sum('amount');
-                            @endphp
-                                    
-                                    <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
-                                   
-                                    @if (isset($billed))
-                                    <div class="date" style="padding-bottom: 3px" ><strong>Billd({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($billed,2) }}</div>
-                                    @endif
-                                    @if (isset($paid))
-                                            <div class="date" style="padding-bottom: 3px" ><strong>Paid({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($paid,2) }}</div>
-                                        @endif
-                                  
-                                        <div class="date" style="padding-bottom: 3px" ><strong>Closing Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($to)) }}</strong> {{$currency->symbol}}{{ number_format($closing_balance ? $closing_balance : 0,2) }}</div>
-                                     
                         </div>
-                    </div> 
+                    </div>
                     <table>
                         <thead>
                             <tr>
                                 <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($from)) }}</strong></td>
                                 <td colspan="3" class="text-center"><strong>Opening Balance {{ $currency->name }}</strong></td>
-                                <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($opening_balance ? $opening_balance->accrual_balance : 0 ,2) }}</strong></td>
+                                <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($data['opening_balance'],2) }}</strong></td>
                             </tr>
                             <tr>
                                 <th class="text-center"><strong>Date</strong></th>
@@ -320,12 +233,7 @@
                                 <th class="text-center"><strong>Accrual Balance</strong></th>
                         </thead>
                         <tbody>
-                            @if (isset($results))
-                                @foreach ($results->sortBy('created_at')->sortBy('transaction_date') as $result)
-                                    @php
-                                        $currency = App\Models\Currency::find($result->currency_id);
-                                        
-                                    @endphp
+                            @foreach ($data['results'] as $result)
                                     <tr>
                                         <td class="text-center">{{ date('F j, Y', strtotime($result->transaction_date)) }}</td>
                                         <td class="text-center">
@@ -340,52 +248,48 @@
                                                                     ->first();
                                                         // use $payment
                                                     }
-                                                    
-                                                    $accrual_balance = App\Models\Bill::where('authorization','approved')->where('vendor_id',$vendor->id)->where('currency_id', $currency->id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
                                                 @endphp
                                                 @if ($result->transaction_type === 'bill')
                                                     <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
                                                     Due {{ $bill->expiry }}
                                                 @elseif ($result->transaction_type === 'payment')
-                                                <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment 
+                                                <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment
                                                 @if (isset($payment->bill))
-                                                    made for <a href="{{ route('bills.show',$payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $payment->bill ? $payment->bill->bill_number : "" }} </a> 
+                                                    made for <a href="{{ route('bills.show',$payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $payment->bill ? $payment->bill->bill_number : "" }} </a>
                                                 @else
                                                     @if ($payment->bill_payments->count()> 0)
                                                             made for
                                                             @foreach ($payment->bill_payments as $bill_payment)
-                                                                <a href="{{ route('bills.show',$bill_payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $bill_payment->bill ? $bill_payment->bill->bill_number : "" }} </a> 
+                                                                <a href="{{ route('bills.show',$bill_payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $bill_payment->bill ? $bill_payment->bill->bill_number : "" }} </a>
                                                                 @if (!$loop->last)
                                                                     ,
                                                                 @endif
-                                                                
+
                                                             @endforeach
                                                     @endif
                                                 @endif
                                                     <br>
-                                                    {{ $payment->notes }} 
+                                                    {{ $payment->notes }}
                                                 @endif
                                         </td>
                                         <td class="text-center">{{ $currency->name}}</td>
                                         <td class="text-center">{{ $currency->symbol}}{{ number_format($result->amount,2) }}</td>
                                         <td class="text-center">{{ $currency->symbol}}{{ number_format($result->balance,2) }}</td>
-                                        <td class="text-center">{{ $currency->symbol}}{{ number_format($result->accrual_balance ? $result->accrual_balance : 0,2) }}</td>
+                                        <td class="text-center">{{ $currency->symbol}}{{ number_format($result->accrual_balance,2) }}</td>
                                     </tr>
                                 @endforeach
-                            @endif
-                          
-                            
-                              
+
                                 <tr>
-                                    <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($from)) }}</strong></td>
+                                    <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($to)) }}</strong></td>
                                     <td colspan="3" class="text-center"><strong>Closing Balance {{ $currency->name }}</strong></td>
-                                    <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($closing_balance ? $closing_balance : 0,2) }}</strong></td>
+                                    <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($data['closing_balance'],2) }}</strong></td>
                                 </tr>
-                              
+
                         </tbody>
                     </table>
-                   
+
                 </main>
+                @endif
                 @endif
                 @endif
                 @endif

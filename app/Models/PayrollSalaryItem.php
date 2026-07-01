@@ -13,6 +13,11 @@ class PayrollSalaryItem extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    protected $fillable = [
+        'payroll_salary_id', 'salary_item_id', 'loan_id', 'deduction_id', 'recovery_id',
+        'movement', 'allowance_id', 'currency_id', 'amount', 'exchange_rate', 'exchange_amount',
+    ];
+
     public function payroll_salary(){
     return $this->belongsTo('App\Models\PayrollSalary');
     }

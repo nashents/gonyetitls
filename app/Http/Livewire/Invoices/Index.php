@@ -123,6 +123,8 @@ class Index extends Component
     public $file;
     
     public $company;
+    public $range;
+    public $authorization;
 
 
     public $inputs = [];
@@ -145,6 +147,8 @@ class Index extends Component
     
 
     public function mount(){
+        $this->range = request()->query('range');
+        $this->authorization = request()->query('authorization');
         $this->resetPage();
         $this->invoice_filter = "created_at";
         $this->tax_status = "all";
@@ -782,15 +786,34 @@ class Index extends Component
 
                 $query = Invoice::query()
                 ->with(['customer:id,name','transporter:id,name', 'currency'])
-                ->when(
-                    filled($this->from) && filled($this->to),
-                    fn ($q) => $q->whereBetween($this->invoice_filter, [
-                        Carbon::parse($this->from)->startOfDay(),
-                        Carbon::parse($this->to)->endOfDay(),
-                    ]),
-                    fn ($q) => $q->whereMonth($this->invoice_filter, now()->month)
-                                ->whereYear($this->invoice_filter, now()->year)
-                );
+                    ->when(
+                        filled($this->from) && filled($this->to),
+                        fn ($q) => $q->whereBetween($this->invoice_filter, [
+                            Carbon::parse($this->from)->startOfDay(),
+                            Carbon::parse($this->to)->endOfDay(),
+                        ]),
+                        function ($q) {
+                            if ($this->range === 'td') {
+                                $q->whereBetween($this->invoice_filter, [
+                                    now()->startOfDay(),
+                                    now()->endOfDay(),
+                                ]);
+                            } elseif ($this->range === 'mtd') {
+                                $q->whereBetween($this->invoice_filter, [
+                                    now()->startOfMonth(),
+                                    now()->endOfDay(),
+                                ]);
+                            } elseif ($this->range === 'ytd') {
+                                $q->whereBetween($this->invoice_filter, [
+                                    now()->startOfYear(),
+                                    now()->endOfDay(),
+                                ]);
+                            } else {
+                                $q->whereMonth($this->invoice_filter, now()->month)
+                                ->whereYear($this->invoice_filter, now()->year);
+                            }
+                        }
+                    );
             
             
                // 1) Search (when present, your original logic ignores tax_status — we keep that behavior)
@@ -831,6 +854,9 @@ class Index extends Component
                     ->orWhere('tax_amount', 0)
                     ->orWhere('tax_amount', '');
                 });
+            }
+            if (filled($this->authorization)) {
+                $query->where('authorization', $this->authorization);
             }
 
             return view('livewire.invoices.index', [

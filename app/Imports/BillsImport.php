@@ -107,52 +107,6 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
                 $bill->authorized_by_id   = Auth::id();
                 $bill->save();
 
-                $paymentsSubquery = DB::table('payments')
-                    ->select([
-                        'vendor_id', 'currency_id',
-                        DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                        DB::raw('DATE(`date`) AS txn_date'),
-                        'created_at',
-                        DB::raw("'payment' AS source"),
-                        DB::raw('0 AS source_priority'),
-                        'id',
-                    ])
-                    ->whereNull('deleted_at')
-                    ->where('vendor_id', $bill->vendor_id)
-                    ->where('currency_id', $currencyId)
-                    ->whereNotNull('accrual_balance');
-
-                $billsSubquery = DB::table('bills')
-                    ->select([
-                        'vendor_id', 'currency_id',
-                        DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                        DB::raw('DATE(`bill_date`) AS txn_date'),
-                        'created_at',
-                        DB::raw("'bill' AS source"),
-                        DB::raw('1 AS source_priority'),
-                        'id',
-                    ])
-                    ->where('authorization', 'approved')
-                    ->where('vendor_id', $bill->vendor_id)
-                    ->where('currency_id', $currencyId)
-                    ->whereNotNull('accrual_balance')
-                    ->whereNull('deleted_at')
-                    ->where('id', '<>', $bill->id);
-
-                $lastAccrual = DB::query()
-                    ->fromSub($paymentsSubquery->unionAll($billsSubquery), 't')
-                    ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
-                    ->orderByDesc('t.created_at')
-                    ->orderBy('t.source_priority')
-                    ->orderByDesc('t.id')
-                    ->first();
-
-                $previousBalance      = ($lastAccrual && is_numeric($lastAccrual->accrual_balance))
-                                            ? (float) $lastAccrual->accrual_balance
-                                            : 0.0;
-                $bill->accrual_balance = $previousBalance + (float) $bill->total;
-                $bill->save();
-
                 $this->recordPayment($bill, $currencyId, $accountId, $line_total);
 
                 $account = Account::find($accountId);
@@ -179,37 +133,6 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
     {
         $account = Account::find($accountId);
 
-        $payments = DB::table('payments')
-            ->select([
-                'vendor_id', 'currency_id',
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                'payments.date', 'payments.created_at',
-                DB::raw("'payment' AS source"), 'id',
-            ])
-            ->whereNull('deleted_at')
-            ->where('vendor_id', $bill->vendor_id)
-            ->where('currency_id', $currencyId);
-
-        $bills = DB::table('bills')
-            ->select([
-                'vendor_id', 'currency_id',
-                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                DB::raw('bills.bill_date AS date'),
-                'bills.created_at',
-                DB::raw("'bill' AS source"), 'id',
-            ])
-            ->where('authorization', 'approved')
-            ->whereNull('deleted_at')
-            ->where('vendor_id', $bill->vendor_id)
-            ->where('currency_id', $currencyId);
-
-        $latest = DB::query()
-            ->fromSub($payments->unionAll($bills), 'u')
-            ->orderByDesc('date')
-            ->orderByDesc('created_at')
-            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC")
-            ->first();
-
         $payment                      = new Payment();
         $payment->vendor_id           = $bill->vendor_id;
         $payment->bill_id             = $bill->id;
@@ -223,9 +146,6 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
         $payment->amount              = $amount;
         $payment->balance             = 0;
         $payment->date                = $bill->bill_date;
-        $payment->accrual_balance     = ($latest && is_numeric($latest->accrual_balance))
-                                            ? (float) bcsub((string) $latest->accrual_balance, (string) $amount, 2)
-                                            : 0;
         $payment->save();
 
         if ($account) {

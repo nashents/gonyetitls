@@ -665,55 +665,6 @@ WithBatchInserts
             $payment->exchange_rate = $bill->exchange_rate;
             $payment->exchange_amount = $bill->exchange_amount;
             $payment->balance = 0; // paid in full
-
-            // Accrual balance: latest vendor ledger entry minus this payment
-            if ($bill->vendor_id) {
-
-                $payments = DB::table('payments')
-                    ->select([
-                        'vendor_id',
-                        'currency_id',
-                        DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                        'payments.date',
-                        'payments.created_at',
-                        DB::raw("'payment' AS source"),
-                        'id',
-                    ])
-                    ->whereNull('deleted_at')
-                    ->where('vendor_id', $bill->vendor_id)
-                    ->where('currency_id', $bill->currency_id);
-
-                $bills = DB::table('bills')
-                    ->select([
-                        'vendor_id',
-                        'currency_id',
-                        DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                        DB::raw('bills.bill_date AS date'),
-                        'bills.created_at',
-                        DB::raw("'bill' AS source"),
-                        'id',
-                    ])
-                    ->where('authorization', 'approved')
-                    ->whereNull('deleted_at')
-                    ->where('vendor_id', $bill->vendor_id)
-                    ->where('currency_id', $bill->currency_id);
-
-                $latest = DB::query()
-                    ->fromSub($payments->unionAll($bills), 'u')
-                    ->orderByDesc('date')
-                    ->orderByDesc('created_at')
-                    ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC")
-                    ->first();
-
-                if ($latest && is_numeric($latest->accrual_balance)) {
-                    $payment->accrual_balance = (float) bcsub(
-                        (string) $latest->accrual_balance,
-                        (string) $amount,
-                        2
-                    );
-                }
-            }
-
             $payment->date = $payment_date;
             $payment->save();
 

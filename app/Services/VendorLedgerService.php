@@ -6,39 +6,37 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 /**
- * Single source of truth for a customer's accrual (running) balance.
+ * Single source of truth for a vendor's accrual (running) balance.
  *
- * The balance is never stored on invoices/payments — it is always derived by
- * replaying the customer's transaction history (approved invoices increase
- * the balance, payments and approved credit notes reduce it) in chronological
- * order. This is the standard "open item" statement method: there is nothing
- * to keep in sync, nothing to reverse on deletion, and no risk of two writers
- * racing on a shared snapshot column.
+ * Mirrors CustomerLedgerService for the vendor/bill side: the balance is
+ * never stored on bills/payments — it is always derived by replaying the
+ * vendor's transaction history (approved bills increase the balance,
+ * payments reduce it) in chronological order.
  */
-class CustomerLedgerService
+class VendorLedgerService
 {
     /**
-     * The full signed transaction history for a customer + currency,
-     * ordered chronologically. Each row carries enough detail to render a
-     * statement line plus a running `accrual_balance`.
+     * The full signed transaction history for a vendor + currency, ordered
+     * chronologically. Each row carries enough detail to render a statement
+     * line plus a running `accrual_balance`.
      */
-    public function ledger(int $customerId, int $currencyId): Collection
+    public function ledger(int $vendorId, int $currencyId): Collection
     {
-        $invoices = DB::table('invoices')
+        $bills = DB::table('bills')
             ->select([
                 'id',
-                DB::raw("'invoice' as transaction_type"),
-                'invoice_number as number',
+                DB::raw("'bill' as transaction_type"),
+                'bill_number as number',
                 'currency_id',
-                'date',
-                'date as transaction_date',
+                DB::raw('bill_date as date'),
+                DB::raw('bill_date as transaction_date'),
                 'created_at',
                 DB::raw('CAST(total AS DECIMAL(20,2)) as amount'),
                 DB::raw('CAST(total AS DECIMAL(20,2)) as balance'),
                 DB::raw('CAST(total AS DECIMAL(20,2)) as signed_amount'),
                 DB::raw('0 as type_priority'),
             ])
-            ->where('customer_id', $customerId)
+            ->where('vendor_id', $vendorId)
             ->where('currency_id', $currencyId)
             ->where('authorization', 'approved')
             ->whereNull('deleted_at');
@@ -57,34 +55,15 @@ class CustomerLedgerService
                 DB::raw('CAST(amount AS DECIMAL(20,2)) * -1 as signed_amount'),
                 DB::raw('1 as type_priority'),
             ])
-            ->where('customer_id', $customerId)
+            ->where('vendor_id', $vendorId)
             ->where('currency_id', $currencyId)
-            ->whereNull('deleted_at');
-
-        $creditNotes = DB::table('credit_notes')
-            ->select([
-                'id',
-                DB::raw("'credit_note' as transaction_type"),
-                'credit_note_number as number',
-                'currency_id',
-                'date',
-                'date as transaction_date',
-                'created_at',
-                DB::raw('CAST(total AS DECIMAL(20,2)) as amount'),
-                DB::raw('CAST(total AS DECIMAL(20,2)) as balance'),
-                DB::raw('CAST(total AS DECIMAL(20,2)) * -1 as signed_amount'),
-                DB::raw('1 as type_priority'),
-            ])
-            ->where('customer_id', $customerId)
-            ->where('currency_id', $currencyId)
-            ->where('authorization', 'approved')
             ->whereNull('deleted_at');
 
         $rows = DB::query()
-            ->fromSub($invoices->unionAll($payments)->unionAll($creditNotes), 'ledger')
+            ->fromSub($bills->unionAll($payments), 'ledger')
             ->orderBy('date')
             ->orderBy('created_at')
-            ->orderBy('type_priority') // invoices settle before payments/credit notes on an exact tie
+            ->orderBy('type_priority') // bills settle before payments on an exact tie
             ->orderBy('id')
             ->get();
 
@@ -101,9 +80,9 @@ class CustomerLedgerService
     /**
      * Running balance as of the last transaction strictly before $date.
      */
-    public function openingBalance(int $customerId, int $currencyId, string $date): float
+    public function openingBalance(int $vendorId, int $currencyId, string $date): float
     {
-        $last = $this->ledger($customerId, $currencyId)
+        $last = $this->ledger($vendorId, $currencyId)
             ->filter(fn ($row) => $row->date < $date)
             ->last();
 
@@ -113,9 +92,9 @@ class CustomerLedgerService
     /**
      * Running balance as of the last transaction on or before $date.
      */
-    public function closingBalance(int $customerId, int $currencyId, string $date): float
+    public function closingBalance(int $vendorId, int $currencyId, string $date): float
     {
-        $last = $this->ledger($customerId, $currencyId)
+        $last = $this->ledger($vendorId, $currencyId)
             ->filter(fn ($row) => $row->date <= $date)
             ->last();
 
@@ -127,9 +106,9 @@ class CustomerLedgerService
      * carrying the running accrual_balance computed over the full history
      * (so it continues seamlessly from the opening balance).
      */
-    public function activity(int $customerId, int $currencyId, string $from, string $to): Collection
+    public function activity(int $vendorId, int $currencyId, string $from, string $to): Collection
     {
-        return $this->ledger($customerId, $currencyId)
+        return $this->ledger($vendorId, $currencyId)
             ->filter(fn ($row) => $row->date >= $from && $row->date <= $to)
             ->values();
     }

@@ -45,8 +45,10 @@ class PayrollAuditLog extends Model
         ?string $reason = null,
         ?string $auditableType = null,
         ?int $auditableId = null,
+        ?int $companyId = null,
     ): self {
         return static::create([
+            'company_id'      => $companyId,
             'payroll_run_id'  => $payrollRunId,
             'auditable_type'  => $auditableType,
             'auditable_id'    => $auditableId,

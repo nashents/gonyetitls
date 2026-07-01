@@ -21,6 +21,7 @@ class JournalEntry extends Model
             'invoice_id',
             'bill_id',
             'payment_id',
+            'payroll_run_id',
             'is_manual',
             'journal_number',
             'date',
@@ -61,6 +62,11 @@ class JournalEntry extends Model
     public function payment()
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function payrollRun()
+    {
+        return $this->belongsTo(PayrollRun::class);
     }
 
     public function created_by()

@@ -292,15 +292,14 @@
                     @endif
                 </div>
             </div>
-
             <div class="gd-grid">
                 @if ($canSee(['Finance','Management','Operations']))
                     <div class="gd-panel wide">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-line-chart"></i> Executive Finance</h5><span class="gd-panel-note">Revenue, cash, receivables and payables</span></div>
                         <div class="gd-kpi-grid">
-                            <a class="gd-kpi" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-dollar"></i></span><div class="value">{{ $money($revenue_today ?? 0) }}</div><span class="name">Revenue Today</span></a>
-                            <a class="gd-kpi {{ ($revenue_mtd_change_pct ?? 0) >= 0 ? 'good' : 'danger' }}" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-line-chart"></i></span><div class="value">{{ $money($revenue_mtd ?? 0) }}</div><span class="name">Revenue MTD · {{ ($revenue_mtd_change_pct ?? 0) > 0 ? '+' : '' }}{{ $revenue_mtd_change_pct ?? 0 }}%</span></a>
-                            <a class="gd-kpi" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-calendar"></i></span><div class="value">{{ $money($revenue_ytd ?? 0) }}</div><span class="name">Revenue YTD</span></a>
+                            <a class="gd-kpi" href="{{ route('invoices.index',['range' => 'td', 'authorization'=>'approved']) }}"><span class="icon"><i class="fa fa-dollar"></i></span><div class="value">{{ $money($revenue_today ?? 0) }}</div><span class="name">Revenue Today</span></a>
+                            <a class="gd-kpi {{ ($revenue_mtd_change_pct ?? 0) >= 0 ? 'good' : 'danger' }}" href="{{ route('invoices.index',['range' => 'mtd', 'authorization'=>'approved']) }}"><span class="icon"><i class="fa fa-dollar"></i></span><div class="value">{{ $money($revenue_mtd ?? 0) }}</div><span class="name">Revenue MTD · {{ ($revenue_mtd_change_pct ?? 0) > 0 ? '+' : '' }}{{ $revenue_mtd_change_pct ?? 0 }}%</span></a>
+                            <a class="gd-kpi" href="{{ route('invoices.index',['range' => 'ytd', 'authorization'=>'approved']) }}"><span class="icon"><i class="fa fa-dollar"></i></span><div class="value">{{ $money($revenue_ytd ?? 0) }}</div><span class="name">Revenue YTD</span></a>
                             <a class="gd-kpi {{ ($gross_margin_pct ?? 0) >= 20 ? 'good' : (($gross_margin_pct ?? 0) >= 10 ? 'warn' : 'danger') }}" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-percent"></i></span><div class="value">{{ $gross_margin_pct ?? 0 }}%</div><span class="name">Gross Margin MTD</span></a>
                             <a class="gd-kpi {{ ($outstanding_invoices_value ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-inbox"></i></span><div class="value">{{ $money($outstanding_invoices_value ?? 0) }}</div><span class="name">Receivables · {{ $outstanding_invoices_count ?? 0 }}</span></a>
                             <a class="gd-kpi {{ ($overdue_invoices_value ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-exclamation-circle"></i></span><div class="value">{{ $money($overdue_invoices_value ?? 0) }}</div><span class="name">Overdue Receivables</span></a>

@@ -236,7 +236,10 @@ class Create extends Component
         // Only HR and Super Admin can create salary records
         $this->authorize('create', \App\Models\Salary::class);
 
-        $this->company = Auth::user()->employee->company;
+        $this->company = Auth::user()->employee?->company;
+        if (!$this->company) {
+            abort(422, 'Your user account is not linked to an employee record with a company, so a salary cannot be created.');
+        }
         $this->selectedCurrency = $this->company->currency_id;
         $this->frequency = "monthly";
         $this->employees = Employee::with('user')
@@ -453,7 +456,10 @@ class Create extends Component
                 if ($this->paye) {
                     $this->processPayeAndAidsLevy($gross);
                 }
-                
+
+                // Process NSSA, NEC and Pension statutory contributions
+                $this->processStatutoryContributions($salary, $gross);
+
                 // Final Salary Calculation
                 $salary->gross = $gross;
                 $salary->net = $gross - $this->total_deductions;
@@ -491,11 +497,11 @@ class Create extends Component
 
                         $exchange_amount = 0;
 
-                        if (isset($exchangeRates[$key]) && ($currencyIds[$key] != Auth::user()->employee->company->currency_id)) {
+                        if (isset($exchangeRates[$key]) && ($currencyIds[$key] != $this->company->currency_id)) {
                             $exchange_amount = $exchangeRates[$key] * $amounts[$key];
                         }
                         $movement = Null;
-                        if(isset($column[$key]) && $column[$key] == "recovery_id"){
+                        if($column == "recovery_id"){
                             $recovery = Recovery::find($item);
                             $movement = $recovery?->type;
                         }
@@ -509,7 +515,7 @@ class Create extends Component
                             'exchange_rate' => $exchangeRates[$key] ?? Null,
                             'exchange_amount' =>  $exchange_amount,
                         ]);
-                        $total += $currencyIds[$key] != Auth::user()->employee->company->currency_id ? $exchange_amount : $amounts[$key];
+                        $total += $currencyIds[$key] != $this->company->currency_id ? $exchange_amount : $amounts[$key];
                     }
                 }
             }
@@ -572,6 +578,67 @@ class Create extends Component
                     }
                 }
             }
+        }
+
+        // Helper function to process NSSA, NEC and Pension statutory contributions.
+        // Each is independently no-op (returns zero) if no rate/assignment is
+        // configured for this employee, so it's always safe to call.
+        private function processStatutoryContributions(Salary $salary, float $gross) {
+            $employee = Employee::find($this->selectedEmployee);
+            if (!$employee) return;
+
+            $calculator = new \App\Services\Payroll\StatutoryCalculator($this->company->id);
+            $today = now()->toDateString();
+
+            $nssa = $calculator->computeNssa($gross, $today);
+            if ($nssa['employee_amount'] > 0) {
+                $nssaDeduction = Deduction::firstOrCreate(['name' => 'NSSA'], ['status' => 1]);
+                $exchange_amount = $this->exchange_rate * $nssa['employee_amount'];
+                SalaryItem::create([
+                    'salary_id' => $this->salary_id,
+                    'deduction_id' => $nssaDeduction->id,
+                    'amount' => $nssa['employee_amount'],
+                    'exchange_rate' => $this->exchange_rate,
+                    'exchange_amount' => $exchange_amount,
+                ]);
+                $this->total_deductions += $nssa['employee_amount'];
+            }
+            $salary->nssa_employee_amount = $nssa['employee_amount'];
+            $salary->nssa_employer_amount = $nssa['employer_amount'];
+
+            $nec = $calculator->computeNec($employee, $gross, $today);
+            if ($nec['employee_amount'] > 0) {
+                $necDeduction = Deduction::firstOrCreate(['name' => 'NEC'], ['status' => 1]);
+                $exchange_amount = $this->exchange_rate * $nec['employee_amount'];
+                SalaryItem::create([
+                    'salary_id' => $this->salary_id,
+                    'deduction_id' => $necDeduction->id,
+                    'amount' => $nec['employee_amount'],
+                    'exchange_rate' => $this->exchange_rate,
+                    'exchange_amount' => $exchange_amount,
+                ]);
+                $this->total_deductions += $nec['employee_amount'];
+            }
+            $salary->nec_category_id = $nec['nec_category_id'];
+            $salary->nec_employee_amount = $nec['employee_amount'];
+            $salary->nec_employer_amount = $nec['employer_amount'];
+
+            $pension = $calculator->computePension($employee, $gross, $today);
+            if ($pension['employee_amount'] > 0) {
+                $pensionDeduction = Deduction::firstOrCreate(['name' => 'Pension'], ['status' => 1]);
+                $exchange_amount = $this->exchange_rate * $pension['employee_amount'];
+                SalaryItem::create([
+                    'salary_id' => $this->salary_id,
+                    'deduction_id' => $pensionDeduction->id,
+                    'amount' => $pension['employee_amount'],
+                    'exchange_rate' => $this->exchange_rate,
+                    'exchange_amount' => $exchange_amount,
+                ]);
+                $this->total_deductions += $pension['employee_amount'];
+            }
+            $salary->pension_scheme_id = $pension['pension_scheme_id'];
+            $salary->pension_employee_amount = $pension['employee_amount'];
+            $salary->pension_employer_amount = $pension['employer_amount'];
         }
 
     public function render()

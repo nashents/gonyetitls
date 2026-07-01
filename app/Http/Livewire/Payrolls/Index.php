@@ -5,14 +5,11 @@ namespace App\Http\Livewire\Payrolls;
 use App\Models\User;
 use App\Models\Salary;
 use App\Models\Payroll;
-use App\Models\Payslip;
+use App\Models\PayrollFrequency;
+use App\Models\PayrollRun;
 use Livewire\Component;
-use App\Models\Currency;
-use App\Models\AccountType;
 use Livewire\WithPagination;
-use App\Models\PayrollSalary;
-use App\Models\PayrollSalaryItem;
-use App\Models\PayrollSalaryDetail;
+use App\Services\Payroll\PayrollBatchService;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -35,99 +32,70 @@ class Index extends Component
     public $currencies;
     public $salaries;
     public $selected_payroll;
+    public $company;
 
     public function mount(){
-        $this->salaries = Salary::with('employee')->where('status',1)->get();
+        $this->company  = Auth::user()->employee?->company;
+        $this->salaries = Salary::with(['employee', 'salary_items'])
+            ->where('status', 1)
+            ->when($this->company, fn ($q) => $q->whereHas('employee', fn ($eq) => $eq->where('company_id', $this->company->id)))
+            ->get();
+    }
+
+    /**
+     * Find (or create, for companies that predate the seeder) the company's
+     * default monthly PayrollFrequency, used when this legacy form derives
+     * a PayrollRun header from plain month/year inputs.
+     */
+    private function defaultFrequency(): PayrollFrequency
+    {
+        return PayrollFrequency::where('code', 'MONTHLY')
+            ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $this->company?->id))
+            ->first()
+            ?? PayrollFrequency::firstOrCreate(
+                ['code' => 'MONTHLY'],
+                ['name' => 'Monthly', 'periods_per_year' => 12, 'active' => true]
+            );
     }
 
 
-    public function payrollNumber(){
-       
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $payroll = Payroll::orderBy('id', 'desc')->first();
-
-        if (!$payroll) {
-            $payroll_number =  $initials .'L'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $payroll->id + 1;
-            $payroll_number =  $initials .'L'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $payroll_number;
-
-
-    }
     private function resetInputFields(){
         $this->payroll_number = '';
         $this->month = '';
         $this->year = '';
     }
 
+    /**
+     * Derive (or find) the PayrollRun header backing this month/year, then
+     * delegate the actual batch-build to PayrollBatchService — the same
+     * service the new /payroll-runs UI uses, so there's one implementation
+     * of "snapshot active salaries into a payroll batch", not two.
+     */
     public function store(){
+        if (!$this->company) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Your user account is not linked to an employee record with a company.',
+            ]);
+            return;
+        }
 
-        $payroll = new Payroll;
-        $payroll->user_id = Auth::user()->id;
-        $payroll->payroll_number = $this->payrollNumber();
-        $payroll->month = $this->month;
-        $payroll->year = $this->year;
-        $payroll->save();
+        $periodStart = \Carbon\Carbon::parse($this->month . ' 1, ' . $this->year)->startOfMonth();
+        $periodEnd   = $periodStart->copy()->endOfMonth();
 
-               if (isset($this->salaries)) {
+        $run = PayrollRun::create([
+            'company_id'           => $this->company->id,
+            'payroll_frequency_id' => $this->defaultFrequency()->id,
+            'currency_id'          => $this->company->currency_id,
+            'name'                 => $this->month . ' ' . $this->year . ' Payroll',
+            'period_start'         => $periodStart,
+            'period_end'           => $periodEnd,
+            'payroll_date'         => $periodEnd,
+            'status'               => 'draft',
+            'created_by'           => Auth::id(),
+        ]);
 
-                    if ($this->salaries->count()>0) {
-
-                        foreach ($this->salaries as $salary) {
-
-                            $payroll_salary = new PayrollSalary;
-                            $payroll_salary->payroll_id = $payroll->id;
-                            $payroll_salary->salary_id = $salary->id;
-                            $payroll_salary->currency_id = $salary->currency_id;
-                            $payroll_salary->employee_id = $salary->employee_id;
-                            $payroll_salary->basic = $salary->basic;
-                            $payroll_salary->gross = $salary->gross;
-                            $payroll_salary->net = $salary->net;
-                            $payroll_salary->total_deductions = $salary->total_deductions;
-                            $payroll_salary->total_allowances = $salary->total_allowances;
-                            $payroll_salary->save();
-                            
-                            foreach ($salary->salary_items as $salary_item) {
-
-                                $payroll_salary_item = new PayrollSalaryItem;
-                                $payroll_salary_item->payroll_salary_id = $payroll_salary->id;
-                                $payroll_salary_item->salary_item_id = $salary_item->id;
-                                $payroll_salary_item->loan_id = $salary_item->loan_id;
-                                $payroll_salary_item->deduction_id = $salary_item->deduction_id;
-                                $payroll_salary_item->recovery_id = $salary_item->recovery_id;
-                                $payroll_salary_item->movement = $salary_item->movement;
-                                $payroll_salary_item->allowance_id = $salary_item->allowance_id;
-                                $payroll_salary_item->currency_id = $salary_item->currency_id;
-                                $payroll_salary_item->amount = $salary_item->amount;
-                                $payroll_salary_item->exchange_amount = $salary_item->exchange_amount;
-                                $payroll_salary_item->exchange_rate = $salary_item->exchange_rate;
-                                $payroll_salary_item->save();
-                            }
-
-                        }
-                    }
-
-                }
+        app(PayrollBatchService::class)->buildBatch($run, $this->salaries ?? collect());
 
         $this->dispatchBrowserEvent('hide-payrollModal');
         $this->resetInputFields();
@@ -175,38 +143,30 @@ class Index extends Component
         $payroll->year = $this->year;
         $payroll->update();
 
-        $payroll_salaries = $payroll->payroll_salaries;
-        foreach ($payroll_salaries as $payroll_salary) {
-            $payroll_salary->delete();
+        $periodStart = \Carbon\Carbon::parse($this->month . ' 1, ' . $this->year)->startOfMonth();
+        $periodEnd   = $periodStart->copy()->endOfMonth();
+
+        $run = $payroll->payrollRun;
+        if ($run) {
+            $run->update(['period_start' => $periodStart, 'period_end' => $periodEnd, 'payroll_date' => $periodEnd]);
+        } else {
+            // Legacy payroll predating the PayrollRun bridge — retrofit one now.
+            $run = PayrollRun::create([
+                'company_id'           => $this->company?->id ?? Auth::user()->employee?->company_id,
+                'payroll_frequency_id' => $this->defaultFrequency()->id,
+                'currency_id'          => $payroll->currency_id,
+                'name'                 => $this->month . ' ' . $this->year . ' Payroll',
+                'period_start'         => $periodStart,
+                'period_end'           => $periodEnd,
+                'payroll_date'         => $periodEnd,
+                'status'               => 'draft',
+                'created_by'           => Auth::id(),
+            ]);
+            $payroll->update(['payroll_run_id' => $run->id]);
         }
 
-        if (isset($this->salaries)) {
-            if ($this->salaries->count()>0) {
-                foreach ($this->salaries as $salary) {
-                    $payroll_salary = new PayrollSalary;
-                    $payroll_salary->payroll_id = $payroll->id;
-                    $payroll_salary->salary_id = $salary->id;
-                    $payroll_salary->employee_id = $salary->employee_id;
-                    $payroll_salary->basic = $salary->basic;
-                    $payroll_salary->gross = $salary->gross;
-                    $payroll_salary->net = $salary->net;
-                    $payroll_salary->total_deductions = $salary->total_deductions;
-                    $payroll_salary->total_allowances = $salary->total_allowances;
-                    $payroll_salary->save();
-                    foreach ($salary->salary_items as $salary_item) {
-                        $payroll_salary_item = new PayrollSalaryItem;
-                        $payroll_salary_item->payroll_salary_id = $payroll_salary->id;
-                        $payroll_salary_item->salary_item_id = $salary_item->id;
-                        $payroll_salary_item->loan_id = $salary_item->loan_id;
-                        $payroll_salary_item->deduction_id = $salary_item->deduction_id;
-                        $payroll_salary_item->allowance_id = $salary_item->allowance_id;
-                        $payroll_salary_item->amount = $salary_item->amount;
-                        $payroll_salary_item->save();
-                    }
-                }
-            }
-        }
-    
+        app(PayrollBatchService::class)->buildBatch($run, $this->salaries ?? collect());
+
         $this->dispatchBrowserEvent('hide-payrollEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[

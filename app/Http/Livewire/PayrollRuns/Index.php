@@ -4,10 +4,12 @@ namespace App\Http\Livewire\PayrollRuns;
 
 use App\Models\Currency;
 use App\Models\PayrollRun;
+use App\Models\Salary;
+use App\Services\Payroll\PayrollBatchService;
+use App\Services\Payroll\PayrollRunLifecycleService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class Index extends Component
 {
@@ -43,7 +45,10 @@ class Index extends Component
 
     public function mount()
     {
-        $this->company     = Auth::user()->employee->company;
+        $this->company = Auth::user()->employee?->company;
+        if (!$this->company) {
+            abort(422, 'Your user account is not linked to an employee record with a company, so payroll runs are unavailable.');
+        }
         $this->frequencies = \App\Models\PayrollFrequency::where('active', true)
             ->where(function ($q) { $q->whereNull('company_id')->orWhere('company_id', $this->company->id); })
             ->orderBy('name')->get();
@@ -73,7 +78,7 @@ class Index extends Component
             'selectedCurrency'  => 'required|exists:currencies,id',
         ]);
 
-        PayrollRun::create([
+        $run = PayrollRun::create([
             'company_id'           => $this->company->id,
             'payroll_frequency_id' => $this->selectedFrequency,
             'currency_id'          => $this->selectedCurrency,
@@ -88,8 +93,15 @@ class Index extends Component
             'created_by'           => Auth::id(),
         ]);
 
+        $salaries = Salary::with(['employee', 'salary_items'])
+            ->where('status', 1)
+            ->whereHas('employee', fn ($q) => $q->where('company_id', $this->company->id))
+            ->get();
+
+        app(PayrollBatchService::class)->buildBatch($run, $salaries);
+
         $this->showCreateModal = false;
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run created.']);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run created with ' . $salaries->count() . ' employee(s).']);
     }
 
     // ── Lifecycle actions ────────────────────────────────────────────────────
@@ -105,50 +117,30 @@ class Index extends Component
     public function executeLifecycle()
     {
         $run = PayrollRun::findOrFail($this->confirmRunId);
-        $now = now();
+        $this->authorize('update', $run);
+
+        $service = app(PayrollRunLifecycleService::class);
+        $messages = [
+            'approve' => 'Payroll run approved.',
+            'lock'    => 'Payroll run locked.',
+            'post'    => 'Payroll run posted to GL.',
+            'reverse' => 'Payroll run reversed.',
+        ];
 
         match ($this->confirmAction) {
-            'approve' => $this->doApprove($run, $now),
-            'lock'    => $this->doLock($run, $now),
-            'post'    => $this->doPost($run, $now),
-            'reverse' => $this->doReverse($run, $now),
+            'approve' => $service->approve($run),
+            'lock'    => $service->lock($run),
+            'post'    => $service->post($run),
+            'reverse' => $service->reverse($run, $this->confirmReason),
             default   => null,
         };
 
+        if (isset($messages[$this->confirmAction])) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => $messages[$this->confirmAction]]);
+        }
+
         $this->reset(['confirmRunId', 'confirmAction', 'confirmReason']);
         $this->dispatchBrowserEvent('hide-confirm-modal');
-    }
-
-    private function doApprove(PayrollRun $run, $now): void
-    {
-        $this->authorize('update', $run);
-        if (!in_array($run->status, ['draft', 'validated'])) abort(422, 'Cannot approve in current status.');
-        $run->update(['status' => 'approved', 'approved_by' => Auth::id(), 'approved_at' => $now]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run approved.']);
-    }
-
-    private function doLock(PayrollRun $run, $now): void
-    {
-        $this->authorize('update', $run);
-        if ($run->status !== 'approved') abort(422, 'Run must be approved before locking.');
-        $run->update(['status' => 'locked', 'locked_by' => Auth::id(), 'locked_at' => $now]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run locked.']);
-    }
-
-    private function doPost(PayrollRun $run, $now): void
-    {
-        $this->authorize('update', $run);
-        if (!in_array($run->status, ['locked', 'exported'])) abort(422, 'Run must be locked before posting.');
-        $run->update(['status' => 'posted', 'posted_by' => Auth::id(), 'posted_at' => $now]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run posted to GL.']);
-    }
-
-    private function doReverse(PayrollRun $run, $now): void
-    {
-        $this->authorize('update', $run);
-        if (!$run->canBeReversed()) abort(422, 'Run cannot be reversed in its current status.');
-        $run->update(['status' => 'reversed', 'reversed_by' => Auth::id(), 'reversed_at' => $now, 'notes' => $this->confirmReason]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'Payroll run reversed.']);
     }
 
     // ── Render ───────────────────────────────────────────────────────────────

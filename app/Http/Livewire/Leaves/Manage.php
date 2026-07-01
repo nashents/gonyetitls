@@ -169,7 +169,7 @@ class Manage extends Component
             $leave->to = $this->to;
             $leave->from = $this->from;
             $leave->is_backdated = $this->is_backdated;
-            $leave->ignore_public_holidays = $this->ignore_public_holidays;
+            $leave->ignore_public_holidays = $this->ignore_public_holidays ?? False;
             $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
             $leave->department_id = $this->department_id;
@@ -243,7 +243,7 @@ class Manage extends Component
         $this->selected_employee = Employee::find($leave->employee_id);
         $this->available_leave_days =  $this->selected_employee->leave_days;
         $this->leave_type_id = $leave->leave_type_id;
-        $this->ignore_public_holidays = $leave->ignore_public_holidays;
+        $this->ignore_public_holidays = $leave->ignore_public_holidays ?? False;
         $this->to = $leave->to;
         $this->from = $leave->from;
         $this->days = $leave->days;
@@ -270,7 +270,7 @@ class Manage extends Component
             $leave->to = $this->to;
             $leave->from = $this->from;
             $leave->is_backdated = $this->is_backdated;
-            $leave->ignore_public_holidays = $this->ignore_public_holidays;
+            $leave->ignore_public_holidays = $this->ignore_public_holidays ?? False;
             $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
             $leave->department_id = $this->department_id;

@@ -8,7 +8,7 @@ use App\Models\Vendor;
 use App\Exports\VendorStatementExport;
 use Livewire\Component;
 use Maatwebsite\Excel\Excel;
-use Illuminate\Support\Facades\DB;
+use App\Services\VendorLedgerService;
 
 class Index extends Component
 {
@@ -86,74 +86,28 @@ class Index extends Component
 
     private function loadAccountActivity()
     {
-       
-       $billsQuery = DB::table('bills')
-        ->selectRaw('
-        bill_number as number,
-        currency_id,
-        bill_date as transaction_date,
-        total as amount,
-        balance,
-        accrual_balance,
-        created_at')
-        ->where('vendor_id', $this->selectedVendor)
-        ->where('authorization', 'approved')
-        ->whereNull('deleted_at')
-        ->whereBetween('bill_date', [$this->from, $this->to]);
+        $service = app(VendorLedgerService::class);
 
-        $this->results = DB::table('payments')
-            ->select(
-                'payment_number as number',
-                'currency_id',
-                'date as transaction_date',
-                'amount',
-                'balance',
-                'accrual_balance',
-                'created_at'
-            )
-            ->where('vendor_id', $this->selectedVendor)
-            ->whereNull('deleted_at')
-            ->whereBetween('date', [$this->from, $this->to])
-            ->union($billsQuery)
-            ->get()
-            ->sortBy([
-                ['transaction_date', 'asc'],
-                ['created_at', 'asc'],
-            ]);
+        // Currencies the vendor has approved bills or payments in, within range
+        $currencyIds = Currency::all()->pluck('id');
 
-        // Build per-currency statement data (opening/closing from accrual_balance snapshots)
-        $currencyIds = $this->results->pluck('currency_id')->unique();
-
+        $this->results = collect();
         $this->statementByCurrency = [];
 
         foreach ($currencyIds as $currencyId) {
-            // Last approved bill before $from — snapshot opening balance
-            $openingBill = Bill::where('vendor_id', $this->selectedVendor)
-                ->where('authorization', 'approved')
-                ->where('currency_id', $currencyId)
-                ->where('bill_date', '<', $this->from)
-                ->whereNotNull('accrual_balance')
-                ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                ->orderBy('bill_date', 'desc')
-                ->orderBy('id', 'desc')
-                ->first();
+            $activity = $service->activity((int) $this->selectedVendor, $currencyId, $this->from, $this->to);
 
-            // Last approved bill within range — snapshot closing balance
-            $closingBill = Bill::where('vendor_id', $this->selectedVendor)
-                ->where('authorization', 'approved')
-                ->where('currency_id', $currencyId)
-                ->whereBetween('bill_date', [$this->from, $this->to])
-                ->whereNotNull('accrual_balance')
-                ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                ->orderBy('bill_date', 'desc')
-                ->orderBy('id', 'desc')
-                ->first();
+            if ($activity->isEmpty()) {
+                continue;
+            }
+
+            $this->results = $this->results->merge($activity);
 
             $this->statementByCurrency[$currencyId] = [
                 'currency'        => Currency::find($currencyId),
-                'opening_balance' => $openingBill?->accrual_balance,
-                'closing_balance' => $closingBill?->accrual_balance,
-                'results'         => $this->results->where('currency_id', $currencyId)->values(),
+                'opening_balance' => $service->openingBalance((int) $this->selectedVendor, $currencyId, $this->from),
+                'closing_balance' => $service->closingBalance((int) $this->selectedVendor, $currencyId, $this->to),
+                'results'         => $activity,
             ];
         }
 

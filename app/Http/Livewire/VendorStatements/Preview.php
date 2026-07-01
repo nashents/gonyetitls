@@ -5,10 +5,9 @@ namespace App\Http\Livewire\VendorStatements;
 use App\Models\Bill;
 use App\Models\Currency;
 use App\Models\Vendor;
-use App\Models\Payment;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Services\VendorLedgerService;
 use Carbon\Carbon;
 
 class Preview extends Component
@@ -62,120 +61,39 @@ class Preview extends Component
 
     private function loadAccountActivity()
     {
-        $from = Carbon::parse($this->from)->startOfDay();
-        $to   = Carbon::parse($this->to)->endOfDay();
+        $from = Carbon::parse($this->from)->startOfDay()->toDateString();
+        $to   = Carbon::parse($this->to)->endOfDay()->toDateString();
 
-        // Bills FIRST — its aliases (bill_date as transaction_date) drive the UNION column names
-        $billsQuery = DB::table('bills')
-            ->selectRaw("
-                'bill' as transaction_type,
-                bill_number as number,
-                currency_id,
-                created_at,
-                bill_date as transaction_date,
-                total as amount,
-                balance,
-                accrual_balance
-            ")
-            ->where('vendor_id', $this->selectedVendor)
-            ->where('authorization', 'approved')
-            ->whereNull('deleted_at')
-            ->whereBetween('bill_date', [$from, $to]);
+        $service = app(VendorLedgerService::class);
 
-        $paymentsQuery = DB::table('payments')
-            ->selectRaw("
-                'payment' as transaction_type,
-                payment_number as number,
-                currency_id,
-                created_at,
-                date as transaction_date,
-                amount,
-                balance,
-                accrual_balance
-            ")
-            ->where('vendor_id', $this->selectedVendor)
-            ->whereNull('deleted_at')
-            ->whereBetween('date', [$from, $to]);
+        $currencyIds = Currency::all()->pluck('id');
 
-        $this->results = $billsQuery
-            ->union($paymentsQuery)
-            ->get()
-            ->sortBy([
-                ['transaction_date', 'asc'],
-                ['created_at', 'asc'],
-            ]);
-
-        $currencyIds = $this->results->pluck('currency_id')->unique();
+        $this->results = collect();
+        $this->statementByCurrency = [];
 
         foreach ($currencyIds as $currencyId) {
-            $ledger = $this->makeLedgerQuery($currencyId);
+            $activity = $service->activity((int) $this->selectedVendor, $currencyId, $from, $to);
 
-            $openingBalance = DB::query()
-                ->fromSub($ledger, 'l')
-                ->where('date', '<', $from)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->orderBy('pay_first', 'asc')
-                ->orderBy('id', 'desc')
-                ->value('accrual_balance') ?? 0;
+            if ($activity->isEmpty()) {
+                continue;
+            }
 
-            $closingBalance = DB::query()
-                ->fromSub($ledger, 'l')
-                ->where('date', '<=', $to)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->orderBy('pay_first', 'asc')
-                ->orderBy('id', 'desc')
-                ->value('accrual_balance') ?? 0;
+            $this->results = $this->results->merge($activity);
 
-            $totalBilled = Bill::where('vendor_id', $this->selectedVendor)
-                ->where('authorization', 'approved')
-                ->where('currency_id', $currencyId)
-                ->whereBetween('bill_date', [$from, $to])
-                ->whereNull('deleted_at')
-                ->whereRaw('total REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                ->sum('total');
-
-            $totalPaid = Payment::where('vendor_id', $this->selectedVendor)
-                ->where('currency_id', $currencyId)
-                ->whereBetween('date', [$from, $to])
-                ->whereNull('deleted_at')
-                ->whereRaw('amount REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-                ->sum('amount');
+            $totalBilled = $activity->where('transaction_type', 'bill')->sum('amount');
+            $totalPaid   = $activity->where('transaction_type', 'payment')->sum('amount');
 
             $this->statementByCurrency[$currencyId] = [
                 'currency'        => Currency::find($currencyId),
-                'opening_balance' => $openingBalance,
-                'closing_balance' => $closingBalance,
+                'opening_balance' => $service->openingBalance((int) $this->selectedVendor, $currencyId, $from),
+                'closing_balance' => $service->closingBalance((int) $this->selectedVendor, $currencyId, $to),
                 'total_billed'    => $totalBilled,
                 'total_paid'      => $totalPaid,
-                'results'         => $this->results->where('currency_id', $currencyId)->values(),
+                'results'         => $activity,
             ];
         }
 
         $this->bills = $this->results->isNotEmpty() ? $this->results : collect();
-    }
-
-    private function makeLedgerQuery(int $currencyId)
-    {
-        $billLedger = Bill::query()
-            ->selectRaw('bill_date as date, created_at, 1 as pay_first, CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance, id')
-            ->where('authorization', 'approved')
-            ->where('vendor_id', $this->selectedVendor)
-            ->where('currency_id', $currencyId)
-            ->whereNotNull('accrual_balance')
-            ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-            ->whereNull('deleted_at');
-
-        $paymentLedger = Payment::query()
-            ->selectRaw('date, created_at, 0 as pay_first, CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance, id')
-            ->where('vendor_id', $this->selectedVendor)
-            ->where('currency_id', $currencyId)
-            ->whereNotNull('accrual_balance')
-            ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
-            ->whereNull('deleted_at');
-
-        return $billLedger->unionAll($paymentLedger);
     }
 
     public function render()

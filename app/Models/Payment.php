@@ -51,6 +51,9 @@ class Payment extends Model implements Auditable
      public function bill_payment(){
         return $this->hasOne('App\Models\BillPayment');
     }
+    public function bill_payments(){
+        return $this->hasMany('App\Models\BillPayment');
+    }
     public function cash_flow(){
         return $this->hasOne('App\Models\CashFlow');
     }

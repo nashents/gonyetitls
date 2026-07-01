@@ -48,7 +48,10 @@ class Index extends Component
 
     public function mount()
     {
-        $this->company    = Auth::user()->employee->company;
+        $this->company = Auth::user()->employee?->company;
+        if (!$this->company) {
+            abort(422, 'Your user account is not linked to an employee record with a company, so salary advances are unavailable.');
+        }
         $this->currencies = Currency::orderBy('name')->get();
         $this->selectedCurrency = $this->company->currency_id;
         $this->advance_date = now()->toDateString();
@@ -85,6 +88,7 @@ class Index extends Component
             'selectedCurrency'       => 'required|exists:currencies,id',
             'amount'                 => 'required|numeric|min:0.01',
             'advance_date'           => 'required|date',
+            'reason'                 => 'required|string|max:255',
             'monthly_recovery_amount'=> 'nullable|numeric|min:0',
         ]);
 

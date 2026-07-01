@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -l app/Http/Livewire/Payments/Index.php)",
+      "Bash(php -l app/Models/Payment.php)",
+      "Bash(rm -f app/Http/Controllers/PayrollPayslipController.php)",
+      "Bash(rm -f app/Http/Controllers/PayrollSalaryDetailController.php)",
+      "Bash(rm -f app/Http/Controllers/PayrollSalaryItemController.php)",
+      "Bash(rm -f app/Http/Controllers/SalaryDetailController.php)",
+      "Bash(rm -f app/Policies/PayrollPayslipPolicy.php)",
+      "Bash(grep -n 'class Role\\\\|protected $fillable' app/Models/Role.php)",
+      "Bash(php -l tests/Feature/PayrollEndToEndTest.php)"
+    ]
+  }
+}

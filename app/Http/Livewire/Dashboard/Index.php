@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Livewire\Dashboard;
-
 use App\Models\Agent;
 use App\Models\Allocation;
 use App\Models\Assignment;
@@ -295,8 +294,9 @@ class Index extends Component
             ->sum(DB::raw('COALESCE(total+0,0)'));
 
         $kpis['revenue_mtd'] = (float) Invoice::where('authorization', 'approved')
-            ->where('currency_id', $cur)->whereBetween('date', [$monthStart, $monthEnd])
-            ->sum(DB::raw('COALESCE(total+0,0)'));
+        ->where('currency_id', $cur)
+        ->whereBetween('date', [$monthStart, $today])
+        ->sum('total');
 
         $kpis['revenue_ytd'] = (float) Invoice::where('authorization', 'approved')
             ->where('currency_id', $cur)->whereBetween('date', [$yearStart, $today])
@@ -311,11 +311,11 @@ class Index extends Component
             : 0;
 
         $kpis['gross_profit_mtd'] = (float) Trip::where('authorization', 'approved')
-            ->where('currency_id', $cur)->whereBetween('start_date', [$monthStart, $monthEnd])
+            ->where('currency_id', $cur)->whereBetween('start_date', [$monthStart, $today])
             ->sum(DB::raw('COALESCE(gross_profit+0,0)'));
 
         $kpis['cost_of_sales_mtd'] = (float) Trip::where('authorization', 'approved')
-            ->where('currency_id', $cur)->whereBetween('start_date', [$monthStart, $monthEnd])
+            ->where('currency_id', $cur)->whereBetween('start_date', [$monthStart, $today])
             ->sum(DB::raw('COALESCE(cost_of_sales+0,0)'));
 
         $kpis['gross_margin_pct'] = $kpis['revenue_mtd'] > 0

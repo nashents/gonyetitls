@@ -3,10 +3,9 @@
 namespace App\Http\Livewire\PayrollRuns;
 
 use App\Models\PayrollRun;
-use App\Models\Payroll;
+use App\Services\Payroll\PayrollRunLifecycleService;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
 
 class Show extends Component
 {
@@ -37,55 +36,30 @@ class Show extends Component
 
     public function executeLifecycle()
     {
-        $now = now();
+        $this->authorize('update', $this->run);
+
+        $service = app(PayrollRunLifecycleService::class);
+        $messages = [
+            'approve' => 'Payroll run approved.',
+            'lock'    => 'Payroll run locked.',
+            'post'    => 'Payroll run posted to GL.',
+            'reverse' => 'Payroll run reversed.',
+        ];
 
         match ($this->confirmAction) {
-            'approve' => $this->doApprove($now),
-            'lock'    => $this->doLock($now),
-            'post'    => $this->doPost($now),
-            'reverse' => $this->doReverse($now),
+            'approve' => $service->approve($this->run),
+            'lock'    => $service->lock($this->run),
+            'post'    => $service->post($this->run),
+            'reverse' => $service->reverse($this->run, $this->confirmReason),
             default   => null,
         };
 
+        if (isset($messages[$this->confirmAction])) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => $messages[$this->confirmAction]]);
+        }
+
         $this->run->refresh();
         $this->dispatchBrowserEvent('hide-confirm-modal');
-    }
-
-    private function doApprove($now): void
-    {
-        $this->authorize('update', $this->run);
-        $this->run->update(['status' => 'approved', 'approved_by' => Auth::id(), 'approved_at' => $now]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run approved.']);
-    }
-
-    private function doLock($now): void
-    {
-        $this->authorize('update', $this->run);
-        $this->run->update(['status' => 'locked', 'locked_by' => Auth::id(), 'locked_at' => $now]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run locked.']);
-    }
-
-    private function doPost($now): void
-    {
-        $this->authorize('update', $this->run);
-        $this->run->update(['status' => 'posted', 'posted_by' => Auth::id(), 'posted_at' => $now]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run posted to GL.']);
-    }
-
-    private function doReverse($now): void
-    {
-        $this->authorize('update', $this->run);
-        if (empty($this->confirmReason)) {
-            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'A reason is required for reversal.']);
-            return;
-        }
-        $this->run->update([
-            'status'      => 'reversed',
-            'reversed_by' => Auth::id(),
-            'reversed_at' => $now,
-            'notes'       => $this->confirmReason,
-        ]);
-        $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'Payroll run reversed.']);
     }
 
     public function render()

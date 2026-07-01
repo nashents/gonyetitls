@@ -340,12 +340,6 @@
                                     </td>
                                     <td>
                                          {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance ? $bill->balance : 0,2)}}
-                                         @if ($bill->accrual_balance)
-                                            <br>
-                                            <small>
-                                                <strong>Accrual Bal: </strong>  {{number_format($bill->accrual_balance,2)}} <a href="#" wire:click.prevent="showAccrual({{$bill->id}})"><i class="fas fa-edit"></i></a>
-                                            </small>
-                                        @endif
                                     </td>
                                     <td><span class="label label-{{($bill->status == 'Paid') ? 'success' : (($bill->status == 'Partial') ? 'warning' : 'danger') }}">{{ $bill->status }}</span></td>
                                     <td>
@@ -423,31 +417,6 @@
         </div>
         <!-- /.container-fluid -->
     </section>
-
-       <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="accrualModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog  mw-100 w-50" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-copy"></i> Update Accrual Balance<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
-                </div>
-                <form wire:submit.prevent="updateAccrualBalance()" >
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="">Accrual Balance<span class="required" style="color: red">*</span></label>
-                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="accrual_balance" placeholder="Enter Accrual Balance" required >
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Update Balance</button>
-                    </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
-            </div>
-        </div>
-    </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">

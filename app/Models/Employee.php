@@ -108,6 +108,9 @@ class Employee extends Model implements Auditable
     public function loans(){
         return $this->hasMany('App\Models\Loan');
     }
+    public function salaryAdvances(){
+        return $this->hasMany('App\Models\SalaryAdvance');
+    }
     public function documents(){
         return $this->hasMany('App\Models\Document');
     }

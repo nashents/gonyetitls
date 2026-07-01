@@ -71,9 +71,13 @@ class PayrollRun extends Model
         return $this->hasMany(Payroll::class);
     }
 
+    /**
+     * Salary lines for this run go through the legacy Payroll header —
+     * payroll_salaries has no payroll_run_id column of its own.
+     */
     public function salaries()
     {
-        return $this->hasMany(PayrollSalary::class);
+        return $this->hasManyThrough(PayrollSalary::class, Payroll::class);
     }
 
     public function auditLogs()

@@ -164,7 +164,7 @@ class Index extends Component
             $leave->employee_id = $this->selected_employee->id;
             $leave->to = $this->to;
             $leave->from = $this->from;
-            $leave->ignore_public_holidays = $this->ignore_public_holidays;
+            $leave->ignore_public_holidays = $this->ignore_public_holidays ?? False;
             $leave->is_backdated = $this->is_backdated;
             $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
@@ -236,14 +236,14 @@ class Index extends Component
         $this->selected_employee = Employee::find($leave->employee_id);
         $this->available_leave_days =  $this->selected_employee->leave_days;
         $this->leave_type_id = $leave->leave_type_id;
-        $this->ignore_public_holidays = $leave->ignore_public_holidays;
+        $this->ignore_public_holidays = $leave->ignore_public_holidays ?? False;
         $this->to = $leave->to;
         $this->from = $leave->from;
         $this->days = $leave->days;
         $this->reason = $leave->reason;
         $this->dispatchBrowserEvent('show-leaveEditModal');
 
-        }
+    }
 
         public function update()
         {
@@ -261,7 +261,7 @@ class Index extends Component
                     $leave->employee_id = $this->selected_employee->id;
                     $leave->to = $this->to;
                     $leave->from = $this->from;
-                    $leave->ignore_public_holidays = $this->ignore_public_holidays;
+                    $leave->ignore_public_holidays = $this->ignore_public_holidays ?? False;
                     $leave->is_backdated = $this->is_backdated;
                     $leave->is_emergency = $isEmergency;
                     $leave->leave_type_id = $this->leave_type_id;

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\Vendor;
+use App\Models\Currency;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendVendorStatementMail;
@@ -13,6 +13,7 @@ use App\Http\Requests\StoreBillRequest;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdateBillRequest;
+use App\Services\VendorLedgerService;
 
 class BillController extends Controller
 {
@@ -41,6 +42,33 @@ class BillController extends Controller
             ]);
     }
 
+    /**
+     * Account Activity figures derived live from the transaction ledger
+     * (approved bills, payments) for every currency the vendor has been
+     * billed in. Never reads a stored balance column.
+     */
+    private function accountActivityData($selectedVendor, $from, $to): array
+    {
+        $service = app(VendorLedgerService::class);
+        $currencies = Currency::all();
+
+        $openingBalances = [];
+        $closingBalances = [];
+        $results = collect();
+
+        foreach ($currencies as $currency) {
+            $openingBalances[$currency->id] = $service->openingBalance((int) $selectedVendor, $currency->id, $from);
+            $closingBalances[$currency->id] = $service->closingBalance((int) $selectedVendor, $currency->id, $to);
+            $results = $results->merge($service->activity((int) $selectedVendor, $currency->id, $from, $to));
+        }
+
+        return [
+            'results' => $results,
+            'openingBalances' => $openingBalances,
+            'closingBalances' => $closingBalances,
+        ];
+    }
+
     public function vendorStatementsPrint($selectedVendor = null, $selectedType = null, $from = null, $to = null){
         $company = Auth::user()->employee->company;
         $vendor = Vendor::find($selectedVendor);
@@ -64,57 +92,25 @@ class BillController extends Controller
                 ]);
     
         }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
+            $activity = [];
             if (isset($from) && isset($to)) {
-                $bills = DB::table('bills')
-                ->select(
-                    DB::raw("'invoice' as transaction_type"),
-                    'invoice_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'total as amount',
-                    'total as balance',
-                    'accrual_balance',
-                    'created_at')
-                ->where('authorization','approved')
-                ->where('vendor_id', $selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] );
-              
-                $results = DB::table('payments')
-                ->select(
-                    DB::raw("'payment' as transaction_type"),
-                    'payment_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'amount',
-                    'balance',
-                    'accrual_balance',
-                    'created_at'
-                    )
-                ->where('vendor_id', $selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] )
-              
-                ->union($bills)
-                ->get();
-
-                // $results = $bills->union($payments);
+                $activity = $this->accountActivityData($selectedVendor, $from, $to);
             }
             return view('vendor_statements.print')->with([
                 'selectedVendor' => $selectedVendor,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'bills' => $bills,
-                'results' => $results,
+                'bills' => $activity['results'] ?? null,
+                'results' => $activity['results'] ?? null,
+                'openingBalances' => $activity['openingBalances'] ?? [],
+                'closingBalances' => $activity['closingBalances'] ?? [],
                 'company' => $company,
                 'vendor' => $vendor,
                 ]);
         }
-       
-   
+
+
     }
 
     public function vendorStatementsPDF($selectedVendor = null, $selectedType = null, $from = null, $to = null){
@@ -139,56 +135,25 @@ class BillController extends Controller
             ];
     
         }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
+            $activity = [];
             if (isset($from) && isset($to)) {
-                $bills = DB::table('bills')
-                ->select(
-                    DB::raw("'invoice' as transaction_type"),
-                    'invoice_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'total as amount',
-                    'total as balance',
-                    'accrual_balance',
-                    'created_at')
-                ->where('authorization','approved')
-                ->where('vendor_id', $selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] );
-               
-                $results = DB::table('payments')
-                ->select(
-                    DB::raw("'payment' as transaction_type"),
-                    'payment_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'amount',
-                    'balance',
-                    'accrual_balance',
-                    'created_at'
-                    )
-                ->where('vendor_id', $selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] )
-                ->union($bills)
-                ->get();
-
-                // $results = $bills->union($payments);
+                $activity = $this->accountActivityData($selectedVendor, $from, $to);
             }
             $data = [
                 'selectedVendor' => $selectedVendor,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'bills' => $bills,
-                'results' => $results,
+                'bills' => $activity['results'] ?? null,
+                'results' => $activity['results'] ?? null,
+                'openingBalances' => $activity['openingBalances'] ?? [],
+                'closingBalances' => $activity['closingBalances'] ?? [],
                 'company' => $company,
                 'vendor' => $vendor,
             ];
-          
+
         }
-       
+
         $pdf = PDF::loadView('vendor_statements.vendor_statement', $data);
 
         $fileName = 'vendor_statement_' . time() . '.pdf';
@@ -231,56 +196,25 @@ class BillController extends Controller
             ];
     
         }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
+            $activity = [];
             if (isset($from) && isset($to)) {
-                $bills = DB::table('bills')
-                ->select(
-                    DB::raw("'invoice' as transaction_type"),
-                    'invoice_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'total as amount',
-                    'total as balance',
-                    'accrual_balance',
-                    'created_at')
-                ->where('authorization','approved')
-                ->where('vendor_id', $selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] );
-               
-                $results = DB::table('payments')
-                ->select(
-                    DB::raw("'payment' as transaction_type"),
-                    'payment_number as number',
-                    'currency_id',
-                    'created_at',
-                    'date as transaction_date',
-                    'amount',
-                    'balance',
-                    'accrual_balance',
-                    'created_at'
-                    )
-                ->where('vendor_id', $selectedVendor)
-                ->where('deleted_at', NULL)
-                ->whereBetween('date',[$from, $to] )
-                ->union($bills)
-                ->get();
-
-                // $results = $bills->union($payments);
+                $activity = $this->accountActivityData($selectedVendor, $from, $to);
             }
             $data = [
                 'selectedVendor' => $selectedVendor,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'bills' => $bills,
-                'results' => $results,
+                'bills' => $activity['results'] ?? null,
+                'results' => $activity['results'] ?? null,
+                'openingBalances' => $activity['openingBalances'] ?? [],
+                'closingBalances' => $activity['closingBalances'] ?? [],
                 'company' => $company,
                 'vendor' => $vendor,
             ];
-          
+
         }
-       
+
         $pdf = PDF::loadView('vendor_statements.vendor_statement', $data);
 
         $fileName = 'vendor_statement_' . time() . '.pdf';

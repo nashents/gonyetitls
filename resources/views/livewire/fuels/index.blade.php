@@ -249,7 +249,7 @@
 
                                                 {{-- Qty --}}
                                                 <td class="text-right">
-                                                    <span class="font-weight-bold">{{ number_format(float($fuel->quantity?? 0), 2) }}</span>
+                                                    <span class="font-weight-bold">{{ number_format($fuel->quantity ?? 0, 2) }}</span>
                                                     <div>
                                                         @if($fuel->is_full_tank)
                                                             <span class="badge badge-success mt-1">Full Tank</span>
@@ -261,7 +261,7 @@
 
                                                 {{-- Amount --}}
                                                 <td class="text-right">
-                                                    {{ optional($fuel->currency)->symbol }}{{ number_format(float($fuel->amount ?? 0), 2) }}
+                                                    {{ optional($fuel->currency)->symbol }}{{ number_format($fuel->amount ?? 0, 2) }}
                                                     <div class="fuel-meta text-muted"><small>{{ optional($fuel->currency)->name }}</small></div>
                                                 </td>
 
