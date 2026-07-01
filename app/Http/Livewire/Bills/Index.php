@@ -114,6 +114,10 @@ class Index extends Component
     public $inputs = [];
     public $i = 1;
     public $n = 1;
+    public $range;
+    public $authorization;
+    public $status;
+
 
 
     public $exchange_amount;
@@ -202,6 +206,10 @@ class Index extends Component
     }
 
     public function mount(){
+
+      $this->status = request()->query('status');
+        $this->range = request()->query('range');
+        $this->authorization = request()->query('authorization');
         $this->company = Auth::user()->employee->company;
         $this->resetPage();
         $this->recalculateBills();
@@ -388,6 +396,7 @@ class Index extends Component
         $bill_payment->vendor_id = $bill->vendor_id;
         $bill_payment->bill_id = $bill->id;
         $bill_payment->payment_id = $payment->id;
+        $bill_payment->source = 'drawdown';
         $bill_payment->currency_id = $bill->currency_id;
         $bill_payment->amount = $this->amount_paid;
         $bill_payment->save();  
@@ -455,6 +464,15 @@ class Index extends Component
                     $payment->balance = $this->current_balance;
         $payment->date = $this->date;
         $payment->save();
+
+        $bill_payment = new BillPayment;
+        $bill_payment->vendor_id = $this->bill->vendor_id;
+        $bill_payment->bill_id = $this->bill->id;
+        $bill_payment->payment_id = $payment->id;
+        $bill_payment->source = 'direct';
+        $bill_payment->currency_id = $this->bill->currency_id;
+        $bill_payment->amount = $this->amount;
+        $bill_payment->save();  
 
         $account->balance = $current_balance - $this->amount;
         $account->update();
@@ -592,7 +610,7 @@ class Index extends Component
             $this->current_balance = $this->bill_balance - $this->amount;
         }
         
-         
+          $cur = Auth::user()->employee?->company?->currency_id;
 
             $base = Bill::query()
                 ->with([
@@ -602,17 +620,23 @@ class Index extends Component
                     'vehicle','trailer','ticket','vendor',
                 ])
                 ->where('to_be_paid', true);
+              if ($this->status === 'unpaid') {
+                    $base->where('currency_id',$cur)->where('status', '!=', 'Paid');
+              }
+              else{
+                    // Date filter: use provided range, else current month
+                    $base->when(
+                        filled($this->from) && filled($this->to),
+                        fn ($q) => $q->whereBetween($this->bill_filter, [
+                            Carbon::parse($this->from)->startOfDay(),
+                            Carbon::parse($this->to)->endOfDay(),
+                        ]),
+                        fn ($q) => $q->whereMonth($this->bill_filter, now()->month)
+                                    ->whereYear($this->bill_filter, now()->year)
+                    );
+              }
 
-            // Date filter: use provided range, else current month
-            $base->when(
-                    filled($this->from) && filled($this->to),
-                    fn ($q) => $q->whereBetween($this->bill_filter, [
-                        Carbon::parse($this->from)->startOfDay(),
-                        Carbon::parse($this->to)->endOfDay(),
-                    ]),
-                    fn ($q) => $q->whereMonth($this->bill_filter, now()->month)
-                                ->whereYear($this->bill_filter, now()->year)
-                );
+          
 
             // Search filter (grouped to keep AND/OR logic correct)
             $base->when(filled($this->search), function ($q) {
@@ -701,7 +725,9 @@ class Index extends Component
             if ($this->asset_id != "") {
                 $base->where('asset_id', $this->asset_id);
             }
-           
+           if (filled($this->authorization)) {
+                $base->where('authorization', $this->authorization);
+            }
 
             $bills = $base
                 ->orderByDesc($this->bill_filter)

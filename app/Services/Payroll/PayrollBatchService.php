@@ -42,7 +42,6 @@ class PayrollBatchService
             } else {
                 $payroll = Payroll::create([
                     'user_id'              => Auth::id(),
-                    'currency_id'          => $run->currency_id,
                     'payroll_number'       => $this->nextPayrollNumber(),
                     'month'                => $run->period_start?->format('F'),
                     'year'                 => $run->period_start?->format('Y'),

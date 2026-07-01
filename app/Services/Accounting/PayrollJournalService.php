@@ -101,7 +101,6 @@ class PayrollJournalService
 
         foreach ($payroll->payroll_salaries as $payrollSalary) {
             $totals['gross']            += (float) $payrollSalary->gross;
-            $totals['net']              += (float) $payrollSalary->net;
             $totals['total_deductions'] += (float) $payrollSalary->total_deductions;
 
             $employeeNamedTotal = 0.0;
@@ -136,6 +135,26 @@ class PayrollJournalService
                 $totals['pension_employer'] += (float) $payrollSalary->salary->pension_employer_amount;
             }
         }
+
+        // Round each component to 2dp (matching MySQL decimal(18,2) storage) BEFORE
+        // computing the balancing plug so the plug matches what is actually stored
+        // in each GL line (MySQL rounds 56.475 → 56.48; raw float 56.475 would not).
+        foreach (array_keys($totals) as $k) {
+            $totals[$k] = round((float) $totals[$k], 2);
+        }
+
+        // Derive net as a plug: DR side = gross + employer-costs; CR side = all payables + net.
+        // Cancelling employer-costs from both sides: gross = named_ee_deductions + other + net.
+        $totals['net'] = round(
+            $totals['gross']
+            - $totals['paye']
+            - $totals['aids_levy']
+            - $totals['nssa_employee']
+            - $totals['nec_employee']
+            - $totals['pension_employee']
+            - $totals['other_deductions'],
+            2
+        );
 
         return $totals;
     }

@@ -311,9 +311,9 @@ class Edit extends Component
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-            return $query->where('name','Expenses');
-        })->orderBy('name','asc')->get();
+        $this->expense_accounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name', 'Expenses');
+        })->orderBy('name', 'asc')->get();
         $this->selectedCurrency = $this->bill->currency_id;
         $this->exchange_rate = $this->bill->exchange_rate;
         $this->exchange_amount = $this->bill->exchange_amount;
@@ -520,7 +520,7 @@ class Edit extends Component
                 if (isset($this->selectedCurrentAccount[$key])) {
                     $account = Account::find($this->selectedCurrentAccount[$key]);
                     $bill_expense->account_id = $this->selectedCurrentAccount[$key];
-                    $bill_expense->account_type_id = $account->account_type->id;
+                    $bill_expense->account_type_id = $account->account_type?->id;
                 }
 
                 if (isset($this->current_description[$key])) {
@@ -676,9 +676,7 @@ class Edit extends Component
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-            return $query->where('name','Expenses');
-        })->orderBy('name','asc')->get();
+      
         $this->bill_expenses = BillExpense::where('bill_id',$this->bill_id)->get();
         return view('livewire.bills.edit',[
             'expenses' => $this->expenses,

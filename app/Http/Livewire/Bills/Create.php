@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Bills;
 
 use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
+use App\Models\AccountType;
 use App\Models\Asset;
 use App\Models\Bill;
 use App\Models\BillAccount;
@@ -85,6 +86,7 @@ class Create extends Component
     public $selectedTax = [];
     public $income_accounts;
     public $expense_accounts;
+    public $expense_account_types;
     public $income_account_id;
     public $expense_account_id;
     public $sell = False;
@@ -162,9 +164,11 @@ class Create extends Component
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-            return $query->where('name','Expenses');
-        })->orderBy('name','asc')->get();
+        
+        $this->expense_accounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name', 'Expenses');
+        })->orderBy('name', 'asc')->get();
+
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->assets = Asset::with('product')->get()->sortBy('product.name');
@@ -394,6 +398,10 @@ class Create extends Component
                 $bill_expense->bill_id = $bill->id;
                 $bill_expense->currency_id = $bill->currency_id;
 
+                $expense_subtotal = 0;
+                $expense_tax_amount = 0;
+                $expense_subtotal_incl = 0;
+
                 if (isset($this->selectedProduct[$key])) {
                     $bill_expense->product_id = $this->selectedProduct[$key];
                 }
@@ -401,7 +409,7 @@ class Create extends Component
                 if (isset($this->selectedAccount[$key])) {
                     $account = Account::find($this->selectedAccount[$key]);
                     $bill_expense->account_id = $this->selectedAccount[$key];
-                    $bill_expense->account_type_id = $account->account_type->id;
+                    $bill_expense->account_type_id = $account->account_type?->id;
                 }
 
                 if (isset($this->description[$key])) {
@@ -505,9 +513,7 @@ class Create extends Component
             $this->income_accounts = Account::whereHas('account_type', function($q){
                 $q->where('name', 'Income');
              })->orderBy('name','asc')->get();
-            $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-                return $query->where('name','Expenses');
-            })->orderBy('name','asc')->get();
+           
 
             return view('livewire.bills.create',[
                 'accounts' => $this->accounts,

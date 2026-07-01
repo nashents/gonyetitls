@@ -219,9 +219,13 @@
                                         <label for="subheading">Expense Accounts<span class="required" style="color: red">*</span></label>
                                         <select wire:model.debounce.300ms="selectedCurrentAccount.{{$key}}" class="form-control" required>
                                             <option value="">Select Expense Account</option>
-                                        @foreach ($expense_accounts as $account)
-                                            <option value="{{$account->id}}">{{$account->name}}</option> 
-                                        @endforeach
+                                                @foreach ($expense_accounts->groupBy('account_type.name') as $typeName => $accounts)
+                                                    <optgroup label="{{ $typeName }}">
+                                                        @foreach ($accounts as $account)
+                                                            <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                                        @endforeach
+                                                    </optgroup>
+                                                @endforeach
                                     
                                         </select>
                                         @error('selectedCurrentAccount.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -293,10 +297,13 @@
                                             <label for="subheading">Expense Accounts<span class="required" style="color: red">*</span></label>
                                             <select wire:model.debounce.300ms="selectedAccount.{{$value}}" class="form-control" required>
                                                 <option value="">Select Expense Account</option>
-                                            @foreach ($expense_accounts as $account)
-                                                <option value="{{$account->id}}">{{$account->name}}</option> 
-                                            @endforeach
-                                        
+                                                @foreach ($expense_accounts->groupBy('account_type.name') as $typeName => $accounts)
+                                                    <optgroup label="{{ $typeName }}">
+                                                        @foreach ($accounts as $account)
+                                                            <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                                        @endforeach
+                                                    </optgroup>
+                                                @endforeach
                                             </select>
                                             @error('selectedAccount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
@@ -479,8 +486,12 @@
                                 <label for="subheading">Expense Category<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="expense_account_id" class="form-control" required>
                                     <option value="">Select Category</option>
-                                        @foreach ($expense_accounts as $account)
-                                        <option value="{{$account->id}}">{{$account->name}} </option> 
+                                        @foreach ($expense_accounts->groupBy('account_type.name') as $typeName => $accounts)
+                                            <optgroup label="{{ $typeName }}">
+                                                @foreach ($accounts as $account)
+                                                    <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                                @endforeach
+                                            </optgroup>
                                         @endforeach
                                     </select>
                                     <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense Account</a></small> 

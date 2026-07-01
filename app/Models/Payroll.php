@@ -13,7 +13,7 @@ class Payroll extends Model implements Auditable
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'currency_id', 'payroll_number', 'exchange_rate', 'month', 'year',
+        'user_id', 'payroll_number', 'exchange_rate', 'total', 'month', 'year',
         'authorized_by_id', 'authorization', 'comments', 'authorization_date',
         // Bridge columns linking to the PayrollRun lifecycle wrapper
         'payroll_run_id', 'period_start', 'period_end', 'payroll_date', 'payroll_frequency_id',

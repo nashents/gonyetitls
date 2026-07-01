@@ -6,6 +6,7 @@ use App\Models\Allocation;
 use App\Models\Assignment;
 use App\Models\Attendance;
 use App\Models\Bill;
+use App\Models\BillExpense;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Breakdown;
@@ -310,13 +311,16 @@ class Index extends Component
             ? round((($kpis['revenue_mtd'] - $kpis['revenue_prev_month']) / $kpis['revenue_prev_month']) * 100, 1)
             : 0;
 
-        $kpis['gross_profit_mtd'] = (float) Trip::where('authorization', 'approved')
-            ->where('currency_id', $cur)->whereBetween('start_date', [$monthStart, $today])
-            ->sum(DB::raw('COALESCE(gross_profit+0,0)'));
+            
+        $kpis['cost_of_sales_mtd'] = (float) BillExpense::whereHas('account.account_type', function ($query) {
+            $query->where('name', 'Costs Of Goods Sold');
+        })
+        ->whereHas('bill', function ($query) use ($monthStart, $today, $cur) {
+            $query->whereBetween('bill_date', [$monthStart, $today])->where('currency_id', $cur);
+        })
+        ->sum(DB::raw('COALESCE(subtotal_incl+0,0)'));
 
-        $kpis['cost_of_sales_mtd'] = (float) Trip::where('authorization', 'approved')
-            ->where('currency_id', $cur)->whereBetween('start_date', [$monthStart, $today])
-            ->sum(DB::raw('COALESCE(cost_of_sales+0,0)'));
+       $kpis['gross_profit_mtd'] = $kpis['revenue_mtd'] - $kpis['cost_of_sales_mtd'];
 
         $kpis['gross_margin_pct'] = $kpis['revenue_mtd'] > 0
             ? round(($kpis['gross_profit_mtd'] / $kpis['revenue_mtd']) * 100, 1)
@@ -332,7 +336,9 @@ class Index extends Component
         $oi = Invoice::where('authorization', 'approved')->where('currency_id', $cur)
             ->where('status', '!=', 'Paid')->whereNull('deleted_at')
             ->selectRaw('COUNT(*) as cnt, SUM(COALESCE(balance+0,0)) as val')->first();
+            
         $kpis['outstanding_invoices_count'] = (int)   ($oi->cnt ?? 0);
+
         $kpis['outstanding_invoices_value'] = (float) ($oi->val ?? 0);
 
         $ov = Invoice::where('authorization', 'approved')->where('currency_id', $cur)
@@ -343,6 +349,7 @@ class Index extends Component
         $kpis['overdue_invoices_value'] = (float) ($ov->val ?? 0);
 
         $kpis['outstanding_bills_value'] = (float) Bill::where('authorization', 'approved')
+            ->where('to_be_paid', true)
             ->where('currency_id', $cur)->where('status', '!=', 'Paid')->whereNull('deleted_at')
             ->sum(DB::raw('COALESCE(balance+0,0)'));
 
