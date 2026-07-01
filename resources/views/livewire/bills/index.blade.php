@@ -242,6 +242,8 @@
                                             @endif
                                         @elseif ( $bill->container && $bill->top_up)
                                             Fuel Topup | <a href="{{ route('containers.show', $bill->container->id) }}" style="color: blue" target="_blank">{{ $bill->container ? $bill->container->name : "" }}</a> 
+                                        @elseif ($bill->employee)
+                                            Employee | {{$bill->employee?->name}} {{$bill->employee?->surname}}
                                         @elseif ( $bill->retread)
                                             Tyre Retread | <a href="{{ route('retreads.show', $bill->retread->id) }}" style="color: blue" target="_blank">{{ $bill->retread ? $bill->retread->retread_number : "" }}</a> 
                                         @elseif ( $bill->fuel)
@@ -759,7 +761,13 @@
                 <div class="form-group">
                     <label for="name">Upload Bill(s) Excel File<span class="required" style="color: red">*</span></label>
                     <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Bills File" required>
-                    @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    @if ($errors->has('importFile'))
+                        <ul style="color:red; padding-left: 18px; margin-bottom: 0;">
+                            @foreach ($errors->get('importFile') as $message)
+                                <li>{{ $message }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             </div>
             <div class="modal-footer">

@@ -414,8 +414,14 @@ Route::get('horses/{selectedHorse?}/{from?}/{to?}/profit-loss/pdf/','HorseContro
 
 Route::get('reports/financial-statements','ReportController@index')->name('reports.index');
 Route::get('reports/income-statement','ReportController@incomeStatement')->name('reports.income_statement');
-Route::get('reports/cashflow','ReportController@incomeStatement')->name('reports.cashflow');
+Route::get('reports/income-statement/pdf','ReportController@incomeStatementPdf')->name('reports.income_statement.pdf');
+Route::get('reports/income-statement/print','ReportController@incomeStatementPrint')->name('reports.income_statement.print');
+Route::get('reports/cashflow','ReportController@cashflow')->name('reports.cashflow');
+Route::get('reports/cashflow/pdf','ReportController@cashflowPdf')->name('reports.cashflow.pdf');
+Route::get('reports/cashflow/print','ReportController@cashflowPrint')->name('reports.cashflow.print');
 Route::get('reports/balance-sheet','ReportController@balanceSheet')->name('reports.balance_sheet');
+Route::get('reports/balance-sheet/pdf','ReportController@balanceSheetPdf')->name('reports.balance_sheet.pdf');
+Route::get('reports/balance-sheet/print','ReportController@balanceSheetPrint')->name('reports.balance_sheet.print');
 Route::get('reports/trial-balance','ReportController@trialBalance')->name('reports.trial-balance');
 
 Route::get('bookings/delete','BookingController@deleted')->name('bookings.deleted');

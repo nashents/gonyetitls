@@ -199,7 +199,9 @@ class Index extends Component
                 $this->addError('importFile', "Row {$failure->row()}: " . implode(', ', $failure->errors()));
             }
         } catch (\Exception $e) {
-            $this->addError('importFile', 'Import failed: ' . $e->getMessage());
+            foreach (explode("\n", $e->getMessage()) as $line) {
+                $this->addError('importFile', $line);
+            }
         }
 
         return redirect(request()->header('Referer'));

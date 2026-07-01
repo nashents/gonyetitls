@@ -7,6 +7,18 @@
     @elseif (Auth::user()->company)
     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
     @endif
+    <style>
+        @media print {
+            .top-navbar, #sidebar, .breadcrumb-div, .page-title-div, .hidden-print {
+                display: none !important;
+            }
+            .content-container, .main-page, .container-fluid {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
 @endsection
 @section('title')
     Balance Sheet |@if (isset(Auth::user()->employee->company))

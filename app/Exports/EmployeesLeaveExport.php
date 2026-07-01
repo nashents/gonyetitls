@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Employee;
+use App\Models\EmployeeLeave;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -31,16 +31,22 @@ WithCustomStartCell
     */
     public function query()
     {
-        return Employee::query();
+        return EmployeeLeave::query()
+            ->whereHas('employee', function ($query) {
+                $query->where('status', 1);
+            })
+            ->with(['employee', 'leave_type'])
+            ->orderBy('employee_id');
     }
-    public function map($employee): array{
-       
+    public function map($employeeLeave): array{
+
             return   [
-                $employee->employee_number,
-                $employee->name." ". $employee->surname,
-                $employee->accrual_rate,
-                $employee->leave_days,
-                $employee->maximum_leave_days,
+                $employeeLeave->employee->employee_number,
+                $employeeLeave->employee->name." ". $employeeLeave->employee->surname,
+                $employeeLeave->leave_type->name ?? '',
+                $employeeLeave->acrual_rate,
+                $employeeLeave->available_leave_days,
+                $employeeLeave->maximum_leave_days,
                  ];
 
 
@@ -49,6 +55,7 @@ WithCustomStartCell
             return[
                 'Employee#',
                 'Fullname',
+                'Leave Type',
                 'Accrual Rate',
                 'Available Leave Days',
                 'Maximum Leave Days',
@@ -59,7 +66,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:E7')->applyFromArray([
+                $event->sheet->getStyle('A7:F7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

@@ -3,6 +3,8 @@
 namespace App\Imports;
 
 use App\Models\Employee;
+use App\Models\EmployeeLeave;
+use App\Models\LeaveType;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithLimit;
@@ -38,19 +40,38 @@ WithBatchInserts
     {
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
-     
+
         $employee = Employee::where('employee_number',$row['employee_number'])->first();
 
+        if (!$employee) {
+            continue;
+        }
 
-        if (isset($employee)) {
-          
-            $employee->accrual_rate    = $row['accrual_rate'];
-            $employee->leave_days    = $row['available_leave_days'];
-            $employee->maximum_leave_days    = $row['maximum_leave_days'];
+        $leaveType = LeaveType::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($row['leave_type'] ?? ''))])->first();
+
+        if (!$leaveType) {
+            continue;
+        }
+
+        EmployeeLeave::updateOrCreate(
+            [
+                'employee_id' => $employee->id,
+                'leave_type_id' => $leaveType->id,
+            ],
+            [
+                'acrual_rate' => $row['accrual_rate'],
+                'available_leave_days' => $row['available_leave_days'],
+                'maximum_leave_days' => $row['maximum_leave_days'],
+            ]
+        );
+
+        // Backward compatibility: keep employee table updated for Annual Leave
+        if (strtolower(trim($leaveType->name)) === 'annual') {
+            $employee->accrual_rate = $row['accrual_rate'];
+            $employee->leave_days = $row['available_leave_days'];
+            $employee->maximum_leave_days = $row['maximum_leave_days'];
             $employee->update();
-        
-        } 
-        
+        }
 
     }
        }

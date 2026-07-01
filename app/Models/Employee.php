@@ -22,6 +22,10 @@ class Employee extends Model implements Auditable
     {
         return $this->hasMany(JournalEntryLine::class);
     }
+    public function bills()
+    {
+        return $this->hasMany(Bill::class);
+    }
     public function employee_leaves()
     {
         return $this->hasMany(EmployeeLeave::class);

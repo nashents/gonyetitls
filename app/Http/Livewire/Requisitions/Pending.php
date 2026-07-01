@@ -287,7 +287,7 @@ class Pending extends Component
                 $bill->account_type_id = $account_type->id;
             }
 
-            $bill->currency_id = $requisition_item->currency_id;
+            $bill->currency_id = $requisition_item->currency_id ?? Null;
             $bill->authorized_by_id = Auth::id();
             $bill->authorization = "approved";
             $bill->comments = $this->comments;
@@ -300,7 +300,7 @@ class Pending extends Component
 
             $bill_expense = new BillExpense;
             $bill_expense->bill_id = $bill->id;
-            $bill_expense->currency_id = $bill->currency_id;
+            $bill_expense->currency_id = $bill->currency_id ?? Null;
             $bill_expense->account_id = $requisition->account_id ?? null;
 
             if ($account_type) {

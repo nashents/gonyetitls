@@ -21,16 +21,29 @@ use App\Models\Vendor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-class BillsImport implements ToCollection, WithHeadingRow, WithValidation
+class BillsImport implements ToCollection ,SkipsEmptyRows, WithLimit, 
+WithHeadingRow,
+SkipsOnError,
+WithValidation,
+WithChunkReading,
+WithBatchInserts
 {
-    use SkipsErrors;
+    use SkipsErrors, Importable;
     use SkipsFailures;
+    
+    
 
     protected $company;
 
@@ -47,35 +60,32 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
 
     public function collection(Collection $rows)
     {
+        $errors = [];
+        
+
         foreach ($rows as $row) {
 
+          
             DB::transaction(function () use ($row) {
+
+               
 
                 $vendor_name     = $row->get('vendor_name');
                 $bill_for        = $row->get('bill_for');
                 $value           = $row->get('value');
                 $bill_date       = $row->get('bill_date');
                 $item_name       = $row->get('items');
-                $qty             = $row->get('qty');
+                $qty             = $row->get('qty') ?: 1;
                 $currency        = $row->get('currency');
                 $unit_price      = $row->get('unit_price');
                 $total           = $row->get('total');
                 $notes           = $row->get('notes');
                 $expense_account = $row->get('expense_account');
 
-                // Skip entirely empty rows
-                if (!$vendor_name && !$currency && !$item_name) return;
-
-                throw_if(!$vendor_name,     \Exception::class, "Missing vendor_name on a row.");
-                throw_if(!$currency,        \Exception::class, "Missing currency on a row.");
-                throw_if(!$item_name,       \Exception::class, "Missing items on a row.");
-                throw_if(!$qty,             \Exception::class, "Missing qty on a row.");
-                throw_if(!$unit_price,      \Exception::class, "Missing unit_price on a row.");
-
-                $vendorId                  = $this->resolveVendor($vendor_name);
+                $vendorId                  = $vendor_name ? $this->resolveVendor($vendor_name) : null;
                 $currencyId                = $this->resolveCurrency($currency);
                 $accountId                 = $this->resolveAccount($expense_account ?? '');
-                [$entityColumn, $entityId] = $this->resolveEntity($bill_for, $value);
+                [$entityColumn, $entityId] = $bill_for ? $this->resolveEntity($bill_for, $value) : [null, null];
 
                 $line_subtotal = (float) $qty * (float) $unit_price;
                 $line_total    = $total ? (float) $total : $line_subtotal;
@@ -96,7 +106,9 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
                 $bill->vehicle_id         = null;
                 $bill->trailer_id         = null;
                 $bill->asset_id           = null;
-                $bill->{$entityColumn}    = $entityId;
+                if ($entityColumn) {
+                    $bill->{$entityColumn}    = $entityId;
+                }
                 $bill->subtotal           = $line_subtotal;
                 $bill->tax_amount         = 0;
                 $bill->total              = $line_total;
@@ -106,6 +118,8 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
                 $bill->authorization_date = now();
                 $bill->authorized_by_id   = Auth::id();
                 $bill->save();
+
+               
 
                 $this->recordPayment($bill, $currencyId, $accountId, $line_total);
 
@@ -237,6 +251,7 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
         }
         return $this->accountCache[$key];
     }
+
     protected function resolveEntity(string $bill_for, string $value): array
     {
         $cache_key = strtolower("{$bill_for}:{$value}");
@@ -264,10 +279,27 @@ class BillsImport implements ToCollection, WithHeadingRow, WithValidation
         return $this->entityCache[$cache_key];
     }
 
+    
+    public function limit(): int
+    {
+        return 2500; // Import only the first 100 rows
+    }
+
     // ── Validation ────────────────────────────────────────────────────────
 
-    public function rules(): array
+    public function rules(): array{
+        return[
+            // '*.idnumber' => ['nullable','unique:employees,idnumber,NULL,id,deleted_at,NULL'],
+        ];
+    }
+
+    public function batchSize(): int
     {
-        return [];
+       return 150;
+    }
+
+    public function chunkSize(): int
+    {
+        return 150;
     }
 }
