@@ -68,6 +68,7 @@ class Index extends Component
     public $last_refreshed_at;
     public $year;
     public $chartData;
+    public $chartVolumeData;
 
     // ── Legacy monthly series (kept for existing Highcharts) ─────────────
     public $jan_litreage_loss, $feb_litreage_loss, $mar_litreage_loss, $apr_litreage_loss, $may_litreage_loss, $jun_litreage_loss, $jul_litreage_loss, $aug_litreage_loss, $sep_litreage_loss, $oct_litreage_loss, $nov_litreage_loss, $dec_litreage_loss;
@@ -242,6 +243,7 @@ class Index extends Component
     {
         $this->loadChart();
         $this->emit('drivers-weight-updated', $this->chartData, $this->year);
+        $this->emit('drivers-volume-updated', $this->chartVolumeData, $this->year);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -847,10 +849,20 @@ class Index extends Component
             ->withSum(['trips as year_total_weight' => fn($q) => $q->whereYear('start_date',$this->year)], 'weight')
             ->orderByRaw('COALESCE(year_total_weight,0) DESC')
             ->get();
+        $drivers_volume = Driver::query()
+            ->with(['employee:id,name,surname'])
+            ->withSum(['trips as year_total_volume' => fn($q) => $q->whereYear('start_date',$this->year)], 'litreage')
+            ->orderByRaw('COALESCE(year_total_volume,0) DESC')
+            ->get();
 
         $this->chartData = $drivers->map(function ($d) {
             $name = trim(($d->employee->name ?? '').' '.($d->employee->surname ?? ''));
             return [$name !== '' ? $name : 'Driver #'.$d->id, (float)($d->year_total_weight ?? 0)];
+        })->values()->all();
+       
+        $this->chartVolumeData = $drivers_volume->map(function ($d) {
+            $name = trim(($d->employee->name ?? '').' '.($d->employee->surname ?? ''));
+            return [$name !== '' ? $name : 'Driver #'.$d->id, (float)($d->year_total_volume ?? 0)];
         })->values()->all();
     }
 

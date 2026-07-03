@@ -489,6 +489,10 @@
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Driver Weight Performance</h6>
                                 <div id="gd_driver_weight_chart" class="gd-chart tall"></div>
                             </div>
+                            <div class="col-md-12 gd-chart-wrap">
+                                <h6 class="gd-panel-title" style="margin-bottom:8px;">Driver Volume Performance</h6>
+                                <div id="gd_driver_volume_chart" class="gd-chart tall"></div>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -511,6 +515,11 @@
 
     document.addEventListener('livewire:load', function () {
         Livewire.on('drivers-weight-updated', function () {
+            setTimeout(renderGonyetiDashboardCharts, 150);
+        });
+    });
+    document.addEventListener('livewire:load', function () {
+        Livewire.on('drivers-volume-updated', function () {
             setTimeout(renderGonyetiDashboardCharts, 150);
         });
     });
@@ -618,6 +627,15 @@
                 yAxis: { title: { text: 'Weight' } },
                 plotOptions: { bar: { borderRadius: 4, colorByPoint: false } },
                 series: [{ name: 'Total Weight', data: @json($chartData ?? []) }]
+            });
+        }
+        if (document.getElementById('gd_driver_volume_chart')) {
+            Highcharts.chart('gd_driver_volume_chart', {
+                chart: { type: 'bar' },
+                xAxis: { type: 'category' },
+                yAxis: { title: { text: 'Volume' } },
+                plotOptions: { bar: { borderRadius: 4, colorByPoint: false } },
+                series: [{ name: 'Total Volume', data: @json($chartVolumeData ?? []) }]
             });
         }
     }
