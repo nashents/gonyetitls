@@ -104,9 +104,7 @@
                                                 style="background-color:#e8f4fd;border-left:6px solid #17a2b8;"
                                             @elseif($requisition->type == 'payment_requisition')
                                                 style="background-color:#eafaf1; border-left:6px solid #28a745;"
-                                            @endif
-                                            
-                                        >
+                                            @endif>
                                         <td>
                                             {{ucfirst($requisition->requisition_number)}} <br>
                                            
@@ -295,7 +293,7 @@
                                                 </small>
                                             @endif
 
-                                            @if ($isTwoStep && $requisition->second_authorized_by_id)
+                                            @if ($requisition->second_authorized_by_id)
                                                 @php
                                                     $secondUser = App\Models\User::find($requisition->second_authorized_by_id);
                                                 @endphp
@@ -306,7 +304,7 @@
                                                 </small>
                                             @endif
 
-                                            @if ($isTwoStep && $requisition->second_authorization_date)
+                                            @if ($requisition->second_authorization_date)
                                                 <br>
                                                 <small style="background-color: #87ceeb">
                                                     <strong>2nd Date: </strong>
@@ -314,7 +312,7 @@
                                                 </small>
                                             @endif
 
-                                            @if ($isTwoStep && $requisition->second_authorization_comments)
+                                            @if ($requisition->second_authorization_comments)
                                                 <br>
                                                 <small style="background-color: #87ceeb">
                                                     <strong>2nd Comments: </strong>

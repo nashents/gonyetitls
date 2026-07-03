@@ -140,15 +140,15 @@ WithCustomStartCell
 
     $symbol = $bill->currency ? $bill->currency->symbol : "";
     $currency = $bill->currency ? $bill->currency->name : "";
-    $subtotal =  number_format($bill->subtotal ?? 0,2);
-    $tax_amount =    number_format($bill->tax_amount ?? 0,2);
-    $total =  number_format($bill->total ?? 0,2);
+    $subtotal =  number_format($bill->subtotal ?: 0,2);
+    $tax_amount =    number_format($bill->tax_amount ?: 0,2);
+    $total =  number_format($bill->total ?: 0,2);
     if (isset($bill->payments)){
-    $payments =  number_format($bill->payments->sum('amount') ?? 0,2);
+    $payments =  number_format($bill->payments->sum('amount') ?: 0,2);
     }else{
-    $payments = number_format($bill->bill_payments->sum('amount') ?? 0,2);
+    $payments = number_format($bill->bill_payments->sum('amount') ?: 0,2);
     }
-    $balance =  number_format($bill->balance ?? 0,2);
+    $balance =  number_format($bill->balance ?: 0,2);
 
     if ($bill->bill_expenses) {
         foreach ($bill->bill_expenses as $expense) {
