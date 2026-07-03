@@ -16,7 +16,7 @@
                             </div>
 
                             <div class="panel-title">
-                                <a href="#" data-toggle="modal" data-target="#budgetModal" class="btn btn-default">
+                                <a href="#" data-toggle="modal" data-target="#addModal" class="btn btn-default">
                                     <i class="fa fa-plus-square-o"></i> Add Budget
                                 </a>
                             </div>
@@ -147,7 +147,7 @@
          data-backdrop="static"
          data-keyboard="false"
          class="modal"
-         id="budgetModal"
+         id="addModal"
          tabindex="-1"
          role="dialog"
          data-backdrop-color="blue">
@@ -537,7 +537,7 @@
          data-backdrop="static"
          data-keyboard="false"
          class="modal"
-         id="budgetEditModal"
+         id="updateModal"
          tabindex="-1"
          role="dialog"
          data-backdrop-color="blue">

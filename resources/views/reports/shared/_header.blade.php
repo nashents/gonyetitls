@@ -2,7 +2,11 @@
     Report header: title, company name/logo, date range (or a single
     as-of date for point-in-time reports like the Balance Sheet),
     optional report type line.
-    Params: title, company, from, to, selectedType (optional), asOfDate (optional)
+    Params: title, company, from, to, selectedType (optional), asOfDate (optional),
+    isPdf (optional, bool) - dompdf must read the logo from disk (public_path)
+    rather than fetch it over HTTP (asset), since a self-referencing HTTP
+    request from the same server can fail or hang; real browser print pages
+    use asset() as normal.
 --}}
 <table class="ps-table">
     <tr>
@@ -20,7 +24,7 @@
         </td>
         <td style="vertical-align:top; width:160px;" class="ps-right">
             @if (!empty($company) && $company->logo)
-            <img src="{{ asset('images/uploads/'.$company->logo) }}" class="ps-logo" alt="">
+            <img src="{{ ($isPdf ?? false) ? public_path('images/uploads/'.$company->logo) : asset('images/uploads/'.$company->logo) }}" class="ps-logo" alt="">
             @endif
         </td>
     </tr>

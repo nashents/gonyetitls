@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Bill;
 use App\Models\Company;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\JournalEntryLine;
 use App\Models\Payment;
@@ -22,6 +23,7 @@ class JournalEntry extends Model
             'bill_id',
             'payment_id',
             'payroll_run_id',
+            'credit_note_id',
             'is_manual',
             'journal_number',
             'date',
@@ -67,6 +69,11 @@ class JournalEntry extends Model
     public function payrollRun()
     {
         return $this->belongsTo(PayrollRun::class);
+    }
+
+    public function creditNote()
+    {
+        return $this->belongsTo(CreditNote::class);
     }
 
     public function created_by()

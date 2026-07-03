@@ -7,7 +7,7 @@
 </head>
 <body>
 
-    @include('reports.shared._header', ['title' => 'Balance Sheet', 'asOfDate' => $as_of_date])
+    @include('reports.shared._header', ['title' => 'Balance Sheet', 'asOfDate' => $as_of_date, 'isPdf' => true])
 
     @include('reports.balance_sheets.partials.statement')
 

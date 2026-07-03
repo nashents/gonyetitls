@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Bill;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Observers\BillObserver;
+use App\Observers\CreditNoteObserver;
 use App\Observers\InvoiceObserver;
 use App\Observers\PaymentObserver;
 use Illuminate\Database\Query\Builder;
@@ -55,5 +57,6 @@ class AppServiceProvider extends ServiceProvider
         Bill::observe(BillObserver::class);
         Invoice::observe(InvoiceObserver::class);
         Payment::observe(PaymentObserver::class);
+        CreditNote::observe(CreditNoteObserver::class);
     }
 }

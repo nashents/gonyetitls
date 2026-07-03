@@ -15,7 +15,7 @@ class BillObserver
      */
     public function created(Bill $bill)
     {
-        if ($bill->isDirty('authorization') && $bill->authorization === 'approved') {
+        if ($bill->isDirty('authorization') && $bill->authorization === 'approved' && $bill->to_be_paid == True) {
             app(BillJournalService::class)->post($bill);
         }
     }
@@ -28,7 +28,7 @@ class BillObserver
      */
     public function updated(Bill $bill)
     {
-        if ($bill->isDirty('authorization') && $bill->authorization === 'approved') {
+        if ($bill->isDirty('authorization') && $bill->authorization === 'approved' && $bill->to_be_paid == True) {
             app(BillJournalService::class)->post($bill);
         }
     }

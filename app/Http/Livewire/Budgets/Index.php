@@ -23,6 +23,7 @@ class Index extends Component
     public $period = [];
     public $value = [];
     public $currency_id = [];
+    public $status = [];
 
     public $edit_name;
     public $edit_module;
@@ -142,43 +143,51 @@ class Index extends Component
     }
     public function edit($id)
     {
+
+        $this->name = Null;
+        $this->module = Null;
+        $this->period = Null;
+        $this->value = Null;
+        $this->currency_id = Null;
+        $this->status = Null;
+
         $budget = Budget::findOrFail($id);
-
+    
         $this->budget_id = $budget->id;
-        $this->edit_name = $budget->name;
-        $this->edit_module = $budget->module;
-        $this->edit_period = $budget->period;
-        $this->edit_value = $budget->value;
-        $this->edit_currency_id = $budget->currency_id;
-        $this->edit_status = $budget->status;
+        $this->name = $budget->name;
+        $this->module = $budget->module;
+        $this->period = $budget->period;
+        $this->value = $budget->value;
+        $this->currency_id = $budget->currency_id;
+        $this->status = $budget->status;
 
-        $this->dispatchBrowserEvent('show-editModal');
+        $this->dispatchBrowserEvent('show-updateModal');
     }
 
     public function update()
     {
         $this->validate([
-            'edit_module' => 'required|string',
-            'edit_name' => 'required|string|max:255',
-            'edit_period' => 'required|string|max:255',
-            'edit_value' => 'required|numeric|min:0',
-            'edit_currency_id' => 'nullable|exists:currencies,id',
-            'edit_status' => 'required',
+            'module' => 'required|string',
+            'name' => 'required|string|max:255',
+            'period' => 'required|string|max:255',
+            'value' => 'required|numeric|min:0',
+            'currency_id' => 'nullable|exists:currencies,id',
+            'status' => 'required',
         ]);
 
         $budget = Budget::findOrFail($this->budget_id);
 
         $budget->update([
             'user_id' => Auth::user()->id,
-            'name' => $this->edit_name,
-            'module' => $this->edit_module,
-            'period' => $this->edit_period,
-            'value' => $this->edit_value,
-            'currency_id' => !empty($this->edit_currency_id) ? $this->edit_currency_id : null,
-            'status' => $this->edit_status,
+            'name' => $this->name,
+            'module' => $this->module,
+            'period' => $this->period,
+            'value' => $this->value,
+            'currency_id' => !empty($this->currency_id) ? $this->currency_id : null,
+            'status' => $this->status,
         ]);
 
-        $this->dispatchBrowserEvent('hide-editModal');
+        $this->dispatchBrowserEvent('hide-updateModal');
 
         $this->resetEditInputFields();
 

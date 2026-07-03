@@ -1,4 +1,37 @@
 <div>
+    <ul class="nav nav-tabs nav-justified" role="tablist">
+        @if (Auth::user()->is_admin())
+            <li role="presentation" class="active">
+                <a href="#personal" aria-controls="personal" role="tab" data-toggle="tab">
+                <select class="form-control"
+                        wire:model.live="company_id">
+                    @foreach($companies as $item)
+                        <option value="{{ $item->id }}">
+                            {{ $item->name }}
+                        </option>
+                    @endforeach
+                </select>
+                </a>
+            </li>
+        @else
+            <li role="presentation" class="active"><a href="#personal" aria-controls="personal" role="tab" data-toggle="tab">
+            {{$company->name}} Details</a></li>
+        @endif
+        
+            
+        <li role="presentation"><a href="#hr" aria-controls="hr" role="tab" data-toggle="tab">HR</a></li>
+        <li role="presentation"><a href="#invoices" aria-controls="invoices" role="tab" data-toggle="tab">Invoices & Quotations</a></li>
+        <li role="presentation"><a href="#dates" aria-controls="dates" role="tab" data-toggle="tab">Dates & Currencies</a></li>
+        <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
+        <li role="presentation"><a href="#bank_accounts" aria-controls="bank_accounts" role="tab" data-toggle="tab">Bank Accounts</a></li>
+        <li role="presentation"><a href="#notifications" aria-controls="notifications" role="tab" data-toggle="tab">Notifications</a></li>
+        <li role="presentation"><a href="#modules" aria-controls="modules" role="tab" data-toggle="tab">Modules</a></li>
+        <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+        <li role="presentation"><a href="#budgets" aria-controls="budgtes" role="tab" data-toggle="tab">Budgets</a></li>
+        @if (Auth::user()->is_admin())
+                <li role="presentation"><a href="#integrations" aria-controls="integrations" role="tab" data-toggle="tab">Integrations</a></li>
+        @endif 
+    </ul>
     <div class="tab-content bg-white p-15">
         <div role="tabpanel" class="tab-pane active" id="personal">
             <form wire:submit.prevent="update()">

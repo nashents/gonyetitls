@@ -201,7 +201,7 @@
                     <span class="gd-panel-note">Clickable year-to-date and master record totals</span>
                 </div>
                 <div class="gd-module-count-grid">
-                    @if ($canSee(['Transport & Logistics','Operations','Management']))
+                    @if ($canSee(['Transport & Logistics']))
                         <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">TOs <span class="gd-module-badge">YTD</span></span>
@@ -228,7 +228,7 @@
                         </a>
                     @endif
 
-                    @if ($canSee(['Finance','Management']))
+                    @if ($canSee(['Finance']))
                         <a href="{{ route('customers.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($customer_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Customers Active</span>
@@ -243,14 +243,14 @@
                         </a>
                     @endif
 
-                    @if ($canSee(['Fuel','Transport & Logistics','Operations','Management']))
+                    @if ($canSee(['Transport & Logistics']))
                         <a href="{{ route('fuels.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-tint"></i></span><strong class="gd-module-value">{{ $fmt($fuel_order_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Fuel Issues <span class="gd-module-badge">YTD</span></span>
                         </a>
                     @endif
 
-                    @if ($canSee(['Workshop','Operations','Management']))
+                    @if ($canSee(['Workshop']))
                         <a href="{{ route('bookings.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-wrench"></i></span><strong class="gd-module-value">{{ $fmt($booking_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Job Cards <span class="gd-module-badge">YTD</span></span>
@@ -261,7 +261,7 @@
                         </a>
                     @endif
 
-                    @if ($canSee(['Stores','Inventory','Operations','Management']))
+                    @if ($canSee(['Stores']))
                         <a href="{{ route('inventories.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-cubes"></i></span><strong class="gd-module-value">{{ $fmt($inventory_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Inventory</span>
@@ -280,7 +280,7 @@
                         </a>
                     @endif
 
-                    @if ($canSee(['Human Resources','Human Resource','Management']))
+                    @if ($canSee(['Human Resources']))
                         <a href="{{ route('employees.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-users"></i></span><strong class="gd-module-value">{{ $fmt($employee_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Employees Active</span>
@@ -293,7 +293,7 @@
                 </div>
             </div>
             <div class="gd-grid">
-                @if ($canSee(['Finance','Management','Operations']))
+                @if ($canSee(['Finance']))
                     <div class="gd-panel wide">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-line-chart"></i> Executive Finance</h5><span class="gd-panel-note">Revenue, cash, receivables and payables</span></div>
                         <div class="gd-kpi-grid">
@@ -309,7 +309,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Transport & Logistics','Operations','Management']))
+                @if ($canSee(['Transport & Logistics']))
                     <div class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-road"></i> Transport Operations</h5><span class="gd-panel-note">Today & MTD</span></div>
                         <div class="gd-kpi-grid">
@@ -325,7 +325,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Fleet','Transport & Logistics','Operations','Management']))
+                @if ($canSee(['Transport & Logistics']))
                     <div class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-truck"></i> Fleet Status</h5><span class="gd-panel-note">Availability and compliance</span></div>
                         <div class="gd-kpi-grid">
@@ -341,7 +341,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Fuel','Transport & Logistics','Operations','Management']))
+                @if ($canSee(['Transport & Logistics']))
                     <div class="gd-panel third">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-tint"></i> Fuel</h5><span class="gd-panel-note">Issue, cost and stock</span></div>
                         <div class="gd-kpi-grid">
@@ -355,7 +355,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Workshop','Operations','Management']))
+                @if ($canSee(['Workshop']))
                     <div class="gd-panel third">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-wrench"></i> Workshop</h5><span class="gd-panel-note">Jobs and repair risk</span></div>
                         <div class="gd-kpi-grid">
@@ -368,7 +368,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Stores','Inventory','Operations','Management']))
+                @if ($canSee(['Stores']))
                     <div class="gd-panel third">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-cubes"></i> Inventory & Stores</h5><span class="gd-panel-note">Stock and procurement</span></div>
                         <div class="gd-kpi-grid">
@@ -381,32 +381,32 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Human Resources','Human Resource','Management']))
+                @if ($canSee(['Human Resources']))
                     <div class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-users"></i> Human Resources</h5><span class="gd-panel-note">People, drivers and payroll</span></div>
                         <div class="gd-kpi-grid">
                             <a class="gd-kpi" href="{{ route('employees.index') }}"><span class="icon"><i class="fa fa-users"></i></span><div class="value">{{ $active_employees ?? 0 }}</div><span class="name">Active Staff</span></a>
                             <a class="gd-kpi" href="{{ route('drivers.index') }}"><span class="icon"><i class="fa fa-id-badge"></i></span><div class="value">{{ $active_drivers ?? 0 }}</div><span class="name">Active Drivers</span></a>
                             <a class="gd-kpi" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $employees_on_leave ?? 0 }}</div><span class="name">On Leave Today</span></a>
-                            <a class="gd-kpi {{ ($pending_leave_requests ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-hourglass-half"></i></span><div class="value">{{ $pending_leave_requests ?? 0 }}</div><span class="name">Pending Leave</span></a>
-                            <a class="gd-kpi warn" href="{{ route('payrolls.index') }}"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($payroll_cost_mtd ?? 0) }}</div><span class="name">Payroll Cost MTD</span></a>
-                            <a class="gd-kpi {{ ($outstanding_loans ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('loans.index') }}"><span class="icon"><i class="fa fa-credit-card"></i></span><div class="value">{{ $money($outstanding_loans ?? 0) }}</div><span class="name">Outstanding Loans</span></a>
+                            <a class="gd-kpi {{ ($pending_leave_requests ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('leaves.pending') }}"><span class="icon"><i class="fa fa-hourglass-half"></i></span><div class="value">{{ $pending_leave_requests ?? 0 }}</div><span class="name">Pending Leave</span></a>
+                            <a class="gd-kpi warn" href="#"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($payroll_cost_mtd ?? 0) }}</div><span class="name">Payroll Cost MTD</span></a>
+                            <a class="gd-kpi {{ ($outstanding_loans ?? 0) > 0 ? 'warn' : 'good' }}" href="#"><span class="icon"><i class="fa fa-credit-card"></i></span><div class="value">{{ $money($outstanding_loans ?? 0) }}</div><span class="name">Outstanding Loans</span></a>
                         </div>
                     </div>
                 @endif
 
-                @if (($pending_authorizations_count ?? 0) > 0 && $canSee(['Management','Operations']))
+                @if (($pending_authorizations_count ?? 0) > 0)
                     <div id="pending-auth" class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-check-square-o"></i> Pending Authorizations</h5><span class="gd-panel-note">Grouped approvals queue</span></div>
                         <div class="gd-kpi-grid">
-                            @if (($pending_trips_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('trips.index') }}"><span class="icon"><i class="fa fa-road"></i></span><div class="value">{{ $pending_trips_auth }}</div><span class="name">Trips</span></a>@endif
-                            @if (($pending_invoices_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('invoices.index') }}"><span class="icon"><i class="fa fa-file-text"></i></span><div class="value">{{ $pending_invoices_auth }}</div><span class="name">Invoices</span></a>@endif
-                            @if (($pending_bills_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bills.index') }}"><span class="icon"><i class="fa fa-file"></i></span><div class="value">{{ $pending_bills_auth }}</div><span class="name">Bills</span></a>@endif
-                            @if (($pending_fuel_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('fuels.index') }}"><span class="icon"><i class="fa fa-tint"></i></span><div class="value">{{ $pending_fuel_auth }}</div><span class="name">Fuel</span></a>@endif
-                            @if (($pending_requisitions_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('requisitions.index') }}"><span class="icon"><i class="fa fa-list-alt"></i></span><div class="value">{{ $pending_requisitions_auth }}</div><span class="name">Requisitions</span></a>@endif
-                            @if (($pending_leave_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $pending_leave_auth }}</div><span class="name">Leave</span></a>@endif
-                            @if (($pending_purchase_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('inventory_purchases.index') }}"><span class="icon"><i class="fa fa-shopping-cart"></i></span><div class="value">{{ $pending_purchase_auth }}</div><span class="name">Purchases</span></a>@endif
-                            @if (($pending_bookings_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bookings.index') }}"><span class="icon"><i class="fa fa-wrench"></i></span><div class="value">{{ $pending_bookings_auth }}</div><span class="name">Workshop</span></a>@endif
+                            @if (($pending_trips_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('trips.pending') }}"><span class="icon"><i class="fa fa-road"></i></span><div class="value">{{ $pending_trips_auth }}</div><span class="name">Trips</span></a>@endif
+                            @if (($pending_invoices_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('invoices.pending') }}"><span class="icon"><i class="fa fa-file-text"></i></span><div class="value">{{ $pending_invoices_auth }}</div><span class="name">Invoices</span></a>@endif
+                            @if (($pending_bills_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bills.pending') }}"><span class="icon"><i class="fa fa-file"></i></span><div class="value">{{ $pending_bills_auth }}</div><span class="name">Bills</span></a>@endif
+                            @if (($pending_fuel_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('fuels.pending') }}"><span class="icon"><i class="fa fa-tint"></i></span><div class="value">{{ $pending_fuel_auth }}</div><span class="name">Fuel</span></a>@endif
+                            @if (($pending_requisitions_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('requisitions.pending') }}"><span class="icon"><i class="fa fa-list-alt"></i></span><div class="value">{{ $pending_requisitions_auth }}</div><span class="name">Requisitions</span></a>@endif
+                            @if (($pending_leave_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('leaves.pending') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $pending_leave_auth }}</div><span class="name">Leave</span></a>@endif
+                            @if (($pending_purchase_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('inventory_purchases.pending') }}"><span class="icon"><i class="fa fa-shopping-cart"></i></span><div class="value">{{ $pending_purchase_auth }}</div><span class="name">Purchases</span></a>@endif
+                            @if (($pending_bookings_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bookings.pending') }}"><span class="icon"><i class="fa fa-wrench"></i></span><div class="value">{{ $pending_bookings_auth }}</div><span class="name">Workshop</span></a>@endif
                         </div>
                     </div>
                 @endif
@@ -456,13 +456,13 @@
                                 <div id="gd_finance_chart" class="gd-chart"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Transport & Logistics','Operations','Management']))
+                        @if ($canSee(['Transport & Logistics']))
                             <div class="col-md-6 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Monthly Trips</h6>
                                 <div id="gd_trips_chart" class="gd-chart"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Fuel','Transport & Logistics','Operations','Management']))
+                        @if ($canSee(['Fuel','Transport & Logistics']))
                             <div class="col-md-6 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Fuel Stock Split</h6>
                                 <div id="gd_fuel_stock_chart" class="gd-chart short"></div>
@@ -472,19 +472,19 @@
                                 <div id="gd_fuel_movement_chart" class="gd-chart short"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Workshop','Operations','Management']))
+                        @if ($canSee(['Workshop']))
                             <div class="col-md-6 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Workshop Bookings</h6>
                                 <div id="gd_bookings_chart" class="gd-chart short"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Human Resources','Human Resource','Management']))
+                        @if ($canSee(['Human Resources']))
                             <div class="col-md-6 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Employee Gender Mix</h6>
                                 <div id="gd_gender_chart" class="gd-chart short"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Transport & Logistics','Operations','Management']))
+                        @if ($canSee(['Transport & Logistics']))
                             <div class="col-md-12 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Driver Weight Performance</h6>
                                 <div id="gd_driver_weight_chart" class="gd-chart tall"></div>

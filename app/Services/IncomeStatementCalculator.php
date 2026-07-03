@@ -20,9 +20,10 @@ class IncomeStatementCalculator
     ) {
     }
 
+    /** @deprecated use ReportFormatter::isNumericAmount() */
     public static function isNumericAmount($value): bool
     {
-        return is_string($value) && preg_match('/^-?[0-9]+(\.[0-9]+)?$/', trim($value)) === 1;
+        return ReportFormatter::isNumericAmount($value);
     }
 
     /** @deprecated use ReportFormatter::money() */
@@ -54,10 +55,10 @@ class IncomeStatementCalculator
         $isBaseCurrency = is_null($currencyId) || (int) $currencyId === (int) $this->defaultCurrencyId;
 
         if ($isBaseCurrency) {
-            return self::isNumericAmount($nativeAmount) ? (float) $nativeAmount : 0.0;
+            return ReportFormatter::isNumericAmount($nativeAmount) ? (float) $nativeAmount : 0.0;
         }
 
-        return self::isNumericAmount($exchangeAmount) ? (float) $exchangeAmount : 0.0;
+        return ReportFormatter::isNumericAmount($exchangeAmount) ? (float) $exchangeAmount : 0.0;
     }
 
     /**

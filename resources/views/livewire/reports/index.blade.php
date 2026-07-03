@@ -64,7 +64,7 @@
                         <hr>
                         <div class="panel-heading">
                             <div class="panel-title">
-                                <h5><a href="#" style="color:blue">Sales Tax Report</a></h5>
+                                <h5><a href="{{route('reports.sales_tax')}}" style="color:blue">Sales Tax Report</a></h5>
                             </div>
                         </div>
                         <div class="panel-body">
@@ -79,7 +79,7 @@
                             <div class="col-md-6">
                                 <div class="panel-heading">
                                     <div class="panel-title">
-                                        <h5><a href="#" style="color:blue">Income by Customer</a></h5>
+                                        <h5><a href="{{route('reports.income_by_customer')}}" style="color:blue">Income by Customer</a></h5>
                                     </div>
                                 </div>
                                 <div class="panel-body">
@@ -89,7 +89,7 @@
                             <div class="col-md-6">
                                 <div class="panel-heading">
                                     <div class="panel-title">
-                                        <h5><a href="#" style="color:blue">Aged Receivables</a></h5>
+                                        <h5><a href="{{route('reports.aged_receivables')}}" style="color:blue">Aged Receivables</a></h5>
                                     </div>
                                 </div>
                                 <div class="panel-body">
@@ -107,7 +107,7 @@
                             <div class="col-md-6">
                                 <div class="panel-heading">
                                     <div class="panel-title">
-                                        <h5><a href="#" style="color:blue">Purchases By Vendor</a></h5>
+                                        <h5><a href="{{route('reports.purchase_by_vendor')}}" style="color:blue">Purchases By Vendor</a></h5>
                                     </div>
                                 </div>
                                 <div class="panel-body">
@@ -117,7 +117,7 @@
                             <div class="col-md-6">
                                 <div class="panel-heading">
                                     <div class="panel-title">
-                                        <h5><a href="#" style="color:blue">Aged Payables</a></h5>
+                                        <h5><a href="{{route('reports.aged_payables')}}" style="color:blue">Aged Payables</a></h5>
                                     </div>
                                 </div>
                                 <div class="panel-body">
@@ -134,7 +134,7 @@
                             <div class="col-md-6">
                                 <div class="panel-heading">
                                     <div class="panel-title">
-                                        <h5><a href="#" style="color:blue">Account Balances</a></h5>
+                                        <h5><a href="{{route('reports.account_balances')}}" style="color:blue">Account Balances</a></h5>
                                     </div>
                                 </div>
                                 <div class="panel-body">
@@ -157,7 +157,7 @@
                         <div class="col-md-6">
                             <div class="panel-heading">
                                 <div class="panel-title">
-                                    <h5><a href="#" style="color:blue">Account Transactions(General Ledger)</a></h5>
+                                    <h5><a href="{{route('reports.account_transactions')}}" style="color:blue">Account Transactions(General Ledger)</a></h5>
                                 </div>
                             </div>
                             <div class="panel-body">

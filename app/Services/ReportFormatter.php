@@ -9,6 +9,16 @@ namespace App\Services;
 class ReportFormatter
 {
     /**
+     * Whether a value from one of this app's many string-typed "numeric"
+     * columns (total, balance, subtotal, tax_amount, etc.) is actually a
+     * well-formed number and safe to cast/sum, rather than dirty data.
+     */
+    public static function isNumericAmount($value): bool
+    {
+        return is_string($value) && preg_match('/^-?[0-9]+(\.[0-9]+)?$/', trim($value)) === 1;
+    }
+
+    /**
      * Format a monetary amount using accounting convention:
      * negative values are wrapped in parentheses.
      */

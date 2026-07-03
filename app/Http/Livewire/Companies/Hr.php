@@ -21,6 +21,7 @@ class Hr extends Component
     public function mount($id){
         $company = Company::find($id);
         $this->company = $company;
+     
         $this->company_id = $company->id;
         $this->maximum_leave_days = $company->maximum_leave_days;
         $this->accrual_rate = $company->accrual_rate;

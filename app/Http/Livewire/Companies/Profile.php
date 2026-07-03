@@ -55,6 +55,7 @@ class Profile extends Component
     public function mount($company){
 
         $this->company = $company;
+
         $this->company_id = $company->id;
         $this->name = $company->name;
         $this->email = $company->email;
@@ -79,6 +80,7 @@ class Profile extends Component
         $this->website = $company->website;
         $this->vat = $company->vat;
         $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->companies = Company::orderBy('name','asc')->get();
         $this->currency_id = $company->currency_id;
         $this->interest = $company->interest;
         $this->quotation_memo = $company->quotation_memo;
@@ -91,6 +93,14 @@ class Profile extends Component
         $this->invoice_footer = $company->invoice_footer;
         $this->receipt_memo = $company->receipt_memo;
         $this->receipt_footer = $company->receipt_footer;
+    }
+
+    public function updatedCompanyId($value)
+    {
+
+        return redirect()->route('company-profile', $value);
+
+        // Reload any other company-specific data here.
     }
 
     public function update(){

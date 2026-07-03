@@ -322,6 +322,7 @@ class Index extends Component
 
        $kpis['gross_profit_mtd'] = $kpis['revenue_mtd'] - $kpis['cost_of_sales_mtd'];
 
+
         $kpis['gross_margin_pct'] = $kpis['revenue_mtd'] > 0
             ? round(($kpis['gross_profit_mtd'] / $kpis['revenue_mtd']) * 100, 1)
             : 0;
@@ -554,12 +555,24 @@ class Index extends Component
 
         $kpis['inventory_total_value'] = (float) DB::table('inventories')
             ->whereNull('deleted_at')->where('disposed',0)->where('status',1)
-            ->sum(DB::raw('COALESCE(amount+0,0) * COALESCE(qty+0,0)'));
+            ->sum(DB::raw('COALESCE(balance+0,0) * COALESCE(total+0,0)'));
 
-        $kpis['low_stock_count'] = DB::table('inventories')
-            ->whereNull('deleted_at')->where('disposed',0)->where('status',1)
-            ->where(DB::raw('COALESCE(qty+0,0)'),'<=',5)
-            ->where(DB::raw('COALESCE(qty+0,0)'),'>',0)->count();
+        $kpis['low_stock_count'] = DB::table('products')
+        ->leftJoin('inventories', function ($join) {
+            $join->on('products.id', '=', 'inventories.product_id')
+                ->whereNull('inventories.deleted_at')
+                ->where('inventories.disposed', 0)
+                ->where('inventories.status', 1);
+        })
+        ->select(
+            'products.id',
+            'products.min',
+            DB::raw('COALESCE(SUM(COALESCE(inventories.qty + 0, 0)), 0) as balance')
+        )
+        ->groupBy('products.id', 'products.min')
+        ->havingRaw('balance > 0')
+        ->havingRaw('balance <= products.min')
+        ->count();
 
         $kpis['pending_pos_count'] = Purchase::whereNull('deleted_at')
             ->where('authorization','pending')->where('department','inventory')->count();
@@ -596,6 +609,7 @@ class Index extends Component
             ->sum(DB::raw('COALESCE(net+0,0)'));
 
         $kpis['outstanding_loans'] = (float) Loan::whereNull('deleted_at')
+        ->where('currency_id',$cur)
             ->where('authorization','approved')->where('status','Unpaid')
             ->sum(DB::raw('COALESCE(balance+0,0)'));
 

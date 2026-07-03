@@ -41,7 +41,20 @@ WithBatchInserts
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
 
-        $employee = Employee::where('employee_number',$row['employee_number'])->first();
+        $employeeNumber = trim($row['employee_number'] ?? '');
+        $fullname = strtolower(trim($row['fullname'] ?? ''));
+
+        $employee = Employee::query()
+            ->when($employeeNumber, function ($query) use ($employeeNumber) {
+                $query->where('employee_number', $employeeNumber);
+            })
+            ->when(!$employeeNumber && $fullname, function ($query) use ($fullname) {
+                $query->whereRaw(
+                    "LOWER(TRIM(CONCAT(name, ' ', surname))) = ?",
+                    [$fullname]
+                );
+            })
+            ->first();
 
         if (!$employee) {
             continue;

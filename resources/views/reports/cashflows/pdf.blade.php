@@ -7,7 +7,7 @@
 </head>
 <body>
 
-    @include('reports.shared._header', ['title' => 'Cash Flow Statement'])
+    @include('reports.shared._header', ['title' => 'Cash Flow Statement', 'isPdf' => true])
 
     @include('reports.cashflows.partials.statement')
 
