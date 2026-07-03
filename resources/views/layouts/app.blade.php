@@ -943,6 +943,18 @@
     </script>
 
     <script type="text/javascript">
+            window.addEventListener('show-statusModal', event => {
+                $('#statusModal').modal('show');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-statusModal', event => {
+                $('#statusModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-qualificationModal', event => {
                 $('#qualificationModal').modal('show');
             })

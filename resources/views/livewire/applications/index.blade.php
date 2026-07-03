@@ -73,7 +73,7 @@
             <th>Qualifications</th>
             <th>Checks</th>
             <th>Interviews</th>
-            {{-- <th>Decision</th> --}}
+            <th>Management Decision</th>
             <th style="width:8%">Status</th>
             <th style="width:6%">Actions</th>
         </tr>
@@ -86,8 +86,14 @@
                 @php
                     $candidate = $application->recruitment_candidate;
                     // Lock flow: qualifications -> checks -> scores -> decisions
-                    $hasQual  = $candidate->qualifications->isNotEmpty();
-                    $hasCheck = $candidate->checks->isNotEmpty();
+                    $hasRejectedQualification = $candidate->qualifications->contains(fn ($q) => strtolower((string) $q->status) === 'rejected');
+                    $hasQual  = $candidate->qualifications->isNotEmpty() && !$hasRejectedQualification;
+
+                    $checksExist = $candidate->checks->isNotEmpty();
+                    $allowedCheckResults = ['present', 'pass', 'available'];
+                    $hasBlockingCheck = $candidate->checks->contains(fn ($c) => !in_array(strtolower((string) $c->result), $allowedCheckResults));
+                    $hasCheck = $checksExist && !$hasBlockingCheck;
+
                     $hasScore = $candidate->scores->isNotEmpty();
                 @endphp
                 <tr>
@@ -132,7 +138,12 @@
                             @forelse ($candidate->qualifications as $qualification)
                                 {{ $loop->iteration }}) {{ $qualification->qualification?->name }} {{ $qualification->level }}
                                 @if ($qualification->status)
-                                    <span class="badge bg-warning">{{ $qualification->status }}</span>
+                                    <span class="badge bg-{{ match(strtolower($qualification->status)) {
+                                        'pending'  => 'warning',
+                                        'verified' => 'success',
+                                        'rejected' => 'danger',
+                                        default    => 'secondary'
+                                    } }}">{{ $qualification->status }}</span>
                                 @endif
                                 @if ($loop->last)
                                     &nbsp;<a href="#" wire:click.prevent="showEditQualifications({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
@@ -152,7 +163,7 @@
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Add a qualification first">
+                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="{{ $hasRejectedQualification ? 'Update the rejected qualification to Verified first' : 'Add a qualification first' }}">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
                         @endif
@@ -161,7 +172,12 @@
                             @forelse ($candidate->checks as $check)
                                 {{ $loop->iteration }}) {{ $check->type }}
                                 @if ($check->result)
-                                    <span class="badge bg-warning">{{ $check->result }}</span>
+                                    <span class="badge bg-{{ match(strtolower($check->result)) {
+                                        'pass', 'present', 'available' => 'success',
+                                        'fail'    => 'danger',
+                                        'pending' => 'warning',
+                                        default   => 'secondary'
+                                    } }}">{{ $check->result }}</span>
                                 @endif
                                 @if ($loop->last)
                                     &nbsp;<a href="#" wire:click.prevent="showEditChecks({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
@@ -181,7 +197,7 @@
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Complete a check first">
+                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="{{ $checksExist ? 'All checks must be Present, Pass or Available first' : 'Complete a check first' }}">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
                         @endif
@@ -205,8 +221,8 @@
                         </small>
                     </td>
 
-                    {{-- Decision (step 4, needs scores) --}}
-                    {{-- <td>
+                    {{-- Management Decision (step 4, needs scores) --}}
+                    <td>
                         @if ($hasScore)
                             <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
@@ -221,7 +237,11 @@
                             @forelse ($candidate->decisions as $decision)
                                 {{ $loop->iteration }}) {{ $decision->stage }}
                                 @if ($decision->decision)
-                                    <span class="badge bg-warning">{{ $decision->decision }}</span>
+                                    <span class="badge bg-{{ match(strtolower($decision->decision)) {
+                                        'engage' => 'success',
+                                        'fail'   => 'danger',
+                                        default  => 'secondary'
+                                    } }}">{{ $decision->decision }}</span>
                                 @endif
                                 @if ($loop->last)
                                     &nbsp;<a href="#" wire:click.prevent="showEditDecisions({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
@@ -232,7 +252,7 @@
                                 <span class="text-muted">None added</span>
                             @endforelse
                         </small>
-                    </td> --}}
+                    </td>
 
                     {{-- Status --}}
                     <td class="text-center">
@@ -249,6 +269,8 @@
                         @if ($candidate->employee_id)
                             <br><small class="text-success" title="Staff record auto-created"><i class="fa fa-check-circle"></i> Onboarded</small>
                         @endif
+                        <br>
+                        <a href="#" wire:click.prevent="showUpdateStatus({{ $candidate->id }})" title="Quick update status"><i class="fa fa-refresh"></i> Update</a>
                     </td>
 
                     {{-- Actions --}}
@@ -568,7 +590,7 @@
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Recruitment Decisions <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Management Decision <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="addDecisions()" >
                     <div class="modal-body">
@@ -588,18 +610,11 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group" >
-                                    <label for="one" class="radio-label">Decision</label>
+                                    <label for="one" class="radio-label">Management Decision</label>
                                     <select wire:model.debounce.300ms="decision.0" class="form-control" required>
                                         <option value="">Select Option</option>
-                                        <option value="Contracted">Contracted</option>
-                                        <option value="Decline">Decline</option>
                                         <option value="Engage">Engage</option>
-                                         <option value="Hired">Hired</option>
-                                        <option value="Impressed">Impressed</option>
-                                        <option value="Next Step">Next Step</option>
-                                        <option value="Unimpressed">Unimpressed</option>
-                                        <option value="Retake">Retake</option>
-                                        <option value="Road Test">Road Test</option>
+                                        <option value="Fail">Fail</option>
                                     </select>
                                     @error('decision.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>   
@@ -628,21 +643,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group" >
-                                        <label for="one" class="radio-label">Decision</label>
+                                        <label for="one" class="radio-label">Management Decision</label>
                                         <select wire:model.debounce.300ms="decision.{{$value}}" class="form-control" required>
                                             <option value="">Select Option</option>
-                                            <option value="Contracted">Contracted</option>
-                                            <option value="Decline">Decline</option>
                                             <option value="Engage">Engage</option>
-                                            <option value="Hired">Hired</option>
-                                            <option value="Impressed">Impressed</option>
-                                            <option value="Next Step">Next Step</option>
-                                            <option value="Unimpressed">Unimpressed</option>
-                                            <option value="Retake">Retake</option>
-                                            <option value="Road Test">Road Test</option>
+                                            <option value="Fail">Fail</option>
                                         </select>
                                         @error('decision.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>   
+                                    </div>
                                 </div>
                             </div>
                            <div class="row">
@@ -668,7 +676,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>    
+                    </div>
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
@@ -680,12 +688,12 @@
             </div>
         </div>
     </div>
-    
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="decisionEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Recruitment Decision <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Management Decision <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="updateDecisions()" >
                     <div class="modal-body">
@@ -706,18 +714,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group" >
-                                        <label for="one" class="radio-label">Decision</label>
+                                        <label for="one" class="radio-label">Management Decision</label>
                                         <select wire:model.debounce.300ms="current_decision.{{$key}}" class="form-control" required>
                                             <option value="">Select Option</option>
-                                             <option value="Contracted">Contracted</option>
-                                            <option value="Decline">Decline</option>
                                             <option value="Engage">Engage</option>
-                                            <option value="Hired">Hired</option>
-                                            <option value="Impressed">Impressed</option>
-                                            <option value="Next Step">Next Step</option>
-                                            <option value="Unimpressed">Unimpressed</option>
-                                            <option value="Retake">Retake</option>
-                                            <option value="Road Test">Road Test</option>
+                                            <option value="Fail">Fail</option>
                                         </select>
                                         @error('current_decision.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
@@ -755,18 +756,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group" >
-                                        <label for="one" class="radio-label">Decision</label>
+                                        <label for="one" class="radio-label">Management Decision</label>
                                         <select wire:model.debounce.300ms="decision.{{$value}}" class="form-control" required>
                                             <option value="">Select Option</option>
-                                            <option value="Contracted">Contracted</option>
-                                            <option value="Decline">Decline</option>
                                             <option value="Engage">Engage</option>
-                                            <option value="Hired">Hired</option>
-                                            <option value="Impressed">Impressed</option>
-                                            <option value="Next Step">Next Step</option>
-                                            <option value="Unimpressed">Unimpressed</option>
-                                            <option value="Retake">Retake</option>
-                                            <option value="Road Test">Road Test</option>
+                                            <option value="Fail">Fail</option>
                                         </select>
                                         @error('decision.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
@@ -1711,6 +1705,38 @@
         </div>
     </div>
 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-refresh"></i> Update Status <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateStatus()" >
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name">Application Status<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="status" required>
+                                <option value="">Select Option</option>
+                                <option value="Applied">Applied</option>
+                                <option value="Engaged">Engaged</option>
+                                <option value="Declined">Declined</option>
+                                <option value="Contracted">Contracted</option>
+                                <option value="Hired">Hired</option>
+                            </select>
+                            @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     </div>
 </div>

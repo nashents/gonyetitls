@@ -248,6 +248,34 @@ class Index extends Component
         return false;
     }
 
+    // Checks stay locked while any qualification is Rejected, until it's updated to Verified.
+    private function qualificationsGateBlocked($candidate){
+        if (!$candidate || $candidate->qualifications()->count() == 0) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Add at least one qualification before recording checks.']);
+            return true;
+        }
+        if ($candidate->qualifications()->whereRaw('LOWER(status) = ?', ['rejected'])->exists()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'A rejected qualification is blocking checks. Update it to Verified first.']);
+            return true;
+        }
+        return false;
+    }
+
+    // Interviews stay locked unless every check result is Present, Pass or Available.
+    private function checksGateBlocked($candidate){
+        if (!$candidate || $candidate->checks()->count() == 0) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Complete checks before scoring this candidate.']);
+            return true;
+        }
+        $allowedResults = ['present', 'pass', 'available'];
+        $hasBlockingResult = $candidate->checks->contains(fn ($check) => !in_array(strtolower((string) $check->result), $allowedResults));
+        if ($hasBlockingResult) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'All checks must be Present, Pass or Available before scoring this candidate.']);
+            return true;
+        }
+        return false;
+    }
+
     public function refresh($category){
 
         if($category == "checks"){
@@ -419,7 +447,7 @@ class Index extends Component
     public function showChecks($id){
 
         $candidate = RecruitmentCandidate::find($id);
-        if ($this->gateBlocked($candidate, 'qualifications', 'Add at least one qualification before recording checks.')) {
+        if ($this->qualificationsGateBlocked($candidate)) {
             return;
         }
 
@@ -518,7 +546,7 @@ class Index extends Component
     public function showScores($id){
 
         $candidate = RecruitmentCandidate::find($id);
-        if ($this->gateBlocked($candidate, 'checks', 'Complete checks before scoring this candidate.')) {
+        if ($this->checksGateBlocked($candidate)) {
             return;
         }
 
@@ -720,7 +748,7 @@ class Index extends Component
      |  Auto-provisioning of Employee / Driver on Contracted|Hired
      * =========================================================== */
 
-    // Promote candidate status from a Hired/Contracted decision, then provision.
+    // Promote candidate status from the management decision (Engage/Fail), then provision.
     private function applyDecisionOutcome(){
         $candidate = RecruitmentCandidate::find($this->recruitment_candidate_id);
         if(!$candidate) return;
@@ -728,8 +756,8 @@ class Index extends Component
         $decisions = $candidate->decisions()->pluck('decision')
             ->map(fn($d) => strtolower((string) $d));
 
-        if($decisions->contains('hired'))            $candidate->status = 'Hired';
-        elseif($decisions->contains('contracted'))   $candidate->status = 'Contracted';
+        if($decisions->contains('fail'))          $candidate->status = 'Declined';
+        elseif($decisions->contains('engage'))    $candidate->status = 'Engaged';
         else return;
 
         $candidate->save();
@@ -969,6 +997,34 @@ class Index extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',['type'=>'success','message'=>"Application Register Update Successfully!!"]);
         });
+    }
+
+    /* ----------------------- Quick status update (file status) ----------- */
+
+    public function showUpdateStatus($id){
+        $candidate = RecruitmentCandidate::find($id);
+        if(!$candidate) return;
+
+        $this->recruitment_candidate_id = $id;
+        $this->status = $candidate->status;
+
+        $this->dispatchBrowserEvent('show-statusModal');
+    }
+
+    public function updateStatus(){
+        $this->validate(['status' => 'required']);
+
+        $candidate = RecruitmentCandidate::find($this->recruitment_candidate_id);
+        if($candidate){
+            $candidate->status = $this->status;
+            $candidate->save();
+
+            $this->provisionStaff($candidate);
+        }
+
+        $this->dispatchBrowserEvent('hide-statusModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',['type'=>'success','message'=>"Status Updated Successfully!!"]);
     }
 
     public function delete($id){

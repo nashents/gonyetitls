@@ -150,7 +150,11 @@
                                                 <strong>HOD: </strong>{{$employee->department_head?->department->name}} <br>
                                             @endif
                                             <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
-                                            <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
+                                            <strong>Rank: </strong>
+                                            @if ($employee->ranks && $employee->ranks->count()>0)
+                                                {{$employee->ranks ? $employee->ranks->first()->name : ""}}
+                                            @endif
+                                             <br>
                                             <strong>Role(s):</strong> 
                                                 @if ($employee->user->roles)
                                                     @foreach ($employee->user->roles as $role)

@@ -695,6 +695,15 @@ class Create extends Component
                     }
                 }
             }
+            $this->autoMatchCustomerRate();
+            $this->autoMatchTransporterRate();
+    }
+
+    public function updatedCustomerId($id)
+    {
+        if (!is_null($id) && $id !== '') {
+            $this->autoMatchCustomerRate();
+        }
     }
     public function updatedSelectedTripType($id)
     {
@@ -904,8 +913,8 @@ class Create extends Component
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
             }
-     
-          
+
+            $this->autoMatchTransporterRate();
         }
     }
 
@@ -1292,8 +1301,8 @@ class Create extends Component
             if(!is_null($id)){
                 $defined_customer_rate = Rate::find($id);
                 $this->rate = $defined_customer_rate->rate;
-                $this->freight = $defined_customer_rate->customer_id;
-                $this->customer_id = $defined_customer_rate->freight;
+                $this->freight = $defined_customer_rate->freight;
+                $this->customer_id = $defined_customer_rate->customer_id ?: $this->customer_id;
                 $this->weight = $defined_customer_rate->weight;
                 $this->litreage = $defined_customer_rate->litreage;
                 $this->distance = $defined_customer_rate->distance;
@@ -1312,6 +1321,91 @@ class Create extends Component
             $this->transporter_freight = $defined_transporter_rate->freight;
         }
       }
+
+    /**
+     * Find a saved Rate whose defining columns match the trip's currently
+     * selected inputs. Used to auto-attach a rate/freight when the rate
+     * fields themselves are hidden from the current user (see
+     * company->rates_managed_by_finance) so operations staff can still
+     * create trips without needing to know or see the agreed rate.
+     */
+    private function findMatchingRate(string $category)
+    {
+        if (empty($this->selectedCargo) || empty($this->selectedFrom) || empty($this->selectedTo)) {
+            return null;
+        }
+
+        $query = Rate::where('category', $category)
+            ->where('cargo_id', $this->selectedCargo)
+            ->where('from', $this->selectedFrom)
+            ->where('to', $this->selectedTo);
+
+        if ($category === 'Customer') {
+            if (empty($this->customer_id)) {
+                return null;
+            }
+            $query->where('customer_id', $this->customer_id);
+        } else {
+            if (empty($this->selectedTransporter)) {
+                return null;
+            }
+            $query->where('transporter_id', $this->selectedTransporter);
+        }
+
+        foreach (['loading_point_id', 'offloading_point_id'] as $field) {
+            if (!empty($this->$field)) {
+                $query->where($field, $this->$field);
+            } else {
+                $query->whereNull($field);
+            }
+        }
+
+        if (!empty($this->selectedCurrency)) {
+            $query->where('currency_id', $this->selectedCurrency);
+        }
+
+        return $query->latest()->first();
+    }
+
+    public function autoMatchCustomerRate()
+    {
+        if (!empty($this->rate) && is_numeric($this->rate) && (float) $this->rate > 0) {
+            return;
+        }
+
+        $matched_rate = $this->findMatchingRate('Customer');
+
+        if ($matched_rate) {
+            $this->selectedDefinedCustomerRate = $matched_rate->id;
+            $this->with_customer_rates = 'rates';
+            $this->rate = $matched_rate->rate;
+            $this->customer_id = $matched_rate->customer_id ?: $this->customer_id;
+            if (!empty($matched_rate->freight_calculation)) {
+                $this->freight_calculation = $matched_rate->freight_calculation;
+            }
+            if (empty($this->selectedCurrency) && !empty($matched_rate->currency_id)) {
+                $this->selectedCurrency = $matched_rate->currency_id;
+            }
+            $this->calculateFreight();
+        }
+    }
+
+    public function autoMatchTransporterRate()
+    {
+        if (!empty($this->transporter_rate) && is_numeric($this->transporter_rate) && (float) $this->transporter_rate > 0) {
+            return;
+        }
+
+        $matched_rate = $this->findMatchingRate('Transporter');
+
+        if ($matched_rate) {
+            $this->selectedDefinedTransporterRate = $matched_rate->id;
+            $this->with_transporter_rates = 'rates';
+            $this->transporter_agreement = true;
+            $this->transporter_rate = $matched_rate->rate;
+            $this->calculateFreight();
+        }
+    }
 
 
     private function addToCategoryTotal($category, $amount)
@@ -2905,8 +2999,11 @@ class Create extends Component
                     $this->calculateDistance($this->selectedFrom, $this->selectedTo,"destinations");
                 }
             }
-          
+
         }
+
+        $this->autoMatchCustomerRate();
+        $this->autoMatchTransporterRate();
     }
 
     public function updatedSelectedFrom($id)
@@ -2919,8 +3016,11 @@ class Create extends Component
                     $this->calculateDistance($this->selectedFrom, $this->selectedTo,"destinations");
                 }
             }
-          
+
         }
+
+        $this->autoMatchCustomerRate();
+        $this->autoMatchTransporterRate();
     }
 
 
@@ -2932,9 +3032,12 @@ class Create extends Component
                 $this->calculateDistance($this->selectedFrom, $this->selectedTo,"destinations");
             }
         }
+
+        $this->autoMatchCustomerRate();
+        $this->autoMatchTransporterRate();
     }
 
-    
+
 
     public function updatedOffloadingPointId(){
         if (isset($this->loading_point_id) && isset($this->offloading_point_id)) {
@@ -2944,6 +3047,9 @@ class Create extends Component
                 $this->calculateDistance($this->selectedFrom, $this->selectedTo,"destinations");
             }
         }
+
+        $this->autoMatchCustomerRate();
+        $this->autoMatchTransporterRate();
     }
 
 
