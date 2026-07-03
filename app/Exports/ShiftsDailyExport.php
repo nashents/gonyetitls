@@ -208,7 +208,8 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $yFrom = $asAt->copy()->subDay()->startOfDay()->addHours(2);
         $yTo = $reportTo;
 
-        $mFrom = $asAt->copy()->startOfMonth()->startOfDay()->addHours(2);
+        
+        $mFrom = $asAt->copy()->subDay()->startOfMonth()->startOfDay()->addHours(2);
         $mTo = $reportTo;
 
         $mtdBudgetDays = $this->mtdBudgetDays($asAt);
