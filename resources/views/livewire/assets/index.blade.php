@@ -56,9 +56,7 @@
                                     @forelse ($assets as $asset)
                                   <tr>
                                     <td>
-                                    @if ($asset->product)
-                                            {{$asset->product->brand ? $asset->product->brand->name : ""}} {{$asset->product ? $asset->product->name : ""}}     
-                                    @endif
+                                        {{$asset->product ? $asset->product->name : ""}} <strong>{{$asset->product?->brand ? "(".$asset->product?->brand?->name.")" : ""}}</strong>
                                     </td>
                                     <td>{{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->product->identification_number ? "PN#: ".$asset->product->identification_number : ""}}</td>
                                     <td>

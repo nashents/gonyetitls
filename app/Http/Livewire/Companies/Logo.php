@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Companies;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 
 class Logo extends Component
@@ -34,9 +35,15 @@ class Logo extends Component
         if($this->logo){
             $image =  $this->logo;
             $filename = time() . '.' . $image->getClientOriginalExtension();
+
+            $uploadsPath = public_path('/images/uploads');
+            if (!File::isDirectory($uploadsPath)) {
+                File::makeDirectory($uploadsPath, 0755, true);
+            }
+
             Image::make($image)->resize(300,300,function ($constraint) {
                 $constraint->aspectRatio();
-            })->save(public_path('/images/uploads/' . $filename));
+            })->save($uploadsPath . '/' . $filename);
 
          
             $company = $this->company;

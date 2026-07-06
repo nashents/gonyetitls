@@ -211,13 +211,19 @@ class Create extends Component
     }
 
     public function updatedSelectedTax($id, $key){
-        if(!is_null($id)){
+            if (is_null($id) || is_null($key)) {
+                return;
+            }
+            
+             // Make sure $key is a valid array key (e.g., numeric or string)
+            if (!is_scalar($key)) {
+                return;
+            }
+            
             $tax = Tax::find($id);
-            if (isset($tax)) {
+            if ($tax) {
                 $this->tax_rate[$key] = $tax->rate;
             }
-           
-        }
     }
 
     public function showItem($key){
@@ -405,6 +411,7 @@ class Create extends Component
                 if (isset($this->selectedProduct[$key])) {
                     $bill_expense->product_id = $this->selectedProduct[$key];
                 }
+
 
                 if (isset($this->selectedAccount[$key])) {
                     $account = Account::find($this->selectedAccount[$key]);

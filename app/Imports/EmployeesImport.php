@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Mail\AccountCreationMail;
 use App\Models\Count;
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeLeave;
 use App\Models\EmployeePosition;
@@ -219,7 +220,7 @@ WithBatchInserts
                     // Skip row if required fields are missing
                     continue;
                 }
-
+                
                 $email          = $row->get('email');
                 $gender         = $row->get('gender');
                 $dob            = $row->get('dob');
@@ -227,6 +228,8 @@ WithBatchInserts
                 $idNumber       = $row->get('idnumber');
                 $country        = $row->get('country');
                 $city           = $row->get('city');
+                $departments           = $row->get('departments');
+                $post           = $row->get('post');
                 $suburb         = $row->get('suburb');
                 $contract       = $row->get('contract_duration');
                 $startDate      = $row->get('start_date');
@@ -237,7 +240,8 @@ WithBatchInserts
                 $contact        = $row->get('contact');
 
                 DB::transaction(function () use ($row,$name,$surname,$email,$gender,$dob,$phone,$idNumber,
-                    $country,$city,$suburb,$contract,$startDate,$expiryDate,$streetAddress,$nextOfKin,$relationship,$contact
+                    $country,$city,$suburb,$contract,$startDate,$expiryDate,$streetAddress,$nextOfKin,$relationship,$contact,
+                    $departments,$post
                 ) {
                     $pin = $this->generatePIN();
 
@@ -314,6 +318,15 @@ WithBatchInserts
                     $employee->relationship  = $relationship;
                     $employee->contact       = $contact;
 
+                    $postTitle = trim((string) $post);
+                    if ($postTitle !== '') {
+                        $jobTitle = JobTitle::firstOrCreate(
+                            ['title' => $postTitle],
+                            ['user_id' => Auth::id()]
+                        );
+                        $employee->post = $jobTitle->title;
+                    }
+
                     $employee->save();
 
                     if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
@@ -322,6 +335,15 @@ WithBatchInserts
 
                     // Avoid duplicate pivot records
                     $employee->ranks()->syncWithoutDetaching([3]);
+
+                    if (!empty($departments)) {
+                        $departmentNames = array_filter(array_map('trim', explode(',', $departments)));
+
+                        if (!empty($departmentNames)) {
+                            $departmentIds = Department::whereIn('name', $departmentNames)->pluck('id')->toArray();
+                            $employee->departments()->sync($departmentIds);
+                        }
+                    }
 
                     $this->updateLeaveDays($employee->id);
 

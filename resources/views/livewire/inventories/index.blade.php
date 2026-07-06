@@ -57,7 +57,7 @@
                                     <td>
                                         @if ($inventory->product)
                                             
-                                            {{$inventory->product ? $inventory->product->name : ""}} (<strong>{{$inventory->product->brand ? $inventory->product->brand->name : ""}}</strong>)
+                                            {{$inventory->product ? $inventory->product->name : ""}} <strong>{{$inventory->product?->brand ? "(".$inventory->product?->brand?->name.")" : ""}}</strong>
                                             @if ($inventory->product->identification_number)
                                             <br>
                                             {{$inventory->product->identification_number ? "ID#: ".$inventory->product->identification_number : ""}}

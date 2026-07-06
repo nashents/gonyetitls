@@ -64,6 +64,10 @@
                                 <td class="w-20 line-height-35">{{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Product Department</th>
+                                <td class="w-20 line-height-35">{{$tyre->product?->department}} </td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Type</th>
                                 <td class="w-20 line-height-35">{{$tyre->type}} </td>
                             </tr>

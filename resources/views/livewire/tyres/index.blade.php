@@ -61,10 +61,8 @@
                                            $assignment = App\Models\TyreAssignment::with(['horse','tyre'])->where('tyre_id',$tyre->id)->where('status',1)->latest()->first();
                                         @endphp
                                     <td>
-                                        @if ($tyre->product)
-                                            {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}
-                                            <br>
-                                        @endif
+                                         {{$tyre->product ? $tyre->product->name : ""}} <strong>{{$tyre->product->brand ? "(".$tyre->product->brand->name.")" : ""}}</strong>
+                                         <br>
                                         <small><strong>Type: </strong>  
                                             @if ($tyre->type == "Diff")
                                                  <span class="badge bg-primary">{{$tyre->type}}</span>

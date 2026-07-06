@@ -14,7 +14,10 @@ yarn-error.log
 /.idea
 /.vscode
 
-/public/images/uploads/
+/public/images/uploads/*
+!/public/images/uploads/avatar.png
+!/public/images/uploads/logo.png
+!/public/images/uploads/noimage.png
 /public/myfiles/documents/
 /public/images/background_images/*
 !/public/images/background_images/.gitkeep

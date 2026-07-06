@@ -24,6 +24,10 @@
                                 <td class="w-20 line-height-35">{{$asset->product ? $asset->product->name : ""}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Product Department</th>
+                                <td class="w-20 line-height-35">{{$asset->product?->department}} </td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">ID#s</th>
                                 <td class="w-20 line-height-35">{{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->part_number ? "PN#: ".$asset->part_number : ""}}</td>
                             </tr>

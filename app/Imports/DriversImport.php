@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Imports\EmployeesImport;
 use App\Mail\AccountCreationMail;
 use App\Models\Count;
+use App\Models\Department;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\EmployeeLeave;
@@ -270,6 +271,8 @@ WithBatchInserts
         $nextOfKin        = $row->get('nextofkin');
         $relationship     = $row->get('relationship');
         $contact          = $row->get('contact');
+        $departments      = $row->get('departments');
+        $post             = $row->get('post');
 
         // Driver-specific columns
         $transporterNumber  = $row->get('transporter_number');
@@ -309,6 +312,8 @@ WithBatchInserts
             $nextOfKin,
             $relationship,
             $contact,
+            $departments,
+            $post,
             $transporterNumber,
             $licenseNumber,
             $passportNumber,
@@ -396,8 +401,26 @@ WithBatchInserts
             $employee->relationship  = $relationship;
             $employee->contact       = $contact;
 
+            $postTitle = trim((string) $post);
+            if ($postTitle !== '') {
+                $jobTitle = JobTitle::firstOrCreate(
+                    ['title' => $postTitle],
+                    ['user_id' => Auth::id()]
+                );
+                $employee->post = $jobTitle->title;
+            }
+
             $employee->save();
             $employee->ranks()->syncWithoutDetaching([3]);
+
+            if (!empty($departments)) {
+                $departmentNames = array_filter(array_map('trim', explode(',', $departments)));
+
+                if (!empty($departmentNames)) {
+                    $departmentIds = Department::whereIn('name', $departmentNames)->pluck('id')->toArray();
+                    $employee->departments()->sync($departmentIds);
+                }
+            }
 
             $this->updateLeaveDays($employee->id);
 

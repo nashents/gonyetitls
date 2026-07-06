@@ -697,7 +697,7 @@
                                 @if ($this->requisition_for == "Other")
                                     <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                         <div class="row">
-                                            <div class="col-md-5">
+                                            <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label for="country">Items<span class="required" style="color: red">*</span></label>
                                                     <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
@@ -775,9 +775,22 @@
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="form-group">
-                                                    <label for="name">Amount</label>
-                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.0"/>
+                                                    <label for="name">Amount<span class="required" style="color: red">*</span></label>
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.0" required/>
                                                     @error('amount.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                             <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label for="subheading">Sales Tax</label>
+                                                    <select wire:model.debounce.300ms="selectedTax.0" class="form-control">
+                                                        <option value="">Select Tax</option>
+                                                            @foreach ($tax_accounts as $tax)
+                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small>
+                                                    @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                         </div>
@@ -788,7 +801,7 @@
                                     @if ($this->requisition_for == "Other")
                                         <div class="mt-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                             <div class="row">
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     @if ($requisition_for == "Trip")
                                                         @if (isset($expense_id[$value]))
                                                             <div class="form-group">
@@ -885,17 +898,30 @@
                                                 <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                        <input type="number" class="form-control" wire:model.debounce.300ms="qty.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : ""}} required />
+                                                        <input type="number" class="form-control" wire:model.debounce.300ms="qty.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : "" }}  required/>
                                                         @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-1">
                                                     <div class="form-group">
-                                                        <label for="name">Amount</label>
-                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : ""}}  />
+                                                        <label for="name">Amount<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : "" }} required />
                                                         @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>
+                                                <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label for="subheading">Sales Tax</label>
+                                                    <select wire:model.debounce.300ms="selectedTax.{{ $value }}" class="form-control">
+                                                        <option value="">Select Tax</option>
+                                                            @foreach ($tax_accounts as $tax)
+                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small>
+                                                    @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
                                                 <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label for=""></label>
@@ -1558,6 +1584,7 @@
                                                     @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
+                                           
                                             <div class="col-md-1">
                                                 <div class="form-group">
                                                     <label for=""></label>
@@ -1692,6 +1719,7 @@
                             </div>
                         </div>
                         @endif
+                        
                     </div>
                     <div class="form-group">
                         <label for="subheading">Sales Tax</label>

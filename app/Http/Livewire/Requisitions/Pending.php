@@ -154,6 +154,7 @@ class Pending extends Component
                 $requisition->authorization_stage = 2;
                 $requisition->save();
 
+              
                 $this->createBillFromRequisition($requisition);
                 $this->sendRequisitionAuthorizationEmail($company, $requisition);
 
@@ -291,10 +292,11 @@ class Pending extends Component
             $bill->authorized_by_id = Auth::id();
             $bill->authorization = "approved";
             $bill->comments = $this->comments;
-            $bill->total = $requisition_item->subtotal;
+            $bill->total = $requisition_item->subtotal_incl ?? $requisition_item->subtotal;
+            $bill->tax_amount = $requisition_item->tax_amount;
             $bill->exchange_rate = $requisition_item->exchange_rate;
             $bill->exchange_amount = $requisition_item->exchange_amount;
-            $bill->balance = $requisition_item->subtotal;
+            $bill->balance = $requisition_item->subtotal_incl ?? $requisition_item->subtotal;
             $bill->to_be_paid = true;
             $bill->save();
 
@@ -311,7 +313,10 @@ class Pending extends Component
             $bill_expense->qty = $requisition_item->qty;
             $bill_expense->amount = $requisition_item->amount;
             $bill_expense->subtotal = $requisition_item->subtotal;
-            $bill_expense->subtotal_incl = $requisition_item->subtotal;
+            $bill_expense->tax_rate = $requisition_item->tax_rate;
+            $bill_expense->tax_id = $requisition_item->tax_id;
+            $bill_expense->tax_amount = $requisition_item->tax_amount;
+            $bill_expense->subtotal_incl = $requisition_item->subtotal_incl ?? $requisition_item->subtotal;
             $bill_expense->save();
         }
     }

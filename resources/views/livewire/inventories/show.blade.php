@@ -20,6 +20,10 @@
                                 <td class="w-20 line-height-35">{{$inventory->inventory_number}} </td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Product Department</th>
+                                <td class="w-20 line-height-35">{{$inventory->product?->department}} </td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Product</th>
                                 <td class="w-20 line-height-35">{{$inventory->product ? $inventory->product->name : ""}}</td>
                             </tr>

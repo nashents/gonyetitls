@@ -128,6 +128,7 @@ class Index extends Component
     public $tax_id;
     public $tax;
     public $tax_accounts;
+    public $tax_amount;
     public $selectedTax;
     public $tax_rate;
     public $expense_account_id;
@@ -428,7 +429,9 @@ class Index extends Component
             if (!$product) {
                 return;
             }
-
+            if ($product->expense_account_id) {
+                $this->selectedAccount[$key] = $product->expense_account_id;
+            }
             $this->amount[$key] = $product->price;
             $this->selectedTax[$key] = $product->tax_id;
 
@@ -441,15 +444,15 @@ class Index extends Component
         }
 
         public function updatedSelectedTax($id, $key){
-            if (is_null($id) || is_null($key)) {
+            if (is_null($key) || !is_scalar($key)) {
                 return;
             }
-            
-             // Make sure $key is a valid array key (e.g., numeric or string)
-            if (!is_scalar($key)) {
+
+            if (empty($id)) {
+                $this->tax_rate[$key] = 0;
                 return;
             }
-            
+
             $tax = Tax::find($id);
             if ($tax) {
                 $this->tax_rate[$key] = $tax->rate;
@@ -656,6 +659,9 @@ class Index extends Component
         $items = [];
         $type = null;
         $requisition_total = 0;
+        $this->subtotal = 0;
+        $this->total = 0;
+        $this->tax_amount = 0;
        
         if (in_array($this->requisition_for,['Trip','Purchase','Booking'])) {
         
@@ -713,6 +719,9 @@ class Index extends Component
 
                 foreach ($this->qty as $key => $value) {
                 
+                    $subtotal = 0;
+                    $tax_amount = 0;
+                    $subtotal_incl = 0;
                 
                     $requisition_item = new RequisitionItem;
                     $requisition_item->requisition_id = $requisition->id;
@@ -732,40 +741,80 @@ class Index extends Component
                     $exchange_rate = $this->exchange_rate[$key] ?? 0;
                     $exchange_amount = $this->exchange_amount[$key] ?? 0;
 
+                    
+
                     $requisition_item->allowance_id = $allowance_id;
                     $requisition_item->product_id = $product_id;
                     $requisition_item->expense_id = $expense_id;
                     $requisition_item->payment_method_id = $payment_method_id;
                     $requisition_item->qty = $qty;
                     $requisition_item->amount = $amount;
+
+                    if (isset($this->selectedAccount[$key])) {
+                        $account = Account::find($this->selectedAccount[$key]);
+                        $requisition_item->account_id = $this->selectedAccount[$key];
+                        $requisition_item->account_type_id = $account->account_type?->id;
+                    }
+                    if (!empty($this->selectedTax[$key])) {
+                        $requisition_item->tax_id = $this->selectedTax[$key];
+                    }
+
                     $requisition_item->currency_id = $currency_id;
                     $requisition_item->exchange_rate = $exchange_rate;
                     $requisition_item->exchange_amount = $exchange_amount;
 
-                    // Calculate subtotal based on currency
+                     // Calculate subtotal based on currency
                     if (is_numeric($amount) && is_numeric($qty)) {
-                        $subtotal = ($currency_id != $this->company->currency_id) 
-                        ? $exchange_amount * $qty 
-                        : $amount * $qty;
+                        $subtotal =  $amount * $qty;
+                        $this->subtotal += $subtotal;
                     }
+
+                    
+
+                    if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && !empty($this->selectedTax[$key])) {
+                        $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
+                        $requisition_item->tax_amount =  $tax_amount;
+                        $requisition_item->tax_rate =  $this->tax_rate[$key];
+                        $requisition_item->subtotal = $subtotal;
+                        $subtotal_incl = $tax_amount + $subtotal ;
+                        $requisition_item->subtotal_incl =  $subtotal_incl;
+                        $this->tax_amount = $this->tax_amount + $tax_amount;
+                        $this->total = $this->total +  $subtotal_incl;
+                        
+                    }else{
+                       
+                        $requisition_item->subtotal = $subtotal;
+                        $subtotal_incl = $subtotal;
+                        $requisition_item->subtotal_incl =  $subtotal_incl;
+                        $this->total = $this->total +  $subtotal_incl;
+                    }
+
+                    if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                        $requisition_item->exchange_rate = $this->exchange_rate;
+                        $requisition_item->exchange_amount = $this->exchange_rate * $subtotal_incl ;
+                    }
+                   
                     
 
                     // Assign and save the subtotal
-                    $requisition_item->subtotal = $subtotal;
+                   
                     $requisition_item->save();
 
-                    // Add to the cumulative total
-                    $requisition_total += $subtotal;
-
+                   
                 }
             }
+
+                   
         }
 
         
-
+       
         $requisition = Requisition::find($requisition->id);
-
-        $requisition->total = $requisition_total;
+        $requisition->total = $this->total;
+        $requisition->tax_amount = $this->tax_amount;
+        $requisition->subtotal = $this->subtotal;
+        $requisition->exchange_rate = $this->exchange_rate;
+        $requisition->exchange_amount = $this->exchange_amount;
 
         $requisition->save();
 
