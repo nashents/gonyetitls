@@ -53,9 +53,9 @@ WithBatchInserts
 
     public function __construct()
         {
-            if (optional(Auth::user()->company)) {
+            if (Auth::user()->company) {
                 $this->company = Auth::user()->company;
-            } elseif (optional(Auth::user()->employee->company)) {
+            } elseif (optional(Auth::user()->employee)->company) {
                 $this->company = Auth::user()->employee->company;
             }
         }

@@ -36,7 +36,7 @@ class AccountCreationMail extends Mailable implements ShouldQueue
     public function build()
     {
         return $this->view('emails.credentials')
-                    ->from($this->company->noreply)
+                    ->from($this->company?->noreply)
                     ->subject('Account Creation Email');
     }
 }
