@@ -340,7 +340,13 @@ WithBatchInserts
                         $departmentNames = array_filter(array_map('trim', explode(',', $departments)));
 
                         if (!empty($departmentNames)) {
-                            $departmentIds = Department::whereIn('name', $departmentNames)->pluck('id')->toArray();
+                            $departmentIds = collect($departmentNames)->map(function ($departmentName) {
+                                return Department::firstOrCreate(
+                                    ['name' => $departmentName],
+                                    ['user_id' => Auth::id()]
+                                )->id;
+                            })->toArray();
+
                             $employee->departments()->sync($departmentIds);
                         }
                     }
