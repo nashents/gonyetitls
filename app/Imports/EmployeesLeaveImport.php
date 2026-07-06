@@ -44,6 +44,10 @@ WithBatchInserts
         $employeeNumber = trim($row['employee_number'] ?? '');
         $fullname = strtolower(trim($row['fullname'] ?? ''));
 
+        if (!$employeeNumber && !$fullname) {
+            continue;
+        }
+
         $employee = Employee::query()
             ->when($employeeNumber, function ($query) use ($employeeNumber) {
                 $query->where('employee_number', $employeeNumber);
