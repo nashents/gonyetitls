@@ -96,6 +96,7 @@ class Index extends Component
     public $item_totals = 0;
 
     public $selectedProduct = [];
+    public $item_account_id = [];
     public $selectedCurrency = [];
     public $selected_currency = [];
     public $payment_method_id = [];
@@ -216,6 +217,7 @@ class Index extends Component
         $this->item_key = Null;
 
         $this->selectedProduct = [];
+        $this->item_account_id = [];
         $this->selectedCurrency = [];
         $this->selected_currency = [];
         $this->exchange_rate = [];
@@ -225,7 +227,9 @@ class Index extends Component
         $this->qty = [];
         $this->amount = [];
         $this->payment_method_id = [];
-        
+        $this->selectedTax = [];
+        $this->tax_rate = [];
+
         $this->current_selectedProduct = [];
         $this->current_selectedCurrency = [];
         $this->current_selected_currency = [];
@@ -430,7 +434,7 @@ class Index extends Component
                 return;
             }
             if ($product->expense_account_id) {
-                $this->selectedAccount[$key] = $product->expense_account_id;
+                $this->item_account_id[$key] = $product->expense_account_id;
             }
             $this->amount[$key] = $product->price;
             $this->selectedTax[$key] = $product->tax_id;
@@ -750,9 +754,9 @@ class Index extends Component
                     $requisition_item->qty = $qty;
                     $requisition_item->amount = $amount;
 
-                    if (isset($this->selectedAccount[$key])) {
-                        $account = Account::find($this->selectedAccount[$key]);
-                        $requisition_item->account_id = $this->selectedAccount[$key];
+                    if (isset($this->item_account_id[$key])) {
+                        $account = Account::find($this->item_account_id[$key]);
+                        $requisition_item->account_id = $this->item_account_id[$key];
                         $requisition_item->account_type_id = $account->account_type?->id;
                     }
                     if (!empty($this->selectedTax[$key])) {
