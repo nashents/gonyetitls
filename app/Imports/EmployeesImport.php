@@ -52,13 +52,13 @@ WithBatchInserts
     }
 
     public function __construct()
-        {
-            if (Auth::user()->company) {
-                $this->company = Auth::user()->company;
-            } elseif (optional(Auth::user()->employee)->company) {
-                $this->company = Auth::user()->employee->company;
-            }
+    {
+        if (Auth::user()->company) {
+            $this->company = Auth::user()->company;
+        } elseif (optional(Auth::user()->employee)->company) {
+            $this->company = Auth::user()->employee->company;
         }
+    }
 
 
     public function limit(): int
@@ -100,35 +100,35 @@ WithBatchInserts
 
     }
 
-      private function parseExcelDate($value)
-        {
-            if (!isset($value)) {
-                return null;
-            }
-
-            // If it's a numeric Excel date serial
-            if (is_numeric($value)) {
-                try {
-                    return Carbon::instance(
-                        \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
-                    );
-                } catch (\Exception $e) {
-                    return null;
-                }
-            }
-
-            // If it's a string in strict YYYY-MM-DD format
-            if (is_string($value)) {
-                try {
-                    $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                    return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-                } catch (\Exception $e) {
-                    return null;
-                }
-            }
-
+    private function parseExcelDate($value)
+    {
+        if (!isset($value)) {
             return null;
         }
+
+        // If it's a numeric Excel date serial
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(
+                    \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                );
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // If it's a string in strict YYYY-MM-DD format
+        if (is_string($value)) {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
 
     private function parseGender($value)
     {
@@ -375,8 +375,7 @@ WithBatchInserts
                         $employeePosition->save();
                     }
                 });
-            }
-      
+            }   
     }
 
     public function rules(): array{

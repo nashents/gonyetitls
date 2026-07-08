@@ -18,6 +18,10 @@
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">{{$fitness->user ? $fitness->user->name : ""}} {{$fitness->user ? $fitness->user->surname : ""}} </td>
                             </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">CreatedOn</th>
+                                <td class="w-20 line-height-35">{{$fitness->created_at }}</td>
+                            </tr>
                             @if ($fitness->type)
                             <tr>
                                 <th class="w-10 text-center line-height-35">Type</th>
@@ -92,6 +96,17 @@
                                             On {{$fitness->third_reminder_at}}
                                         @endif  
                                         <span class="badge bg-{{$fitness->third_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->third_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">4th Reminder</th>
+                                    <td class="w-20 line-height-35">
+                                        @if ((preg_match($pattern, $fitness->fourth_reminder_at)) )
+                                            On {{ \Carbon\Carbon::parse($fitness->fourth_reminder_at)->format('d M Y g:i A')}}
+                                        @else
+                                            On {{$fitness->fourth_reminder_at}}
+                                        @endif  
+                                        <span class="badge bg-{{$fitness->fourth_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->fourth_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span>
                                     </td>
                                 </tr>
                                 <tr>

@@ -217,7 +217,10 @@
                                     <td>
                                         {{$bill->bill_number}}
                                         <br>
-                                        <small><strong>CreatedBy:</strong> {{$bill->user ? $bill->user->name : ""}} {{$bill->user ? $bill->user->surname : ""}}</small>
+                                        <small>
+                                            <strong>CreatedBy:</strong> {{$bill->user ? $bill->user->name : ""}} {{$bill->user ? $bill->user->surname : ""}} <br>
+                                            <strong>CreatedOn:</strong> {{$bill->created_at}}
+                                        </small>
                                     </td>
                                     <td>
                                         @if ($bill->transporter)
@@ -374,15 +377,15 @@
                                                      <li><a href="#" wire:click="showPayment({{$bill->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
                                                 @endif
                                                 @if (isset($bill->bill_for))
-                                                @if ($bill->payments->isEmpty())
+                                                @if ($bill->payments->isEmpty() )
                                                 <li><a href="{{route('bills.edit',$bill->id)}}"  ><i class="fas fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#billDeleteModal{{ $bill->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
+                                                <li><a href="#" wire:click.prevent="delete({{$bill->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
                                                 
                                             </ul>
                                         </div>
-                                        @include('bills.delete')
+                                        
                                 </td>
                                   </tr>
                                   @empty
@@ -419,6 +422,35 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="billDeleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-danger">
+            <div class="modal-body">
+               <center> <strong>Are you sure you want to delete  Bill {{$selected_bill?->bill_number}}</strong> </center>
+               @if ($selected_bill && $selected_bill->payments->isNotEmpty())
+               <center>
+                   <small>
+                       This bill has existing payments totalling {{ number_format($selected_bill->payments->sum('amount'), 2) }}.
+                       Deleting it will reverse those transactions and restore the affected account/wallet balances.
+                   </small>
+               </center>
+               @endif
+            </div>
+            <form wire:submit.prevent = "destroy">
+               
+            <div class="modal-footer no-border">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">

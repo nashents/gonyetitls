@@ -58,6 +58,11 @@
                                         @elseif (isset($reminder->trailer))
                                         for trailer {{$reminder->trailer->registration_number}}
                                         @endif
+                                        <br>
+                                        <small>
+                                            <strong>CreatedBy: {{$reminder->user?->name}} {{$reminder->user?->surname}}</strong> <br>
+                                            <strong>CreatedOn: {{$reminder->created_at}}</strong> 
+                                        </small>
                                     </td>
                              @php
                                 $dtLocalPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/';

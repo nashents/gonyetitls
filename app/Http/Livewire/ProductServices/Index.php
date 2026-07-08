@@ -154,8 +154,9 @@ class Index extends Component
     {
 
         if ($this->category == "invoices") {
+            
              $this->sell = True;
-             $this->buy = False;
+        
              if (filled($this->search)) {
                  return view('livewire.product-services.index',[
                 'products' =>   Product::where('sell',True)
@@ -173,7 +174,7 @@ class Index extends Component
           
         }elseif ($this->category == "bills") {
              $this->buy = True;
-             $this->sell = False;
+           
              if (filled($this->search)) {
                 return view('livewire.product-services.index',[
                 'products' =>  Product::where('buy',True)

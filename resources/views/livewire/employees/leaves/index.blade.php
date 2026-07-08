@@ -13,6 +13,7 @@
                             <div class="panel-heading">
                                 <div>
                                     @include('includes.messages')
+                                    
                                 </div>
                                 <div class="panel-title">
                                     <a href="" data-toggle="modal" data-target="#leavesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>

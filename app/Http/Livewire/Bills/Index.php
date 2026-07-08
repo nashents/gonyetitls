@@ -16,6 +16,7 @@ use App\Models\Denomination;
 use App\Models\Document;
 use App\Models\Driver;
 use App\Models\Horse;
+use App\Models\JournalEntry;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\Trailer;
@@ -89,6 +90,7 @@ class Index extends Component
     public $bill_filter;
     public $selected_currency;
     public $selected_vendor;
+    public $selected_bill;
     public $vendors;
     public $last_payment;
     public $pop;
@@ -568,6 +570,104 @@ class Index extends Component
         $this->resetPage();
     }
 
+
+    public function delete($id){
+        $this->bill_id = $id;
+        $this->selected_bill = Bill::find($id);
+         $this->dispatchBrowserEvent('show-deleteModal');
+        
+    }
+
+    public function destroy(){
+
+        DB::transaction(function () {
+
+            $journalReversal = app(\App\Services\Accounting\JournalReversalService::class);
+
+            $bill = Bill::with([
+                'bill_expenses',
+                'bill_payments',
+                'payments.denominations',
+                'payments.documents',
+                'payments.receipt',
+                'payments.cash_flow',
+            ])->lockForUpdate()->findOrFail($this->bill_id);
+
+            // -----------------------------
+            // 1) Reverse allocations recorded against this bill (direct + drawdown)
+            // -----------------------------
+            foreach ($bill->bill_payments as $bill_payment) {
+
+                if ($bill_payment->source === 'drawdown' && $bill_payment->payment_id) {
+                    // Give the money back to the wallet it was drawn down from
+                    $funding_payment = Payment::where('id', $bill_payment->payment_id)->lockForUpdate()->first();
+                    if ($funding_payment) {
+                        $funding_payment->drawdown_balance = (float) ($funding_payment->drawdown_balance ?? 0) + (float) $bill_payment->amount;
+                        $funding_payment->save();
+                    }
+                }
+
+                $bill_payment->delete();
+            }
+
+            // -----------------------------
+            // 2) Reverse and remove payments recorded directly against this bill
+            // -----------------------------
+            foreach ($bill->payments as $payment) {
+
+                if ($payment->account_id) {
+                    $account = Account::where('id', $payment->account_id)->lockForUpdate()->first();
+                    if ($account) {
+                        $account->balance = (float) $account->balance + (float) $payment->amount;
+                        $account->save();
+                    }
+                }
+
+                // Post a reversing journal entry for whatever this payment originally posted
+                JournalEntry::where('payment_id', $payment->id)
+                    ->where('status', '!=', 'reversed')
+                    ->get()
+                    ->each(fn ($entry) => $journalReversal->reverse($entry, "Bill {$bill->bill_number} deleted"));
+
+                $payment->denominations?->each->delete();
+                $payment->documents?->each->delete();
+
+                if ($payment->receipt) {
+                    $payment->receipt->delete();
+                }
+
+                if ($payment->cash_flow) {
+                    $payment->cash_flow->delete();
+                }
+
+                $payment->deleted_by_id = Auth::id();
+                $payment->save();
+                $payment->delete();
+            }
+
+            // -----------------------------
+            // 3) Reverse the bill's own journal entry, remove line items and the bill itself
+            // -----------------------------
+            JournalEntry::where('bill_id', $bill->id)
+                ->where('status', '!=', 'reversed')
+                ->get()
+                ->each(fn ($entry) => $journalReversal->reverse($entry, "Bill {$bill->bill_number} deleted"));
+
+            foreach ($bill->bill_expenses as $bill_expense) {
+                $bill_expense->delete();
+            }
+
+            $bill->deleted_by_id = Auth::id();
+            $bill->save();
+            $bill->delete();
+        });
+
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->dispatchBrowserEvent('alert',[
+        'type'=>'success',
+        'message'=>"Bill Deleted and related transactions reversed Successfully!!"
+        ]);
+    }
 
     public function render()
     {

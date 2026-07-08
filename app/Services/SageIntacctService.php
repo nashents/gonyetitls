@@ -105,8 +105,11 @@ class SageIntacctService
     protected function finish(Model $model, string $entity, string $action, CompanyIntegration $integration, array $result, ?string $requestReference): array
     {
         if (! empty($result['success'])) {
-            // On create, Sage returns the assigned id; on update reuse the known one.
-            $sageId = $result['data']['id'] ?? $model->sageId();
+            // Prefer the id Sage echoes back; if the response omits it, fall back
+            // to the CUSTOMERID/VENDORID we sent ($requestReference) — that is the
+            // value we target updates by — and finally to any id already known.
+            // Using ?: so empty strings also fall through.
+            $sageId = ($result['data']['id'] ?? null) ?: ($requestReference ?: $model->sageId());
             $model->markSageSynced((string) $sageId);
 
             $integration->forceFill([

@@ -17,13 +17,15 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 
-class EmployeesLeaveImport implements  ToCollection, SkipsEmptyRows, WithLimit, 
+class EmployeesLeaveImport implements  ToCollection, SkipsEmptyRows, WithLimit,
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
 WithChunkReading,
-WithBatchInserts
+WithBatchInserts,
+WithCalculatedFormulas
 {
     use Importable, SkipsErrors;
     /**
@@ -59,16 +61,19 @@ WithBatchInserts
                 );
             })
             ->first();
+          
 
         if (!$employee) {
             continue;
         }
 
         $leaveType = LeaveType::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($row['leave_type'] ?? ''))])->first();
+  
 
         if (!$leaveType) {
             continue;
         }
+      
 
         EmployeeLeave::updateOrCreate(
             [
@@ -104,11 +109,11 @@ WithBatchInserts
 
      public function batchSize(): int
     {
-        return 10;
+        return 150;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 150;
     }
 }

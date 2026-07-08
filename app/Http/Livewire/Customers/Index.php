@@ -2,26 +2,27 @@
 
 namespace App\Http\Livewire\Customers;
 
-use Carbon\Carbon;
-use App\Models\User;
+use App\Exports\CustomersExport;
+use App\Mail\AccountCreationMail;
 use App\Models\Contact;
-use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Document;
+use App\Models\User;
+use App\Services\SageIntacctService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Livewire\WithPagination;
-use Maatwebsite\Excel\Excel;
-use Livewire\WithFileUploads;
-use App\Exports\CustomersExport;
-use App\Mail\AccountCreationMail;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Ixudra\Curl\Facades\Curl;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Ixudra\Curl\Facades\Curl;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
@@ -334,7 +335,7 @@ class Index extends Component
      */
     protected function pushCustomerToSage(Customer $customer): void
     {
-        $result = app(\App\Services\SageIntacctService::class)->syncCustomer($customer);
+        $result = app(SageIntacctService::class)->syncCustomer($customer);
 
         if (isset($result['success']) && $result['success'] === false && empty($result['skipped'])) {
             $this->dispatchBrowserEvent('alert', [

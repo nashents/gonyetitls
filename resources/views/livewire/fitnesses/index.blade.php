@@ -31,7 +31,13 @@
             @if (isset($fitnesses))
             @forelse ($fitnesses as $fitness)
             <tr>
-                <td>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</td>
+                <td>
+                    {{$fitness->reminder_item ? $fitness->reminder_item->name : ""}} <br>
+                    <small>
+                        <strong>CreatedBy: {{$fitness->user?->name}} {{$fitness->user?->surname}}</strong> <br>
+                        <strong>CreatedOn: {{$fitness->created_at}}</strong> 
+                    </small>
+                </td>
                 @php
                     $dtLocalPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/';
 

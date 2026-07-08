@@ -201,7 +201,9 @@
                                         </td>
                                         <td>{{$requisition->date }}</td>
                                         <td>
-                                            {{$company->currency ? $company->currency->name : "" }} {{$company->currency ? $company->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
+                                            {{ $requisition->currency?->name ?? $company->currency?->name }}
+                                            {{ $requisition->currency?->symbol ?? $company->currency?->symbol }}{{number_format($requisition->total,2)}}  
+                                        </td>
                                         <td>
                                             @if ($requisition->total)
                                                 <span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span>

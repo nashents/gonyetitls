@@ -12,6 +12,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 
+
 class Index extends Component
 {
     use WithPagination;
@@ -214,7 +215,7 @@ class Index extends Component
             ]);
         }{
             return view('livewire.employees.leaves.index',[
-                'employees' => Employee::where('status',1)->orderBy('name','asc')->paginate(10)
+                'employees' => Employee::where('archive', 0)->orderBy('name','asc')->paginate(10)
             ]);
         }
      
