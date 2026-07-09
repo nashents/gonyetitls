@@ -44,9 +44,12 @@ WithBatchInserts
     public $transporter;
     public $transporter_id;
     public $company;
+    public $send_creds;
 
-     public function __construct()
+     public function __construct($send_creds)
         {
+
+            $this->send_creds = $send_creds;
             if (Auth::user()->company) {
                 $this->company = Auth::user()->company;
             } elseif (optional(Auth::user()->employee)->company) {
@@ -434,9 +437,11 @@ WithBatchInserts
 
             $this->updateLeaveDays($employee->id);
 
-            if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
-                Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
-            }
+            if ($this->send_creds == True) {
+                if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+                    Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
+                }
+              }
 
             /*
             |----------------------
