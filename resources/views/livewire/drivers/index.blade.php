@@ -273,8 +273,8 @@
                     <form wire:submit.prevent="importEmployees()">
                         <div class="modal-body">
                             <div class="form-group">
-                                <label for="name">Upload Driver(s) Excel File</label>
-                                <input type="file" class="form-control" wire:model.debounce.3300ms="importFile" placeholder="Upload Employee File" >
+                                <label for="name">Upload Driver(s) Excel File<span class="required" style="color: red">*</span></label>
+                                <input type="file" class="form-control" wire:model.debounce.3300ms="importFile" placeholder="Upload Employee File" required>
                                 @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                             <div class="mb-10">

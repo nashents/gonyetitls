@@ -68,16 +68,30 @@ class Index extends Component
     }
 
     public function importEmployees(){
-      
+
         $file = $this->importFile;
         $import = new EmployeesImport($this->send_creds);
         $import->import($file);
 
         $this->dispatchBrowserEvent('hide-importModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Employees Imported Successfully!!"
-        ]);
+
+        $errors = $import->errors();
+
+        if ($errors->isNotEmpty()) {
+            \Illuminate\Support\Facades\Log::error('Employee import row failures', [
+                'errors' => $errors->map(fn ($e) => $e->getMessage())->all(),
+            ]);
+
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'warning',
+                'message'=> $errors->count() . " row(s) failed to import. Check the logs for details."
+            ]);
+        } else {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Employees Imported Successfully!!"
+            ]);
+        }
 
         return redirect(request()->header('Referer'));
     }

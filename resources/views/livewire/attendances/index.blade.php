@@ -233,12 +233,12 @@
                                         $i = 1;
                                     @endphp
                                     @foreach ($employees as $key => $employee)
-                                        <tr>
+                                        <tr wire:key="attendance-row-{{ $employee->id }}">
                                             <td>
                                                 {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
                                             </td>
                                             <td>
-                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="{{ $employee->id }}" >
+                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="status-{{ $employee->id }}" >
                                                     <option value="">Select Option</option>
                                                     <option value="absent">Absent</option>
                                                     <option value="annual_leave">Annual Leave</option>
@@ -253,20 +253,20 @@
                                                 </select>
                                             </td>
                                             <td>
-                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="shift-{{ $employee->id }}">
                                                     <option value="">Select Option</option>
                                                     <option value="day">Day</option>
                                                     <option value="night">Night</option>
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="checkin-{{ $employee->id }}">
                                             </td>
                                             <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="checkout-{{ $employee->id }}">
                                             </td>
                                             <td>
-                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="notes-{{ $employee->id }}">
                                                     <option value="">Select Option</option>
                                                     <option value="early_arrival">Early Arrival</option>
                                                     <option value="on_time">On time</option>
@@ -366,12 +366,12 @@
                                         $i = 1;
                                     @endphp
                                     @foreach ($employees as $key => $employee)
-                                        <tr>
+                                        <tr wire:key="attendance-edit-row-{{ $employee->id }}">
                                             <td>
                                                 {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
                                             </td>
                                             <td>
-                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="{{ $employee->id }}" >
+                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="edit-status-{{ $employee->id }}" >
                                                     <option value="">Select Option</option>
                                                     <option value="absent">Absent</option>
                                                     <option value="annual_leave">Annual Leave</option>
@@ -386,20 +386,20 @@
                                                 </select>
                                             </td>
                                             <td>
-                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="edit-shift-{{ $employee->id }}">
                                                     <option value="">Select Option</option>
                                                     <option value="day">Day</option>
                                                     <option value="night">Night</option>
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="edit-checkin-{{ $employee->id }}">
                                             </td>
                                             <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="edit-checkout-{{ $employee->id }}">
                                             </td>
                                             <td>
-                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="edit-notes-{{ $employee->id }}">
                                                     <option value="">Select Option</option>
                                                     <option value="early_arrival">Early Arrival</option>
                                                     <option value="on_time">On time</option>
