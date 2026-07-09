@@ -17,7 +17,7 @@
                                 
                                 <div class="panel-title">
                                     <a href="{{route('employees.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Employee</a>
-                                    <a href="" data-toggle="modal" data-target="#employeesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                    <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                     <a href="#" wire:click="exportEmployeesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportEmployeesCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportEmployeesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -246,29 +246,33 @@
             <!-- /.container-fluid -->
         </section>
 
-        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="employeesImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="importModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Employees <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                     </div>
-                    <form action="{{route('employees.import')}}" method="POST" enctype="multipart/form-data">
-                        {{ csrf_field() }}
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="name">Upload Employee(s) Excel File</label>
-                            <input type="file" class="form-control" name="file" placeholder="Upload Employee File" >
-                            @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <form wire:submit.prevent="importEmployees()">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="name">Upload Employee(s) Excel File</label>
+                                <input type="file" class="form-control" wire:model.debounce.3300ms="importFile" placeholder="Upload Employee File" >
+                                @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="send_creds" class="line-style" />
+                                <label for="one" class="radio-label">Send credential emails to employees</label>
+                                @error('send_creds') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button onClick="this.form.submit(); this.disabled=true; this.value='Sending…'; " class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                        <div class="modal-footer">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                            </div>
+                            <!-- /.btn-group -->
                         </div>
-                        <!-- /.btn-group -->
-                    </div>
-                </form>
+                    </form>
                 </div>
             </div>
         </div>

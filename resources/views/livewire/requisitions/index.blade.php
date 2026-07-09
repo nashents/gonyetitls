@@ -1086,7 +1086,7 @@
                         <div class="modal-footer">
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                                <button type="submit" class="btn bg-success btn-wide btn-rounded" ><i class="fa fa-save"></i>Save</button>
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="store"><i class="fa fa-save"></i><span wire:loading.remove wire:target="store">Save</span><span wire:loading wire:target="store">Saving...</span></button>
                             </div>
                             <!-- /.btn-group -->
                         </div>

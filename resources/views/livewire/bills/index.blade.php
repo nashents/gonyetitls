@@ -376,12 +376,12 @@
                                                 @if ($bill->authorization == "approved")
                                                      <li><a href="#" wire:click="showPayment({{$bill->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
                                                 @endif
-                                                @if (isset($bill->bill_for))
-                                                @if ($bill->payments->isEmpty() )
-                                                <li><a href="{{route('bills.edit',$bill->id)}}"  ><i class="fas fa-edit color-success"></i> Edit</a></li>
-                                                @endif
-                                                <li><a href="#" wire:click.prevent="delete({{$bill->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                                @endif
+                                                {{-- @if (isset($bill->bill_for)) --}}
+                                                    @if ($bill->payments->isEmpty() )
+                                                    <li><a href="{{route('bills.edit',$bill->id)}}"  ><i class="fas fa-edit color-success"></i> Edit</a></li>
+                                                    @endif
+                                                    <li><a href="#" wire:click.prevent="delete({{$bill->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                {{-- @endif --}}
                                                 
                                             </ul>
                                         </div>
@@ -423,7 +423,7 @@
         <!-- /.container-fluid -->
     </section>
 
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="billDeleteModal" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">

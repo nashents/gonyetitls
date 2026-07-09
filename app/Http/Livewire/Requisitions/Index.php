@@ -24,6 +24,7 @@ use App\Models\Trip;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
@@ -695,6 +696,25 @@ class Index extends Component
        
 
     public function store(){
+
+        $lock = Cache::lock('requisition-store-user-'.Auth::id(), 30);
+
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $this->storeRequisition();
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function storeRequisition(){
+
+        if (blank($this->requisition_type) || blank($this->department_id)) {
+            return;
+        }
 
         DB::transaction(function () {
 

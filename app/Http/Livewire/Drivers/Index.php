@@ -2,27 +2,29 @@
 
 namespace App\Http\Livewire\Drivers;
 
-use App\Models\Rank;
-use App\Models\Grade;
+use App\Exports\DriversExport;
+use App\Exports\NewDriversExport;
+use App\Imports\DriversImport;
+use App\Mail\AccountCreationMail;
 use App\Models\Branch;
-use App\Models\Driver;
-// use App\Exports\DriversExport;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\JobTitle;
 use App\Models\Department;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\EmployeePosition;
+use App\Models\Grade;
+use App\Models\JobTitle;
+use App\Models\Rank;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Exports\DriversExport;
-use App\Models\EmployeePosition;
-use App\Exports\NewDriversExport;
-use App\Mail\AccountCreationMail;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 
 class Index extends Component
 {
+    use WithFileUploads;
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -47,6 +49,8 @@ class Index extends Component
     public $employee_id;
     public $selected_employee;
     public $company;
+    public $importFile;
+    public $send_creds = False;
 
     public function exportDriversCSV(Excel $excel){
 
@@ -58,6 +62,21 @@ class Index extends Component
     }
     public function exportDriversExcel(Excel $excel){
         return $excel->download(new DriversExport, 'drivers.xlsx');
+    }
+
+    public function importDrivers(){
+      
+        $file = $this->importFile;
+        $import = new DriversImport($this->send_creds);
+        $import->import($file);
+
+        $this->dispatchBrowserEvent('hide-importModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Drivers Imported Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
     }
   
        public function resetInputFields(){

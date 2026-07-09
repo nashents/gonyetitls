@@ -213,7 +213,7 @@
                                                 <li><a href="{{route('bills.show',$bill->id)}}"  ><i class="fas fa-eye color-default"></i>View</a></li>
                                             </ul>
                                         </div>
-                                        @include('bills.delete')
+                                       
                                 </td>
                                   </tr>
                                    @empty

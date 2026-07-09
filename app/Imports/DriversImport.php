@@ -134,7 +134,7 @@ WithBatchInserts
 
          private function parseExcelDate($value)
         {
-            if (!isset($value)) {
+            if (!isset($value) || trim((string) $value) === '') {
                 return null;
             }
 
@@ -149,17 +149,27 @@ WithBatchInserts
                 }
             }
 
-            // If it's a string in strict YYYY-MM-DD format
-            if (is_string($value)) {
-                try {
-                    $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                    return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-                } catch (\Exception $e) {
-                    return null;
+            $value = trim((string) $value);
+
+            // Common date formats that show up depending on how the cell was entered/exported
+            $formats = ['Y-m-d', 'Y-m-d H:i:s', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'd.m.Y'];
+
+            foreach ($formats as $format) {
+                $parsed = \DateTime::createFromFormat('!' . $format, $value);
+                $errors = \DateTime::getLastErrors();
+                $hasErrors = $errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0);
+
+                if ($parsed && !$hasErrors) {
+                    return Carbon::instance($parsed);
                 }
             }
 
-            return null;
+            // Last resort: let Carbon try to make sense of it
+            try {
+                return Carbon::parse($value);
+            } catch (\Exception $e) {
+                return null;
+            }
         }
 
     private function parseGender($value)

@@ -6,7 +6,6 @@ use App\Models\EmployeeLeave;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -15,9 +14,10 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
-class EmployeesLeaveExport implements FromQuery,
+class EmployeesLeaveExport implements FromCollection,
 ShouldAutoSize,
 WithMapping,
 WithHeadings,
@@ -29,24 +29,53 @@ WithCustomStartCell
     /**
     * @return Collection
     */
-    public function query()
+    public function collection()
     {
         return EmployeeLeave::query()
             ->whereHas('employee', function ($query) {
                 $query->where('status', 1);
             })
+            ->whereHas('leave_type', function ($query) {
+                $query->where('active', true);
+            })
             ->with(['employee', 'leave_type'])
-            ->orderBy('employee_id');
+            ->orderBy('employee_id')
+            ->get()
+            ->groupBy('employee_id')
+            ->map(function ($employeeLeaves) {
+                $leaveData = new RichText();
+                $first = true;
+
+                foreach ($employeeLeaves as $employeeLeave) {
+                    if (!$first) {
+                        $leaveData->createText("\n");
+                    }
+                    $first = false;
+
+                    $boldRun = $leaveData->createTextRun($employeeLeave->leave_type->name ?? '');
+                    $boldRun->getFont()->setBold(true);
+
+                    $leaveData->createText(
+                        ' - Taken:' . ($employeeLeave->days_taken ?? 0)
+                        . ', Available:' . ($employeeLeave->available_leave_days ?? 0)
+                        . ', Accrual:' . ($employeeLeave->acrual_rate ?? 0)
+                        . ', Maximum:' . ($employeeLeave->maximum_leave_days ?? 0)
+                    );
+                }
+
+                return (object) [
+                    'employee' => $employeeLeaves->first()->employee,
+                    'leave_data' => $leaveData,
+                ];
+            })
+            ->values();
     }
-    public function map($employeeLeave): array{
+    public function map($row): array{
 
             return   [
-                $employeeLeave->employee->employee_number,
-                $employeeLeave->employee->name." ". $employeeLeave->employee->surname,
-                $employeeLeave->leave_type->name ?? '',
-                $employeeLeave->acrual_rate,
-                $employeeLeave->available_leave_days,
-                $employeeLeave->maximum_leave_days,
+                $row->employee->employee_number,
+                $row->employee->name." ". $row->employee->surname,
+                $row->leave_data,
                  ];
 
 
@@ -55,10 +84,7 @@ WithCustomStartCell
             return[
                 'Employee#',
                 'Fullname',
-                'Leave Type',
-                'Accrual Rate',
-                'Available Leave Days',
-                'Maximum Leave Days',
+                'Leave Data',
             ];
 
 
@@ -66,7 +92,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:F7')->applyFromArray([
+                $event->sheet->getStyle('A7:C7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
@@ -77,6 +103,10 @@ WithCustomStartCell
                         ],
                     ]
                 ]);
+                $highestRow = $event->sheet->getHighestRow();
+                if ($highestRow >= 8) {
+                    $event->sheet->getStyle('C8:C' . $highestRow)->getAlignment()->setWrapText(true);
+                }
             },
         ];
     }

@@ -39,6 +39,7 @@ WithBatchInserts
     use Importable, SkipsErrors;
 
     public $company;
+    public $send_creds;
 
     public function generatePIN($digits = 4){
         $i = 0; //counter
@@ -51,8 +52,9 @@ WithBatchInserts
         return $pin;
     }
 
-    public function __construct()
+    public function __construct($send_creds)
     {
+        $this->send_creds = $send_creds;
         if (Auth::user()->company) {
             $this->company = Auth::user()->company;
         } elseif (optional(Auth::user()->employee)->company) {
@@ -102,7 +104,7 @@ WithBatchInserts
 
     private function parseExcelDate($value)
     {
-        if (!isset($value)) {
+        if (!isset($value) || trim((string) $value) === '') {
             return null;
         }
 
@@ -117,17 +119,27 @@ WithBatchInserts
             }
         }
 
-        // If it's a string in strict YYYY-MM-DD format
-        if (is_string($value)) {
-            try {
-                $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-            } catch (\Exception $e) {
-                return null;
+        $value = trim((string) $value);
+
+        // Common date formats that show up depending on how the cell was entered/exported
+        $formats = ['Y-m-d', 'Y-m-d H:i:s', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'd.m.Y'];
+
+        foreach ($formats as $format) {
+            $parsed = \DateTime::createFromFormat('!' . $format, $value);
+            $errors = \DateTime::getLastErrors();
+            $hasErrors = $errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0);
+
+            if ($parsed && !$hasErrors) {
+                return Carbon::instance($parsed);
             }
         }
 
-        return null;
+        // Last resort: let Carbon try to make sense of it
+        try {
+            return Carbon::parse($value);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function parseGender($value)
@@ -221,6 +233,7 @@ WithBatchInserts
                     continue;
                 }
                 
+                $middlename          = $row->get('middlename');
                 $email          = $row->get('email');
                 $gender         = $row->get('gender');
                 $dob            = $row->get('dob');
@@ -239,7 +252,7 @@ WithBatchInserts
                 $relationship   = $row->get('relationship');
                 $contact        = $row->get('contact');
 
-                DB::transaction(function () use ($row,$name,$surname,$email,$gender,$dob,$phone,$idNumber,
+                DB::transaction(function () use ($row,$name,$surname,$middlename,$email,$gender,$dob,$phone,$idNumber,
                     $country,$city,$suburb,$contract,$startDate,$expiryDate,$streetAddress,$nextOfKin,$relationship,$contact,
                     $departments,$post
                 ) {
@@ -302,6 +315,7 @@ WithBatchInserts
 
                     $employee->name          = $name;
                     $employee->surname       = $surname;
+                    $employee->middle_name       = $middlename;
                     $employee->gender        = $this->parseGender($gender);
                     $employee->dob           = $this->parseExcelDate($dob);
                     $employee->email         = $email;
@@ -328,10 +342,8 @@ WithBatchInserts
                     }
 
                     $employee->save();
-
-                    if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
-                         Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
-                    }
+                   
+                   
 
                     // Avoid duplicate pivot records
                     $employee->ranks()->syncWithoutDetaching([3]);
@@ -373,6 +385,12 @@ WithBatchInserts
                         $employeePosition->change_reason = 'Appointment';
                         $employeePosition->remarks       = 'Initial Appointment';
                         $employeePosition->save();
+                    }
+
+                     if ($this->send_creds == True) {
+                        if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+                            Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
+                        }
                     }
                 });
             }   

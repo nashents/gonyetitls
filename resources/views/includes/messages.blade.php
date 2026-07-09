@@ -18,7 +18,14 @@
 @if (session('error'))
 <div class='alert alert-danger' style="padding-top:10px ">
         <button type='button' class='close' data-dismiss='alert'>×</button>
-       <center><strong>{{session('error')}}</strong></center> 
+       <center><strong>{{session('error')}}</strong></center>
+</div>
+@endif
+
+@if (session('warning'))
+<div class='alert alert-warning' style="padding-top:10px ">
+        <button type='button' class='close' data-dismiss='alert'>×</button>
+       <center><strong>{{session('warning')}}</strong></center>
 </div>
 @endif
 

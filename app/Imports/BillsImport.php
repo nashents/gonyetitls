@@ -18,6 +18,7 @@ use App\Models\Trailer;
 use App\Models\Transporter;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +74,7 @@ WithBatchInserts
                 $vendor_name     = $row->get('vendor_name');
                 $bill_for        = $row->get('bill_for');
                 $value           = $row->get('value');
-                $bill_date       = $row->get('bill_date');
+                $bill_date       = $this->parseExcelDate($row->get('bill_date'));
                 $item_name       = $row->get('items');
                 $qty             = $row->get('qty') ?: 1;
                 $currency        = $row->get('currency');
@@ -166,6 +167,38 @@ WithBatchInserts
             $account->balance = ($account->balance ?? 0) - $amount;
             $account->save();
         }
+    }
+
+    private function parseExcelDate($value)
+    {
+        if (!isset($value)) {
+            return null;
+        }
+
+        // Numeric Excel serial
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(
+                    \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                );
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // String date, normalize separators
+        if (is_string($value)) {
+            $value = trim($value);
+            $normalized = preg_replace('/[\.\/\\\\]/', '-', $value);
+
+            try {
+                return Carbon::createFromFormat('Y-m-d', $normalized);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     protected function paymentNumber(): string

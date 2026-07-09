@@ -237,7 +237,7 @@
                                                 <li><a href="#" wire:click="authorize({{$bill->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
                                             </ul>
                                         </div>
-                                        @include('bills.delete')
+                                       
                                 </td>
                                   </tr>
                                   @empty

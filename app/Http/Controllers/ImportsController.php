@@ -99,7 +99,17 @@ class ImportsController extends Controller
         ini_set('max_execution_time', 300);
         $import = new EmployeesLeaveImport;
         $import->import($file);
-        Session::flash('success','Employee Leave Data Imported Successfully!!');
+
+        $skipped = $import->getSkippedRows();
+        if (!empty($skipped)) {
+            $summary = collect($skipped)
+                ->map(fn ($skip) => "Row {$skip['row']}: {$skip['reason']}")
+                ->implode(' | ');
+            Session::flash('warning', count($skipped).' row(s) were skipped: '.$summary);
+        } else {
+            Session::flash('success','Employee Leave Data Imported Successfully!!');
+        }
+
         return redirect()->back();
     }
 

@@ -2,30 +2,32 @@
 
 namespace App\Http\Livewire\Employees;
 
+use App\Exports\EmployeesExport;
+use App\Imports\EmployeesImport;
+use App\Mail\AccountCreationMail;
+use App\Models\Branch;
+use App\Models\Count;
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\EmployeePosition;
+use App\Models\Grade;
+use App\Models\JobTitle;
 use App\Models\Rank;
 use App\Models\User;
-use App\Models\Count;
-use App\Models\Grade;
-use App\Models\Branch;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\JobTitle;
-use App\Models\Department;
-use Livewire\WithPagination;
-use Maatwebsite\Excel\Excel;
-use App\Exports\EmployeesExport;
-use App\Models\EmployeePosition;
-use App\Mail\AccountCreationMail;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
 
 
-    
+    use WithFileUploads;
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -50,6 +52,8 @@ class Index extends Component
     public $change_reason;
     public $remarks;
     public $company;
+    public $importFile;
+    public $send_creds = False;
 
     public function exportEmployeesCSV(Excel $excel){
 
@@ -61,6 +65,21 @@ class Index extends Component
     }
     public function exportEmployeesExcel(Excel $excel){
         return $excel->download(new EmployeesExport, 'employees.xlsx');
+    }
+
+    public function importEmployees(){
+      
+        $file = $this->importFile;
+        $import = new EmployeesImport($this->send_creds);
+        $import->import($file);
+
+        $this->dispatchBrowserEvent('hide-importModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Employees Imported Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
     }
   
     public function resetInputFields(){

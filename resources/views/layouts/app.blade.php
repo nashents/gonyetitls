@@ -134,6 +134,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-importModal', event => {
+                $('#importModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-importModal', event => {
+                $('#importModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-updateModal', event => {
                 $('#updateModal').modal('show');
             })
