@@ -24,16 +24,18 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-class EmployeesImport implements  ToCollection,SkipsEmptyRows, WithLimit, 
+class EmployeesImport implements  ToCollection,SkipsEmptyRows, WithLimit,
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
 WithChunkReading,
+WithCalculatedFormulas,
 WithBatchInserts
 {
     use Importable, SkipsErrors;
@@ -251,6 +253,7 @@ WithBatchInserts
                 $nextOfKin      = $row->get('nextofkin');
                 $relationship   = $row->get('relationship');
                 $contact        = $row->get('contact');
+              
 
                 DB::transaction(function () use ($row,$name,$surname,$middlename,$email,$gender,$dob,$phone,$idNumber,
                     $country,$city,$suburb,$contract,$startDate,$expiryDate,$streetAddress,$nextOfKin,$relationship,$contact,

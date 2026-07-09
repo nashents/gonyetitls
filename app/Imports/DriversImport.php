@@ -28,16 +28,18 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-class DriversImport implements  ToCollection, SkipsEmptyRows, WithLimit, 
+class DriversImport implements  ToCollection, SkipsEmptyRows, WithLimit,
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
 WithChunkReading,
+WithCalculatedFormulas,
 WithBatchInserts
 {
     use Importable, SkipsErrors;

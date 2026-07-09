@@ -31,9 +31,7 @@
 
 @section('timeout-js')
 <script>
-$(".alert").fadeTo(2000, 1000).slideUp(1000, function(){
-$(".alert").slideUp(1000);
-});
+$(".alert").delay(45000).slideUp(1000);
 </script>
 
 @endsection
