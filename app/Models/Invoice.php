@@ -34,6 +34,9 @@ class Invoice extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function deleted_by(){
+        return $this->belongsTo('App\Models\User', 'deleted_by_id');
+    }
     public function transporter(){
         return $this->belongsTo('App\Models\Transporter');
     }

@@ -19,7 +19,7 @@
                                 </div>
                                 <div class="panel-title">
                                     <a href="{{route('drivers.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Driver</a>
-                                    <a href="" data-toggle="modal" data-target="#driversImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                    <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                     <a href="#" wire:click="exportDriversExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportDriversCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportDriversPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>

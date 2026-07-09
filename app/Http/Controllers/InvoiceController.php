@@ -367,50 +367,10 @@ class InvoiceController extends Controller
      */
     public function destroy(Invoice $invoice)
     {
-        $bills = $invoice->bills;
-        if (isset($bills)) {
-            foreach ($bills as $bill) {
-                $bill_expenses = $bill->bill_expenses;
-                if (isset($bill_expenses)) {
-                    foreach ($bill_expenses as $bill_expense) {
-                        $bill_expense->delete();
-                    }
-                }
-                $bill->delete();
-            }
-        }
-        $invoice_items = $invoice->invoice_items;
-        if ($invoice_items->count()>0) {
-            foreach ($invoice_items as $invoice_item) {
-                $invoice_item->delete();
-            }
-        }
-        $payments = $invoice->payments;
-        if ($payments->count()>0) {
-            foreach ($payments as $payment) {
-                if ($payment) {
-                    $cashflow = $payment->cash_flow;
+        app(\App\Services\Accounting\InvoiceDeletionService::class)
+            ->delete($invoice, Auth::id());
 
-                    if (isset($cashflow)) {
-                        $cashflow->delete();
-                    }
-
-                    $denominations = $payment->denominations;
-                    if (isset($denominations)) {
-                        foreach ($denominations as $denomination) {
-                            $denomination->delete();
-                        }
-                    }
-                    $receipt = $payment->receipt;
-                    if (isset($receipt)) {
-                        $receipt->delete();
-                    }
-                }
-                $payment->delete();
-            }
-        }
-        $invoice->delete();
-        Session::flash('success','Invoice Deleted Successfully!!');
+        Session::flash('success','Invoice Deleted and related transactions reversed Successfully!!');
         return redirect()->back();
     }
 }

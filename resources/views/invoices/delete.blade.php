@@ -3,6 +3,19 @@
         <div class="modal-content bg-danger">
             <div class="modal-body">
                <center> <strong>Are you sure you want to delete this Invoice</strong> </center>
+               @if ($invoice->payments->isNotEmpty())
+               <center>
+                   <small>
+                       This invoice has existing payments totalling {{ number_format($invoice->payments->sum('amount'), 2) }}.
+                       Deleting it will reverse those transactions and restore the affected account/wallet balances.
+                   </small>
+               </center>
+               @endif
+               @if ($invoice->bills->isNotEmpty())
+               <center>
+                   <small>{{ $invoice->bills->count() }} bill(s) raised against this invoice will also be deleted and reversed.</small>
+               </center>
+               @endif
             </div>
             <form action="{{route('invoices.destroy', $invoice->id)}}" method="POST" >
                 {{ csrf_field() }}
