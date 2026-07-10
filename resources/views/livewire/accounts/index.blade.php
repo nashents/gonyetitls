@@ -40,9 +40,25 @@
                                         <table class="table table-striped">
                                             <h6 style="background-color: lightgray;" ><strong style="margin-left: 5px;">{{$account_type->name}}</strong></h6>
                                             @if ($account_type->accounts->count()>0)
+                                            <thead>
+                                                <tr>
+                                                    <th class="w-10 text-center">Ref</th>
+                                                    <th class="w-10 text-center">GL Code</th>
+                                                    <th class="w-20">Account Name</th>
+                                                    <th class="w-20">Description</th>
+                                                    <th class="w-10 text-center">Actions</th>
+                                                </tr>
+                                            </thead>
                                             @foreach ($account_type->accounts as $account)
                                                 <tr>
                                                     <th class="w-10 text-center line-height-35">{{$account->account_reference}}</th>
+                                                    <td class="w-10 text-center line-height-35">
+                                                        @if ($account->code)
+                                                            <span class="label label-default">{{$account->code}}</span>
+                                                        @else
+                                                            <a href="#" wire:click.prevent="edit({{$account->id}})"><i class="fa fa-plus-square-o"></i> Add code</a>
+                                                        @endif
+                                                    </td>
                                                     <td class="w-20 line-height-35">{{$account->name}}
                                                         @if ($account->balance)
                                                         {{$account->currency ? $account->currency->name : ""}} {{$account->currency ? $account->currency->symbol : ""}}{{number_format($account->balance,2)}}
@@ -79,6 +95,7 @@
                                             @endforeach
                                             <tr>
                                                 <th></th>
+                                                <td></td>
                                                 <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$account_type_group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
                                                 <td></td>
                                                 <td></td>
@@ -86,17 +103,19 @@
                                             @else
                                             <tr>
                                                 <th></th>
+                                                <td></td>
                                                 <td class="w-50 line-height-35" ><small>You haven't added any {{$account_type->name}} accounts yet.</small></td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>
                                             <tr>
                                                 <th></th>
+                                                <td></td>
                                                 <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$account_type_group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>
-                                           
+
                                             @endif
                                            
                                           
@@ -109,11 +128,27 @@
                                         @foreach ($group->account_types as $account_type)
                                             <table class="table table-striped">
                                                 <h6 style="background-color: lightgray;" ><strong style="margin-left: 5px;">{{$account_type->name}}</strong></h6>
+                                                <thead>
+                                                    <tr>
+                                                        <th class="w-10 text-center">Ref</th>
+                                                        <th class="w-10 text-center">GL Code</th>
+                                                        <th class="w-20">Account Name</th>
+                                                        <th class="w-20">Description</th>
+                                                        <th class="w-10 text-center">Actions</th>
+                                                    </tr>
+                                                </thead>
                                                 <tbody class="text-center line-height-35 ">
                                                     @if ($account_type->accounts->count()>0)
                                                     @foreach ($account_type->accounts as $account)
                                                         <tr>
                                                             <th class="w-10 text-center line-height-35">{{$account->account_reference}}</th>
+                                                            <td class="w-10 text-center line-height-35">
+                                                                @if ($account->code)
+                                                                    <span class="label label-default">{{$account->code}}</span>
+                                                                @else
+                                                                    <a href="#" wire:click.prevent="edit({{$account->id}})"><i class="fa fa-plus-square-o"></i> Add code</a>
+                                                                @endif
+                                                            </td>
                                                             <td class="w-20 line-height-35">{{$account->name}}</td>
                                                             <td class="w-20 line-height-35">{{$account->description}}</td>
                                                             <td class="w-10 line-height-35 table-dropdown">
@@ -138,6 +173,7 @@
                                                     @endforeach
                                                     <tr>
                                                         <th></th>
+                                                        <td></td>
                                                         <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
                                                         <td></td>
                                                         <td></td>
@@ -145,12 +181,14 @@
                                                     @else
                                                     <tr>
                                                         <th></th>
+                                                        <td></td>
                                                         <td class="w-50 line-height-35" ><small>You haven't added any {{$account_type->name}} accounts yet.</small></td>
                                                         <td></td>
                                                         <td></td>
                                                     </tr>
                                                     <tr>
                                                         <th></th>
+                                                        <td></td>
                                                         <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
                                                         <td></td>
                                                         <td></td>
@@ -368,8 +406,8 @@
                             </div>
                         </div>
                     </div>
-                   
-                    <div class="row"> 
+
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Account Currency</label>
@@ -388,11 +426,18 @@
                                 <input type="text" class="form-control" wire:model.debounce.300ms="account_reference" placeholder="Enter Account Ref"  />
                                 @error('account_reference') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                           
+
                            </div>
                     </div>
-                   
+
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">GL Code</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="code" placeholder="Enter GL Code" />
+                                @error('code') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Linked Account - Bank Account</label>
@@ -402,10 +447,12 @@
                                              <option value="{{ $bank_account->id }}">{{ $bank_account->name }} {{ $bank_account->account_number }} {{ $bank_account->branch }}</option>
                                         @endforeach
                                     </select>
-                                    <small>  <a href="{{ route('bank_accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bank Account</a></small> 
+                                    <small>  <a href="{{ route('bank_accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bank Account</a></small>
                                 @error('bank_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Description</label>
@@ -414,7 +461,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -439,12 +486,15 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Account Types<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.debounce.300ms="account_type_id" class="form-control" required>
+                                        <select wire:model.debounce.300ms="account_type_id" class="form-control" required @if($lock_type_currency) disabled @endif>
                                             <option value="">Select Account Type</option>
                                             @foreach ($account_types as $account_type)
                                                  <option value="{{ $account_type->id }}">{{ $account_type->name }}</option>
                                             @endforeach
                                         </select>
+                                    @if($lock_type_currency)
+                                        <small class="text-muted">Cash &amp; Bank account type can't be changed after creation.</small>
+                                    @endif
                                     @error('account_type_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -456,17 +506,20 @@
                                 </div>
                             </div>
                         </div>
-                       
-                        <div class="row"> 
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Account Currency</label>
-                                        <select wire:model.debounce.300ms="selectedCurrency" class="form-control">
+                                        <select wire:model.debounce.300ms="selectedCurrency" class="form-control" @if($lock_type_currency) disabled @endif>
                                             <option value="">Select Currency</option>
                                             @foreach ($currencies as $currency)
                                             <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                             @endforeach
                                         </select>
+                                    @if($lock_type_currency)
+                                        <small class="text-muted">Currency can't be changed after creation for Cash &amp; Bank accounts.</small>
+                                    @endif
                                     @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -476,11 +529,18 @@
                                 <input type="text" class="form-control" wire:model.debounce.300ms="account_reference" placeholder="Enter Account Ref"  />
                                 @error('account_reference') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                           
+
                            </div>
                         </div>
-                       
+
                         <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">GL Code</label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="code" placeholder="Enter GL Code" />
+                                    @error('code') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Linked Account - Bank Account</label>
@@ -490,10 +550,12 @@
                                                  <option value="{{ $bank_account->id }}">{{ $bank_account->name }} {{ $bank_account->account_number }} {{ $bank_account->branch }}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('bank_accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bank Account</a></small> 
+                                        <small>  <a href="{{ route('bank_accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bank Account</a></small>
                                     @error('bank_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Description</label>

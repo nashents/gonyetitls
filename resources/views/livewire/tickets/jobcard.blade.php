@@ -2,7 +2,7 @@
 @section('extra-css')
     <style>
       :root{
-      --accent: {{$company->color}};          /* tweak to match your brand */
+      --accent: {{$company?->color}};          /* tweak to match your brand */
     }
     .tag { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-size:12px; }
     .tag.ok   { background:#ecfdf5; border-color:#a7f3d0; }     /* green */
@@ -26,13 +26,13 @@
     <!-- ===== Header ===== -->
     <header class="header">
       <div class="brand">
-        <img class="brand__logo" src="{{asset('images/uploads/'.$company->logo)}}" alt="Company Logo" onerror="this.style.display='none'" />
+        <img class="brand__logo" src="{{asset('images/uploads/'.$company?->logo)}}" alt="Company Logo" onerror="this.style.display='none'" />
         <div>
-          <div class="brand__name" data-field="company.name">{{$company->name}}</div>
+          <div class="brand__name" data-field="company.name">{{$company?->name}}</div>
           <div class="brand__meta">
-            <span data-field="company.address">{{$company->street_address}} {{$company->suburb}} {{$company->city}} {{$company->country}}</span><br />
-            Tel: <span data-field="company.phone">{{$company->phonenumber}}</span>
-            · Email: <span data-field="company.email">{{$company->email}}</span>
+            <span data-field="company.address">{{$company?->street_address}} {{$company?->suburb}} {{$company?->city}} {{$company?->country}}</span><br />
+            Tel: <span data-field="company.phone">{{$company?->phonenumber}}</span>
+            · Email: <span data-field="company.email">{{$company?->email}}</span>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
         <dl class="meta-grid">
           <dt>Booking/JobCard/Inspection#</dt><dd class="mono" data-field="jobcard.number">{{$booking->booking_number}}{{$ticket->ticket_number ? "/".$ticket->ticket_number : ""}}{{$inspection->inspection_number ? "/".$inspection->inspection_number : ""}}</dd>
           <dt>Date Opened</dt><dd data-field="jobcard.opened_at">{{$booking->in_date}}</dd>
-          <dt>Job Type/Status</dt><dd data-field="jobcard.opened_at">{{$service_type->name}} <span class="tag upper" data-field="jobcard.status">{{$ticket->status == 1 ? "Open" :  "Closed"}}</span></dd>
+          <dt>Job Type/Status</dt><dd data-field="jobcard.opened_at">{{$service_type?->name}} <span class="tag upper" data-field="jobcard.status">{{$ticket->status == 1 ? "Open" :  "Closed"}}</span></dd>
           <dt>AssignedTo</dt><dd>
               @foreach ($ticket?->booking?->employees as $employee)
                 {{$employee?->name}} {{$employee?->surname}}@if (!$loop->last), @endif

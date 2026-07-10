@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\EmployeeLeave;
+use App\Models\LeaveType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -14,7 +15,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use PhpOffice\PhpSpreadsheet\RichText\RichText;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
 class EmployeesLeaveExport implements FromCollection,
@@ -26,6 +27,17 @@ WithDrawings,
 WithCustomStartCell
 {
     use Exportable;
+
+    protected Collection $leaveTypes;
+
+    public function __construct()
+    {
+        $this->leaveTypes = LeaveType::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
     /**
     * @return Collection
     */
@@ -35,64 +47,53 @@ WithCustomStartCell
             ->whereHas('employee', function ($query) {
                 $query->where('status', 1);
             })
-            ->whereHas('leave_type', function ($query) {
-                $query->where('active', true);
-            })
+            ->whereIn('leave_type_id', $this->leaveTypes->pluck('id'))
             ->with(['employee', 'leave_type'])
             ->orderBy('employee_id')
             ->get()
             ->groupBy('employee_id')
             ->map(function ($employeeLeaves) {
-                $leaveData = new RichText();
-                $first = true;
-
-                foreach ($employeeLeaves as $employeeLeave) {
-                    if (!$first) {
-                        $leaveData->createText("\n");
-                    }
-                    $first = false;
-
-                    $boldRun = $leaveData->createTextRun($employeeLeave->leave_type->name ?? '');
-                    $boldRun->getFont()->setBold(true);
-
-                    $leaveData->createText(
-                        ' - Taken:' . ($employeeLeave->days_taken ?? 0)
+                $leaveDataByType = $employeeLeaves->keyBy('leave_type_id')->map(function ($employeeLeave) {
+                    return 'Taken:' . ($employeeLeave->days_taken ?? 0)
                         . ', Available:' . ($employeeLeave->available_leave_days ?? 0)
-                        . ', Accrual:' . ($employeeLeave->acrual_rate ?? 0)
-                        . ', Maximum:' . ($employeeLeave->maximum_leave_days ?? 0)
-                    );
-                }
+                        . ', Maximum:' . ($employeeLeave->maximum_leave_days ?? 0);
+                });
 
                 return (object) [
                     'employee' => $employeeLeaves->first()->employee,
-                    'leave_data' => $leaveData,
+                    'leave_data' => $leaveDataByType,
                 ];
             })
             ->values();
     }
     public function map($row): array{
 
-            return   [
+            $data = [
                 $row->employee->employee_number,
                 $row->employee->name." ". $row->employee->surname,
-                $row->leave_data,
-                 ];
+            ];
+
+            foreach ($this->leaveTypes as $leaveType) {
+                $data[] = $row->leave_data->get($leaveType->id, '');
+            }
+
+            return $data;
 
 
     }
     public function headings(): array{
-            return[
-                'Employee#',
-                'Fullname',
-                'Leave Data',
-            ];
+            return array_merge(
+                ['Employee#', 'Fullname'],
+                $this->leaveTypes->pluck('name')->toArray()
+            );
 
 
     }
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:C7')->applyFromArray([
+                $lastColumn = Coordinate::stringFromColumnIndex($this->leaveTypes->count() + 2);
+                $event->sheet->getStyle("A7:{$lastColumn}7")->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
@@ -103,10 +104,6 @@ WithCustomStartCell
                         ],
                     ]
                 ]);
-                $highestRow = $event->sheet->getHighestRow();
-                if ($highestRow >= 8) {
-                    $event->sheet->getStyle('C8:C' . $highestRow)->getAlignment()->setWrapText(true);
-                }
             },
         ];
     }
@@ -122,7 +119,7 @@ WithCustomStartCell
         }else{
             $drawing->setPath(public_path('/images/uploads/logo.png'));
         }
-            } 
+            }
         $drawing->setHeight(90);
         $drawing->setCoordinates('A2');
 

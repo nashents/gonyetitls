@@ -36,6 +36,7 @@ class Index extends Component
     public $account_types;
     public $account_type_id;
     public $name;
+    public $code;
     public $amount;
     public $exchange_rate;
     public $exchange_amount;
@@ -67,6 +68,7 @@ class Index extends Component
     public $company;
     public $user_id;
     public $account;
+    public $lock_type_currency = false;
 
     public function mount(){
         $this->resetPage();
@@ -100,6 +102,7 @@ class Index extends Component
     protected $rules = [
         'name' => 'required|unique:accounts,name,NULL,id,deleted_at,NULL|string|min:2',
         'account_reference' => 'required|unique:accounts,account_reference,NULL,id,deleted_at,NULL|min:2',
+        'code' => 'nullable|unique:accounts,code,NULL,id,deleted_at,NULL|max:20',
     ];
 
     public function updatedSelectedCurrency($id){
@@ -109,6 +112,7 @@ class Index extends Component
     private function resetInputFields(){
         $this->account_type_id = '';
         $this->name = '';
+        $this->code = '';
         $this->selectedCurrency = '';
         $this->description = '';
         $this->bank_account_id = '';
@@ -162,6 +166,7 @@ class Index extends Component
         $account->user_id = Auth::user()->id;
         $account->name = $this->name;
         $account->account_reference = $this->account_reference;
+        $account->code = $this->code ? $this->code : null;
         $account->account_type_id = $this->account_type_id;
         $account_type = AccountType::find($this->account_type_id);
         $account->account_type_group_id = $account_type->account_type_group_id;
@@ -228,6 +233,7 @@ class Index extends Component
     $account = Account::find($id);
     $this->user_id = $account->user_id;
     $this->name = $account->name;
+    $this->code = $account->code;
     $this->account_type_id = $account->account_type_id;
     $this->selectedCurrency = $account->currency_id;
     $this->bank_account_id = $account->bank_account_id;
@@ -235,6 +241,7 @@ class Index extends Component
     $this->description = $account->description;
     $this->account_reference = $account->account_reference;
     $this->account_id = $account->id;
+    $this->lock_type_currency = optional($account->account_type)->name === 'Cash & Bank';
     $this->dispatchBrowserEvent('show-accountEditModal');
 
     }
@@ -246,15 +253,19 @@ class Index extends Component
         if ($this->account_id) {
             try{
             $account = Account::find($this->account_id);
+            $locked = optional($account->account_type)->name === 'Cash & Bank';
             $account->user_id = Auth::user()->id;
             $account->name = $this->name;
             $account->account_reference = $this->account_reference;
-            $account->account_type_id = $this->account_type_id;
-            $account_type = AccountType::find($this->account_type_id);
-            $account->account_type_group_id = $account_type->account_type_group_id;
+            $account->code = $this->code ? $this->code : null;
+            if (!$locked) {
+                $account->account_type_id = $this->account_type_id;
+                $account_type = AccountType::find($this->account_type_id);
+                $account->account_type_group_id = $account_type->account_type_group_id;
+                $account->currency_id = $this->selectedCurrency;
+            }
             $account->bank_account_id = $this->bank_account_id ? $this->bank_account_id : null;
             $account->customer_id = $this->customer_id ? $this->customer_id : null;
-            $account->currency_id = $this->selectedCurrency;
             $account->description = $this->description;
             $account->update();
             

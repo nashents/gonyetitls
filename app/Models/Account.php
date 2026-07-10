@@ -83,6 +83,7 @@ class Account extends Model implements Auditable
         'currency_id',
         'account_number',
         'name',
+        'code',
         'description',
         'hs_code',
     ];

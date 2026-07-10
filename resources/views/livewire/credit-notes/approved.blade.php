@@ -46,10 +46,10 @@
                                     </td>
                                     <td>{{$credit_note->customer ? $credit_note->customer->name : "undefined"}}</td>
                                     <td>{{$credit_note->date}}</td>
-                                    <td>{{$credit_note->invoice->currency ? $credit_note->invoice->currency->name : "undefined"}}</td>
+                                    <td>{{$credit_note->invoice && $credit_note->invoice->currency ? $credit_note->invoice->currency->name : "undefined"}}</td>
                                     <td>
                                         @if ($credit_note->total)
-                                             {{$credit_note->invoice->currency ? $credit_note->invoice->currency->symbol : ""}}{{number_format($credit_note->total,2)}}        
+                                             {{$credit_note->invoice && $credit_note->invoice->currency ? $credit_note->invoice->currency->symbol : ""}}{{number_format($credit_note->total,2)}}        
                                         @endif
                                     </td> 
                                     <td><span class="badge bg-{{($credit_note->authorization == 'approved') ? 'success' : (($credit_note->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($credit_note->authorization == 'approved') ? 'approved' : (($credit_note->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>

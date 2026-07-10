@@ -484,6 +484,11 @@ Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-stateme
 Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-statements/print/','BillController@vendorStatementsPrint')->name('vendor_statements.print.account');
 Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-statements/','BillController@vendorStatementsPreview')->name('vendor_statements.preview.account');
 
+Route::get('payments/{payment}/remittance-advice','PaymentController@remittanceAdvicePreview')->name('remittance_advice.preview');
+Route::get('payments/{payment}/remittance-advice/print','PaymentController@remittanceAdvicePrint')->name('remittance_advice.print');
+Route::get('payments/{payment}/remittance-advice/pdf','PaymentController@remittanceAdvicePDF')->name('remittance_advice.pdf');
+Route::get('payments/{payment}/remittance-advice/send-email','PaymentController@remittanceAdviceEmail')->name('remittance_advice.email');
+
 
 
 Route::get('tickets/{ticket}/job-card','TicketController@jobcard')->name('tickets.jobcard');

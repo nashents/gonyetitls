@@ -150,8 +150,11 @@
 
               <div class="row">
                 <div class="col-md-12">
-                    <div class="btn-group pull-right mt-10" >
-                       <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
+                    <div class="pull-right mt-10" >
+                       @if ($payment->vendor_id)
+                       <a href="{{ route('remittance_advice.preview', ['payment' => $payment->id]) }}" class="btn bg-info btn-wide btn-rounded" style="margin-right:10px;"><i class="fa fa-file-text"></i> Remittance Advice</a>
+                       @endif
+                       <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i> Back</a>
                     </div>
                 </div>
                 </div>
