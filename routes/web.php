@@ -533,6 +533,7 @@ Route::resource('transport_orders','TransportOrderController');
 Route::resource('inspection_schedules','InspectionScheduleController');
 Route::resource('problem_categories','ProblemCategoryController');
 Route::resource('teams','TeamController');
+Route::get('audit-logs','AuditLogController@index')->name('audit_logs.index');
 Route::resource('bins','BinController');
 Route::resource('trip_transport_orders','TripTransportOrderController');
 Route::resource('claims','ClaimController');

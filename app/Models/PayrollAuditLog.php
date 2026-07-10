@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class PayrollAuditLog extends Model
+class PayrollAuditLog extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
+
     // Audit logs are immutable — no updated_at, no soft deletes
     const UPDATED_AT = null;
 

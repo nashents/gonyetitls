@@ -74,6 +74,7 @@ class Index extends Component
     $this->category_value_id = $team->category_value_id;
     $this->status = $team->status;
     $this->team_id = $team->id;
+    $this->employee_id = $team->employees()->pluck('employees.id')->toArray();
     $this->dispatchBrowserEvent('show-teamEditModal');
 
     }

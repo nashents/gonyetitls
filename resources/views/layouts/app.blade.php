@@ -4950,6 +4950,11 @@ window.addEventListener('hide-imageModal', event => {
         $('#journalEditModal').modal('hide');
     })
 </script>
+<script type="text/javascript">
+    window.addEventListener('show-auditViewModal', event => {
+        $('#auditViewModal').modal('show');
+    })
+</script>
 
 <script>
     ClassicEditor

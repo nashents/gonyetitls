@@ -16,10 +16,12 @@ use App\Models\Vehicle;
 use App\Models\Vendor;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class JournalEntryLine extends Model
+class JournalEntryLine extends Model implements Auditable
 {
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'journal_entry_id',

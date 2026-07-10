@@ -8,10 +8,12 @@ use App\Models\Customer;
 use App\Models\UnitsOfMeasure;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Deal extends Model
+class Deal extends Model implements Auditable
 {
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     public function currency()
     {

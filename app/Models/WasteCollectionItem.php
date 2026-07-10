@@ -6,10 +6,12 @@ use App\Models\Employee;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class WasteCollectionItem extends Model
+class WasteCollectionItem extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     public function waste_collection(){
         return $this->belongsTo('App\Models\WasteCollection');

@@ -72,6 +72,23 @@ class Rejected extends Component
                     })
                     ->orWhereHas('employee', function ($sub) use ($term) {
                         $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.product', function ($sub) use ($term) {
+                        $sub->where('product_number', 'like', $term)
+                        ->orWhere('name', 'like', $term)
+                        ->orWhere('identification_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.inventory', function ($sub) use ($term) {
+                        $sub->where('inventory_number', 'like', $term)
+                        ->orWhere('serial_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.tyre', function ($sub) use ($term) {
+                        $sub->where('tyre_number', 'like', $term)
+                        ->orWhere('serial_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.asset', function ($sub) use ($term) {
+                        $sub->where('asset_number', 'like', $term)
+                        ->orWhere('serial_number', 'like', $term);
                     });
                 });
             });

@@ -2234,7 +2234,7 @@ class MenuRegistrySeeder extends Seeder
             'name' => 'Audits',
             'slug' => 'audits',
             'icon' => 'fas fa-history',
-            'route_name' => 'audits.index',
+            'route_name' => 'audit_logs.index',
             'sort_order' => 20,
             'visibility' => $any([$all(['isSuperAdmin'])]),
         ]);
