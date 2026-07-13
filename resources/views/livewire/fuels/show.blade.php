@@ -80,8 +80,14 @@
                             </tr>
                             @endif
                             <tr>
-                                <th class="w-10 text-center line-height-35">Fueling Station</th>
-                                <td class="w-20 line-height-35">{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
+                                <th class="w-10 text-center line-height-35">{{ $fuel->source_horse ? "Source Truck" : "Fueling Station" }}</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($fuel->container)
+                                        {{ucfirst($fuel->container->name)}}
+                                    @elseif ($fuel->source_horse)
+                                        {{$fuel->source_horse->registration_number}} {{$fuel->source_horse->fleet_number ? "(".$fuel->source_horse->fleet_number.")" : ""}}
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Quantity</th>

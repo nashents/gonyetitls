@@ -33,6 +33,7 @@
                                         <th>Customer</th>
                                         <th>Cargo</th>
                                         <th>Allocation</th>
+                                        <th>Progress</th>
                                         <th>Timeline</th>
                                         <th>Ccy</th>
                                         <th>Freight</th>
@@ -62,6 +63,38 @@
 
                                                     @if ($deal->quantity)
                                                         <strong>Quantity:</strong> {{ number_format($deal->quantity, 2) }} {{ $deal->units_of_measure ? $deal->units_of_measure->name : '' }}
+                                                    @endif
+
+                                                    @if (!$deal->weight && !$deal->litreage && !$deal->quantity)
+                                                        N/A
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($deal->weight)
+                                                        @php $wPct = min(100, round((($deal->trips_sum_weight ?? 0) / $deal->weight) * 100)); @endphp
+                                                        <strong>Weight:</strong> {{ number_format($deal->trips_sum_weight ?? 0, 2) }} / {{ number_format($deal->weight, 2) }}t
+                                                        <div class="progress" style="height:4px; margin-top:2px; margin-bottom:2px;">
+                                                            <div class="progress-bar {{ $wPct >= 100 ? 'bg-success' : 'bg-info' }}" style="width:{{ $wPct }}%"></div>
+                                                        </div>
+                                                        <small class="text-muted">{{ $wPct }}% moved</small><br>
+                                                    @endif
+
+                                                    @if ($deal->litreage)
+                                                        @php $lPct = min(100, round((($deal->trips_sum_litreage ?? 0) / $deal->litreage) * 100)); @endphp
+                                                        <strong>Litreage:</strong> {{ number_format($deal->trips_sum_litreage ?? 0, 2) }} / {{ number_format($deal->litreage, 2) }}l
+                                                        <div class="progress" style="height:4px; margin-top:2px; margin-bottom:2px;">
+                                                            <div class="progress-bar {{ $lPct >= 100 ? 'bg-success' : 'bg-info' }}" style="width:{{ $lPct }}%"></div>
+                                                        </div>
+                                                        <small class="text-muted">{{ $lPct }}% moved</small><br>
+                                                    @endif
+
+                                                    @if ($deal->quantity)
+                                                        @php $qPct = min(100, round((($deal->trips_sum_quantity ?? 0) / $deal->quantity) * 100)); @endphp
+                                                        <strong>Quantity:</strong> {{ number_format($deal->trips_sum_quantity ?? 0, 2) }} / {{ number_format($deal->quantity, 2) }} {{ $deal->units_of_measure ? $deal->units_of_measure->name : '' }}
+                                                        <div class="progress" style="height:4px; margin-top:2px; margin-bottom:2px;">
+                                                            <div class="progress-bar {{ $qPct >= 100 ? 'bg-success' : 'bg-info' }}" style="width:{{ $qPct }}%"></div>
+                                                        </div>
+                                                        <small class="text-muted">{{ $qPct }}% moved</small>
                                                     @endif
 
                                                     @if (!$deal->weight && !$deal->litreage && !$deal->quantity)
@@ -145,7 +178,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="10">
+                                                <td colspan="12">
                                                     <div style="text-align:center; color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                         No Deals Found ....
                                                     </div>

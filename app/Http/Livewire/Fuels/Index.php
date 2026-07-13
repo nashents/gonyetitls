@@ -96,6 +96,9 @@ class Index extends Component
     public $selectedContainer;
     public $container_balance;
     public $account_balance;
+    public $fuel_source = 'station';
+    public $selectedSourceHorse;
+    public $fuel_type_locked = false;
     public $selectedCategory;
     public $selectedCategoryValue;
     public $selectedTrip;
@@ -506,11 +509,39 @@ class Index extends Component
         
             $this->container_balance = $this->container ? $this->container->balance : "";
             $this->account_balance = $this->container ? $this->container->account_balance : "";
-            $this->fuel_type = $this->container?->fuel_type;
-           
+            $containerFuelType = $this->container?->fuel_type;
+            $containerFuelType = $containerFuelType ? ucfirst(strtolower($containerFuelType)) : null;
+            $this->fuel_type_locked = (bool) $containerFuelType;
+            $this->fuel_type = $containerFuelType ?: 'Diesel';
+
             $this->selectedCurrency = $this->container->currency_id;
            
             }
+    }
+
+    public function updatedFuelSource($value)
+    {
+        if ($value == 'truck') {
+            $this->selectedContainer = Null;
+            $this->container = Null;
+            $this->selected_container = Null;
+            $this->container_balance = Null;
+            $this->account_balance = Null;
+        } else {
+            $this->selectedSourceHorse = Null;
+        }
+        $this->fuel_type = Null;
+        $this->fuel_type_locked = false;
+    }
+
+    public function updatedSelectedSourceHorse($id)
+    {
+        if (!is_null($id)) {
+            $sourceFuelType = Horse::find($id)?->fuel_type;
+            $sourceFuelType = $sourceFuelType ? ucfirst(strtolower($sourceFuelType)) : null;
+            $this->fuel_type_locked = (bool) $sourceFuelType;
+            $this->fuel_type = $sourceFuelType ?: 'Diesel';
+        }
     }
 
     public function updatedSelectedVehicle($id)
@@ -552,7 +583,7 @@ class Index extends Component
     {
         $rules = [
             'type' => 'required|in:Horse,Vehicle,Asset,Other',
-            'selectedContainer' => 'required',
+            'selectedContainer' => $this->type == 'Horse' && $this->fuel_source == 'truck' ? 'nullable' : 'required',
             'selectedCurrency' => 'required',
             'date' => 'required',
             'quantity' => 'required|numeric|min:0.01',
@@ -570,6 +601,10 @@ class Index extends Component
             $rules['selectedHorse'] = 'required';
             $rules['employee_id'] = 'required';
             $rules['mileage'] = 'required|numeric|min:0';
+
+            if ($this->fuel_source == 'truck') {
+                $rules['selectedSourceHorse'] = 'required|different:selectedHorse';
+            }
         }
 
         if ($this->type == 'Vehicle') {
@@ -708,6 +743,9 @@ class Index extends Component
         $this->selectedTrip = Null;
         $this->deduct_from = "quantity";
         $this->selectedContainer = Null;
+        $this->fuel_source = "station";
+        $this->selectedSourceHorse = Null;
+        $this->fuel_type_locked = false;
         $this->selectedCategory = Null;
         $this->selectedFuelRequest = Null;
         $this->selectedCategoryValue = Null;
@@ -815,7 +853,13 @@ class Index extends Component
             $fuel->vehicle_id = Null;
         }
       
-        $fuel->container_id = $this->selectedContainer ?? Null;
+        if ($this->type == "Horse" && $this->fuel_source == "truck") {
+            $fuel->source_horse_id = $this->selectedSourceHorse;
+            $fuel->container_id = Null;
+        } else {
+            $fuel->container_id = $this->selectedContainer ?? Null;
+            $fuel->source_horse_id = Null;
+        }
         $fuel->date = $this->date;
         $fuel->unit_price = $this->unit_price;
         $fuel->quantity = $this->quantity;
@@ -962,15 +1006,18 @@ class Index extends Component
     $this->vehicle_id = $fuel->vehicle_id;
     $this->is_full_tank = $fuel->is_full_tank;
     $this->selectedTrip = $fuel->trip_id;
-    $this->fuel_type = $fuel->fuel_type;
+    $this->fuel_type = $fuel->fuel_type ? ucfirst(strtolower($fuel->fuel_type)) : null;
     $this->trips = Trip::where('trip_status','!=','Cancelled')->orderBy('created_at','desc')->orderBy('created_at','desc')->get();
     $this->selectedCurrency = $fuel->currency_id;
     $this->asset_id = $fuel->asset_id;
     $this->selectedContainer = $fuel->container_id;
+    $this->fuel_source = $fuel->source_horse_id ? 'truck' : 'station';
+    $this->selectedSourceHorse = $fuel->source_horse_id;
     $this->container = Container::find($fuel->container_id);
     $this->selected_container = Container::find($fuel->container_id);
     $this->container_balance = $this->container ? $this->container->balance : "";
     $this->account_balance = $this->container ? $this->container->account_balance : "";
+    $this->fuel_type_locked = (bool) ($fuel->source_horse_id ? $fuel->source_horse?->fuel_type : $this->container?->fuel_type);
     $this->driver_id = $fuel->driver_id;
     $this->date = $fuel->date;
     $this->selectedFuelRequest = $fuel->fuel_request_id;
@@ -1041,7 +1088,13 @@ class Index extends Component
         }
            
             $fuel->is_full_tank = $this->is_full_tank;
-            $fuel->container_id = $this->selectedContainer ?? Null;
+            if ($this->type == "Horse" && $this->fuel_source == "truck") {
+                $fuel->source_horse_id = $this->selectedSourceHorse;
+                $fuel->container_id = Null;
+            } else {
+                $fuel->container_id = $this->selectedContainer ?? Null;
+                $fuel->source_horse_id = Null;
+            }
             $fuel->deduct_from = $this->deduct_from;
             $fuel->date = $this->date;
             $fuel->fuel_request_id = $this->selectedFuelRequest ?? Null;

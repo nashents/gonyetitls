@@ -173,9 +173,9 @@ class Rejected extends Component
         
 
                     $container = Container::find($fuel->container_id);
-        
-                    if (isset($container)) {
-                  
+
+                    if (isset($container) || $fuel->source_horse_id) {
+
                     if ($fuel->horse) {
                         $horse = Horse::find($fuel->horse_id);
                         if((isset($horse->fuel_balance) && is_numeric($horse->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
@@ -185,7 +185,7 @@ class Rejected extends Component
                         if ($fuel->odometer >  $current_mileage) {
                             $horse->mileage = $fuel->odometer;
                         }
-                      
+
                         $horse->update();
                     }
                     if ($fuel->vehicle) {
@@ -193,14 +193,22 @@ class Rejected extends Component
                         if((isset($vehicle->fuel_balance) && is_numeric($vehicle->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
                             $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
                         }
-                       
+
                         $current_mileage = $vehicle->mileage;
                         if ($fuel->odometer >  $current_mileage) {
                             $vehicle->mileage = $fuel->odometer;
                         }
-                      
+
                         $vehicle->update();
-        
+
+                    }
+
+                    if ($fuel->source_horse_id) {
+                        $source_horse = Horse::find($fuel->source_horse_id);
+                        if ($source_horse && isset($source_horse->fuel_balance) && is_numeric($source_horse->fuel_balance) && isset($fuel->quantity) && is_numeric($fuel->quantity)) {
+                            $source_horse->fuel_balance = $source_horse->fuel_balance - $fuel->quantity;
+                            $source_horse->update();
+                        }
                     }
 
                     $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
@@ -235,14 +243,15 @@ class Rejected extends Component
                         }
                     }
 
-                    
+
+                   if ($container) {
                    if($container->purchase_type == "Bulk Buy"){
-                       
+
                         if ($fuel->deduct_from == "quantity") {
                             if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
                                 if($container->balance >= $fuel->quantity){
                                     $container->balance = $container->balance - $fuel->quantity;
-                                } 
+                                }
                             }
                         }elseif($fuel->deduct_from == "account"){
                             if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
@@ -251,13 +260,13 @@ class Rejected extends Component
                                 }
                             }
                         }
-                        
+
                         $container->update();
                     }
-                    
+
                     $expense = Expense::where('name','Fuel Topup')->get()->first();
-                  
-    
+
+
                     $bill = new Bill;
                     if($fuel->trip){
                         $bill->trip_id = $fuel->trip_id;
@@ -376,11 +385,10 @@ class Rejected extends Component
             
                         
             
-                        } 
-                       
-                    }
+                        }
 
-                   
+                    }
+                    }
 
                 }else{
                     $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
@@ -390,7 +398,6 @@ class Rejected extends Component
                     ]);
                 }
 
-         
                 }
             }
 
@@ -460,23 +467,19 @@ class Rejected extends Component
 
             $container = Container::find($fuel->container_id);
 
-            if (isset($container)) {
-               
-           
-
-
+            if (isset($container) || $fuel->source_horse_id) {
 
             if ($fuel->horse) {
                 $horse = Horse::find($fuel->horse_id);
                 if((isset($horse->fuel_balance) && is_numeric($horse->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
                     $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
                 }
-               
+
                 $current_mileage = $horse->mileage;
                 if ($fuel->odometer >  $current_mileage) {
                     $horse->mileage = $fuel->odometer;
                 }
-              
+
                 $horse->update();
             }
             if ($fuel->vehicle) {
@@ -484,14 +487,22 @@ class Rejected extends Component
                 if((isset($vehicle->fuel_balance) && is_numeric($vehicle->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
                     $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
                 }
-              
+
                 $current_mileage = $vehicle->mileage;
                 if ($fuel->odometer >  $current_mileage) {
                     $vehicle->mileage = $fuel->odometer;
                 }
-              
+
                 $vehicle->update();
 
+            }
+
+            if ($fuel->source_horse_id) {
+                $source_horse = Horse::find($fuel->source_horse_id);
+                if ($source_horse && isset($source_horse->fuel_balance) && is_numeric($source_horse->fuel_balance) && isset($fuel->quantity) && is_numeric($fuel->quantity)) {
+                    $source_horse->fuel_balance = $source_horse->fuel_balance - $fuel->quantity;
+                    $source_horse->update();
+                }
             }
 
             $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
@@ -526,8 +537,9 @@ class Rejected extends Component
                 }
             }
             
+                if ($container) {
                 if($container->purchase_type == "Bulk Buy"){
-                       
+
                         if ($fuel->deduct_from == "quantity") {
                             if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
                                 if($container->balance >= $fuel->quantity){
@@ -680,7 +692,10 @@ class Rejected extends Component
                 ]);
                 return redirect()->route('fuels.approved');
             }
-               
+
+            }
+            } else {
+                $this->station_email = "";
             }
 
             $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');

@@ -20,11 +20,16 @@
             @endif
             @if ($employee)
                 @if ($trip->authorization == "approved")
+                    @foreach ($trip->transport_orders as $transport_order)
                     <li>
-                        <a href="{{ route('transport_orders.preview', $trip->id) }}">
+                        <a href="{{ route('transport_orders.preview', $transport_order->id) }}">
                             <i class="fas fa-file color-warning"></i> Transport Order
+                            @if ($trip->transport_orders->count() > 1)
+                                ({{ $transport_order->transport_order_number }})
+                            @endif
                         </a>
                     </li>
+                    @endforeach
                     <li>
                         <a href="{{ route('trips.trip_sheet', $trip->id) }}">
                             <i class="fas fa-file color-warning"></i> Trip Sheet

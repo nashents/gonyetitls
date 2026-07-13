@@ -304,6 +304,9 @@ class Index extends Component
 
         $query = Deal::query()
             ->with(['customer', 'cargo', 'units_of_measure'])
+            ->withSum('trips', 'weight')
+            ->withSum('trips', 'litreage')
+            ->withSum('trips', 'quantity')
             ->when($this->company_id, function ($q) {
                 $q->where('company_id', $this->company_id);
             })

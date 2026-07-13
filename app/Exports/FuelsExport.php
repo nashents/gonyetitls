@@ -48,19 +48,19 @@ WithCustomStartCell
     {
         if (isset($this->from) && isset($this->to)) {
             if (isset($this->container_id)) {
-                return Fuel::query()->with(['container','horse',
+                return Fuel::query()->with(['container','horse','source_horse',
                 'horse.horse_make','horse.horse_model'])->where('container_id',$this->container_id)->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc');
             }else{
-                return Fuel::query()->with(['container','horse',
+                return Fuel::query()->with(['container','horse','source_horse',
                 'horse.horse_make','horse.horse_model'])->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc');
             }
-           
+
         }elseif(isset($this->container_id)){
-            return Fuel::query()->with(['container','horse',
+            return Fuel::query()->with(['container','horse','source_horse',
             'horse.horse_make','horse.horse_model'])->where('container_id',$this->container_id)->whereMonth($this->fuel_filter, date('m'))
             ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc');
         }else {
-            return Fuel::query()->with(['container','horse',
+            return Fuel::query()->with(['container','horse','source_horse',
             'horse.horse_make','horse.horse_model'])->whereMonth($this->fuel_filter, date('m'))
             ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc');
         }
@@ -99,6 +99,7 @@ WithCustomStartCell
             $created_by_name =  $fuel->user ? $fuel->user->name : "" ;
             $created_by_surname = $fuel->user ? $fuel->user->name : "" ;
             $symbol = $fuel->currency ? $fuel->currency->symbol : "";
+            $source_truck = $fuel->source_horse ? $fuel->source_horse->registration_number.($fuel->source_horse->fleet_number ? ' ('.$fuel->source_horse->fleet_number.')' : '') : "";
 
             if ( $fuel->type == "Horse" || $fuel->type == "Trip") {
                 return   [
@@ -107,6 +108,7 @@ WithCustomStartCell
                 $fuel->authorization,
                 $authorized_by_name ." ".$authorized_by_surname,
                 $fuel->container ? $fuel->container->name : "",
+                $source_truck,
                 $fuel->date,
                 $fuel->type,
                 $fuel->trip ? "Trip#: ".$fuel->trip->trip_number : "" .' '.$horse_registration_number .' '.$horse_make .' '. $horse_model,
@@ -126,6 +128,7 @@ WithCustomStartCell
                         $fuel->authorization,
                         $authorized_by_name ." ".$authorized_by_surname,
                         $fuel->container ? $fuel->container->name : "",
+                $source_truck,
                         $fuel->date,
                         $fuel->type,
                         $fuel->trip ? "Trip#: ".$fuel->trip->trip_number : "" .' '. $vehicle_registration_number . ' ' .$vehicle_make .' '. $vehicle_model ,
@@ -144,6 +147,7 @@ WithCustomStartCell
                         $fuel->authorization,
                         $authorized_by_name ." ".$authorized_by_surname,
                         $fuel->container ? $fuel->container->name : "",
+                $source_truck,
                         $fuel->date,
                         $fuel->type,
                         $product ,
@@ -162,6 +166,7 @@ WithCustomStartCell
                         $fuel->authorization,
                         $authorized_by_name ." ".$authorized_by_surname,
                         $fuel->container ? $fuel->container->name : "",
+                $source_truck,
                         $fuel->date,
                         $fuel->type,
                         "",
@@ -184,6 +189,7 @@ WithCustomStartCell
                 'Auth Status',
                 'AuthorizedBy',
                 'Fueling Station',
+                'Source Truck',
                 'Date ',
                 'Fuel Order For',
                 'Category',
@@ -202,7 +208,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:O7')->applyFromArray([
+                $event->sheet->getStyle('A7:P7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

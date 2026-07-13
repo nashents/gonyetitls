@@ -48,6 +48,9 @@ class Fuel extends Model implements Auditable
     public function container(){
         return $this->belongsTo('App\Models\Container');
     }
+    public function source_horse(){
+        return $this->belongsTo('App\Models\Horse','source_horse_id');
+    }
     public function trip(){
         return $this->belongsTo('App\Models\Trip');
     }
@@ -93,6 +96,7 @@ class Fuel extends Model implements Auditable
         'type',
         'driver_id',
         'container_id',
+        'source_horse_id',
         'date',
         'unit_price',
         'quantity',

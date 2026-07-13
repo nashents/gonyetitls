@@ -1894,6 +1894,14 @@ class Create extends Component
         
         DB::transaction(function () {
 
+                if($this->with_deal && $this->selectedDeal){
+                    $deal = Deal::find($this->selectedDeal);
+                    if($deal){
+                        $this->selectedCargo = $deal->cargo_id;
+                        $this->units_of_measure_id = $deal->units_of_measure_id;
+                    }
+                }
+
                 if(empty($this->selectedTransportOrder)){
                     $this->createTransportOrder();
                 }
@@ -3063,7 +3071,7 @@ class Create extends Component
             ]);
         }
         elseif($category == 'deals'){
-            $this->deals = Deal::where('end_date', '<=', now())
+            $this->deals = Deal::where('end_date', '>=', now())
                             ->where('status', 1)
                             ->where('is_closed', 0)
                             ->get();

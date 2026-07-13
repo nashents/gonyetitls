@@ -238,9 +238,13 @@
 
                                                 {{-- Station --}}
                                                 <td>
-                                                    {{ ucfirst(optional($fuel->container)->name) }}
+                                                    @if ($fuel->container)
+                                                        {{ ucfirst($fuel->container->name) }}
+                                                    @elseif ($fuel->source_horse)
+                                                        Truck: {{ $fuel->source_horse->registration_number }} {{ $fuel->source_horse->fleet_number ? "(".$fuel->source_horse->fleet_number.")" : "" }}
+                                                    @endif
                                                     <div class="fuel-meta text-muted">
-                                                        <small><strong>Fuel Type:</strong> {{ $fuel->container->fuel_type ?? '' }}</small>
+                                                        <small><strong>Fuel Type:</strong> {{ $fuel->container->fuel_type ?? $fuel->fuel_type ?? '' }}</small>
                                                     </div>
                                                 </td>
 
@@ -572,6 +576,18 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
+                                @if ($type == "Horse")
+                                    <div class="form-group">
+                                        <label>Fuel Source<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="radio" wire:model.debounce.300ms="fuel_source" value="station" class="line-style" required/>
+                                            <label for="one" class="radio-label">Fueling Station</label>
+                                            <input type="radio" wire:model.debounce.300ms="fuel_source" value="truck" class="line-style" required/>
+                                            <label for="one" class="radio-label">Another Truck</label>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($type == "Vehicle" || $fuel_source == "station")
                                 <div class="form-group">
                                     <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -581,7 +597,7 @@
                                         @endforeach
                                     </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small>
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -594,9 +610,22 @@
                                                     <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
                                                 @endif
                                             </div>
-                                        @endif 
+                                        @endif
                                     @endif
                                 </div>
+                                @elseif ($type == "Horse" && $fuel_source == "truck")
+                                <div class="form-group">
+                                    <label for="source_horse">Source Truck<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="selectedSourceHorse" class="form-control" required>
+                                        <option value="">Select Source Truck</option>
+                                        @foreach ($horses as $horse)
+                                            @continue($horse->id == $selectedHorse)
+                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                                @endif
                             </div>
                         @else
                             <div class="col-md-12">
@@ -644,7 +673,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="date">Fuel Type<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="fuel_type" required disabled>
+                                <select class="form-control" wire:model.debounce.300ms="fuel_type" required @if($fuel_type_locked) disabled @endif>
                                     <option value="">Select Fuel Type</option>
                                     <option value="Diesel">Diesel</option>
                                     <option value="Petrol">Petrol</option>
@@ -1001,6 +1030,18 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
+                                @if ($type == "Horse")
+                                    <div class="form-group">
+                                        <label>Fuel Source<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="radio" wire:model.debounce.300ms="fuel_source" value="station" class="line-style" required/>
+                                            <label for="one" class="radio-label">Fueling Station</label>
+                                            <input type="radio" wire:model.debounce.300ms="fuel_source" value="truck" class="line-style" required/>
+                                            <label for="one" class="radio-label">Another Truck</label>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($type == "Vehicle" || $fuel_source == "station")
                                 <div class="form-group">
                                     <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -1010,7 +1051,7 @@
                                         @endforeach
                                     </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small>
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -1023,9 +1064,22 @@
                                                     <span>{{$selected_container->currency?->symbol}}{{ number_format($this->effectiveAccountBalance ?? $account_balance ?? 0, 2) }}</span>
                                                 @endif
                                             </div>
-                                        @endif 
+                                        @endif
                                     @endif
                                 </div>
+                                @elseif ($type == "Horse" && $fuel_source == "truck")
+                                <div class="form-group">
+                                    <label for="source_horse">Source Truck<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="selectedSourceHorse" class="form-control" required>
+                                        <option value="">Select Source Truck</option>
+                                        @foreach ($horses as $horse)
+                                            @continue($horse->id == $selectedHorse)
+                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                                @endif
                             </div>
                         @else
                             <div class="col-md-12">
@@ -1061,7 +1115,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="date">Fuel Type<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="fuel_type" required disabled>
+                                <select class="form-control" wire:model.debounce.300ms="fuel_type" required @if($fuel_type_locked) disabled @endif>
                                     <option value="">Select Fuel Type</option>
                                     <option value="Diesel">Diesel</option>
                                     <option value="Petrol">Petrol</option>

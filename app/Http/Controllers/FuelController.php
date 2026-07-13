@@ -46,6 +46,7 @@ class FuelController extends Controller
             'fuel' => $fuel,
             'company' => $company,
             'container' => $container,
+            'source_horse' => $fuel->source_horse,
           ]);
     }
     public function print(Fuel $fuel){
@@ -60,6 +61,7 @@ class FuelController extends Controller
             'fuel' => $fuel,
             'company' => $company,
             'container' => $container,
+            'source_horse' => $fuel->source_horse,
           ]);
     }
 

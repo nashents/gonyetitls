@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
@@ -54,9 +55,11 @@ WithCustomStartCell
             ->groupBy('employee_id')
             ->map(function ($employeeLeaves) {
                 $leaveDataByType = $employeeLeaves->keyBy('leave_type_id')->map(function ($employeeLeave) {
-                    return 'Taken:' . ($employeeLeave->days_taken ?? 0)
-                        . ', Available:' . ($employeeLeave->available_leave_days ?? 0)
-                        . ', Maximum:' . ($employeeLeave->maximum_leave_days ?? 0);
+                    return (object) [
+                        'taken' => $employeeLeave->days_taken ?? 0,
+                        'available' => $employeeLeave->available_leave_days ?? 0,
+                        'maximum' => $employeeLeave->maximum_leave_days ?? 0,
+                    ];
                 });
 
                 return (object) [
@@ -74,7 +77,10 @@ WithCustomStartCell
             ];
 
             foreach ($this->leaveTypes as $leaveType) {
-                $data[] = $row->leave_data->get($leaveType->id, '');
+                $leave = $row->leave_data->get($leaveType->id);
+                $data[] = $leave->taken ?? '';
+                $data[] = $leave->available ?? '';
+                $data[] = $leave->maximum ?? '';
             }
 
             return $data;
@@ -82,20 +88,45 @@ WithCustomStartCell
 
     }
     public function headings(): array{
-            return array_merge(
-                ['Employee#', 'Fullname'],
-                $this->leaveTypes->pluck('name')->toArray()
-            );
+            $typeRow = ['Employee#', 'Fullname'];
+            $subRow = ['', ''];
+
+            foreach ($this->leaveTypes as $leaveType) {
+                $typeRow[] = $leaveType->name;
+                $typeRow[] = '';
+                $typeRow[] = '';
+                $subRow[] = 'Taken';
+                $subRow[] = 'Available';
+                $subRow[] = 'Maximum';
+            }
+
+            return [$typeRow, $subRow];
 
 
     }
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $lastColumn = Coordinate::stringFromColumnIndex($this->leaveTypes->count() + 2);
-                $event->sheet->getStyle("A7:{$lastColumn}7")->applyFromArray([
+                $lastColumn = Coordinate::stringFromColumnIndex($this->leaveTypes->count() * 3 + 2);
+
+                $event->sheet->mergeCells("A7:A8");
+                $event->sheet->mergeCells("B7:B8");
+
+                foreach ($this->leaveTypes as $index => $leaveType) {
+                    $startCol = 3 + ($index * 3);
+                    $endCol = $startCol + 2;
+                    $startLetter = Coordinate::stringFromColumnIndex($startCol);
+                    $endLetter = Coordinate::stringFromColumnIndex($endCol);
+                    $event->sheet->mergeCells("{$startLetter}7:{$endLetter}7");
+                }
+
+                $event->sheet->getStyle("A7:{$lastColumn}8")->applyFromArray([
                     'font' => [
                         'bold' => true
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
                     ],
                     'borders' => [
                         'outline' => [

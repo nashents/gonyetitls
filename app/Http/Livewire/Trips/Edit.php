@@ -1297,6 +1297,18 @@ class Edit extends Component
 
          $this->with_trailer = $this->trip->with_trailer;
          $this->selectedDeal = $this->trip->deal_id;
+         if($this->selectedDeal){
+             $this->with_deal = true;
+             $this->deals = Deal::where(function($q){
+                     $q->where('end_date', '>=', now())
+                       ->where('status', 1)
+                       ->where('is_closed', 0);
+                 })
+                 ->orWhere('id', $this->selectedDeal)
+                 ->get();
+         }else{
+             $this->deals = collect();
+         }
          $this->trip_number = $this->trip->trip_number;
          $this->trip_ref = $this->trip->trip_ref;
          $this->freight_calculation = $this->trip->freight_calculation;
@@ -2252,6 +2264,14 @@ class Edit extends Component
     public function update(){
 
         DB::transaction(function () {
+
+        if($this->with_deal && $this->selectedDeal){
+            $deal = Deal::find($this->selectedDeal);
+            if($deal){
+                $this->selectedCargo = $deal->cargo_id;
+                $this->units_of_measure_id = $deal->units_of_measure_id;
+            }
+        }
 
         $trip = Trip::find($this->trip_id);
 
@@ -3648,7 +3668,7 @@ class Edit extends Component
                 ]);
             }
             elseif($category == 'deals'){
-            $this->deals = Deal::where('end_date', '<=', now())
+            $this->deals = Deal::where('end_date', '>=', now())
                             ->where('status', 1)
                             ->where('is_closed', 0)
                             ->get();

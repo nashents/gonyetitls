@@ -39,9 +39,13 @@
                             <div class="row contacts">
                                 <div class="col invoice-to">
                                     <div class="text-gray-light">FUEL ORDER TO:</div>
-                                    <h5 class="to">{{$container->name}}</h5>
-                                    <div class="address">{{$container->address}}</div>
-                                    <div class="email"><a href="mailto:{{$container->email}}">{{$container->email}}</a></div>
+                                    @if ($container)
+                                        <h5 class="to">{{$container->name}}</h5>
+                                        <div class="address">{{$container->address}}</div>
+                                        <div class="email"><a href="mailto:{{$container->email}}">{{$container->email}}</a></div>
+                                    @elseif ($source_horse)
+                                        <h5 class="to">Truck: {{$source_horse->registration_number}} {{$source_horse->fleet_number ? "(".$source_horse->fleet_number.")" : ""}}</h5>
+                                    @endif
                                 </div>
                                 <div class="col invoice-details">
                                     <div class="date"><strong>Fuel Order Number:</strong> {{$fuel->order_number}}</div>
@@ -119,7 +123,7 @@
                                   
                                     <tr>
                                         <th class="text-center"><strong>Fuel Type</strong></th>
-                                        <td class="text-center"> {{$fuel->container ? $fuel->container->fuel_type : ""}}</td>
+                                        <td class="text-center"> {{$fuel->container ? $fuel->container->fuel_type : ($fuel->fuel_type ?? "")}}</td>
                                     </tr>
                                     <tr>
                                         <th class="text-center"><strong>Quantity</strong></th>

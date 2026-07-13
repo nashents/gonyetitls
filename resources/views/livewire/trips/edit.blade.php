@@ -466,14 +466,18 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('cargos.index') }}" target="_blank" style="color: blue">Cargo(s)</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedCargo" required>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedCargo" required {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                               <option value="">Select Cargo</option>
                                               @foreach ($cargos as $cargo)
                                                   <option value="{{$cargo->id}}">{{$cargo->name}} {{$cargo->sku}}</option>
                                               @endforeach
                                           </select>
                                             @error('selectedCargo') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @if ($with_deal && $selectedDeal)
+                                                <small style="color: grey">Cargo is set by the selected deal and cannot be changed.</small>
+                                            @else
                                             <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small> <a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -513,7 +517,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="customer">Units Of Measure</label>
-                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                             <option value="">Select Unit Of Measure</option>
                                                 @foreach ($units_of_measures as $units_of_measure)
                                                     <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
@@ -541,7 +545,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="customer">Units Of Measure</label>
-                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                             <option value="">Select Unit Of Measure</option>
                                                 @foreach ($units_of_measures as $units_of_measure)
                                                     <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
@@ -989,7 +993,7 @@
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="customer">Units Of Measure</label>
-                                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                                             <option value="">Select Unit Of Measure</option>
                                                                 @foreach ($units_of_measures as $units_of_measure)
                                                                     <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
@@ -1089,7 +1093,7 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="customer">Units Of Measure</label>
-                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                                                 <option value="">Select Unit Of Measure</option>
                                                                     @foreach ($units_of_measures as $units_of_measure)
                                                                         <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
@@ -1304,7 +1308,7 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="customer">Units Of Measure</label>
-                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                                                 <option value="">Select Unit Of Measure</option>
                                                                     @foreach ($units_of_measures as $units_of_measure)
                                                                         <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
@@ -1405,7 +1409,7 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             <label for="customer">Units Of Measure</label>
-                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" {{ ($with_deal && $selectedDeal) ? 'disabled' : '' }}>
                                                                 <option value="">Select Unit Of Measure</option>
                                                                     @foreach ($units_of_measures as $units_of_measure)
                                                                         <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
