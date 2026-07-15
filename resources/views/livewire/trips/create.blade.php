@@ -1508,7 +1508,9 @@
                                                 <select wire:model.debounce.300ms="selectedTransporter" class="form-control" >
                                                     <option value="">Select Transporter</option>
                                                     @foreach ($transporters as $transporter)
+                                                    @if (!$transporter_agreement || !$transporter->default)
                                                     <option value="{{$transporter->id}}">{{$transporter->name}}</option>
+                                                    @endif
                                                     @endforeach
                                                 </select>
                                                 @error('selectedTransporter') <span class="text-danger error">{{ $message }}</span>@enderror

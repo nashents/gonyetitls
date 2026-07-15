@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\EmployeeLeave;
+use App\Models\Leave;
 use App\Models\LeaveType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -44,6 +45,16 @@ WithCustomStartCell
     */
     public function collection()
     {
+        $daysTaken = Leave::query()
+            ->whereYear('from', date('Y'))
+            ->where('hod_decision', 'approved')
+            ->where('management_decision', 'approved')
+            ->whereIn('leave_type_id', $this->leaveTypes->pluck('id'))
+            ->selectRaw('employee_id, leave_type_id, SUM(days) as total_days')
+            ->groupBy('employee_id', 'leave_type_id')
+            ->get()
+            ->groupBy('employee_id');
+
         return EmployeeLeave::query()
             ->whereHas('employee', function ($query) {
                 $query->where('status', 1);
@@ -53,10 +64,12 @@ WithCustomStartCell
             ->orderBy('employee_id')
             ->get()
             ->groupBy('employee_id')
-            ->map(function ($employeeLeaves) {
-                $leaveDataByType = $employeeLeaves->keyBy('leave_type_id')->map(function ($employeeLeave) {
+            ->map(function ($employeeLeaves, $employeeId) use ($daysTaken) {
+                $takenByType = $daysTaken->get($employeeId, collect())->keyBy('leave_type_id');
+
+                $leaveDataByType = $employeeLeaves->keyBy('leave_type_id')->map(function ($employeeLeave) use ($takenByType) {
                     return (object) [
-                        'taken' => $employeeLeave->days_taken ?? 0,
+                        'taken' => (float) ($takenByType->get($employeeLeave->leave_type_id)->total_days ?? 0),
                         'available' => $employeeLeave->available_leave_days ?? 0,
                         'maximum' => $employeeLeave->maximum_leave_days ?? 0,
                     ];

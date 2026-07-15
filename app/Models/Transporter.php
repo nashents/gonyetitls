@@ -132,5 +132,10 @@ class Transporter extends Model implements Auditable
         'suburb',
         'status',
         'street_address',
+        'default',
+    ];
+
+    protected $casts = [
+        'default' => 'boolean',
     ];
 }

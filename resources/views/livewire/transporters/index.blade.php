@@ -57,7 +57,11 @@
                                             <small><strong>Custom Ref:</strong> {{$transporter->custom_ref}}</small>
                                         @endif
                                     </td>
-                                    <td>{{ucfirst($transporter->name)}}</td>
+                                    <td>{{ucfirst($transporter->name)}}
+                                        @if ($transporter->default)
+                                        <span class="badge bg-primary">Default</span>
+                                        @endif
+                                    </td>
                                     <td>{{$transporter->email}}</td>
                                     <td>{{$transporter->phonenumber}}</td>
                                     <td>
@@ -326,9 +330,15 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="default" class="line-style" />
+                        <label for="default" class="radio-label">Default Transporter</label>
+                        <small class="d-block text-muted">Cannot be changed back once saved as default.</small>
+                        @error('default') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
 
                     <br>
-                   
+
                     <div style="height: 400px; overflow: auto">
                         <div class="form-group">
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%"  style="height: 400px">
@@ -555,6 +565,12 @@
                                 @error('street_address') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="default" class="line-style" @if($default_locked) disabled @endif />
+                        <label for="default" class="radio-label">Default Transporter</label>
+                        <small class="d-block text-muted">Cannot be changed back once saved as default.</small>
+                        @error('default') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                 </div>
                 <div class="modal-footer">

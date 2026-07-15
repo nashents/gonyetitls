@@ -29,6 +29,8 @@ class Edit extends Component
     public $suburb;
     public $street_address;
     public $worknumber;
+    public $default = false;
+    public $default_locked = false;
 
     public $transporter_id;
     public $user_id;
@@ -152,6 +154,8 @@ class Edit extends Component
         $this->suburb = $transporter->suburb;
         $this->street_address = $transporter->street_address;
         $this->transporter_id = $transporter->id;
+        $this->default = (bool) $transporter->default;
+        $this->default_locked = (bool) $transporter->default;
     }
 
     public function update()
@@ -159,6 +163,10 @@ class Edit extends Component
         if ($this->transporter_id) {
             try{
             $transporter = Transporter::find($this->transporter_id);
+            // A transporter's default flag can only go from false to true, never back to false.
+            if (!$transporter->default && $this->default) {
+                Transporter::where('default', true)->update(['default' => false]);
+            }
             $transporter->update([
                 'user_id' => Auth::user()->id,
                 'name' => $this->name,
@@ -169,8 +177,9 @@ class Edit extends Component
                 'city' => $this->city,
                 'suburb' => $this->suburb,
                 'street_address' => $this->street_address,
+                'default' => $transporter->default || $this->default,
             ]);
-          
+
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Transporter Updated Successfully!!"

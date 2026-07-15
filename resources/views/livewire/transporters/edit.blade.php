@@ -75,6 +75,12 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="default" class="line-style" @if($default_locked) disabled @endif />
+                                        <label for="default" class="radio-label">Default Transporter</label>
+                                        <small class="d-block text-muted">Cannot be changed back once saved as default.</small>
+                                        @error('default') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
                                 </div>
                                 <div class="modal-footer">
                                     <div class="btn-group" role="group">

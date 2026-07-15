@@ -5,7 +5,11 @@
             <div class="panel border-primary no-border border-3-top">
                 <div class="panel-heading">
                     <div class="panel-title">
-                        <h5>{{ucfirst($transporter->name)}}</h5>
+                        <h5>{{ucfirst($transporter->name)}}
+                            @if ($transporter->default)
+                            <span class="badge bg-primary">Default</span>
+                            @endif
+                        </h5>
                     </div>
                 </div>
                 <div class="panel-body">
@@ -107,7 +111,11 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Name</th>
-                                <td class="w-20 line-height-35">{{$transporter->name}}</td>
+                                <td class="w-20 line-height-35">{{$transporter->name}}
+                                    @if ($transporter->default)
+                                    <span class="badge bg-primary">Default</span>
+                                    @endif
+                                </td>
                             </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Email</th>

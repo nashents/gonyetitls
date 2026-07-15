@@ -50,6 +50,8 @@ class Index extends Component
     public $street_address;
     public $worknumber;
     public $custom_ref;
+    public $default = false;
+    public $default_locked = false;
 
     public $transporter_id;
     public $user_id;
@@ -197,6 +199,8 @@ class Index extends Component
         $this->title = [];
         $this->file = [];
         $this->expires_at = [];
+        $this->default = false;
+        $this->default_locked = false;
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -237,6 +241,10 @@ class Index extends Component
 
         
 
+        if ($this->default) {
+            Transporter::where('default', true)->update(['default' => false]);
+        }
+
         $transporter = new Transporter;
         $transporter->creator_id = Auth::user()->id;
         $transporter->company_id = Auth::user()->employee->company->id;
@@ -253,6 +261,7 @@ class Index extends Component
         $transporter->suburb = $this->suburb;
         $transporter->street_address = $this->street_address;
         $transporter->status = 1;
+        $transporter->default = $this->default;
         $transporter->save();
         if (isset($this->cargo_id) && !empty($this->cargo_id)) {
             foreach ($this->cargo_id as $key => $value) {
@@ -373,6 +382,8 @@ class Index extends Component
         $this->suburb = $transporter->suburb;
         $this->street_address = $transporter->street_address;
         $this->transporter_id = $transporter->id;
+        $this->default = (bool) $transporter->default;
+        $this->default_locked = (bool) $transporter->default;
         $this->dispatchBrowserEvent('show-transporterEditModal');
 
     }
@@ -383,7 +394,7 @@ class Index extends Component
         DB::transaction(function () {
 
         if ($this->transporter_id) {
-            
+
             $transporter = Transporter::find($this->transporter_id);
             $transporter->user_id = Auth::user()->id;
             $transporter->name = $this->name;
@@ -395,6 +406,11 @@ class Index extends Component
             $transporter->city = $this->city;
             $transporter->suburb = $this->suburb;
             $transporter->street_address = $this->street_address;
+            // A transporter's default flag can only go from false to true, never back to false.
+            if (!$transporter->default && $this->default) {
+                Transporter::where('default', true)->update(['default' => false]);
+                $transporter->default = true;
+            }
             $transporter->update();
 
             $this->dispatchBrowserEvent('hide-transporterEditModal');

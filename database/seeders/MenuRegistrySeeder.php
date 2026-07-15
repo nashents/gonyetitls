@@ -14,6 +14,7 @@ use App\Models\Module;
 use App\Models\ModuleGroup;
 use App\Models\SubModule;
 use App\Models\Tax;
+use App\Models\Transporter;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -2246,5 +2247,23 @@ class MenuRegistrySeeder extends Seeder
             'route_name' => 'logout',
             'sort_order' => 30,
         ]);
+
+        $this->seedDefaultTransporter();
+    }
+
+    /**
+     * Marks the earliest-created, non-Gonyeti transporter as the default one.
+     * A default is permanent once set, so this no-ops once any transporter is already default.
+     */
+    private function seedDefaultTransporter(): void
+    {
+        if (Transporter::where('default', true)->exists()) {
+            return;
+        }
+
+        Transporter::where('name', 'not like', '%Gonyeti%')
+            ->orderBy('id')
+            ->first()
+            ?->update(['default' => true]);
     }
 }

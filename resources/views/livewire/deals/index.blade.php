@@ -157,6 +157,11 @@
                                                         </button>
                                                         <ul class="dropdown-menu">
                                                             <li>
+                                                                <a href="{{ route('deals.show', $deal->id) }}" target="_blank">
+                                                                    <i class="fas fa-eye color-default"></i> View
+                                                                </a>
+                                                            </li>
+                                                            <li>
                                                                 <a href="#" wire:click.prevent="edit({{ $deal->id }})">
                                                                     <i class="fa fa-edit color-success"></i> Edit
                                                                 </a>

@@ -1530,7 +1530,9 @@
                                                 <option value="">Select Transporter</option>
                                                 @if (!is_null($selectedStatus))
                                                     @foreach ($transporters as $transporter)
+                                                        @if (!$transporter_agreement || !$transporter->default)
                                                         <option value="{{$transporter->id}}">{{$transporter->name}}</option>
+                                                        @endif
                                                     @endforeach
                                                 @endif
                                             </select>
