@@ -16,6 +16,7 @@
                                     
                                 </div>
                                 <div class="panel-title">
+                                    <a href="#" wire:click="enforceLeaveTypeDefaults()" onclick="return confirm('This will force update ALL employee leave records with each leave type\'s default accrual rate, max accruable and entitlement, overwriting any manual adjustments. Continue?')" class="btn btn-default border-danger btn-rounded btn-wide"><i class="fa fa-refresh"></i>Enforce Leave Type Defaults</a>
                                     <a href="" data-toggle="modal" data-target="#leavesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                     <a href="#" wire:click="exportEmployeesLeaveExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportEmployeesLeaveCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>

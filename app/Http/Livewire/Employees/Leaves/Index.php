@@ -36,6 +36,51 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function enforceLeaveTypeDefaults()
+    {
+        $leaveTypes = LeaveType::where('active', true)->get();
+
+        $enforced = 0;
+
+        DB::transaction(function () use ($leaveTypes, &$enforced) {
+            Employee::where('archive', 0)
+                ->select('id')
+                ->chunkById(200, function ($employees) use ($leaveTypes, &$enforced) {
+                    foreach ($employees as $employee) {
+                        foreach ($leaveTypes as $leaveType) {
+                            EmployeeLeave::updateOrCreate(
+                                [
+                                    'employee_id' => $employee->id,
+                                    'leave_type_id' => $leaveType->id,
+                                ],
+                                [
+                                    'acrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
+                                    'available_leave_days' => $leaveType->entitlement ?? 0,
+                                    'maximum_leave_days' => $leaveType->max_carry_forward_days ?? 0,
+                                ]
+                            );
+
+                            $enforced++;
+
+                            // Backward compatibility: keep the Employee table in sync, Annual Leave only
+                            if (strtolower($leaveType->name) === 'annual') {
+                                Employee::where('id', $employee->id)->update([
+                                    'accrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
+                                    'leave_days' => $leaveType->entitlement ?? 0,
+                                    'maximum_leave_days' => $leaveType->max_carry_forward_days ?? 0,
+                                ]);
+                            }
+                        }
+                    }
+                });
+        });
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Leave Type Defaults Enforced Successfully!! ({$enforced} record(s) updated)"
+        ]);
+    }
+
     public function exportEmployeesLeaveCSV(Excel $excel){
 
         return $excel->download(new EmployeesLeaveExport, 'employees_leave_data.csv', Excel::CSV);
