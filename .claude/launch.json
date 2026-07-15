@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "laravel",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["artisan", "serve", "--port=8000"],
+      "port": 8000
+    },
+    {
+      "name": "mix-watch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "watch"],
+      "port": 8080
+    }
+  ]
+}

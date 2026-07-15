@@ -1152,6 +1152,9 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Loss Causes','slug'=>'loss-causes','icon'=>'fas fa-list','route_name'=>'losses.index','sort_order'=>30]);
         $upsertSub($m, ['name'=>'Waste Receptacles','slug'=>'waste-receptacles','icon'=>'fas fa-list','route_name'=>'waste_receptacles.index','sort_order'=>35]);
         $upsertSub($m, ['name'=>'Waste Types','slug'=>'waste-types','icon'=>'fas fa-list','route_name'=>'waste_types.index','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Audit Templates','slug'=>'sheq-audit-templates','icon'=>'fas fa-list','route_name'=>'sheq_audit_templates.index','sort_order'=>50]);
+        $upsertSub($m, ['name'=>'Equipment Classes','slug'=>'sheq-equipment-classes','icon'=>'fas fa-list','route_name'=>'sheq_equipment_classes.index','sort_order'=>60]);
+        $upsertSub($m, ['name'=>'Monitoring Parameters','slug'=>'sheq-monitoring-parameters','icon'=>'fas fa-list','route_name'=>'sheq_monitoring_parameters.index','sort_order'=>70]);
        
 
         $m = $upsertModule($g, [
@@ -1167,30 +1170,167 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Approved Incidents','slug'=>'approved-incidents','icon'=>'fas fa-check','route_name'=>'incidents.approved','sort_order'=>40,'badge_key'=>'incidents_approved_count']);
         $upsertSub($m, ['name'=>'Rejected Incidents','slug'=>'rejected-incidents','icon'=>'fas fa-ban','route_name'=>'incidents.rejected','sort_order'=>50,'badge_key'=>'incidents_rejected_count']);
         
+        // Context & Planning (ISO clauses 4 & 6)
         $m = $upsertModule($g, [
-            'name' => 'Waste Collection',
-            'slug' => 'waste-collections',
+            'name' => 'Context & Stakeholders',
+            'slug' => 'sheq-context',
+            'icon' => 'fas fa-compass',
+            'sort_order' => 12,
+        ]);
+        $upsertSub($m, ['name'=>'Context Issues (SWOT/PESTEL)','slug'=>'sheq-context-issues','icon'=>'fas fa-list','route_name'=>'sheq_context_issues.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Interested Parties','slug'=>'sheq-stakeholders','icon'=>'fas fa-handshake','route_name'=>'sheq_stakeholders.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Leadership',
+            'slug' => 'sheq-leadership',
+            'icon' => 'fas fa-users',
+            'sort_order' => 14,
+        ]);
+        $upsertSub($m, ['name'=>'SHEQ Meetings','slug'=>'sheq-meetings','icon'=>'fas fa-list','route_name'=>'sheq_meetings.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Leadership Engagements','slug'=>'sheq-engagements','icon'=>'fas fa-street-view','route_name'=>'sheq_engagements.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Appointments Register','slug'=>'sheq-appointments','icon'=>'fas fa-id-badge','route_name'=>'sheq_appointments.index','sort_order'=>30]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Risk Management',
+            'slug' => 'sheq-risk-management',
+            'icon' => 'fas fa-shield-alt',
+            'sort_order' => 16,
+        ]);
+        $upsertSub($m, ['name'=>'Risk Assessments','slug'=>'sheq-risk-assessments','icon'=>'fas fa-list','route_name'=>'sheq_risk_assessments.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Risk Register','slug'=>'sheq-risks','icon'=>'fas fa-exclamation-circle','route_name'=>'sheq_risks.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Compliance Obligations',
+            'slug' => 'sheq-obligations',
+            'icon' => 'fas fa-balance-scale',
+            'route_name' => 'sheq_obligations.*',
+            'sort_order' => 17,
+        ]);
+        $upsertSub($m, ['name'=>'Obligations Register','slug'=>'sheq-obligations-register','icon'=>'fas fa-list','route_name'=>'sheq_obligations.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Objectives & Programmes',
+            'slug' => 'sheq-objectives',
+            'icon' => 'fas fa-bullseye',
+            'route_name' => 'sheq_objectives.*',
+            'sort_order' => 18,
+        ]);
+        $upsertSub($m, ['name'=>'SHEQ Objectives','slug'=>'sheq-objectives-register','icon'=>'fas fa-list','route_name'=>'sheq_objectives.index','sort_order'=>10]);
+
+        // Improvement (ISO clauses 9 & 10)
+        $m = $upsertModule($g, [
+            'name' => 'Audits',
+            'slug' => 'sheq-audits',
+            'icon' => 'fas fa-clipboard-check',
+            'sort_order' => 21,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Audits','slug'=>'sheq-manage-audits','icon'=>'fas fa-list','route_name'=>'sheq_audits.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Audit Templates','slug'=>'sheq-audit-templates-module','icon'=>'fas fa-list-alt','route_name'=>'sheq_audit_templates.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Non-Conformities',
+            'slug' => 'sheq-non-conformities',
+            'icon' => 'fas fa-times-circle',
+            'route_name' => 'sheq_non_conformities.*',
+            'sort_order' => 22,
+        ]);
+        $upsertSub($m, ['name'=>'NC Register','slug'=>'sheq-nc-register','icon'=>'fas fa-list','route_name'=>'sheq_non_conformities.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Action Tracker',
+            'slug' => 'sheq-actions',
             'icon' => 'fas fa-tasks',
-            'route_name' => 'waste_collections.*',
+            'route_name' => 'sheq_actions.*',
+            'sort_order' => 23,
+        ]);
+        $upsertSub($m, ['name'=>'All Actions','slug'=>'sheq-all-actions','icon'=>'fas fa-list','route_name'=>'sheq_actions.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Management Reviews',
+            'slug' => 'sheq-management-reviews',
+            'icon' => 'fas fa-gavel',
+            'route_name' => 'sheq_management_reviews.*',
+            'sort_order' => 24,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Reviews','slug'=>'sheq-manage-reviews','icon'=>'fas fa-list','route_name'=>'sheq_management_reviews.index','sort_order'=>10]);
+
+        // Retire the old standalone waste modules (now nested under Environmental)
+        Module::where('module_group_id', $g->id)
+            ->whereIn('slug', ['waste-collections','waste-disposals'])
+            ->update(['is_active' => false]);
+
+        // Environmental (monitoring + waste)
+        $m = $upsertModule($g, [
+            'name' => 'Environmental',
+            'slug' => 'sheq-environmental',
+            'icon' => 'fas fa-leaf',
             'sort_order' => 25,
         ]);
+        $upsertSub($m, ['name'=>'Monitoring Readings','slug'=>'sheq-monitoring-readings','icon'=>'fas fa-chart-line','route_name'=>'sheq_monitoring_readings.index','sort_order'=>5]);
         $upsertSub($m, ['name'=>'Manage Collection','slug'=>'manage-waste-collections','icon'=>'fas fa-list','route_name'=>'waste_collections.index','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Pending Collections','slug'=>'pending-waste-collections','icon'=>'fas fa-clock','route_name'=>'waste_collections.pending','sort_order'=>20,'badge_key'=>'waste_collections_pending_count']);
         $upsertSub($m, ['name'=>'Approved Collections','slug'=>'approved-waste-collections','icon'=>'fas fa-check','route_name'=>'waste_collections.approved','sort_order'=>30,'badge_key'=>'waste_collections_approved_count']);
         $upsertSub($m, ['name'=>'Rejected Collections','slug'=>'rejected-waste-collections','icon'=>'fas fa-ban','route_name'=>'waste_collections.rejected','sort_order'=>40,'badge_key'=>'waste_collections_rejected_count']);
-        
-        $m = $upsertModule($g, [
-            'name' => 'Waste Disposal',
-            'slug' => 'waste-disposals',
-            'icon' => 'fas fa-remove',
-            'route_name' => 'waste_disposal.*',
-            'sort_order' => 26,
-        ]);
-        $upsertSub($m, ['name'=>'Manage Disposals','slug'=>'manage-waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Disposals','slug'=>'pending-waste-disposals','icon'=>'fas fa-clock','route_name'=>'waste_disposals.pending','sort_order'=>20,'badge_key'=>'waste_disposals_pending_count']);
-        $upsertSub($m, ['name'=>'Approved Disposals','slug'=>'approved-waste-disposals','icon'=>'fas fa-check','route_name'=>'waste_disposals.approved','sort_order'=>30,'badge_key'=>'waste_disposals_pending_count']);
-        $upsertSub($m, ['name'=>'Rejected Disposals','slug'=>'rejected-waste-disposals','icon'=>'fas fa-ban','route_name'=>'waste_disposals.rejected','sort_order'=>40,'badge_key'=>'waste_disposals_pending_count']);
+        $upsertSub($m, ['name'=>'Manage Disposals','slug'=>'manage-waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.index','sort_order'=>50]);
+        $upsertSub($m, ['name'=>'Pending Disposals','slug'=>'pending-waste-disposals','icon'=>'fas fa-clock','route_name'=>'waste_disposals.pending','sort_order'=>60,'badge_key'=>'waste_disposals_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Disposals','slug'=>'approved-waste-disposals','icon'=>'fas fa-check','route_name'=>'waste_disposals.approved','sort_order'=>70,'badge_key'=>'waste_disposals_pending_count']);
+        $upsertSub($m, ['name'=>'Rejected Disposals','slug'=>'rejected-waste-disposals','icon'=>'fas fa-ban','route_name'=>'waste_disposals.rejected','sort_order'=>80,'badge_key'=>'waste_disposals_pending_count']);
 
+        // Operational controls (ISO clause 8)
+        $m = $upsertModule($g, [
+            'name' => 'Emergency Preparedness',
+            'slug' => 'sheq-emergency',
+            'icon' => 'fas fa-bell',
+            'sort_order' => 27,
+        ]);
+        $upsertSub($m, ['name'=>'Emergency Scenarios','slug'=>'sheq-emergencies','icon'=>'fas fa-list','route_name'=>'sheq_emergencies.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Drills','slug'=>'sheq-drills','icon'=>'fas fa-bullhorn','route_name'=>'sheq_drills.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Chemicals (HCS)',
+            'slug' => 'sheq-chemicals',
+            'icon' => 'fas fa-flask',
+            'route_name' => 'sheq_chemicals.*',
+            'sort_order' => 28,
+        ]);
+        $upsertSub($m, ['name'=>'Chemical Register','slug'=>'sheq-chemical-register','icon'=>'fas fa-list','route_name'=>'sheq_chemicals.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Critical Equipment',
+            'slug' => 'sheq-equipment',
+            'icon' => 'fas fa-wrench',
+            'route_name' => 'sheq_equipment.*',
+            'sort_order' => 29,
+        ]);
+        $upsertSub($m, ['name'=>'Equipment Register','slug'=>'sheq-equipment-register','icon'=>'fas fa-list','route_name'=>'sheq_equipment.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Occupational Health',
+            'slug' => 'sheq-occupational-health',
+            'icon' => 'fas fa-heartbeat',
+            'sort_order' => 31,
+        ]);
+        $upsertSub($m, ['name'=>'Hygiene Surveys','slug'=>'sheq-hygiene-surveys','icon'=>'fas fa-list','route_name'=>'sheq_hygiene_surveys.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Medical Surveillance','slug'=>'sheq-medical-surveillances','icon'=>'fas fa-user-md','route_name'=>'sheq_medical_surveillances.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'PPE Issue Register','slug'=>'sheq-ppe-issues','icon'=>'fas fa-hard-hat','route_name'=>'sheq_ppe_issues.index','sort_order'=>30]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Change Management',
+            'slug' => 'sheq-changes',
+            'icon' => 'fas fa-random',
+            'route_name' => 'sheq_changes.*',
+            'sort_order' => 32,
+        ]);
+        $upsertSub($m, ['name'=>'Change Requests','slug'=>'sheq-change-requests','icon'=>'fas fa-list','route_name'=>'sheq_changes.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Contractor SHEQ',
+            'slug' => 'sheq-contractors',
+            'icon' => 'fas fa-truck',
+            'route_name' => 'sheq_contractor_onboardings.*',
+            'sort_order' => 33,
+        ]);
+        $upsertSub($m, ['name'=>'Contractor Onboarding','slug'=>'sheq-contractor-onboardings','icon'=>'fas fa-list','route_name'=>'sheq_contractor_onboardings.index','sort_order'=>10]);
 
         $m = $upsertModule($g, [
             'name' => 'Age Pyramid',
@@ -1207,7 +1347,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Vendors','slug'=>'age-vendors','icon'=>'fas fa-list','route_name'=>'vendors.age','sort_order'=>70]);
 
         $m = $upsertModule($g, [
-            'name' => 'Compliance',
+            'name' => 'Route Compliance',
             'slug' => 'compliance',
             'icon' => 'fas fa-check',
             'route_name' => 'compliances.index',

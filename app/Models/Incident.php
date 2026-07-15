@@ -70,6 +70,9 @@ class Incident extends Model implements Auditable
     public function destination(){
         return $this->belongsTo('App\Models\Destination');
     }
+    public function sheq_actions(){
+        return $this->morphMany('App\Models\SheqAction','actionable');
+    }
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }

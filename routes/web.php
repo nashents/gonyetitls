@@ -930,9 +930,40 @@ Route::get('/third-parties/dashboard','DashboardController@thirdParty')->name('d
 Route::get('/third-parties/trips','TripController@thirdParty')->name('trips.third_parties');
 Route::get('trips/{id}/third-parties/','TripController@thirdPartyShow')->name('trips.third_parties.show');
 
-// Send SMS 
+// Send SMS
 Route::get('/sendUserSms', [SmsController::class, 'sendUserSms'])->name('sendUserSms');
 Route::get('/smsBalance', [SmsController::class, 'get_balance'])->name('smsBalance');
+
+// ----------------------------
+// SHEQ / IMS (ISO 9001, 14001, 45001)
+// ----------------------------
+Route::resource('sheq_actions','SheqActionController');
+Route::resource('sheq_audit_templates','SheqAuditTemplateController');
+Route::get('sheq_audits/{id}/conduct','SheqAuditController@conduct')->name('sheq_audits.conduct');
+Route::resource('sheq_audits','SheqAuditController');
+Route::resource('sheq_risk_assessments','SheqRiskAssessmentController');
+Route::resource('sheq_risks','SheqRiskController');
+Route::resource('sheq_obligations','SheqObligationController');
+Route::resource('sheq_objectives','SheqObjectiveController');
+Route::resource('sheq_context_issues','SheqContextIssueController');
+Route::resource('sheq_stakeholders','SheqStakeholderController');
+Route::resource('sheq_meetings','SheqMeetingController');
+Route::resource('sheq_engagements','SheqEngagementController');
+Route::resource('sheq_appointments','SheqAppointmentController');
+Route::resource('sheq_non_conformities','SheqNonConformityController');
+Route::resource('sheq_management_reviews','SheqManagementReviewController');
+Route::resource('sheq_emergencies','SheqEmergencyController');
+Route::resource('sheq_drills','SheqDrillController');
+Route::resource('sheq_chemicals','SheqChemicalController');
+Route::resource('sheq_equipment_classes','SheqEquipmentClassController');
+Route::resource('sheq_equipment','SheqEquipmentController');
+Route::resource('sheq_changes','SheqChangeController');
+Route::resource('sheq_hygiene_surveys','SheqHygieneSurveyController');
+Route::resource('sheq_medical_surveillances','SheqMedicalSurveillanceController');
+Route::resource('sheq_ppe_issues','SheqPpeIssueController');
+Route::resource('sheq_monitoring_parameters','SheqMonitoringParameterController');
+Route::resource('sheq_monitoring_readings','SheqMonitoringReadingController');
+Route::resource('sheq_contractor_onboardings','SheqContractorOnboardingController');
 
 });
 
