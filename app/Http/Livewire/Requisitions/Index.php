@@ -829,7 +829,7 @@ class Index extends Component
                     if (isset($this->item_account_id[$key])) {
                         $account = Account::find($this->item_account_id[$key]);
                         $requisition_item->account_id = $this->item_account_id[$key];
-                        $requisition_item->account_type_id = $account->account_type?->id;
+                        $requisition_item->account_type_id = $account?->account_type?->id;
                     }
                     if (!empty($this->selectedTax[$key])) {
                         $requisition_item->tax_id = $this->selectedTax[$key];
@@ -1314,7 +1314,7 @@ class Index extends Component
                     if (isset($this->current_item_account_id[$key])) {
                         $account = Account::find($this->current_item_account_id[$key]);
                         $requisition_item->account_id = $this->current_item_account_id[$key];
-                        $requisition_item->account_type_id = $account->account_type?->id;
+                        $requisition_item->account_type_id = $account?->account_type?->id;
                     }
                     if (!empty($this->current_selectedTax[$key])) {
                         $requisition_item->tax_id = $this->current_selectedTax[$key];
@@ -1442,7 +1442,7 @@ class Index extends Component
                     if (isset($this->item_account_id[$key])) {
                         $account = Account::find($this->item_account_id[$key]);
                         $requisition_item->account_id = $this->item_account_id[$key];
-                        $requisition_item->account_type_id = $account->account_type?->id;
+                        $requisition_item->account_type_id = $account?->account_type?->id;
                     }
                     if (!empty($this->selectedTax[$key])) {
                         $requisition_item->tax_id = $this->selectedTax[$key];

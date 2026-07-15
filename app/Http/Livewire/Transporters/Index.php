@@ -430,6 +430,12 @@ class Index extends Component
 
             $query = Transporter::query()
             ->with('cargos','corridors')
+            ->withCount([
+                'drivers as drivers_count',
+                'horses as horses_count',
+                'trailers as trailers_count',
+                'vehicles as vehicles_count',
+            ])
             ->orderBy('name', 'asc');
 
             if (filled($this->search)) {

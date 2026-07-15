@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Leave;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -45,7 +46,6 @@ WithCustomStartCell
     {
         return Leave::query()
         ->with(['employee', 'user', 'department', 'leave_type'])
-        ->where('user_id', Auth::id())
         ->filterLeaves($this->filter, $this->from, $this->to, $this->search)
         ->orderBy('created_at', 'desc');
     }
@@ -55,34 +55,58 @@ WithCustomStartCell
 
         $employee_name = $leave->employee ? $leave->employee->name : "";
         $employee_surname = $leave->employee ? $leave->employee->surname : "";
-        $employee_full_name = $employee_name ." ".$employee_surname;
-        $user_name = $leave->user ? $leave->user->name : "";
-        $user_surname = $leave->user ? $leave->user->surname : "";
-        $user_full_name = $user_name ." ".$user_surname;
+        $employee_full_name = trim($employee_name." ".$employee_surname);
+
+        $flags = collect([
+            $leave->is_backdated ? 'Backdated' : null,
+            $leave->is_emergency ? 'Emergency' : null,
+        ])->filter()->implode(', ');
+
+        $status = ($leave->status == 'approved') ? 'Approved' : (($leave->status == 'rejected') ? 'Rejected' : 'Pending');
+
+        $today = Carbon::today();
+        $start = $leave->from ? Carbon::parse($leave->from) : null;
+        $end = $leave->to ? Carbon::parse($leave->to) : null;
+        $progress = '';
+        if ($start && $end) {
+            if ($today->lt($start)) {
+                $progress = 'Not Yet Started';
+            } elseif ($today->between($start, $end)) {
+                $progress = 'In Progress';
+            } else {
+                $progress = 'Completed';
+            }
+        }
 
             return   [
-                $user_full_name ,
-                $leave->created_at ,
-                $employee_full_name ,
-                $leave->from,
-                $leave->to,
-                $leave->days,
+                $employee_full_name,
+                $leave->department ? $leave->department->name : "",
+                $leave->leave_type ? $leave->leave_type->name : "",
+                $leave->created_at ? Carbon::parse($leave->created_at)->format('d F Y') : "",
+                $start ? $start->format('d F Y') : "",
+                $end ? $end->format('d F Y') : "",
+                $leave->days ? $leave->days." Days" : "",
                 $leave->reason,
-                $leave->status,
+                $flags,
+                $status,
+                $progress,
                  ];
 
 
     }
     public function headings(): array{
             return[
-                'CreatedBy',
-                'AppliedOn',
                 'Employee',
+                'Department',
+                'Type',
+                'Date Applied',
                 'Start Date',
                 'End Date',
                 'Duration',
                 'Reason',
+                'Flags',
                 'Status',
+                'Progress',
             ];
 
 
@@ -90,7 +114,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:H7')->applyFromArray([
+                $event->sheet->getStyle('A7:K7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

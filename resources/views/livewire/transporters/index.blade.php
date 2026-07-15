@@ -38,6 +38,8 @@
                                     </th>
                                     <th class="th-sm">Address
                                     </th>
+                                    <th class="th-sm">Fleet
+                                    </th>
                                     <th class="th-sm">Auth
                                     </th>
                                     <th class="th-sm">Status
@@ -79,6 +81,12 @@
                                         {{$transporter->country}},
                                         @endif
                                     </td>
+                                    <td>
+                                        <span class="badge bg-default" title="Drivers"><i class="fa fa-user"></i> Drivers: {{$transporter->drivers_count}}</span>
+                                        <span class="badge bg-default" title="Horses"><i class="fa fa-truck"></i> Horses: {{$transporter->horses_count}}</span>
+                                        <span class="badge bg-default" title="Trailers"><i class="fa fa-cube"></i> Trailers: {{$transporter->trailers_count}}</span>
+                                        <span class="badge bg-default" title="Vehicles"><i class="fa fa-car"></i> Vehicles: {{$transporter->vehicles_count}}</span>
+                                    </td>
                                     <td><span class="badge bg-{{($transporter->authorization == 'approved') ? 'success' : (($transporter->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($transporter->authorization == 'approved') ? 'approved' : (($transporter->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                     <td><span class="badge bg-{{$transporter->status == 1 ? "success" : "danger"}}">{{$transporter->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -98,7 +106,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="8">
+                                    <td colspan="9">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Transporters Found ....
                                         </div>

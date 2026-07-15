@@ -124,7 +124,7 @@ class Index extends Component
     private function resetInputFields(){
         $this->date = "";
         $this->time = "";
-        $this->notes = "";
+        $this->notes = [];
         $this->selectedDepartment = Null;
         $this->selected_department = Null;
         $this->is_drivers = False;
