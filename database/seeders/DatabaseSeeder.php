@@ -128,5 +128,6 @@ class DatabaseSeeder extends Seeder
         $this->call(MenuRegistrySeeder::class);
         $this->call(PayrollControlAccountSeeder::class);
         $this->call(PayrollStatutoryConfigSeeder::class);
+        $this->call(SheqAuditTemplateSeeder::class);
     }
 }
