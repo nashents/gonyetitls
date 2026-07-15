@@ -1,0 +1,23 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        site:
+          #MIMJ
+          - https://forge.laravel.com/servers/751029/sites/3009514/deploy/http?token=G4IyDwB3VBvi0qZTv2rCiiDNHAFcabOlT3VgcWx8
+         
+          # add as many as you want
+
+    steps:
+      - name: Trigger deployment
+        run: |
+          curl -X POST "${{ matrix.site }}"
