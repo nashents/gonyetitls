@@ -134,6 +134,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-createRunModal', event => {
+                $('#createRunModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-createRunModal', event => {
+                $('#createRunModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-freqModal', event => {
+                $('#freqModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-freqModal', event => {
+                $('#freqModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-importModal', event => {
                 $('#importModal').modal('show');
             })
@@ -4966,7 +4986,11 @@ window.addEventListener('hide-imageModal', event => {
 @stack('custom-scripts')
        <script>
         function goBack() {
-          window.history.back();
+          if (window.history.length > 1) {
+              window.history.back();
+          } else {
+              window.close();
+          }
         }
         </script>
 

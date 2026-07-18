@@ -34,9 +34,16 @@
                                                 <i class="fa fa-bars"></i>
                                                 <span class="caret"></span>
                                             </button>
+                                            @php
+                                                $runStatus = optional($payroll_salary->payroll->payrollRun)->status;
+                                                $isReleased = $payroll_salary->payroll->authorization === 'approved'
+                                                    || in_array($runStatus, ['approved', 'locked', 'posted']);
+                                            @endphp
                                             <ul class="dropdown-menu">
-                                                @if ($payroll_salary->payroll->authorization == "approved")
+                                                @if ($isReleased)
                                                     <li><a href="{{ route('payslips.preview', $payroll_salary->id) }}"><i class="fa fa-eye color-success"></i> Preview</a></li>
+                                                @else
+                                                    <li><span class="dropdown-item-text text-muted px-3">Not yet approved</span></li>
                                                 @endif
                                             </ul>
                                         </div>

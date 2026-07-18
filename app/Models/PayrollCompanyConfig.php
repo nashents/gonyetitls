@@ -19,6 +19,9 @@ class PayrollCompanyConfig extends Model implements Auditable
         'require_approval_for_reversal', 'auto_deduct_loans', 'auto_deduct_salary_advances',
         'gl_wages_expense_account', 'gl_nssa_liability_account', 'gl_paye_liability_account',
         'gl_pension_liability_account', 'gl_nec_liability_account',
+        'gl_nssa_employer_expense_account', 'gl_nec_employer_expense_account', 'gl_pension_employer_expense_account',
+        'gl_nssa_employee_liability_account', 'gl_aids_levy_liability_account',
+        'gl_payroll_suspense_account', 'gl_wages_payable_account',
         'effective_from', 'effective_to', 'active',
         'created_by', 'updated_by',
     ];

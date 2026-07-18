@@ -13,9 +13,8 @@
                                     <i class="fa fa-file-text-o"></i> {{ $run->name }}
                                     @php
                                         $statusColors = [
-                                            'draft'=>'secondary','calculating'=>'info','validated'=>'primary',
-                                            'approved'=>'success','locked'=>'dark','exported'=>'dark',
-                                            'posted'=>'success','archived'=>'secondary','reversed'=>'danger',
+                                            'draft'=>'secondary','approved'=>'success','locked'=>'dark',
+                                            'posted'=>'success','reversed'=>'danger',
                                         ];
                                         $color = $statusColors[$run->status] ?? 'secondary';
                                         $user      = Auth::user();
@@ -23,7 +22,7 @@
                                         $deptNames = $user->employee?->departments->pluck('name') ?? collect();
                                         $isHR      = $deptNames->contains('Human Resources') || $roleNames->contains('Super Admin') || $roleNames->contains('Admin');
                                         $isFinance = $deptNames->contains('Finance') || $deptNames->contains('Management') || $roleNames->contains('Super Admin') || $roleNames->contains('Admin');
-                                        $canApprove = $isFinance && $run->created_by !== Auth::id() && in_array($run->status, ['draft','validated']);
+                                        $canApprove = $isFinance && $run->status === 'draft' && ($run->created_by !== Auth::id() || $roleNames->contains('Super Admin'));
                                     @endphp
                                     <span class="badge bg-{{ $color }} text-white ml-2">{{ strtoupper($run->status) }}</span>
                                 </h4>
@@ -39,7 +38,7 @@
                                         <i class="fa fa-lock"></i> Lock
                                     </button>
                                 @endif
-                                @if(in_array($run->status, ['locked','exported']) && $isHR)
+                                @if($run->status === 'locked' && $isHR)
                                     <button wire:click="confirmLifecycle('post')" class="btn btn-info btn-sm">
                                         <i class="fa fa-book"></i> Post to GL
                                     </button>

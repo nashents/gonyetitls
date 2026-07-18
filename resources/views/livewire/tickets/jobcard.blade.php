@@ -238,7 +238,7 @@
                             @php
                                     $tyre = $ticket_inventory->tyre;
                             @endphp
-                                {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} 
+                                {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}
                             
                             @endif
                         </td>

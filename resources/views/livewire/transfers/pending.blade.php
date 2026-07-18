@@ -103,7 +103,7 @@
                                                         @php
                                                             $tyre = $transfer_item->tyre;
                                                         @endphp
-                                                        {{$tyre->tyre_number}} {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number}} ({{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} )
+                                                        {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number}} ({{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} )
                                                 @endif
                                                 ({{$transfer_item->qty}})
                                                 @if (!$loop->last),@endif

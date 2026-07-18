@@ -19,7 +19,7 @@ class PayrollRunLifecycleService
 {
     public function approve(PayrollRun $run): void
     {
-        if (!in_array($run->status, ['draft', 'validated'])) {
+        if ($run->status !== 'draft') {
             abort(422, 'Cannot approve in current status.');
         }
         $run->update(['status' => 'approved', 'approved_by' => Auth::id(), 'approved_at' => now()]);
@@ -41,7 +41,7 @@ class PayrollRunLifecycleService
      */
     public function post(PayrollRun $run): JournalEntry
     {
-        if (!in_array($run->status, ['locked', 'exported'])) {
+        if ($run->status !== 'locked') {
             abort(422, 'Run must be locked before posting.');
         }
 

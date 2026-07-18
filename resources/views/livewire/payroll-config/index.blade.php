@@ -130,19 +130,59 @@
 
                                 {{-- GL ACCOUNTS TAB --}}
                                 @if($activeTab === 'gl')
-                                <p class="text-muted mb-3"><i class="fa fa-info-circle"></i> Enter GL account codes from your chart of accounts. Leave blank if not applicable.</p>
-                                <div class="row">
+                                <p class="text-muted mb-3"><i class="fa fa-info-circle"></i> These accounts drive the actual payroll journal entry posted for each pay run. Accounts are grouped by their chart-of-accounts category so you can see whether you're picking an Expense or a Liability account. Leave a field blank to fall back to the default account of that name.</p>
+
+                                <h6 class="text-muted">Debit lines (expenses)</h6>
+                                <div class="row mb-3">
                                     @foreach([
-                                        ['gl_wages_account',   'Wages Expense Account',          'fa-money'],
-                                        ['gl_paye_account',    'PAYE Tax Liability Account',      'fa-balance-scale'],
-                                        ['gl_nssa_account',    'NSSA / Social Security Liability','fa-shield'],
-                                        ['gl_pension_account', 'Pension Fund Liability Account',  'fa-university'],
-                                        ['gl_nec_account',     'NEC Levy Liability Account',      'fa-briefcase'],
+                                        ['gl_wages_account',                    'Wages Expense Account',                    'fa-money'],
+                                        ['gl_nssa_employer_expense_account',    'NSSA Employer Contribution Expense',       'fa-shield'],
+                                        ['gl_nec_employer_expense_account',     'NEC Employer Contribution Expense',       'fa-briefcase'],
+                                        ['gl_pension_employer_expense_account', 'Pension Employer Contribution Expense',   'fa-university'],
                                     ] as [$field, $label, $icon])
                                     <div class="col-md-6 mb-3">
                                         <div class="form-group">
                                             <label><i class="fa {{ $icon }}"></i> {{ $label }}</label>
-                                            <input wire:model.defer="{{ $field }}" type="text" class="form-control" placeholder="e.g. 5000/001">
+                                            <select wire:model.defer="{{ $field }}" class="form-control">
+                                                <option value="">— none —</option>
+                                                @foreach($accountsByGroup as $groupName => $accounts)
+                                                <optgroup label="{{ $groupName }}">
+                                                    @foreach($accounts as $account)
+                                                    <option value="{{ $account['code'] }}">{{ $account['code'] }} — {{ $account['name'] }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+
+                                <h6 class="text-muted">Credit lines (liabilities / payables)</h6>
+                                <div class="row">
+                                    @foreach([
+                                        ['gl_paye_account',           'PAYE Tax Liability Account',            'fa-balance-scale'],
+                                        ['gl_aids_levy_account',      'AIDS Levy Payable',                     'fa-balance-scale'],
+                                        ['gl_nssa_account',           'NSSA Employer Contribution Payable',    'fa-shield'],
+                                        ['gl_nssa_employee_account',  'NSSA Employee Contribution Payable',    'fa-shield'],
+                                        ['gl_nec_account',            'NEC Levy Payable',                      'fa-briefcase'],
+                                        ['gl_pension_account',        'Pension Payable',                       'fa-university'],
+                                        ['gl_payroll_suspense_account','Payroll Suspense (loans/advances)',    'fa-question-circle'],
+                                        ['gl_wages_payable_account',  'Salaries & Wages Payable (net pay)',    'fa-money'],
+                                    ] as [$field, $label, $icon])
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label><i class="fa {{ $icon }}"></i> {{ $label }}</label>
+                                            <select wire:model.defer="{{ $field }}" class="form-control">
+                                                <option value="">— none —</option>
+                                                @foreach($accountsByGroup as $groupName => $accounts)
+                                                <optgroup label="{{ $groupName }}">
+                                                    @foreach($accounts as $account)
+                                                    <option value="{{ $account['code'] }}">{{ $account['code'] }} — {{ $account['name'] }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
                                     @endforeach
@@ -213,13 +253,12 @@
     </section>
 
     {{-- Frequency Modal --}}
-    @if($showFreqModal)
-    <div class="modal fade show" style="display:block; background:rgba(0,0,0,0.5);" tabindex="-1">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="freqModal" tabindex="-1" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">{{ $freq_id ? 'Edit' : 'Add' }} Pay Frequency</h4>
-                    <button class="close" wire:click="$set('showFreqModal', false)">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -259,7 +298,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-default" wire:click="$set('showFreqModal', false)">Cancel</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button class="btn btn-primary" wire:click="saveFrequency" wire:loading.attr="disabled">
                         <span wire:loading wire:target="saveFrequency"><i class="fa fa-spinner fa-spin"></i></span>
                         Save
@@ -268,5 +307,4 @@
             </div>
         </div>
     </div>
-    @endif
 </div>

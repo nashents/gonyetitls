@@ -68,6 +68,7 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+    
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="provincesImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

@@ -15,9 +15,7 @@
                                     $isHR      = $deptNames->contains('Human Resources') || $roleNames->contains('Super Admin') || $roleNames->contains('Admin');
                                 @endphp
                                 @if($isHR)
-                                <button wire:click="openCreateModal" class="btn btn-default">
-                                    <i class="fa fa-plus-square-o"></i> New Payroll Run
-                                </button>
+                                <a href="#" data-toggle="modal" data-target="#createRunModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>New Payroll Run</a>
                                 @endif
                             </div>
                         </div>
@@ -31,7 +29,7 @@
                                 <div class="col-md-3">
                                     <select wire:model="filterStatus" class="form-control">
                                         <option value="">All Statuses</option>
-                                        @foreach(['draft','calculating','validated','approved','locked','exported','posted','archived','reversed'] as $s)
+                                        @foreach(['draft','approved','locked','posted','reversed'] as $s)
                                         <option value="{{ $s }}">{{ ucfirst($s) }}</option>
                                         @endforeach
                                     </select>
@@ -59,13 +57,9 @@
                                         @php
                                             $statusColors = [
                                                 'draft'       => 'secondary',
-                                                'calculating' => 'info',
-                                                'validated'   => 'primary',
                                                 'approved'    => 'success',
                                                 'locked'      => 'dark',
-                                                'exported'    => 'dark',
                                                 'posted'      => 'success',
-                                                'archived'    => 'secondary',
                                                 'reversed'    => 'danger',
                                             ];
                                             $color = $statusColors[$run->status] ?? 'secondary';
@@ -96,7 +90,7 @@
                                                             </a>
                                                         </li>
 
-                                                        @if(in_array($run->status, ['draft','validated']) && ($deptNames->contains('Finance') || $deptNames->contains('Management') || $roleNames->contains('Super Admin') || $roleNames->contains('Admin')) && $run->created_by !== Auth::id())
+                                                        @if($run->status === 'draft' && ($deptNames->contains('Finance') || $deptNames->contains('Management') || $roleNames->contains('Super Admin') || $roleNames->contains('Admin')) && ($run->created_by !== Auth::id() || $roleNames->contains('Super Admin')))
                                                         <li>
                                                             <a href="#" wire:click.prevent="confirmLifecycle({{ $run->id }}, 'approve')">
                                                                 <i class="fa fa-check color-success"></i> Approve
@@ -112,7 +106,7 @@
                                                         </li>
                                                         @endif
 
-                                                        @if(in_array($run->status, ['locked','exported']) && $isHR)
+                                                        @if($run->status === 'locked' && $isHR)
                                                         <li>
                                                             <a href="#" wire:click.prevent="confirmLifecycle({{ $run->id }}, 'post')">
                                                                 <i class="fa fa-book color-info"></i> Post to GL
@@ -151,14 +145,14 @@
         </div>
     </section>
 
-    {{-- Create Modal --}}
-    @if($showCreateModal)
-    <div class="modal fade show" id="createRunModal" style="display:block; background:rgba(0,0,0,0.5);" tabindex="-1">
+  
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="createRunModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title"><i class="fa fa-plus-square-o"></i> New Payroll Run</h4>
-                    <button type="button" class="close" wire:click="$set('showCreateModal', false)">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -172,12 +166,14 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Frequency <span class="text-danger">*</span></label>
-                                <select wire:model.defer="selectedFrequency" class="form-control @error('selectedFrequency') is-invalid @enderror">
-                                    <option value="">Select frequency</option>
-                                    @foreach($frequencies as $freq)
+                                <select wire:model.defer="selectedFrequency" class="form-control @error('selectedFrequency') is-invalid @enderror" disabled>
+                                    @forelse($frequencies as $freq)
                                     <option value="{{ $freq->id }}">{{ $freq->name }}</option>
-                                    @endforeach
+                                    @empty
+                                    <option value="">No active frequency configured</option>
+                                    @endforelse
                                 </select>
+                                <small class="text-muted">Set in Payroll Config &rarr; Pay Frequencies.</small>
                                 @error('selectedFrequency') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
@@ -247,8 +243,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" wire:click="$set('showCreateModal', false)">Cancel</button>
-                    <button type="button" class="btn btn-primary" wire:click="store" wire:loading.attr="disabled">
+                   <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Cancel</button>
+                    <button type="button" class="btn bg-success btn-wide btn-rounded" wire:click="store" wire:loading.attr="disabled">
                         <span wire:loading wire:target="store"><i class="fa fa-spinner fa-spin"></i></span>
                         Create Run
                     </button>
@@ -256,7 +252,7 @@
             </div>
         </div>
     </div>
-    @endif
+  
 
     {{-- Lifecycle Confirm Modal --}}
     <div class="modal fade" id="confirmModal" tabindex="-1">

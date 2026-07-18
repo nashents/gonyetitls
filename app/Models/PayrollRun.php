@@ -45,11 +45,11 @@ class PayrollRun extends Model implements Auditable
 
     public function isDraft(): bool        { return $this->status === 'draft'; }
     public function isApproved(): bool     { return $this->status === 'approved'; }
-    public function isLocked(): bool       { return in_array($this->status, ['locked','exported','posted','archived']); }
+    public function isLocked(): bool       { return in_array($this->status, ['locked','posted']); }
     public function isReversed(): bool     { return $this->status === 'reversed'; }
-    public function canBeEdited(): bool    { return in_array($this->status, ['draft','calculating','validated']); }
-    public function canBeApproved(): bool  { return $this->status === 'validated'; }
-    public function canBeReversed(): bool  { return in_array($this->status, ['approved','locked','exported','posted']); }
+    public function canBeEdited(): bool    { return $this->status === 'draft'; }
+    public function canBeApproved(): bool  { return $this->status === 'draft'; }
+    public function canBeReversed(): bool  { return in_array($this->status, ['approved','locked','posted']); }
 
     // ── Relationships ─────────────────────────────────────────────────────
 

@@ -81,7 +81,7 @@ class PayrollRunPolicy
         if (!$isPrivileged) return false;
 
         // Segregation of duties — creator cannot approve their own run
-        if ($run->status === 'validated' && $run->created_by === $user->id) {
+        if ($run->status === 'draft' && $run->created_by === $user->id) {
             return $this->isSuperAdmin($user);
         }
 

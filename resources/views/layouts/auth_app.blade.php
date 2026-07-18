@@ -3880,7 +3880,11 @@ window.addEventListener('hide-imageModal', event => {
 @stack('custom-scripts')
        <script>
         function goBack() {
-          window.history.back();
+          if (window.history.length > 1) {
+              window.history.back();
+          } else {
+              window.close();
+          }
         }
         </script>
 

@@ -4,6 +4,7 @@ namespace App\Services\Accounting;
 
 use App\Models\Account;
 use App\Models\JournalEntry;
+use App\Models\PayrollCompanyConfig;
 use App\Models\PayrollRun;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,8 +44,9 @@ class PayrollJournalService
         }
 
         $totals = $this->aggregate($payroll);
+        $config = PayrollCompanyConfig::where('company_id', $run->company_id)->where('active', true)->latest()->first();
 
-        return DB::transaction(function () use ($run, $totals) {
+        return DB::transaction(function () use ($run, $totals, $config) {
             $entry = JournalEntry::create([
                 'company_id'     => $run->company_id,
                 'payroll_run_id' => $run->id,
@@ -62,20 +64,20 @@ class PayrollJournalService
             $currencyId = $run->currency_id;
 
             // ── DR: expenses ────────────────────────────────────────────────
-            $this->line($entry, 'Salaries & Wages Expense', $totals['gross'], 0, $currencyId, "Gross salaries - {$run->name}");
-            $this->line($entry, 'NSSA Employer Contribution Expense', $totals['nssa_employer'], 0, $currencyId, "NSSA employer cost - {$run->name}");
-            $this->line($entry, 'NEC Employer Contribution Expense', $totals['nec_employer'], 0, $currencyId, "NEC employer cost - {$run->name}");
-            $this->line($entry, 'Pension Employer Contribution Expense', $totals['pension_employer'], 0, $currencyId, "Pension employer cost - {$run->name}");
+            $this->line($entry, $config?->gl_wages_expense_account, 'Salaries & Wages Expense', $totals['gross'], 0, $currencyId, "Gross salaries - {$run->name}");
+            $this->line($entry, $config?->gl_nssa_employer_expense_account, 'NSSA Employer Contribution Expense', $totals['nssa_employer'], 0, $currencyId, "NSSA employer cost - {$run->name}");
+            $this->line($entry, $config?->gl_nec_employer_expense_account, 'NEC Employer Contribution Expense', $totals['nec_employer'], 0, $currencyId, "NEC employer cost - {$run->name}");
+            $this->line($entry, $config?->gl_pension_employer_expense_account, 'Pension Employer Contribution Expense', $totals['pension_employer'], 0, $currencyId, "Pension employer cost - {$run->name}");
 
             // ── CR: payables ────────────────────────────────────────────────
-            $this->line($entry, 'PAYE Payable', 0, $totals['paye'], $currencyId, "PAYE withheld - {$run->name}");
-            $this->line($entry, 'AIDS Levy Payable', 0, $totals['aids_levy'], $currencyId, "AIDS Levy withheld - {$run->name}");
-            $this->line($entry, 'NSSA Employee Contribution Payable', 0, $totals['nssa_employee'], $currencyId, "NSSA employee withheld - {$run->name}");
-            $this->line($entry, 'NSSA Employer Contribution Payable', 0, $totals['nssa_employer'], $currencyId, "NSSA employer payable - {$run->name}");
-            $this->line($entry, 'NEC Levy Payable', 0, $totals['nec_employee'] + $totals['nec_employer'], $currencyId, "NEC levy payable - {$run->name}");
-            $this->line($entry, 'Pension Payable', 0, $totals['pension_employee'] + $totals['pension_employer'], $currencyId, "Pension payable - {$run->name}");
-            $this->line($entry, 'Payroll Suspense', 0, $totals['other_deductions'], $currencyId, "Loans/advances/other deductions - {$run->name}");
-            $this->line($entry, 'Salaries & Wages Payable', 0, $totals['net'], $currencyId, "Net pay owed to staff - {$run->name}");
+            $this->line($entry, $config?->gl_paye_liability_account, 'PAYE Payable', 0, $totals['paye'], $currencyId, "PAYE withheld - {$run->name}");
+            $this->line($entry, $config?->gl_aids_levy_liability_account, 'AIDS Levy Payable', 0, $totals['aids_levy'], $currencyId, "AIDS Levy withheld - {$run->name}");
+            $this->line($entry, $config?->gl_nssa_employee_liability_account, 'NSSA Employee Contribution Payable', 0, $totals['nssa_employee'], $currencyId, "NSSA employee withheld - {$run->name}");
+            $this->line($entry, $config?->gl_nssa_liability_account, 'NSSA Employer Contribution Payable', 0, $totals['nssa_employer'], $currencyId, "NSSA employer payable - {$run->name}");
+            $this->line($entry, $config?->gl_nec_liability_account, 'NEC Levy Payable', 0, $totals['nec_employee'] + $totals['nec_employer'], $currencyId, "NEC levy payable - {$run->name}");
+            $this->line($entry, $config?->gl_pension_liability_account, 'Pension Payable', 0, $totals['pension_employee'] + $totals['pension_employer'], $currencyId, "Pension payable - {$run->name}");
+            $this->line($entry, $config?->gl_payroll_suspense_account, 'Payroll Suspense', 0, $totals['other_deductions'], $currencyId, "Loans/advances/other deductions - {$run->name}");
+            $this->line($entry, $config?->gl_wages_payable_account, 'Salaries & Wages Payable', 0, $totals['net'], $currencyId, "Net pay owed to staff - {$run->name}");
 
             return $entry;
         });
@@ -159,11 +161,13 @@ class PayrollJournalService
         return $totals;
     }
 
-    private function line(JournalEntry $entry, string $accountName, float $debit, float $credit, ?int $currencyId, string $description): void
+    private function line(JournalEntry $entry, ?string $accountCode, string $fallbackName, float $debit, float $credit, ?int $currencyId, string $description): void
     {
         if ($debit <= 0 && $credit <= 0) return;
 
-        $account = Account::where('name', $accountName)->firstOrFail();
+        $account = $accountCode !== null && $accountCode !== ''
+            ? Account::where('code', $accountCode)->firstOrFail()
+            : Account::where('name', $fallbackName)->firstOrFail();
 
         $entry->journal_entry_lines()->create([
             'account_id'      => $account->id,

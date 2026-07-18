@@ -161,7 +161,7 @@
             <tr data-row>
               <td class="center">{{$i++}}</td>
               <td data-field="item.product">
-                {{optional($tyre->product->brand)->name}} {{optional($tyre->product)->name}}
+                {{optional(optional($tyre->product)->brand)->name}} {{optional($tyre->product)->name}}
               </td>
               <td class="mono" data-field="item.serial">
                 SN#: {{$tyre->serial_number}} · {{$tyre->width}}/{{$tyre->aspect_ratio}} R{{$tyre->diameter}}

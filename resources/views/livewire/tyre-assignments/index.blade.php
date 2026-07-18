@@ -152,12 +152,12 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}"> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
-                  
+
                     <div class="row">
                         <div class="col-md-6">
                             @if ($type == "Horse")
@@ -287,7 +287,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}"> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

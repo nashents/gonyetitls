@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\PayrollConfig;
 
+use App\Models\Account;
 use App\Models\Currency;
 use App\Models\PayrollCompanyConfig;
 use App\Models\PayrollFrequency;
@@ -30,11 +31,17 @@ class Index extends Component
     public $gl_paye_account;
     public $gl_pension_account;
     public $gl_nec_account;
+    public $gl_nssa_employer_expense_account;
+    public $gl_nec_employer_expense_account;
+    public $gl_pension_employer_expense_account;
+    public $gl_nssa_employee_account;
+    public $gl_aids_levy_account;
+    public $gl_payroll_suspense_account;
+    public $gl_wages_payable_account;
 
     // ── Frequency fields ─────────────────────────────────────────────────
 
     public $frequencies = [];
-    public $showFreqModal = false;
     public $freq_id;
     public $freq_name;
     public $freq_code;
@@ -47,6 +54,7 @@ class Index extends Component
     public $currencies;
     public $company;
     public $activeTab = 'general';
+    public $accountsByGroup = [];
 
     public function mount()
     {
@@ -54,6 +62,23 @@ class Index extends Component
         $this->currencies = Currency::orderBy('name')->get();
         $this->loadConfig();
         $this->loadFrequencies();
+        $this->loadAccounts();
+    }
+
+    private function loadAccounts(): void
+    {
+        $accounts = Account::with('account_type_group')
+            ->where('user_id', $this->company->admin_id)
+            ->orderBy('code')
+            ->get();
+
+        $this->accountsByGroup = $accounts
+            ->groupBy(fn ($account) => $account->account_type_group->name ?? 'Other')
+            ->map(fn ($group) => $group->map(fn ($account) => [
+                'code' => $account->code,
+                'name' => $account->name,
+            ])->values())
+            ->toArray();
     }
 
     private function loadConfig(): void
@@ -79,6 +104,13 @@ class Index extends Component
             $this->gl_paye_account               = $cfg->gl_paye_liability_account;
             $this->gl_pension_account            = $cfg->gl_pension_liability_account;
             $this->gl_nec_account                = $cfg->gl_nec_liability_account;
+            $this->gl_nssa_employer_expense_account   = $cfg->gl_nssa_employer_expense_account;
+            $this->gl_nec_employer_expense_account    = $cfg->gl_nec_employer_expense_account;
+            $this->gl_pension_employer_expense_account= $cfg->gl_pension_employer_expense_account;
+            $this->gl_nssa_employee_account      = $cfg->gl_nssa_employee_liability_account;
+            $this->gl_aids_levy_account          = $cfg->gl_aids_levy_liability_account;
+            $this->gl_payroll_suspense_account   = $cfg->gl_payroll_suspense_account;
+            $this->gl_wages_payable_account      = $cfg->gl_wages_payable_account;
         } else {
             $this->selectedCurrency = $this->company->currency_id;
         }
@@ -120,6 +152,13 @@ class Index extends Component
             'gl_paye_liability_account'               => $this->gl_paye_account,
             'gl_pension_liability_account'            => $this->gl_pension_account,
             'gl_nec_liability_account'                => $this->gl_nec_account,
+            'gl_nssa_employer_expense_account'        => $this->gl_nssa_employer_expense_account,
+            'gl_nec_employer_expense_account'         => $this->gl_nec_employer_expense_account,
+            'gl_pension_employer_expense_account'     => $this->gl_pension_employer_expense_account,
+            'gl_nssa_employee_liability_account'      => $this->gl_nssa_employee_account,
+            'gl_aids_levy_liability_account'          => $this->gl_aids_levy_account,
+            'gl_payroll_suspense_account'             => $this->gl_payroll_suspense_account,
+            'gl_wages_payable_account'                => $this->gl_wages_payable_account,
             'active'                                  => true,
             'created_by'                              => Auth::id(),
             'updated_by'                              => Auth::id(),
@@ -153,7 +192,7 @@ class Index extends Component
             $this->freq_active          = $freq->active;
         }
 
-        $this->showFreqModal = true;
+        $this->dispatchBrowserEvent('show-freqModal');
     }
 
     public function saveFrequency()
@@ -179,15 +218,28 @@ class Index extends Component
             PayrollFrequency::create($data);
         }
 
-        $this->showFreqModal = false;
         $this->loadFrequencies();
+        $this->dispatchBrowserEvent('hide-freqModal');
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Frequency saved.']);
     }
 
     public function toggleFrequency($id)
     {
         $freq = PayrollFrequency::findOrFail($id);
-        $freq->update(['active' => !$freq->active]);
+        $activating = !$freq->active;
+
+        if ($activating) {
+            // Only one frequency can be active at a time for this company, so
+            // activating one deactivates every other frequency visible to it
+            // (global defaults + this company's own).
+            PayrollFrequency::where('id', '!=', $id)
+                ->where(function ($q) {
+                    $q->whereNull('company_id')->orWhere('company_id', $this->company->id);
+                })
+                ->update(['active' => false]);
+        }
+
+        $freq->update(['active' => $activating]);
         $this->loadFrequencies();
     }
 

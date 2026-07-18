@@ -61,7 +61,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Product</th>
-                                <td class="w-20 line-height-35">{{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}</td>
+                                <td class="w-20 line-height-35">{{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Product Department</th>

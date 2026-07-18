@@ -8,10 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -21,11 +20,11 @@ use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class AttendanceRegisterExport implements
-    FromQuery,
+    FromCollection,
     ShouldAutoSize,
-    WithMapping,
     WithHeadings,
     WithEvents,
     WithDrawings,
@@ -42,6 +41,11 @@ class AttendanceRegisterExport implements
 
     public $totals;
     public $notesTotals;
+
+    // Row numbers (absolute sheet rows) of the department banner/subtotal rows,
+    // populated by collection() so registerEvents() can style/merge them.
+    protected $departmentHeaderRows = [];
+    protected $departmentSubtotalRows = [];
 
     public function __construct($from = null, $to = null, $department_id = null, $search = null, $attendance_filter)
     {
@@ -162,7 +166,39 @@ class AttendanceRegisterExport implements
         return $baseQuery->orderBy($this->attendance_filter, 'desc');
     }
 
-    public function map($row): array
+    public function collection()
+    {
+        $records = $this->query()->get();
+
+        $grouped = $records
+            ->groupBy(fn ($row) => $row->attendance?->department?->name ?: 'Unassigned')
+            ->sortKeys();
+
+        $rows = collect();
+        $currentRow = 9; // data starts immediately after the heading row (startCell 'A8')
+
+        foreach ($grouped as $departmentName => $departmentRows) {
+            $rows->push($this->bannerRow("{$departmentName} — {$departmentRows->count()} record" . ($departmentRows->count() === 1 ? '' : 's')));
+            $this->departmentHeaderRows[] = $currentRow++;
+
+            foreach ($departmentRows as $row) {
+                $rows->push($this->mapRow($row));
+                $currentRow++;
+            }
+
+            $rows->push($this->bannerRow("Subtotal — {$departmentName}: {$departmentRows->count()} record" . ($departmentRows->count() === 1 ? '' : 's')));
+            $this->departmentSubtotalRows[] = $currentRow++;
+        }
+
+        return $rows;
+    }
+
+    protected function bannerRow(string $label): array
+    {
+        return array_merge([$label], array_fill(0, 10, ''));
+    }
+
+    protected function mapRow($row): array
     {
         $employeeName = trim(($row->employee?->name ?? '') . ' ' . ($row->employee?->surname ?? ''));
 
@@ -252,6 +288,30 @@ class AttendanceRegisterExport implements
                         ],
                     ],
                 ]);
+
+                // Department banner rows
+                foreach ($this->departmentHeaderRows as $row) {
+                    $sheet->mergeCells("A{$row}:K{$row}");
+                    $event->sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['argb' => 'FF1F4E78']],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'D9E1F2'],
+                        ],
+                    ]);
+                }
+
+                // Department subtotal rows
+                foreach ($this->departmentSubtotalRows as $row) {
+                    $sheet->mergeCells("A{$row}:K{$row}");
+                    $event->sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+                        'font' => ['italic' => true],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+                        'borders' => [
+                            'top' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                        ],
+                    ]);
+                }
 
                 // Wrap: Employee Name + Status + Notes (keeps widths fixed)
                 $highestRow = $sheet->getHighestRow();

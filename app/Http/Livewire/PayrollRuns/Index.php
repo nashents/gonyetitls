@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\PayrollRuns;
 
 use App\Models\Currency;
+use App\Models\PayrollCompanyConfig;
 use App\Models\PayrollRun;
 use App\Models\Salary;
 use App\Services\Payroll\PayrollBatchService;
@@ -22,7 +23,7 @@ class Index extends Component
     protected $queryString = ['search', 'filterStatus'];
 
     // Create form
-    public $showCreateModal = false;
+   
     public $name;
     public $period_start;
     public $period_end;
@@ -52,17 +53,23 @@ class Index extends Component
         $this->frequencies = \App\Models\PayrollFrequency::where('active', true)
             ->where(function ($q) { $q->whereNull('company_id')->orWhere('company_id', $this->company->id); })
             ->orderBy('name')->get();
+        $this->selectedFrequency = $this->frequencies->first()?->id;
         $this->currencies  = Currency::orderBy('name')->get();
         $this->selectedCurrency = $this->company->currency_id;
+
+        $config = PayrollCompanyConfig::where('company_id', $this->company->id)->where('active', true)->latest()->first();
+        $this->proration_method = $config->proration_method ?? 'calendar_days';
     }
 
     // ── Create ──────────────────────────────────────────────────────────────
 
     public function openCreateModal()
     {
-        $this->reset(['name','period_start','period_end','payroll_date','payment_date','selectedFrequency','notes']);
+        $this->reset(['name','period_start','period_end','payroll_date','payment_date','notes']);
         $this->selectedCurrency = $this->company->currency_id;
-        $this->showCreateModal = true;
+        $this->selectedFrequency = $this->frequencies->first()?->id;
+
+        $this->dispatchBrowserEvent('show-createRunModal');
     }
 
     public function store()
@@ -100,7 +107,8 @@ class Index extends Component
 
         app(PayrollBatchService::class)->buildBatch($run, $salaries);
 
-        $this->showCreateModal = false;
+        
+        $this->dispatchBrowserEvent('hide-createRunModal');
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll run created with ' . $salaries->count() . ' employee(s).']);
     }
 
