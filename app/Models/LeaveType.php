@@ -31,6 +31,7 @@ class LeaveType extends Model implements Auditable
         'monthly_accrual_rate',
         'max_carry_forward_days',
         'max_consecutive_days',
+        'maximum_leave_days',
         'requires_hod_approval',
         'requires_management_approval',
         'active',

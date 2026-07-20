@@ -24,6 +24,8 @@
                                         <th>Accrual</th>
                                         <th>Paid</th>
                                         <th>Carry Forward</th>
+                                        <th>Max Consecutive</th>
+                                        <th>Max Balance</th>
                                         <th>Medical Report</th>
                                         <th>Attachment</th>
                                         <th>Approvals</th>
@@ -61,6 +63,12 @@
                                                     @else
                                                         <span class="badge bg-danger">No</span>
                                                     @endif
+                                                </td>
+                                                <td>
+                                                    {{ $leave_type->max_consecutive_days ? $leave_type->max_consecutive_days . ' Days' : '-' }}
+                                                </td>
+                                                <td>
+                                                    {{ $leave_type->maximum_leave_days ? $leave_type->maximum_leave_days . ' Days' : '-' }}
                                                 </td>
                                                 <td>
                                                     <span class="badge bg-{{ $leave_type->requires_medical_report ? 'warning' : 'default' }}">

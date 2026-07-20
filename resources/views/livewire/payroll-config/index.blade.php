@@ -50,8 +50,8 @@
                                             <label>Default Payroll Currency</label>
                                             <select wire:model.defer="selectedCurrency" class="form-control">
                                                 <option value="">Select currency</option>
-                                                @foreach($currencies as $cur)
-                                                <option value="{{ $cur->id }}">{{ $cur->code }} – {{ $cur->name }}</option>
+                                                @foreach($currencies as $currency)
+                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                                 @endforeach
                                             </select>
                                         </div>

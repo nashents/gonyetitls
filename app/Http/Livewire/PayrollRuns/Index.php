@@ -41,7 +41,7 @@ class Index extends Component
 
     // Lifecycle action
     public $confirmRunId;
-    public $confirmAction;
+    public $confirmAction = '';
     public $confirmReason = '';
 
     public function mount()

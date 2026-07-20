@@ -56,7 +56,7 @@ class Index extends Component
                                 [
                                     'acrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
                                     'available_leave_days' => $leaveType->entitlement ?? 0,
-                                    'maximum_leave_days' => $leaveType->max_carry_forward_days ?? 0,
+                                    'maximum_leave_days' => $leaveType->maximum_leave_days ?? 0,
                                 ]
                             );
 
@@ -67,7 +67,7 @@ class Index extends Component
                                 Employee::where('id', $employee->id)->update([
                                     'accrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
                                     'leave_days' => $leaveType->entitlement ?? 0,
-                                    'maximum_leave_days' => $leaveType->max_carry_forward_days ?? 0,
+                                    'maximum_leave_days' => $leaveType->maximum_leave_days ?? 0,
                                 ]);
                             }
                         }

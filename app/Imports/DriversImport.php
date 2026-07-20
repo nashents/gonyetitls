@@ -226,7 +226,7 @@ WithBatchInserts
                 ]);
 
                 $employeeLeave->acrual_rate = $employeeLeave->acrual_rate ?? $accrualRate;
-                $employeeLeave->maximum_leave_days = $employeeLeave->maximum_leave_days ?? $maximumDays;
+                $employeeLeave->maximum_leave_days = $employeeLeave->maximum_leave_days ?? ($leaveType->maximum_leave_days ?? 0);
 
                 if (strtolower(trim($leaveType->name)) === 'annual') {
 

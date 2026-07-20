@@ -195,7 +195,7 @@ class AttendanceRegisterExport implements
 
     protected function bannerRow(string $label): array
     {
-        return array_merge([$label], array_fill(0, 10, ''));
+        return array_merge([$label], array_fill(0, 11, ''));
     }
 
     protected function mapRow($row): array
@@ -214,6 +214,7 @@ class AttendanceRegisterExport implements
             $row->source ?? 'manual',
             $row->notes ?? '',
             $row->created_at ? $row->created_at->format('Y-m-d H:i') : '',
+            $row->attendance?->department?->name ?? '-', // department the attendance was marked under
         ];
     }
 
@@ -231,6 +232,7 @@ class AttendanceRegisterExport implements
             'Source',
             'Notes',
             'Captured At',
+            'Department',
         ];
     }
 
@@ -268,6 +270,7 @@ class AttendanceRegisterExport implements
             'I' => 12,
             'J' => 35,
             'K' => 18,
+            'L' => 16,
         ];
     }
 
@@ -278,8 +281,8 @@ class AttendanceRegisterExport implements
 
                 $sheet = $event->sheet->getDelegate();
 
-                // Headings row at A8:K8
-                $event->sheet->getStyle('A8:K8')->applyFromArray([
+                // Headings row at A8:L8
+                $event->sheet->getStyle('A8:L8')->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
@@ -291,8 +294,8 @@ class AttendanceRegisterExport implements
 
                 // Department banner rows
                 foreach ($this->departmentHeaderRows as $row) {
-                    $sheet->mergeCells("A{$row}:K{$row}");
-                    $event->sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+                    $sheet->mergeCells("A{$row}:L{$row}");
+                    $event->sheet->getStyle("A{$row}:L{$row}")->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['argb' => 'FF1F4E78']],
                         'fill' => [
                             'fillType' => Fill::FILL_SOLID,
@@ -303,8 +306,8 @@ class AttendanceRegisterExport implements
 
                 // Department subtotal rows
                 foreach ($this->departmentSubtotalRows as $row) {
-                    $sheet->mergeCells("A{$row}:K{$row}");
-                    $event->sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+                    $sheet->mergeCells("A{$row}:L{$row}");
+                    $event->sheet->getStyle("A{$row}:L{$row}")->applyFromArray([
                         'font' => ['italic' => true],
                         'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
                         'borders' => [

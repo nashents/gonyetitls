@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Dispatches;
 
+use App\Exports\DispatchesExport;
 use App\Imports\DispatchesImport;
 use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
@@ -30,6 +31,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 use Maatwebsite\Excel\Facades\Excel as ExcelFacade;
 use Maatwebsite\Excel\Validators\ValidationException ;
 
@@ -474,6 +476,19 @@ class Index extends Component
         $writer->save($path);
 
         return response()->download($path, $filename)->deleteFileAfterSend(true);
+    }
+
+    public function exportDispatchesCSV(Excel $excel){
+
+        return $excel->download(new DispatchesExport($this->department), 'dispatches.csv', Excel::CSV);
+    }
+    public function exportDispatchesPDF(Excel $excel){
+
+        return $excel->download(new DispatchesExport($this->department), 'dispatches.pdf', Excel::DOMPDF);
+    }
+    public function exportDispatchesExcel(Excel $excel){
+
+        return $excel->download(new DispatchesExport($this->department), 'dispatches.xlsx');
     }
 
     public function updatedDispatchFor($value){

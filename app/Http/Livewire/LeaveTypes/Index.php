@@ -25,6 +25,7 @@ class Index extends Component
     public $monthly_accrual_rate = 0;
     public $max_carry_forward_days = 0;
     public $max_consecutive_days;
+    public $maximum_leave_days = 0;
 
     public $requires_hod_approval = true;
     public $requires_management_approval = true;
@@ -51,6 +52,7 @@ class Index extends Component
         $this->monthly_accrual_rate = 0;
         $this->max_carry_forward_days = 0;
         $this->max_consecutive_days = '';
+        $this->maximum_leave_days = 0;
         $this->requires_hod_approval = true;
         $this->requires_management_approval = true;
         $this->active = true;
@@ -73,6 +75,7 @@ class Index extends Component
             'monthly_accrual_rate' => 'nullable|numeric|min:0',
             'max_carry_forward_days' => 'nullable|numeric|min:0',
             'max_consecutive_days' => 'nullable|numeric|min:0',
+            'maximum_leave_days' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
             'is_paid' => 'boolean',
             'is_accruable' => 'boolean',
@@ -108,6 +111,7 @@ class Index extends Component
                 'monthly_accrual_rate' => $this->monthly_accrual_rate ?: 0,
                 'max_carry_forward_days' => $this->max_carry_forward_days ?: 0,
                 'max_consecutive_days' => $this->max_consecutive_days ?: null,
+                'maximum_leave_days' => $this->maximum_leave_days ?: 0,
                 'requires_hod_approval' => $this->requires_hod_approval,
                 'requires_management_approval' => $this->requires_management_approval,
                 'active' => $this->active,
@@ -147,6 +151,7 @@ class Index extends Component
         $this->monthly_accrual_rate = $leave_type->monthly_accrual_rate;
         $this->max_carry_forward_days = $leave_type->max_carry_forward_days;
         $this->max_consecutive_days = $leave_type->max_consecutive_days;
+        $this->maximum_leave_days = $leave_type->maximum_leave_days;
 
         $this->requires_hod_approval = (bool) $leave_type->requires_hod_approval;
         $this->requires_management_approval = (bool) $leave_type->requires_management_approval;
@@ -176,6 +181,7 @@ class Index extends Component
                 'monthly_accrual_rate' => $this->monthly_accrual_rate ?: 0,
                 'max_carry_forward_days' => $this->max_carry_forward_days ?: 0,
                 'max_consecutive_days' => $this->max_consecutive_days ?: null,
+                'maximum_leave_days' => $this->maximum_leave_days ?: 0,
                 'requires_hod_approval' => $this->requires_hod_approval,
                 'requires_management_approval' => $this->requires_management_approval,
                 'active' => $this->active,

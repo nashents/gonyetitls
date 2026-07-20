@@ -20,7 +20,6 @@
             <div class="col-md-6">
                 <ul class="breadcrumb">
                     <li><a href="{{ route('dashboard.index') }}"><i class="fa fa-home"></i> Home</a></li>
-                    <li><a href="{{ route('payrolls.index') }}">Payroll</a></li>
                     <li class="active"><i class="fa fa-list"></i> Payroll Runs</li>
                 </ul>
             </div>

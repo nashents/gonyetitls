@@ -68,7 +68,7 @@
                                             <td><strong>{{ $run->name }}</strong></td>
                                             <td>{{ \Carbon\Carbon::parse($run->period_start)->format('d M') }} – {{ \Carbon\Carbon::parse($run->period_end)->format('d M Y') }}</td>
                                             <td>{{ $run->frequency?->name ?? '—' }}</td>
-                                            <td>{{ $run->currency?->code ?? '—' }}</td>
+                                            <td>{{ $run->currency?->name ?? '—' }}</td>
                                             <td class="text-center">{{ number_format($run->employee_count ?? 0) }}</td>
                                             <td class="text-right">{{ number_format($run->total_gross ?? 0, 2) }}</td>
                                             <td class="text-right">{{ number_format($run->total_net ?? 0, 2) }}</td>
@@ -214,8 +214,8 @@
                             <div class="form-group">
                                 <label>Currency <span class="text-danger">*</span></label>
                                 <select wire:model.defer="selectedCurrency" class="form-control">
-                                    @foreach($currencies as $cur)
-                                    <option value="{{ $cur->id }}">{{ $cur->code }} – {{ $cur->name }}</option>
+                                    @foreach($currencies as $currency)
+                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                     @endforeach
                                 </select>
                             </div>

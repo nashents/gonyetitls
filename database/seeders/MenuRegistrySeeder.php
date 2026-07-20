@@ -685,26 +685,6 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Create Salary','slug'=>'create-salary','icon'=>'fas fa-plus','route_name'=>'salaries.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Salaries','slug'=>'manage-salaries','icon'=>'fas fa-list','route_name'=>'salaries.index','sort_order'=>20]);
 
-        // Payroll (Admin+HR) OR Super
-        $m = $upsertModule($g, [
-            'name' => 'Payroll',
-            'slug' => 'payroll',
-            'icon' => 'fas fa-file',
-            'route_name' => 'payrolls.*',
-            'sort_order' => 50,
-            'visibility' => $any([
-                $all(['isAdmin','inHR']),
-                $all(['isManagement','inHR']),
-                $all(['hasHRDeptHead']),
-                $all(['isSuperAdmin']),
-            ]),
-        ]);
-
-        $upsertSub($m, ['name'=>'Manage Payrolls','slug'=>'manage-payrolls','icon'=>'fas fa-list','route_name'=>'payrolls.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Payrolls','slug'=>'pending-payrolls','icon'=>'fas fa-clock','route_name'=>'payrolls.pending','sort_order'=>20,'badge_key'=>'payrolls_pending_count']);
-        $upsertSub($m, ['name'=>'Approved Payrolls','slug'=>'approved-payrolls','icon'=>'fas fa-check','route_name'=>'payrolls.approved','sort_order'=>30,'badge_key'=>'payrolls_approved_count']);
-        $upsertSub($m, ['name'=>'Rejected Payrolls','slug'=>'rejected-payrolls','icon'=>'fas fa-ban','route_name'=>'payrolls.rejected','sort_order'=>40,'badge_key'=>'payrolls_rejected_count']);
-
         // Payroll Runs (Admin+HR) OR Super
         $m = $upsertModule($g, [
             'name' => 'Payroll Runs',

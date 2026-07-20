@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\AccrueEmployeeLeave;
+use App\Console\Commands\CarryForwardEmployeeLeave;
 use Carbon\Carbon;
 use App\Console\Commands\SyncChangeLog;
 use Illuminate\Console\Scheduling\Schedule;
@@ -21,6 +22,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         FitnessReminderCommand::class,
         AccrueEmployeeLeave::class,
+        CarryForwardEmployeeLeave::class,
         SendDailyReports::class,
         GenerateZimbabweHolidays::class,
         SyncChangeLog::class,
@@ -43,8 +45,15 @@ class Kernel extends ConsoleKernel
         ->withoutOverlapping()
         ->onOneServer();
 
+        // Runs just before the Jan 1 accrual so the new year's accrual builds on the carried-forward balance
+        $schedule->command('employees:carry-forward-leave')
+        ->yearlyOn(12, 31, '23:50')
+        ->timezone('Africa/Harare')
+        ->withoutOverlapping()
+        ->onOneServer();
+
         $schedule->command('employees:accrue-leave')
-        ->monthlyOn(1, '00:00')          
+        ->monthlyOn(1, '00:00')
         ->timezone('Africa/Harare')        // your timezone
         ->withoutOverlapping()
         ->onOneServer();

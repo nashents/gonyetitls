@@ -53,6 +53,17 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Maximum Leave Days</label>
+                <input type="number" min="0" step="0.01" class="form-control" wire:model.debounce.300ms="maximum_leave_days" placeholder="e.g. 60">
+                @error('maximum_leave_days') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                <small class="text-muted">Balance ceiling applied to employees on this leave type — accrual stops growing once this is reached.</small>
+            </div>
+        </div>
+    </div>
+
     <hr>
 
     <div class="row">

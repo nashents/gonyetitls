@@ -194,6 +194,9 @@ class Currency extends Model implements Auditable
     public function payroll_salaries(){
         return $this->hasMany('App\Models\PayrollSalary');
     }
+    public function salary_advances(){
+        return $this->hasMany('App\Models\SalaryAdvance');
+    }
     public function cashflows(){
         return $this->hasMany('App\Models\Cashflow');
     }

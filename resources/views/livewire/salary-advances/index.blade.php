@@ -149,13 +149,12 @@
     </section>
 
     {{-- Create Modal --}}
-    @if($showCreateModal)
-    <div class="modal fade show" style="display:block; background:rgba(0,0,0,0.5);" tabindex="-1">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="advanceModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title"><i class="fa fa-money"></i> Request Salary Advance</h4>
-                    <button class="close" wire:click="$set('showCreateModal', false)">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -175,8 +174,8 @@
                             <div class="form-group">
                                 <label>Currency <span class="text-danger">*</span></label>
                                 <select wire:model.defer="selectedCurrency" class="form-control">
-                                    @foreach($currencies as $cur)
-                                    <option value="{{ $cur->id }}">{{ $cur->code }}</option>
+                                    @foreach($currencies as $currency)
+                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                     @endforeach
                                 </select>
                             </div>
@@ -222,7 +221,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-default" wire:click="$set('showCreateModal', false)">Cancel</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button class="btn btn-primary" wire:click="store" wire:loading.attr="disabled">
                         <span wire:loading wire:target="store"><i class="fa fa-spinner fa-spin"></i></span>
                         Submit Request
@@ -231,11 +230,9 @@
             </div>
         </div>
     </div>
-    @endif
 
     {{-- Approve/Reject Modal --}}
-    @if($showAuthModal)
-    <div class="modal fade show" style="display:block; background:rgba(0,0,0,0.5);" tabindex="-1">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="advanceAuthModal" tabindex="-1" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-{{ $authAction === 'approve' ? 'success' : 'danger' }}">
@@ -243,7 +240,7 @@
                         <i class="fa fa-{{ $authAction === 'approve' ? 'check' : 'times' }}"></i>
                         {{ ucfirst($authAction) }} Advance
                     </h4>
-                    <button class="close text-white" wire:click="$set('showAuthModal', false)">&times;</button>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -252,7 +249,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-default" wire:click="$set('showAuthModal', false)">Cancel</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button class="btn btn-{{ $authAction === 'approve' ? 'success' : 'danger' }}" wire:click="authorise" wire:loading.attr="disabled">
                         <span wire:loading wire:target="authorise"><i class="fa fa-spinner fa-spin"></i></span>
                         Confirm {{ ucfirst($authAction) }}
@@ -261,5 +258,4 @@
             </div>
         </div>
     </div>
-    @endif
 </div>

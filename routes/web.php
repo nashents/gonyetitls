@@ -609,7 +609,6 @@ Route::resource('accounts','AccountController');
 Route::resource('invoice_products','InvoiceProductController');
 Route::resource('product_services','ProductServiceController');
 Route::resource('account_types','AccountTypeController');
-Route::resource('payrolls','PayrollController');
 Route::resource('trailer_links','TrailerLinkController');
 Route::resource('payslips','PayslipController');
 Route::resource('salary_items','SalaryItemController');
@@ -816,10 +815,6 @@ Route::get('waste-collections/authorization/rejected','WasteCollectionController
 Route::get('waste-disposals/authorization/pending','WasteDisposalController@pending')->name('waste_disposals.pending');
 Route::get('waste-disposals/authorization/approved','WasteDisposalController@approved')->name('waste_disposals.approved');
 Route::get('waste-disposals/authorization/rejected','WasteDisposalController@rejected')->name('waste_disposals.rejected');
-
-Route::get('payrolls/authorization/pending','PayrollController@pending')->name('payrolls.pending');
-Route::get('payrolls/authorization/approved','PayrollController@approved')->name('payrolls.approved');
-Route::get('payrolls/authorization/rejected','PayrollController@rejected')->name('payrolls.rejected');
 
 Route::get('retreads/authorization/pending','RetreadController@pending')->name('retreads.pending');
 Route::get('retreads/authorization/approved','RetreadController@approved')->name('retreads.approved');

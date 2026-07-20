@@ -154,6 +154,26 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-advanceModal', event => {
+                $('#advanceModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-advanceModal', event => {
+                $('#advanceModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-advanceAuthModal', event => {
+                $('#advanceAuthModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-advanceAuthModal', event => {
+                $('#advanceAuthModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-importModal', event => {
                 $('#importModal').modal('show');
             })

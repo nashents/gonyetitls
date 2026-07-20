@@ -21,7 +21,6 @@ class Index extends Component
     protected $queryString = ['search', 'filterStatus', 'filterAuth'];
 
     // Create form
-    public $showCreateModal  = false;
     public $selectedEmployee;
     public $selectedCurrency;
     public $amount;
@@ -32,9 +31,8 @@ class Index extends Component
     public $notes;
 
     // Approve/Reject
-    public $showAuthModal    = false;
     public $authAdvanceId;
-    public $authAction;
+    public $authAction = 'approve';
     public $authComments;
 
     // Support data
@@ -78,7 +76,7 @@ class Index extends Component
         $this->selectedCurrency = $this->company->currency_id;
         $this->advance_date = now()->toDateString();
         $this->monthly_recovery_amount = 0;
-        $this->showCreateModal = true;
+        $this->dispatchBrowserEvent('show-advanceModal');
     }
 
     public function store()
@@ -113,7 +111,7 @@ class Index extends Component
             'created_by'              => Auth::id(),
         ]);
 
-        $this->showCreateModal = false;
+        $this->dispatchBrowserEvent('hide-advanceModal');
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Salary advance submitted for approval.']);
     }
 
@@ -124,7 +122,7 @@ class Index extends Component
         $this->authAdvanceId = $id;
         $this->authAction    = $action;
         $this->authComments  = '';
-        $this->showAuthModal = true;
+        $this->dispatchBrowserEvent('show-advanceAuthModal');
     }
 
     public function authorise()
@@ -149,7 +147,7 @@ class Index extends Component
             $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'Advance rejected.']);
         }
 
-        $this->showAuthModal = false;
+        $this->dispatchBrowserEvent('hide-advanceAuthModal');
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
