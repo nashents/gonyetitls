@@ -55,7 +55,7 @@ WithCalculatedFormulas
         // rely on actually exist in this file, so a renamed/misspelled
         // column header shows up as a clear log entry instead of silent nulls.
         if ($this->rowNumber === 2) {
-            
+
             $expectedHeadings = ['employee_number', 'fullname', 'leave_type', 'accrual_rate', 'available_leave_days', 'maximum_leave_days'];
             $missingHeadings = array_filter($expectedHeadings, fn ($heading) => !$row->has($heading));
             if (!empty($missingHeadings)) {
@@ -122,16 +122,26 @@ WithCalculatedFormulas
             ]);
         }
 
+        $data = [];
+
+        if (filled($row['accrual_rate'] ?? null)) {
+            $data['acrual_rate'] = $row['accrual_rate'];
+        }
+
+        if (filled($row['available_leave_days'] ?? null)) {
+            $data['available_leave_days'] = $row['available_leave_days'];
+        }
+
+        if (filled($row['maximum_leave_days'] ?? null)) {
+            $data['maximum_leave_days'] = $row['maximum_leave_days'];
+        }
+
         EmployeeLeave::updateOrCreate(
             [
                 'employee_id' => $employee->id,
                 'leave_type_id' => $leaveType->id,
             ],
-            [
-                'acrual_rate' => $row['accrual_rate'],
-                'available_leave_days' => $row['available_leave_days'],
-                'maximum_leave_days' => $row['maximum_leave_days'],
-            ]
+            $data
         );
 
         // Backward compatibility: keep employee table updated for Annual Leave
