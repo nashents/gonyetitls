@@ -46,6 +46,7 @@ WithCalculatedFormulas
     public function collection(Collection $rows)
     {
        foreach($rows as $row){
+
         $this->rowNumber++;
 
         if($row->filter()->isNotEmpty()){
@@ -54,6 +55,7 @@ WithCalculatedFormulas
         // rely on actually exist in this file, so a renamed/misspelled
         // column header shows up as a clear log entry instead of silent nulls.
         if ($this->rowNumber === 2) {
+            
             $expectedHeadings = ['employee_number', 'fullname', 'leave_type', 'accrual_rate', 'available_leave_days', 'maximum_leave_days'];
             $missingHeadings = array_filter($expectedHeadings, fn ($heading) => !$row->has($heading));
             if (!empty($missingHeadings)) {

@@ -135,6 +135,12 @@ class Trailer extends Model implements Auditable
         return $this->hasMany('App\Models\CashFlow');
     }
 
+    /** Sage Intacct class mapping for this trailer (status badge / sync state). */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'trailer');
+    }
+
     protected $fillable = [
         'user_id',
         'trailer_type_id',

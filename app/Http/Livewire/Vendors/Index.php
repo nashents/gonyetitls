@@ -14,6 +14,7 @@ use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Exports\VendorsExport;
+use App\Services\Sage\SageIntegration;
 use App\Mail\AccountCreationMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -327,11 +328,21 @@ class Index extends Component
       }
     }
 
+    /** Whether the acting user's company has an active Sage integration. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
     /**
      * Sync a vendor to Sage Intacct and surface any failure as a warning.
      */
     protected function pushVendorToSage(Vendor $vendor): void
     {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
         $result = app(\App\Services\SageIntacctService::class)->syncVendor($vendor);
 
         if (isset($result['success']) && $result['success'] === false && empty($result['skipped'])) {
@@ -348,6 +359,10 @@ class Index extends Component
      */
     public function retrySync($id)
     {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
         $vendor = Vendor::findOrFail($id);
         $result = app(\App\Services\SageIntacctService::class)->retry($vendor);
 

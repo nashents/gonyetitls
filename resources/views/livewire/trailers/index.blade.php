@@ -20,6 +20,9 @@
                                     <a href="#" wire:click="exportTrailersExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportTrailersCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportTrailersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    @if ($this->sageEnabled)
+                                    <button wire:click="bulkSyncToSage" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</button>
+                                    @endif
                                 </div>
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -55,11 +58,20 @@
                                         @forelse ($trailers as $trailer)
                                       <tr>
                                         <td>
+                                            @if ($this->sageEnabled)
+                                            <input type="checkbox" wire:model="sageSelected" value="{{ $trailer->id }}" title="Select for Sage bulk sync">
+                                            @endif
                                             {{$trailer->trailer_number}}
                                             @if ($trailer->custom_ref)
                                             <br>
                                                 <small>Custom Ref:{{$trailer->custom_ref}}</small>
-                                            @endif 
+                                            @endif
+                                            @if ($this->sageEnabled)
+                                            <br>
+                                            @php $sm = $trailer->sageMapping; @endphp
+                                            <small class="badge bg-{{ $sm ? ($sm->sync_status === 'synced' ? 'success' : ($sm->sync_status === 'failed' ? 'danger' : ($sm->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $sm->sync_status)) : 'Not synced' }}</small>
+                                            @endif
                                         </td>
                                         <td>{{$trailer->transporter ? $trailer->transporter->name : ""}}</td>
                                         <td>{{$trailer->make}} {{$trailer->model}}</td>
@@ -78,6 +90,16 @@
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trailers.show', $trailer->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     <li><a href="#" wire:click="edit({{$trailer->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    @if ($this->sageEnabled)
+                                                    @php $ss = optional($trailer->sageMapping)->sync_status; @endphp
+                                                    @if ($ss === 'synced')
+                                                    <li><a href="#" wire:click.prevent="syncToSage({{$trailer->id}})" wire:loading.attr="disabled"><i class="fa fa-refresh color-success"></i> Re-sync to Sage</a></li>
+                                                    @elseif (in_array($ss, ['failed','requires_attention']))
+                                                    <li><a href="#" wire:click.prevent="retrySync({{$trailer->id}})" wire:loading.attr="disabled"><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
+                                                    @else
+                                                    <li><a href="#" wire:click.prevent="syncToSage({{$trailer->id}})" wire:loading.attr="disabled"><i class="fa fa-cloud-upload color-primary"></i> Sync to Sage</a></li>
+                                                    @endif
+                                                    @endif
                                                     <li><a href="#" data-toggle="modal" data-target="#trailerDeleteModal{{$trailer->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @if ($trailer->status == 1)
                                                     <li><a href="{{route('trailers.deactivate',$trailer->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>

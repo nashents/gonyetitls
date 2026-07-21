@@ -76,9 +76,106 @@ class SageXmlDriver implements SageDriver
         return $this->send($fn, 'update', 'VENDOR');
     }
 
+    // ── CLASS (Transporter / Horse / Trailer) ────────────────────
+
+    public function createClass(array $class): array
+    {
+        return $this->send('<create>' . $this->buildClass($class, true) . '</create>', 'create', 'CLASS');
+    }
+
+    public function updateClass(string $classId, array $class): array
+    {
+        $class['id'] = $classId;
+        return $this->send('<update>' . $this->buildClass($class, false) . '</update>', 'update', 'CLASS');
+    }
+
+    // ── PROJECT (Trip) ───────────────────────────────────────────
+
+    public function createProject(array $project): array
+    {
+        return $this->send('<create>' . $this->buildProject($project, true) . '</create>', 'create', 'PROJECT');
+    }
+
+    public function updateProject(string $projectId, array $project): array
+    {
+        $project['id'] = $projectId;
+        return $this->send('<update>' . $this->buildProject($project, false) . '</update>', 'update', 'PROJECT');
+    }
+
+    // ── READ (existence checks / pull) ───────────────────────────
+
+    /**
+     * Run a readByQuery. On success `data` is a list of associative rows
+     * (field name => value). Used to de-dup classes by NAME before creating.
+     */
+    public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array
+    {
+        $fn = '<readByQuery>'
+            . $this->el('object', $object)
+            . $this->el('fields', implode(',', $fields))
+            . $this->el('query', $query)
+            . $this->el('pagesize', $pageSize)
+            . '</readByQuery>';
+
+        $t = $this->transport($fn);
+
+        if (! $t['ok']) {
+            return $this->fail(null, $t['error']) + ['request' => $fn, 'response' => null];
+        }
+
+        return $this->parseQuery($t['body'], $t['status']) + ['request' => $fn, 'response' => $t['body']];
+    }
+
     // ─────────────────────────────────────────────────────────────
     // PAYLOAD BUILDERS
     // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Build a CLASS element. Required CLASSID + NAME; optional DESCRIPTION,
+     * PARENTID (hierarchy), STATUS.
+     */
+    protected function buildClass(array $data, bool $isCreate): string
+    {
+        $fields = '';
+        if (! empty($data['id'])) {
+            $fields .= $this->el('CLASSID', $data['id']);
+        }
+        if ($isCreate || isset($data['name'])) {
+            $fields .= $this->el('NAME', $data['name'] ?? '');
+        }
+        $fields .= $this->elIf('DESCRIPTION', $data['description'] ?? null);
+        $fields .= $this->elIf('PARENTID', $data['parentid'] ?? null);
+        $fields .= $this->elIf('STATUS', $data['status'] ?? null);
+
+        return '<CLASS>' . $fields . '</CLASS>';
+    }
+
+    /**
+     * Build a PROJECT element. Required NAME + PROJECTCATEGORY (on create);
+     * optional PROJECTID, CUSTOMERID, CLASSID, dates, CURRENCY, STATUS, DESCRIPTION.
+     */
+    protected function buildProject(array $data, bool $isCreate): string
+    {
+        $fields = '';
+        if (! empty($data['id'])) {
+            $fields .= $this->el('PROJECTID', $data['id']);
+        }
+        if ($isCreate || isset($data['name'])) {
+            $fields .= $this->el('NAME', $data['name'] ?? '');
+        }
+        // PROJECTCATEGORY is required by Sage on create.
+        $fields .= $this->elIf('PROJECTCATEGORY', $data['category'] ?? null);
+        $fields .= $this->elIf('DESCRIPTION', $data['description'] ?? null);
+        $fields .= $this->elIf('CUSTOMERID', $data['customerid'] ?? null);
+        $fields .= $this->elIf('CLASSID', $data['classid'] ?? null);
+        // Dates must be mm/dd/yyyy — the mapper formats them.
+        $fields .= $this->elIf('BEGINDATE', $data['begindate'] ?? null);
+        $fields .= $this->elIf('ENDDATE', $data['enddate'] ?? null);
+        $fields .= $this->elIf('CURRENCY', $data['currency'] ?? null);
+        $fields .= $this->elIf('STATUS', $data['status'] ?? null);
+
+        return '<PROJECT>' . $fields . '</PROJECT>';
+    }
 
     /**
      * Build a CUSTOMER / VENDOR element from the service's generic field array.
@@ -126,25 +223,46 @@ class SageXmlDriver implements SageDriver
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Wrap a function body in the full request envelope, POST it, and parse.
+     * POST a function body inside the full envelope. Returns the raw transport
+     * outcome (never parsed) so different callers can parse it their own way.
+     * The auth envelope (with credentials) is built here and NOT returned — only
+     * the credential-free function body is echoed back for safe logging.
      */
-    protected function send(string $functionBody, string $action, ?string $object = null): array
+    protected function transport(string $functionBody): array
     {
         $controlId = (config('sageintacct.xml.control_id', 'gonyeti')) . '-' . uniqid();
-
-        $xml = $this->envelope($functionBody, $controlId);
+        $xml       = $this->envelope($functionBody, $controlId);
 
         try {
             $response = Http::timeout($this->timeout)
                 ->withBody($xml, 'application/xml')
                 ->post($this->endpoint);
         } catch (Throwable $e) {
-            // Network / transport failure — log without any payload (no secrets).
-            Log::error("SageIntacct XML [{$action} {$object}] transport error: " . $e->getMessage());
-            return $this->fail(null, 'Could not reach Sage Intacct: ' . $e->getMessage());
+            Log::error('SageIntacct XML transport error: ' . $e->getMessage());
+            return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'Could not reach Sage Intacct: ' . $e->getMessage(), 'request' => $functionBody];
         }
 
-        return $this->parse($response->body(), $response->status(), $action, $object);
+        return ['ok' => true, 'status' => $response->status(), 'body' => $response->body(), 'error' => null, 'request' => $functionBody];
+    }
+
+    /**
+     * Send a create/update function and parse its single-record result.
+     * The result carries `request` (credential-free function XML) + `response`
+     * (raw body) for troubleshooting/audit payload storage.
+     */
+    protected function send(string $functionBody, string $action, ?string $object = null): array
+    {
+        $t = $this->transport($functionBody);
+
+        if (! $t['ok']) {
+            return $this->fail(null, $t['error']) + ['request' => $functionBody, 'response' => null];
+        }
+
+        $result             = $this->parse($t['body'], $t['status'], $action, $object);
+        $result['request']  = $functionBody;
+        $result['response'] = $t['body'];
+
+        return $result;
     }
 
     protected function envelope(string $functionBody, string $controlId): string
@@ -221,6 +339,45 @@ class SageXmlDriver implements SageDriver
             'data'    => ['id' => $key],
             'error'   => null,
         ];
+    }
+
+    /**
+     * Parse a readByQuery response into a list of associative rows.
+     */
+    protected function parseQuery(string $body, int $httpStatus): array
+    {
+        if ($body === '') {
+            return $this->fail($httpStatus, 'Empty response from Sage Intacct.');
+        }
+
+        try {
+            $xml = new SimpleXMLElement($body);
+        } catch (Throwable $e) {
+            return $this->fail($httpStatus, 'Unexpected response from Sage Intacct.');
+        }
+
+        if ((string) ($xml->control->status ?? '') === 'failure'
+            || (string) ($xml->operation->authentication->status ?? '') === 'failure') {
+            return $this->fail($httpStatus, $this->extractError($xml));
+        }
+
+        $result = $xml->operation->result ?? null;
+        if (! $result || (string) $result->status !== 'success') {
+            return $this->fail($httpStatus, $this->extractError($xml));
+        }
+
+        $records = [];
+        if (isset($result->data)) {
+            foreach ($result->data->children() as $record) {
+                $row = [];
+                foreach ($record->children() as $field) {
+                    $row[$field->getName()] = (string) $field;
+                }
+                $records[] = $row;
+            }
+        }
+
+        return ['success' => true, 'status' => $httpStatus, 'data' => $records, 'error' => null];
     }
 
     /**

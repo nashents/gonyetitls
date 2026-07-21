@@ -3,12 +3,11 @@
 namespace App\Services;
 
 use App\Integrations\Contracts\SageDriver;
-use App\Integrations\SageIntacct\SageIntacctDriver;
 use App\Models\CompanyIntegration;
 use App\Models\Customer;
 use App\Models\IntegrationLog;
-use App\Models\IntegrationProvider;
 use App\Models\Vendor;
+use App\Services\Sage\Concerns\ResolvesSageIntegration;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -30,7 +29,7 @@ use Throwable;
  */
 class SageIntacctService
 {
-    protected const PROVIDER_KEY = 'sage_intacct';
+    use ResolvesSageIntegration;
 
     // ─────────────────────────────────────────────────────────────
     // PUBLIC API
@@ -187,31 +186,16 @@ class SageIntacctService
 
     /**
      * Find the active Sage integration for the model's company.
+     * Resolution now lives in the shared ResolvesSageIntegration trait.
      */
     protected function activeIntegrationFor(Model $model): ?CompanyIntegration
     {
-        $provider = IntegrationProvider::where('key', self::PROVIDER_KEY)->first();
-        if (! $provider) {
-            return null;
-        }
-
-        return CompanyIntegration::where('company_id', $model->company_id)
-            ->where('integration_provider_id', $provider->id)
-            ->where('status', 'active')
-            ->first();
+        return $this->activeSageIntegration($model->company_id);
     }
 
     protected function driverFor(CompanyIntegration $integration): SageDriver
     {
-        // The provider's `driver` FQN points at the façade; honour it but fall
-        // back to the known façade so a misconfigured row still works.
-        $class = $integration->integration_provider->driver ?? SageIntacctDriver::class;
-
-        if (! class_exists($class)) {
-            $class = SageIntacctDriver::class;
-        }
-
-        return new $class($integration);
+        return $this->sageDriverFor($integration);
     }
 
     // ─────────────────────────────────────────────────────────────

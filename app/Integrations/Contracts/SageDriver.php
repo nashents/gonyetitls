@@ -31,4 +31,19 @@ interface SageDriver extends IntegrationDriver
     public function createVendor(array $vendor): array;
 
     public function updateVendor(string $sageId, array $vendor): array;
+
+    // ── Phase 2: Classes (Transporter/Horse/Trailer) & Projects (Trip) ──
+
+    /** Generic class payload: id, name, parentid?, description?, status?. */
+    public function createClass(array $class): array;
+
+    public function updateClass(string $classId, array $class): array;
+
+    /** Generic project payload: id, name, category, customerid?, classid?, begindate?, enddate?, currency?, status?, description?. */
+    public function createProject(array $project): array;
+
+    public function updateProject(string $projectId, array $project): array;
+
+    /** Read records; on success `data` is a list of associative rows. */
+    public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array;
 }

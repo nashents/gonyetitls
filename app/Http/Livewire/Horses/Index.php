@@ -12,6 +12,9 @@ use App\Models\Incident;
 use App\Models\Inspection;
 use App\Models\Mileage;
 use App\Models\Trip;
+use App\Services\Sage\SageSyncService;
+use App\Services\Sage\SageIntegration;
+use App\Jobs\Sage\SyncHorseToSageJob;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -35,6 +38,9 @@ class Index extends Component
     public $horse_id;
     public $from;
     public $to;
+
+    // Sage sync — selected horse ids for bulk sync.
+    public $sageSelected = [];
 
     public function exportHorsesCSV(Excel $excel){
 
@@ -170,11 +176,71 @@ class Index extends Component
 
     }
 
+    /**
+     * Whether the acting user's company has an active Sage integration.
+     * Drives visibility of all Sage controls; computed once per request.
+     */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /**
+     * Sync one horse to Sage Intacct (as a Class) inline. Used for both the
+     * initial sync and retry — the service is idempotent.
+     */
+    public function syncToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $horse  = Horse::findOrFail($id);
+        $result = app(SageSyncService::class)->syncHorse($horse);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : (! empty($result['skipped']) ? 'warning' : 'error'),
+            'message' => ! empty($result['success'])
+                ? 'Horse synced to Sage (class ' . ($result['external_id'] ?? '') . ').'
+                : 'Sage sync: ' . ($result['error'] ?? 'unknown error'),
+        ]);
+    }
+
+    /** Retry a failed horse sync (idempotent — never duplicates in Sage). */
+    public function retrySync($id)
+    {
+        $this->syncToSage($id);
+    }
+
+    /** Bulk sync the selected horses via queued jobs. */
+    public function bulkSyncToSage()
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $ids = array_filter($this->sageSelected);
+
+        foreach ($ids as $id) {
+            SyncHorseToSageJob::dispatch((int) $id);
+        }
+
+        $this->sageSelected = [];
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => count($ids) ? 'success' : 'warning',
+            'message' => count($ids)
+                ? count($ids) . ' horse(s) queued for Sage sync.'
+                : 'Select at least one horse to sync.',
+        ]);
+    }
+
     public function render()
-    {   
+    {
         if (isset($this->search)) {
             return view('livewire.horses.index',[
                 'horses' => Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')
+                ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
                 ->where('archive',0)
                 ->where('horse_number','like', '%'.$this->search.'%')
                 ->orWhere('registration_number','like', '%'.$this->search.'%')
@@ -194,6 +260,7 @@ class Index extends Component
         }else{
             return view('livewire.horses.index',[
                 'horses' => Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')
+                ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
                 ->where('archive',0)->orderBy('registration_number','asc')->paginate(10),
                 'kpis' => $this->kpis,
             ]);

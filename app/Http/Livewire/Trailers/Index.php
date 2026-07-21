@@ -20,6 +20,9 @@ use Livewire\WithFileUploads;
 use App\Exports\TrailersExport;
 use App\Models\TrailerDocument;
 use App\Models\VehicleDocument;
+use App\Services\Sage\SageSyncService;
+use App\Services\Sage\SageIntegration;
+use App\Jobs\Sage\SyncTrailerToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -32,6 +35,9 @@ class Index extends Component
     use WithFileUploads;
     public $search;
     protected $queryString = ['search'];
+
+    // Sage sync — selected trailer ids for bulk sync.
+    public $sageSelected = [];
     public $measurements;
     public $measurement_id = [];
     public $cargos;
@@ -460,6 +466,58 @@ public function activate($id){
             $this->resetPage();
         }
 
+    /** Whether the acting user's company has an active Sage integration. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Sync one trailer to Sage Intacct (Class) inline; also used for retry. */
+    public function syncToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $trailer = Trailer::findOrFail($id);
+        $result  = app(SageSyncService::class)->syncTrailer($trailer);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : (! empty($result['skipped']) ? 'warning' : 'error'),
+            'message' => ! empty($result['success'])
+                ? 'Trailer synced to Sage (class ' . ($result['external_id'] ?? '') . ').'
+                : 'Sage sync: ' . ($result['error'] ?? 'unknown error'),
+        ]);
+    }
+
+    public function retrySync($id)
+    {
+        $this->syncToSage($id);
+    }
+
+    /** Bulk sync the selected trailers via queued jobs. */
+    public function bulkSyncToSage()
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $ids = array_filter($this->sageSelected);
+
+        foreach ($ids as $id) {
+            SyncTrailerToSageJob::dispatch((int) $id);
+        }
+
+        $this->sageSelected = [];
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => count($ids) ? 'success' : 'warning',
+            'message' => count($ids)
+                ? count($ids) . ' trailer(s) queued for Sage sync.'
+                : 'Select at least one trailer to sync.',
+        ]);
+    }
+
     public function render()
     {
         $this->cargos = Cargo::orderBy('name','asc')->get();
@@ -470,6 +528,7 @@ public function activate($id){
         if (isset($this->search)) {
             return view('livewire.trailers.index',[
                 'trailers' => Trailer::with('transporter:id,name')
+                ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
                 ->where('archive',0)
                 ->where('trailer_number','like', '%'.$this->search.'%')
                 ->orWhere('registration_number','like', '%'.$this->search.'%')
@@ -486,6 +545,7 @@ public function activate($id){
         }else{
             return view('livewire.trailers.index',[
                 'trailers' => Trailer::with('transporter:id,name')
+                ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
                 ->where('archive',0)->orderBy('registration_number','asc')->paginate(10),
                 'cargos' => $this->cargos,
                 'measurements' => $this->measurements,

@@ -30,6 +30,10 @@ class Index extends Component
     public $leave_type_id;
     public $leave_types ;
 
+    public $enforce_accrual_rate = true;
+    public $enforce_leave_days = true;
+    public $enforce_maximum_leave_days = true;
+
 
     public function mount(){
         $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
@@ -38,42 +42,82 @@ class Index extends Component
 
     public function enforceLeaveTypeDefaults()
     {
+        if (!$this->enforce_accrual_rate && !$this->enforce_leave_days && !$this->enforce_maximum_leave_days) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'danger',
+                'message' => 'Select at least one field to enforce.'
+            ]);
+            return;
+        }
+
+        $enforceAccrualRate = $this->enforce_accrual_rate;
+        $enforceLeaveDays = $this->enforce_leave_days;
+        $enforceMaximumLeaveDays = $this->enforce_maximum_leave_days;
+
         $leaveTypes = LeaveType::where('active', true)->get();
 
         $enforced = 0;
 
-        DB::transaction(function () use ($leaveTypes, &$enforced) {
+        DB::transaction(function () use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays) {
             Employee::where('archive', 0)
                 ->select('id')
-                ->chunkById(200, function ($employees) use ($leaveTypes, &$enforced) {
+                ->chunkById(200, function ($employees) use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays) {
                     foreach ($employees as $employee) {
                         foreach ($leaveTypes as $leaveType) {
-                            EmployeeLeave::updateOrCreate(
-                                [
+                            $defaults = [
+                                'acrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
+                                'available_leave_days' => $leaveType->entitlement ?? 0,
+                                'maximum_leave_days' => $leaveType->maximum_leave_days ?? 0,
+                            ];
+
+                            $employeeLeave = EmployeeLeave::where('employee_id', $employee->id)
+                                ->where('leave_type_id', $leaveType->id)
+                                ->first();
+
+                            if ($employeeLeave) {
+                                $values = array_intersect_key($defaults, array_filter([
+                                    'acrual_rate' => $enforceAccrualRate,
+                                    'available_leave_days' => $enforceLeaveDays,
+                                    'maximum_leave_days' => $enforceMaximumLeaveDays,
+                                ]));
+
+                                $employeeLeave->update($values);
+                            } else {
+                                EmployeeLeave::create(array_merge($defaults, [
                                     'employee_id' => $employee->id,
                                     'leave_type_id' => $leaveType->id,
-                                ],
-                                [
-                                    'acrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
-                                    'available_leave_days' => $leaveType->entitlement ?? 0,
-                                    'maximum_leave_days' => $leaveType->maximum_leave_days ?? 0,
-                                ]
-                            );
+                                ]));
+                            }
 
                             $enforced++;
 
                             // Backward compatibility: keep the Employee table in sync, Annual Leave only
                             if (strtolower($leaveType->name) === 'annual') {
-                                Employee::where('id', $employee->id)->update([
-                                    'accrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
-                                    'leave_days' => $leaveType->entitlement ?? 0,
-                                    'maximum_leave_days' => $leaveType->maximum_leave_days ?? 0,
-                                ]);
+                                $employeeDefaults = [
+                                    'accrual_rate' => $defaults['acrual_rate'],
+                                    'leave_days' => $defaults['available_leave_days'],
+                                    'maximum_leave_days' => $defaults['maximum_leave_days'],
+                                ];
+
+                                // New records are fully seeded from the leave type regardless of the checkboxes
+                                $employeeValues = $employeeLeave
+                                    ? array_intersect_key($employeeDefaults, array_filter([
+                                        'accrual_rate' => $enforceAccrualRate,
+                                        'leave_days' => $enforceLeaveDays,
+                                        'maximum_leave_days' => $enforceMaximumLeaveDays,
+                                    ]))
+                                    : $employeeDefaults;
+
+                                if (!empty($employeeValues)) {
+                                    Employee::where('id', $employee->id)->update($employeeValues);
+                                }
                             }
                         }
                     }
                 });
         });
+
+        $this->dispatchBrowserEvent('hide-enforceLeaveTypeDefaultsModal');
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',

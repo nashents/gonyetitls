@@ -40,4 +40,23 @@ return [
     // HTTP timeout (seconds) for all Sage requests.
     'timeout' => env('SAGE_INTACCT_TIMEOUT', 30),
 
+    /*
+    | Phase 2 — Fleet (Classes) & Trips (Projects).
+    | Per-company overrides may be set on the integration `config` JSON
+    | (e.g. {"project_category": "Haulage"}); those win over these defaults.
+    */
+
+    // Sage CLASS constraints / conventions for Transporter/Horse/Trailer.
+    'class' => [
+        // CLASSID max length (Sage caps class ids); refs are trimmed to this.
+        'id_max_length' => 20,
+    ],
+
+    // Sage PROJECT defaults for Trips.
+    'project' => [
+        // Required by Sage. Confirmed live in bhsquared-imp. Override per company
+        // on the integration config as `project_category` if a company differs.
+        'category' => env('SAGE_INTACCT_PROJECT_CATEGORY', 'Contract'),
+    ],
+
 ];

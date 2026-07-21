@@ -59,7 +59,7 @@
                                     <td>{{$vendor->phonenumber}}</td>
                                     <td>
                                         <span class="badge bg-{{$vendor->status == 1 ? "success" : "danger"}}">{{$vendor->status == 1 ? "Active" : "Inactive"}}</span>
-                                        @if ($vendor->sage_sync_status)
+                                        @if ($this->sageEnabled && $vendor->sage_sync_status)
                                             <br>
                                             <small class="badge bg-{{ $vendor->sage_sync_status === 'synced' ? 'success' : ($vendor->sage_sync_status === 'failed' ? 'danger' : 'warning') }}"
                                                    title="{{ $vendor->sage_sync_error }}">Sage: {{ ucfirst($vendor->sage_sync_status) }}</small>
@@ -74,7 +74,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('vendors.show',$vendor->id)}}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$vendor->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @if ($vendor->sage_sync_status === 'failed')
+                                                @if ($this->sageEnabled && $vendor->sage_sync_status === 'failed')
                                                 <li><a href="#" wire:click="retrySync({{$vendor->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#vendorDeleteModal{{ $vendor->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>

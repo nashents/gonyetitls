@@ -26,6 +26,9 @@ use App\Models\TripStatus;
 use App\Models\TripType;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\Sage\SageSyncService;
+use App\Services\Sage\SageIntegration;
+use App\Jobs\Sage\SyncTripToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -51,6 +54,61 @@ class Index extends Component
     public $trip_id;
     public $status;
     public $units_of_measure_id;
+
+    // Sage sync — selected trip ids for bulk sync.
+    public $sageSelected = [];
+
+    /** Whether the acting user's company has an active Sage integration. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Sync one trip to Sage Intacct (Project) inline; also used for retry. */
+    public function syncToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $trip   = Trip::findOrFail($id);
+        $result = app(SageSyncService::class)->syncTrip($trip);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : (! empty($result['skipped']) ? 'warning' : 'error'),
+            'message' => ! empty($result['success'])
+                ? 'Trip synced to Sage (project ' . ($result['external_id'] ?? '') . ').'
+                : 'Sage sync: ' . ($result['error'] ?? 'unknown error'),
+        ]);
+    }
+
+    public function retrySync($id)
+    {
+        $this->syncToSage($id);
+    }
+
+    /** Bulk sync the selected trips via queued jobs. */
+    public function bulkSyncToSage()
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $ids = array_filter($this->sageSelected);
+
+        foreach ($ids as $id) {
+            SyncTripToSageJob::dispatch((int) $id);
+        }
+
+        $this->sageSelected = [];
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => count($ids) ? 'success' : 'warning',
+            'message' => count($ids)
+                ? count($ids) . ' trip(s) queued for Sage sync.'
+                : 'Select at least one trip to sync.',
+        ]);
+    }
 
     public array $deliveryNotes = [];
  
@@ -1381,6 +1439,11 @@ class Index extends Component
             'trip_transport_orders.transport_order.customer',
             'trip_transport_orders.transport_order.cargo',
         ];
+
+        // Only load the Sage mapping when the company actually uses Sage.
+        if ($this->sageEnabled) {
+            $withRelations[] = 'sageMapping';
+        }
 
         $trips = Trip::query()->with($withRelations)->when($this->driver?->id, function ($q) {
         $q->where('driver_id', $this->driver->id);

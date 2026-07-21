@@ -372,6 +372,12 @@
                 $('#leaveDaysModal').modal('hide');
             })
     </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-enforceLeaveTypeDefaultsModal', event => {
+                $('#enforceLeaveTypeDefaultsModal').modal('hide');
+            })
+    </script>
     <script type="text/javascript">
             window.addEventListener('show-restoreModal', event => {
                 $('#restoreModal').modal('show');

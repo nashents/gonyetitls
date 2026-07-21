@@ -17,9 +17,9 @@
                                 </div>
                                 <div class="panel-title">
 
-                                    @if (Auth::user()->is_admin())
-                                        <a href="#" wire:click="enforceLeaveTypeDefaults()" onclick="return confirm('This will force update ALL employee leave records with each leave type\'s default accrual rate, max accruable and entitlement, overwriting any manual adjustments. Continue?')" class="btn btn-default border-danger btn-rounded btn-wide"><i class="fa fa-refresh"></i>Enforce Leave Type Defaults</a>
-                                    @endif
+                                    {{-- @if (Auth::user()->is_admin()) --}}
+                                        <a href="#" data-toggle="modal" data-target="#enforceLeaveTypeDefaultsModal" class="btn btn-default border-danger btn-rounded btn-wide"><i class="fa fa-refresh"></i>Enforce Leave Type Defaults</a>
+                                    {{-- @endif --}}
                                     <a href="" data-toggle="modal" data-target="#leavesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                     <a href="#" wire:click="exportEmployeesLeaveExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportEmployeesLeaveCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
@@ -244,7 +244,53 @@
             </div>
         </div>
 
-          <!-- Modal -->
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="enforceLeaveTypeDefaultsModal" tabindex="-1" role="dialog" aria-labelledby="enforceLeaveTypeDefaultsModalLabel" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
 
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="enforceLeaveTypeDefaultsModalLabel">
+                            <i class="fa fa-refresh"></i> Enforce Leave Type Defaults
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </h4>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>Choose which field(s) to force-update on every active employee's leave records, using each leave type's current defaults. Unchecked fields are left untouched.</p>
+
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" wire:model="enforce_accrual_rate"> Accrual Rate
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" wire:model="enforce_leave_days"> Entitlement (Available Leave Days)
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" wire:model="enforce_maximum_leave_days"> Maximum Leave Days
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                                <i class="fa fa-times"></i> Close
+                            </button>
+
+                            <button type="button" wire:click="enforceLeaveTypeDefaults()" onclick="return confirm('This will force update the selected field(s) on ALL employee leave records from their leave type defaults, overwriting any manual adjustments. Continue?')" class="btn btn-default border-danger btn-wide btn-rounded">
+                                <i class="fa fa-refresh"></i> Enforce Selected
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
     </div>

@@ -78,7 +78,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-{{$customer->status == 1 ? "success" : "danger"}}">{{$customer->status == 1 ? "Active" : "Inactive"}}</span>
-                                        @if ($customer->sage_sync_status)
+                                        @if ($this->sageEnabled && $customer->sage_sync_status)
                                             <br>
                                             <small class="badge bg-{{ $customer->sage_sync_status === 'synced' ? 'success' : ($customer->sage_sync_status === 'failed' ? 'danger' : 'warning') }}"
                                                    title="{{ $customer->sage_sync_error }}">Sage: {{ ucfirst($customer->sage_sync_status) }}</small>
@@ -93,7 +93,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('customers.show', $customer->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$customer->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @if ($customer->sage_sync_status === 'failed')
+                                                @if ($this->sageEnabled && $customer->sage_sync_status === 'failed')
                                                 <li><a href="#" wire:click="retrySync({{$customer->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#customerDeleteModal{{ $customer->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>

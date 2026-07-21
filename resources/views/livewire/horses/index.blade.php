@@ -39,7 +39,10 @@
                                     <a href="#" wire:click="exportHorsesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportHorsesCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportHorsesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-                                 
+                                    @if ($this->sageEnabled)
+                                    <button wire:click="bulkSyncToSage" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</button>
+                                    @endif
+
                                 </div>
                             </div>
                             {{-- KPI Strip --}}
@@ -147,11 +150,20 @@
                                         @forelse ($horses as $horse)
                                      <tr>
                                         <td>
+                                            @if ($this->sageEnabled)
+                                            <input type="checkbox" wire:model="sageSelected" value="{{ $horse->id }}" title="Select for Sage bulk sync">
+                                            @endif
                                             {{$horse->horse_number}}
                                             @if ($horse->custom_ref)
                                             <br>
                                                 <small>Custom Ref:{{$horse->custom_ref}}</small>
-                                            @endif 
+                                            @endif
+                                            @if ($this->sageEnabled)
+                                            <br>
+                                            @php $sm = $horse->sageMapping; @endphp
+                                            <small class="badge bg-{{ $sm ? ($sm->sync_status === 'synced' ? 'success' : ($sm->sync_status === 'failed' ? 'danger' : ($sm->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $sm->sync_status)) : 'Not synced' }}</small>
+                                            @endif
                                         </td>
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                         <td>{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}}</td>
@@ -206,6 +218,16 @@
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('horses.show', $horse->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     <li><a href="{{route('horses.edit', $horse->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    @if ($this->sageEnabled)
+                                                    @php $ss = optional($horse->sageMapping)->sync_status; @endphp
+                                                    @if ($ss === 'synced')
+                                                    <li><a href="#" wire:click.prevent="syncToSage({{$horse->id}})" wire:loading.attr="disabled"><i class="fa fa-refresh color-success"></i> Re-sync to Sage</a></li>
+                                                    @elseif (in_array($ss, ['failed','requires_attention']))
+                                                    <li><a href="#" wire:click.prevent="retrySync({{$horse->id}})" wire:loading.attr="disabled"><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
+                                                    @else
+                                                    <li><a href="#" wire:click.prevent="syncToSage({{$horse->id}})" wire:loading.attr="disabled"><i class="fa fa-cloud-upload color-primary"></i> Sync to Sage</a></li>
+                                                    @endif
+                                                    @endif
                                                     <li><a href="#" data-toggle="modal" data-target="#horseDeleteModal{{$horse->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @if ($horse->status == 1)
                                                         <li><a href="{{route('horses.deactivate', $horse->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>

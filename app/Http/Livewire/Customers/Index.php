@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Document;
 use App\Models\User;
 use App\Services\SageIntacctService;
+use App\Services\Sage\SageIntegration;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Ixudra\Curl\Facades\Curl;
@@ -330,11 +331,21 @@ class Index extends Component
       }
     }
 
+    /** Whether the acting user's company has an active Sage integration. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
     /**
      * Sync a customer to Sage Intacct and surface any failure as a warning.
      */
     protected function pushCustomerToSage(Customer $customer): void
     {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
         $result = app(SageIntacctService::class)->syncCustomer($customer);
 
         if (isset($result['success']) && $result['success'] === false && empty($result['skipped'])) {
@@ -351,6 +362,10 @@ class Index extends Component
      */
     public function retrySync($id)
     {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
         $customer = Customer::findOrFail($id);
         $result   = app(\App\Services\SageIntacctService::class)->retry($customer);
 

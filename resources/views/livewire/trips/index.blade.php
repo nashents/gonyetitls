@@ -342,6 +342,9 @@
                                                         <li><a href="{{ route('trips.summary',['trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
                                                         @endif
                                                         <li><a href="#" wire:click="exportPodTrackerExcel()"><i class="fa fa-download"></i>POD Tracker</a></li>
+                                                        @if ($this->sageEnabled)
+                                                        <li><a href="#" wire:click="bulkSyncToSage" wire:loading.attr="disabled"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</a></li>
+                                                        @endif
                                                     </ul>
                                                 </div>
                                             </div>
@@ -444,7 +447,22 @@
 
                                             <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
                                                 <td>
+                                                    @if ($this->sageEnabled)
+                                                    <input type="checkbox" wire:model="sageSelected" value="{{ $trip->id }}" title="Select for Sage bulk sync">
+                                                    @endif
                                                     <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong>
+                                                    @if ($this->sageEnabled)
+                                                    @php $sm = $trip->sageMapping; $ss = optional($sm)->sync_status; @endphp
+                                                    <span class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                          title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</span>
+                                                    @if ($ss === 'synced')
+                                                        <a href="#" wire:click.prevent="syncToSage({{ $trip->id }})" wire:loading.attr="disabled" title="Re-sync to Sage"><i class="fa fa-refresh"></i></a>
+                                                    @elseif (in_array($ss, ['failed','requires_attention']))
+                                                        <a href="#" wire:click.prevent="retrySync({{ $trip->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
+                                                    @else
+                                                        <a href="#" wire:click.prevent="syncToSage({{ $trip->id }})" wire:loading.attr="disabled" title="Sync to Sage"><i class="fa fa-cloud-upload"></i> Sync</a>
+                                                    @endif
+                                                    @endif
                                                     <br>
                                                     <small class="text-muted">
                                                         @if ($trip->trip_transport_orders)
