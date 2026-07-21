@@ -42,8 +42,10 @@ class BillJournalService
 
             // ── DR each expense line against its account ─────────────────
             foreach ($bill->bill_expenses as $expense) {
-                
+
                 if (!$expense->account_id) continue;
+
+                $subtotal = is_numeric($expense->subtotal) ? (float) $expense->subtotal : 0;
 
                 $entry->journal_entry_lines()->create([
                     'account_id'      => $expense->account_id,
@@ -54,10 +56,9 @@ class BillJournalService
                     'trailer_id'      => $bill->trailer_id,
                     'driver_id'       => $bill->driver_id,
                     'transporter_id'  => $bill->transporter_id,
-                    'debit'           => $expense->subtotal,
+                    'debit'           => $subtotal,
                     'credit'          => 0,
-                   'exchange_debit' => (is_numeric($expense->subtotal) ? (float) $expense->subtotal : 0)
-                  * (is_numeric($rate) ? (float) $rate : 0),
+                    'exchange_debit'  => $subtotal * (is_numeric($rate) ? (float) $rate : 0),
                     'exchange_credit' => 0,
                     'currency_id'     => $bill->currency_id,
                     'exchange_rate'   => $rate,
@@ -67,13 +68,14 @@ class BillJournalService
 
             // ── DR VAT (input tax — recoverable) ─────────────────────────
             if ($bill->tax_amount > 0) {
+                $taxAmount = is_numeric($bill->tax_amount) ? (float) $bill->tax_amount : 0;
+
                 $entry->journal_entry_lines()->create([
                     'account_id'      => $vatAccount->id,
                     'vendor_id'       => $bill->vendor_id,
-                    'debit'           => $bill->tax_amount,
+                    'debit'           => $taxAmount,
                     'credit'          => 0,
-                    'exchange_debit' => (is_numeric($bill->tax_amount) ? (float) $bill->tax_amount : 0)
-                  * (is_numeric($rate) ? (float) $rate : 0),
+                    'exchange_debit'  => $taxAmount * (is_numeric($rate) ? (float) $rate : 0),
                     'exchange_credit' => 0,
                     'currency_id'     => $bill->currency_id,
                     'exchange_rate'   => $rate,
@@ -82,14 +84,15 @@ class BillJournalService
             }
 
             // ── CR Accounts Payable (full bill total) ────────────────────
+            $total = is_numeric($bill->total) ? (float) $bill->total : 0;
+
             $entry->journal_entry_lines()->create([
                 'account_id'      => $apAccount->id,
                 'vendor_id'       => $bill->vendor_id,
                 'debit'           => 0,
-                'credit'          => $bill->total,
+                'credit'          => $total,
                 'exchange_debit'  => 0,
-                'exchange_credit' => (is_numeric($bill->total) ? (float) $bill->total : 0)
-                  * (is_numeric($rate) ? (float) $rate : 0),
+                'exchange_credit' => $total * (is_numeric($rate) ? (float) $rate : 0),
                 'currency_id'     => $bill->currency_id,
                 'exchange_rate'   => $rate,
                 'description'     => "AP - Bill {$bill->bill_number}",

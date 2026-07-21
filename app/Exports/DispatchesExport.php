@@ -3,7 +3,9 @@
 namespace App\Exports;
 
 use App\Models\Dispatch;
+use App\Models\DispatchItem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -12,7 +14,11 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
 class DispatchesExport implements FromQuery,
@@ -21,15 +27,79 @@ WithMapping,
 WithHeadings,
 WithEvents,
 WithDrawings,
+WithColumnWidths,
 WithCustomStartCell
 {
     use Exportable;
 
     protected $department;
 
+    // Summary metrics
+    protected int $totalDispatches = 0;
+    protected float $totalQty = 0;
+    protected array $valueByCurrency = [];
+    protected array $statusBreakdown = [];
+    protected array $popularStores = [];
+    protected array $popularVendors = [];
+    protected array $popularBranches = [];
+
     public function __construct($department = null)
     {
         $this->department = $department;
+
+        $base = $this->baseQuery();
+
+        $this->totalDispatches = (clone $base)->count();
+
+        $this->totalQty = (float) DispatchItem::whereIn('dispatch_id', (clone $base)->pluck('id'))->sum('qty');
+
+        $this->valueByCurrency = (clone $base)
+            ->join('currencies', 'currencies.id', '=', 'dispatches.currency_id')
+            ->groupBy('currencies.name')
+            ->orderByDesc(DB::raw('SUM(dispatches.total)'))
+            ->get(['currencies.name as name', DB::raw('SUM(dispatches.total) as total')])
+            ->toArray();
+
+        $this->statusBreakdown = (clone $base)
+            ->select('authorization', DB::raw('COUNT(*) as total'))
+            ->groupBy('authorization')
+            ->pluck('total', 'authorization')
+            ->toArray();
+
+        $this->popularStores = (clone $base)
+            ->whereNotNull('dispatches.store_id')
+            ->join('stores', 'stores.id', '=', 'dispatches.store_id')
+            ->groupBy('stores.name')
+            ->orderByDesc(DB::raw('COUNT(*)'))
+            ->limit(5)
+            ->get(['stores.name as name', DB::raw('COUNT(*) as total')])
+            ->toArray();
+
+        $this->popularVendors = (clone $base)
+            ->whereNotNull('dispatches.vendor_id')
+            ->join('vendors', 'vendors.id', '=', 'dispatches.vendor_id')
+            ->groupBy('vendors.name')
+            ->orderByDesc(DB::raw('COUNT(*)'))
+            ->limit(5)
+            ->get(['vendors.name as name', DB::raw('COUNT(*) as total')])
+            ->toArray();
+
+        $this->popularBranches = (clone $base)
+            ->whereNotNull('dispatches.branch_id')
+            ->join('branches', 'branches.id', '=', 'dispatches.branch_id')
+            ->groupBy('branches.name')
+            ->orderByDesc(DB::raw('COUNT(*)'))
+            ->limit(5)
+            ->get(['branches.name as name', DB::raw('COUNT(*) as total')])
+            ->toArray();
+    }
+
+    protected function baseQuery()
+    {
+        return Dispatch::query()
+            ->when($this->department, function ($q) {
+                $q->where('department', $this->department);
+            });
     }
 
     /**
@@ -37,7 +107,7 @@ WithCustomStartCell
     */
     public function query()
     {
-        return Dispatch::query()
+        return $this->baseQuery()
             ->with([
                 'user', 'employee',
                 'branch', 'department', 'store', 'currency',
@@ -45,9 +115,6 @@ WithCustomStartCell
                 'dispatch_items.product', 'dispatch_items.inventory.product',
                 'dispatch_items.asset.product', 'dispatch_items.tyre.product',
             ])
-            ->when($this->department, function ($q) {
-                $q->where('department', $this->department);
-            })
             ->orderByDesc('date');
     }
 
@@ -67,7 +134,7 @@ WithCustomStartCell
                 return $dispatch_item->product->name;
             }
             return "";
-        })->filter()->implode(', ');
+        })->filter()->implode("\n");
 
         return [
             $dispatch->dispatch_number,
@@ -123,21 +190,133 @@ WithCustomStartCell
         ];
     }
 
+    /**
+     * Cap the width of free-text / multi-value columns so their content
+     * wraps and expands the row downwards instead of stretching the column.
+     */
+    public function columnWidths(): array
+    {
+        return [
+            'N' => 30, // Narration
+            'O' => 35, // Items
+            'V' => 30, // Comments
+        ];
+    }
+
+    protected function pairLine(array $rows, string $labelKey = 'name', string $totalKey = 'total'): string
+    {
+        if (empty($rows)) {
+            return 'None';
+        }
+
+        return collect($rows)
+            ->map(fn ($row) => ($row[$labelKey] ?? 'Unknown') . ' (' . ($row[$totalKey] ?? 0) . ')')
+            ->implode(', ');
+    }
+
+    protected function valueLine(): string
+    {
+        if (empty($this->valueByCurrency)) {
+            return 'None';
+        }
+
+        return collect($this->valueByCurrency)
+            ->map(fn ($row) => ($row['name'] ?? '') . ' ' . number_format((float) ($row['total'] ?? 0), 2))
+            ->implode(', ');
+    }
+
+    protected function statusLine(): string
+    {
+        if (empty($this->statusBreakdown)) {
+            return 'None';
+        }
+
+        $pairs = [];
+        foreach ($this->statusBreakdown as $status => $count) {
+            $pairs[] = ucfirst($status ?: 'pending') . ' ' . (int) $count;
+        }
+
+        return implode(', ', $pairs);
+    }
+
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getStyle('A7:V7')->applyFromArray([
+                $sheet = $event->sheet->getDelegate();
+
+                // Summary block, starting under the logo
+                $row = 7;
+
+                $sheet->setCellValue("C{$row}", 'Dispatches Summary');
+                $sheet->mergeCells("C{$row}:D{$row}");
+                $sheet->getStyle("C{$row}")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 14],
+                ]);
+                $row++;
+
+                $summaryStart = $row;
+
+                $sheet->setCellValue("C{$row}", 'Total Dispatches');
+                $sheet->setCellValue("D{$row}", $this->totalDispatches);
+                $row++;
+
+                $sheet->setCellValue("C{$row}", 'Total Items Dispatched');
+                $sheet->setCellValue("D{$row}", $this->totalQty);
+                $row++;
+
+                $sheet->setCellValue("C{$row}", 'Total Value Dispatched');
+                $sheet->setCellValue("D{$row}", $this->valueLine());
+                $row++;
+
+                $sheet->setCellValue("C{$row}", 'By Status');
+                $sheet->setCellValue("D{$row}", $this->statusLine());
+                $row++;
+
+                $sheet->setCellValue("C{$row}", 'Popular Stores');
+                $sheet->setCellValue("D{$row}", $this->pairLine($this->popularStores));
+                $row++;
+
+                $sheet->setCellValue("C{$row}", 'Popular Vendors');
+                $sheet->setCellValue("D{$row}", $this->pairLine($this->popularVendors));
+                $row++;
+
+                $sheet->setCellValue("C{$row}", 'Popular Branches');
+                $sheet->setCellValue("D{$row}", $this->pairLine($this->popularBranches));
+
+                $summaryEnd = $row;
+
+                $sheet->getStyle("C{$summaryStart}:D{$summaryEnd}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'FCE4D6'],
+                    ],
+                ]);
+                $sheet->getStyle("D{$summaryStart}:D{$summaryEnd}")
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                    ->setWrapText(true);
+
+                // Table headings, two rows below the summary block
+                $headingRow = $summaryEnd + 2;
+                $sheet->getStyle("A{$headingRow}:V{$headingRow}")->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
                     'borders' => [
                         'outline' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
+                            'borderStyle' => Border::BORDER_THICK,
                             'color' => ['argb' => 'FFFF0000'],
                         ],
                     ]
                 ]);
+
+                // Multi-line item lists / narration / comments should wrap and
+                // grow the row height downwards rather than widen the column.
+                $sheet->getStyle('N:N')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
+                $sheet->getStyle('O:O')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
+                $sheet->getStyle('V:V')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
             },
         ];
     }
@@ -162,6 +341,7 @@ WithCustomStartCell
 
     public function startCell(): string
     {
-        return 'A7';
+        // Title (row 7) + 7 summary metrics (rows 8-14) + 1 blank row (15) = headings on row 16
+        return 'A16';
     }
 }
