@@ -90,4 +90,34 @@ class SageIntacctDriver implements SageDriver
     {
         return $this->driver->readByQuery($object, $fields, $query, $pageSize);
     }
+
+    public function createItem(array $item): array
+    {
+        return $this->driver->createItem($item);
+    }
+
+    public function updateItem(string $itemId, array $item): array
+    {
+        return $this->driver->updateItem($itemId, $item);
+    }
+
+    public function createContact(array $contact): array
+    {
+        return $this->driver->createContact($contact);
+    }
+
+    public function createEmployee(array $employee): array
+    {
+        return $this->driver->createEmployee($employee);
+    }
+
+    public function updateEmployee(string $employeeId, array $employee): array
+    {
+        return $this->driver->updateEmployee($employeeId, $employee);
+    }
+
+    public function createRequisition(array $header, array $lines): array
+    {
+        return $this->driver->createRequisition($header, $lines);
+    }
 }

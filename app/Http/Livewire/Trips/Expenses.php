@@ -15,6 +15,7 @@ use App\Models\TripExpense;
 use App\Models\PaymentMethod;
 use App\Models\AllowanceDriver;
 use App\Models\ExpenseCategory;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
 
 class Expenses extends Component
@@ -48,6 +49,8 @@ class Expenses extends Component
     public $currencies;
     public $selectedCurrency;
     public $selected_currency;
+    public $vendors;
+    public $selectedVendor;
 
     public $total_customer_expenses;
     public $total_transporter_expenses;
@@ -89,6 +92,7 @@ class Expenses extends Component
         $this->amount = Null;
         $this->edit = Null;
         $this->selectedCurrency = Null;
+        $this->selectedVendor = Null;
         $this->total_customer_expenses = 0;
         $this->total_transporter_expenses = 0;
         $this->total_expenses = 0;
@@ -139,6 +143,7 @@ class Expenses extends Component
     $this->trip = $trip;
     $this->trip_id = $trip->addid;
     $this->currencies = Currency::orderBy('name')->get();
+    $this->vendors = Vendor::orderBy('name')->get();
     $this->allowances = Allowance::orderBy('name')->get();
     $this->payment_methods = PaymentMethod::orderBy('name')->get();
     $this->expenses = Expense::whereHas('account', function($q){
@@ -198,6 +203,12 @@ class Expenses extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Allowances Refreshed Successfully!!."
+            ]);
+        } elseif($category == 'vendors'){
+            $this->vendors = Vendor::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Vendors Refreshed Successfully!!."
             ]);
         }
     }
@@ -273,8 +284,9 @@ class Expenses extends Component
                     $trip_expense->user_id = Auth::user()->id;
                     $trip_expense->trip_id = $this->trip->id;
                     $trip_expense->currency_id = $this->selectedCurrency[$key] ?? null;
+                    $trip_expense->vendor_id = $this->selectedVendor[$key] ?? null;
                     $trip_expense->payment_method_id = $this->payment_method_id[$key] ?? null;
-                
+
                     if ($type === 'expense') {
                         $trip_expense->expense_id = $this->selectedExpense[$key];
                         $trip_expense->allowance_id = null;
@@ -324,6 +336,7 @@ class Expenses extends Component
                     }
                     $bill->bill_date = $this->trip->start_date;
                     $bill->currency_id = $trip_expense->currency_id;
+                    $bill->vendor_id = $trip_expense->vendor_id;
                     if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
                         $bill->exchange_rate = $trip_expense ->exchange_rate;
                         $bill->exchange_amount = $trip_expense->exchange_amount;
@@ -436,6 +449,7 @@ class Expenses extends Component
         $this->edit = True;
         $this->trip = Trip::find($this->trip_id);
         $this->selectedCurrency = $expense->currency_id;
+        $this->selectedVendor = $expense->vendor_id;
         $this->payment_method_id = $expense->payment_method_id;
         $this->selectedExpense = $expense->expense_id;
         $this->selectedAllowance = $expense->allowance_id;
@@ -479,6 +493,7 @@ class Expenses extends Component
                 $trip_expense->exchange_rate = $this->exchange_rate;
                 $trip_expense->exchange_amount = $this->exchange_amount;
                 $trip_expense->currency_id = $this->selectedCurrency;
+                $trip_expense->vendor_id = $this->selectedVendor;
                 $trip_expense->payment_method_id = $this->payment_method_id;
                 $trip_expense->update();
                 
@@ -492,6 +507,7 @@ class Expenses extends Component
                     $bill->driver_id = $this->trip->driver_id;
                     $bill->bill_date = $this->trip->start_date;
                     $bill->currency_id = $this->trip->currency_id;
+                    $bill->vendor_id = $trip_expense->vendor_id;
                     if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
                         $bill->exchange_rate = $trip_expense ->exchange_rate;
                         $bill->exchange_amount = $trip_expense->exchange_amount;

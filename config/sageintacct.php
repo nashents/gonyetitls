@@ -52,11 +52,48 @@ return [
         'id_max_length' => 20,
     ],
 
-    // Sage PROJECT defaults for Trips.
+    // Sage PROJECT defaults. Transporters, Horses and Trips are all Projects.
+    // Per-company overrides may be set on the integration `config` JSON, e.g.
+    // {"project_category":"...","project_location_id":"...","project_department_id":"..."}.
     'project' => [
-        // Required by Sage. Confirmed live in bhsquared-imp. Override per company
-        // on the integration config as `project_category` if a company differs.
-        'category' => env('SAGE_INTACCT_PROJECT_CATEGORY', 'Contract'),
+        // Required by Sage. Confirmed live in bhsquared-imp.
+        'category'      => env('SAGE_INTACCT_PROJECT_CATEGORY', 'Contract'),
+
+        // Confirmed live: E100 = "Hono Transport Logistics CC", D2-1 = "Sub Contracting".
+        'location_id'   => env('SAGE_INTACCT_PROJECT_LOCATION_ID', 'E100'),
+        'department_id' => env('SAGE_INTACCT_PROJECT_DEPARTMENT_ID', 'D2-1'),
+
+        // PROJECTTYPE per entity (exact Sage type names).
+        'types' => [
+            'transporter' => env('SAGE_INTACCT_TYPE_TRANSPORTER', 'SUBCONTRACTOR'),
+            'horse'       => env('SAGE_INTACCT_TYPE_HORSE', 'SUB - TRUCKS'),
+            'trip'        => env('SAGE_INTACCT_TYPE_TRIP', 'TRIPS'),
+        ],
+    ],
+
+    // Phase 3 — Trip expenses → Purchase Requisitions.
+    'purchasing' => [
+        // Exact Sage transaction definition name (confirmed live in bhsquared-imp).
+        'requisition_type' => env('SAGE_INTACCT_REQUISITION_TYPE', 'Purchase requisition'),
+        // Line unit of measure — existing requisition lines use "Each".
+        'line_unit'        => env('SAGE_INTACCT_LINE_UNIT', 'Each'),
+    ],
+
+    // Sage ITEM defaults (Gonyeti Expense → Item).
+    'item' => [
+        'type'      => env('SAGE_INTACCT_ITEM_TYPE', 'Non-Inventory'),
+        'id_prefix' => env('SAGE_INTACCT_ITEM_ID_PREFIX', 'EXP-'),
+        'taxable'   => env('SAGE_INTACCT_ITEM_TAXABLE', true),
+        // OPTIONAL item tax group key so new items resolve a purchase tax schedule.
+        // Their working items use "Standard Rate" (TAXGROUPKEY 14). Leave null to
+        // create items without a tax group and rely on de-dup/link to existing
+        // (properly-configured) Sage items; set once confirmed with the client.
+        'tax_group_key' => env('SAGE_INTACCT_ITEM_TAX_GROUP_KEY'),
+    ],
+
+    // Sage EMPLOYEE defaults (Gonyeti Driver's Employee → Employee).
+    'employee' => [
+        'id_prefix' => env('SAGE_INTACCT_EMPLOYEE_ID_PREFIX', 'EMP-'),
     ],
 
 ];

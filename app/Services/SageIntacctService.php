@@ -142,8 +142,8 @@ class SageIntacctService
     {
         return [
             // CUSTOMERID: existing-Sage records reuse custom_ref; new ones send
-            // the Gonyeti customer_number. Never regenerated on retry.
-            'id'       => $c->sageId() ?: $c->customer_number,
+            // the Gonyeti customer_number (fallback CUST-{id} if unset).
+            'id'       => $c->sageId() ?: ($c->customer_number ?: 'CUST-' . $c->id),
             'name'     => $c->name,
             'email'    => $c->email,
             'phone'    => $c->phonenumber,
@@ -161,7 +161,8 @@ class SageIntacctService
     protected function mapVendor(Vendor $v): array
     {
         return [
-            'id'       => $v->sageId() ?: $v->vendor_number,
+            // VENDORID: reuse Sage id, else vendor_number, else VEND-{id}.
+            'id'       => $v->sageId() ?: ($v->vendor_number ?: 'VEND-' . $v->id),
             'name'     => $v->name,
             'email'    => $v->email,
             'phone'    => $v->phonenumber,

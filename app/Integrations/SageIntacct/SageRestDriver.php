@@ -85,6 +85,36 @@ class SageRestDriver implements SageDriver
         return $this->notImplemented();
     }
 
+    public function createItem(array $item): array
+    {
+        return $this->notImplemented();
+    }
+
+    public function updateItem(string $itemId, array $item): array
+    {
+        return $this->notImplemented();
+    }
+
+    public function createContact(array $contact): array
+    {
+        return $this->notImplemented();
+    }
+
+    public function createEmployee(array $employee): array
+    {
+        return $this->notImplemented();
+    }
+
+    public function updateEmployee(string $employeeId, array $employee): array
+    {
+        return $this->notImplemented();
+    }
+
+    public function createRequisition(array $header, array $lines): array
+    {
+        return $this->notImplemented();
+    }
+
     /**
      * Obtain (and cache/refresh) the OAuth bearer token.
      * TODO: implement against the confirmed grant type.

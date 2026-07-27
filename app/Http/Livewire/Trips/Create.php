@@ -52,6 +52,8 @@ use App\Models\TruckStop;
 use App\Models\UnitsOfMeasure;
 use App\Models\Vehicle;
 use App\Models\VehicleAssignment;
+use App\Models\Vendor;
+use App\Services\Cartrack\CartrackSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -404,6 +406,8 @@ class Create extends Component
     public $payment_method_id;
     public $category;
     public $expense_currency_id = [];
+    public $expense_vendor_id = [];
+    public $vendors;
     public $amount = [];
     public $expense_exchange_rate;
     public $expense_exchange_amount;
@@ -440,6 +444,7 @@ class Create extends Component
     public $fuel_amount;
    
     public $odometer;
+    public $odometer_is_live_from_cartrack = false;
     public $fuel_comments;
     public $customer_updates = False;
     public $fuel_consumption_loaded_standard;
@@ -738,8 +743,16 @@ class Create extends Component
             if($horse){
                  $trailer_assignments = $horse->trailer_assignments->where('status',1);
                 $this->odometer = $horse->mileage;
+                $this->odometer_is_live_from_cartrack = false;
+
+                $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($horse);
+                if (! empty($cartrackSnapshot['mileage'])) {
+                    $this->odometer = $cartrackSnapshot['mileage'];
+                    $this->odometer_is_live_from_cartrack = true;
+                }
+
                 $this->fuel_tank_capacity = $horse->fuel_tank_capacity;
-                $this->starting_mileage = $horse->mileage;
+                $this->starting_mileage = $this->odometer;
                 $this->starting_hours = $horse->hours;
                 $this->fuel_consumption_loaded_standard = $horse->fuel_consumption_loaded_standard;
                 $this->fuel_consumption_empty_standard = $horse->fuel_consumption_empty_standard;
@@ -778,8 +791,16 @@ class Create extends Component
                                     
             if($vehicle){
                 $this->odometer = $vehicle->mileage;
+                $this->odometer_is_live_from_cartrack = false;
+
+                $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($vehicle);
+                if (! empty($cartrackSnapshot['mileage'])) {
+                    $this->odometer = $cartrackSnapshot['mileage'];
+                    $this->odometer_is_live_from_cartrack = true;
+                }
+
                 $this->fuel_tank_capacity = $vehicle->fuel_tank_capacity;
-                $this->starting_mileage = $vehicle->mileage;
+                $this->starting_mileage = $this->odometer;
                 $this->starting_hours = $vehicle->hours;
                 $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
                 $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
@@ -1247,6 +1268,7 @@ class Create extends Component
         $this->brokers = Broker::orderBy('name','asc')->latest()->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
       }
@@ -2407,6 +2429,7 @@ class Create extends Component
                         $expenseId = $this->expense_id[$key] ?? null;
                         $trip_expense->expense_id = (is_null($expenseId) || Expense::where('id', $expenseId)->exists()) ? $expenseId : null;
                         $trip_expense->currency_id = $this->expense_currency_id[$key] ?? null;
+                        $trip_expense->vendor_id = $this->expense_vendor_id[$key] ?? null;
                         $trip_expense->payment_method_id = $this->payment_method_id[$key] ?? null;
                         $trip_expense->category = $this->category[$key] ?? null;
                         $trip_expense->amount = $this->amount[$key] ?? 0;
@@ -3301,6 +3324,13 @@ class Create extends Component
              $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Expenses Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'vendors'){
+            $this->vendors = Vendor::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Vendors Refreshed Successfully!!."
             ]);
         }
         elseif($category == 'stations'){

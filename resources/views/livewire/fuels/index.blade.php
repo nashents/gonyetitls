@@ -564,6 +564,9 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
+                                    @if ($mileage_is_live_from_cartrack)
+                                        <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                    @endif
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -1018,6 +1021,9 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
+                                    @if ($mileage_is_live_from_cartrack)
+                                        <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                    @endif
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -1349,6 +1355,9 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
+                                    @if ($mileage_is_live_from_cartrack)
+                                        <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                    @endif
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -1545,6 +1554,9 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
+                                    @if ($mileage_is_live_from_cartrack)
+                                        <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                    @endif
                                     <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage">
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>

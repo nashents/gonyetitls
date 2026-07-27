@@ -147,6 +147,12 @@ class Vehicle extends Model implements Auditable
         return $this->belongsTo('App\Models\Transporter');
     }
 
+    /** Cartrack vehicle mapping for this vehicle (drives live mileage/position pulls). */
+    public function cartrackMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'vehicle_vehicle');
+    }
+
     protected $fillable=[
     'user_id',
     'chasis_number',

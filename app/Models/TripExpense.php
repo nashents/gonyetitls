@@ -30,6 +30,9 @@ class TripExpense extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function vendor(){
+        return $this->belongsTo('App\Models\Vendor');
+    }
     public function fuel(){
         return $this->belongsTo('App\Models\Fuel');
     }
@@ -55,6 +58,7 @@ class TripExpense extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'currency_id',
+        'vendor_id',
         'expense_id',
         'trip_id',
         'amount',

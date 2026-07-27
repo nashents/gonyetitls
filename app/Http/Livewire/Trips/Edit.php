@@ -266,7 +266,7 @@ class Edit extends Component
         $this->d = $d;
         array_push($this->destinations_inputs ,$d);
     }
-    public function destinationsRemove($d)
+    public function removeDestination($d)
     {
         unset($this->destinations_inputs[$d]);
     }
@@ -3082,6 +3082,7 @@ class Edit extends Component
                     $bill->category = "Trip Expense - Fuel Order";
                     $bill->bill_date = date("Y-m-d");
                     $bill->currency_id = $trip_expense->currency_id;
+                    $bill->vendor_id = $trip_expense->vendor_id;
                     $bill->subtotal = $trip_expense->amount;
                     $bill->total = $trip_expense->amount;
                     $bill->exchange_amount = $trip_expense->exchange_amount;
@@ -3181,6 +3182,7 @@ class Edit extends Component
                 $bill->transporter_id = $trip->transporter_id;
                 $bill->bill_date = $trip->start_date;
                 $bill->currency_id = $trip->currency_id;
+                $bill->vendor_id = $trip_expense->vendor_id;
                 $bill->total = $freight_amount;
                 $bill->balance =  $freight_amount;
                 $bill->authorized_by_id = $trip->authorized_by_id;
@@ -3241,6 +3243,7 @@ class Edit extends Component
                         $bill->account_type_id = $account->account_type->id;
                     }
                     $bill->currency_id = $trip_expense->currency_id;
+                    $bill->vendor_id = $trip_expense->vendor_id;
                     $bill->subtotal = $trip_expense->amount;
                     $bill->total = $trip_expense->amount;
                     $bill->balance = $trip_expense->amount;

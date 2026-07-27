@@ -1878,6 +1878,9 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="end_date">Starting Mileage</label>
+                                            @if ($odometer_is_live_from_cartrack)
+                                                <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                            @endif
                                             <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="starting_mileage" placeholder="Mileage @ Rest" >
                                             @error('starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -2111,7 +2114,8 @@
                                                             <th>Category</th>
                                                             <th>Payment Method</th>
                                                             <th>Currency</th>
-                                                            <th>Amount</th> 
+                                                            <th>Vendor</th>
+                                                            <th>Amount</th>
                                                         </tr>
                                                     </thead>
 
@@ -2184,6 +2188,18 @@
                                                                                 </div>
                                                                             </div>
                                                                         @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="form-group">
+                                                                            <select class="form-control" wire:model="expense_vendor_id.{{ $id }}">
+                                                                                <option value="">Select Vendor</option>
+                                                                                @foreach ($vendors as $vendor)
+                                                                                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                            @error('expense_vendor_id.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                            <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> <a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                                        </div>
                                                                     </td>
                                                                     <td>
                                                                         <div class="form-group">
@@ -2383,6 +2399,9 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="odometer">Horse Mileage<span class="required" style="color: red">*</span></label>
+                                        @if ($odometer_is_live_from_cartrack)
+                                            <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                        @endif
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="odometer"  placeholder="Enter Horse Mileage" required/>
                                         @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>

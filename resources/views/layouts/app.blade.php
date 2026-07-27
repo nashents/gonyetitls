@@ -204,6 +204,16 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-company_integrationEditModal', event => {
+                $('#company_integrationEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-company_integrationEditModal', event => {
+                $('#company_integrationEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-importModal', event => {
                 $('#importModal').modal('show');
             })

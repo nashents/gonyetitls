@@ -89,6 +89,9 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="number">Mileage<span class="required" style="color: red">*</span></label>
+                                            @if ($mileage_is_live_from_cartrack)
+                                                <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                            @endif
                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" {{$type == "Asset" ? "disabled" : ""}} placeholder="Enter Mileage" required>
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>

@@ -38,6 +38,7 @@ use App\Models\Trip;
 use App\Models\TripType;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\Cartrack\CartrackSyncService;
 use App\Models\Work;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -273,6 +274,7 @@ class Index extends Component
     public $unit_price = 0;
     public $fuel_amount;
     public $mileage;
+    public $mileage_is_live_from_cartrack = false;
     public $hours;
     public $fuel_comments;
     public $fuel_id;
@@ -1646,6 +1648,8 @@ class Index extends Component
         if (!is_null($id)) {
             $horse = Horse::find($id);
             $this->shift_open_mileage = $horse->mileage;
+            $this->mileage = $horse->mileage;
+            $this->applyLiveCartrackMileage($horse);
             $assignment = $horse?->assignment;
             $this->driver_id = $assignment?->driver_id;
             $cluster = Cluster::where('horse_id',$id)->where('status',True)->first();
@@ -1655,6 +1659,38 @@ class Index extends Component
                     $this->trailer_id[] = $trailer->id;
                 }
             }
+        }
+    }
+
+    public function updatedSelectedVehicle($id){
+        if (!is_null($id)) {
+            $vehicle = Vehicle::find($id);
+            $this->shift_open_mileage = $vehicle->mileage;
+            $this->mileage = $vehicle->mileage;
+            $this->applyLiveCartrackMileage($vehicle);
+        }
+    }
+
+    /**
+     * Overwrite the Fuel Order's mileage (used when refuelling) AND the
+     * shift's Closing Mileage with a live Cartrack reading, when matched.
+     * Opening mileage stays the stored historical value — shifts are
+     * captured at day-end, so "now" is the closing reading, not the opening one.
+     */
+    protected function applyLiveCartrackMileage($equipment): void
+    {
+        $this->mileage_is_live_from_cartrack = false;
+
+        if (! $equipment) {
+            return;
+        }
+
+        $snapshot = app(CartrackSyncService::class)->currentSnapshot($equipment);
+
+        if (! empty($snapshot['mileage'])) {
+            $this->mileage = $snapshot['mileage'];
+            $this->shift_close_mileage = $snapshot['mileage'];
+            $this->mileage_is_live_from_cartrack = true;
         }
     }
 

@@ -24,6 +24,7 @@ use App\Models\TopUp;
 use App\Models\Trip;
 use App\Models\TripExpense;
 use App\Models\Vehicle;
+use App\Services\Cartrack\CartrackSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -78,6 +79,7 @@ class Index extends Component
     public $amount = 0;
     public $quantity = 0 ;
     public $mileage;
+    public $mileage_is_live_from_cartrack = false;
     public $hours;
     public $date;
     public $fillup;
@@ -420,12 +422,14 @@ class Index extends Component
             $this->hours = $horse?->hours;
             $this->type = "Horse";
             $this->trips = Trip::with('horse','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('horse_id',$this->selectedHorse)->orderBy('created_at','desc')->take(100)->get();
+            $this->applyLiveCartrackMileage($horse);
         }elseif($this->selectedVehicle){
             $vehicle = Vehicle::find($this->selectedVehicle);
             $this->mileage = $vehicle?->mileage;
             $this->hours = $vehicle?->hours;
             $this->type = "Vehicle";
             $this->trips = Trip::with('vehicle','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('vehicle_id',$this->selectedVehicle)->orderBy('created_at','desc')->take(100)->get();
+            $this->applyLiveCartrackMileage($vehicle);
         }elseif($this->asset_id){
              $this->type = "Asset";
         }else{
@@ -464,6 +468,7 @@ class Index extends Component
         $this->mileage = $this->horse->mileage;
         $this->hours = $this->horse->hours;
         $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
+        $this->applyLiveCartrackMileage($this->horse);
         }
     }
 
@@ -554,6 +559,24 @@ class Index extends Component
             $this->mileage = $this->vehicle->mileage;
             $this->hours = $this->vehicle->hours;
             $this->fuel_tank_capacity = $this->vehicle->fuel_tank_capacity;
+            $this->applyLiveCartrackMileage($this->vehicle);
+        }
+    }
+
+    /** Overwrite $this->mileage with a live Cartrack reading when the equipment is matched; otherwise keep the stored value. */
+    protected function applyLiveCartrackMileage($equipment): void
+    {
+        $this->mileage_is_live_from_cartrack = false;
+
+        if (! $equipment) {
+            return;
+        }
+
+        $snapshot = app(CartrackSyncService::class)->currentSnapshot($equipment);
+
+        if (! empty($snapshot['mileage'])) {
+            $this->mileage = $snapshot['mileage'];
+            $this->mileage_is_live_from_cartrack = true;
         }
     }
  

@@ -138,7 +138,13 @@ class Trailer extends Model implements Auditable
     /** Sage Intacct class mapping for this trailer (status badge / sync state). */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
-                    ->where('entity_type', 'trailer');
+                    ->where('entity_type', 'trailer_class');
+    }
+
+    /** Cartrack vehicle mapping for this trailer (drives live mileage/position pulls). */
+    public function cartrackMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'trailer_vehicle');
     }
 
     protected $fillable = [

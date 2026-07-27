@@ -22,6 +22,8 @@
                 </th>
                 <th class="th-sm">Currency
                 </th>
+                <th class="th-sm">Vendor
+                </th>
                 <th class="th-sm">Amount
                 </th>
                 <th class="th-sm">Conversion
@@ -63,6 +65,7 @@
                 <td>{{$trip_expense->payment_method ? $trip_expense->payment_method->name : ""}}</td>
                 <td>{{$trip_expense->category}}</td>
                 <td>{{ $trip_expense->currency ? $trip_expense->currency->name : ""}}</td>
+                <td>{{ $trip_expense->vendor ? $trip_expense->vendor->name : ""}}</td>
                 <td>
                     @if ($trip_expense->amount)
                     {{ $trip_expense->currency ? $trip_expense->currency->symbol : "" }}{{number_format($trip_expense->amount,2)}}
@@ -106,7 +109,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="9">
+                <td colspan="10">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Trip Expenses Captured....
                     </div>
@@ -211,7 +214,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="payment_method_id">Payment Methods</label>
                                 <select wire:model.debounce.300ms="payment_method_id.0" class="form-control" >
@@ -223,7 +226,7 @@
                                 @error('payment_method_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="selectedCurrency">Currencies<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="selectedCurrency.0" class="form-control" required>
@@ -243,12 +246,28 @@
                                         @error('exchange_rate.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                         <small style="color: green">{{isset($selected_currency[0]) ? " 1 ".$selected_currency[0]->name." is how much in" : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name." ?" : ""}}</small>
                                         <small>{{isset($exchange_amount[0]) ? "The converted amount is: ".$exchange_amount[0] : ""}}</small>
-                                    </div> 
+                                    </div>
                                     @endif
                                 @endif
                             @endif
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="selectedVendor">Vendor</label>
+                                <select wire:model.debounce.300ms="selectedVendor.0" class="form-control">
+                                    <option value="">Select Vendor</option>
+                                    @foreach ($vendors as $vendor)
+                                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('selectedVendor.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                <a href="#" wire:click.prevent="refresh('vendors')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="amount">Amount<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" class="form-control"  wire:model.debounce.300ms="amount.0" placeholder="Enter Amount" required/>
@@ -311,7 +330,7 @@
                         </div>
                     </div>
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="payment_method_id">Payment Methods</label>
                            <select wire:model.debounce.300ms="payment_method_id.{{$value}}" class="form-control">
@@ -323,7 +342,7 @@
                             @error('payment_method_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="selectedCurrency">Currencies<span class="required" style="color: red">*</span></label>
                        <select wire:model.debounce.300ms="selectedCurrency.{{$value}}" class="form-control" required>
@@ -343,12 +362,25 @@
                                 @error('exchange_rate.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 <small style="color: green">{{isset($selected_currency[$value]) ? " 1 ".$selected_currency[$value]->name." is how much in" : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name." ?" : ""}}</small>
                                 <small>{{isset($exchange_amount[$value]) ? "The converted amount is: ".$exchange_amount[$value] : ""}}</small>
-                            </div> 
+                            </div>
                             @endif
                         @endif
                     @endif
                 </div>
                 <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="selectedVendor">Vendor</label>
+                       <select wire:model.debounce.300ms="selectedVendor.{{$value}}" class="form-control">
+                           <option value="">Select Vendor</option>
+                           @foreach ($vendors as $vendor)
+                           <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                           @endforeach
+                       </select>
+                        @error('selectedVendor.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> <a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="amount">Amount<span class="required" style="color: red">*</span></label>
                         <input type="number" step="any" class="form-control"  wire:model.debounce.300ms="amount.{{$value}}" placeholder="Enter Amount" required/>
@@ -452,7 +484,7 @@
                     </div>
                     </div>
                     <div class="row">
-                          <div class="col-md-4">
+                          <div class="col-md-3">
                         <div class="form-group">
                             <label for="payment_method_id">Payment Methods</label>
                            <select wire:model.debounce.300ms="payment_method_id" class="form-control" >
@@ -464,7 +496,7 @@
                             @error('payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="selectedCurrency">Currencies<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
@@ -485,14 +517,30 @@
                                     @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                     <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name." ?" : ""}}</small>
                                     <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
-                                </div> 
+                                </div>
                                 @endif
                             @endif
                         @endif
                             @endif
-                           
+
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="selectedVendor">Vendor</label>
+                               <select wire:model.debounce.300ms="selectedVendor" class="form-control">
+                                   <option value="">Select Vendor</option>
+                                   @foreach ($vendors as $vendor)
+                                   <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                   @endforeach
+                               </select>
+                                @error('selectedVendor') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                <a href="#" wire:click.prevent="refresh('vendors')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="amount">Amount<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" class="form-control"  wire:model.debounce.300ms="amount" placeholder="Enter Amount" required/>

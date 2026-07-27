@@ -193,7 +193,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="destination_id">Destinations<span class="required" style="color: red">*</span></label>
+                                <label for="destination_id">To<span class="required" style="color: red">*</span></label>
                                 <select  class="form-control"  wire:model.debounce.300ms="destination_id.0" required>
                                     <option value="">Select Destination</option>
                                     @foreach ($destinations as $destination)
@@ -319,7 +319,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="destination_id">Destinations<span class="required" style="color: red">*</span></label>
+                                        <label for="destination_id">To<span class="required" style="color: red">*</span></label>
                                         <select  class="form-control"  wire:model.debounce.300ms="destination_id.{{ $value }}" required>
                                             <option value="">Select Destination</option>
                                             @foreach ($destinations as $destination)
@@ -478,7 +478,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="destination_id">Destinations<span class="required" style="color: red">*</span></label>
+                                <label for="destination_id">To<span class="required" style="color: red">*</span></label>
                                 <select  class="form-control"  wire:model.debounce.300ms="destination_id" required>
                                     <option value="">Select Destination</option>
                                     @foreach ($destinations as $destination)

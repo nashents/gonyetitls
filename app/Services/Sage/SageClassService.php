@@ -15,11 +15,11 @@ use App\Services\Sage\Mappers\SageTransporterMapper;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Syncs Transporters, Horses and Trailers to Sage Classes.
- *
- * Hierarchy: Transporter (parent) → Horse / Trailer (children). Horses and
- * trailers de-dup against the 587 existing Sage classes by matching NAME
- * (= registration); a match links to the existing CLASSID instead of creating.
+ * Sage CLASS sync.
+ *  - Horse class: top-level (NO parent) → renders orange. Referenced by trips.
+ *  - Trailer class: child of the Transporter class → renders green.
+ *  - Transporter class: kept only as the green parent for trailer classes.
+ * Horse/Trailer classes de-dup against existing Sage classes by NAME (registration).
  */
 class SageClassService
 {
@@ -34,90 +34,84 @@ class SageClassService
         $this->integration = $integration;
     }
 
-    public function syncHorse(Horse $horse): array
+    /** Horse → CLASS, flat (orange). */
+    public function syncHorseClass(Horse $horse): array
     {
-        $parentId = $this->ensureTransporterClassId($horse->transporter);
-        $payload  = SageHorseMapper::map($horse, (string) $parentId);
-        if ($parentId === null) {
-            unset($payload['parentid']);
-        }
-
-        return $this->syncClass('horse', $horse, SageHorseMapper::classId($horse), SageHorseMapper::registration($horse), $payload);
+        return $this->syncClass(
+            'horse_class',
+            $horse,
+            SageHorseMapper::classId($horse),
+            SageHorseMapper::registration($horse),
+            SageHorseMapper::map($horse)          // deliberately no parentid
+        );
     }
 
+    /** Trailer → CLASS, under the Transporter class (green). */
     public function syncTrailer(Trailer $trailer): array
     {
-        $parentId = $this->ensureTransporterClassId($trailer->transporter);
-        $payload  = SageTrailerMapper::map($trailer, (string) $parentId);
-        if ($parentId === null) {
+        $parent   = $this->ensureTransporterClass($trailer->transporter);
+        $parentId = $parent['external_id'] ?? null;
+
+        $payload = SageTrailerMapper::map($trailer, (string) $parentId);
+        if (! $parentId) {
             unset($payload['parentid']);
         }
 
-        return $this->syncClass('trailer', $trailer, SageTrailerMapper::classId($trailer), SageTrailerMapper::registration($trailer), $payload);
+        return $this->syncClass(
+            'trailer_class',
+            $trailer,
+            SageTrailerMapper::classId($trailer),
+            SageTrailerMapper::registration($trailer),
+            $payload
+        );
     }
 
     /**
-     * Ensure the Transporter parent class exists; returns its CLASSID (or null
-     * if there's no transporter / it couldn't be created — the child is then
-     * created top-level rather than blocking the whole sync).
+     * Ensure the Transporter CLASS exists (the green parent for trailers).
+     * Returns ['success'=>bool,'external_id'=>?string].
      */
-    public function ensureTransporterClassId(?Transporter $transporter): ?string
+    public function ensureTransporterClass(?Transporter $transporter): array
     {
         if (! $transporter) {
-            return null;
+            return ['success' => false, 'external_id' => null];
         }
 
-        $mapping = $this->mappingFor($this->integration, 'transporter', $transporter);
+        $mapping = $this->mappingFor($this->integration, 'transporter_class', $transporter);
         if ($mapping->exists && $mapping->external_id) {
-            return $mapping->external_id;
+            return ['success' => true, 'external_id' => $mapping->external_id];
         }
 
-        $payload = SageTransporterMapper::map($transporter);
-        $classId = $payload['id'];
-
-        $mapping->local_model      = get_class($transporter);
-        $mapping->local_reference  = $transporter->name;
-        $mapping->last_attempted_at = now();
-
-        $res = $this->driver->createClass($payload);
-
-        if (! empty($res['success']) || $this->isDuplicate($res['error'] ?? null)) {
-            // Created, or already present in Sage under this CLASSID → link.
-            $mapping->markSynced($classId, $transporter->name, $res['request'] ?? null, $res['response'] ?? null);
-            return $classId;
-        }
-
-        $mapping->markFailed($res['error'] ?? 'Failed to create transporter class', $res['request'] ?? null, $res['response'] ?? null);
-        return null;
+        return $this->syncClass(
+            'transporter_class',
+            $transporter,
+            SageTransporterMapper::classId($transporter),
+            null,
+            SageTransporterMapper::map($transporter)
+        );
     }
 
-    /**
-     * Core class sync: update if already linked, else de-dup by NAME, else create.
-     */
+    /** Update if already linked, else de-dup by NAME (registration), else create. */
     protected function syncClass(string $entityType, Model $model, string $classId, ?string $registration, array $payload): array
     {
         $mapping = $this->mappingFor($this->integration, $entityType, $model);
-        $mapping->local_model      = get_class($model);
-        $mapping->local_reference  = $registration ?: $classId;
+        $mapping->local_model       = get_class($model);
+        $mapping->local_reference   = $registration ?: $classId;
         $mapping->last_attempted_at = now();
         if (! $mapping->exists) {
             $mapping->sync_status = IntegrationMapping::STATUS_PENDING;
             $mapping->save();
         }
 
-        // Already linked → update in place.
         if ($mapping->external_id) {
             $res = $this->driver->updateClass($mapping->external_id, $payload);
             return $this->finishSync($mapping, $res, $mapping->external_id, 'update', $entityType, $model);
         }
 
-        // De-dup: link to an existing Sage class with the same NAME (registration).
         if ($registration && ($existingId = $this->findClassIdByName($registration))) {
             $res = $this->driver->updateClass($existingId, $payload);
             return $this->finishSync($mapping, $res, $existingId, 'link', $entityType, $model);
         }
 
-        // Create; if the CLASSID happens to exist already, fall back to update.
         $res = $this->driver->createClass($payload);
         if (empty($res['success']) && $this->isDuplicate($res['error'] ?? null)) {
             $res = $this->driver->updateClass($classId, $payload);
@@ -130,7 +124,7 @@ class SageClassService
     /** Look up an existing Sage CLASS by exact NAME; returns its CLASSID or null. */
     protected function findClassIdByName(string $name): ?string
     {
-        $safe = str_replace("'", '', $name); // strings are single-quoted in the query
+        $safe = str_replace("'", '', $name);
         $res  = $this->driver->readByQuery('CLASS', ['RECORDNO', 'CLASSID', 'NAME'], "NAME = '{$safe}'", 1);
 
         if (! empty($res['success']) && ! empty($res['data'][0]['CLASSID'])) {

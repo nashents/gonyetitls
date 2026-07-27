@@ -130,7 +130,7 @@ class Origins extends Component
                 TripOrigin::insert($rows);
             }
 
-            $this->dispatchBrowserEvent('hide-trip_originModal');
+            $this->dispatchBrowserEvent('hide-createModal');
 
             $this->resetInputFields();
 

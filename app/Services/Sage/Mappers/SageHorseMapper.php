@@ -4,20 +4,26 @@ namespace App\Services\Sage\Mappers;
 
 use App\Models\Horse;
 use App\Services\Sage\Support\SageFormat;
+use App\Services\Sage\Support\SageProjectDefaults;
 
 /**
- * Gonyeti Horse → Sage CLASS (child of its Transporter).
- * CLASSID = horse_number (e.g. FHH00001); NAME = registration (Sage convention).
+ * Gonyeti Horse → Sage PROJECT (child of the Transporter project, SUB - TRUCKS)
+ * AND Sage CLASS (top-level, NO parent → renders orange), both named after the
+ * registration number. The class is what a Trip project references.
  */
 class SageHorseMapper
 {
-    /** Stable CLASSID: horse_number, else HORSE-{id}. */
+    /** Stable CLASSID / horse ref: horse_number, else HORSE-{id}. */
     public static function classId(Horse $h): string
     {
         $max = (int) config('sageintacct.class.id_max_length', 20);
-        $ref = $h->horse_number ?: 'HORSE-' . $h->id;
 
-        return SageFormat::id($ref, $max);
+        return SageFormat::id($h->horse_number ?: 'HORSE-' . $h->id, $max);
+    }
+
+    public static function projectId(Horse $h): string
+    {
+        return self::classId($h);
     }
 
     /** The registration used as NAME and as the de-dup match key against Sage. */
@@ -26,28 +32,42 @@ class SageHorseMapper
         return $h->registration_number ?: null;
     }
 
-    /**
-     * Generic CLASS payload.
-     * @param  string  $parentClassId  the Transporter CLASSID (PARENTID).
-     */
-    public static function map(Horse $h, string $parentClassId): array
+    /** Human name: registration, else horse_number, else a label. */
+    protected static function name(Horse $h): string
     {
-        // NAME must be present: registration, else horse_number, else a label.
-        $name = $h->registration_number ?: ($h->horse_number ?: ('Horse ' . $h->id));
+        return $h->registration_number ?: ($h->horse_number ?: ('Horse ' . $h->id));
+    }
 
-        // DESCRIPTION: readable make/model/year (only if present).
-        $desc = trim(implode(' ', array_filter([
-            $h->manufacturer,
-            $h->model,
-            $h->year,
-        ])));
+    /**
+     * CLASS payload. Deliberately NO parentid → top-level class → orange,
+     * matching the client's existing horse classes.
+     */
+    public static function map(Horse $h): array
+    {
+        $desc = trim(implode(' ', array_filter([$h->manufacturer, $h->model, $h->year])));
 
         return [
             'id'          => self::classId($h),
-            'name'        => $name,
-            'parentid'    => $parentClassId,
+            'name'        => self::name($h),
             'description' => $desc !== '' ? $desc : null,
+            // Explicit empty parent → forces the class top-level (orange), and
+            // clears any parent a previously-synced class may have had.
+            'parentid'    => '',
             'status'      => SageFormat::boolStatus($h->status),
         ];
+    }
+
+    /**
+     * PROJECT payload (SUB - TRUCKS, child of the Transporter project).
+     * @param  string  $parentProjectId  the Transporter PROJECTID (PARENTID).
+     */
+    public static function mapProject(Horse $h, string $parentProjectId): array
+    {
+        return array_merge(SageProjectDefaults::forEntity('horse'), [
+            'id'       => self::projectId($h),
+            'name'     => self::name($h),
+            'parentid' => $parentProjectId,
+            'status'   => SageFormat::boolStatus($h->status),
+        ]);
     }
 }

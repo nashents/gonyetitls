@@ -46,4 +46,19 @@ interface SageDriver extends IntegrationDriver
 
     /** Read records; on success `data` is a list of associative rows. */
     public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array;
+
+    // ── Phase 3: Items, Employees, Purchase Requisitions ──
+
+    public function createItem(array $item): array;
+
+    public function updateItem(string $itemId, array $item): array;
+
+    public function createContact(array $contact): array;
+
+    public function createEmployee(array $employee): array;
+
+    public function updateEmployee(string $employeeId, array $employee): array;
+
+    /** create_potransaction (Purchase Requisition): header array + line rows. */
+    public function createRequisition(array $header, array $lines): array;
 }

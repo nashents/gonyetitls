@@ -41,6 +41,8 @@ trait ManagesMappings
             'object definition', 'not found', 'not subscribed', 'projectcategory',
             'does not exist', 'is required', 'invalid', 'unsupported', 'not authorized',
             'permission',
+            // Tax-schedule resolution is a client VAT-config prerequisite.
+            'tax schedule', 'tax can', 'schedule map', 'tax group', 'valid unit',
         ];
         foreach ($attention as $needle) {
             if (str_contains($e, $needle)) {

@@ -20,6 +20,7 @@ use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\Cartrack\CartrackSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -84,6 +85,7 @@ class Create extends Component
     public $odometer;
     public $mileage;
     public $hours;
+    public $mileage_is_live_from_cartrack = false;
     public $service_types;
     public $service_type_id;
     public $booking_number;
@@ -138,9 +140,10 @@ class Create extends Component
         if (!is_null($id)) {
            $horse = Horse::find($id);
            $this->selected_equipment = Horse::with('bookings')->find($id);
-          
+
            $this->mileage = $horse ? $horse->mileage : "";
            $this->hours = $horse ? $horse->hours : "";
+           $this->applyLiveCartrackMileage($horse);
         }
     }
 
@@ -155,6 +158,7 @@ class Create extends Component
            $trailer = Trailer::find($id);
             $this->selected_equipment = Trailer::with('bookings')->find($id);
            $this->mileage = $trailer ? $trailer->mileage : "";
+           $this->applyLiveCartrackMileage($trailer);
         }
 
     }
@@ -164,6 +168,24 @@ class Create extends Component
             $this->selected_equipment = Vehicle::with('bookings')->find($id);
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
+           $this->applyLiveCartrackMileage($vehicle);
+        }
+    }
+
+    /** Overwrite $this->mileage with a live Cartrack reading when the equipment is matched; otherwise keep the stored value. */
+    protected function applyLiveCartrackMileage($equipment): void
+    {
+        $this->mileage_is_live_from_cartrack = false;
+
+        if (! $equipment) {
+            return;
+        }
+
+        $snapshot = app(CartrackSyncService::class)->currentSnapshot($equipment);
+
+        if (! empty($snapshot['mileage'])) {
+            $this->mileage = $snapshot['mileage'];
+            $this->mileage_is_live_from_cartrack = true;
         }
     }
 

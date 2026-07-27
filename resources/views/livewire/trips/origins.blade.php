@@ -2,7 +2,7 @@
     {{-- <blockquote class="blockquote-reverse mt-20"> --}}
         @if (Auth::user()->employee)
         @if ($trip->authorization == "approved")
-        <a href="" data-toggle="modal" data-target="#trip_originModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Loading Point</a>
+        <a href="" data-toggle="modal" data-target="#createModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Loading Point</a>
         @endif
         <br>
         <br>
@@ -18,7 +18,7 @@
                     </th>
                     <th class="th-sm" style="width: 15%">Date
                     </th>
-                    <th class="th-sm">To
+                    <th class="th-sm">From
                     </th>
                     <th class="th-sm">Loading Point
                     </th>
@@ -215,7 +215,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="destination_id">Destinations<span class="required" style="color: red">*</span></label>
+                                    <label for="destination_id">From<span class="required" style="color: red">*</span></label>
                                     <select  class="form-control"  wire:model.debounce.300ms="destination_id.0" required>
                                         <option value="">Select Destination</option>
                                         @foreach ($destinations as $destination)
@@ -340,7 +340,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="destination_id">Destinations<span class="required" style="color: red">*</span></label>
+                                        <label for="destination_id">From<span class="required" style="color: red">*</span></label>
                                         <select  class="form-control"  wire:model.debounce.300ms="destination_id.{{ $value }}" required>
                                             <option value="">Select Destination</option>
                                             @foreach ($destinations as $destination)
@@ -496,7 +496,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="destination_id">Destinations<span class="required" style="color: red">*</span></label>
+                                    <label for="destination_id">From<span class="required" style="color: red">*</span></label>
                                     <select  class="form-control"  wire:model.debounce.300ms="destination_id" required>
                                         <option value="">Select Destination</option>
                                         @foreach ($destinations as $destination)

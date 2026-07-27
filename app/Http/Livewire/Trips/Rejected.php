@@ -449,11 +449,12 @@ public function updatingSearch()
                                         $bill->category = "Trip Expense - Fuel Order";
                                         $bill->bill_date = date("Y-m-d");
                                         $bill->currency_id = $trip_expense->currency_id;
+                                        $bill->vendor_id = $trip_expense->vendor_id;
                                         $bill->subtotal = $trip_expense->amount;
                                         $bill->total = $trip_expense->amount;
                                         $bill->exchange_amount = $trip_expense->exchange_amount;
                                         $bill->balance = $trip_expense->amount;
-                    
+
                                         $bill->authorized_by_id = Auth::user()->id;
                                         $bill->authorization = $this->authorize;
                                         $bill->comments = $this->comments;
@@ -496,10 +497,11 @@ public function updatingSearch()
                                     $bill->account_type_id = $account->account_type->id;
                                 }
                                 $bill->currency_id = $trip_expense->currency_id;
+                                $bill->vendor_id = $trip_expense->vendor_id;
                                 $bill->subtotal = $trip_expense->amount;
                                 $bill->total = $trip_expense->amount;
                                 $bill->balance = $trip_expense->amount;
-    
+
                                 $bill->authorized_by_id = Auth::user()->id;
                                 $bill->authorization = $this->authorize;
                                 $bill->comments = $this->comments;
@@ -547,11 +549,12 @@ public function updatingSearch()
                                 $bill->category = "Trip Expense";
                                 $bill->bill_date = date("Y-m-d");
                                 $bill->currency_id = $trip_expense->currency_id ?: null;
+                                $bill->vendor_id = $trip_expense->vendor_id ?: null;
                                 $bill->subtotal = $trip_expense->amount;
                                 $bill->total = $trip_expense->amount;
                                 $bill->exchange_amount = $trip_expense->exchange_amount;
                                 $bill->balance = $trip_expense->amount;
-        
+
                                 $bill->authorized_by_id = Auth::user()->id;
                                 $bill->authorization = $this->authorize;
                                 $bill->comments = $this->comments;
@@ -1069,11 +1072,12 @@ public function updatingSearch()
                                             $bill->category = "Trip Expense - Fuel Order";
                                             $bill->bill_date = date("Y-m-d");
                                             $bill->currency_id = $trip_expense->currency_id;
+                                            $bill->vendor_id = $trip_expense->vendor_id;
                                             $bill->subtotal = $trip_expense->amount;
                                             $bill->total = $trip_expense->amount;
                                             $bill->exchange_amount = $trip_expense->exchange_amount;
                                             $bill->balance = $trip_expense->amount;
-                        
+
                                             $bill->authorized_by_id = Auth::user()->id;
                                             $bill->authorization = $this->authorize;
                                             $bill->comments = $this->comments;
@@ -1117,6 +1121,7 @@ public function updatingSearch()
                                         $bill->account_type_id = $account->account_type->id;
                                     }
                                     $bill->currency_id = $trip_expense->currency_id;
+                                    $bill->vendor_id = $trip_expense->vendor_id;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
                                     $bill->balance = $trip_expense->amount;
@@ -1164,11 +1169,12 @@ public function updatingSearch()
                                     $bill->category = "Trip Expense";
                                     $bill->bill_date = date("Y-m-d");
                                     $bill->currency_id = $trip_expense->currency_id ?: null;
+                                    $bill->vendor_id = $trip_expense->vendor_id ?: null;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
                                     $bill->exchange_amount = $trip_expense->exchange_amount;
                                     $bill->balance = $trip_expense->amount;
-            
+
                                     $bill->authorized_by_id = Auth::user()->id;
                                     $bill->authorization = $this->authorize;
                                     $bill->comments = $this->comments;

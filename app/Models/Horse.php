@@ -154,10 +154,16 @@ class Horse extends Model implements Auditable
     public function cash_flows(){
         return $this->hasMany('App\Models\CashFlow');
     }
-    /** Sage Intacct class mapping for this horse (status badge / sync state). */
+    /** Sage Intacct project mapping for this horse (status badge / sync state). */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
-                    ->where('entity_type', 'horse');
+                    ->where('entity_type', 'horse_project');
+    }
+
+    /** Cartrack vehicle mapping for this horse (drives live mileage/position pulls). */
+    public function cartrackMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'horse_vehicle');
     }
 
     protected $fillable=[

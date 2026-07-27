@@ -65,15 +65,17 @@ class SageSyncService
         }
 
         try {
-            $driver       = $this->sageDriverFor($integration);
-            $classService = new SageClassService($driver, $integration);
+            $driver          = $this->sageDriverFor($integration);
+            $classService    = new SageClassService($driver, $integration);
+            $projectService  = new SageProjectService($driver, $integration, $classService);
 
             if ($type === 'trip') {
-                $result = (new SageProjectService($driver, $integration, $classService))->syncTrip($model);
+                $result = $projectService->syncTrip($model);
             } elseif ($type === 'trailer') {
-                $result = $classService->syncTrailer($model);
+                $result = $classService->syncTrailer($model);   // stays a green CLASS
             } else {
-                $result = $classService->syncHorse($model);
+                // Horse → Transporter project + Horse project + Horse class (orange).
+                $result = $projectService->ensureHorse($model);
             }
         } catch (Throwable $e) {
             Log::error("Sage sync {$type} #{$model->getKey()} threw: " . $e->getMessage());

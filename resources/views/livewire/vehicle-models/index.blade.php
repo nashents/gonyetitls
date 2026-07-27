@@ -27,7 +27,7 @@
                                 <tbody>
                                     @foreach ($vehicle_models as $vehicle_model)
                                   <tr>
-                                    <td>{{$vehicle_model->vehicle_make->name}}</td>
+                                    <td>{{ optional($vehicle_model->vehicle_make)->name ?? '—' }}</td>
                                     <td>{{$vehicle_model->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -70,6 +70,16 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
+                    <div class="form-group">
+                        <label for="vehicle_make_id">Make</label>
+                        <select class="form-control" wire:model.debounce.300ms="vehicle_make_id" required>
+                            <option value="">Select Make</option>
+                            @foreach ($vehicle_makes as $vehicle_make)
+                                <option value="{{ $vehicle_make->id }}">{{ $vehicle_make->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('vehicle_make_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                     <div class="form-group">
                         <label for="title">Name</label>
                         <input type="text" class="form-control" wire:model.debounce.300ms="name" required>

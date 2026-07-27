@@ -4,22 +4,26 @@ namespace App\Http\Livewire\VehicleModels;
 
 use Livewire\Component;
 use App\Models\VehicleModel;
+use App\Models\VehicleMake;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
 
     public $vehicle_models;
+    public $vehicle_makes;
     public $name;
     public $model_name;
     public $status;
     public $vehicle_model_id;
+    public $vehicle_make_id;
     public $user_id;
 
 
 
     public function mount(){
         $this->vehicle_models = VehicleModel::all();
+        $this->vehicle_makes = VehicleMake::orderBy('name')->get();
     }
 
     public function updated($model){
@@ -27,6 +31,7 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:vehicle_models,name,NULL,id,deleted_at,NULL|string|min:2',
+        'vehicle_make_id' => 'required|exists:vehicle_makes,id',
     ];
 
 
@@ -35,6 +40,7 @@ class Index extends Component
     $this->updateMode = true;
     $this->user_id = $vehicle_model->user_id;
     $this->name = $vehicle_model->name;
+    $this->vehicle_make_id = $vehicle_model->vehicle_make_id;
     $this->vehicle_model_id = $vehicle_model->id;
     $this->dispatchBrowserEvent('show-vehicleModelEditModal');
 
@@ -44,9 +50,11 @@ class Index extends Component
     public function update()
     {
         if ($this->vehicle_model_id) {
+            $this->validateOnly('vehicle_make_id');
+
             $vehicle_model = VehicleModel::find($this->vehicle_model_id);
             $vehicle_model->update([
-                'vehicle_model_id' => $this->user_id,
+                'vehicle_make_id' => $this->vehicle_make_id,
                 'user_id' => $this->user_id,
                 'name' => $this->name,
             ]);

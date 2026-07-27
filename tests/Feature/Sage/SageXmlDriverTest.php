@@ -85,18 +85,24 @@ class SageXmlDriverTest extends TestCase
         Http::fake(['*' => Http::response($this->successXml('P1'), 200)]);
 
         $res = $this->driver()->createProject([
-            'id' => 'FPT00627', 'name' => 'HARARE TO BEIRA', 'category' => 'Contract',
-            'customerid' => 'FHC00022', 'classid' => 'FHH00001', 'status' => 'active',
+            'id' => 'MAN001', 'name' => 'HARARE TO BEIRA', 'category' => 'Contract',
+            'projecttype' => 'TRIPS', 'parentid' => 'FHH00001', 'classid' => 'FHH00001',
+            'customerid' => 'FHC00022', 'locationid' => 'E100', 'departmentid' => 'D2-1',
+            'status' => 'active',
         ]);
 
         $this->assertTrue($res['success']);
         Http::assertSent(function ($r) {
             $b = $r->body();
             return str_contains($b, '<create><PROJECT>')
-                && str_contains($b, '<PROJECTID>FPT00627</PROJECTID>')
+                && str_contains($b, '<PROJECTID>MAN001</PROJECTID>')
                 && str_contains($b, '<PROJECTCATEGORY>Contract</PROJECTCATEGORY>')
+                && str_contains($b, '<PROJECTTYPE>TRIPS</PROJECTTYPE>')
+                && str_contains($b, '<PARENTID>FHH00001</PARENTID>')
                 && str_contains($b, '<CUSTOMERID>FHC00022</CUSTOMERID>')
-                && str_contains($b, '<CLASSID>FHH00001</CLASSID>');
+                && str_contains($b, '<CLASSID>FHH00001</CLASSID>')
+                && str_contains($b, '<LOCATIONID>E100</LOCATIONID>')
+                && str_contains($b, '<DEPARTMENTID>D2-1</DEPARTMENTID>');
         });
     }
 

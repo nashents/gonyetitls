@@ -193,7 +193,7 @@ class Trip extends Model implements Auditable
     /** Sage Intacct project mapping for this trip (status badge / sync state). */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
-                    ->where('entity_type', 'trip');
+                    ->where('entity_type', 'trip_project');
     }
     public function agent(){
         return $this->belongsTo('App\Models\Agent');

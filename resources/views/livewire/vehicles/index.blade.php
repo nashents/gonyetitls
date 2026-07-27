@@ -40,7 +40,7 @@
                                             <th class="th-sm">Make
                                             </th>
                                             <th class="th-sm">
-                                                (Fleet#) HRN
+                                                (Fleet#)VRN
                                             </th>
                                             <th class="th-sm">Revenue
                                             </th>

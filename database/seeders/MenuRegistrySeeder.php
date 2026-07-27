@@ -1506,6 +1506,16 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Manage Vehicles','slug'=>'manage-vehicles','icon'=>'fas fa-list','route_name'=>'vehicles.index','sort_order'=>20]);
         $upsertSub($m, ['name'=>'Archived Vehicles','slug'=>'archived-vehicles','icon'=>'fas fa-archive','route_name'=>'vehicles.archived','sort_order'=>30]);
 
+        // Live Fleet Map (Cartrack real-time positions)
+        $m = $upsertModule($g, [
+            'name' => 'Live Fleet Map',
+            'slug' => 'live-fleet-map',
+            'icon' => 'fas fa-map-marker-alt',
+            'route_name' => 'fleet.live-map',
+            'sort_order' => 45,
+        ]);
+        $upsertSub($m, ['name'=>'Live Fleet Map','slug'=>'live-fleet-map-view','icon'=>'fas fa-map-marker-alt','route_name'=>'fleet.live-map','sort_order'=>10]);
+
         // Assignments
         $m = $upsertModule($g, [
             'name' => 'Assignments',

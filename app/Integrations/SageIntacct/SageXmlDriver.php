@@ -102,6 +102,56 @@ class SageXmlDriver implements SageDriver
         return $this->send('<update>' . $this->buildProject($project, false) . '</update>', 'update', 'PROJECT');
     }
 
+    // ── ITEM (from Expense) ──────────────────────────────────────
+
+    public function createItem(array $item): array
+    {
+        return $this->send('<create>' . $this->buildItem($item, true) . '</create>', 'create', 'ITEM');
+    }
+
+    public function updateItem(string $itemId, array $item): array
+    {
+        $item['id'] = $itemId;
+        return $this->send('<update>' . $this->buildItem($item, false) . '</update>', 'update', 'ITEM');
+    }
+
+    // ── CONTACT + EMPLOYEE (from Driver) ─────────────────────────
+
+    /** Employees require a real Contact first; create one (CONTACTNAME unique). */
+    public function createContact(array $contact): array
+    {
+        $fn = '<create><CONTACT>'
+            . $this->el('CONTACTNAME', $contact['name'])
+            . $this->elIf('PRINTAS', $contact['printas'] ?? $contact['name'])
+            . '</CONTACT></create>';
+        return $this->send($fn, 'create', 'CONTACT');
+    }
+
+    public function createEmployee(array $employee): array
+    {
+        return $this->send('<create>' . $this->buildEmployee($employee, true) . '</create>', 'create', 'EMPLOYEE');
+    }
+
+    public function updateEmployee(string $employeeId, array $employee): array
+    {
+        $employee['id'] = $employeeId;
+        return $this->send('<update>' . $this->buildEmployee($employee, false) . '</update>', 'update', 'EMPLOYEE');
+    }
+
+    // ── PURCHASE REQUISITION (create_potransaction) ──────────────
+
+    /**
+     * Create a Purchase Requisition. $header keys: transactiontype, datecreated,
+     * vendorid, referenceno, datedue, contactname (pay-to/return-to), currency.
+     * Each $lines row: itemid, itemdesc, quantity, unit, price, locationid,
+     * departmentid, projectid, employeeid, classid. Element ORDER is enforced by
+     * the Sage schema — do not reorder without re-checking.
+     */
+    public function createRequisition(array $header, array $lines): array
+    {
+        return $this->send($this->buildRequisition($header, $lines), 'create', 'REQUISITION');
+    }
+
     // ── READ (existence checks / pull) ───────────────────────────
 
     /**
@@ -144,7 +194,12 @@ class SageXmlDriver implements SageDriver
             $fields .= $this->el('NAME', $data['name'] ?? '');
         }
         $fields .= $this->elIf('DESCRIPTION', $data['description'] ?? null);
-        $fields .= $this->elIf('PARENTID', $data['parentid'] ?? null);
+        // Emit PARENTID whenever the key is present — an empty value CLEARS the
+        // parent (horse classes force this to stay top-level → orange); a value
+        // sets it (trailer classes → green). Absent key leaves it unchanged.
+        if (array_key_exists('parentid', $data)) {
+            $fields .= $this->el('PARENTID', $data['parentid']);
+        }
         $fields .= $this->elIf('STATUS', $data['status'] ?? null);
 
         return '<CLASS>' . $fields . '</CLASS>';
@@ -165,9 +220,14 @@ class SageXmlDriver implements SageDriver
         }
         // PROJECTCATEGORY is required by Sage on create.
         $fields .= $this->elIf('PROJECTCATEGORY', $data['category'] ?? null);
+        $fields .= $this->elIf('PROJECTTYPE', $data['projecttype'] ?? null);
+        // PARENTID nests a project (Transporter → Horse → Trip).
+        $fields .= $this->elIf('PARENTID', $data['parentid'] ?? null);
         $fields .= $this->elIf('DESCRIPTION', $data['description'] ?? null);
         $fields .= $this->elIf('CUSTOMERID', $data['customerid'] ?? null);
         $fields .= $this->elIf('CLASSID', $data['classid'] ?? null);
+        $fields .= $this->elIf('LOCATIONID', $data['locationid'] ?? null);
+        $fields .= $this->elIf('DEPARTMENTID', $data['departmentid'] ?? null);
         // Dates must be mm/dd/yyyy — the mapper formats them.
         $fields .= $this->elIf('BEGINDATE', $data['begindate'] ?? null);
         $fields .= $this->elIf('ENDDATE', $data['enddate'] ?? null);
@@ -175,6 +235,94 @@ class SageXmlDriver implements SageDriver
         $fields .= $this->elIf('STATUS', $data['status'] ?? null);
 
         return '<PROJECT>' . $fields . '</PROJECT>';
+    }
+
+    /** Build an ITEM (Gonyeti Expense). Required ITEMID + NAME + ITEMTYPE (on create). */
+    protected function buildItem(array $data, bool $isCreate): string
+    {
+        $fields = '';
+        if (! empty($data['id'])) {
+            $fields .= $this->el('ITEMID', $data['id']);
+        }
+        if ($isCreate || isset($data['name'])) {
+            $fields .= $this->el('NAME', $data['name'] ?? '');
+        }
+        if ($isCreate) {
+            $fields .= $this->el('ITEMTYPE', $data['type'] ?? 'Non-Inventory');
+        }
+        $fields .= $this->elIf('TAXABLE', $data['taxable'] ?? null);
+        // Optional item tax group so new items resolve a purchase tax schedule.
+        $fields .= $this->elIf('TAXGROUPKEY', $data['tax_group_key'] ?? null);
+
+        return '<ITEM>' . $fields . '</ITEM>';
+    }
+
+    /** Build an EMPLOYEE. Needs an existing Contact + LOCATIONID + DEPARTMENTID. */
+    protected function buildEmployee(array $data, bool $isCreate): string
+    {
+        $fields = '';
+        if (! empty($data['id'])) {
+            $fields .= $this->el('EMPLOYEEID', $data['id']);
+        }
+        if ($isCreate || isset($data['contactname'])) {
+            $fields .= '<PERSONALINFO>' . $this->el('CONTACTNAME', $data['contactname'] ?? '') . '</PERSONALINFO>';
+        }
+        $fields .= $this->elIf('DEPARTMENTID', $data['departmentid'] ?? null);
+        $fields .= $this->elIf('LOCATIONID', $data['locationid'] ?? null);
+        $fields .= $this->elIf('STATUS', $data['status'] ?? null);
+
+        return '<EMPLOYEE>' . $fields . '</EMPLOYEE>';
+    }
+
+    /**
+     * Build a create_potransaction (Purchase Requisition). The Sage schema is a
+     * strict sequence: transactiontype, datecreated, vendorid, referenceno,
+     * datedue, returnto, payto, currency, potransitems. Line sequence:
+     * itemid, itemdesc, quantity, unit, price, locationid, departmentid,
+     * projectid, employeeid, classid.
+     */
+    protected function buildRequisition(array $h, array $lines): string
+    {
+        $items = '';
+        foreach ($lines as $l) {
+            $line  = $this->el('itemid', $l['itemid']);
+            $line .= $this->elIf('itemdesc', $l['itemdesc'] ?? null);
+            $line .= $this->el('quantity', $l['quantity'] ?? 1);
+            $line .= $this->elIf('unit', $l['unit'] ?? null);
+            $line .= $this->elIf('price', $l['price'] ?? null);
+            $line .= $this->elIf('locationid', $l['locationid'] ?? null);
+            $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
+            $line .= $this->elIf('projectid', $l['projectid'] ?? null);
+            $line .= $this->elIf('employeeid', $l['employeeid'] ?? null);
+            $line .= $this->elIf('classid', $l['classid'] ?? null);
+            $items .= '<potransitem>' . $line . '</potransitem>';
+        }
+
+        $hdr  = $this->el('transactiontype', $h['transactiontype']);
+        $hdr .= $this->poDate('datecreated', $h['datecreated'] ?? null);
+        $hdr .= $this->el('vendorid', $h['vendorid']);
+        $hdr .= $this->elIf('referenceno', $h['referenceno'] ?? null);
+        $hdr .= $this->poDate('datedue', $h['datedue'] ?? null);
+        // returnto + payto are REQUIRED (a valid contact name).
+        $hdr .= '<returnto>' . $this->el('contactname', $h['contactname'] ?? '') . '</returnto>';
+        $hdr .= '<payto>' . $this->el('contactname', $h['contactname'] ?? '') . '</payto>';
+        $hdr .= $this->elIf('currency', $h['currency'] ?? null);
+
+        return '<create_potransaction>' . $hdr . '<potransitems>' . $items . '</potransitems></create_potransaction>';
+    }
+
+    /** Emit a Sage <tag><year/><month/><day/></tag> date, or '' if unparseable. */
+    protected function poDate(string $tag, $value): string
+    {
+        if (empty($value)) {
+            return '';
+        }
+        try {
+            $d = \Carbon\Carbon::parse($value);
+        } catch (Throwable $e) {
+            return '';
+        }
+        return "<{$tag}><year>" . $d->format('Y') . '</year><month>' . $d->format('n') . '</month><day>' . $d->format('j') . "</day></{$tag}>";
     }
 
     /**
