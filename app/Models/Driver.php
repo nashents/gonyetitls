@@ -106,6 +106,16 @@ class Driver extends Model implements Auditable
         return $this->hasMany('App\Models\Fuel');
     }
 
+    /**
+     * Sage Intacct mapping for this driver's badge. The mapping is keyed on the
+     * underlying Employee (entity_type driver_employee), so we join the driver's
+     * employee_id to the mapping's local_id.
+     */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id', 'employee_id')
+                    ->where('entity_type', 'driver_employee');
+    }
+
  protected $fillable=[
     'user_id',
     'employee_id',

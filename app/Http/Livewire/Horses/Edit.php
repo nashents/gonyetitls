@@ -152,6 +152,7 @@ class Edit extends Component
         $this->horse_id = $id;
         $this->fleet_number = $horse->fleet_number;
         $this->registration_number = $horse->registration_number;
+        $this->custom_ref = $horse->custom_ref;
         $this->horse_group_id = $horse->horse_group_id;
         $this->horse_type_id = $horse->horse_type_id;
         $this->condition = $horse->condition;

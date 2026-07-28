@@ -404,8 +404,9 @@ class Create extends Component
 
     public function store(){
 
-      DB::transaction(function () {
-        
+      $driver = null;
+      DB::transaction(function () use (&$driver) {
+
       $pin = $this->generatePIN();
 
       $user = new User;
@@ -571,9 +572,18 @@ class Create extends Component
         
       Session::flash('success','Driver created successfully');
       return redirect()->route('drivers.index');
-        
+
         });
-      
+
+      // Push the new driver to Sage as an Employee AFTER commit. Non-blocking:
+      // a Sage outage/inactive integration never blocks driver creation.
+      if ($driver) {
+          try {
+              app(\App\Services\Sage\SageSyncService::class)->syncDriver($driver);
+          } catch (\Throwable $e) {
+              \Illuminate\Support\Facades\Log::error('Driver Sage sync on create failed: ' . $e->getMessage());
+          }
+      }
 
       }
     public function render()

@@ -41,4 +41,10 @@ return [
         'maps_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'ezytrack' => [
+        // Bearer token EzyTrack's Device Manager sends on every push to
+        // /api/webhooks/ezytrack. Single shared token — see VerifyEzyTrackToken.
+        'token' => env('EZYTRACK_WEBHOOK_TOKEN'),
+    ],
+
 ];

@@ -29,6 +29,7 @@ class Index extends Component
 {
     use WithFileUploads;
     use WithPagination;
+    use \App\Http\Livewire\Concerns\PullsFromSage;
     public $search;
     protected $queryString = ['search'];
     protected $paginationTheme = 'bootstrap';
@@ -335,6 +336,12 @@ class Index extends Component
     public function getSageEnabledProperty()
     {
         return SageIntegration::enabledForUser();
+    }
+
+    /** Pull customers from Sage into Gonyeti (queued, de-duped). */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('customer', 'customers');
     }
 
     /**

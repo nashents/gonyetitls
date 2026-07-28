@@ -44,8 +44,11 @@ interface SageDriver extends IntegrationDriver
 
     public function updateProject(string $projectId, array $project): array;
 
-    /** Read records; on success `data` is a list of associative rows. */
+    /** Read records; on success `data` is a list of associative rows (+ resultId/remaining). */
     public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array;
+
+    /** Fetch the next page of a prior readByQuery using its resultId. */
+    public function readMore(string $resultId): array;
 
     // ── Phase 3: Items, Employees, Purchase Requisitions ──
 

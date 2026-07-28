@@ -41,6 +41,7 @@
                                     <a href="#" wire:click="exportHorsesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                     @if ($this->sageEnabled)
                                     <button wire:click="bulkSyncToSage" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</button>
+                                    <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i>Pull from Sage</button>
                                     @endif
 
                                 </div>

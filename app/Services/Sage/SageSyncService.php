@@ -40,6 +40,12 @@ class SageSyncService
         return $this->run($trip, 'trip');
     }
 
+    /** Driver → Sage Employee (via its Employee + Contact). */
+    public function syncDriver(\App\Models\Driver $driver): array
+    {
+        return $this->run($driver, 'driver');
+    }
+
     /** Retry a previously-attempted record (idempotent — de-dup handles it). */
     public function retry(Model $model): array
     {
@@ -48,6 +54,9 @@ class SageSyncService
         }
         if ($model instanceof Trailer) {
             return $this->syncTrailer($model);
+        }
+        if ($model instanceof \App\Models\Driver) {
+            return $this->syncDriver($model);
         }
         return $this->syncHorse($model);
     }
@@ -73,6 +82,8 @@ class SageSyncService
                 $result = $projectService->syncTrip($model);
             } elseif ($type === 'trailer') {
                 $result = $classService->syncTrailer($model);   // stays a green CLASS
+            } elseif ($type === 'driver') {
+                $result = (new SageEmployeeService($driver, $integration))->ensureForDriver($model);
             } else {
                 // Horse → Transporter project + Horse project + Horse class (orange).
                 $result = $projectService->ensureHorse($model);
@@ -98,9 +109,15 @@ class SageSyncService
             return $model->company_id;
         }
 
-        // Horses/trailers have no company_id: use the transporter's company,
-        // else the acting user's company.
-        $companyId = optional($model->transporter)->company_id;
+        if ($type === 'driver') {
+            // A driver has no company_id: use its Employee's company, else its
+            // transporter's, else the acting user's.
+            $companyId = optional($model->employee)->company_id
+                ?? optional($model->transporter)->company_id;
+        } else {
+            // Horses/trailers have no company_id: use the transporter's company.
+            $companyId = optional($model->transporter)->company_id;
+        }
 
         if (! $companyId) {
             $user = auth()->user();

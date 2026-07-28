@@ -96,4 +96,15 @@ return [
         'id_prefix' => env('SAGE_INTACCT_EMPLOYEE_ID_PREFIX', 'EMP-'),
     ],
 
+    // Phase 4 — Pull from Sage → Gonyeti (reverse import).
+    'pull' => [
+        // Sage CLASSID prefixes that identify horses vs trailers (NAME=registration).
+        'horse_class_prefixes'     => ['H', 'FHH'],
+        'trailer_class_prefixes'   => ['T', 'FHT'],
+        // Sage PROJECTTYPE that represents a transporter.
+        'transporter_project_type' => env('SAGE_INTACCT_TYPE_TRANSPORTER', 'SUBCONTRACTOR'),
+        // Page size for readByQuery (max 1000). readMore() pages beyond this.
+        'page_size'                => 1000,
+    ],
+
 ];

@@ -45,8 +45,12 @@ class IntegrationProviderSeeder extends Seeder
                 'name'                 => 'EzyTrack',
                 'type'                 => 'tracking',
                 'driver'               => 'App\\Integrations\\EzyTrack\\EzyTrackDriver',
-                'required_credentials' => json_encode(['base_url', 'api_key', 'account_id']),
-                'default_config'       => json_encode(['sync_interval_minutes' => 5, 'timeout' => 30]),
+                // Push-based (Digital Matter JSON to /api/webhooks/ezytrack, auth via
+                // the single shared EZYTRACK_WEBHOOK_TOKEN) — no per-company credentials.
+                // Enabling this row just turns on the company's Live Map section and
+                // lets you link devices under Fleet > EzyTrack Device Mapping.
+                'required_credentials' => json_encode([]),
+                'default_config'       => json_encode(['mode' => 'push']),
                 'is_active'            => true,
             ],
 

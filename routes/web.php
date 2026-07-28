@@ -591,6 +591,7 @@ Route::resource('logs','LogController');
 Route::resource('drivers','DriverController');
 Route::resource('vehicles','VehicleController');
 Route::get('fleet/live-map', 'FleetController@liveMap')->name('fleet.live-map');
+Route::get('fleet/ezytrack-device-mapping', 'FleetController@ezyTrackDeviceMappings')->name('fleet.ezytrack-device-mappings');
 Route::resource('vehicle_assignments','VehicleAssignmentController');
 Route::resource('bills','BillController');
 Route::resource('bill_expenses','BillExpenseController');

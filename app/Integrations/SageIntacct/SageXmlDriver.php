@@ -123,6 +123,8 @@ class SageXmlDriver implements SageDriver
         $fn = '<create><CONTACT>'
             . $this->el('CONTACTNAME', $contact['name'])
             . $this->elIf('PRINTAS', $contact['printas'] ?? $contact['name'])
+            . $this->elIf('FIRSTNAME', $contact['firstname'] ?? null)
+            . $this->elIf('LASTNAME', $contact['lastname'] ?? null)
             . '</CONTACT></create>';
         return $this->send($fn, 'create', 'CONTACT');
     }
@@ -166,6 +168,20 @@ class SageXmlDriver implements SageDriver
             . $this->el('query', $query)
             . $this->el('pagesize', $pageSize)
             . '</readByQuery>';
+
+        $t = $this->transport($fn);
+
+        if (! $t['ok']) {
+            return $this->fail(null, $t['error']) + ['request' => $fn, 'response' => null];
+        }
+
+        return $this->parseQuery($t['body'], $t['status']) + ['request' => $fn, 'response' => $t['body']];
+    }
+
+    /** Fetch the next page of a prior readByQuery, using its resultId. */
+    public function readMore(string $resultId): array
+    {
+        $fn = '<readMore>' . $this->el('resultId', $resultId) . '</readMore>';
 
         $t = $this->transport($fn);
 
@@ -515,7 +531,12 @@ class SageXmlDriver implements SageDriver
         }
 
         $records = [];
+        $resultId = null;
+        $remaining = 0;
         if (isset($result->data)) {
+            $attrs     = $result->data->attributes();
+            $resultId  = isset($attrs['resultId']) ? (string) $attrs['resultId'] : null;
+            $remaining = isset($attrs['numremaining']) ? (int) $attrs['numremaining'] : 0;
             foreach ($result->data->children() as $record) {
                 $row = [];
                 foreach ($record->children() as $field) {
@@ -525,7 +546,14 @@ class SageXmlDriver implements SageDriver
             }
         }
 
-        return ['success' => true, 'status' => $httpStatus, 'data' => $records, 'error' => null];
+        return [
+            'success'   => true,
+            'status'    => $httpStatus,
+            'data'      => $records,
+            'resultId'  => $resultId,      // pass to readMore() for the next page
+            'remaining' => $remaining,     // records still to fetch
+            'error'     => null,
+        ];
     }
 
     /**

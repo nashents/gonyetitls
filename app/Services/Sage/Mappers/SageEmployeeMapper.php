@@ -11,12 +11,12 @@ use App\Services\Sage\Support\SageFormat;
  */
 class SageEmployeeMapper
 {
-    /** Stable EMPLOYEEID: employee_number, else EMP-{id}. */
+    /** Stable EMPLOYEEID: custom_ref (a linked Sage id), else employee_number, else EMP-{id}. */
     public static function employeeId(Employee $e): string
     {
         $prefix = (string) config('sageintacct.employee.id_prefix', 'EMP-');
         $max    = (int) config('sageintacct.class.id_max_length', 20);
-        $ref    = $e->employee_number ?: ($prefix . $e->id);
+        $ref    = $e->custom_ref ?: ($e->employee_number ?: ($prefix . $e->id));
 
         return SageFormat::id($ref, $max);
     }
@@ -42,8 +42,10 @@ class SageEmployeeMapper
     public static function contactPayload(Employee $e): array
     {
         return [
-            'name'    => self::contactName($e),   // CONTACTNAME (unique)
-            'printas' => self::fullName($e),      // PRINTAS (display)
+            'name'      => self::contactName($e),        // CONTACTNAME (unique)
+            'printas'   => self::fullName($e),           // PRINTAS (display)
+            'firstname' => $e->name ?: null,             // for reverse-pull name matching
+            'lastname'  => $e->surname ?: null,
         ];
     }
 

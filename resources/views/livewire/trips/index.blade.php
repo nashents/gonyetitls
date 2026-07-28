@@ -450,7 +450,8 @@
                                                     @if ($this->sageEnabled)
                                                     <input type="checkbox" wire:model="sageSelected" value="{{ $trip->id }}" title="Select for Sage bulk sync">
                                                     @endif
-                                                    <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong>
+                                                    <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong> <br>
+                                                    <small><strong>Manifest#: {{$trip->manifest_number}}</strong></small>
                                                     @if ($this->sageEnabled)
                                                     @php $sm = $trip->sageMapping; $ss = optional($sm)->sync_status; @endphp
                                                     <span class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"

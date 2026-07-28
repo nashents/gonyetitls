@@ -154,10 +154,14 @@ class Horse extends Model implements Auditable
     public function cash_flows(){
         return $this->hasMany('App\Models\CashFlow');
     }
-    /** Sage Intacct project mapping for this horse (status badge / sync state). */
+    /**
+     * Sage Intacct mapping for this horse's status badge. Points at the CLASS
+     * mapping, which BOTH flows populate — forward sync (project + class) and
+     * the reverse pull (class only) — so pulled horses show as synced too.
+     */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
-                    ->where('entity_type', 'horse_project');
+                    ->where('entity_type', 'horse_class');
     }
 
     /** Cartrack vehicle mapping for this horse (drives live mileage/position pulls). */

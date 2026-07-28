@@ -91,6 +91,11 @@ class SageIntacctDriver implements SageDriver
         return $this->driver->readByQuery($object, $fields, $query, $pageSize);
     }
 
+    public function readMore(string $resultId): array
+    {
+        return $this->driver->readMore($resultId);
+    }
+
     public function createItem(array $item): array
     {
         return $this->driver->createItem($item);

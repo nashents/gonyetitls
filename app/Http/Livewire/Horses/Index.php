@@ -26,6 +26,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\PullsFromSage;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -233,6 +234,12 @@ class Index extends Component
                 ? count($ids) . ' horse(s) queued for Sage sync.'
                 : 'Select at least one horse to sync.',
         ]);
+    }
+
+    /** Pull horses from Sage into Gonyeti (queued, de-duped). */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('horse', 'horses');
     }
 
     public function render()

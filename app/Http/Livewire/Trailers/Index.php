@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Session;
 class Index extends Component
 {
     use WithPagination;
+    use \App\Http\Livewire\Concerns\PullsFromSage;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -516,6 +517,12 @@ public function activate($id){
                 ? count($ids) . ' trailer(s) queued for Sage sync.'
                 : 'Select at least one trailer to sync.',
         ]);
+    }
+
+    /** Pull trailers from Sage into Gonyeti (queued, de-duped). */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('trailer', 'trailers');
     }
 
     public function render()

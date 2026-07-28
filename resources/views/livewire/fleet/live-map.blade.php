@@ -11,19 +11,28 @@
                                 <span class="badge badge-info">{{ count($markers) }} vehicle(s) reporting</span>
                             </div>
                         </div>
-                        <div class="panel-body p-20">
-                            @if (! $this->cartrackEnabled)
+        <div class="panel-body p-20">
+                            @if (! $this->cartrackEnabled && ! $this->ezyTrackEnabled)
                                 <p class="text-muted">
-                                    Cartrack isn't active for your company yet. Set it up under
+                                    No tracking provider is active for your company yet. Set up Cartrack and/or EzyTrack under
                                     <a href="{{ route('company_integrations.index') }}">Integrations</a> first.
                                 </p>
-                            @elseif ($apiError)
-                                <p class="text-danger">Cartrack request failed: {{ $apiError }}</p>
-                            @elseif (empty($markers))
-                                <p class="text-muted">
-                                    No live positions yet. Run <code>php artisan cartrack:match-vehicles</code>
-                                    to link your fleet, then check back shortly.
-                                </p>
+                            @else
+                                @if ($apiError)
+                                    <p class="text-danger">Cartrack request failed: {{ $apiError }}</p>
+                                @endif
+                                @if ($this->cartrackEnabled && empty($markers))
+                                    <p class="text-muted">
+                                        No live positions yet. Run <code>php artisan cartrack:match-vehicles</code>
+                                        to link your fleet, then check back shortly.
+                                    </p>
+                                @endif
+                                @if ($this->ezyTrackEnabled)
+                                    <p class="text-muted">
+                                        EzyTrack devices show up once linked under
+                                        <a href="{{ route('fleet.ezytrack-device-mappings') }}">EzyTrack Device Mapping</a>.
+                                    </p>
+                                @endif
                             @endif
                             <div id="cartrack-live-map" style="width:100%; height:600px;"></div>
                         </div>
@@ -59,6 +68,7 @@
                 const info = new google.maps.InfoWindow({
                     content: '<strong>' + marker.label + '</strong>'
                         + (marker.type ? '<br>' + marker.type : '')
+                        + (marker.source ? '<br><small>' + marker.source + '</small>' : '')
                         + (marker.last_update ? '<br><small>' + marker.last_update + '</small>' : ''),
                 });
 

@@ -135,6 +135,43 @@ class SageXmlDriverTest extends TestCase
     }
 
     /** @test */
+    public function read_by_query_returns_result_id_and_remaining_for_paging()
+    {
+        $xml = '<?xml version="1.0"?><response><control><status>success</status></control><operation>'
+            . '<authentication><status>success</status></authentication><result><status>success</status>'
+            . '<data listtype="class" count="2" numremaining="3" resultId="RID99">'
+            . '<class><CLASSID>H0001</CLASSID><NAME>ABJ 1034</NAME></class>'
+            . '<class><CLASSID>H0002</CLASSID><NAME>ABJ 1110</NAME></class>'
+            . '</data></result></operation></response>';
+        Http::fake(['*' => Http::response($xml, 200)]);
+
+        $res = $this->driver()->readByQuery('CLASS', ['CLASSID', 'NAME'], "CLASSID LIKE 'H%'");
+
+        $this->assertTrue($res['success']);
+        $this->assertCount(2, $res['data']);
+        $this->assertSame('RID99', $res['resultId']);
+        $this->assertSame(3, $res['remaining']);
+    }
+
+    /** @test */
+    public function read_more_pages_using_the_result_id()
+    {
+        $xml = '<?xml version="1.0"?><response><control><status>success</status></control><operation>'
+            . '<authentication><status>success</status></authentication><result><status>success</status>'
+            . '<data listtype="class" count="1" numremaining="0" resultId="RID99">'
+            . '<class><CLASSID>H0003</CLASSID><NAME>AEZ 3124</NAME></class>'
+            . '</data></result></operation></response>';
+        Http::fake(['*' => Http::response($xml, 200)]);
+
+        $res = $this->driver()->readMore('RID99');
+
+        $this->assertTrue($res['success']);
+        $this->assertSame('H0003', $res['data'][0]['CLASSID']);
+        $this->assertSame(0, $res['remaining']);
+        Http::assertSent(fn ($r) => str_contains($r->body(), '<readMore><resultId>RID99</resultId></readMore>'));
+    }
+
+    /** @test */
     public function it_handles_a_transport_failure_gracefully()
     {
         Http::fake(function () {

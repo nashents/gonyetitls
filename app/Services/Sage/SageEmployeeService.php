@@ -36,6 +36,7 @@ class SageEmployeeService
 
         $mapping = $this->mappingFor($this->integration, 'driver_employee', $employee);
         if ($mapping->exists && $mapping->external_id) {
+            $this->storeCustomRef($driver, $employee, $mapping->external_id);
             return ['success' => true, 'external_id' => $mapping->external_id];
         }
 
@@ -56,12 +57,32 @@ class SageEmployeeService
         }
 
         // 2) Create the employee (fall back to update if it already exists).
-        $res = $this->driver->createEmployee($payload);
+        $action = 'create';
+        $res    = $this->driver->createEmployee($payload);
         if (empty($res['success']) && $this->isDuplicate($res['error'] ?? null)) {
-            $res = $this->driver->updateEmployee($employeeId, $payload);
-            return $this->finishSync($mapping, $res, $employeeId, 'update', 'driver_employee', $employee);
+            $res    = $this->driver->updateEmployee($employeeId, $payload);
+            $action = 'update';
         }
 
-        return $this->finishSync($mapping, $res, $employeeId, 'create', 'driver_employee', $employee);
+        $result = $this->finishSync($mapping, $res, $employeeId, $action, 'driver_employee', $employee);
+
+        // Store the Sage EMPLOYEEID in custom_ref (Sage-id convention) so the
+        // Gonyeti employee_number/driver_number sequences stay untouched.
+        if (! empty($result['success'])) {
+            $this->storeCustomRef($driver, $employee, $result['external_id'] ?? $employeeId);
+        }
+
+        return $result;
+    }
+
+    /** Persist the Sage EMPLOYEEID onto the employee and driver custom_ref. */
+    protected function storeCustomRef(?\App\Models\Driver $driver, \App\Models\Employee $employee, string $externalId): void
+    {
+        if (empty($employee->custom_ref)) {
+            $employee->forceFill(['custom_ref' => $externalId])->saveQuietly();
+        }
+        if ($driver && empty($driver->custom_ref)) {
+            $driver->forceFill(['custom_ref' => $externalId])->saveQuietly();
+        }
     }
 }

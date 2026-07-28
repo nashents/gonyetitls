@@ -219,6 +219,32 @@ WithBatchInserts
     }
 
     // ──────────────────────────────────────────────
+    // Auto-derive freight from rate/measurement/distance
+    // when it isn't provided manually in the excel file
+    // ──────────────────────────────────────────────
+    protected function calculateFreight($method, $rate, $measurement_value, $distance)
+    {
+        if (!is_numeric($rate)) {
+            return null;
+        }
+
+        switch ($method) {
+            case 'flat_rate':
+                return (float) $rate;
+            case 'rate_weight':
+                return is_numeric($measurement_value) ? (float) $rate * (float) $measurement_value : null;
+            case 'rate_weight_distance':
+                return (is_numeric($measurement_value) && is_numeric($distance))
+                    ? (float) $rate * (float) $measurement_value * (float) $distance
+                    : null;
+            case 'rate_distance':
+                return is_numeric($distance) ? (float) $rate * (float) $distance : null;
+            default:
+                return null;
+        }
+    }
+
+    // ──────────────────────────────────────────────
     // Find by fuzzy name match, create if missing
     // ──────────────────────────────────────────────
     protected $lookupCache = [];
@@ -314,9 +340,14 @@ WithBatchInserts
 
                 $offloading_point = $this->resolveOrCreate(OffloadingPoint::class, $row->get('offloading_point'));
 
+                $cargo_type = trim((string) $row->get('cargo_type')) ?: null;
+
                 $cargo = $this->resolveOrCreate(Cargo::class, $row->get('cargo'), [
-                    'type' => 'Solid', // default for auto-created cargo
+                    'type' => $cargo_type ?: 'Solid', // default for auto-created cargo
                 ]);
+
+                // Row-level cargo_type drives the freight calculation; fall back to the Cargo record's type
+                $cargo_type = $cargo_type ?: $cargo?->type;
 
                 $transporter = $this->resolveOrCreate(Transporter::class, $row->get('transporter'), [
                     'company_id' => $company_id,
@@ -341,14 +372,32 @@ WithBatchInserts
                     }
                 }
 
-                $freight_calculation = $row->get('rate') ? 'flat_rate' : null;
+                $freight_calculation = trim((string) $row->get('freight_calculation_method')) ?: null;
+                if (!in_array($freight_calculation, ['flat_rate', 'rate_weight', 'rate_weight_distance', 'rate_distance'])) {
+                    $freight_calculation = $row->get('rate') ? 'flat_rate' : null;
+                }
 
-                if ($cargo?->type === "Solid") {
+                if ($cargo_type === "Solid") {
                     $calculation_measurement = "weight";
-                } elseif ($cargo?->type === "Liquid") {
-                    $calculation_measurement = "litreage_at_20";
+                } elseif ($cargo_type === "Liquid") {
+                    $calculation_measurement = "litreage_at_ambient";
                 } else {
                     $calculation_measurement = null;
+                }
+
+                $distance = $row->get('distance');
+
+                // weight for Solid cargo, litreage_at_ambient for Liquid cargo
+                $measurement_value = $cargo_type === "Solid"
+                    ? $row->get('weight')
+                    : ($cargo_type === "Liquid" ? $row->get('litreage_at_ambient') : null);
+
+                $rate = $row->get('rate');
+                $freight = $row->get('freight');
+
+                // Only auto-calculate freight when it hasn't been set manually in the excel file
+                if (!is_numeric($freight)) {
+                    $freight = $this->calculateFreight($freight_calculation, $rate, $measurement_value, $distance);
                 }
 
                 $trip = new Trip();
@@ -369,11 +418,12 @@ WithBatchInserts
                 $trip->start_date = $start_date;
                 $trip->end_date = $end_date;
                 $trip->trip_status = trim($row->get('trip_status'));
-                $trip->rate = $row->get('rate');
-                $trip->freight = $row->get('freight');
+                $trip->rate = $rate;
+                $trip->freight = $freight;
                 $trip->weight = $row->get('weight');
                 $trip->litreage = $row->get('litreage_at_ambient');
                 $trip->litreage_at_20 = $row->get('litreage_at_20');
+                $trip->distance = $distance;
 
                 $trip->with_trailer = count($trailer_ids) > 0 ? 1 : 0;
                 $trip->with_customer_rates = "custom";
@@ -410,6 +460,9 @@ WithBatchInserts
                     'start_date'              => $start_date,
                     'end_date'                => $end_date,
                     'trip_ref'                => $trip_ref,
+                    'rate'                    => $rate,
+                    'freight'                 => $freight,
+                    'distance'                => $distance,
                 ]);
 
                 // Link Trip <-> Transport Order
@@ -718,13 +771,13 @@ WithBatchInserts
         $transport_order->units_of_measure_id = null;
         $transport_order->weight = $row->get('weight') ?: null;
         $transport_order->status = "Pending";
-        $transport_order->rate = $row->get('rate') ?: null;
-        $transport_order->freight = $row->get('freight') ?: null;
+        $transport_order->rate = $lookups['rate'] ?: null;
+        $transport_order->freight = $lookups['freight'] ?: null;
         $transport_order->transporter_rate = null;
         $transport_order->transporter_freight = null;
         $transport_order->exchange_rate = null;
         $transport_order->exchange_customer_freight = null;
-        $transport_order->distance = $row->get('distance') ?: null;
+        $transport_order->distance = $lookups['distance'] ?: null;
         $transport_order->save();
 
         $this->addDestinations($transport_order, $row, $lookups);
@@ -749,8 +802,8 @@ WithBatchInserts
                 'quantity'            => $row->get('quantity') ?: null,
                 'units_of_measure_id' => null,
                 'litreage'            => $row->get('offloaded_litreage_at_ambient') ?: $row->get('litreage_at_ambient'),
-                'rate'                => $row->get('rate') ?: null,
-                'freight'             => $row->get('freight') ?: null,
+                'rate'                => $lookups['rate'] ?: null,
+                'freight'             => $lookups['freight'] ?: null,
             ]
         );
     }
@@ -771,8 +824,8 @@ WithBatchInserts
                 'quantity'            => $row->get('quantity') ?: null,
                 'units_of_measure_id' => null,
                 'litreage'            => $row->get('litreage_at_ambient') ?: null,
-                'rate'                => $row->get('rate') ?: null,
-                'freight'             => $row->get('freight') ?: null,
+                'rate'                => $lookups['rate'] ?: null,
+                'freight'             => $lookups['freight'] ?: null,
             ]
         );
     }

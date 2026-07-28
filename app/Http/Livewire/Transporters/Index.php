@@ -17,6 +17,7 @@ use App\Mail\AccountCreationMail;
 use App\Models\TransporterContact;
 use Illuminate\Support\Facades\DB;
 use App\Exports\TransportersExport;
+use App\Services\Sage\SageIntegration;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -27,6 +28,7 @@ class Index extends Component
     use WithFileUploads;
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\PullsFromSage;
     public $search;
     protected $queryString = ['search'];
     protected $paginationTheme = 'bootstrap';
@@ -136,6 +138,18 @@ class Index extends Component
     }
     public function exportTransportersExcel(Excel $excel){
         return $excel->download(new TransportersExport, 'transporters.xlsx');
+    }
+
+    /** Whether the acting user's company has an active Sage integration. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Pull transporters from Sage into Gonyeti (queued, de-duped). */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('transporter', 'transporters');
     }
 
     public function mount(){

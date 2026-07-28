@@ -85,6 +85,11 @@ class SageRestDriver implements SageDriver
         return $this->notImplemented();
     }
 
+    public function readMore(string $resultId): array
+    {
+        return $this->notImplemented();
+    }
+
     public function createItem(array $item): array
     {
         return $this->notImplemented();

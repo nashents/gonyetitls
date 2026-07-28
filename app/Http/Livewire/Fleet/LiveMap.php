@@ -2,25 +2,34 @@
 
 namespace App\Http\Livewire\Fleet;
 
+use App\Models\EzyTrackDevice;
 use App\Models\Horse;
 use App\Models\IntegrationMapping;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Services\Cartrack\Concerns\ResolvesCartrackIntegration;
+use App\Services\EzyTrack\Concerns\ResolvesEzyTrackIntegration;
 use App\Services\Integrations\IntegrationGate;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 /**
- * Live vehicle-location board: pulls the whole fleet's latest Cartrack
- * position (ISO 15143-3 snapshot) and plots it against Gonyeti's own
- * Horse/Trailer/Vehicle records via the IntegrationMapping cache built by
- * `cartrack:match-vehicles`, so markers show Gonyeti fleet numbers instead
- * of raw Cartrack ids.
+ * Live vehicle-location board: plots every configured tracking source
+ * against Gonyeti's own Horse/Trailer/Vehicle records.
+ *
+ *  - Cartrack: pulls the whole fleet's latest position (ISO 15143-3
+ *    snapshot) and resolves it via the IntegrationMapping cache built by
+ *    `cartrack:match-vehicles`.
+ *  - EzyTrack: reads the locally cached state of whichever devices have
+ *    pushed us a position (see EzyTrackPositionIngestor), resolved via the
+ *    manual links made on the "EzyTrack Device Mapping" screen.
+ *
+ * Either source shows Gonyeti fleet numbers instead of raw provider ids.
  */
 class LiveMap extends Component
 {
     use ResolvesCartrackIntegration;
+    use ResolvesEzyTrackIntegration;
 
     /** Refresh cadence for the browser poll — the underlying fetch is itself cached (see ResolvesCartrackIntegration::cachedFleetSnapshot). */
     public int $pollSeconds = 30;
@@ -33,16 +42,32 @@ class LiveMap extends Component
         'vehicle_vehicle' => [Vehicle::class, 'Vehicle'],
     ];
 
+    protected const EZYTRACK_ENTITY_MODELS = [
+        'horse_ezytrack_device'   => [Horse::class, 'Horse'],
+        'trailer_ezytrack_device' => [Trailer::class, 'Trailer'],
+        'vehicle_ezytrack_device' => [Vehicle::class, 'Vehicle'],
+    ];
+
     /** Follows the app-wide convention: every integration's UI states plainly when it isn't active, rather than silently showing nothing. */
     public function getCartrackEnabledProperty(): bool
     {
         return IntegrationGate::enabledForUser('cartrack');
     }
 
+    public function getEzyTrackEnabledProperty(): bool
+    {
+        return IntegrationGate::enabledForUser('ezytrack');
+    }
+
     public function render()
     {
+        $markers = array_merge(
+            $this->cartrackEnabled ? $this->markers() : [],
+            $this->ezyTrackEnabled ? $this->ezyTrackMarkers() : []
+        );
+
         return view('livewire.fleet.live-map', [
-            'markers'  => $this->cartrackEnabled ? $this->markers() : [],
+            'markers'  => $markers,
             'apiError' => $this->apiError,
         ]);
     }
@@ -101,9 +126,60 @@ class LiveMap extends Component
             $markers[] = [
                 'label'       => $label,
                 'type'        => $type,
+                'source'      => 'Cartrack',
                 'latitude'    => (float) $latitude,
                 'longitude'   => (float) $longitude,
                 'last_update' => data_get($node, 'Location.DateTime'),
+            ];
+        }
+
+        return $markers;
+    }
+
+    /** EzyTrack markers: locally cached device state (pushed via webhook), resolved through the manual device mapping. */
+    protected function ezyTrackMarkers(): array
+    {
+        $companyId = $this->currentCompanyId();
+        $integration = $this->activeEzyTrackIntegration($companyId);
+
+        if (! $integration) {
+            return [];
+        }
+
+        $mappings = IntegrationMapping::where('company_integration_id', $integration->id)
+            ->whereIn('entity_type', array_keys(self::EZYTRACK_ENTITY_MODELS))
+            ->get()
+            ->keyBy('external_reference');
+
+        if ($mappings->isEmpty()) {
+            return [];
+        }
+
+        $devices = EzyTrackDevice::whereIn('serial_number', $mappings->keys())->get()->keyBy('serial_number');
+
+        $markers = [];
+
+        foreach ($mappings as $serial => $mapping) {
+            $device = $devices->get($serial);
+
+            if (! $device || ! $device->hasPosition()) {
+                continue;
+            }
+
+            [$modelClass, $typeLabel] = self::EZYTRACK_ENTITY_MODELS[$mapping->entity_type];
+            $model = $modelClass::find($mapping->local_id);
+
+            if (! $model) {
+                continue;
+            }
+
+            $markers[] = [
+                'label'       => $model->fleet_number ?? $model->registration_number ?? $serial,
+                'type'        => $typeLabel,
+                'source'      => 'EzyTrack',
+                'latitude'    => (float) $device->latitude,
+                'longitude'   => (float) $device->longitude,
+                'last_update' => optional($device->last_gps_at)->toDateTimeString(),
             ];
         }
 

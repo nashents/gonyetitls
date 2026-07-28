@@ -97,10 +97,9 @@
                                         @if (!$employee->driver)
                                             @if (Auth::user()->is_admin() || !$employee->user->is_admin())
                                             <tr>
-                                                <td >
+                                                <td>
                                                     <img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
                                                 </td>
-                                            
                                                 <td>
                                                     {{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}
                                                     <br>

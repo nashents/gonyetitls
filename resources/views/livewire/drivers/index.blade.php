@@ -23,6 +23,10 @@
                                     <a href="#" wire:click="exportDriversExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportDriversCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportDriversPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    @if ($this->sageEnabled)
+                                    <button wire:click="bulkSyncToSage" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</button>
+                                    <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i>Pull from Sage</button>
+                                    @endif
                                 </div>
 
                             </div>
@@ -110,8 +114,17 @@
                                        
                                         <td>{{ucfirst($driver->transporter ? $driver->transporter->name : "")}}</td>
                                         <td>
+                                            @if ($this->sageEnabled)
+                                            <input type="checkbox" wire:model="sageSelected" value="{{ $driver->id }}" title="Select for Sage bulk sync">
+                                            @endif
                                             {{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}} <br>
                                              <small><strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}</small>
+                                             @if ($this->sageEnabled)
+                                             <br>
+                                             @php $sm = $driver->sageMapping; @endphp
+                                             <small class="badge bg-{{ $sm ? ($sm->sync_status === 'synced' ? 'success' : ($sm->sync_status === 'failed' ? 'danger' : ($sm->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                    title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $sm->sync_status)) : 'Not synced' }}</small>
+                                             @endif
                                              @if ($employee->custom_ref)
                                                         <br>
                                                         <small>
@@ -205,6 +218,16 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('employees.show', $driver->employee->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
+                                                    @if ($this->sageEnabled)
+                                                    @php $ss = optional($driver->sageMapping)->sync_status; @endphp
+                                                    @if ($ss === 'synced')
+                                                    <li><a href="#" wire:click.prevent="syncToSage({{$driver->id}})" wire:loading.attr="disabled"><i class="fa fa-refresh color-success"></i> Re-sync to Sage</a></li>
+                                                    @elseif (in_array($ss, ['failed','requires_attention']))
+                                                    <li><a href="#" wire:click.prevent="retrySync({{$driver->id}})" wire:loading.attr="disabled"><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
+                                                    @else
+                                                    <li><a href="#" wire:click.prevent="syncToSage({{$driver->id}})" wire:loading.attr="disabled"><i class="fa fa-cloud-upload color-primary"></i> Sync to Sage</a></li>
+                                                    @endif
+                                                    @endif
                                                     <li><a href="{{route('drivers.edit', $driver->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" wire:click.prevent="changePosition({{$employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#driverDeleteModal{{$driver->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>

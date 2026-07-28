@@ -14,6 +14,9 @@ use App\Models\EmployeePosition;
 use App\Models\Grade;
 use App\Models\JobTitle;
 use App\Models\Rank;
+use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SageSyncService;
+use App\Jobs\Sage\SyncDriverToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -26,8 +29,10 @@ class Index extends Component
 {
     use WithFileUploads;
     use WithPagination;
+    use \App\Http\Livewire\Concerns\PullsFromSage;
     protected $paginationTheme = 'bootstrap';
     public $search;
+    public $sageSelected = [];
     protected $queryString = ['search'];
     private $drivers;
     public $driver_id;
@@ -214,11 +219,66 @@ class Index extends Component
 
       }
 
+    /** Whether the acting user's company has an active Sage integration. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Sync one driver to Sage (as an Employee) inline; also used for retry. */
+    public function syncToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $driver = Driver::findOrFail($id);
+        $result = app(SageSyncService::class)->syncDriver($driver);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : (! empty($result['skipped']) ? 'warning' : 'error'),
+            'message' => ! empty($result['success'])
+                ? 'Driver synced to Sage (employee ' . ($result['external_id'] ?? '') . ').'
+                : 'Sage sync: ' . ($result['error'] ?? 'unknown error'),
+        ]);
+    }
+
+    public function retrySync($id)
+    {
+        $this->syncToSage($id);
+    }
+
+    /** Bulk sync the selected drivers via queued jobs. */
+    public function bulkSyncToSage()
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $ids = array_filter($this->sageSelected);
+        foreach ($ids as $id) {
+            SyncDriverToSageJob::dispatch((int) $id);
+        }
+        $this->sageSelected = [];
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => count($ids) ? 'success' : 'warning',
+            'message' => count($ids) ? count($ids) . ' driver(s) queued for Sage sync.' : 'Select at least one driver to sync.',
+        ]);
+    }
+
+    /** Pull drivers from Sage into Gonyeti (queued, de-duped). */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('driver', 'drivers');
+    }
+
     public function render()
     {
-    
+
     $query = Driver::query()
     ->with(['user:id,active','transporter:id,name','employee:id,name,surname'])
+    ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
     ->leftJoin('employees', 'employees.id', '=', 'drivers.employee_id')
     ->select('drivers.*')                  // avoid ambiguous columns
     ->where('drivers.archive', 0)          // ✅ disambiguate

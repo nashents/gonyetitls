@@ -1515,6 +1515,7 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 45,
         ]);
         $upsertSub($m, ['name'=>'Live Fleet Map','slug'=>'live-fleet-map-view','icon'=>'fas fa-map-marker-alt','route_name'=>'fleet.live-map','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'EzyTrack Device Mapping','slug'=>'ezytrack-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.ezytrack-device-mappings','sort_order'=>20]);
 
         // Assignments
         $m = $upsertModule($g, [
