@@ -107,11 +107,16 @@ class Index extends Component
         $this->validate();
 
         try {
-            $exists = CompanyIntegration::where('company_id', $this->company_id)
+            // withTrashed(): the (company_id, integration_provider_id) unique index
+            // doesn't know about soft deletes, so a previously-deleted row for this
+            // provider still blocks a plain insert with a duplicate-key error. Treat
+            // a soft-deleted match as "restore & update" instead of "already exists".
+            $existing = CompanyIntegration::withTrashed()
+                ->where('company_id', $this->company_id)
                 ->where('integration_provider_id', $this->integration_provider_id)
-                ->exists();
+                ->first();
 
-            if ($exists) {
+            if ($existing && ! $existing->trashed()) {
                 $this->dispatchBrowserEvent('alert', [
                     'type'    => 'error',
                     'message' => 'This provider is already integrated for your company!',
@@ -129,13 +134,21 @@ class Index extends Component
                 return;
             }
 
-            CompanyIntegration::create([
-                'company_id'              => $this->company_id,
-                'integration_provider_id' => $this->integration_provider_id,
-                'status'                  => $this->status,
-                'credentials'             => array_filter($this->credentials, fn ($v) => $v !== '' && $v !== null),
-                'config'                  => $this->config,
-            ]);
+            $attributes = [
+                'status'      => $this->status,
+                'credentials' => array_filter($this->credentials, fn ($v) => $v !== '' && $v !== null),
+                'config'      => $this->config,
+            ];
+
+            if ($existing) {
+                $existing->restore();
+                $existing->update($attributes);
+            } else {
+                CompanyIntegration::create($attributes + [
+                    'company_id'              => $this->company_id,
+                    'integration_provider_id' => $this->integration_provider_id,
+                ]);
+            }
 
             // The create modal's id is `createModal`; the global handler hides it
             // on `hide-createModal` (it was dispatching a non-existent modal id).
