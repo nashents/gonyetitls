@@ -240,8 +240,10 @@ class Manage extends Component
         $this->hod_decision = $leave->hod_decision;
         $this->management_decision = $leave->management_decision;
         $this->selectedEmployee = $leave->employee_id;
-        $this->selected_employee = Employee::find($leave->employee_id);
+        $this->selected_employee = Employee::with('departments')->find($leave->employee_id);
         $this->available_leave_days =  $this->selected_employee->leave_days;
+        $this->employee_departments = $this->selected_employee->departments;
+        $this->department_id = $leave->department_id;
         $this->leave_type_id = $leave->leave_type_id;
         $this->ignore_public_holidays = $leave->ignore_public_holidays ?? False;
         $this->to = $leave->to;

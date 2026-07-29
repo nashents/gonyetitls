@@ -70,6 +70,8 @@ class Index extends Component
     protected $rules = [
         'grade_name' => 'required|unique:grades,grade_name,NULL,id,deleted_at,NULL',
         'grade_code' => 'required|unique:grades,grade_code,NULL,id,deleted_at,NULL',
+        'currency_id' => 'required|exists:currencies,id',
+        'next_grade_id' => 'nullable|exists:grades,id',
     ];
 
     public function store(){
@@ -84,7 +86,7 @@ class Index extends Component
         $grade->max_salary = $this->max_salary;
         $grade->job_category = $this->job_category;
         $grade->job_band = $this->job_band;
-        $grade->next_grade_id = $this->next_grade_id;
+        $grade->next_grade_id = $this->next_grade_id ?: null;
         $grade->promotion_criteria = $this->promotion_criteria;
         $grade->max_years_in_grade = $this->max_years_in_grade;
         $grade->leave_days = $this->leave_days;
@@ -137,6 +139,8 @@ class Index extends Component
         $this->validate([
             'grade_name' => 'required|unique:grades,grade_name,'.$this->grade_id.',id,deleted_at,NULL',
             'grade_code' => 'required|unique:grades,grade_code,'.$this->grade_id.',id,deleted_at,NULL',
+            'currency_id' => 'required|exists:currencies,id',
+            'next_grade_id' => 'nullable|exists:grades,id',
         ]);
 
         $grade = Grade::find($this->grade_id);
@@ -148,7 +152,7 @@ class Index extends Component
         $grade->max_salary = $this->max_salary;
         $grade->job_category = $this->job_category;
         $grade->job_band = $this->job_band;
-        $grade->next_grade_id = $this->next_grade_id;
+        $grade->next_grade_id = $this->next_grade_id ?: null;
         $grade->promotion_criteria = $this->promotion_criteria;
         $grade->max_years_in_grade = $this->max_years_in_grade;
         $grade->leave_days = $this->leave_days;
