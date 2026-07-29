@@ -73,6 +73,8 @@ class Index extends Component
     ];
 
     public function store(){
+        $this->validate();
+
         $grade = new Grade;
         $grade->grade_name = $this->grade_name;
         $grade->grade_code = $this->grade_code;
@@ -132,6 +134,11 @@ class Index extends Component
     }
 
     public function update(){
+        $this->validate([
+            'grade_name' => 'required|unique:grades,grade_name,'.$this->grade_id.',id,deleted_at,NULL',
+            'grade_code' => 'required|unique:grades,grade_code,'.$this->grade_id.',id,deleted_at,NULL',
+        ]);
+
         $grade = Grade::find($this->grade_id);
         $grade->grade_name = $this->grade_name;
         $grade->grade_code = $this->grade_code;

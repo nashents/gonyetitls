@@ -96,7 +96,7 @@
 @endsection
 
 @section('extra-js')
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initialize" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_key') }}&libraries=places&callback=initialize" async defer></script>
 <script src="/js/mapInput.js"></script>
 @endsection
 

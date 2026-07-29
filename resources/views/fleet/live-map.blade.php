@@ -43,6 +43,6 @@
 
 @section('extra-js')
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key={{env('GOOGLE_MAPS_API_KEY')}}">
+        src="https://maps.googleapis.com/maps/api/js?key={{config('services.google.maps_key')}}">
     </script>
 @endsection
