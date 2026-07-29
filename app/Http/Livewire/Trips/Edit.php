@@ -1445,7 +1445,20 @@ class Edit extends Component
        
     }
 
- 
+    /**
+     * Guards against stale/orphaned units_of_measure_id values (e.g. a unit that has
+     * since been deleted, or a value left over from before the FK constraint existed)
+     * being written to columns that reference units_of_measures, which would otherwise
+     * crash with a foreign key constraint violation.
+     */
+    private function validUnitsOfMeasureId($id)
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        return UnitsOfMeasure::whereKey($id)->exists() ? $id : null;
+    }
 
     public function addDestinations($trip_transport_order)
     {
@@ -1473,7 +1486,7 @@ class Edit extends Component
                             'weight'              => $this->current_offloaded_weight[$key] ?? null,
                             'offloading_date'     => $this->current_offloading_date[$key] ?? null,
                             'quantity'            => $this->current_offloaded_quantity[$key] ?? null,
-                            'units_of_measure_id' => $this->current_units_of_measure_id ?? null,
+                            'units_of_measure_id' => $this->validUnitsOfMeasureId($this->current_units_of_measure_id ?? null),
                             'litreage'            => $this->current_offloaded_litreage[$key] ?? null,
                             'rate'                => $this->current_offloaded_rate[$key] ?? null,
                             'freight'             => $this->current_offloaded_freight[$key] ?? null,
@@ -1482,7 +1495,7 @@ class Edit extends Component
                 }
             }
 
-             
+
             if (!empty($this->destinations_selectedTo)) {
 
                     
@@ -1503,7 +1516,7 @@ class Edit extends Component
                             'weight'              => $this->offloaded_weight[$key] ?? null,
                             'offloading_date'              => $this->offloading_date[$key] ?? null,
                             'quantity'            => $this->offloaded_quantity[$key] ?? null,
-                            'units_of_measure_id' => $this->units_of_measure_id ?? null,
+                            'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                             'litreage'            => $this->offloaded_litreage[$key] ?? null,
                             'rate'                => $this->offloaded_rate[$key] ?? null,
                             'freight'             => $this->offloaded_freight[$key] ?? null,
@@ -1529,7 +1542,7 @@ class Edit extends Component
                     'user_id'             => $userId,
                     'weight'              => $this->weight,
                     'quantity'            => $this->quantity,
-                    'units_of_measure_id' => $this->units_of_measure_id ?? Null,
+                    'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                     'litreage'            => $this->litreage,
                     'rate'                => $this->rate,
                     'freight'             => $this->freight,
@@ -1537,7 +1550,7 @@ class Edit extends Component
             );
         }
     }
-    
+
     public function addOrigins($trip_transport_order)
     {
        
@@ -1562,7 +1575,7 @@ class Edit extends Component
                             'weight'              => $this->current_loaded_weight[$key] ?? null,
                             'loading_date'        => $this->current_loading_date[$key] ?? null,
                             'quantity'            => $this->current_loaded_quantity[$key] ?? null,
-                            'units_of_measure_id' => $this->current_units_of_measure_id ?? null,
+                            'units_of_measure_id' => $this->validUnitsOfMeasureId($this->current_units_of_measure_id ?? null),
                             'litreage'            => $this->current_loaded_litreage[$key] ?? null,
                             'rate'                => $this->current_loaded_rate[$key] ?? null,
                             'freight'             => $this->current_loaded_freight[$key] ?? null,
@@ -1590,7 +1603,7 @@ class Edit extends Component
                             'weight'              => $this->loaded_weight[$key] ?? null,
                             'loading_date'              => $this->loading_date[$key] ?? null,
                             'quantity'            => $this->loaded_quantity[$key] ?? null,
-                            'units_of_measure_id' => $this->units_of_measure_id  ?? Null,
+                            'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                             'litreage'            => $this->loaded_litreage[$key] ?? null,
                             'rate'                => $this->loaded_rate[$key] ?? null,
                             'freight'             => $this->loaded_freight[$key] ?? null,
@@ -1613,7 +1626,7 @@ class Edit extends Component
                     'user_id'             => $userId,
                     'weight'              => $this->weight,
                     'quantity'            => $this->quantity,
-                    'units_of_measure_id' => $this->units_of_measure_id  ?? Null,
+                    'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                     'litreage'            => $this->litreage,
                     'rate'                => $this->rate,
                     'freight'             => $this->freight,
@@ -2358,7 +2371,7 @@ class Edit extends Component
             $trip->multiple_destinations = $this->multiple_destinations;
             $trip->transporter_rate = $this->transporter_rate;
             $trip->quantity = $this->quantity;
-            $trip->units_of_measure_id = $this->units_of_measure_id ?: Null;
+            $trip->units_of_measure_id = $this->validUnitsOfMeasureId($this->units_of_measure_id);
             $trip->litreage = $this->litreage;
             $trip->litreage_at_20 = $this->litreage_at_20;
             $trip->weight = $this->weight;
@@ -2405,7 +2418,7 @@ class Edit extends Component
                         $litreage = $this->current_allocated_litreage[$key] ?: Null;
                         $rate = $this->current_allocated_rate[$key] ?: Null;
                         $freight = $this->current_allocated_freight[$key] ?: Null;
-                        $units_of_measure_id = $this->current_allocated_units_of_measure_id[$key] ?: Null;
+                        $units_of_measure_id = $this->validUnitsOfMeasureId($this->current_allocated_units_of_measure_id[$key] ?? null);
                         $currency_id = $this->current_allocated_currency_id[$key] ?: Null;
                         $exchange_rate = $this->current_allocated_exchange_rate[$key] ?: Null;
                         $exchange_amount = $this->current_allocated_exchange_amount[$key] ?: Null;
@@ -2445,7 +2458,7 @@ class Edit extends Component
                             $trip_transport_order->allocated_litreage  = $transport_order->litreage;
                             $trip_transport_order->allocated_freight  = $transport_order->freight;
                             $trip_transport_order->allocated_rate  = $transport_order->rate;
-                            $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id ?: Null;
+                            $trip_transport_order->units_of_measure_id = $this->validUnitsOfMeasureId($transport_order->units_of_measure_id);
                             $trip_transport_order->currency_id = $transport_order->currency_id;
                             $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                             $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
@@ -2518,7 +2531,7 @@ class Edit extends Component
                         $litreage = $this->allocated_litreage[$key] ?: Null;
                         $rate = $this->allocated_rate[$key] ?: Null;
                         $freight = $this->allocated_freight[$key] ?: Null;
-                        $units_of_measure_id = $this->allocated_units_of_measure_id[$key] ?: Null;
+                        $units_of_measure_id = $this->validUnitsOfMeasureId($this->allocated_units_of_measure_id[$key] ?? null);
                         $currency_id = $this->allocated_currency_id[$key] ?: Null;
                         $exchange_rate = $this->allocated_exchange_rate[$key] ?: Null;
                         $exchange_amount = $this->allocated_exchange_amount[$key] ?: Null;
@@ -2553,7 +2566,7 @@ class Edit extends Component
                             $trip_transport_order->allocated_litreage  = $transport_order->litreage;
                             $trip_transport_order->allocated_freight  = $transport_order->freight;
                             $trip_transport_order->allocated_rate  = $transport_order->rate;
-                            $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id ?: Null;
+                            $trip_transport_order->units_of_measure_id = $this->validUnitsOfMeasureId($transport_order->units_of_measure_id);
                             $trip_transport_order->currency_id = $transport_order->currency_id;
                             $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                             $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;

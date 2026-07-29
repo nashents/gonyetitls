@@ -600,7 +600,7 @@
                                         @endforeach
                                     </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small>
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -641,7 +641,7 @@
                                         @endforeach
                                     </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -1057,7 +1057,7 @@
                                         @endforeach
                                     </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small>
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -1098,7 +1098,7 @@
                                         @endforeach
                                     </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -1379,7 +1379,7 @@
                                       @endforeach
                                    </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -1578,7 +1578,7 @@
                                       @endforeach
                                    </select>
                                     @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                    <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                     @if (!is_null($selectedContainer) && isset($selected_container) )
                                         @if ($selected_container->purchase_type == "Bulk Buy")
                                             <div class="fuel-balance-card">
@@ -1765,7 +1765,7 @@
                                   @endforeach
                                </select>
                                 @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                                <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @if (!is_null($selectedContainer) && isset($selected_container) )
                                     @if ($selected_container->purchase_type == "Bulk Buy")
                                         @if (isset($container_balance))
@@ -1906,7 +1906,7 @@
                           @endforeach
                        </select>
                         @error('selectedContainer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> 
+                        <small>  <a href="{{ route('containers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Fueling Station</a></small> <a href="#" wire:click.prevent="refreshStations" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                         @if (!is_null($selectedContainer) && isset($selected_container) )
                             @if ($selected_container->purchase_type == "Bulk Buy")
                                 @if (isset($container_balance))

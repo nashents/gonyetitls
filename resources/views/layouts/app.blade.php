@@ -224,6 +224,16 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-importDevicesModal', event => {
+                $('#importDevicesModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-importDevicesModal', event => {
+                $('#importDevicesModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-importModal', event => {
                 $('#importModal').modal('show');
             })

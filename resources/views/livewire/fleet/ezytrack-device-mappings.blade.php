@@ -11,7 +11,12 @@
                             </div>
                             <div class="panel-title">
                                 EzyTrack Device Mapping
-                                <span class="badge badge-info">{{ $devices->count() }} device(s) seen</span>
+                                <span class="badge badge-info">{{ $devices->total() }} device(s) seen</span>
+                                @if ($this->ezyTrackEnabled)
+                                    <a href="#" wire:click.prevent="openImportModal" class="btn btn-default border-primary btn-rounded btn-wide" style="float: right">
+                                        <i class="fa fa-upload"></i> Import
+                                    </a>
+                                @endif
                             </div>
                         </div>
                         <div class="panel-body p-20" style="overflow-x:auto; width:100%;">
@@ -35,6 +40,17 @@
                                     by its serial number. Map each one to the Horse/Trailer/Vehicle it's fitted to so it
                                     shows up correctly on the Live Fleet Map.
                                 </p>
+
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mr-2 mb-0">Show</label>
+                                    <select class="form-control form-control-sm w-auto" wire:model="perPage">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span class="ml-2">per page</span>
+                                </div>
 
                                 <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead>
@@ -93,6 +109,8 @@
                                         @endif
                                     </tbody>
                                 </table>
+
+                                {{ $devices->links() }}
                             @endif
                         </div>
                     </div>
@@ -139,6 +157,45 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- IMPORT DEVICES MODAL --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="importDevicesModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"><i class="fa fa-upload"></i> Import Devices from EzyTrack
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Upload EzyTrack's <strong>Asset Listing</strong> export (Asset Id, Asset Type, Name, Description, Serial Number columns).
+                        Each row is matched by registration number — extracted from "Name", stripping any trailing
+                        <code>(Int Sim)</code>-style suffix — against your Horses (Asset Type "Trucks"), Trailers, or Vehicles,
+                        and linked to the device in the "Serial Number" column.
+                    </p>
+                    <div class="form-group">
+                        <label>Excel / CSV File<span class="required" style="color:red">*</span></label>
+                        <input type="file" class="form-control" wire:model="importFile">
+                        @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <div wire:loading wire:target="importFile" class="text-muted mt-1">
+                            <i class="fa fa-spinner fa-spin"></i> Uploading...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        <button type="button" wire:click.prevent="import" wire:loading.attr="disabled" wire:target="import"
+                                class="btn bg-success btn-wide btn-rounded">
+                            <span wire:loading.remove wire:target="import"><i class="fa fa-upload"></i> Import</span>
+                            <span wire:loading wire:target="import"><i class="fa fa-spinner fa-spin"></i> Importing...</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

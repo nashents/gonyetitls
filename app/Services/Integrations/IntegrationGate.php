@@ -73,4 +73,33 @@ class IntegrationGate
     {
         return static::activeForCompany($providerKey, static::companyIdForUser());
     }
+
+    /**
+     * True if the company has ANY active integration whose provider is of the
+     * given category (IntegrationProvider.type — e.g. "tracking", "accounting"),
+     * regardless of which specific provider it is. Used to gate shared UI (like
+     * the Live Fleet Map) that works with any provider in that category.
+     */
+    public static function activeForCompanyType(string $type, ?int $companyId): bool
+    {
+        if (! $companyId) {
+            return false;
+        }
+
+        $memoKey = 'type:' . $type . ':' . $companyId;
+        if (array_key_exists($memoKey, static::$memo)) {
+            return static::$memo[$memoKey];
+        }
+
+        return static::$memo[$memoKey] = CompanyIntegration::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->whereHas('integration_provider', fn ($q) => $q->where('type', $type))
+            ->exists();
+    }
+
+    /** True if the acting user's company has an active integration of the given category. */
+    public static function enabledForUserType(string $type): bool
+    {
+        return static::activeForCompanyType($type, static::companyIdForUser());
+    }
 }

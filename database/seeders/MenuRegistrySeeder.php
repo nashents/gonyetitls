@@ -1430,16 +1430,33 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Manage Vehicles','slug'=>'manage-vehicles','icon'=>'fas fa-list','route_name'=>'vehicles.index','sort_order'=>20]);
         $upsertSub($m, ['name'=>'Archived Vehicles','slug'=>'archived-vehicles','icon'=>'fas fa-archive','route_name'=>'vehicles.archived','sort_order'=>30]);
 
-        // Live Fleet Map (Cartrack real-time positions)
+        // Live Fleet Map (Cartrack / EzyTrack real-time positions) — only worth
+        // showing once the company actually has an active tracking-category
+        // integration; super admins always see it regardless (setup/debugging).
+        $vHasTracking = $any([
+            $all(['isNotDriver', 'inTransport', 'hasTrackingIntegration']),
+            $all(['isNotDriver', 'inWorkshop', 'hasTrackingIntegration']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        // EzyTrack Device Mapping needs the ezytrack provider specifically —
+        // a company with only Cartrack active shouldn't see this sub-item.
+        $vHasEzyTrack = $any([
+            $all(['isNotDriver', 'inTransport', 'hasEzyTrackIntegration']),
+            $all(['isNotDriver', 'inWorkshop', 'hasEzyTrackIntegration']),
+            $all(['isSuperAdmin']),
+        ]);
+
         $m = $upsertModule($g, [
             'name' => 'Live Fleet Map',
             'slug' => 'live-fleet-map',
             'icon' => 'fas fa-map-marker-alt',
             'route_name' => 'fleet.live-map',
             'sort_order' => 45,
+            'visibility' => $vHasTracking,
         ]);
         $upsertSub($m, ['name'=>'Live Fleet Map','slug'=>'live-fleet-map-view','icon'=>'fas fa-map-marker-alt','route_name'=>'fleet.live-map','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'EzyTrack Device Mapping','slug'=>'ezytrack-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.ezytrack-device-mappings','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'EzyTrack Device Mapping','slug'=>'ezytrack-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.ezytrack-device-mappings','sort_order'=>20,'visibility'=>$vHasEzyTrack]);
 
         // Assignments
         $m = $upsertModule($g, [

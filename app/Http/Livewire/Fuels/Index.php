@@ -199,6 +199,15 @@ class Index extends Component
 
     }
 
+    public function refreshStations()
+    {
+        $this->containers = Container::orderBy('name','asc')->get();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Fueling Stations Refreshed Successfully!!."
+        ]);
+    }
+
     public function updatedSearchHorse()
     {
         $term = trim((string) $this->searchHorse);

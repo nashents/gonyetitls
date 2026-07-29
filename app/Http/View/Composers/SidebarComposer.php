@@ -8,6 +8,7 @@ use App\Models\{
     Transporter, TransportOrder, Trip, User, WasteCollection, WasteDisposal,
 };
 
+use App\Services\Integrations\IntegrationGate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -639,6 +640,11 @@ class SidebarComposer
         $in_transport_admin = $isAdmin && $inTransport;
         $in_transport_management = $isManagement && $inTransport;
 
+        // Gates the Live Fleet Map menu (any active "tracking" category integration)
+        // and the EzyTrack Device Mapping sub-item (ezytrack specifically).
+        $hasTrackingIntegration = IntegrationGate::enabledForUserType('tracking');
+        $hasEzyTrackIntegration = IntegrationGate::enabledForUser('ezytrack');
+
            // Build your context keys ONCE (map your booleans + ids here)
         $ctx = [
              // roles / flags (use what you computed, not session())
@@ -661,6 +667,8 @@ class SidebarComposer
             'inStores'      => (bool) $inStores,
             'inWorkshop'    => (bool) $inWorkshop,
             'isNotDriver'    => (bool) $not_driver,
+            'hasTrackingIntegration' => (bool) $hasTrackingIntegration,
+            'hasEzyTrackIntegration' => (bool) $hasEzyTrackIntegration,
             'hasStoresDeptHead'    => (bool) $stdepartment_head,
             'hasWorkshopDeptHead'    => (bool) $wsdepartment_head,
             'hasHRDeptHead'    => (bool) $hrdepartment_head,

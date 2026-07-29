@@ -482,6 +482,21 @@ class Index extends Component
         return null;
     }
 
+    /**
+     * Guards against stale/orphaned units_of_measure_id values (e.g. a unit that has
+     * since been deleted, or a value left over from before the FK constraint existed)
+     * being written to columns that reference units_of_measures, which would otherwise
+     * crash with a foreign key constraint violation.
+     */
+    private function validUnitsOfMeasureId($id)
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        return UnitsOfMeasure::whereKey($id)->exists() ? $id : null;
+    }
+
     public function addDestinations($transport_order)
     {
 
@@ -507,7 +522,7 @@ class Index extends Component
                             'user_id'             => $userId,
                             'weight'              => $this->offloaded_weight[$key] ?? null,
                             'quantity'            => $this->offloaded_quantity[$key] ?? null,
-                            'units_of_measure_id' => $this->units_of_measure_id,
+                            'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id),
                             'litreage'            => $this->offloaded_litreage[$key] ?? null,
                             'rate'                => $this->offloaded_rate[$key] ?? null,
                             'freight'             => $this->offloaded_freight[$key] ?? null,
@@ -529,7 +544,7 @@ class Index extends Component
                     'user_id'             => $userId,
                     'weight'              => $this->weight,
                     'quantity'            => $this->quantity,
-                    'units_of_measure_id' => $this->units_of_measure_id,
+                    'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id),
                     'litreage'            => $this->litreage,
                     'rate'                => $this->rate,
                     'freight'             => $this->freight,
@@ -563,7 +578,7 @@ class Index extends Component
                             'user_id'             => $userId,
                             'weight'              => $this->loaded_weight[$key] ?? null,
                             'quantity'            => $this->loaded_quantity[$key] ?? null,
-                            'units_of_measure_id' => $this->units_of_measure_id,
+                            'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id),
                             'litreage'            => $this->loaded_litreage[$key] ?? null,
                             'rate'                => $this->loaded_rate[$key] ?? null,
                             'freight'             => $this->loaded_freight[$key] ?? null,
@@ -585,7 +600,7 @@ class Index extends Component
                     'user_id'             => $userId,
                     'weight'              => $this->weight,
                     'quantity'            => $this->quantity,
-                    'units_of_measure_id' => $this->units_of_measure_id,
+                    'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id),
                     'litreage'            => $this->litreage,
                     'rate'                => $this->rate,
                     'freight'             => $this->freight,
