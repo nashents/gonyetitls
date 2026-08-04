@@ -15,7 +15,7 @@ class AddGlGroupToProductsTable extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             if (! Schema::hasColumn('products', 'gl_group')) {
-                $table->string('gl_group')->nullable()->after('type');
+                $table->string('gl_group')->nullable();
             }
         });
     }
