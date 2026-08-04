@@ -64,4 +64,7 @@ interface SageDriver extends IntegrationDriver
 
     /** create_potransaction (Purchase Requisition): header array + line rows. */
     public function createRequisition(array $header, array $lines): array;
+
+    /** create_sotransaction (sales/Order-Entry, e.g. Job Card): header + lines. */
+    public function createSalesTransaction(array $header, array $lines): array;
 }

@@ -215,6 +215,7 @@ class Create extends Component
     public $allowances;
     public $allowance_id;
     public $allowance_category;
+    public $allowance_vendor_id;
     public $selectedAllowanceCurrency;
     public $allowance_currency_id;
     public $allowance_amount;
@@ -2348,6 +2349,7 @@ class Create extends Component
                             $trip_expense->user_id = $this->user->id;
                             $trip_expense->trip_id = $trip->id;
                             $trip_expense->allowance_id = $this->allowance_id[$key] ?? null;
+                            $trip_expense->vendor_id = $this->allowance_vendor_id[$key] ?? null;
                             $trip_expense->currency_id = $this->selectedAllowanceCurrency[$key] ?? null;
                             $trip_expense->category = $this->allowance_category[$key] ?? null;
                             $trip_expense->amount = $this->allowance_amount[$key] ?? null;

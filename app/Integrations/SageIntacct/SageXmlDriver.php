@@ -151,7 +151,23 @@ class SageXmlDriver implements SageDriver
      */
     public function createRequisition(array $header, array $lines): array
     {
-        return $this->send($this->buildRequisition($header, $lines), 'create', 'REQUISITION');
+        // Scope the create session to the operating entity (login <locationid>) so
+        // the requisition is owned by that entity — required for the UI's Convert
+        // action. entityid is a session concern, not part of the transaction body.
+        return $this->send($this->buildRequisition($header, $lines), 'create', 'REQUISITION', $header['entityid'] ?? null);
+    }
+
+    // ── SALES TRANSACTION (create_sotransaction) ─────────────────
+
+    /**
+     * Create an Order-Entry (sales) transaction — e.g. a Job Card. $header keys:
+     * transactiontype, datecreated, customerid, referenceno, datedue (= ship
+     * date), currency, exchratetype, entityid, customfields. Each $lines row:
+     * itemid, itemdesc, quantity, unit, price, locationid, departmentid, memo.
+     */
+    public function createSalesTransaction(array $header, array $lines): array
+    {
+        return $this->send($this->buildSalesTransaction($header, $lines), 'create', 'SOTRANSACTION', $header['entityid'] ?? null);
     }
 
     // ── READ (existence checks / pull) ───────────────────────────
@@ -267,8 +283,13 @@ class SageXmlDriver implements SageDriver
             $fields .= $this->el('ITEMTYPE', $data['type'] ?? 'Non-Inventory');
         }
         $fields .= $this->elIf('TAXABLE', $data['taxable'] ?? null);
-        // Optional item tax group so new items resolve a purchase tax schedule.
-        $fields .= $this->elIf('TAXGROUPKEY', $data['tax_group_key'] ?? null);
+        // Item GL Group — drives the item's revenue/COGS/inventory GL accounts.
+        $fields .= $this->elIf('GLGROUP', $data['gl_group'] ?? null);
+        // Item tax group (nested related-object form — the flat/key forms don't
+        // take). Lets the item resolve a purchase tax schedule.
+        if (! empty($data['tax_group'])) {
+            $fields .= '<TAXGROUP>' . $this->el('NAME', $data['tax_group']) . '</TAXGROUP>';
+        }
 
         return '<ITEM>' . $fields . '</ITEM>';
     }
@@ -306,6 +327,8 @@ class SageXmlDriver implements SageDriver
             $line .= $this->el('quantity', $l['quantity'] ?? 1);
             $line .= $this->elIf('unit', $l['unit'] ?? null);
             $line .= $this->elIf('price', $l['price'] ?? null);
+            // Receipt lines convert a PO line: reference it by its record key.
+            $line .= $this->elIf('sourcelinekey', $l['sourcelinekey'] ?? null);
             $line .= $this->elIf('locationid', $l['locationid'] ?? null);
             $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
             $line .= $this->elIf('projectid', $l['projectid'] ?? null);
@@ -323,8 +346,69 @@ class SageXmlDriver implements SageDriver
         $hdr .= '<returnto>' . $this->el('contactname', $h['contactname'] ?? '') . '</returnto>';
         $hdr .= '<payto>' . $this->el('contactname', $h['contactname'] ?? '') . '</payto>';
         $hdr .= $this->elIf('currency', $h['currency'] ?? null);
+        // When a transaction currency is set AND the session is scoped to an
+        // entity, Sage requires an exchange rate. Sending an exchange-rate TYPE
+        // lets Sage look the rate up (rate = 1 when it equals the base currency),
+        // so both base and foreign currency trips post without a manual rate.
+        if (! empty($h['currency'])) {
+            $hdr .= $this->elIf('exchratetype', $h['exchratetype'] ?? null);
+        }
+
+        // Header custom fields (e.g. Dispatch Sheet's required REG + Driver
+        // picklists). name => value; empty values are still sent (the field may
+        // be required). Placed after the header, before the line items.
+        if (! empty($h['customfields']) && is_array($h['customfields'])) {
+            $cf = '';
+            foreach ($h['customfields'] as $name => $value) {
+                $cf .= '<customfield>' . $this->el('customfieldname', $name) . $this->el('customfieldvalue', $value) . '</customfield>';
+            }
+            $hdr .= '<customfields>' . $cf . '</customfields>';
+        }
 
         return '<create_potransaction>' . $hdr . '<potransitems>' . $items . '</potransitems></create_potransaction>';
+    }
+
+    /**
+     * Build a create_sotransaction (sales/Order-Entry, e.g. a Job Card). Schema
+     * sequence: transactiontype, datecreated, customerid, referenceno, datedue
+     * (ship date), currency, exchratetype, customfields, sotransitems. Line
+     * sequence: itemid, quantity, unit, price, locationid, departmentid, memo.
+     */
+    protected function buildSalesTransaction(array $h, array $lines): string
+    {
+        $items = '';
+        foreach ($lines as $l) {
+            $line  = $this->el('itemid', $l['itemid']);
+            $line .= $this->el('quantity', $l['quantity'] ?? 1);
+            $line .= $this->elIf('unit', $l['unit'] ?? null);
+            $line .= $this->elIf('price', $l['price'] ?? null);
+            // Close-off / reversal convert a job-card line: reference it by key.
+            $line .= $this->elIf('sourcelinekey', $l['sourcelinekey'] ?? null);
+            $line .= $this->elIf('locationid', $l['locationid'] ?? null);
+            $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
+            $line .= $this->elIf('memo', $l['memo'] ?? null);
+            $items .= '<sotransitem>' . $line . '</sotransitem>';
+        }
+
+        $hdr  = $this->el('transactiontype', $h['transactiontype']);
+        $hdr .= $this->poDate('datecreated', $h['datecreated'] ?? null);
+        $hdr .= $this->el('customerid', $h['customerid']);
+        $hdr .= $this->elIf('referenceno', $h['referenceno'] ?? null);
+        // datedue doubles as the required Ship Date on these definitions.
+        $hdr .= $this->poDate('datedue', $h['datedue'] ?? null);
+        $hdr .= $this->elIf('currency', $h['currency'] ?? null);
+        if (! empty($h['currency'])) {
+            $hdr .= $this->elIf('exchratetype', $h['exchratetype'] ?? null);
+        }
+        if (! empty($h['customfields']) && is_array($h['customfields'])) {
+            $cf = '';
+            foreach ($h['customfields'] as $name => $value) {
+                $cf .= '<customfield>' . $this->el('customfieldname', $name) . $this->el('customfieldvalue', $value) . '</customfield>';
+            }
+            $hdr .= '<customfields>' . $cf . '</customfields>';
+        }
+
+        return '<create_sotransaction>' . $hdr . '<sotransitems>' . $items . '</sotransitems></create_sotransaction>';
     }
 
     /** Emit a Sage <tag><year/><month/><day/></tag> date, or '' if unparseable. */
@@ -363,6 +447,10 @@ class SageXmlDriver implements SageDriver
 
         // DISPLAYCONTACT (PRINTAS is mandatory on the contact).
         $contact  = $this->el('PRINTAS', $data['name'] ?? '');
+        // Contact tax group uses the FLAT form (<TAXGROUP>value</TAXGROUP>) —
+        // the nested <TAXGROUP><NAME> form 500s for contacts. Lets vendor
+        // requisitions resolve a purchase tax schedule.
+        $contact .= $this->elIf('TAXGROUP', $data['taxgroup'] ?? null);
         $contact .= $this->elIf('EMAIL1', $data['email'] ?? null);
         $contact .= $this->elIf('PHONE1', $data['phone'] ?? null);
 
@@ -392,10 +480,10 @@ class SageXmlDriver implements SageDriver
      * The auth envelope (with credentials) is built here and NOT returned — only
      * the credential-free function body is echoed back for safe logging.
      */
-    protected function transport(string $functionBody): array
+    protected function transport(string $functionBody, ?string $locationId = null): array
     {
         $controlId = (config('sageintacct.xml.control_id', 'gonyeti')) . '-' . uniqid();
-        $xml       = $this->envelope($functionBody, $controlId);
+        $xml       = $this->envelope($functionBody, $controlId, $locationId);
 
         try {
             $response = Http::timeout($this->timeout)
@@ -414,9 +502,9 @@ class SageXmlDriver implements SageDriver
      * The result carries `request` (credential-free function XML) + `response`
      * (raw body) for troubleshooting/audit payload storage.
      */
-    protected function send(string $functionBody, string $action, ?string $object = null): array
+    protected function send(string $functionBody, string $action, ?string $object = null, ?string $locationId = null): array
     {
-        $t = $this->transport($functionBody);
+        $t = $this->transport($functionBody, $locationId);
 
         if (! $t['ok']) {
             return $this->fail(null, $t['error']) + ['request' => $functionBody, 'response' => null];
@@ -429,7 +517,7 @@ class SageXmlDriver implements SageDriver
         return $result;
     }
 
-    protected function envelope(string $functionBody, string $controlId): string
+    protected function envelope(string $functionBody, string $controlId, ?string $locationId = null): string
     {
         $senderId   = $this->credentials['sender_id'] ?? '';
         $senderPass = $this->credentials['sender_password'] ?? '';
@@ -437,6 +525,14 @@ class SageXmlDriver implements SageDriver
         $companyId  = $this->credentials['company_id'] ?? '';
         $userPass   = $this->credentials['user_password'] ?? '';
         $dtd        = config('sageintacct.xml.dtd_version', '3.0');
+
+        // In a multi-entity company, <locationid> in the login scopes the whole
+        // request to that operating entity, so records it creates are owned by the
+        // entity (not the shared top level). Only sent when a caller needs it
+        // (e.g. purchase requisitions) — shared objects omit it and stay top-level.
+        $loginExtra = ($locationId !== null && $locationId !== '')
+            ? $this->el('locationid', $locationId)
+            : '';
 
         return '<?xml version="1.0" encoding="UTF-8"?>'
             . '<request>'
@@ -453,6 +549,7 @@ class SageXmlDriver implements SageDriver
             .       $this->el('userid', $userId)
             .       $this->el('companyid', $companyId)
             .       $this->el('password', $userPass)
+            .       $loginExtra
             .     '</login></authentication>'
             .     '<content><function controlid="f1">' . $functionBody . '</function></content>'
             .   '</operation>'

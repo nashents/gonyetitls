@@ -145,6 +145,9 @@ class SageIntacctService
             // the Gonyeti customer_number (fallback CUST-{id} if unset).
             'id'       => $c->sageId() ?: ($c->customer_number ?: 'CUST-' . $c->id),
             'name'     => $c->name,
+            // Contact tax group so this customer's sales invoices resolve a tax
+            // schedule (see config sageintacct.customer.tax_group).
+            'taxgroup' => config('sageintacct.customer.tax_group') ?: null,
             'email'    => $c->email,
             'phone'    => $c->phonenumber,
             'address1' => $c->street_address,
@@ -164,6 +167,9 @@ class SageIntacctService
             // VENDORID: reuse Sage id, else vendor_number, else VEND-{id}.
             'id'       => $v->sageId() ?: ($v->vendor_number ?: 'VEND-' . $v->id),
             'name'     => $v->name,
+            // Contact tax group so this vendor's purchase requisitions resolve
+            // a tax schedule (see config sageintacct.vendor.tax_group).
+            'taxgroup' => config('sageintacct.vendor.tax_group') ?: null,
             'email'    => $v->email,
             'phone'    => $v->phonenumber,
             'address1' => $v->street_address,

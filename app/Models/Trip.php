@@ -118,6 +118,38 @@ class Trip extends Model implements Auditable
     public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');
     }
+    /**
+     * Invoiced when the trip has its own invoice line OR belongs to a transport
+     * order that has been invoiced (the single-line "Transport Order" invoice).
+     */
+    public function getIsInvoicedAttribute(): bool
+    {
+        if ($this->invoice_items()->exists()) {
+            return true;
+        }
+
+        return $this->transport_orders()->whereHas('invoice_items')->exists();
+    }
+
+    /**
+     * All invoices covering this trip — its own lines PLUS the invoices raised
+     * against any transport order it belongs to (the single-line invoice).
+     */
+    public function getInvoiceDocumentsAttribute()
+    {
+        $direct   = $this->invoices; // belongsToMany via invoice_items.trip_id
+        $orderIds = $this->transport_orders()->pluck('transport_orders.id');
+
+        if ($orderIds->isEmpty()) {
+            return $direct;
+        }
+
+        $viaOrders = \App\Models\Invoice::whereHas('invoice_items', function ($q) use ($orderIds) {
+            $q->whereIn('transport_order_id', $orderIds);
+        })->get();
+
+        return $direct->concat($viaOrders)->unique('id')->values();
+    }
     public function quotation(){
         return $this->belongsTo('App\Models\Quotation');
     }

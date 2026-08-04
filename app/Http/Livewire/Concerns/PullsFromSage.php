@@ -10,7 +10,7 @@ use App\Jobs\Sage\PullFromSageJob;
  */
 trait PullsFromSage
 {
-    protected function dispatchSagePull(string $entity, string $label): void
+    protected function dispatchSagePull(string $entity, string $label, array $options = []): void
     {
         if (! $this->sageEnabled) {
             return;
@@ -29,7 +29,7 @@ trait PullsFromSage
             return;
         }
 
-        PullFromSageJob::dispatch($entity, (int) $companyId, (int) $user->id);
+        PullFromSageJob::dispatch($entity, (int) $companyId, (int) $user->id, $options);
 
         $this->dispatchBrowserEvent('alert', [
             'type'    => 'success',

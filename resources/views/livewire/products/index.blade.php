@@ -18,6 +18,9 @@
                                 <a href="{{route('products.create')}}" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Product</a>
                                 @endif
                                   <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import Products (Pastel)</a>
+                                @if ($this->sageEnabled)
+                                <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i>Pull from Sage</button>
+                                @endif
                                 <a href="#" wire:click="exportProductsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportProductsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportProductsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -65,6 +68,12 @@
                                     <td>{{$product->product_number}}</td>
                                     <td>
                                         {{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}
+                                        @if ($this->sageEnabled)
+                                        <br>
+                                        @php $sm = $product->sageMapping; @endphp
+                                        <small class="badge bg-{{ $sm ? ($sm->sync_status === 'synced' ? 'success' : ($sm->sync_status === 'failed' ? 'danger' : ($sm->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                               title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $sm->sync_status)) : 'Not synced' }}</small>
+                                        @endif
                                         <small>
                                             <br>
                                             <strong>Min Stock Level</strong> {{number_format($product->min ? $product->min : 0)}}

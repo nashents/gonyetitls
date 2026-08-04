@@ -49,6 +49,9 @@ class Expense extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function tax(){
+        return $this->belongsTo('App\Models\Tax');
+    }
 
     protected $fillable = [
         'user_id',
@@ -57,6 +60,8 @@ class Expense extends Model implements Auditable
         'frequency',
         'description',
         'type',
+        'item_type',
+        'tax_id',
         'status',
     ];
 }

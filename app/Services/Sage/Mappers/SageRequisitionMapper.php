@@ -25,16 +25,28 @@ class SageRequisitionMapper
      * @param  string       $vendorContact  vendor's contact name (pay-to/return-to)
      * @param  string|null  $currencyCode
      */
-    public static function header(Trip $trip, int $vendorId, string $vendorSageId, string $vendorContact, ?string $currencyCode): array
+    /**
+     * @param  string|null  $transactionType  Sage PO definition name; defaults to
+     *                                         the Purchase Requisition type. Pass
+     *                                         the Dispatch Sheet type for paycard.
+     */
+    public static function header(Trip $trip, int $vendorId, string $vendorSageId, string $vendorContact, ?string $currencyCode, ?string $transactionType = null): array
     {
         return [
-            'transactiontype' => (string) config('sageintacct.purchasing.requisition_type', 'Purchase requisition'),
+            'transactiontype' => $transactionType ?: (string) config('sageintacct.purchasing.requisition_type', 'Purchase requisition'),
             'datecreated'     => $trip->start_date,
             'datedue'         => $trip->start_date,     // expiration = same as date
             'vendorid'        => $vendorSageId,
             'referenceno'     => self::referenceNo($trip, $vendorId),
             'contactname'     => $vendorContact,        // pay-to + return-to
             'currency'        => $currencyCode ?: null,
+            // Exchange-rate type so a currency-bearing requisition resolves a rate
+            // under the entity scope (only used by the driver when currency is set).
+            'exchratetype'    => config('sageintacct.purchasing.exchange_rate_type') ?: null,
+            // Operating entity the requisition is created IN (login <locationid>),
+            // so it lands in the same entity as native requisitions and the UI
+            // offers the Convert action. Not emitted in the transaction body.
+            'entityid'        => config('sageintacct.purchasing.entity_id') ?: null,
         ];
     }
 
@@ -50,7 +62,7 @@ class SageRequisitionMapper
     {
         return [
             'itemid'       => $itemId,
-            'itemdesc'     => optional($expense->expense)->name ?: 'Trip expense',
+            'itemdesc'     => optional($expense->expense)->name ?: (optional($expense->allowance)->name ?: 'Trip expense'),
             'quantity'     => 1,
             'unit'         => (string) config('sageintacct.purchasing.line_unit', 'Each'),
             'price'        => self::amount($expense),

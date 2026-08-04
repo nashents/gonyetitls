@@ -24,6 +24,14 @@ class TransportOrder extends Model implements Auditable
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }
+    public function invoice_items(){
+        return $this->hasMany('App\Models\InvoiceItem');
+    }
+    /** Invoiced when a "Transport Order" invoice line references it. */
+    public function getIsInvoicedAttribute(): bool
+    {
+        return $this->invoice_items()->exists();
+    }
     public function trip_origins(){
         return $this->hasMany('App\Models\TripOrigin');
     }

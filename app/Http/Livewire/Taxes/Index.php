@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Taxes;
 
 use App\Models\Account;
 use App\Models\Tax;
+use App\Services\Sage\SageIntegration;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 class Index extends Component
 {
      use WithPagination;
+     use \App\Http\Livewire\Concerns\PullsFromSage;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -120,6 +122,18 @@ class Index extends Component
         }
     }
 
+
+    /** Sage integration gate — controls the "Pull from Sage" button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Queue an import of Sage's item tax groups into the taxes module. */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('tax', 'tax groups');
+    }
 
     public function render()
     {

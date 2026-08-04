@@ -5,6 +5,7 @@ namespace Database\Seeders;
 
 
 use App\Models\Account;
+use App\Models\Allowance;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmployeeLeave;
@@ -2321,6 +2322,25 @@ class MenuRegistrySeeder extends Seeder
         ]);
 
         $this->seedDefaultTransporter();
+        $this->seedDefaultAllowance();
+    }
+
+    /**
+     * Ensures the "Trip Bonus" default allowance exists on every instance and stays
+     * marked as the non-deletable system default. Only the policy fields (type, status,
+     * default) are enforced here so an admin's amount/currency/calculate_by/description
+     * customizations survive re-runs of this seeder.
+     */
+    private function seedDefaultAllowance(): void
+    {
+        Allowance::updateOrCreate(
+            ['name' => 'Trip Bonus'],
+            [
+                'type' => 'Non Inventory',
+                'status' => 1,
+                'default' => true,
+            ]
+        );
     }
 
     /**

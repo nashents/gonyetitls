@@ -70,6 +70,15 @@ class Index extends Component
     public $account;
     public $lock_type_currency = false;
 
+    // Inline "also create the bank account record" option, shown when account_type is Cash & Bank
+    public $create_bank_account = false;
+    public $new_bank_name;
+    public $new_bank_account_name;
+    public $new_bank_account_number;
+    public $new_bank_branch;
+    public $new_bank_branch_code;
+    public $new_bank_swift_code;
+
     public function mount(){
         $this->resetPage();
         $this->active_group = AccountTypeGroup::orderBy('name','asc')->first()->id;
@@ -118,6 +127,13 @@ class Index extends Component
         $this->bank_account_id = '';
         $this->account_reference = '';
         $this->customer_id = '';
+        $this->create_bank_account = false;
+        $this->new_bank_name = '';
+        $this->new_bank_account_name = '';
+        $this->new_bank_account_number = '';
+        $this->new_bank_branch = '';
+        $this->new_bank_branch_code = '';
+        $this->new_bank_swift_code = '';
     }
 
     public function accountNumber(){
@@ -170,11 +186,32 @@ class Index extends Component
         $account->account_type_id = $this->account_type_id;
         $account_type = AccountType::find($this->account_type_id);
         $account->account_type_group_id = $account_type->account_type_group_id;
-        $account->bank_account_id = $this->bank_account_id ? $this->bank_account_id : null;
         $account->customer_id = $this->customer_id ? $this->customer_id : null;
         $account->currency_id = $this->selectedCurrency;
         $account->description = $this->description;
-        $account->save();
+
+        if (optional($account_type)->name === 'Cash & Bank' && $this->create_bank_account) {
+            DB::transaction(function () use ($account) {
+                $bank_account = new BankAccount;
+                $bank_account->user_id = Auth::user()->id;
+                $bank_account->company_id = $this->company->id;
+                $bank_account->currency_id = $this->selectedCurrency;
+                $bank_account->name = $this->new_bank_name;
+                $bank_account->account_name = $this->new_bank_account_name;
+                $bank_account->account_number = $this->new_bank_account_number;
+                $bank_account->branch = $this->new_bank_branch;
+                $bank_account->branch_code = $this->new_bank_branch_code;
+                $bank_account->swift_code = $this->new_bank_swift_code;
+                $bank_account->status = 1;
+                $bank_account->save();
+
+                $account->bank_account_id = $bank_account->id;
+                $account->save();
+            });
+        } else {
+            $account->bank_account_id = $this->bank_account_id ? $this->bank_account_id : null;
+            $account->save();
+        }
 
         $this->dispatchBrowserEvent('hide-accountModal');
         $this->resetInputFields();
@@ -474,6 +511,31 @@ class Index extends Component
         $this->active_group = $id;
     }
 
+    /**
+     * The Chart of Accounts has no company_id of its own - it's a shared
+     * chart across every company (Sales, Accounts Receivable, etc. are
+     * global by design, looked up by name in the journal posting services).
+     * The one thing that should NOT leak across companies is a Cash & Bank
+     * account linked to another company's physical BankAccount - those are
+     * hidden here, while the shared "Cash on Hand" (no bank_account_id) and
+     * every non-Cash & Bank account keep showing for everyone as before.
+     */
+    private function scopeVisibleAccounts($query)
+    {
+        $companyId = $this->company->id ?? null;
+
+        $query->where(function ($q) use ($companyId) {
+            $q->whereDoesntHave('account_type', fn ($t) => $t->where('name', 'Cash & Bank'))
+              ->orWhere(function ($q2) use ($companyId) {
+                  $q2->whereHas('account_type', fn ($t) => $t->where('name', 'Cash & Bank'))
+                     ->where(function ($q3) use ($companyId) {
+                         $q3->whereNull('bank_account_id')
+                            ->orWhereHas('bank_account', fn ($b) => $b->where('company_id', $companyId));
+                     });
+              });
+        });
+    }
+
     public function render()
     {
 
@@ -483,39 +545,45 @@ class Index extends Component
 
         }
 
-        if (isset($this->customer_id) && isset($this->selectedCurrency)) { 
+        if (isset($this->customer_id) && isset($this->selectedCurrency)) {
             $this->last_payment = Payment::where('customer_id',$this->customer_id)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Customer Deposits")->orderBy('created_at','desc')->first();
-           
+
         }
 
         $this->account_types =  AccountType::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        
+
         if (isset($this->search)) {
-               
+            $accountsQuery = Account::query()->with(['account_type:id,name','currency'])
+                ->where(function ($q) {
+                    $q->where('name','like', '%'.$this->search.'%')
+                        ->orWhereHas('account_type', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('account_type_group', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%');
+                        });
+                });
+            $this->scopeVisibleAccounts($accountsQuery);
+
             return view('livewire.invoices.index',[
-                'accounts' => Account::query()->with(['account_type:id,name','currency'])
-                    ->where('name','like', '%'.$this->search.'%')
-                    ->orWhereHas('account_type', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('account_type_group', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('name','asc')->paginate(10),
+                'accounts' => $accountsQuery->orderBy('name','asc')->paginate(10),
                     'bank_accounts' => $this->bank_accounts,
                     'customers' => $this->customers,
                     'vendors' => $this->vendors,
                     'account_types' => $this->account_types,
-                   
-                 
+
+
             ]);
 
         }else{
+            $accountsQuery = Account::query();
+            $this->scopeVisibleAccounts($accountsQuery);
+
             return view('livewire.accounts.index',[
-                'accounts' => Account::orderBy('name','asc')->paginate(10),
+                'accounts' => $accountsQuery->orderBy('name','asc')->paginate(10),
                 'bank_accounts' => $this->bank_accounts,
                 'customers' => $this->customers,
                 'vendors' => $this->vendors,
@@ -523,6 +591,6 @@ class Index extends Component
             ]);
         }
 
-       
+
     }
 }

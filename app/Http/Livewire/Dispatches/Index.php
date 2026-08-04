@@ -765,12 +765,14 @@ class Index extends Component
                 continue;
             }
 
-            // 4) Row cost in company currency
+            // 4) Row cost in company currency (total/exchange_amount price the ORIGINAL purchased
+            // qty, not the remaining balance, so unit cost must divide by the original qty)
             $rowCostCompany = $model->currency_id != $this->company->currency_id
                 ? (float)$model->exchange_amount
                 : (float)$model->total;
 
-            $unitCost      = $rowCostCompany / $rowQtyAvailable;
+            $rowOriginalQty = (float)($model->qty ?: $rowQtyAvailable);
+            $unitCost      = $rowOriginalQty > 0 ? $rowCostCompany / $rowOriginalQty : 0;
             $qtyFromRow    = min($requestedQty, $rowQtyAvailable);
             $amountFromRow = $qtyFromRow * $unitCost;
 
@@ -899,13 +901,18 @@ class Index extends Component
                 $totalCost = 0;
 
                 foreach ($allRows as $row) {
-                    $rowQty  = (float)$row->balance;
+                    $rowBalance     = (float)$row->balance;
+                    $rowOriginalQty = (float)($row->qty ?: $rowBalance);
                     $rowCost = $row->currency_id != $this->company->currency_id
                         ? (float)$row->exchange_amount
                         : (float)$row->total;
 
-                    $totalQty  += $rowQty;
-                    $totalCost += $rowCost;
+                    // row->total/exchange_amount price the ORIGINAL purchased qty, so derive the
+                    // per-unit cost first, then weight it by what's actually still in stock
+                    $rowUnitCost = $rowOriginalQty > 0 ? $rowCost / $rowOriginalQty : 0;
+
+                    $totalQty  += $rowBalance;
+                    $totalCost += $rowUnitCost * $rowBalance;
                 }
 
                 $avcoCache[$productId] = $totalQty > 0
@@ -1025,12 +1032,14 @@ class Index extends Component
                     continue;
                 }
 
-                // 3) Row cost in company currency
+                // 3) Row cost in company currency (total/exchange_amount price the ORIGINAL
+                // purchased qty, not the remaining balance, so unit cost must divide by original qty)
                 $rowCostCompany = $item->currency_id != $this->company->currency_id
                     ? (float)$item->exchange_amount
                     : (float)$item->total;
 
-                $unitCost = $rowCostCompany / $rowQtyAvailable;
+                $rowOriginalQty = (float)($item->qty ?: $rowQtyAvailable);
+                $unitCost = $rowOriginalQty > 0 ? $rowCostCompany / $rowOriginalQty : 0;
 
                 // 4) Take from this row (FIFO)
                 $qtyFromRow    = min($remainingQty, $rowQtyAvailable);
@@ -1157,9 +1166,9 @@ class Index extends Component
             $totalCostCompanyCurr = 0.0;
 
             foreach ($items as $item) {
-                $itemQty = (float)($item->balance ?: $item->qty); // fixed: was hardcoded 1.0 for asset/tyre
+                $itemBalance = (float)($item->balance ?: $item->qty); // fixed: was hardcoded 1.0 for asset/tyre
 
-                if ($itemQty <= 0) {
+                if ($itemBalance <= 0) {
                     continue;
                 }
 
@@ -1167,8 +1176,13 @@ class Index extends Component
                     ? (float)$item->exchange_amount
                     : (float)$item->total;
 
-                $totalQtyAvailable    += $itemQty;
-                $totalCostCompanyCurr += $rowCostCompany;
+                // total/exchange_amount price the ORIGINAL purchased qty, so derive the per-unit
+                // cost first, then weight it by what's actually still in stock (balance)
+                $itemOriginalQty = (float)($item->qty ?: $itemBalance);
+                $itemUnitCost    = $itemOriginalQty > 0 ? $rowCostCompany / $itemOriginalQty : 0;
+
+                $totalQtyAvailable    += $itemBalance;
+                $totalCostCompanyCurr += $itemUnitCost * $itemBalance;
             }
 
             if ($totalQtyAvailable <= 0) {

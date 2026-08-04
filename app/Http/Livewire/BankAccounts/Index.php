@@ -5,6 +5,7 @@ namespace App\Http\Livewire\BankAccounts;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\BankAccount;
+use App\Services\Accounting\BankAccountGlLinkService;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -94,6 +95,8 @@ class Index extends Component
                     }
                     $bank_account->status = 1;
                     $bank_account->save();
+
+                    app(BankAccountGlLinkService::class)->ensureLinkedAccount($bank_account);
                 }
             }
 
@@ -139,6 +142,9 @@ class Index extends Component
         $bank_account->swift_code = $this->swift_code;
         $bank_account->status = $this->status;
         $bank_account->update();
+
+        app(BankAccountGlLinkService::class)->syncLinkedAccount($bank_account);
+
         $this->dispatchBrowserEvent('hide-bank_accountEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[

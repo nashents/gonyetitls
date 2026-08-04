@@ -46,6 +46,54 @@ class SageSyncService
         return $this->run($driver, 'driver');
     }
 
+    /** Product (products & services) → Sage ITEM. */
+    public function syncProduct(\App\Models\Product $product): array
+    {
+        return $this->run($product, 'product');
+    }
+
+    /** Fuel order → Sage "PR - Diesel" (supplier = fuelling station). */
+    public function syncFuel(\App\Models\Fuel $fuel): array
+    {
+        return $this->run($fuel, 'fuel');
+    }
+
+    /** Purchase → Sage "Purchase order". */
+    public function syncPurchase(\App\Models\Purchase $purchase): array
+    {
+        return $this->run($purchase, 'purchase');
+    }
+
+    /** Goods received → Sage "Receipt" (converts the PO). */
+    public function syncGoodsReceived(\App\Models\GoodsReceived $goodsReceived): array
+    {
+        return $this->run($goodsReceived, 'goods_received');
+    }
+
+    /** Workshop Ticket → Sage job card (Internal Job Card / Job Card Invoice). */
+    public function syncJobCard(\App\Models\Ticket $ticket): array
+    {
+        return $this->run($ticket, 'job_card');
+    }
+
+    /** Close off a job card (on ticket close) — converts the Sage job card. */
+    public function closeOffJobCard(\App\Models\Ticket $ticket): array
+    {
+        return $this->run($ticket, 'job_card_closeoff');
+    }
+
+    /** Reverse an internal job card (on booking rejection/cancellation). */
+    public function reverseJobCard(\App\Models\Ticket $ticket): array
+    {
+        return $this->run($ticket, 'job_card_reversal');
+    }
+
+    /** Invoice → Sage OE sales invoice (customer) / Job Card Invoice (transporter). */
+    public function syncInvoice(\App\Models\Invoice $invoice): array
+    {
+        return $this->run($invoice, 'invoice');
+    }
+
     /** Retry a previously-attempted record (idempotent — de-dup handles it). */
     public function retry(Model $model): array
     {
@@ -84,6 +132,22 @@ class SageSyncService
                 $result = $classService->syncTrailer($model);   // stays a green CLASS
             } elseif ($type === 'driver') {
                 $result = (new SageEmployeeService($driver, $integration))->ensureForDriver($model);
+            } elseif ($type === 'product') {
+                $result = (new SageItemService($driver, $integration))->ensureProduct($model);
+            } elseif ($type === 'fuel') {
+                $result = (new SageFuelDieselService($driver, $integration))->syncFuel($model);
+            } elseif ($type === 'purchase') {
+                $result = (new SagePurchaseService($driver, $integration))->syncPurchase($model);
+            } elseif ($type === 'goods_received') {
+                $result = (new SagePurchaseService($driver, $integration))->syncGoodsReceipt($model);
+            } elseif ($type === 'job_card') {
+                $result = (new SageJobCardService($driver, $integration))->syncJobCard($model);
+            } elseif ($type === 'job_card_closeoff') {
+                $result = (new SageJobCardService($driver, $integration))->closeOffJobCard($model);
+            } elseif ($type === 'job_card_reversal') {
+                $result = (new SageJobCardService($driver, $integration))->reverseJobCard($model);
+            } elseif ($type === 'invoice') {
+                $result = (new SageInvoiceService($driver, $integration))->syncInvoice($model);
             } else {
                 // Horse → Transporter project + Horse project + Horse class (orange).
                 $result = $projectService->ensureHorse($model);
@@ -105,8 +169,38 @@ class SageSyncService
     /** Company that owns the record → which Sage integration to push to. */
     protected function companyIdFor(Model $model, string $type): ?int
     {
-        if ($type === 'trip') {
+        // Trips and invoices carry their own company_id.
+        if ($type === 'trip' || $type === 'invoice') {
             return $model->company_id;
+        }
+
+        // Products have no company_id — push to the acting user's company.
+        if ($type === 'product') {
+            $user = auth()->user();
+            return optional(optional($user)->employee)->company_id ?? optional($user)->company_id;
+        }
+
+        // Fuel has no company_id — use its creator's company, else the horse's
+        // transporter, else the acting user's company.
+        if ($type === 'fuel') {
+            $companyId = optional(optional($model->user)->employee)->company_id
+                ?? optional(optional($model->horse)->transporter)->company_id;
+            if (! $companyId) {
+                $user      = auth()->user();
+                $companyId = optional(optional($user)->employee)->company_id ?? optional($user)->company_id;
+            }
+            return $companyId;
+        }
+
+        // Purchases / goods received / job cards have no company_id — use the
+        // creator's company, else the acting user's.
+        if (in_array($type, ['purchase', 'goods_received', 'job_card', 'job_card_closeoff', 'job_card_reversal'], true)) {
+            $companyId = optional(optional($model->user)->employee)->company_id;
+            if (! $companyId) {
+                $user      = auth()->user();
+                $companyId = optional(optional($user)->employee)->company_id ?? optional($user)->company_id;
+            }
+            return $companyId;
         }
 
         if ($type === 'driver') {

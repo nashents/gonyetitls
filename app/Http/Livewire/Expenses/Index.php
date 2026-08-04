@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Expenses;
 
 use App\Models\Account;
 use App\Models\Expense;
+use App\Models\Tax;
 use Livewire\Component;
 use App\Models\Currency;
 use Livewire\WithPagination;
@@ -41,6 +42,8 @@ class Index extends Component
     public $frequency;
     public $description;
     public $type;
+    public $taxes;
+    public $tax_id;
     public $importFile;
 
     public $expense_id;
@@ -52,6 +55,9 @@ class Index extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
         $this->accounts = Account::orderBy('name','asc')->get();
+        $this->taxes = Tax::whereHas('account', function ($query) {
+            return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
     }
 
      public function exportExpensesCSV(Excel $excel){
@@ -74,6 +80,7 @@ class Index extends Component
         $this->currency_id = '';
         $this->description = '';
         $this->type = '';
+        $this->tax_id = '';
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -120,6 +127,8 @@ class Index extends Component
         $expense->frequency = $this->frequency;
         $expense->description = $this->description;
         $expense->type = $this->type;
+        $expense->tax_id = $this->tax_id;
+        $expense->item_type = 'Non Inventory';
         $expense->save();
         $this->dispatchBrowserEvent('hide-expenseModal');
         $this->resetInputFields();
@@ -143,6 +152,7 @@ class Index extends Component
     $this->user_id = $expense->user_id;
     $this->name = $expense->name;
     $this->type = $expense->type;
+    $this->tax_id = $expense->tax_id;
     $this->amount = $expense->amount;
     $this->payment_method_id = $expense->payment_method_id;
     $this->currency_id = $expense->currency_id;
@@ -170,6 +180,8 @@ class Index extends Component
            
             $expense->name = $this->name;
             $expense->type = $this->type;
+            $expense->tax_id = $this->tax_id;
+            $expense->item_type = 'Non Inventory';
             $expense->frequency = $this->frequency;
             $expense->description = $this->description;
             $expense->status = $this->status;
@@ -197,7 +209,7 @@ class Index extends Component
     {
         if (filled($this->search)) {
             return view('livewire.expenses.index',[
-                'expenses' => Expense::query()->with('currency','account')
+                'expenses' => Expense::query()->with('currency','account','tax')
                 ->where('name','like', '%'.$this->search.'%')
                 ->orWhere('type','like', '%'.$this->search.'%')
                 ->orWhere('amount','like', '%'.$this->search.'%')
@@ -214,7 +226,7 @@ class Index extends Component
 
         }else{
             return view('livewire.expenses.index',[
-                'expenses' => Expense::orderBy('name','asc')->paginate(10)
+                'expenses' => Expense::with('currency','account','tax')->orderBy('name','asc')->paginate(10)
             ]);
         }
     }

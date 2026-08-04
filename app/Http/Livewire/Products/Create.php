@@ -33,6 +33,7 @@ class Create extends Component
     public $status;
     public $name;
     public $model;
+    public $type;
 
     public $identification_number;
     public $manufacturer;
@@ -161,11 +162,12 @@ class Create extends Component
 
 
     private function resetInputFields(){
-        $this->category_name = '';
-        $this->sub_category_name = '';
-        $this->brand_name = '';
-        $this->category_id = '';
-        $this->sub_category_id = '';
+        $this->category_name = Null;
+        $this->sub_category_name = Null;
+        $this->brand_name = Null;
+        $this->category_id = Null;
+        $this->sub_category_id = Null;
+        $this->type = Null;
     }
 
     public function updated($value){
@@ -317,6 +319,7 @@ class Create extends Component
         $product->product_number = $this->productNumber();;
         $product->identification_number = $this->identification_number;
         $product->price = $this->buy_price;
+        $product->type = $this->type;
         $product->unit_of_measure = $this->unit_of_measure;
         $product->sell_price = $this->sell_price;
         $product->fitment_mode = $this->fitment_mode;
@@ -340,7 +343,16 @@ class Create extends Component
         $product->status = '1';
 
         $product->save();
-        
+
+        // Push to Sage as an ITEM (guarded — a Sage hiccup never blocks creation).
+        if (\App\Services\Sage\SageIntegration::enabledForUser()) {
+            try {
+                app(\App\Services\Sage\SageSyncService::class)->syncProduct($product);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Sage product push failed: ' . $e->getMessage());
+            }
+        }
+
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Product Created Successfully!!"

@@ -41,6 +41,10 @@
                                     </th>
                                     <th class="th-sm">Amount
                                     </th>
+                                    <th class="th-sm">Tax
+                                    </th>
+                                    <th class="th-sm">Item Type
+                                    </th>
                                     <th class="th-sm">Frequency
                                     </th>
                                     <th class="th-sm">Description
@@ -71,6 +75,8 @@
                                         {{$expense->currency ? $expense->currency->symbol : ""}}{{number_format($expense->amount,2)}}
                                         @endif
                                     </td>
+                                    <td>{{$expense->tax ? $expense->tax->abbreviation : ""}}</td>
+                                    <td>{{$expense->item_type}}</td>
                                     <td>{{$expense->frequency}}</td>
                                     <td>{{$expense->description}}</td>
                                     <td><span class="badge bg-{{$expense->status == 1 ? "success" : "danger"}}">{{$expense->status == 1 ? "Active" : "Inactive"}}</span></td>
@@ -223,9 +229,22 @@
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                       
+
                     </div>
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Tax</label>
+                               <select wire:model.debounce.300ms="tax_id" class="form-control">
+                                <option value="">Select Tax</option>
+                                @foreach ($taxes as $tax)
+                                    <option value="{{ $tax->id }}">{{ $tax->abbreviation }}</option>
+                                @endforeach
+                               </select>
+                               <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small>
+                                @error('tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Frequency</label>
@@ -240,6 +259,8 @@
                                 @error('frequency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Description</label>
@@ -248,7 +269,7 @@
                             </div>
                         </div>
                     </div>
-                
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -355,9 +376,15 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Description</label>
-                                    <textarea class="form-control" wire:model.debounce.300ms="description"  cols="30" rows="7"></textarea>
-                                @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="name">Tax</label>
+                               <select wire:model.debounce.300ms="tax_id" class="form-control">
+                                <option value="">Select Tax</option>
+                                @foreach ($taxes as $tax)
+                                    <option value="{{ $tax->id }}">{{ $tax->abbreviation }}</option>
+                                @endforeach
+                               </select>
+                               <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small>
+                                @error('tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -369,6 +396,15 @@
                                 <option value="0">InActive</option>
                                </select>
                                 @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Description</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="description"  cols="30" rows="7"></textarea>
+                                @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>  

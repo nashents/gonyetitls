@@ -42,6 +42,8 @@ class JournalEntryLine extends Model implements Auditable
         'exchange_credit',
         'currency_id',
         'exchange_rate',
+        'bank_reconciliation_id',
+        'cleared_at',
     ];
 
     protected $casts = [
@@ -50,6 +52,7 @@ class JournalEntryLine extends Model implements Auditable
         'exchange_debit' => 'decimal:2',
         'exchange_credit'=> 'decimal:2',
         'exchange_rate'  => 'decimal:6',
+        'cleared_at'     => 'datetime',
     ];
 
     public function journal_entry()
@@ -110,5 +113,15 @@ class JournalEntryLine extends Model implements Auditable
     public function trailer()
     {
         return $this->belongsTo(Trailer::class);
+    }
+
+    public function bank_reconciliation()
+    {
+        return $this->belongsTo(BankReconciliation::class);
+    }
+
+    public function isCleared(): bool
+    {
+        return $this->cleared_at !== null;
     }
 }

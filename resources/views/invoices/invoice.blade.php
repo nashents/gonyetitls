@@ -302,7 +302,7 @@
                                 <footer style=" position:fixed; bottom: 0px; left: 0px; right: 0px; ">
                                     {{$invoice->footer}}
                                     <br>
-                                     <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="margin-top:5px; width: 20%; height:11%">    
+                                     <img src="{{asset('images/logo.png')}}" alt="" style="margin-top:5px; width: 20%; height:11%">    
                                 </footer>
                             </center>  
                         </div>

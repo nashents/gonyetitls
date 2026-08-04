@@ -68,11 +68,22 @@
                             </div>
                              <div class="row">
                                 <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">Name<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Product Name, Model etc" required>
-                                    @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <div class="form-group">
+                                        <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Product Name, Model etc" required>
+                                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="subheading">Type<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="type" class="form-control" required>
+                                            <option value="">Select Type</option>
+                                            <option value="Inventory">Inventory Item</option>
+                                            <option value="Non Inventory">Non Inventory Item</option>
+                                        </select>
+                                        @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
@@ -81,7 +92,7 @@
                                         @error('identification_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="name">Unit Of Measure<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.debounce.300ms="unit_of_measure" required>
@@ -93,17 +104,17 @@
                                         @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-1">
                                     <div class="form-group">
-                                        <label for="name">Minimum Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min" placeholder="Min Inventory Level" required>
+                                        <label for="name">Min Qty</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min" placeholder="Min Inventory Level" >
                                         @error('min') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-1">
                                     <div class="form-group">
-                                        <label for="name">Maximum Qty Level<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="max" placeholder="Max Inventory Level" required>
+                                        <label for="name">Max Qty</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="max" placeholder="Max Inventory Level" >
                                         @error('max') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -230,7 +241,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="subheading">Sales Tax</label>
+                                <label for="subheading">Tax Categories</label>
                                 <select wire:model.debounce.300ms="selectedTax" class="form-control">
                                     <option value="">Select Tax</option>
                                         @foreach ($tax_accounts as $tax)

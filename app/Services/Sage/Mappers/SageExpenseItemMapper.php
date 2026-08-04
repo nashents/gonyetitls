@@ -35,10 +35,10 @@ class SageExpenseItemMapper
             'id'            => self::itemId($e),
             'name'          => $e->name ?: ('Expense ' . $e->id),
             'type'          => (string) config('sageintacct.item.type', 'Non-Inventory'),
-            'taxable'       => $taxable === false || $taxable === 'false' ? 'false' : 'true',
-            // Optional; only emitted when configured (lets new items resolve a
-            // purchase tax schedule). Null ⇒ omitted (rely on link-to-existing).
-            'tax_group_key' => config('sageintacct.item.tax_group_key') ?: null,
+            'taxable'   => $taxable === false || $taxable === 'false' ? 'false' : 'true',
+            // Item tax group name (nested form); helps the item resolve a
+            // purchase tax schedule. Null ⇒ omitted.
+            'tax_group' => config('sageintacct.item.tax_group') ?: null,
         ];
     }
 }

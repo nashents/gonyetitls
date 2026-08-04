@@ -86,6 +86,15 @@ class Product extends Model implements Auditable
     public function vehicle_make(){
         return $this->belongsTo('App\Models\VehicleMake');
     }
+    public function tax(){
+        return $this->belongsTo('App\Models\Tax');
+    }
+
+    /** Sage Intacct link (entity_type product_item) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'product_item');
+    }
 
     protected $fillable = [
         'user_id',
@@ -95,6 +104,7 @@ class Product extends Model implements Auditable
         'category_value_id',
         'brand_id',
         'name',
+        'type',
         'buy',
         'price',
         'sell_price',

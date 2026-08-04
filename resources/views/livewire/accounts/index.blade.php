@@ -438,6 +438,72 @@
                                 @error('code') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                        @php $selectedTypeName = $account_types->firstWhere('id', $account_type_id)?->name; @endphp
+                        @if($selectedTypeName === 'Cash & Bank')
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">&nbsp;</label>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model="create_bank_account"> Create the associated bank account record
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+
+                    @if($selectedTypeName === 'Cash & Bank' && $create_bank_account)
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Bank Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="new_bank_name" placeholder="e.g. FBC" required />
+                                @error('new_bank_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Account Holder Name</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="new_bank_account_name" placeholder="Enter Account Holder Name" />
+                                @error('new_bank_account_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Account Number</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="new_bank_account_number" placeholder="Enter Account Number" />
+                                @error('new_bank_account_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Branch</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="new_bank_branch" placeholder="Enter Branch" />
+                                @error('new_bank_branch') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Branch Code</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="new_bank_branch_code" placeholder="Enter Branch Code" />
+                                @error('new_bank_branch_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">SWIFT Code</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="new_bank_swift_code" placeholder="Enter SWIFT Code" />
+                                @error('new_bank_swift_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    @else
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Linked Account - Bank Account</label>
@@ -452,6 +518,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

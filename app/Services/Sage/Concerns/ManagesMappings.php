@@ -43,6 +43,9 @@ trait ManagesMappings
             'permission',
             // Tax-schedule resolution is a client VAT-config prerequisite.
             'tax schedule', 'tax can', 'schedule map', 'tax group', 'valid unit',
+            // Dispatch Sheet custom-field pick-list values must be configured in
+            // Sage (REG / Driver) — a data-alignment prerequisite, not a bug.
+            'is not valid', 'format for',
         ];
         foreach ($attention as $needle) {
             if (str_contains($e, $needle)) {

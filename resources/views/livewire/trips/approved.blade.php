@@ -354,11 +354,12 @@
                                                 @endif
 
                                                 <td>
-                                                    @if($trip->invoices?->count())
+                                                    @php $tripInvoices = $trip->invoice_documents; @endphp
+                                                    @if($tripInvoices?->count())
                                                         <span class="label label-success">issued</span>
                                                         <small>
                                                             <strong>Invoice#(s):</strong>
-                                                            @foreach($trip->invoices as $invoice)
+                                                            @foreach($tripInvoices as $invoice)
                                                                 {{ $invoice->invoice_number }}@if(!$loop->last),@endif
                                                             @endforeach
                                                         </small>

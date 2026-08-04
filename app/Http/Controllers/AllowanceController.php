@@ -82,6 +82,11 @@ class AllowanceController extends Controller
      */
     public function destroy(Allowance $allowance)
     {
+        if ($allowance->default) {
+            Session::flash('error','This is a default system allowance and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $allowance->delete();
         Session::flash('success','Allowance Deleted Successfully');
         return redirect()->back();

@@ -31,6 +31,8 @@ class Index extends Component
 
     use WithFileUploads;
 
+    use \App\Http\Livewire\Concerns\PullsFromSage;
+
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $department;
@@ -176,10 +178,22 @@ class Index extends Component
 
     }
 
+    /** Sage integration gate — controls the "Pull from Sage" button. */
+    public function getSageEnabledProperty()
+    {
+        return \App\Services\Sage\SageIntegration::enabledForUser();
+    }
+
+    /** Queue an import of Sage items into the products listing (bought stock). */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('product', 'products', ['buy' => true]);
+    }
+
     public function render()
     {
         $products = Product::query()
-            ->with(['brand', 'category', 'category_value'])
+            ->with(['brand', 'category', 'category_value', 'sageMapping'])
             ->where('department', $this->department)
             ->where('status', 1)
             ->when(filled($this->search), function ($query) {

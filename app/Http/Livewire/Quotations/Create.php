@@ -18,6 +18,7 @@ use App\Models\OffloadingPoint;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
+use App\Services\Accounting\BankAccountGlLinkService;
 use App\Models\Tax;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -236,15 +237,18 @@ public function updatedSelectedCargo($id){
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            $this->bank_accounts = BankAccount::where('currency_id',$id)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
             if($id != $this->company->currency_id){
                 $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
                     ->where('status', 1)
                     ->where('expiry', '>', Carbon::today())
                     ->first();
-                if ($predefined_exchange_rate) {   
+                if ($predefined_exchange_rate) {
                     $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
                 }
             }
+        }else{
+            $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         }
     }
 
@@ -483,8 +487,10 @@ public function quotationNumber(){
             $bank_account->status = 1;
             $bank_account->save();
 
+            app(BankAccountGlLinkService::class)->ensureLinkedAccount($bank_account);
+
             $this->bank_account_id[] = $bank_account->id;
-           
+
             $this->dispatchBrowserEvent('hide-bank_accountModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[

@@ -11,9 +11,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Queued pull of one entity type (customer|vendor|horse|trailer|transporter)
- * from Sage into Gonyeti for a company. Runs with no Auth, so company + creator
- * are carried explicitly.
+ * Queued pull of one entity type (customer|vendor|horse|trailer|transporter|
+ * driver|tax|product) from Sage into Gonyeti for a company. Runs with no Auth,
+ * so company + creator are carried explicitly.
  */
 class PullFromSageJob implements ShouldQueue
 {
@@ -27,12 +27,14 @@ class PullFromSageJob implements ShouldQueue
     protected string $entity;
     protected int $companyId;
     protected int $creatorId;
+    protected array $options;
 
-    public function __construct(string $entity, int $companyId, int $creatorId)
+    public function __construct(string $entity, int $companyId, int $creatorId, array $options = [])
     {
         $this->entity    = $entity;
         $this->companyId = $companyId;
         $this->creatorId = $creatorId;
+        $this->options   = $options;
     }
 
     public function handle(): void
@@ -45,6 +47,6 @@ class PullFromSageJob implements ShouldQueue
         $driver = $this->sageDriverFor($integration);
 
         (new SagePullService($driver, $integration, $this->companyId, $this->creatorId))
-            ->pull($this->entity);
+            ->pull($this->entity, $this->options);
     }
 }

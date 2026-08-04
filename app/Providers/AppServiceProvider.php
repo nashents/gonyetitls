@@ -3,13 +3,23 @@
 namespace App\Providers;
 
 use App\Models\Bill;
+use App\Models\Booking;
 use App\Models\CreditNote;
+use App\Models\Fuel;
+use App\Models\GoodsReceived;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Purchase;
+use App\Models\Ticket;
 use App\Observers\BillObserver;
+use App\Observers\BookingObserver;
 use App\Observers\CreditNoteObserver;
+use App\Observers\FuelObserver;
+use App\Observers\GoodsReceivedObserver;
 use App\Observers\InvoiceObserver;
 use App\Observers\PaymentObserver;
+use App\Observers\PurchaseObserver;
+use App\Observers\TicketObserver;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -58,5 +68,10 @@ class AppServiceProvider extends ServiceProvider
         Invoice::observe(InvoiceObserver::class);
         Payment::observe(PaymentObserver::class);
         CreditNote::observe(CreditNoteObserver::class);
+        Fuel::observe(FuelObserver::class);
+        Purchase::observe(PurchaseObserver::class);
+        GoodsReceived::observe(GoodsReceivedObserver::class);
+        Booking::observe(BookingObserver::class);
+        Ticket::observe(TicketObserver::class);
     }
 }

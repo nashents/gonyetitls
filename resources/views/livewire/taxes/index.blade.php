@@ -12,6 +12,9 @@
 
                             <div class="panel-title">
                                 <a href="#" data-toggle="modal" data-target="#taxModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Tax</a>
+                                @if ($this->sageEnabled)
+                                <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary"><i class="fa fa-cloud-download"></i> Pull from Sage</button>
+                                @endif
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">

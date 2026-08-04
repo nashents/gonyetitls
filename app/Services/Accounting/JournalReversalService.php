@@ -19,6 +19,14 @@ class JournalReversalService
             return null;
         }
 
+        $entry->loadMissing('journal_entry_lines');
+
+        if ($entry->journal_entry_lines->contains(fn ($line) => $line->cleared_at !== null)) {
+            throw new \RuntimeException(
+                "Journal entry {$entry->journal_number} has a line cleared against a bank statement - unmatch it from that bank statement line (reopening its bank reconciliation first, if already completed) before reversing it."
+            );
+        }
+
         return DB::transaction(function () use ($entry, $reason) {
 
             $entry->loadMissing('journal_entry_lines');

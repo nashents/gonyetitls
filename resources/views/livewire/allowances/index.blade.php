@@ -33,6 +33,10 @@
                                     </th>
                                     <th class="th-sm">Percentage
                                     </th>
+                                    <th class="th-sm">Tax
+                                    </th>
+                                    <th class="th-sm">Type
+                                    </th>
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
@@ -50,6 +54,8 @@
                                     <td>{{$allowance->calculate_on}}</td>
                                     <td>{{$allowance->amount}}</td>
                                     <td>{{$allowance->percentage}}</td>
+                                    <td>{{$allowance->tax ? $allowance->tax->abbreviation : ""}}</td>
+                                    <td>{{$allowance->type}}</td>
                                     <td><span class="badge bg-{{$allowance->status == 1 ? "success" : "danger"}}">{{$allowance->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -60,11 +66,15 @@
                                             <ul class="dropdown-menu">
                                                 @if ($allowance->user_id != Null || Auth::user()->is_admin())
                                                 <li><a href="#"  wire:click="edit({{$allowance->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @if (!$allowance->default)
                                                 <li><a href="#" data-toggle="modal" data-target="#allowanceDeleteModal{{ $allowance->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
                                                 @endif
                                             </ul>
                                         </div>
+                                        @if (!$allowance->default)
                                         @include('allowances.delete')
+                                        @endif
                                 </td>
                                   </tr>
                                   @endforeach
@@ -164,7 +174,33 @@
                             </div>
                         </div>
                     </div>
-                   
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Tax</label>
+                                <select wire:model.debounce.300ms="tax_id" class="form-control">
+                                    <option value="">Select Tax</option>
+                                        @foreach ($taxes as $tax)
+                                        <option value="{{$tax->id}}">{{$tax->abbreviation}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small>
+                                @error('tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Type</label>
+                                <select wire:model.debounce.300ms="type" class="form-control">
+                                    <option value="">Select Type</option>
+                                    <option value="Inventory">Inventory Item</option>
+                                    <option value="Non Inventory">Non Inventory Item</option>
+                                </select>
+                                @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -252,6 +288,32 @@
                                 <label for="name">Description</label>
                               <textarea class="form-control" wire:model.debounce.300ms="description" placeholder="Enter Description" cols="30" rows="3"></textarea>
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Tax</label>
+                                <select wire:model.debounce.300ms="tax_id" class="form-control">
+                                    <option value="">Select Tax</option>
+                                        @foreach ($taxes as $tax)
+                                        <option value="{{$tax->id}}">{{$tax->abbreviation}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small>
+                                @error('tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Type</label>
+                                <select wire:model.debounce.300ms="type" class="form-control">
+                                    <option value="">Select Type</option>
+                                    <option value="Inventory">Inventory Item</option>
+                                    <option value="Non Inventory">Non Inventory Item</option>
+                                </select>
+                                @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

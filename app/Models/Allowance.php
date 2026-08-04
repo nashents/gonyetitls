@@ -36,4 +36,11 @@ class Allowance extends Model implements Auditable
     public function bill_expenses(){
         return $this->hasMany('App\Models\BillExpense');
     }
+    public function tax(){
+        return $this->belongsTo('App\Models\Tax');
+    }
+
+    protected $casts = [
+        'default' => 'boolean',
+    ];
 }

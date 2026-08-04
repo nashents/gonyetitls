@@ -534,7 +534,8 @@
                   </ul>
               </li>
               <li  class="{{ request()->routeIs('bank_accounts.index') ? 'active' : '' }}" ><a href="{{route('bank_accounts.index')}}"><i class="fas fa-bank"></i> <span>Bank Accounts</span></a></li>
-             
+              <li  class="{{ request()->routeIs('bank-reconciliations.*') ? 'active' : '' }}" ><a href="{{route('bank-reconciliations.index')}}"><i class="fas fa-check-double"></i> <span>Bank Reconciliation</span></a></li>
+
               @endif
 
 

@@ -46,6 +46,7 @@ class Edit extends Component
     public $previous_image;
     public $unit_of_measure;
     public $units_of_measure;
+    public $type;
 
     public $tax;
     public $tax_accounts;
@@ -99,6 +100,7 @@ class Edit extends Component
         $this->identification_number = $product->identification_number;
         $this->department = $product->department;
         $this->brand_id = $product->brand_id;
+        $this->type = $product->type;
         $this->min = $product->min;
         $this->max = $product->max;
         $this->manufacturer = $product->manufacturer;
@@ -181,9 +183,10 @@ class Edit extends Component
         $product->name = $this->name;
         $product->min = $this->min;
         $product->max = $this->max;
+        $product->type = $this->type;
         $product->price = $this->buy_price;
         $product->sell_price = $this->sell_price;
-         $product->fitment_mode = $this->fitment_mode;
+        $product->fitment_mode = $this->fitment_mode;
         $product->is_serialized = $this->is_serialized;
         $product->is_trackable = $this->is_trackable;
         $product->requires_position = $this->requires_position;

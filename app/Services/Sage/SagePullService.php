@@ -3,6 +3,7 @@
 namespace App\Services\Sage;
 
 use App\Integrations\Contracts\SageDriver;
+use App\Models\Account;
 use App\Models\Company;
 use App\Models\CompanyIntegration;
 use App\Models\Customer;
@@ -10,6 +11,9 @@ use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\Horse;
 use App\Models\IntegrationLog;
+use App\Models\IntegrationMapping;
+use App\Models\Product;
+use App\Models\Tax;
 use App\Models\Trailer;
 use App\Models\Transporter;
 use App\Models\Vendor;
@@ -46,8 +50,11 @@ class SagePullService
         $this->creatorId   = $creatorId;
     }
 
-    /** @return array{created:int,linked:int,skipped:int,failed:int} */
-    public function pull(string $entity): array
+    /**
+     * @param  array  $options  entity-specific context (products use buy/sell).
+     * @return array{created:int,linked:int,skipped:int,failed:int}
+     */
+    public function pull(string $entity, array $options = []): array
     {
         try {
             $summary = match ($entity) {
@@ -57,6 +64,8 @@ class SagePullService
                 'trailer'     => $this->pullTrailers(),
                 'transporter' => $this->pullTransporters(),
                 'driver'      => $this->pullDrivers(),
+                'tax'         => $this->pullTaxes(),
+                'product'     => $this->pullProducts($options),
                 default       => ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0],
             };
         } catch (Throwable $e) {
@@ -319,6 +328,223 @@ class SagePullService
 
                 // Mapping is keyed on the Employee (entity_type driver_employee).
                 $this->linkMapping('driver_employee', $employee, $empId, trim(($first ?? '') . ' ' . ($last ?? '')));
+
+                $isNew ? $s['created']++ : $s['linked']++;
+            } catch (Throwable $e) {
+                $s['failed']++;
+            }
+        }
+
+        return $s;
+    }
+
+    // ── Item tax groups (Sage ITEMTAXGROUP → Gonyeti taxes module) ──
+
+    /**
+     * Pull Sage's ITEM tax groups (Standard Rate, Exempt, Zero Rate, imports, …)
+     * into the Gonyeti taxes module. The group itself carries no rate — the rate
+     * lives in TAXDETAIL — so each group's rate is resolved from the best matching
+     * tax detail (prefer the purchase/input side, since item tax groups drive
+     * purchases). When no confident match exists the rate is left null for the
+     * user to complete. De-dup is by tax name (case-insensitive); existing,
+     * user-entered fields are never overwritten.
+     */
+    protected function pullTaxes(): array
+    {
+        // ITEMTAXGROUP holds only item-type groups; GROUPTYPE isn't a filterable
+        // field, so read them all (RECORDNO > 0) rather than filtering on it.
+        $groups  = $this->readAll('ITEMTAXGROUP', ['NAME', 'GROUPTYPE'], 'RECORDNO > 0');
+        $details = $this->readAll('TAXDETAIL', ['DETAILID', 'DESCRIPTION', 'TAXTYPE', 'VALUE', 'STATUS'], 'RECORDNO > 0');
+        $rateFor = $this->taxRateResolver($details);
+
+        // Post to the VAT control account if the chart of accounts has one.
+        $accountId = optional(
+            Account::where('name', 'Value Added Tax')->orWhere('name', 'like', '%VAT%')->first()
+        )->id;
+
+        $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
+        foreach ($groups as $row) {
+            $name = trim($row['NAME'] ?? '');
+            if ($name === '') {
+                $s['skipped']++;
+                continue;
+            }
+
+            try {
+                $tax   = Tax::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
+                $isNew = false;
+                if (! $tax) {
+                    $tax          = new Tax();
+                    $tax->name    = $name;
+                    $tax->user_id = $this->creatorId;
+                    $isNew        = true;
+                }
+
+                // Fill only empty fields — never clobber a user-entered rate/category.
+                $tax->category     = $tax->category ?: 'Item Tax Group';
+                $tax->abbreviation = $tax->abbreviation ?: $this->taxAbbreviation($name);
+                $tax->account_id   = $tax->account_id ?: $accountId;
+                if ($tax->rate === null || $tax->rate === '') {
+                    $tax->rate = $rateFor($name); // may stay null when unresolved
+                }
+                $tax->description = $tax->description ?: 'Imported from Sage Intacct item tax group.';
+                $tax->save();
+
+                $isNew ? $s['created']++ : $s['linked']++;
+            } catch (Throwable $e) {
+                $s['failed']++;
+            }
+        }
+
+        return $s;
+    }
+
+    /**
+     * Build a resolver that maps an item-tax-group name to a percentage rate by
+     * matching it against the tax details (normalised, purchase side preferred).
+     */
+    protected function taxRateResolver(array $details): \Closure
+    {
+        $index = [];
+        foreach ($details as $d) {
+            if (strcasecmp($d['STATUS'] ?? 'active', 'active') !== 0) {
+                continue;
+            }
+            $key = $this->normaliseTaxName($d['DESCRIPTION'] ?? ($d['DETAILID'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+            $isPurchase = strcasecmp($d['TAXTYPE'] ?? '', 'Purchase') === 0;
+            // First writer wins, but a purchase detail overrides a sale one.
+            if (! isset($index[$key]) || $isPurchase) {
+                $index[$key] = $d['VALUE'] ?? null;
+            }
+        }
+
+        return function (string $groupName) use ($index): ?string {
+            $g = $this->normaliseTaxName($groupName);
+            if ($g === '') {
+                return null;
+            }
+            if (array_key_exists($g, $index)) {
+                return $this->numericRate($index[$g]);
+            }
+            foreach ($index as $k => $value) {
+                if ($k !== '' && (str_contains($k, $g) || str_contains($g, $k))) {
+                    return $this->numericRate($value);
+                }
+            }
+            return null;
+        };
+    }
+
+    /** Normalise a tax name for matching (drop qualifiers/side, keep the core). */
+    protected function normaliseTaxName(string $s): string
+    {
+        $s = mb_strtolower($s);
+        $s = preg_replace('/\(.*?\)/', ' ', $s);            // drop parenthetical qualifiers
+        $s = preg_replace('/[^a-z0-9]+/', ' ', $s);         // punctuation → space
+        $s = preg_replace('/\b(input|output|imported)\b/', ' ', $s); // drop direction words
+        return trim(preg_replace('/\s+/', ' ', $s));
+    }
+
+    protected function numericRate($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return number_format((float) $value, 2, '.', '');
+    }
+
+    /** A short uppercase abbreviation from a tax group name (e.g. "SR", "ZR"). */
+    protected function taxAbbreviation(string $name): string
+    {
+        $words = preg_split('/\s+/', trim($name)) ?: [];
+        $acr   = '';
+        foreach ($words as $w) {
+            if ($w !== '') {
+                $acr .= mb_strtoupper(mb_substr($w, 0, 1));
+            }
+        }
+        // Ensure at least two characters for readability.
+        return mb_strlen($acr) >= 2 ? $acr : mb_strtoupper(mb_substr($name, 0, 3));
+    }
+
+    // ── Products (Sage ITEM → Gonyeti products & services) ────────
+
+    /**
+     * Pull Sage ITEMs into the Gonyeti products module. De-dup: existing Sage
+     * link (mapping), then product name; otherwise create a sparse product.
+     * ITEMTYPE → product type, and the item's tax group is matched to a Gonyeti
+     * Tax (by name, from the item-tax-group pull) → tax_id. Existing, user-entered
+     * fields are never overwritten. Items land as sell+buy so they appear in the
+     * invoice/bill product pickers.
+     */
+    protected function pullProducts(array $options = []): array
+    {
+        // Buy/sell context from the calling screen: products & bills → buy;
+        // invoices → sell; "all" → both. Default to both when unspecified.
+        $buy  = ! empty($options['buy']);
+        $sell = ! empty($options['sell']);
+        if (! $buy && ! $sell) {
+            $buy = $sell = true;
+        }
+
+        $rows = $this->readAll('ITEM', ['ITEMID', 'NAME', 'ITEMTYPE', 'TAXGROUP.NAME', 'GLGROUP', 'STATUS'], 'RECORDNO > 0');
+
+        // Tax lookup by lower-cased name (mirrors the Sage item tax group names).
+        $taxByName = Tax::all()->keyBy(fn ($t) => mb_strtolower((string) $t->name));
+
+        $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
+        foreach ($rows as $row) {
+            $itemId = $row['ITEMID'] ?? null;
+            $name   = trim($row['NAME'] ?? '');
+            if (! $itemId || $name === '') {
+                $s['skipped']++;
+                continue;
+            }
+
+            try {
+                $mapping = IntegrationMapping::where([
+                    'company_integration_id' => $this->integration->id,
+                    'entity_type'            => 'product_item',
+                    'external_id'            => $itemId,
+                ])->first();
+
+                $product = ($mapping ? Product::find($mapping->local_id) : null)
+                    ?? Product::where('name', $name)->first();
+
+                $isNew = false;
+                if (! $product) {
+                    $product                 = new Product();
+                    $product->name           = $name;
+                    $product->user_id        = $this->creatorId;
+                    $product->product_number = $this->nextNumber(Product::class, 'P');
+                    $product->status         = 1;
+                    $isNew = true;
+                }
+
+                // Buy/sell: turn ON the flags for this context; never turn a flag
+                // off (a product listed for both must keep both).
+                if ($buy) {
+                    $product->buy = 1;
+                }
+                if ($sell) {
+                    $product->sell = 1;
+                }
+
+                // Fill type + tax + GL group only when empty — never clobber edits.
+                $product->type = $product->type ?: \App\Services\Sage\Mappers\SageProductItemMapper::gonyetiType($row['ITEMTYPE'] ?? null);
+                $product->gl_group = $product->gl_group ?: (trim($row['GLGROUP'] ?? '') ?: null);
+                if (empty($product->tax_id)) {
+                    $grp = mb_strtolower(trim($row['TAXGROUP.NAME'] ?? ''));
+                    if ($grp !== '' && isset($taxByName[$grp])) {
+                        $product->tax_id = $taxByName[$grp]->id;
+                    }
+                }
+                $product->saveQuietly();
+
+                $this->linkMapping('product_item', $product, $itemId, $name);
 
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {

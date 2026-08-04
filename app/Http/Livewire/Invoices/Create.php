@@ -23,6 +23,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceCount;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
+use App\Services\Accounting\BankAccountGlLinkService;
 use App\Models\InvoiceTrip;
 use App\Models\Measurement;
 use App\Models\Notification;
@@ -32,6 +33,7 @@ use App\Models\ProductService;
 use App\Models\Rental;
 use App\Models\Tax;
 use App\Models\Transporter;
+use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripDocument;
 use App\Models\TripTransportOrder;
@@ -49,6 +51,7 @@ class Create extends Component
     public $searchRental;
     public $searchTrip;
     public $searchTTO;
+    public $searchTransportOrder;
     protected $queryString = ['searchTrip','searchTTO','searchBooking','searchRental'];
     public $from;
     public $to;
@@ -84,6 +87,8 @@ class Create extends Component
     public $source = "Generic";
     public $from_trips = false;
     public $from_ttos = false;
+    public $from_transport_orders = false;
+    public $selectedTransportOrder = [];
     public $exchange_rate;
     public $from_inventory = false;
     public $from_bookings = false;
@@ -330,8 +335,10 @@ class Create extends Component
             $bank_account->status = 1;
             $bank_account->save();
 
+            app(BankAccountGlLinkService::class)->ensureLinkedAccount($bank_account);
+
             $this->bank_account_id[] = $bank_account->id;
-           
+
             $this->dispatchBrowserEvent('hide-bank_accountModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
@@ -498,7 +505,7 @@ class Create extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->income_account_id = Account::where('name','Sales')->first()->id;
      
-        $this->bank_accounts = collect();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->where('status',True)->orderBy('name','asc')->get();
 
 
@@ -520,11 +527,15 @@ class Create extends Component
             $product = Product::find($id);
             $this->selectedAccount[$key] = $product->account_id;
             if (isset($product)) {
-                if ($product->sell_price) {
-                    $this->amount[$key] = $product->sell_price;
+                // For a Transport Order line the description + amount (freight) come
+                // from the order — the product is only the Sage item; don't clobber.
+                if ($this->source != "Transport Order") {
+                    if ($product->sell_price) {
+                        $this->amount[$key] = $product->sell_price;
+                    }
+                    $this->qty[$key] = 1;
+                    $this->description[$key] = $product->description;
                 }
-                $this->qty[$key] = 1;
-                $this->description[$key] = $product->description;
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
                     $tax = Tax::find($product->tax_id);
@@ -1672,8 +1683,78 @@ class Create extends Component
                     }
                     
             }
+            elseif ($this->source == "Transport Order") {
+
+                    // One freight line per selected transport order (qty 1, amount
+                    // = the order's freight). The transport_order_id link lets the
+                    // order's trips show as invoiced.
+                    foreach($this->qty as $key => $value){
+
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedTransportOrder[$key])) {
+                                $invoice_item->transport_order_id = $this->selectedTransportOrder[$key];
+                            }
+                            if (isset($this->selectedProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+
+                    }
+
+            }
             elseif ($this->source == "Booking") {
-            
+
                     foreach($this->selectedBooking as $key => $value){
 
                             $invoice_item = new InvoiceItem;
@@ -2153,6 +2234,45 @@ class Create extends Component
             elseif($value == "TTO"){
                  $this->from_ttos = True;
             }
+            elseif($value == "Transport Order"){
+                 $this->from_transport_orders = True;
+            }
+    }
+
+    /**
+     * Populate a "Transport Order" invoice line: description from the order's
+     * cargo details, qty 1, amount = its freight. Mirrors updatedSelectedTTO.
+     */
+    public function updatedSelectedTransportOrder($id, $key){
+        if (is_null($id)) {
+            return;
+        }
+
+        $transport_order = TransportOrder::find($id);
+        if (! $transport_order) {
+            return;
+        }
+
+        if ($this->invoice_to == "Customer") {
+            $this->amount[$key]      = $transport_order->freight;
+            $this->description[$key] = $this->setTransportOrderDescription($id);
+        }
+
+        $this->qty[$key]             = 1;
+        $this->selectedAccount[$key] = $this->income_account_id;
+    }
+
+    /** Description for a Transport Order line (its cargo details + reference). */
+    protected function setTransportOrderDescription($id){
+        $transport_order = TransportOrder::find($id);
+        if (! $transport_order) {
+            return null;
+        }
+
+        $ref  = $transport_order->transport_order_number ? ('Transport Order ' . $transport_order->transport_order_number) : 'Transport Order';
+        $body = $transport_order->cargo_details ?: (optional($transport_order->cargo)->name ?? '');
+
+        return trim($ref . ($body !== '' ? ' — ' . $body : ''));
     }
  
     public function getBookingsProperty(){
@@ -2249,8 +2369,33 @@ class Create extends Component
 
     }
 
-   
+    /** Transport orders available to invoice (customer's, not yet invoiced). */
+    public function getTransportOrdersProperty(){
 
+        $query = \App\Models\TransportOrder::query()
+            ->with('customer','currency','cargo')
+            ->whereDoesntHave('invoice_items');
+
+        if ($this->invoice_to == "Customer" && $this->selectedCustomer) {
+            $query->where('customer_id', $this->selectedCustomer);
+        }
+
+        if (filled($this->searchTransportOrder)) {
+            $term = '%'.$this->searchTransportOrder.'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('transport_order_number', 'like', $term)
+                  ->orWhere('manifest_number', 'like', $term)
+                  ->orWhere('freight', 'like', $term)
+                  ->orWhere('cargo_details', 'like', $term)
+                  ->orWhereHas('customer', function ($qq) use ($term) {
+                      return $qq->where('name', 'like', $term);
+                  });
+            });
+        }
+
+        return $query->orderByDesc('id')->get();
+
+    }
 
     public function render()
     {

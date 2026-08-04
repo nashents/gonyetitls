@@ -21,9 +21,7 @@ class PaymentJournalService
         $rate   = (float) ($payment->exchange_rate ?? 1);
         $amount = (float) $payment->amount;
 
-        $cashBankAccount = $payment->account_id
-            ? Account::findOrFail($payment->account_id)
-            : Account::where('name', 'Cash on Hand')->firstOrFail();
+        $cashBankAccount = $this->resolveCashBankAccount($payment);
 
         return DB::transaction(function () use ($payment, $rate, $amount, $cashBankAccount) {
 
@@ -211,6 +209,22 @@ class PaymentJournalService
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Payments record which Chart of Accounts "Cash & Bank" account the money
+     * moved through directly via account_id (this can be "Cash on Hand" or any
+     * bank-linked account) - bank_account_id is not populated when recording a
+     * payment, so it is not consulted here.
+     */
+    private function resolveCashBankAccount(Payment $payment): Account
+    {
+        if ($payment->account_id) {
+            return Account::findOrFail($payment->account_id);
+        }
+
+        return Account::where('name', 'Cash on Hand')->firstOrFail();
+    }
+
     private function resolveDescription(Payment $payment): string
     {
         return match (strtolower($payment->category)) {

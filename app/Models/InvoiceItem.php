@@ -33,6 +33,9 @@ class InvoiceItem extends Model implements Auditable
     public function trip_transport_order(){
         return $this->belongsTo('App\Models\TripTransportOrder');
     }
+    public function transport_order(){
+        return $this->belongsTo('App\Models\TransportOrder');
+    }
     public function income_stream(){
         return $this->belongsTo('App\Models\IncomeStream');
     }

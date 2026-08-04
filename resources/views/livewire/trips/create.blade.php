@@ -1672,59 +1672,60 @@
                                                 <textarea wire:model.debounce.300ms="notes"  class="form-control" placeholder="Driver Notes OR Instructions eg What to do @ offloading point" cols="30" rows="2"></textarea>
                                                 @error('notes') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
-                                            @foreach ($allowance_inputs as $key => $value)
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <div class="form-group">
-                                                            <label for="driver">Allowance(s)</label>
+                                        </div>
+                                      
+                                        @foreach ($allowance_inputs as $key => $value)
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="driver">Allowance(s)</label>
                                                         <select class="form-control" wire:model.debounce.300ms="allowance_id.{{ $value }}">
                                                             <option value="">Select Allowance</option>
                                                                 @foreach ($allowances as $allowance)
                                                                 <option value="{{$allowance->id}}">{{$allowance->name}}</option>
                                                                 @endforeach
                                                         </select>
-                                                            @error('allowance_id.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                            <small>  <a href="#" data-toggle="modal" data-target="#allowanceModal" ><i class="fa fa-plus-square-o"></i> Allowance</a></small> <a href="#" wire:click.prevent="refresh('allowances')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                                        </div>
+                                                        @error('allowance_id.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <small>  <a href="#" data-toggle="modal" data-target="#allowanceModal" ><i class="fa fa-plus-square-o"></i> Allowance</a></small> <a href="#" wire:click.prevent="refresh('allowances')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
-                                                    <div class="col-md-3">
-                                                        <div class="form-group">
-                                                            <label for="driver">Category</label>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="driver">Vendor</label>
+                                                        <select class="form-control" wire:model.debounce.300ms="allowance_vendor_id.{{ $value }}">
+                                                            <option value="">Select Vendor</option>
+                                                            @foreach ($vendors as $vendor)
+                                                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('allowance_vendor_id.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> <a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="driver">Category</label>
                                                         <select class="form-control" wire:model.debounce.300ms="allowance_category.{{ $value }}">
-                                                            <option value="">Select Category</option>
+                                                            <option value="">Select</option>
                                                             <option value="Customer">Customer</option>
                                                             <option value="Self">Self</option>
                                                             <option value="Transporter">Transporter</option>
                                                         </select>
-                                                            @error('allowance_category.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <div class="form-group">
-                                                            <label for="currency">Currency </label>
-                                                            <select class="form-control" wire:model.debounce.300ms="selectedAllowanceCurrency.{{ $value }}" >
-                                                                <option value="">Select Ccy</option>
-                                                                    @foreach ($currencies as $currency)
-                                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                                                    @endforeach
-                                                            </select>
-                                                            @error('selectedAllowanceCurrency.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <div class="form-group">
-                                                            <label for="">Amt</label>
-                                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowance_amount.{{ $value }}"  />
-                                                            @error('allowance_amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-1">
-                                                        <div class="form-group" style="margin-top:7px;">
-                                                            <button class="btn btn-danger btn-rounded btn-xs" style="margin-left:-25px; margin-top:26px;"   wire:click.prevent="removeAllowance({{$key}})"> <i class="fa fa-times" ></i></button>
-                                                        </div>
+                                                        @error('allowance_category.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
-                                                @if (isset($selectedAllowanceCurrency[$value]))
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="currency">Ccy</label>
+                                                        <select class="form-control" wire:model.debounce.300ms="selectedAllowanceCurrency.{{ $value }}" >
+                                                            <option value="">Select</option>
+                                                                @foreach ($currencies as $currency)
+                                                                <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                                                @endforeach
+                                                        </select>
+                                                        @error('selectedAllowanceCurrency.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                        @if (isset($selectedAllowanceCurrency[$value]))
                                                     @if ($selectedAllowanceCurrency[$value] != $company->currency_id)
                                                         <div class="row">
                                                             <div class="col-md-6">
@@ -1746,11 +1747,24 @@
                                                         </div>
                                                     @endif
                                                 @endif 
-                                            @endforeach
-                                            <div class="row">
-                                                <div class="form-group">
-                                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="addAllowance({{$x}})"> <i class="fa fa-plus"></i>Add Allowance</button>
                                                 </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="">Amt</label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowance_amount.{{ $value }}"  />
+                                                        @error('allowance_amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group" style="margin-top:7px;">
+                                                        <button class="btn btn-danger btn-rounded btn-xs" style="margin-left:-25px; margin-top:26px;"   wire:click.prevent="removeAllowance({{$key}})"> <i class="fa fa-times" ></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>       
+                                        @endforeach
+                                        <div class="row">
+                                            <div class="form-group">
+                                                <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="addAllowance({{$x}})"> <i class="fa fa-plus"></i>Add Allowance</button>
                                             </div>
                                         </div>
                                     </div>

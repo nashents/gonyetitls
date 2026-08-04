@@ -37,4 +37,12 @@ class BankAccount extends Model implements Auditable
         return $this->belongsTo('App\Models\Currency');
     }
 
+    public function bank_statements(){
+        return $this->hasMany('App\Models\BankStatement');
+    }
+
+    public function bank_reconciliations(){
+        return $this->hasMany('App\Models\BankReconciliation');
+    }
+
 }

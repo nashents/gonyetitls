@@ -746,6 +746,13 @@ Route::resource('purchase_documents','PurchaseDocumentController');
 Route::resource('truck_stops','TruckStopController');
 Route::resource('incidents','IncidentController');
 Route::resource('bank_accounts','BankAccountController');
+
+Route::get('bank-reconciliations', 'BankReconciliationController@index')->name('bank-reconciliations.index');
+Route::post('bank-reconciliations/import', 'BankReconciliationController@importStatement')->name('bank-reconciliations.import');
+Route::post('bank-reconciliations/start', 'BankReconciliationController@start')->name('bank-reconciliations.start');
+Route::get('bank-reconciliations/{bankReconciliation}', 'BankReconciliationController@workspace')->name('bank-reconciliations.workspace');
+Route::get('bank-reconciliations/{bankReconciliation}/statement', 'BankReconciliationController@statement')->name('bank-reconciliations.statement');
+Route::get('bank-reconciliations/{bankReconciliation}/statement/pdf', 'BankReconciliationController@statementPdf')->name('bank-reconciliations.statement.pdf');
 Route::resource('incomes','IncomeController');
 Route::resource('deals','DealController');
 Route::resource('corridors','CorridorController');
