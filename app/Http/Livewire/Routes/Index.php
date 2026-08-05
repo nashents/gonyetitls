@@ -4,17 +4,34 @@ namespace App\Http\Livewire\Routes;
 
 use App\Models\Route;
 use App\Models\Border;
+use App\Models\Account;
+use App\Models\Expense;
+use App\Models\Currency;
 use Livewire\Component;
 use App\Models\Destination;
+use App\Models\RouteExpense;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
+    use WithPagination;
 
+    protected $paginationTheme = 'bootstrap';
+
+    public function paginationView()
+    {
+        return 'vendor.pagination.bootstrap-custom';
+    }
+
+    public $perPage = 10;
+
+    public $search;
+    protected $queryString = ['search'];
 
     public $destinations;
-    public $routes;
+    public $currencies;
     public $from;
     public $to;
     public $rank;
@@ -26,6 +43,9 @@ class Index extends Component
     public $border_id;
     public $name;
     public $description;
+    public $fuel_consumption_rate;
+    public $fuel_price_per_litre;
+    public $fuel_currency_id;
 
     public $route_id;
     public $user_id;
@@ -47,9 +67,9 @@ class Index extends Component
     }
 
     public function mount(){
-        $this->routes = Route::latest()->get();
         $this->borders = Border::latest()->get();
         $this->destinations = Destination::all();
+        $this->currencies = Currency::orderBy('name', 'asc')->get();
     }
 
     public function updated($value){
@@ -74,6 +94,55 @@ class Index extends Component
         $this->distance = '';
         $this->status = '';
         $this->border_id = Null;
+        $this->fuel_consumption_rate = '';
+        $this->fuel_price_per_litre = '';
+        $this->fuel_currency_id = '';
+    }
+
+    private function getFuelExpenseCatalogItem()
+    {
+        $account = Account::where('name', 'Trip Expense')->first();
+
+        if (!$account) {
+            return null;
+        }
+
+        return Expense::firstOrCreate(
+            ['name' => 'Fuel', 'account_id' => $account->id],
+            ['user_id' => Auth::id(), 'status' => 1]
+        );
+    }
+
+    private function syncFuelExpense(Route $route){
+        $existing = RouteExpense::where('route_id', $route->id)->where('source', 'fuel')->first();
+
+        $hasFuelInputs = $route->distance && $this->fuel_consumption_rate && $this->fuel_price_per_litre;
+
+        if (!$hasFuelInputs) {
+            if ($existing) {
+                $existing->delete();
+            }
+            return;
+        }
+
+        $fuelExpense = $this->getFuelExpenseCatalogItem();
+
+        if (!$fuelExpense) {
+            return;
+        }
+
+        $amount = round(((float) $route->distance / 100) * (float) $this->fuel_consumption_rate * (float) $this->fuel_price_per_litre, 2);
+
+        $route_expense = $existing ?: new RouteExpense;
+        $route_expense->route_id = $route->id;
+        $route_expense->user_id = Auth::id();
+        $route_expense->expense_id = $fuelExpense->id;
+        $route_expense->category = 'Self';
+        $route_expense->currency_id = $this->fuel_currency_id ?: null;
+        $route_expense->amount = $amount;
+        $route_expense->source = 'fuel';
+        $route_expense->status = 1;
+        $route_expense->save();
     }
 
     public function store(){
@@ -88,9 +157,13 @@ class Index extends Component
         $route->expiry_date = $this->expiry_date;
         $route->to = $this->to;
         $route->rank = $this->rank;
+        $route->fuel_consumption_rate = $this->fuel_consumption_rate ?: null;
+        $route->fuel_price_per_litre = $this->fuel_price_per_litre ?: null;
+        $route->fuel_currency_id = $this->fuel_currency_id ?: null;
         $route->status = 1;
         $route->save();
         $route->borders()->sync($this->border_id);
+        $this->syncFuelExpense($route);
 
         $this->dispatchBrowserEvent('hide-routeModal');
         $this->resetInputFields();
@@ -126,6 +199,9 @@ class Index extends Component
     $this->from = $route->from;
     $this->to = $route->to;
     $this->rank = $route->rank;
+    $this->fuel_consumption_rate = $route->fuel_consumption_rate;
+    $this->fuel_price_per_litre = $route->fuel_price_per_litre;
+    $this->fuel_currency_id = $route->fuel_currency_id;
     $this->route_id = $route->id;
     $this->dispatchBrowserEvent('show-routeEditModal');
 
@@ -165,9 +241,13 @@ class Index extends Component
             $route->from = $this->from;
             $route->to = $this->to;
             $route->rank = $this->rank;
+            $route->fuel_consumption_rate = $this->fuel_consumption_rate ?: null;
+            $route->fuel_price_per_litre = $this->fuel_price_per_litre ?: null;
+            $route->fuel_currency_id = $this->fuel_currency_id ?: null;
             $route->update();
             $route->borders()->detach();
             $route->borders()->sync($this->border_id);
+            $this->syncFuelExpense($route);
 
             $this->dispatchBrowserEvent('hide-routeEditModal');
             $this->resetInputFields();
@@ -190,11 +270,28 @@ class Index extends Component
     }
 
 
+    public function updatingSearch(){
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $this->routes = Route::latest()->get();
+        $query = Route::with(['route_expenses.expense', 'borders', 'fuel_currency'])->latest();
+
+        if (filled($this->search)) {
+            $query->where(function ($q) {
+                $q->where('name', 'like', '%'.$this->search.'%')
+                  ->orWhere('rank', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        $routes = $query->paginate($this->perPage);
+
+        $destinations = Destination::with('country')->get()->keyBy('id');
+
         return view('livewire.routes.index',[
-            'routes'=>   $this->routes
+            'routes'=> $routes,
+            'destinationsById'=> $destinations,
         ]);
     }
 }

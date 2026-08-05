@@ -202,6 +202,14 @@ class Create extends Component
         $this->horse_models = HorseModel::where('horse_make_id', $make)->get();
         }
     }
+    public function updatedHorseModelId($modelId)
+    {
+        if ($model = HorseModel::find($modelId)) {
+            foreach (array_keys(config('horse_mechanical_fields')) as $field) {
+                $this->$field = $model->$field;
+            }
+        }
+    }
     public function store(){
         $horse = new Horse;
         $horse->fleet_number = $this->fleet_number;

@@ -27,6 +27,9 @@ class Route extends Model implements Auditable
     public function compliances(){
         return $this->hasMany('App\Models\Compliance');
     }
+    public function fuel_currency(){
+        return $this->belongsTo('App\Models\Currency', 'fuel_currency_id');
+    }
 
     protected $fillable=[
         'user_id',
@@ -39,5 +42,43 @@ class Route extends Model implements Auditable
         'status',
         'distance',
         'expiry_date',
+        'fuel_consumption_rate',
+        'fuel_price_per_litre',
+        'fuel_currency_id',
     ];
+
+    /**
+     * Estimated fuel cost for the full route distance, using the standard
+     * freight costing formula: (distance / 100) * consumption rate (L/100km) * price per litre.
+     */
+    public function getFuelCostAttribute()
+    {
+        if (!$this->distance || !$this->fuel_consumption_rate || !$this->fuel_price_per_litre) {
+            return null;
+        }
+
+        return round(((float) $this->distance / 100) * (float) $this->fuel_consumption_rate * (float) $this->fuel_price_per_litre, 2);
+    }
+
+    // Assumes route_expenses share a common currency; amounts are not cross-currency converted.
+    public function getEstimatedExpenseTotalAttribute()
+    {
+        return $this->route_expenses->sum(function ($expense) {
+            return $expense->exchange_amount ?: $expense->amount;
+        });
+    }
+
+    /**
+     * Cost per kilometre (CPK) - the standard freight/logistics KPI for comparing route economics.
+     */
+    public function getCostPerKmAttribute()
+    {
+        $distance = (float) $this->distance;
+
+        if ($distance <= 0) {
+            return null;
+        }
+
+        return round($this->estimated_expense_total / $distance, 2);
+    }
 }

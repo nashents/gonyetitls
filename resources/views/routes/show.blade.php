@@ -49,16 +49,3 @@
 
 @endsection
 
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#routesTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#tripsTable').DataTable();
-    } );
-    </script>
-@endsection
-

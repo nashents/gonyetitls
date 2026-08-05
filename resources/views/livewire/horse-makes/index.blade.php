@@ -45,6 +45,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="#" data-toggle="modal" data-target="#horse_makeEditModal" wire:click="edit({{$horse_make->id}})" ><i class="fa fa-edit color-success"></i> Edit Make</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#horse_modelEditModal" wire:click="editModel({{$horse_model->id}})" ><i class="fa fa-edit color-success"></i> Edit Model</a></li>
+                                                <li><a href="{{ route('horse_models.edit', $horse_model->id) }}"><i class="fa fa-wrench color-success"></i> Edit Mechanical Details</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#horse_makeDeleteModal{{ $horse_make->id }}" ><i class="fa fa-trash color-danger"></i>Delete Make</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#horse_modelDeleteModal{{ $horse_model->id }}" ><i class="fa fa-trash color-danger"></i>Delete Model</a></li>
                                             </ul>

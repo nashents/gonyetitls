@@ -41,6 +41,11 @@ class TransporterController extends Controller
         return view('transporters.reports');
     }
 
+    public function profitLoss()
+    {
+        return view('transporters.profit_loss.index');
+    }
+
     /**
      * Show the form for creating a new resource.
      *

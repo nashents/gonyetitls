@@ -43,13 +43,16 @@
                                 <tbody>
                                     @forelse ($route_expenses as $route_expense)
                                   <tr>
-                                    <td>{{$route_expense->expense ? $route_expense->expense->name : ""}}</td>
+                                    <td>{{$route_expense->expense ? $route_expense->expense->name : ""}} @if ($route_expense->source == 'fuel') <span class="badge bg-info" title="Auto-generated from the route's fuel fields">Auto</span> @endif</td>
                                     <td>{{$route_expense->category}}</td>
                                     <td>{{$route_expense->payment_method ? $route_expense->currency->name : ""}}</td>
                                     <td>{{$route_expense->currency ? $route_expense->currency->name : ""}}</td>
                                     <td>{{number_format($route_expense->amount ? $route_expense->amount : 0,2)}}</td>
                                     <td><span class="badge bg-{{$route_expense->status == 1 ? "success" : "danger"}}">{{$route_expense->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
+                                        @if ($route_expense->source == 'fuel')
+                                            <small class="text-muted">Edit via Route</small>
+                                        @else
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fa fa-bars"></i>
@@ -60,7 +63,8 @@
                                                 <li><a href="#"  wire:click="removeExpense({{$route_expense->id}})" ><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                             </ul>
                                         </div>
-                                    
+                                        @endif
+
                                 </td>
                                   </tr>
                                   @empty

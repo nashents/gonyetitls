@@ -412,6 +412,8 @@ Route::get('horses/{selectedHorse?}/{from?}/{to?}/profit-loss/preview/','HorseCo
 Route::get('horses/{selectedHorse?}/{from?}/{to?}/profit-loss/print/','HorseController@profitLossPrint')->name('horses.statement.print');
 Route::get('horses/{selectedHorse?}/{from?}/{to?}/profit-loss/pdf/','HorseController@profitLossPdf')->name('horses.statement.pdf');
 
+Route::get('transporters/profit-and-loss','TransporterController@profitLoss')->name('transporters.statement.index');
+
 Route::get('reports/financial-statements','ReportController@index')->name('reports.index');
 Route::get('reports/income-statement','ReportController@incomeStatement')->name('reports.income_statement');
 Route::get('reports/income-statement/pdf','ReportController@incomeStatementPdf')->name('reports.income_statement.pdf');

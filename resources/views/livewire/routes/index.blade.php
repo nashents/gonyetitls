@@ -15,6 +15,11 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                            <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search routes by name or rank...">
+                                </div>
+                            </div>
 
                             <table id="routesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
@@ -22,13 +27,19 @@
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">
-                                        From 
+                                        From
                                         <hr style="margin-top:2px; margin-bottom:2px">
                                         To
                                     </th>
                                     <th class="th-sm">Expenses
                                     </th>
                                     <th class="th-sm">Narration
+                                    </th>
+                                    <th class="th-sm" title="Estimated fuel cost for the full route, using distance x consumption rate x fuel price">Est. Fuel Cost
+                                    </th>
+                                    <th class="th-sm" title="Sum of all preset route expenses, including fuel">Est. Total Cost
+                                    </th>
+                                    <th class="th-sm" title="Cost per Kilometre - standard freight/logistics costing KPI (Est. Total Cost / Distance)">Cost/Km (CPK)
                                     </th>
                                     <th class="th-sm">Assessment Expires
                                     </th>
@@ -41,45 +52,62 @@
                                 @if ($routes->count()>0)
                                 <tbody>
                                     @foreach ($routes as $route)
+                                    @php
+                                        $from = $destinationsById->get($route->from);
+                                        $to = $destinationsById->get($route->to);
+                                        $expiry = $route->expiry_date ? \Carbon\Carbon::parse($route->expiry_date) : null;
+                                    @endphp
                                   <tr>
                                     <td>{{ucfirst($route->name)}}</td>
-                                    @php
-                                        $from = App\Models\Destination::find($route->from);
-                                        $to = App\Models\Destination::find($route->to);
-                                        $route_expenses = App\Models\RouteExpense::where('route_id',$route->id)->get()
-                                    @endphp
                                     <td>
                                         @if (isset($from))
                                             {{$from->country ? $from->country->name : ""}} {{$from->city}}
                                         @endif
-                                        <hr style="margin-top:5px; margin-bottom:5px">  
+                                        <hr style="margin-top:5px; margin-bottom:5px">
                                         @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{$to->city}}        
-                                        @endif  
+                                            {{$to->country ? $to->country->name : ""}} {{$to->city}}
+                                        @endif
                                     </td>
                                     <td>
-                                        @if ($route_expenses)
-                                            @foreach ($route_expenses as $route_expense)
-                                                {{$route_expense->expense ? $route_expense->expense->name : ""}}@if (!$loop->last), @endif
-                                            @endforeach
-                                        @endif
+                                        @foreach ($route->route_expenses as $route_expense)
+                                            {{$route_expense->expense ? $route_expense->expense->name : ""}}@if ($route_expense->source == 'fuel') <span class="badge bg-info">Auto</span>@endif @if (!$loop->last), @endif
+                                        @endforeach
                                     </td>
                                     <td>
                                         <strong>Distance:</strong> {{$route->distance ? $route->distance."Kms" : ""}} <br>
                                         <strong>Tollgates:</strong> {{$route->tollgates}} <br>
                                         <strong>Rank:</strong> {{$route->rank}} <br>
                                         <strong>Borders:</strong>
-                                          
+
                                                 @foreach ($route->borders as $border)
                                                     {{$border->name}} @if (!$loop->last), @endif
                                                 @endforeach
-                                        
+
                                     </td>
                                     <td>
-                                        @if ($route->expiry_date >= now()->toDateTimeString())
-                                        <span class="badge bg-success">{{$route->expiry_date}}</span>
+                                        @if (!is_null($route->fuel_cost))
+                                            {{number_format($route->fuel_cost,2)}} {{$route->fuel_currency->name ?? ""}}
                                         @else
-                                        <span class="badge bg-danger">{{$route->expiry_date}}</span>        
+                                            <span class="text-muted">Not set</span>
+                                        @endif
+                                    </td>
+                                    <td>{{number_format($route->estimated_expense_total,2)}}</td>
+                                    <td>
+                                        @if (!is_null($route->cost_per_km))
+                                            {{number_format($route->cost_per_km,2)}}
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if (!$expiry)
+                                            <span class="badge bg-secondary">Not set</span>
+                                        @elseif ($expiry->isPast())
+                                            <span class="badge bg-danger">{{$route->expiry_date}}</span>
+                                        @elseif ($expiry->lessThanOrEqualTo(now()->addDays(30)))
+                                            <span class="badge bg-warning">{{$route->expiry_date}} (Expiring Soon)</span>
+                                        @else
+                                            <span class="badge bg-success">{{$route->expiry_date}}</span>
                                         @endif
                                     </td>
                                     <td><span class="badge bg-{{$route->status == 1 ? "success" : "danger"}}">{{$route->status == 1 ? "Active" : "Inactive"}}</span></td>
@@ -104,6 +132,7 @@
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                                {{ $routes->links() }}
 
                             <!-- /.col-md-12 -->
                         </div>
@@ -173,6 +202,40 @@
                                 @error('tollgates') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Fuel Consumption Rate (L/100km)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_rate" placeholder="e.g. 35"/>
+                                @error('fuel_consumption_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Fuel Price per Litre</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_price_per_litre" placeholder="Enter current fuel price"/>
+                                @error('fuel_price_per_litre') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Fuel Currency</label>
+                                <select wire:model.debounce.300ms="fuel_currency_id" class="form-control" >
+                                    <option value="">Select Currency</option>
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('fuel_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if ($distance && $fuel_consumption_rate && $fuel_price_per_litre)
+                        <div class="col-md-12">
+                            <small class="text-muted">Estimated Fuel Cost: {{ number_format(((float)$distance/100)*(float)$fuel_consumption_rate*(float)$fuel_price_per_litre,2) }} — this is auto-saved as a preset "Fuel" expense on the route.</small>
+                        </div>
+                        @endif
                     </div>
 
                     <div class="row">
@@ -325,6 +388,40 @@
                                 @error('tollgates') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Fuel Consumption Rate (L/100km)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_rate" placeholder="e.g. 35"/>
+                                @error('fuel_consumption_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Fuel Price per Litre</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_price_per_litre" placeholder="Enter current fuel price"/>
+                                @error('fuel_price_per_litre') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Fuel Currency</label>
+                                <select wire:model.debounce.300ms="fuel_currency_id" class="form-control" >
+                                    <option value="">Select Currency</option>
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('fuel_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if ($distance && $fuel_consumption_rate && $fuel_price_per_litre)
+                        <div class="col-md-12">
+                            <small class="text-muted">Estimated Fuel Cost: {{ number_format(((float)$distance/100)*(float)$fuel_consumption_rate*(float)$fuel_price_per_litre,2) }} — this is auto-saved as a preset "Fuel" expense on the route.</small>
+                        </div>
+                        @endif
                     </div>
 
                     <div class="row">

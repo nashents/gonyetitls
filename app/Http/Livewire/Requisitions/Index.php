@@ -6,13 +6,16 @@ use App\Exports\RequisitionExport;
 use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
 use App\Models\Allowance;
+use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Currency;
 use App\Models\Department;
 use App\Models\Document;
+use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\ExchangeRate;
 use App\Models\Expense;
+use App\Models\Horse;
 use App\Models\Notification;
 use App\Models\PaymentMethod;
 use App\Models\Product;
@@ -20,8 +23,11 @@ use App\Models\Purchase;
 use App\Models\Requisition;
 use App\Models\RequisitionItem;
 use App\Models\Tax;
+use App\Models\Trailer;
+use App\Models\Transporter;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -57,8 +63,23 @@ class Index extends Component
     public $selectedAccount;
     public $requisition_for = "Other";
     public $requisition_type;
-   
-    
+
+    public $attach_to;
+    public $assets;
+    public $asset_id;
+    public $transporters;
+    public $transporter_id;
+    public $horses;
+    public $horse_id;
+    public $trailers;
+    public $trailer_id;
+    public $vehicles;
+    public $vehicle_id;
+    public $drivers;
+    public $driver_id;
+    public $attached_employee_id;
+
+
     public $trips;
     public $selectedTrip;
     public $purchases;
@@ -553,6 +574,13 @@ class Index extends Component
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
 
+        $this->assets = Asset::with('product')->get()->sortBy('product.name');
+        $this->transporters = Transporter::orderBy('name','asc')->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->drivers = Driver::all();
+
     }
 
     public function updated($value){
@@ -710,6 +738,40 @@ class Index extends Component
         }
     }
 
+    private function applyAttachTo($requisition){
+
+        $requisition->attach_to = $this->attach_to;
+        $requisition->asset_id = Null;
+        $requisition->driver_id = Null;
+        $requisition->horse_id = Null;
+        $requisition->trailer_id = Null;
+        $requisition->transporter_id = Null;
+        $requisition->vehicle_id = Null;
+        $requisition->attached_employee_id = Null;
+
+        if ($this->attach_to == "Asset") {
+            $requisition->asset_id = $this->asset_id;
+        }
+        elseif ($this->attach_to == "Driver") {
+            $requisition->driver_id = $this->driver_id;
+        }
+        elseif ($this->attach_to == "Horse") {
+            $requisition->horse_id = $this->horse_id;
+        }
+        elseif ($this->attach_to == "Trailer") {
+            $requisition->trailer_id = $this->trailer_id;
+        }
+        elseif ($this->attach_to == "Transporter") {
+            $requisition->transporter_id = $this->transporter_id;
+        }
+        elseif ($this->attach_to == "Vehicle") {
+            $requisition->vehicle_id = $this->vehicle_id;
+        }
+        elseif ($this->attach_to == "Employee") {
+            $requisition->attached_employee_id = $this->attached_employee_id;
+        }
+    }
+
     private function storeRequisition(){
 
         if (blank($this->requisition_type) || blank($this->department_id)) {
@@ -733,6 +795,7 @@ class Index extends Component
         $requisition->subject = $this->subject;
         $requisition->status = "Unpaid";
         $requisition->currency_id = $this->selectedRequisitionCurrency ?: Null;
+        $this->applyAttachTo($requisition);
         $requisition->save();
 
         $items = [];
@@ -1040,6 +1103,14 @@ class Index extends Component
         $this->subject = $requisition->subject;
         $this->requisition_id = $requisition->id;
         $this->requisition_items = $requisition->requisition_items;
+        $this->attach_to = $requisition->attach_to;
+        $this->asset_id = $requisition->asset_id;
+        $this->driver_id = $requisition->driver_id;
+        $this->horse_id = $requisition->horse_id;
+        $this->trailer_id = $requisition->trailer_id;
+        $this->transporter_id = $requisition->transporter_id;
+        $this->vehicle_id = $requisition->vehicle_id;
+        $this->attached_employee_id = $requisition->attached_employee_id;
 
         if (in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking'])) {
 
@@ -1262,6 +1333,7 @@ class Index extends Component
         if ($this->requisition_for == 'Other') {
             $requisition->currency_id = $this->selectedRequisitionCurrency;
         }
+        $this->applyAttachTo($requisition);
         $requisition->update();
 
         $items = [];

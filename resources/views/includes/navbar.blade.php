@@ -127,8 +127,9 @@
                                         <li><a href="{{ route('drivers.performance') }}"><i class="fa fa-plus-square-o"></i>Drivers</a></li>
                                         <li><a href="{{ route('horses.performance') }}"><i class="fa fa-plus-square-o"></i>Horses</a></li>
 
-                                        <li><a href="#"><strong>Horses</strong></a></li>
-                                        <li><a href="{{ route('horses.statement.index') }}"><i class="fa fa-plus-square-o"></i>P &amp; L Statement</a></li>
+                                        <li><a href="#"><strong>Profit &amp; Loss</strong></a></li>
+                                        <li><a href="{{ route('horses.statement.index') }}"><i class="fa fa-plus-square-o"></i>Horses</a></li>
+                                        <li><a href="{{ route('transporters.statement.index') }}"><i class="fa fa-plus-square-o"></i>Transporters</a></li>
                                     @endif
                                 @endif
                             </ul>

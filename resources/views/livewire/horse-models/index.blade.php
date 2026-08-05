@@ -37,6 +37,7 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="#" data-toggle="modal" data-target="#horse_modelEditModal" wire:click="edit({{$horse_model->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                <li><a href="{{ route('horse_models.edit', $horse_model->id) }}"><i class="fa fa-wrench color-success"></i> Edit Mechanical Details</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#horse_modelDeleteModal{{ $horse_model->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>

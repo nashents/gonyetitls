@@ -122,6 +122,14 @@ class Rejected extends Component
                 $bill->bill_number = $this->billNumber();
                 $bill->requisition_id = $requisition->id;
                 $bill->category = "Requisition";
+                $bill->bill_for = $requisition->attach_to;
+                $bill->asset_id = $requisition->asset_id;
+                $bill->driver_id = $requisition->driver_id;
+                $bill->horse_id = $requisition->horse_id;
+                $bill->trailer_id = $requisition->trailer_id;
+                $bill->transporter_id = $requisition->transporter_id;
+                $bill->vehicle_id = $requisition->vehicle_id;
+                $bill->employee_id = $requisition->attached_employee_id;
                 $bill->bill_date = $requisition->date;
                 $bill->notes = $requisition->description;
                 $account_type = Account::find($requisition->account_id)->account_type;

@@ -118,8 +118,15 @@ class Expenses extends Component
     }
 
      public function edit($id){
-        $this->route_expense_id = $id;
         $route_expense = RouteExpense::find($id);
+        if ($route_expense && $route_expense->source == 'fuel') {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"This is an auto-generated Fuel estimate. Edit the route's fuel fields instead."
+            ]);
+            return;
+        }
+        $this->route_expense_id = $id;
         $this->currency_id = $route_expense->currency_id;
         $this->expense_id = $route_expense->expense_id;
         $this->amount = $route_expense->amount;
@@ -153,9 +160,17 @@ class Expenses extends Component
     }
 
     public function removeExpense($id){
+        $route_expense = RouteExpense::find($id);
+        if ($route_expense && $route_expense->source == 'fuel') {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"This is an auto-generated Fuel estimate. Clear the route's fuel fields instead to remove it."
+            ]);
+            return;
+        }
         $this->route_expense_id = $id;
         $this->dispatchBrowserEvent('show-expenseDeleteModal');
-      
+
     }
     public function delete(){
         $route_expense = RouteExpense::find($this->route_expense_id);

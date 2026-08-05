@@ -646,8 +646,116 @@
                                             @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    
+
                                 </div>
+                                @if ($requisition_type == "payment_requisition" && $requisition_for == "Other")
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group" >
+                                                <label for="name">Attach To?</label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Asset" name="optradio_attach">Asset
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Driver" name="optradio_attach">Driver
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Horse" name="optradio_attach">Horse
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Trailer" name="optradio_attach">Trailer
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Transporter" name="optradio_attach">Transporter
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Vehicle" name="optradio_attach">Vehicle
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Employee" name="optradio_attach">Employee
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if ($attach_to == "Transporter")
+                                        <div class="form-group">
+                                            <label for="country">Transporter(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="transporter_id" class="form-control" required>
+                                                <option value="">Select Transporter</option>
+                                                @foreach ($transporters as $transporter)
+                                                    <option value="{{$transporter->id}}">{{$transporter->name}} </option>
+                                                @endforeach
+                                            </select>
+                                            @error('transporter_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Vehicle")
+                                        <div class="form-group">
+                                            <label for="country">Vehicle(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="vehicle_id" class="form-control" required>
+                                                <option value="">Select Vehicle</option>
+                                                @foreach ($vehicles as $vehicle)
+                                                <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Asset")
+                                        <div class="form-group">
+                                            <label for="country">Asset(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="asset_id" class="form-control" required>
+                                                <option value="">Select Asset</option>
+                                                @foreach ($assets as $asset)
+                                                <option value="{{$asset->id}}"> {{$asset->product->brand ? $asset->product->brand->name : ""}} {{$asset->product ? $asset->product->name : ""}} {{$asset->product ? $asset->product->identification_number : ""}} {{$asset->serial_number ? "SN: ".$asset->serial_number : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('asset_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Horse")
+                                        <div class="form-group">
+                                            <label for="country">Horse(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="horse_id" class="form-control" required>
+                                                <option value="">Select Horse</option>
+                                                @foreach ($horses as $horse)
+                                                <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Driver")
+                                        <div class="form-group">
+                                            <label for="country">Driver(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="driver_id" class="form-control" required>
+                                                <option value="">Select Driver</option>
+                                                @foreach ($drivers as $driver)
+                                                    <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Trailer")
+                                        <div class="form-group">
+                                            <label for="country">Trailer(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="trailer_id" class="form-control" required>
+                                                <option value="">Select Trailer</option>
+                                                @foreach ($trailers as $trailer)
+                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Employee")
+                                        <div class="form-group">
+                                            <label for="country">Employee(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="attached_employee_id" class="form-control" required>
+                                                <option value="">Select Employee</option>
+                                                @foreach ($employees as $employee)
+                                                    <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('attached_employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @endif
+                                @endif
                                 <div class="row">
                                     @if (in_array($requisition_for,['Trip','Booking','Purchase']))
                                         <div class="col-md-6">
@@ -1255,6 +1363,114 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if ($requisition_type == "payment_requisition" && $requisition_for == "Other")
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group" >
+                                                <label for="name">Attach To?</label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Asset" name="optradio_attach_edit">Asset
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Driver" name="optradio_attach_edit">Driver
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Horse" name="optradio_attach_edit">Horse
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Trailer" name="optradio_attach_edit">Trailer
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Transporter" name="optradio_attach_edit">Transporter
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Vehicle" name="optradio_attach_edit">Vehicle
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="attach_to" value="Employee" name="optradio_attach_edit">Employee
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if ($attach_to == "Transporter")
+                                        <div class="form-group">
+                                            <label for="country">Transporter(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="transporter_id" class="form-control" required>
+                                                <option value="">Select Transporter</option>
+                                                @foreach ($transporters as $transporter)
+                                                    <option value="{{$transporter->id}}">{{$transporter->name}} </option>
+                                                @endforeach
+                                            </select>
+                                            @error('transporter_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Vehicle")
+                                        <div class="form-group">
+                                            <label for="country">Vehicle(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="vehicle_id" class="form-control" required>
+                                                <option value="">Select Vehicle</option>
+                                                @foreach ($vehicles as $vehicle)
+                                                <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Asset")
+                                        <div class="form-group">
+                                            <label for="country">Asset(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="asset_id" class="form-control" required>
+                                                <option value="">Select Asset</option>
+                                                @foreach ($assets as $asset)
+                                                <option value="{{$asset->id}}"> {{$asset->product->brand ? $asset->product->brand->name : ""}} {{$asset->product ? $asset->product->name : ""}} {{$asset->product ? $asset->product->identification_number : ""}} {{$asset->serial_number ? "SN: ".$asset->serial_number : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('asset_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Horse")
+                                        <div class="form-group">
+                                            <label for="country">Horse(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="horse_id" class="form-control" required>
+                                                <option value="">Select Horse</option>
+                                                @foreach ($horses as $horse)
+                                                <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Driver")
+                                        <div class="form-group">
+                                            <label for="country">Driver(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="driver_id" class="form-control" required>
+                                                <option value="">Select Driver</option>
+                                                @foreach ($drivers as $driver)
+                                                    <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Trailer")
+                                        <div class="form-group">
+                                            <label for="country">Trailer(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="trailer_id" class="form-control" required>
+                                                <option value="">Select Trailer</option>
+                                                @foreach ($trailers as $trailer)
+                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($attach_to == "Employee")
+                                        <div class="form-group">
+                                            <label for="country">Employee(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="attached_employee_id" class="form-control" required>
+                                                <option value="">Select Employee</option>
+                                                @foreach ($employees as $employee)
+                                                    <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('attached_employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @endif
+                                @endif
                                 <div class="row">
                                      @if (in_array($requisition_for,['Trip','Booking','Purchase']))
                                         <div class="col-md-6">

@@ -58,7 +58,7 @@ class HorseModelController extends Controller
      */
     public function edit(HorseModel $horseModel)
     {
-        //
+        return view('horse_models.edit', compact('horseModel'));
     }
 
     /**

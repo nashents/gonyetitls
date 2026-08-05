@@ -48,4 +48,25 @@ class Requisition extends Model implements Auditable
     public function account(){
         return $this->belongsTo('App\Models\Account');
     }
+    public function asset(){
+        return $this->belongsTo('App\Models\Asset');
+    }
+    public function driver(){
+        return $this->belongsTo('App\Models\Driver');
+    }
+    public function horse(){
+        return $this->belongsTo('App\Models\Horse');
+    }
+    public function trailer(){
+        return $this->belongsTo('App\Models\Trailer');
+    }
+    public function transporter(){
+        return $this->belongsTo('App\Models\Transporter');
+    }
+    public function vehicle(){
+        return $this->belongsTo('App\Models\Vehicle');
+    }
+    public function attached_employee(){
+        return $this->belongsTo('App\Models\Employee', 'attached_employee_id');
+    }
 }
