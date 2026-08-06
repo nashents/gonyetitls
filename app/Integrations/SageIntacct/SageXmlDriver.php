@@ -170,6 +170,25 @@ class SageXmlDriver implements SageDriver
         return $this->send($this->buildSalesTransaction($header, $lines), 'create', 'SOTRANSACTION', $header['entityid'] ?? null);
     }
 
+    /**
+     * Append line items to an existing sales transaction (e.g. add dispatch items
+     * to a Job Card). $key = the document RECORDNO. Uses update_sotransaction with
+     * <updatesotransitems> so existing lines are kept.
+     */
+    public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null): array
+    {
+        $items = '';
+        foreach ($lines as $l) {
+            $items .= $this->soLine($l);
+        }
+
+        $fn = '<update_sotransaction key="' . htmlspecialchars($key, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '">'
+            . '<updatesotransitems>' . $items . '</updatesotransitems>'
+            . '</update_sotransaction>';
+
+        return $this->send($fn, 'update', 'SOTRANSACTION', $entityId);
+    }
+
     // ── READ (existence checks / pull) ───────────────────────────
 
     /**
@@ -265,6 +284,10 @@ class SageXmlDriver implements SageDriver
         $fields .= $this->elIf('ENDDATE', $data['enddate'] ?? null);
         $fields .= $this->elIf('CURRENCY', $data['currency'] ?? null);
         $fields .= $this->elIf('STATUS', $data['status'] ?? null);
+        // Project workflow status (In Progress / Completed) + project manager
+        // (a Sage EMPLOYEE — the trip's driver).
+        $fields .= $this->elIf('PROJECTSTATUS', $data['projectstatus'] ?? null);
+        $fields .= $this->elIf('MANAGERID', $data['managerid'] ?? null);
 
         return '<PROJECT>' . $fields . '</PROJECT>';
     }
@@ -374,20 +397,27 @@ class SageXmlDriver implements SageDriver
      * (ship date), currency, exchratetype, customfields, sotransitems. Line
      * sequence: itemid, quantity, unit, price, locationid, departmentid, memo.
      */
+    /** A single <sotransitem> in schema order. */
+    protected function soLine(array $l): string
+    {
+        $line  = $this->el('itemid', $l['itemid']);
+        $line .= $this->el('quantity', $l['quantity'] ?? 1);
+        $line .= $this->elIf('unit', $l['unit'] ?? null);
+        $line .= $this->elIf('price', $l['price'] ?? null);
+        // Close-off / reversal convert a job-card line: reference it by key.
+        $line .= $this->elIf('sourcelinekey', $l['sourcelinekey'] ?? null);
+        $line .= $this->elIf('locationid', $l['locationid'] ?? null);
+        $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
+        $line .= $this->elIf('memo', $l['memo'] ?? null);
+
+        return '<sotransitem>' . $line . '</sotransitem>';
+    }
+
     protected function buildSalesTransaction(array $h, array $lines): string
     {
         $items = '';
         foreach ($lines as $l) {
-            $line  = $this->el('itemid', $l['itemid']);
-            $line .= $this->el('quantity', $l['quantity'] ?? 1);
-            $line .= $this->elIf('unit', $l['unit'] ?? null);
-            $line .= $this->elIf('price', $l['price'] ?? null);
-            // Close-off / reversal convert a job-card line: reference it by key.
-            $line .= $this->elIf('sourcelinekey', $l['sourcelinekey'] ?? null);
-            $line .= $this->elIf('locationid', $l['locationid'] ?? null);
-            $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
-            $line .= $this->elIf('memo', $l['memo'] ?? null);
-            $items .= '<sotransitem>' . $line . '</sotransitem>';
+            $items .= $this->soLine($l);
         }
 
         $hdr  = $this->el('transactiontype', $h['transactiontype']);

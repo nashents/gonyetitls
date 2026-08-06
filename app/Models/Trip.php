@@ -119,6 +119,27 @@ class Trip extends Model implements Auditable
         return $this->hasMany('App\Models\InvoiceItem');
     }
     /**
+     * Eligible for Sage project sync: authorized (approved), offloaded
+     * (trip_status in the configured list) AND marked completed (status == 1, the
+     * final lock set via markCompleted). Only then is the trip frozen — no further
+     * changes after it is pushed to Sage. Mirrors SageProjectService::syncTrip.
+     */
+    public function getIsSageSyncableAttribute(): bool
+    {
+        if (strcasecmp((string) $this->authorization, 'approved') !== 0) {
+            return false;
+        }
+
+        // Marked as completed (status = 1) — no more edits after this.
+        if ((int) $this->status !== 1) {
+            return false;
+        }
+
+        $allowed = array_map('strtolower', (array) config('sageintacct.trip.syncable_statuses', ['Offloaded']));
+
+        return in_array(strtolower((string) $this->trip_status), $allowed, true);
+    }
+    /**
      * Invoiced when the trip has its own invoice line OR belongs to a transport
      * order that has been invoiced (the single-line "Transport Order" invoice).
      */

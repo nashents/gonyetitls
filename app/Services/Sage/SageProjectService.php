@@ -104,6 +104,18 @@ class SageProjectService
      */
     public function syncTrip(Trip $trip): array
     {
+        // Only offloaded (completed) trips that have been authorized are synced.
+        if (! $this->isSyncable($trip)) {
+            return [
+                'success' => false,
+                'skipped' => true,
+                'status'  => 'skipped',
+                'entity'  => 'trip',
+                'model'   => $trip,
+                'error'   => 'Trip must be authorized, offloaded and marked as Completed before it can sync to Sage.',
+            ];
+        }
+
         if (! $trip->horse) {
             return $this->validationError($trip, 'Trip has no horse, so it cannot be linked to a Sage project.');
         }
@@ -117,6 +129,13 @@ class SageProjectService
         $customer       = $trip->customer;
         $customerSageId = $customer ? ($customer->sage_intacct_id ?: $customer->custom_ref) : null;
 
+        // Project manager = the driver's Sage EMPLOYEE (created if it doesn't exist).
+        $managerId = null;
+        if ($trip->driver) {
+            $employee  = (new SageEmployeeService($this->driver, $this->integration))->ensureForDriver($trip->driver);
+            $managerId = $employee['external_id'] ?? null;
+        }
+
         $trailerRegs = $trip->trailers
             ->pluck('registration_number')
             ->filter()
@@ -124,26 +143,71 @@ class SageProjectService
             ->all();
 
         $payload = $this->applyOverrides(
-            SageTripMapper::map($trip, $horse['project_id'], $horse['class_id'], $trailerRegs, $customerSageId)
+            SageTripMapper::map($trip, $horse['project_id'], $horse['class_id'], $trailerRegs, $customerSageId, $managerId)
         );
         if (empty($horse['project_id'])) {
             unset($payload['parentid']);
         }
 
-        $result = $this->syncProject('trip_project', $trip, SageTripMapper::projectId($trip), $payload);
+        // A "Completed" project blocks Purchasing submittal in Sage, so create the
+        // project in the purchasing-allowed status first, raise the requisitions /
+        // dispatch sheet, THEN finalise the project status (e.g. Completed).
+        $finalStatus            = $payload['projectstatus'] ?? null;
+        $inProgress             = (string) config('sageintacct.project.status_in_progress', 'In Progress');
+        $payload['projectstatus'] = $inProgress;
+
+        $result    = $this->syncProject('trip_project', $trip, SageTripMapper::projectId($trip), $payload);
+        $projectId = $result['external_id'] ?? SageTripMapper::projectId($trip);
 
         // After the project is in Sage, sync the trip's expenses as Purchase
-        // Requisitions. Failures are attached but never fail the project sync.
+        // Requisitions / a Dispatch Sheet. Failures are attached but never fail
+        // the project sync.
         if (! empty($result['success'])) {
             $requisitions = (new SageRequisitionService($this->driver, $this->integration))
-                ->syncTripRequisitions($trip, $result['external_id'] ?? null, $horse['class_id'] ?? null);
+                ->syncTripRequisitions($trip, $projectId, $horse['class_id'] ?? null);
             $result['requisitions'] = $requisitions['requisitions'] ?? [];
+
+            // Raise a "PR - Diesel" for each approved fuel order attached to the
+            // trip (supplier = the fuelling station/container), while the project
+            // is still purchasing-allowed.
+            $fuelResults = [];
+            foreach ($trip->fuels()->where('authorization', 'approved')->get() as $fuel) {
+                $fuelResults[] = (new SageFuelDieselService($this->driver, $this->integration))->syncFuel($fuel);
+            }
+            $result['fuel'] = $fuelResults;
+
+            // Finalise the project status now that the purchasing docs are raised.
+            if ($finalStatus && strcasecmp($finalStatus, $inProgress) !== 0) {
+                $this->driver->updateProject($projectId, ['projectstatus' => $finalStatus]);
+                $result['project_finalised_status'] = $finalStatus;
+            }
         }
 
         return $result;
     }
 
     // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Only authorized, offloaded, AND marked-completed (status == 1) trips sync
+     * to Sage — completion is the final lock, so nothing changes after the push.
+     * The offloaded statuses are configurable (sageintacct.trip.syncable_statuses).
+     */
+    protected function isSyncable(Trip $trip): bool
+    {
+        if (strcasecmp((string) $trip->authorization, 'approved') !== 0) {
+            return false;
+        }
+
+        // Marked as completed (status = 1) — no more edits after this.
+        if ((int) $trip->status !== 1) {
+            return false;
+        }
+
+        $allowed = array_map('strtolower', (array) config('sageintacct.trip.syncable_statuses', ['Offloaded']));
+
+        return in_array(strtolower((string) $trip->trip_status), $allowed, true);
+    }
 
     /** Update if already linked, else create (fallback to update on duplicate). */
     protected function syncProject(string $entityType, Model $model, string $projectId, array $payload): array

@@ -95,7 +95,7 @@ class Index extends Component
     public $description;
     public $selectedEmployee;
     public $requested_by_id;
-    public $all_products;
+    public $all_products = false;
     public $date;
     public $stores;
     public $selectedStore;
@@ -218,24 +218,35 @@ class Index extends Component
 
     public function updatedSearchProduct($value)
     {
-        $relation = $this->department === 'tyre' 
+        $relation = $this->department === 'tyre'
             ? 'tyres'
             : ($this->department === 'asset'
                 ? 'assets'
                 : 'inventories');
 
-        $relationFields = [
-            'tyre' => 'tyres:id,product_id,tyre_number,serial_number,balance,weight,total,currency_id,status',
-            'asset' => 'assets:id,product_id,asset_number,serial_number,balance,weight,total,currency_id,status',
-            'inventory' => 'inventories:id,product_id,inventory_number,serial_number,balance,weight,total,currency_id,status',
-        ];
+        $stockCheck = function ($q) {
+            $q->where('status', 1)->where('balance', '>', 0);
+        };
 
         // Base query
-        $query = Product::with('brand:id,name', $relationFields[$this->department])
-            ->where('department', $this->department)
-            ->whereHas($relation, function ($q) {
-                $q->where('status', 1);
-                $q->where('balance', '>', 0);
+        $query = Product::with([
+                'brand:id,name',
+                'inventories:id,product_id,inventory_number,serial_number,balance,weight,total,currency_id,status,store_id',
+                'tyres:id,product_id,tyre_number,serial_number,balance,weight,total,currency_id,status,store_id',
+                'assets:id,product_id,asset_number,serial_number,balance,weight,total,currency_id,status,store_id',
+            ])
+            ->when(!$this->all_products, function ($q) {
+                $q->where('department', $this->department);
+            })
+            ->when($this->all_products, function ($q) use ($stockCheck) {
+                // Extended search: match stock in ANY department's table, not just the current one.
+                $q->where(function ($qq) use ($stockCheck) {
+                    $qq->whereHas('inventories', $stockCheck)
+                        ->orWhereHas('tyres', $stockCheck)
+                        ->orWhereHas('assets', $stockCheck);
+                });
+            }, function ($q) use ($relation, $stockCheck) {
+                $q->whereHas($relation, $stockCheck);
             });
 
         // If search term exists
@@ -251,6 +262,15 @@ class Index extends Component
         }
 
         $this->products = $query->orderBy('name', 'asc')->get();
+    }
+
+    public function updatedAllProducts()
+    {
+        if (filled($this->searchProduct)) {
+            $this->updatedSearchProduct($this->searchProduct);
+        } else {
+            $this->loadProducts($this->selectedStore);
+        }
     }
 
    
@@ -315,21 +335,34 @@ class Index extends Component
             return;
         }
        
-        $this->products = Product::with(['brand', $relation])
+        $this->products = Product::with(['brand', 'inventories', 'tyres', 'assets'])
         ->where('status', 1)
-        ->where('department', $this->department)
+        ->when(!$this->all_products, function ($query) {
+            $query->where('department', $this->department);
+        })
         ->when($this->dispatch_for === 'inventory', function ($query) use ($relation, $store_id) {
-            $query->whereHas($relation, function ($q) use ($store_id) {
+            $stockCheck = function ($q) use ($store_id) {
                 $q->where('status', 1)
                 ->where('balance', '>', 0)
                 ->when($store_id, function ($qq) use ($store_id) {
                     $qq->where('store_id', $store_id);
                 });
+            };
+
+            $query->when($this->all_products, function ($q) use ($stockCheck) {
+                // Extended search: match stock in ANY department's table, not just the current one.
+                $q->where(function ($qq) use ($stockCheck) {
+                    $qq->whereHas('inventories', $stockCheck)
+                        ->orWhereHas('tyres', $stockCheck)
+                        ->orWhereHas('assets', $stockCheck);
+                });
+            }, function ($q) use ($relation, $stockCheck) {
+                $q->whereHas($relation, $stockCheck);
             });
         })
         ->orderBy('name', 'asc')
         ->get();
-       
+
     }
 
     public function mount($department){
@@ -1448,21 +1481,34 @@ class Index extends Component
                 return;
             }
         
-            $this->products = Product::with(['brand', $relation])
+            $this->products = Product::with(['brand', 'inventories', 'tyres', 'assets'])
             ->where('status', 1)
-            ->where('department', $this->department)
+            ->when(!$this->all_products, function ($query) {
+                $query->where('department', $this->department);
+            })
             ->when($this->dispatch_for === 'inventory', function ($query) use ($relation, $store_id) {
-                $query->whereHas($relation, function ($q) use ($store_id) {
+                $stockCheck = function ($q) use ($store_id) {
                     $q->where('status', 1)
                     ->where('balance', '>', 0)
                     ->when($store_id, function ($qq) use ($store_id) {
                         $qq->where('store_id', $store_id);
                     });
+                };
+
+                $query->when($this->all_products, function ($q) use ($stockCheck) {
+                    // Extended search: match stock in ANY department's table, not just the current one.
+                    $q->where(function ($qq) use ($stockCheck) {
+                        $qq->whereHas('inventories', $stockCheck)
+                            ->orWhereHas('tyres', $stockCheck)
+                            ->orWhereHas('assets', $stockCheck);
+                    });
+                }, function ($q) use ($relation, $stockCheck) {
+                    $q->whereHas($relation, $stockCheck);
                 });
             })
             ->orderBy('name', 'asc')
             ->get();
-            
+
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."

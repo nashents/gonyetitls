@@ -144,7 +144,7 @@ class Approved extends Component
             if (isset($this->from) && isset($this->to)) {
                 if (isset($this->search)) {
                     return view('livewire.bookings.approved',[
-                        'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )
+                        'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )
                         ->where('booking_number','like', '%'.$this->search.'%')
                     ->orWhereHas('horse', function ($query) {
                         return $query->where('registration_number', 'like', '%'.$this->search.'%');
@@ -174,7 +174,7 @@ class Approved extends Component
                     ]);
                 }else {
                     return view('livewire.bookings.approved',[
-                        'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )->orderBy('booking_number','desc')->paginate(10),
+                        'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )->orderBy('booking_number','desc')->paginate(10),
                       
                     ]);
                 }
@@ -183,7 +183,7 @@ class Approved extends Component
             elseif (isset($this->search)) {
                
                 return view('livewire.bookings.approved',[
-                    'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
+                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'))
                     ->where('booking_number','like', '%'.$this->search.'%')
                     ->orWhereHas('horse', function ($query) {
@@ -216,7 +216,7 @@ class Approved extends Component
             else {
                
                 return view('livewire.bookings.approved',[
-                    'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
+                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'))->orderBy('booking_number','desc')->paginate(10),
                   
                 ]);
@@ -226,7 +226,7 @@ class Approved extends Component
             if (isset($this->from) && isset($this->to)) {
                 if (isset($this->search)) {
                     return view('livewire.bookings.approved',[
-                        'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )->where('user_id',Auth::user()->id)
+                        'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )->where('user_id',Auth::user()->id)
                         ->where('booking_number','like', '%'.$this->search.'%')
                         ->orWhereHas('horse', function ($query) {
                             return $query->where('registration_number', 'like', '%'.$this->search.'%');
@@ -256,7 +256,7 @@ class Approved extends Component
                     ]);
                 }else{
                     return view('livewire.bookings.approved',[
-                        'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )->where('user_id',Auth::user()->id)->orderBy('booking_number','desc')->paginate(10),
+                        'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereBetween('created_at',[$this->from, $this->to] )->where('user_id',Auth::user()->id)->orderBy('booking_number','desc')->paginate(10),
                       
                     ]);
                 }
@@ -265,7 +265,7 @@ class Approved extends Component
             }
             elseif (isset($this->search)) {
                 return view('livewire.bookings.approved',[
-                    'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
+                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'))->where('user_id',Auth::user()->id)
                     ->where('booking_number','like', '%'.$this->search.'%')
                     ->orWhereHas('horse', function ($query) {
@@ -298,7 +298,7 @@ class Approved extends Component
             else {
                 
                 return view('livewire.bookings.approved',[
-                    'bookings' => Booking::query()->with('ticket','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
+                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'))->where('user_id',Auth::user()->id)->orderBy('booking_number','desc')->paginate(10),
                   
                 ]);

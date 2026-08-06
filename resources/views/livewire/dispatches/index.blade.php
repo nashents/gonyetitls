@@ -445,16 +445,15 @@
                                 <div class="col-md-7">
                                     <div class="form-group">
                                         <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                            <label for="one" class="radio-label">Show all products</label>
+                                            @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
                                         <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/Model/Part#,..." class="form-control" >
                                         <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
                                                 <option value="" disabled>Select Products</option>
                                                 @foreach ($products as $product)
-                                                    <option value="{{$product->id}}"
-                                                        @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
-                                                            disabled 
-                                                        @endif
-                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                      
                                                     @php
                                                         $relation = match ($department) {
                                                             'inventory' => 'inventories',
@@ -472,12 +471,23 @@
                                                                 ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
                                                                 ->sum('balance');
                                                         }
-                                                    @endphp
 
-                                                    @if(!is_null($count))
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        $hasCurrentStock = !is_null($count) && $count > 0;
+                                                        $isForeignDept = $product->department && $product->department !== $department;
+                                                    @endphp
+                                                    <option value="{{$product->id}}"
+                                                        @if((in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) || !$hasCurrentStock)
+                                                            disabled
+                                                        @endif
+                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
                                                     @endif
-                                                     
+                                                    @if($hasCurrentStock)
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
+                                                    @endif
                                                     </option>
                                                 @endforeach
                                         </select>
@@ -599,40 +609,52 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                            <div class="mb-10">
+                                                <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                                <label for="one" class="radio-label">Show all products</label>
+                                                @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            </div>
                                             <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
                                             <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
                                                 <option value="" selected>Select Products</option>
                                                 @foreach ($products as $product)
+                                                @php
+                                                    $relation = match ($department) {
+                                                        'inventory' => 'inventories',
+                                                        'tyre'      => 'tyres',
+                                                        'asset'     => 'assets',
+                                                        default     => null,
+                                                    };
+
+                                                    $count = null;
+
+                                                    if ($relation) {
+                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                            ->where('status', 1)
+                                                            ->where('balance', '>', 0)
+                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                            ->sum('balance');
+                                                    }
+
+                                                    $hasCurrentStock = !is_null($count) && $count > 0;
+                                                    $isForeignDept = $product->department && $product->department !== $department;
+                                                @endphp
                                                 <option value="{{$product->id}}"
-                                                        @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) 
-                                                            disabled 
+                                                        @if((in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) || !$hasCurrentStock)
+                                                            disabled
                                                         @endif
-                                                    > 
-                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                           @php
-                                                        $relation = match ($department) {
-                                                            'inventory' => 'inventories',
-                                                            'tyre'      => 'tyres',
-                                                            'asset'     => 'assets',
-                                                            default     => null,
-                                                        };
-
-                                                        $count = null;
-
-                                                        if ($relation) {
-                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
-                                                                ->where('status', 1)
-                                                                ->where('balance', '>', 0)
-                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                ->sum('balance');
-                                                        }
-                                                    @endphp
-
-                                                    @if(!is_null($count))
+                                                    >
+                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
+                                                    @endif
+                                                    @if($hasCurrentStock)
                                                         {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
                                                  </option>
-                                                @endforeach                                                       
+                                                @endforeach
                                             </select>
                                             @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
@@ -764,32 +786,44 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                            <label for="one" class="radio-label">Show all products</label>
+                                            @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
                                         <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
                                         <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
                                             <option value="" selected>Select Products</option>
                                             @foreach ($products as $product)
-                                                <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                        @php
-                                                        $relation = match ($department) {
-                                                            'inventory' => 'inventories',
-                                                            'tyre'      => 'tyres',
-                                                            'asset'     => 'assets',
-                                                            default     => null,
-                                                        };
+                                                @php
+                                                    $relation = match ($department) {
+                                                        'inventory' => 'inventories',
+                                                        'tyre'      => 'tyres',
+                                                        'asset'     => 'assets',
+                                                        default     => null,
+                                                    };
 
-                                                        $count = null;
+                                                    $count = null;
 
-                                                        if ($relation) {
-                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
-                                                                ->where('status', 1)
-                                                                ->where('balance', '>', 0)
-                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                ->sum('balance');
-                                                        }
-                                                    @endphp
+                                                    if ($relation) {
+                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                            ->where('status', 1)
+                                                            ->where('balance', '>', 0)
+                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                            ->sum('balance');
+                                                    }
 
-                                                    @if(!is_null($count))
+                                                    $hasCurrentStock = !is_null($count) && $count > 0;
+                                                    $isForeignDept = $product->department && $product->department !== $department;
+                                                @endphp
+                                                <option value="{{$product->id}}" @if(!$hasCurrentStock) disabled @endif>  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
+                                                    @endif
+                                                    @if($hasCurrentStock)
                                                         {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
                                                 </option>
                                             @endforeach
@@ -909,32 +943,44 @@
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                                <div class="mb-10">
+                                                    <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                                    <label for="one" class="radio-label">Show all products</label>
+                                                    @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
                                                 <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
                                                 <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
                                                     <option value="" selected>Select Products</option>
                                                     @foreach ($products as $product)
-                                                        <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                                @php
-                                                                    $relation = match ($department) {
-                                                                        'inventory' => 'inventories',
-                                                                        'tyre'      => 'tyres',
-                                                                        'asset'     => 'assets',
-                                                                        default     => null,
-                                                                    };
+                                                        @php
+                                                            $relation = match ($department) {
+                                                                'inventory' => 'inventories',
+                                                                'tyre'      => 'tyres',
+                                                                'asset'     => 'assets',
+                                                                default     => null,
+                                                            };
 
-                                                                    $count = null;
+                                                            $count = null;
 
-                                                                    if ($relation) {
-                                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
-                                                                            ->where('status', 1)
-                                                                            ->where('balance', '>', 0)
-                                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                            ->sum('balance');
-                                                                    }
-                                                                @endphp
+                                                            if ($relation) {
+                                                                $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                                    ->where('status', 1)
+                                                                    ->where('balance', '>', 0)
+                                                                    ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                                    ->sum('balance');
+                                                            }
 
-                                                    @if(!is_null($count))
+                                                            $hasCurrentStock = !is_null($count) && $count > 0;
+                                                            $isForeignDept = $product->department && $product->department !== $department;
+                                                        @endphp
+                                                        <option value="{{$product->id}}" @if(!$hasCurrentStock) disabled @endif>  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
+                                                    @endif
+                                                    @if($hasCurrentStock)
                                                         {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
                                                     </option>
                                                     @endforeach
@@ -1435,16 +1481,15 @@
                                 <div class="col-md-7">
                                     <div class="form-group">
                                         <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                            <label for="one" class="radio-label">Show all products</label>
+                                            @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
                                         <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/Model/Part#,..." class="form-control" >
                                         <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
                                                 <option value="" disabled>Select Products</option>
                                                 @foreach ($products as $product)
-                                                    <option value="{{$product->id}}"
-                                                        @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
-                                                            disabled 
-                                                        @endif
-                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                      
                                                     @php
                                                         $relation = match ($department) {
                                                             'inventory' => 'inventories',
@@ -1462,12 +1507,23 @@
                                                                 ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
                                                                 ->sum('balance');
                                                         }
-                                                    @endphp
 
-                                                    @if(!is_null($count))
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        $hasCurrentStock = !is_null($count) && $count > 0;
+                                                        $isForeignDept = $product->department && $product->department !== $department;
+                                                    @endphp
+                                                    <option value="{{$product->id}}"
+                                                        @if((in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) || !$hasCurrentStock)
+                                                            disabled
+                                                        @endif
+                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
                                                     @endif
-                                                     
+                                                    @if($hasCurrentStock)
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
+                                                    @endif
                                                     </option>
                                                 @endforeach
                                         </select>
@@ -1517,40 +1573,52 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                            <div class="mb-10">
+                                                <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                                <label for="one" class="radio-label">Show all products</label>
+                                                @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            </div>
                                             <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
                                             <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
                                                 <option value="" selected>Select Products</option>
                                                 @foreach ($products as $product)
+                                                @php
+                                                    $relation = match ($department) {
+                                                        'inventory' => 'inventories',
+                                                        'tyre'      => 'tyres',
+                                                        'asset'     => 'assets',
+                                                        default     => null,
+                                                    };
+
+                                                    $count = null;
+
+                                                    if ($relation) {
+                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                            ->where('status', 1)
+                                                            ->where('balance', '>', 0)
+                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                            ->sum('balance');
+                                                    }
+
+                                                    $hasCurrentStock = !is_null($count) && $count > 0;
+                                                    $isForeignDept = $product->department && $product->department !== $department;
+                                                @endphp
                                                 <option value="{{$product->id}}"
-                                                        @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) 
-                                                            disabled 
+                                                        @if((in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) || !$hasCurrentStock)
+                                                            disabled
                                                         @endif
-                                                    > 
-                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                           @php
-                                                        $relation = match ($department) {
-                                                            'inventory' => 'inventories',
-                                                            'tyre'      => 'tyres',
-                                                            'asset'     => 'assets',
-                                                            default     => null,
-                                                        };
-
-                                                        $count = null;
-
-                                                        if ($relation) {
-                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
-                                                                ->where('status', 1)
-                                                                ->where('balance', '>', 0)
-                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                ->sum('balance');
-                                                        }
-                                                    @endphp
-
-                                                    @if(!is_null($count))
+                                                    >
+                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
+                                                    @endif
+                                                    @if($hasCurrentStock)
                                                         {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
                                                  </option>
-                                                @endforeach                                                       
+                                                @endforeach
                                             </select>
                                             @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
@@ -1611,32 +1679,44 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                            <label for="one" class="radio-label">Show all products</label>
+                                            @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
                                         <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
                                         <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
                                             <option value="" selected>Select Products</option>
                                             @foreach ($products as $product)
-                                                <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                        @php
-                                                        $relation = match ($department) {
-                                                            'inventory' => 'inventories',
-                                                            'tyre'      => 'tyres',
-                                                            'asset'     => 'assets',
-                                                            default     => null,
-                                                        };
+                                                @php
+                                                    $relation = match ($department) {
+                                                        'inventory' => 'inventories',
+                                                        'tyre'      => 'tyres',
+                                                        'asset'     => 'assets',
+                                                        default     => null,
+                                                    };
 
-                                                        $count = null;
+                                                    $count = null;
 
-                                                        if ($relation) {
-                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
-                                                                ->where('status', 1)
-                                                                ->where('balance', '>', 0)
-                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                ->sum('balance');
-                                                        }
-                                                    @endphp
+                                                    if ($relation) {
+                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                            ->where('status', 1)
+                                                            ->where('balance', '>', 0)
+                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                            ->sum('balance');
+                                                    }
 
-                                                    @if(!is_null($count))
+                                                    $hasCurrentStock = !is_null($count) && $count > 0;
+                                                    $isForeignDept = $product->department && $product->department !== $department;
+                                                @endphp
+                                                <option value="{{$product->id}}" @if(!$hasCurrentStock) disabled @endif>  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
+                                                    @endif
+                                                    @if($hasCurrentStock)
                                                         {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
                                                 </option>
                                             @endforeach
@@ -1756,32 +1836,44 @@
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                                <div class="mb-10">
+                                                    <input type="checkbox" wire:model.debounce.300ms="all_products" class="line-style" />
+                                                    <label for="one" class="radio-label">Show all products</label>
+                                                    @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
                                                 <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
                                                 <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
                                                     <option value="" selected>Select Products</option>
                                                     @foreach ($products as $product)
-                                                        <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
-                                                                @php
-                                                                    $relation = match ($department) {
-                                                                        'inventory' => 'inventories',
-                                                                        'tyre'      => 'tyres',
-                                                                        'asset'     => 'assets',
-                                                                        default     => null,
-                                                                    };
+                                                        @php
+                                                            $relation = match ($department) {
+                                                                'inventory' => 'inventories',
+                                                                'tyre'      => 'tyres',
+                                                                'asset'     => 'assets',
+                                                                default     => null,
+                                                            };
 
-                                                                    $count = null;
+                                                            $count = null;
 
-                                                                    if ($relation) {
-                                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
-                                                                            ->where('status', 1)
-                                                                            ->where('balance', '>', 0)
-                                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                            ->sum('balance');
-                                                                    }
-                                                                @endphp
+                                                            if ($relation) {
+                                                                $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                                    ->where('status', 1)
+                                                                    ->where('balance', '>', 0)
+                                                                    ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                                    ->sum('balance');
+                                                            }
 
-                                                    @if(!is_null($count))
+                                                            $hasCurrentStock = !is_null($count) && $count > 0;
+                                                            $isForeignDept = $product->department && $product->department !== $department;
+                                                        @endphp
+                                                        <option value="{{$product->id}}" @if(!$hasCurrentStock) disabled @endif>  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}}
+                                                    @if($isForeignDept)
+                                                        [{{ ucfirst($product->department) }} item]
+                                                    @endif
+                                                    @if($hasCurrentStock)
                                                         {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @elseif($isForeignDept)
+                                                        (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
                                                     </option>
                                                     @endforeach

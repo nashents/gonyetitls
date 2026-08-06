@@ -19,7 +19,7 @@
                                         <span class="input-group-addon">
                                             Filter By
                                         </span>
-                                        <select wire:model.debounce.300ms="purchase_order_filter" class="form-control" aria-label="..." >
+                                        <select wire:model.debounce.300ms="purchase_filter" class="form-control" aria-label="..." >
                                             <option value="created_at">Purchase Order Created At</option>
                                             <option value="date">Purchase Order Date</option>
                                         </select>

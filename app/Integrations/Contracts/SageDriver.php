@@ -67,4 +67,7 @@ interface SageDriver extends IntegrationDriver
 
     /** create_sotransaction (sales/Order-Entry, e.g. Job Card): header + lines. */
     public function createSalesTransaction(array $header, array $lines): array;
+
+    /** Append line items to an existing sales transaction (by RECORDNO key). */
+    public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null): array;
 }

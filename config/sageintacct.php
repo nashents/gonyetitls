@@ -69,6 +69,19 @@ return [
             'horse'       => env('SAGE_INTACCT_TYPE_HORSE', 'SUB - TRUCKS'),
             'trip'        => env('SAGE_INTACCT_TYPE_TRIP', 'TRIPS'),
         ],
+
+        // Sage PROJECTSTATUS (the project workflow status). A trip is only synced
+        // once offloaded/completed, so it lands "Completed"; the in-progress value
+        // is kept for completeness. Must match the instance's project statuses
+        // (In Progress / Completed / AVAILABLE in bhsquared-imp).
+        'status_completed'   => env('SAGE_INTACCT_PROJECT_STATUS_COMPLETED', 'Completed'),
+        'status_in_progress' => env('SAGE_INTACCT_PROJECT_STATUS_IN_PROGRESS', 'In Progress'),
+    ],
+
+    // Trip → PROJECT sync gate. Only trips whose authorization is "approved" AND
+    // whose trip_status is one of these (offloaded/completed) are synced to Sage.
+    'trip' => [
+        'syncable_statuses' => ['Offloaded'],
     ],
 
     // Phase 3 — Trip expenses → Purchase Requisitions.
@@ -138,8 +151,14 @@ return [
     // The booking's transaction_type decides which Sage definition is used:
     //   expense → Internal Job Card ; income → the standard Job Card (invoice).
     'jobcard' => [
+        // Booking transaction_type → definition: expense = "Internal Job Card",
+        // income = the standard "Job-Card" (both are Order-class definitions;
+        // "Job Card Invoice" is a separate Invoice-class billing doc, NOT this).
         'internal_type'     => env('SAGE_INTACCT_INTERNAL_JOBCARD_TYPE', 'Internal Job Card'),
-        'standard_type'     => env('SAGE_INTACCT_JOBCARD_TYPE', 'Job Card Invoice'),
+        'standard_type'     => env('SAGE_INTACCT_JOBCARD_TYPE', 'Job-Card'),
+        // The standard "Job-Card" definition requires a mileage custom field
+        // (integration name "Milage_", free-text) — set from the ticket odometer.
+        'mileage_field'     => env('SAGE_INTACCT_JOBCARD_MILEAGE_FIELD', 'Milage_'),
         // Close-off (both types) + reversal (internal only) definitions. Both are
         // conversions of the source job card (its lines referenced by sourcelinekey).
         'closeoff_type'         => env('SAGE_INTACCT_JOBCARD_CLOSEOFF_TYPE', 'Job-Card-Close Off'),

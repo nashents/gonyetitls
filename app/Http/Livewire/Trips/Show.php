@@ -595,7 +595,7 @@ class Show extends Component
                                     $bill->fuel_id = $trip_expense->fuel_id;
                                     $bill->trip_expense_id = $trip_expense->id;
                                     $bill->horse_id = $trip->horse_id;
-                                    $bill->vehicle_id = $trip->vehicle_id;
+                                    $bill->vehicle_id = $trip->vehicle_id ?: null;
                                     if (isset($account)) {
                                         $bill->account_id = $account->id;
                                         $bill->account_type_id = $account->account_type->id;
@@ -709,7 +709,7 @@ class Show extends Component
                         $bill->fuel_id = $trip_expense->fuel_id;
                         $bill->trip_expense_id = $trip_expense->id;
                         $bill->horse_id = $trip->horse_id;
-                        $bill->vehicle_id = $trip->vehicle_id;
+                        $bill->vehicle_id = $trip->vehicle_id ?: null;
                         if (isset($account)) {
                             $bill->account_id = $account->id;
                             $bill->account_type_id = $account->account_type->id;

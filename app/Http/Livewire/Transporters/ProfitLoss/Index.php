@@ -63,6 +63,10 @@ class Index extends Component
     protected $fleetTrailerIds = [];
     protected $fleetDriverIds = [];
 
+    // False for the company's own in-house fleet transporter (Transporter::default = true),
+    // true for real (subcontracted) transporters.
+    protected $isThirdPartyTransporter = false;
+
     /**
      * Flat line items:
      * each item:
@@ -153,6 +157,7 @@ class Index extends Component
         $this->fleetHorseIds = [];
         $this->fleetTrailerIds = [];
         $this->fleetDriverIds = [];
+        $this->isThirdPartyTransporter = false;
 
         $this->cogs_items = [];
         $this->opex_items = [];
@@ -180,18 +185,7 @@ class Index extends Component
         $this->fleetDriverIds  = Driver::query()->where('transporter_id', $transporterId)->pluck('id')->all();
 
         $this->total_trucks = count($this->fleetHorseIds);
-
-        $this->total_trips = Trip::query()
-            ->where(function ($x) use ($transporterId) {
-                $x->where('transporter_id', $transporterId);
-                if (!empty($this->fleetHorseIds)) {
-                    $x->orWhereIn('horse_id', $this->fleetHorseIds);
-                }
-            })
-            ->where('authorization', 'approved')
-            ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
-            ->count();
+        $this->isThirdPartyTransporter = !((bool) ($this->selected_transporter->default ?? false));
 
         $this->total_fuel_orders = Fuel::query()
             ->whereIn('horse_id', $this->fleetHorseIds)
@@ -205,8 +199,11 @@ class Index extends Component
             ->whereBetween('date', [$this->fromDt, $this->toDt])
             ->sum('quantity');
 
-        // Income in reporting currency (freight earned on this transporter's trips/trucks)
-        $incomeBase = (float) Trip::query()
+        // Income in reporting currency (freight earned on this transporter's trips/trucks).
+        // For real (non in-house) transporters, a trip that has "Add Transporter Freight"
+        // checked and a transporter_freight amount set is billed to the transporter at that
+        // rate, not the customer-facing freight — so use transporter_freight for those trips.
+        $matchingTrips = Trip::query()
             ->where(function ($x) use ($transporterId) {
                 $x->where('transporter_id', $transporterId);
                 if (!empty($this->fleetHorseIds)) {
@@ -216,23 +213,34 @@ class Index extends Component
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
             ->whereBetween('start_date', [$this->fromDt, $this->toDt])
-            ->where('currency_id', $this->default_currency_id)
-            ->sum('freight');
+            ->get([
+                'id', 'currency_id',
+                'freight', 'exchange_customer_freight',
+                'transporter_agreement', 'transporter_freight', 'exchange_transporter_freight',
+            ]);
 
-        $incomeFxBaseEquivalent = (float) Trip::query()
-            ->where(function ($x) use ($transporterId) {
-                $x->where('transporter_id', $transporterId);
-                if (!empty($this->fleetHorseIds)) {
-                    $x->orWhereIn('horse_id', $this->fleetHorseIds);
-                }
-            })
-            ->where('authorization', 'approved')
-            ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
-            ->where('currency_id', '!=', $this->default_currency_id)
-            ->sum('exchange_customer_freight'); // assumed already in reporting currency
+        $this->total_trips = $matchingTrips->count();
 
-        $this->total_income = $incomeBase + $incomeFxBaseEquivalent;
+        $totalIncome = 0.0;
+        foreach ($matchingTrips as $trip) {
+            $sameCurrency = ((int) $trip->currency_id === (int) $this->default_currency_id);
+
+            $useTransporterFreight = $this->isThirdPartyTransporter
+                && (bool) $trip->transporter_agreement
+                && (float) $trip->transporter_freight > 0;
+
+            if ($useTransporterFreight) {
+                $totalIncome += $sameCurrency
+                    ? (float) $trip->transporter_freight
+                    : (float) $trip->exchange_transporter_freight;
+            } else {
+                $totalIncome += $sameCurrency
+                    ? (float) $trip->freight
+                    : (float) $trip->exchange_customer_freight;
+            }
+        }
+
+        $this->total_income = $totalIncome;
 
         // Line items
         $this->cogs_items = $this->fetchExpenseItemsFlat(
@@ -311,6 +319,15 @@ class Index extends Component
                 if (!empty($this->fleetDriverIds)) {
                     $x->orWhereIn('bills.driver_id', $this->fleetDriverIds);
                 }
+            })
+            // The "Trip Expense - Transporter Payment" bill is what pays the transporter for
+            // the trip — it's the transporter's income (already counted via transporter_freight
+            // above), not an expense they incurred, so keep it out of their P&L expenses.
+            ->when($this->isThirdPartyTransporter, function ($x) {
+                $x->where(function ($y) {
+                    $y->whereNull('bills.category')
+                      ->orWhere('bills.category', '!=', 'Trip Expense - Transporter Payment');
+                });
             })
             ->when($tripOnly, function ($x) {
                 $x->whereNotNull('bills.trip_id')

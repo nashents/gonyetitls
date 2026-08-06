@@ -59,6 +59,11 @@ class Ticket extends Model implements Auditable
     public function dispatches(){
         return $this->hasMany('App\Models\Dispatch');
     }
+    /** Sage Intacct job-card link (entity_type job_card) for the sync badge. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'job_card');
+    }
     public function inventory_dispatches(){
         return $this->hasMany('App\Models\InventoryDispatch');
     }

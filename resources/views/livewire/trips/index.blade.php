@@ -447,7 +447,8 @@
 
                                             <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
                                                 <td>
-                                                    @if ($this->sageEnabled)
+                                                    @php $syncable = $trip->is_sage_syncable; @endphp
+                                                    @if ($this->sageEnabled && $syncable)
                                                     <input type="checkbox" wire:model="sageSelected" value="{{ $trip->id }}" title="Select for Sage bulk sync">
                                                     @endif
                                                     <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong> <br>
@@ -458,6 +459,8 @@
                                                           title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</span>
                                                     @if ($ss === 'synced')
                                                         <a href="#" wire:click.prevent="syncToSage({{ $trip->id }})" wire:loading.attr="disabled" title="Re-sync to Sage"><i class="fa fa-refresh"></i></a>
+                                                    @elseif (! $syncable)
+                                                        <span class="text-muted" style="cursor:not-allowed; opacity:.5" title="Sync is available only once the trip is authorized, offloaded and marked as Completed"><i class="fa fa-cloud-upload"></i> Sync</span>
                                                     @elseif (in_array($ss, ['failed','requires_attention']))
                                                         <a href="#" wire:click.prevent="retrySync({{ $trip->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
                                                     @else

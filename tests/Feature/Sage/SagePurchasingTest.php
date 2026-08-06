@@ -164,6 +164,28 @@ class SagePurchasingTest extends TestCase
     }
 
     /** @test */
+    public function it_appends_lines_to_an_existing_sales_transaction()
+    {
+        Http::fake(['*' => Http::response($this->successXml('Internal Job Card-IJC-1'), 200)]);
+
+        $lines = [[
+            'itemid' => 'PRD-9', 'quantity' => 1, 'unit' => 'Each', 'price' => '160.00',
+            'locationid' => 'E100', 'departmentid' => 'D2-1', 'memo' => 'AIR BAG BPW',
+        ]];
+
+        $res = $this->driver()->appendSalesTransactionLines('276223', $lines, 'E100');
+        $this->assertTrue($res['success']);
+
+        Http::assertSent(function ($r) {
+            $b = $r->body();
+            return str_contains($b, '<update_sotransaction key="276223">')
+                && str_contains($b, '<updatesotransitems><sotransitem><itemid>PRD-9</itemid>')
+                && str_contains($b, '</sotransitem></updatesotransitems></update_sotransaction>')
+                && str_contains($b, '<locationid>E100</locationid></login>');   // entity-scoped
+        });
+    }
+
+    /** @test */
     public function it_creates_an_item_and_an_employee()
     {
         Http::fake(['*' => Http::response($this->successXml('X'), 200)]);

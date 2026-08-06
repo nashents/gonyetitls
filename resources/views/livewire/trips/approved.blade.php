@@ -333,7 +333,7 @@
                                                     <span class="label label-{{ $s['badge'] }} label-wide">
                                                         {{ $trip->trip_status }}
                                                         @if($trip->authorization === "approved")
-                                                            <a href="#" wire:click="status({{ $trip->id }})" class="ms-1">
+                                                            <a href="#" wire:click.prevent="$emit('openTripStatusModal', {{ $trip->id }})" class="ms-1">
                                                                 <i class="fa fa-edit" style="color:black"></i>
                                                             </a>
                                                         @endif
@@ -476,5 +476,7 @@
                 </div>
             </div>
         </div>
+
+        @livewire('trips.trip-status-manager')
 
     </div>

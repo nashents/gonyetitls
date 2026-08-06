@@ -366,11 +366,10 @@
                                       <ul class="dropdown-menu">
                                           <li><a href="{{route('fuels.show',$fuel->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
                                           @if ($fuel->authorization == "approved")
-                                          <li><a href="#" wire:click="topup({{$fuel->id}})"  ><i class="fa fa-gas-pump color-warning"></i>TopUp</a></li>
                                           <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
                                           @endif
                                           @if ($fuel->authorization == "pending" || $fuel->authorization == "rejected" )
-                                          <li><a href="#"  wire:click="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                          <li><a href="{{route('fuels.edit',$fuel->id)}}" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                           <li><a href="#" data-toggle="modal" data-target="#fuelDeleteModal{{ $fuel->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                           @endif
                                       </ul>
@@ -431,7 +430,7 @@
                                         <li><a href="{{route('fuels.preview',$fuel->id)}}"  ><i class="fa fa-file-invoice color-primary"></i>Preview</a></li>
                                         @endif
                                         @if ($fuel->authorization == "pending" || $fuel->authorization == "rejected" )
-                                        <li><a href="#"  wire:click="edit({{$fuel->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                        <li><a href="{{route('fuels.edit',$fuel->id)}}" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                         <li><a href="#" data-toggle="modal" data-target="#fuelDeleteModal{{ $fuel->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                         @endif
                                     </ul>

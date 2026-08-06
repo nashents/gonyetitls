@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Bill;
 use App\Models\Booking;
 use App\Models\CreditNote;
+use App\Models\DispatchItem;
 use App\Models\Fuel;
 use App\Models\GoodsReceived;
 use App\Models\Invoice;
@@ -14,6 +15,7 @@ use App\Models\Ticket;
 use App\Observers\BillObserver;
 use App\Observers\BookingObserver;
 use App\Observers\CreditNoteObserver;
+use App\Observers\DispatchItemObserver;
 use App\Observers\FuelObserver;
 use App\Observers\GoodsReceivedObserver;
 use App\Observers\InvoiceObserver;
@@ -73,5 +75,6 @@ class AppServiceProvider extends ServiceProvider
         GoodsReceived::observe(GoodsReceivedObserver::class);
         Booking::observe(BookingObserver::class);
         Ticket::observe(TicketObserver::class);
+        DispatchItem::observe(DispatchItemObserver::class);
     }
 }

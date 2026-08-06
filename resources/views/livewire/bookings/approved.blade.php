@@ -81,7 +81,14 @@
                                     <tbody>
                                         @forelse ($bookings as $booking)
                                       <tr>
-                                        <td>{{ucfirst($booking->booking_number)}}</td>
+                                        <td>{{ucfirst($booking->booking_number)}}
+                                            @if (\App\Services\Sage\SageIntegration::enabledForUser())
+                                                @php $sm = optional($booking->ticket)->sageMapping; $ss = optional($sm)->sync_status; @endphp
+                                                <br>
+                                                <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                       title="{{ $sm->last_error ?? '' }}">Sage Job Card: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                            @endif
+                                        </td>
                                         <td>{{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</td>
                                         <td>{{ucfirst($booking->employee ? $booking->employee->name : "")}} {{ucfirst($booking->employee ? $booking->employee->surname : "")}}</td>
                                         <td>

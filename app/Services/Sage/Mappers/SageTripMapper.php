@@ -57,20 +57,23 @@ class SageTripMapper
      * @param  string|null  $horseClassId    Horse class (CLASSID)
      * @param  string[]     $trailerRegs     trailer registrations for the description
      * @param  string|null  $customerSageId  optional CUSTOMERID if the customer is synced
+     * @param  string|null  $managerId       project manager = the driver's Sage EMPLOYEEID
      */
-    public static function map(Trip $trip, ?string $horseProjectId, ?string $horseClassId, array $trailerRegs = [], ?string $customerSageId = null): array
+    public static function map(Trip $trip, ?string $horseProjectId, ?string $horseClassId, array $trailerRegs = [], ?string $customerSageId = null, ?string $managerId = null): array
     {
         return array_merge(SageProjectDefaults::forEntity('trip'), [
-            'id'          => self::projectId($trip),
-            'name'        => self::routeName($trip),
-            'parentid'    => $horseProjectId ?: null,
-            'classid'     => $horseClassId ?: null,
-            'customerid'  => $customerSageId ?: null,
-            'begindate'   => SageFormat::date($trip->start_date),
-            'enddate'     => SageFormat::date($trip->end_date),
-            'currency'    => optional($trip->currency)->code ?: null,
-            'status'      => self::status($trip),
-            'description' => self::description($trip, $trailerRegs),
+            'id'            => self::projectId($trip),
+            'name'          => self::routeName($trip),
+            'parentid'      => $horseProjectId ?: null,
+            'classid'       => $horseClassId ?: null,
+            'customerid'    => $customerSageId ?: null,
+            'managerid'     => $managerId ?: null,
+            'begindate'     => SageFormat::date($trip->start_date),
+            'enddate'       => SageFormat::date($trip->end_date),
+            'currency'      => optional($trip->currency)->code ?: null,
+            'status'        => self::status($trip),
+            'projectstatus' => self::projectStatus($trip),
+            'description'   => self::description($trip, $trailerRegs),
         ]);
     }
 
@@ -80,6 +83,19 @@ class SageTripMapper
         $s = strtolower((string) $trip->trip_status);
 
         return in_array($s, ['cancelled', 'canceled', 'closed', 'void'], true) ? 'inactive' : 'active';
+    }
+
+    /**
+     * Sage PROJECTSTATUS (workflow): offloaded trips are Completed, everything
+     * else In Progress. Only offloaded trips actually sync, so this is Completed.
+     */
+    protected static function projectStatus(Trip $trip): string
+    {
+        $offloaded = strcasecmp((string) $trip->trip_status, 'Offloaded') === 0;
+
+        return $offloaded
+            ? (string) config('sageintacct.project.status_completed', 'Completed')
+            : (string) config('sageintacct.project.status_in_progress', 'In Progress');
     }
 
     /**

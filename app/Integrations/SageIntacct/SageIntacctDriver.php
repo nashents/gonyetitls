@@ -130,4 +130,9 @@ class SageIntacctDriver implements SageDriver
     {
         return $this->driver->createSalesTransaction($header, $lines);
     }
+
+    public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null): array
+    {
+        return $this->driver->appendSalesTransactionLines($key, $lines, $entityId);
+    }
 }

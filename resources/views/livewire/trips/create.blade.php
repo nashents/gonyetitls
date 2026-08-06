@@ -1675,8 +1675,9 @@
                                         </div>
                                       
                                         @foreach ($allowance_inputs as $key => $value)
+                                         <div class="mt-15 mb-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                             <div class="row">
-                                                <div class="col-md-3">
+                                                <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label for="driver">Allowance(s)</label>
                                                         <select class="form-control" wire:model.debounce.300ms="allowance_id.{{ $value }}">
@@ -1689,7 +1690,7 @@
                                                         <small>  <a href="#" data-toggle="modal" data-target="#allowanceModal" ><i class="fa fa-plus-square-o"></i> Allowance</a></small> <a href="#" wire:click.prevent="refresh('allowances')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label for="driver">Vendor</label>
                                                         <select class="form-control" wire:model.debounce.300ms="allowance_vendor_id.{{ $value }}">
@@ -1702,11 +1703,13 @@
                                                         <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> <a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-2">
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4">
                                                     <div class="form-group">
                                                         <label for="driver">Category</label>
                                                         <select class="form-control" wire:model.debounce.300ms="allowance_category.{{ $value }}">
-                                                            <option value="">Select</option>
+                                                            <option value="">Select Option</option>
                                                             <option value="Customer">Customer</option>
                                                             <option value="Self">Self</option>
                                                             <option value="Transporter">Transporter</option>
@@ -1714,11 +1717,11 @@
                                                         @error('allowance_category.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label for="currency">Ccy</label>
+                                                        <label for="currency">Currencies</label>
                                                         <select class="form-control" wire:model.debounce.300ms="selectedAllowanceCurrency.{{ $value }}" >
-                                                            <option value="">Select</option>
+                                                            <option value="">Select Currency</option>
                                                                 @foreach ($currencies as $currency)
                                                                 <option value="{{ $currency->id }}">{{ $currency->name }}</option>
                                                                 @endforeach
@@ -1748,9 +1751,9 @@
                                                     @endif
                                                 @endif 
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-3">
                                                     <div class="form-group">
-                                                        <label for="">Amt</label>
+                                                        <label for="">Amount</label>
                                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowance_amount.{{ $value }}"  />
                                                         @error('allowance_amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
@@ -1760,7 +1763,8 @@
                                                         <button class="btn btn-danger btn-rounded btn-xs" style="margin-left:-25px; margin-top:26px;"   wire:click.prevent="removeAllowance({{$key}})"> <i class="fa fa-times" ></i></button>
                                                     </div>
                                                 </div>
-                                            </div>       
+                                            </div>  
+                                         </div>     
                                         @endforeach
                                         <div class="row">
                                             <div class="form-group">

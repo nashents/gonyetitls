@@ -125,6 +125,11 @@ class SageRestDriver implements SageDriver
         return $this->notImplemented();
     }
 
+    public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null): array
+    {
+        return $this->notImplemented();
+    }
+
     /**
      * Obtain (and cache/refresh) the OAuth bearer token.
      * TODO: implement against the confirmed grant type.
