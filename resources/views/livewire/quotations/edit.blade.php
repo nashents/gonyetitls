@@ -357,7 +357,7 @@
                                                         <option value="{{$product->id}}">{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
                                                         @endforeach
                                                     </select>
-                                                    <small>  <a href="#"  wire:click="showItem()"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                    <small>  <a href="#"  wire:click="showItem('current', {{ $key }})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('currentSelectedProduct.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -413,7 +413,7 @@
                                                             <option value="{{$product->id}}">{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
                                                             @endforeach
                                                         </select>
-                                                        <small>  <a href="#"  wire:click="showItem()"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small> 
+                                                        <small>  <a href="#"  wire:click="showItem('new', {{ $value }})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small>
                                                     @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                                 </div>
