@@ -695,7 +695,7 @@ class Index extends Component
         if (isset($this->account_id)) {
             $account = Account::find($this->account_id);
             $current_balance = $account->balance;
-            if(($current_balance && is_numeric($current_balance)) && is_numeric($this->amount) ){
+            if(is_numeric($current_balance) && is_numeric($this->amount) ){
                 $account->balance = $current_balance + $this->amount;
             }
           

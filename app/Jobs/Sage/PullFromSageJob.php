@@ -12,8 +12,8 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Queued pull of one entity type (customer|vendor|horse|trailer|transporter|
- * driver|tax|product) from Sage into Gonyeti for a company. Runs with no Auth,
- * so company + creator are carried explicitly.
+ * driver|tax|product|store) from Sage into Gonyeti for a company. Runs with no
+ * Auth, so company + creator are carried explicitly.
  */
 class PullFromSageJob implements ShouldQueue
 {

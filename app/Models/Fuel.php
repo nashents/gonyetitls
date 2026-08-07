@@ -30,6 +30,12 @@ class Fuel extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+
+    /** Sage Intacct link (entity_type fuel_po_diesel) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'fuel_po_diesel');
+    }
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }

@@ -21,6 +21,12 @@ return [
     // 'rest' = Sage Intacct REST API (OAuth 2.0) — enable after onboarding.
     'default_driver' => env('SAGE_INTACCT_DRIVER', 'xml'),
 
+    // Last-resort fallback currency. Every deployment MUST set the company base
+    // currency (mandatory at instance setup) to match its Sage base — which is
+    // NOT always ZAR; it varies per instance. The company's own currency is
+    // always preferred, so this default should never actually be reached.
+    'base_currency' => env('SAGE_INTACCT_BASE_CURRENCY', 'ZAR'),
+
     // XML Web Services gateway endpoint (same URL for sandbox and production;
     // the target company is selected by the credentials in the request body).
     'xml' => [
@@ -136,6 +142,10 @@ return [
 
     // Fuel (Gonyeti Fuel order → Sage PR - Diesel).
     'fuel' => [
+        // Fuel orders post to the "PO - Diesel" definition (Order class). Unlike
+        // "PR - Diesel" (Quote) it needs NO REG/Driver picklists — it carries the
+        // trip/horse PROJECT on the line instead.
+        'type'      => env('SAGE_INTACCT_FUEL_TYPE', 'PO - Diesel'),
         // Explicit diesel ITEMID to use on the line; when null, an item named
         // `item_name` is ensured (linked by name, else created).
         'item_id'   => env('SAGE_INTACCT_FUEL_ITEM_ID', null),
@@ -185,6 +195,15 @@ return [
         // Fallback line item (ensured by name) for invoice lines with no product
         // (e.g. custom / transport-order freight lines).
         'default_item_name'      => env('SAGE_INTACCT_INVOICE_DEFAULT_ITEM', 'Transportation'),
+    ],
+
+    // Stores ↔ Sage Warehouses. A store pushes to a WAREHOUSE (id WH-{store_id},
+    // linking to an existing warehouse of the same NAME first). A multi-entity
+    // company requires a LOCATIONID on each warehouse; when this is null the
+    // service falls back to the operating entity (purchasing.entity_id, e.g.
+    // E100). Set this only to override that with a specific LOCATION dimension.
+    'warehouse' => [
+        'location_id' => env('SAGE_INTACCT_WAREHOUSE_LOCATION_ID', null),
     ],
 
     // Sage ITEM defaults (Gonyeti Expense → Item).

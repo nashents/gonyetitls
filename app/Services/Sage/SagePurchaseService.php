@@ -43,6 +43,14 @@ class SagePurchaseService
     public function syncPurchase(Purchase $po): array
     {
         $entity  = 'purchase_order';
+
+        // Only push a PO once it is authorized (approved) — never a draft/pending
+        // one. This is the single gate honoured by every caller (observer + the
+        // manual index button).
+        if (strcasecmp((string) $po->authorization, 'approved') !== 0) {
+            return $this->result(true, 'skipped', null, null, $entity, $po);
+        }
+
         $mapping = $this->mappingFor($this->integration, $entity, $po);
         $mapping->local_model     = get_class($po);
         $mapping->local_reference = $this->purchaseRef($po);

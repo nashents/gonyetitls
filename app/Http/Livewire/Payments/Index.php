@@ -15,6 +15,8 @@ use App\Models\Document;
 use App\Models\AccountType;
 use App\Models\BankAccount;
 use App\Models\Denomination;
+use App\Models\JournalEntry;
+use App\Services\Accounting\JournalReversalService;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use App\Models\TransactionType;
@@ -566,12 +568,15 @@ class Index extends Component
                 $lockedAccount = \App\Models\Account::where('id', $payment->account->id)->lockForUpdate()->first();
 
                 if ($lockedAccount) {
-                    if ($payment->category === 'customer') {
+                    $category = strtolower((string) $payment->category);
+
+                    if ($category === 'customer') {
                         $lockedAccount->balance = (float) $lockedAccount->balance - (float) $payment->amount;
-                    } elseif ($payment->category === 'vendor') {
+                    } elseif (in_array($category, ['vendor', 'bill'], true)) {
+                        // Vendor/Bill payments decremented cash on creation (money out) - reverse is +amount
                         $lockedAccount->balance = (float) $lockedAccount->balance + (float) $payment->amount;
                     } else {
-                        // If category isn't set consistently, default to reversing as "customer"
+                        // invoice/sale/recovery/unset all incremented cash on creation (money in) - reverse is -amount
                         $lockedAccount->balance = (float) $lockedAccount->balance - (float) $payment->amount;
                     }
 
@@ -650,7 +655,18 @@ class Index extends Component
             }
 
             // -----------------------------
-            // 5) Delete payment
+            // 5) Reverse the associated journal entry, if any
+            // -----------------------------
+            $journalEntry = JournalEntry::where('payment_id', $payment->id)->first();
+            if ($journalEntry) {
+                app(JournalReversalService::class)->reverse(
+                    $journalEntry,
+                    "Payment {$payment->payment_number} deleted"
+                );
+            }
+
+            // -----------------------------
+            // 6) Delete payment
             // -----------------------------
             $payment->delete();
         });

@@ -3611,7 +3611,7 @@ class Edit extends Component
 
         public function calculateFuelTotal(){
 
-        if(($this->fuel_balance && is_numeric($this->fuel_balance)) && ($this->fuel_quantity && is_numeric($this->fuel_quantity))){
+        if(is_numeric($this->fuel_balance) && is_numeric($this->fuel_quantity)){
             if (!is_null($this->selectedHorse)) {
                 $this->horse_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
             }elseif(!is_null($this->selectedVehicle)){

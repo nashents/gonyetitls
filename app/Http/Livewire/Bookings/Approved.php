@@ -12,6 +12,7 @@ class Approved extends Component
 {
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\SyncsBookingJobCard;
 
     protected $paginationTheme = 'bootstrap';
 

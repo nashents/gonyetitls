@@ -86,6 +86,16 @@ class SageIntacctDriver implements SageDriver
         return $this->driver->updateProject($projectId, $project);
     }
 
+    public function createWarehouse(array $warehouse): array
+    {
+        return $this->driver->createWarehouse($warehouse);
+    }
+
+    public function updateWarehouse(string $warehouseId, array $warehouse): array
+    {
+        return $this->driver->updateWarehouse($warehouseId, $warehouse);
+    }
+
     public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array
     {
         return $this->driver->readByQuery($object, $fields, $query, $pageSize);

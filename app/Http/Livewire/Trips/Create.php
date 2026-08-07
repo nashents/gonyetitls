@@ -1315,10 +1315,45 @@ class Create extends Component
           'selectedContainer' => 'required',
           'expense_id.*' => 'nullable|exists:expenses,id',
           'start_date' => 'required',
-         
+
       ];
 
-     
+    public function validateTripExpenses(): void
+    {
+        if (! $this->trip_expenses) {
+            return;
+        }
+
+        $rowIds = collect([$this->expense_id, $this->category, $this->expense_currency_id, $this->expense_vendor_id, $this->amount])
+            ->flatMap(fn ($rows) => array_keys(array_filter((array) $rows, fn ($value) => $value !== null && $value !== '')))
+            ->unique();
+
+        if ($rowIds->isEmpty()) {
+            return;
+        }
+
+        $rules = [];
+        $attributes = [];
+
+        foreach ($rowIds as $id) {
+            $rules["expense_id.$id"] = 'required|exists:expenses,id';
+            $rules["category.$id"] = 'required';
+            $rules["expense_currency_id.$id"] = 'required|exists:currencies,id';
+            $rules["expense_vendor_id.$id"] = 'required|exists:vendors,id';
+            $rules["amount.$id"] = 'required|numeric|min:0.01';
+
+            $expenseName = optional($this->expenses)->firstWhere('id', $id)?->name ?? "expense #$id";
+            $attributes["expense_id.$id"] = "Expense ($expenseName)";
+            $attributes["category.$id"] = "Category ($expenseName)";
+            $attributes["expense_currency_id.$id"] = "Currency ($expenseName)";
+            $attributes["expense_vendor_id.$id"] = "Vendor ($expenseName)";
+            $attributes["amount.$id"] = "Amount ($expenseName)";
+        }
+
+        $this->validate($rules, [], $attributes);
+    }
+
+
 
     public function updatedSelectedDefinedCustomerRate($id){
             if(!is_null($id)){
@@ -1927,9 +1962,10 @@ class Create extends Component
     public function store(){
 
         // $this->validate();
+        $this->validateTripExpenses();
         //start trip creation logic
         // try{
-        
+
         DB::transaction(function () {
 
                 if($this->with_deal && $this->selectedDeal){
@@ -2973,7 +3009,7 @@ class Create extends Component
 
     public function calculateFuelTotal(){
 
-        if(($this->fuel_balance && is_numeric($this->fuel_balance)) && ($this->fuel_quantity && is_numeric($this->fuel_quantity))){
+        if(is_numeric($this->fuel_balance) && is_numeric($this->fuel_quantity)){
             if (!is_null($this->selectedHorse)) {
                 $this->horse_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
             }elseif(!is_null($this->selectedVehicle)){

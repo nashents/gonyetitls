@@ -80,6 +80,16 @@ class SageRestDriver implements SageDriver
         return $this->notImplemented();
     }
 
+    public function createWarehouse(array $warehouse): array
+    {
+        return $this->notImplemented();
+    }
+
+    public function updateWarehouse(string $warehouseId, array $warehouse): array
+    {
+        return $this->notImplemented();
+    }
+
     public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array
     {
         return $this->notImplemented();

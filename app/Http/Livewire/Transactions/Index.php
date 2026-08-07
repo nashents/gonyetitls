@@ -395,13 +395,32 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-paymentDeleteModal');
     }
     public function deleteTransaction(){
-        $this->payment->delete();
+        DB::transaction(function () {
+            $payment = Payment::lockForUpdate()->find($this->payment->id);
+
+            if ($payment && $payment->account_id) {
+                $account = Account::lockForUpdate()->find($payment->account_id);
+
+                if ($account && is_numeric($account->balance) && is_numeric($payment->amount)) {
+                    if ($payment->movement === 'Crt') {
+                        $account->balance = (float) $account->balance - (float) $payment->amount;
+                        $account->save();
+                    } elseif ($payment->movement === 'Dbt') {
+                        $account->balance = (float) $account->balance + (float) $payment->amount;
+                        $account->save();
+                    }
+                }
+            }
+
+            $payment?->delete();
+        });
+
         $this->dispatchBrowserEvent('hide-paymentDeleteModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Transaction Deleted Successfully!!"
         ]);
-       
+
     }
 
     public function showDepositModal(){

@@ -89,6 +89,19 @@ class SageXmlDriver implements SageDriver
         return $this->send('<update>' . $this->buildClass($class, false) . '</update>', 'update', 'CLASS');
     }
 
+    // ── WAREHOUSE (Store) ────────────────────────────────────────
+
+    public function createWarehouse(array $warehouse): array
+    {
+        return $this->send('<create>' . $this->buildWarehouse($warehouse, true) . '</create>', 'create', 'WAREHOUSE');
+    }
+
+    public function updateWarehouse(string $warehouseId, array $warehouse): array
+    {
+        $warehouse['id'] = $warehouseId;
+        return $this->send('<update>' . $this->buildWarehouse($warehouse, false) . '</update>', 'update', 'WAREHOUSE');
+    }
+
     // ── PROJECT (Trip) ───────────────────────────────────────────
 
     public function createProject(array $project): array
@@ -257,6 +270,30 @@ class SageXmlDriver implements SageDriver
     }
 
     /**
+     * Build a WAREHOUSE element. Required WAREHOUSEID + NAME (on create). In a
+     * multi-entity company each warehouse must be tied to a LOCATION (the entity),
+     * written via the nested relationship <LOC><LOCATIONID>…</LOCATIONID></LOC>
+     * (the flat <LOCATIONID> element is the warehouse's OWN id, a different field).
+     * Optional STATUS.
+     */
+    protected function buildWarehouse(array $data, bool $isCreate): string
+    {
+        $fields = '';
+        if (! empty($data['id'])) {
+            $fields .= $this->el('WAREHOUSEID', $data['id']);
+        }
+        if ($isCreate || isset($data['name'])) {
+            $fields .= $this->el('NAME', $data['name'] ?? '');
+        }
+        if (! empty($data['locationid'])) {
+            $fields .= '<LOC>' . $this->el('LOCATIONID', $data['locationid']) . '</LOC>';
+        }
+        $fields .= $this->elIf('STATUS', $data['status'] ?? null);
+
+        return '<WAREHOUSE>' . $fields . '</WAREHOUSE>';
+    }
+
+    /**
      * Build a PROJECT element. Required NAME + PROJECTCATEGORY (on create);
      * optional PROJECTID, CUSTOMERID, CLASSID, dates, CURRENCY, STATUS, DESCRIPTION.
      */
@@ -395,7 +432,8 @@ class SageXmlDriver implements SageDriver
      * Build a create_sotransaction (sales/Order-Entry, e.g. a Job Card). Schema
      * sequence: transactiontype, datecreated, customerid, referenceno, datedue
      * (ship date), currency, exchratetype, customfields, sotransitems. Line
-     * sequence: itemid, quantity, unit, price, locationid, departmentid, memo.
+     * sequence: itemid, quantity, unit, price, locationid, departmentid,
+     * projectid, classid, memo.
      */
     /** A single <sotransitem> in schema order. */
     protected function soLine(array $l): string
@@ -409,6 +447,8 @@ class SageXmlDriver implements SageDriver
         $line .= $this->elIf('locationid', $l['locationid'] ?? null);
         $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
         $line .= $this->elIf('memo', $l['memo'] ?? null);
+        $line .= $this->elIf('projectid', $l['projectid'] ?? null);
+        $line .= $this->elIf('classid', $l['classid'] ?? null);
 
         return '<sotransitem>' . $line . '</sotransitem>';
     }

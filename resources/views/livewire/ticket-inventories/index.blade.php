@@ -5,7 +5,7 @@
                          <tr>
                             <th class="th-sm">Item
                             </th>
-                            <th class="th-sm">Quantities
+                            <th class="th-sm">Quantity
                             </th>
                             <th class="th-sm">Currency
                             </th>
@@ -40,7 +40,7 @@
                                 </td>  
                                 <td>
                                     @if ($ticket_inventory->inventory)
-                                    {{$ticket_inventory->weight}} {{$ticket_inventory->measurement}}
+                                    {{$ticket_inventory->qty}}
                                     @elseif ($ticket_inventory->tyre)
                                     1
                                     @endif

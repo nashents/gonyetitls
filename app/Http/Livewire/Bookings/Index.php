@@ -23,6 +23,7 @@ use Maatwebsite\Excel\Excel;
 class Index extends Component
 {
     use WithPagination;
+    use \App\Http\Livewire\Concerns\SyncsBookingJobCard;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -263,7 +264,7 @@ class Index extends Component
     public function getBookingsProperty()
     {
         $query = Booking::query()
-            ->with(['ticket','inspection','horse','trailer','vehicle']);
+            ->with(['ticket.sageMapping','inspection','horse','trailer','vehicle']);
 
         // Date window
         if ($this->from && $this->to) {

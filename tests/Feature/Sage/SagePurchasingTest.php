@@ -143,7 +143,8 @@ class SagePurchasingTest extends TestCase
         ];
         $lines = [[
             'itemid' => 'PRD-9', 'quantity' => 2, 'unit' => 'Each', 'price' => '50.00',
-            'locationid' => 'E100', 'departmentid' => 'D2-1', 'memo' => 'Brake pads',
+            'locationid' => 'E100', 'departmentid' => 'D2-1',
+            'projectid' => 'FHH00002', 'classid' => 'FHH00002', 'memo' => 'Brake pads',
         ]];
 
         $res = $this->driver()->createSalesTransaction($header, $lines);
@@ -154,11 +155,18 @@ class SagePurchasingTest extends TestCase
             $b = $r->body();
             $ordered = strpos($b, '<transactiontype>') < strpos($b, '<customerid>')
                 && strpos($b, '<customerid>') < strpos($b, '<sotransitems>');
-            return $ordered
+            // Line schema order: departmentid, memo, projectid, classid (memo must
+            // precede projectid/classid — Sage rejects memo after classid).
+            $lineOrder = strpos($b, '<departmentid>D2-1</departmentid>') < strpos($b, '<memo>Brake pads</memo>')
+                && strpos($b, '<memo>Brake pads</memo>') < strpos($b, '<projectid>FHH00002</projectid>')
+                && strpos($b, '<projectid>FHH00002</projectid>') < strpos($b, '<classid>FHH00002</classid>');
+            return $ordered && $lineOrder
                 && str_contains($b, '<create_sotransaction>')
                 && str_contains($b, '<transactiontype>Internal Job Card</transactiontype>')
                 && str_contains($b, '<customerid>Sub-00007</customerid>')
                 && str_contains($b, '<sotransitem><itemid>PRD-9</itemid><quantity>2</quantity><unit>Each</unit><price>50.00</price>')
+                && str_contains($b, '<projectid>FHH00002</projectid>')     // horse project on the line
+                && str_contains($b, '<classid>FHH00002</classid>')          // horse class on the line
                 && str_contains($b, '<locationid>E100</locationid></login>');   // entity-scoped
         });
     }

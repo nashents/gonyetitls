@@ -13,6 +13,7 @@ use App\Models\Horse;
 use App\Models\IntegrationLog;
 use App\Models\IntegrationMapping;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\Tax;
 use App\Models\Trailer;
 use App\Models\Transporter;
@@ -66,6 +67,7 @@ class SagePullService
                 'driver'      => $this->pullDrivers(),
                 'tax'         => $this->pullTaxes(),
                 'product'     => $this->pullProducts($options),
+                'store'       => $this->pullStores(),
                 default       => ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0],
             };
         } catch (Throwable $e) {
@@ -545,6 +547,57 @@ class SagePullService
                 $product->saveQuietly();
 
                 $this->linkMapping('product_item', $product, $itemId, $name);
+
+                $isNew ? $s['created']++ : $s['linked']++;
+            } catch (Throwable $e) {
+                $s['failed']++;
+            }
+        }
+
+        return $s;
+    }
+
+    // ── Stores (Sage Warehouses) ─────────────────────────────────
+
+    /**
+     * Store ← WAREHOUSE. De-dup by the store_warehouse mapping (external_id), then
+     * by NAME; create sparse (name only) otherwise. Links every processed row so a
+     * re-run creates nothing.
+     */
+    protected function pullStores(): array
+    {
+        $rows = $this->readAll('WAREHOUSE', ['WAREHOUSEID', 'NAME', 'STATUS'], 'RECORDNO > 0');
+
+        $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
+        foreach ($rows as $row) {
+            $warehouseId = $row['WAREHOUSEID'] ?? null;
+            $name        = trim($row['NAME'] ?? '');
+            if (! $warehouseId || $name === '') {
+                $s['skipped']++;
+                continue;
+            }
+
+            try {
+                $mapping = IntegrationMapping::where([
+                    'company_integration_id' => $this->integration->id,
+                    'entity_type'            => 'store_warehouse',
+                    'external_id'            => $warehouseId,
+                ])->first();
+
+                $store = ($mapping ? Store::find($mapping->local_id) : null)
+                    ?? Store::where('name', $name)->first();
+
+                $isNew = false;
+                if (! $store) {
+                    $store          = new Store();
+                    $store->name    = $name;
+                    $store->user_id = $this->creatorId;
+                    $store->status  = ((string) ($row['STATUS'] ?? 'active') === 'inactive') ? '0' : '1';
+                    $isNew = true;
+                }
+                $store->saveQuietly();
+
+                $this->linkMapping('store_warehouse', $store, $warehouseId, $name);
 
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {

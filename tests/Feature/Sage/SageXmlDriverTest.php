@@ -80,6 +80,29 @@ class SageXmlDriverTest extends TestCase
     }
 
     /** @test */
+    public function it_creates_a_warehouse_with_nested_location()
+    {
+        Http::fake(['*' => Http::response($this->successXml('WH-2'), 200)]);
+
+        $res = $this->driver()->createWarehouse([
+            'id' => 'WH-2', 'name' => 'Trinitas Stores Room',
+            'status' => 'active', 'locationid' => 'E100',
+        ]);
+
+        $this->assertTrue($res['success']);
+        Http::assertSent(function ($r) {
+            $b = $r->body();
+            // The multi-entity location link is the NESTED relationship <LOC>, not a
+            // flat <LOCATIONID> (which is the warehouse's own id).
+            return str_contains($b, '<create><WAREHOUSE>')
+                && str_contains($b, '<WAREHOUSEID>WH-2</WAREHOUSEID>')
+                && str_contains($b, '<NAME>Trinitas Stores Room</NAME>')
+                && str_contains($b, '<LOC><LOCATIONID>E100</LOCATIONID></LOC>')
+                && str_contains($b, '<STATUS>active</STATUS>');
+        });
+    }
+
+    /** @test */
     public function it_creates_a_project_with_category_customer_and_class()
     {
         Http::fake(['*' => Http::response($this->successXml('P1'), 200)]);

@@ -12,6 +12,9 @@
 
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#storeModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Store</a>
+                                @if ($this->sageEnabled)
+                                <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded"><i class="fa fa-cloud-download"></i>Pull from Sage</button>
+                                @endif
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -43,7 +46,21 @@
                                 <tbody>
                                     @forelse ($stores as $store)
                                   <tr>
-                                    <td>{{$store->name}}</td>
+                                    <td>{{$store->name}}
+                                        @if ($this->sageEnabled)
+                                            @php $sm = $store->sageMapping; $ss = optional($sm)->sync_status; @endphp
+                                            <br>
+                                            <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ optional($sm)->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                            @if ($ss === 'synced')
+                                                <a href="#" wire:click.prevent="syncStoreToSage({{ $store->id }})" wire:loading.attr="disabled" title="Re-sync to Sage"><i class="fa fa-refresh"></i></a>
+                                            @elseif (in_array($ss, ['failed','requires_attention']))
+                                                <a href="#" wire:click.prevent="syncStoreToSage({{ $store->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
+                                            @else
+                                                <a href="#" wire:click.prevent="syncStoreToSage({{ $store->id }})" wire:loading.attr="disabled" title="Sync to Sage"><i class="fa fa-cloud-upload"></i> Sync</a>
+                                            @endif
+                                        @endif
+                                    </td>
                                     <td>{{$store->country}}</td>
                                     <td>{{$store->city}}</td>
                                     <td>{{$store->suburb}}</td>

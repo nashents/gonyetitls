@@ -54,6 +54,9 @@ class Booking extends Model implements Auditable
     public function ticket(){
         return $this->hasOne('App\Models\Ticket');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
     public function horse(){
         return $this->belongsTo('App\Models\Horse');
     }

@@ -46,8 +46,10 @@ class SageJobCardService
     {
         $entity = 'job_card';
 
-        // Only after the booking has been authorized.
-        if (strcasecmp((string) optional($ticket->booking)->authorization, 'approved') !== 0) {
+        // Only sync once the ticket is CLOSED (and its booking authorized) — so we
+        // never push a job card while items are still being dispatched to it.
+        if (! $ticket->closed_by_id
+            || strcasecmp((string) optional($ticket->booking)->authorization, 'approved') !== 0) {
             return $this->result(true, 'skipped', null, null, $entity, $ticket);
         }
 
@@ -71,7 +73,10 @@ class SageJobCardService
             return $this->fail($mapping, $entity, $ticket, 'No Sage customer could be resolved for the job card.', IntegrationMapping::STATUS_REQUIRES_ATTENTION);
         }
 
-        $lines = $this->dispatchLines($newItems);
+        // Attach the serviced unit's Sage PROJECT + CLASS to every line.
+        $projectContext = $this->projectContext($ticket);
+
+        $lines = $this->dispatchLines($newItems, $projectContext);
         if (empty($lines)) {
             return $this->result(true, 'skipped', $mapping->external_id, null, $entity, $ticket);
         }
@@ -91,7 +96,12 @@ class SageJobCardService
             $type     = $isIncome
                 ? (string) config('sageintacct.jobcard.standard_type', 'Job-Card')
                 : (string) config('sageintacct.jobcard.internal_type', 'Internal Job Card');
-            $currency = optional($ticket->booking)->currency_id ? optional(optional($ticket->booking)->currency)->code : null;
+            // Sage requires a document currency. Gonyeti bookings carry no currency
+            // (line items may each be in a different currency), so the job card is
+            // pushed in the COMPANY BASE currency — which each deployment sets to
+            // match its Sage base (may be ZAR or another currency, per instance).
+            // Line prices are converted to that base too (see linePrice()).
+            $currency = $this->baseCurrencyCode();
 
             $header = [
                 'transactiontype' => $type,
@@ -263,7 +273,7 @@ class SageJobCardService
     }
 
     /** Build Sage job-card lines from a set of dispatch items. */
-    protected function dispatchLines(array $dispatchItems): array
+    protected function dispatchLines(array $dispatchItems, array $projectContext = []): array
     {
         $lines = [];
         foreach ($dispatchItems as $di) {
@@ -278,11 +288,54 @@ class SageJobCardService
                 'price'        => $this->linePrice($di),
                 'locationid'   => config('sageintacct.project.location_id'),
                 'departmentid' => config('sageintacct.project.department_id'),
+                'projectid'    => $projectContext['projectid'] ?? null,
+                'classid'      => $projectContext['classid'] ?? null,
                 'memo'         => $di->description ?: optional($di->product)->name,
             ];
         }
 
         return $lines;
+    }
+
+    /**
+     * The serviced unit's Sage PROJECT + CLASS, attached to every job-card line:
+     * horse → horse_project / horse_class; trailer → trailer_class (no project).
+     */
+    protected function projectContext(Ticket $ticket): array
+    {
+        $ctx = ['projectid' => null, 'classid' => null];
+
+        if ($horseId = ($ticket->horse_id ?: optional($ticket->booking)->horse_id)) {
+            $ctx['projectid'] = $this->mappingExternalId('horse_project', $horseId);
+            $ctx['classid']   = $this->mappingExternalId('horse_class', $horseId);
+        } elseif ($trailerId = ($ticket->trailer_id ?: optional($ticket->booking)->trailer_id)) {
+            $ctx['classid'] = $this->mappingExternalId('trailer_class', $trailerId);
+        }
+
+        return $ctx;
+    }
+
+    /** The company (Sage) base currency id — dispatch items in this currency need no conversion. */
+    protected function baseCurrencyId(): ?int
+    {
+        $id = optional($this->integration->company)->currency_id;
+
+        return $id ? (int) $id : null;
+    }
+
+    /**
+     * Document currency = the company BASE currency ISO code (currencies.name).
+     * Every deployment sets this mandatorily to match its Sage base currency —
+     * which varies by instance (ZAR in some, another currency in others), so it
+     * is always read from the company, never assumed. The config fallback is a
+     * last resort that should not be reached in a properly deployed instance.
+     */
+    protected function baseCurrencyCode(): ?string
+    {
+        $code = optional(optional($this->integration->company)->currency)->name
+            ?: (string) config('sageintacct.base_currency', 'ZAR');
+
+        return $code ? strtoupper(trim($code)) : null;
     }
 
     /** Resolve a dispatch item to a Sage ITEMID (product, else its inventory/tyre/asset product, else a named item from the description). */
@@ -306,9 +359,38 @@ class SageJobCardService
         return $res['external_id'] ?? null;
     }
 
-    /** Ex-tax unit price for a dispatch item (unit_cost, else subtotal/amount ÷ qty). */
+    /**
+     * Ex-tax unit price for a dispatch item, IN THE COMPANY BASE CURRENCY.
+     *
+     * Gonyeti records each dispatch item in its own currency; when that differs
+     * from the base currency it also stores the base-currency equivalent on
+     * `exchange_amount` (line total) / `exchange_rate` (base per foreign unit).
+     * The Sage job card is a single-currency (base) document, so a foreign line
+     * is converted here; a base-currency line uses its recorded cost as-is.
+     */
     protected function linePrice($di): string
     {
+        $baseCurrencyId = $this->baseCurrencyId();
+        $qty            = (float) ($di->qty ?: 0);
+
+        // Foreign-currency line → use the recorded base-currency equivalent.
+        if ($baseCurrencyId && $di->currency_id && (int) $di->currency_id !== (int) $baseCurrencyId) {
+            $baseTotal = (float) ($di->exchange_amount ?: 0);   // line total in base currency
+            if ($baseTotal > 0) {
+                return number_format($qty > 0 ? $baseTotal / $qty : $baseTotal, 2, '.', '');
+            }
+            // Fallback: convert the foreign unit cost by the stored rate (base = rate × foreign).
+            $rate = (float) ($di->exchange_rate ?: 0);
+            if ($rate > 0) {
+                $foreignUnit = (float) ($di->unit_cost ?: 0);
+                if ($foreignUnit <= 0) {
+                    $foreignUnit = $qty > 0 ? (float) ($di->subtotal ?: $di->amount) / $qty : (float) ($di->subtotal ?: $di->amount);
+                }
+                return number_format($foreignUnit * $rate, 2, '.', '');
+            }
+        }
+
+        // Base-currency line (or no conversion data) → recorded unit cost as-is.
         if ((float) ($di->unit_cost ?? 0) > 0) {
             return number_format((float) $di->unit_cost, 2, '.', '');
         }

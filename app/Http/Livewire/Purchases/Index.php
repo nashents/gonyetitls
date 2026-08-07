@@ -25,9 +25,12 @@ use App\Models\Requisition;
 use App\Models\Tax;
 use App\Models\Vendor;
 use App\Models\VendorType;
+use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SageSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -936,6 +939,50 @@ class Index extends Component
         }
     }
 
+    /** Sage integration gate — controls the PO sync badge/button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /**
+     * Manually push a purchase order to Sage (badge Sync / Re-sync / Retry).
+     * Only authorized (approved) POs sync — the service enforces the same gate.
+     */
+    public function syncPurchaseToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $purchase = Purchase::find($id);
+        if (! $purchase) {
+            return;
+        }
+
+        if (strcasecmp((string) $purchase->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) purchase orders can be synced to Sage.',
+            ]);
+            return;
+        }
+
+        try {
+            $result = app(SageSyncService::class)->syncPurchase($purchase);
+            $ok     = ! empty($result['success']) && ! empty($result['external_id']);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => $ok ? 'success' : 'warning',
+                'message' => $ok
+                    ? 'Purchase order synced to Sage (' . $result['external_id'] . ').'
+                    : 'Sage sync: ' . ($result['error'] ?? 'could not sync this purchase order.'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Sage purchase-order manual push failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Sage sync failed for this purchase order.']);
+        }
+    }
+
     public function render()
     {
 
@@ -954,7 +1001,7 @@ class Index extends Component
             ->get();
         
         $query = Purchase::query()
-        ->with(['vendor', 'booking', 'purchase_products', 'purchase_products.product'])
+        ->with(['vendor', 'booking', 'purchase_products', 'purchase_products.product', 'sageMapping'])
         ->where('department', $this->department);
 
         // Date filter

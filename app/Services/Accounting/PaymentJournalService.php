@@ -16,7 +16,7 @@ class PaymentJournalService
             return JournalEntry::where('payment_id', $payment->id)->first();
         }
 
-        $payment->loadMissing(['account', 'customer', 'vendor', 'currency', 'invoice', 'bill']);
+        $payment->loadMissing(['account', 'customer', 'vendor', 'currency', 'invoice', 'bill', 'sale', 'recovery']);
 
         $rate   = (float) ($payment->exchange_rate ?? 1);
         $amount = (float) $payment->amount;
@@ -44,6 +44,8 @@ class PaymentJournalService
                 'vendor'   => $this->postVendorWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
                 'invoice'  => $this->postInvoicePayment($entry, $payment, $amount, $rate, $cashBankAccount),
                 'bill'     => $this->postBillPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'sale'     => $this->postSalePayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'recovery' => $this->postRecoveryPayment($entry, $payment, $amount, $rate, $cashBankAccount),
                 default    => null,
             };
 
@@ -208,6 +210,82 @@ class PaymentJournalService
         ]);
     }
 
+    // ── 5. Direct Sale Payment ────────────────────────────────────────────────
+    // Sales component: category = sale, sale_id set directly
+    // DR Cash/Bank   CR Accounts Receivable
+    private function postSalePayment(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Sale payment - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $arAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "AR settlement - Sale #{$payment->sale_id} - {$payment->payment_number}",
+        ]);
+    }
+
+    // ── 6. Driver Recovery Payment ────────────────────────────────────────────
+    // Recoveries component: category = recovery, recovery_id set directly
+    // DR Cash/Bank   CR Accounts Receivable
+    private function postRecoveryPayment(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'driver_id'       => $payment->driver_id,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Recovery payment - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $arAccount->id,
+            'driver_id'       => $payment->driver_id,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "AR settlement - Recovery #{$payment->recovery_id} - {$payment->payment_number}",
+        ]);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
@@ -232,6 +310,8 @@ class PaymentJournalService
             'vendor'   => "Vendor Prepayment - {$payment->vendor?->name} - {$payment->payment_number}",
             'invoice'  => "Invoice Payment - {$payment->customer?->name} - {$payment->payment_number}",
             'bill'     => "Bill Payment - {$payment->vendor?->name} - {$payment->payment_number}",
+            'sale'     => "Sale Payment - {$payment->customer?->name} - {$payment->payment_number}",
+            'recovery' => "Recovery Payment - {$payment->driver?->employee?->name} - {$payment->payment_number}",
             default    => "Payment - {$payment->payment_number}",
         };
     }

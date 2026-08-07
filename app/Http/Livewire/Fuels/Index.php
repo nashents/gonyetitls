@@ -25,9 +25,12 @@ use App\Models\Trip;
 use App\Models\TripExpense;
 use App\Models\Vehicle;
 use App\Services\Cartrack\CartrackSyncService;
+use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SageSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -100,6 +103,7 @@ class Index extends Component
     public $account_balance;
     public $fuel_source = 'station';
     public $selectedSourceHorse;
+    public $source_horse_balance;
     public $fuel_type_locked = false;
     public $selectedCategory;
     public $selectedCategoryValue;
@@ -543,6 +547,7 @@ class Index extends Component
             $this->account_balance = Null;
         } else {
             $this->selectedSourceHorse = Null;
+            $this->source_horse_balance = Null;
         }
         $this->fuel_type = Null;
         $this->fuel_type_locked = false;
@@ -551,10 +556,14 @@ class Index extends Component
     public function updatedSelectedSourceHorse($id)
     {
         if (!is_null($id)) {
-            $sourceFuelType = Horse::find($id)?->fuel_type;
+            $sourceHorse = Horse::find($id);
+            $sourceFuelType = $sourceHorse?->fuel_type;
             $sourceFuelType = $sourceFuelType ? ucfirst(strtolower($sourceFuelType)) : null;
             $this->fuel_type_locked = (bool) $sourceFuelType;
             $this->fuel_type = $sourceFuelType ?: 'Diesel';
+            $this->source_horse_balance = $sourceHorse?->fuel_balance;
+        } else {
+            $this->source_horse_balance = Null;
         }
     }
 
@@ -729,6 +738,14 @@ class Index extends Component
             $issues[] = 'Fuel quantity exceeds the selected unit fuel tank capacity.';
         }
 
+        if ($this->type == 'Horse' && $this->fuel_source == 'truck' && $this->selectedSourceHorse) {
+            if (!is_numeric($this->source_horse_balance)) {
+                $issues[] = 'Source truck has no fuel balance set. Please set its fuel balance before dispatching from it.';
+            } elseif ($quantity > (float) $this->source_horse_balance) {
+                $issues[] = 'Fuel quantity exceeds the source truck\'s available fuel balance.';
+            }
+        }
+
         return $issues;
     }
 
@@ -777,6 +794,7 @@ class Index extends Component
         $this->selectedContainer = Null;
         $this->fuel_source = "station";
         $this->selectedSourceHorse = Null;
+        $this->source_horse_balance = Null;
         $this->fuel_type_locked = false;
         $this->selectedCategory = Null;
         $this->selectedFuelRequest = Null;
@@ -1045,6 +1063,7 @@ class Index extends Component
     $this->selectedContainer = $fuel->container_id;
     $this->fuel_source = $fuel->source_horse_id ? 'truck' : 'station';
     $this->selectedSourceHorse = $fuel->source_horse_id;
+    $this->source_horse_balance = $fuel->source_horse_id ? $fuel->source_horse?->fuel_balance : Null;
     $this->container = Container::find($fuel->container_id);
     $this->selected_container = Container::find($fuel->container_id);
     $this->container_balance = $this->container ? $this->container->balance : "";
@@ -1380,6 +1399,51 @@ class Index extends Component
     }
 
 
+    /** Sage integration gate — controls the fuel PO - Diesel sync badge/button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /**
+     * Manually push a fuel order to Sage as a "PO - Diesel" (badge Sync / Re-sync
+     * / Retry). Only authorized (approved) fuels sync — the service enforces the
+     * same gate.
+     */
+    public function syncFuelToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $fuel = Fuel::find($id);
+        if (! $fuel) {
+            return;
+        }
+
+        if (strcasecmp((string) $fuel->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) fuel orders can be synced to Sage.',
+            ]);
+            return;
+        }
+
+        try {
+            $result = app(SageSyncService::class)->syncFuel($fuel);
+            $ok     = ! empty($result['success']) && ! empty($result['external_id']);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => $ok ? 'success' : 'warning',
+                'message' => $ok
+                    ? 'Fuel order synced to Sage PO - Diesel (' . $result['external_id'] . ').'
+                    : 'Sage sync: ' . ($result['error'] ?? 'could not sync this fuel order.'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Sage fuel manual push failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Sage sync failed for this fuel order.']);
+        }
+    }
+
     public function render()
     {
 
@@ -1409,6 +1473,7 @@ class Index extends Component
                     'trip.toDestination.country',
                     'container',
                     'currency',
+                    'sageMapping',
                 ]);
 
             // Date filter: from/to if set, otherwise current month

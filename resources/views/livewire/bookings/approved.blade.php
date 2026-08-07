@@ -87,6 +87,13 @@
                                                 <br>
                                                 <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
                                                        title="{{ $sm->last_error ?? '' }}">Sage Job Card: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                                @if ($ss === 'synced')
+                                                    <a href="#" wire:click.prevent="syncJobCardToSage({{ $booking->id }})" wire:loading.attr="disabled" title="Re-sync job card to Sage"><i class="fa fa-refresh"></i></a>
+                                                @elseif (in_array($ss, ['failed','requires_attention']))
+                                                    <a href="#" wire:click.prevent="syncJobCardToSage({{ $booking->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
+                                                @else
+                                                    <a href="#" wire:click.prevent="syncJobCardToSage({{ $booking->id }})" wire:loading.attr="disabled" title="Sync job card to Sage"><i class="fa fa-cloud-upload"></i> Sync</a>
+                                                @endif
                                             @endif
                                         </td>
                                         <td>{{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</td>

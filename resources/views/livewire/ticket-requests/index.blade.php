@@ -11,7 +11,7 @@
                             </th>
                             <th class="th-sm">Item
                             </th>
-                            <th class="th-sm">Qty
+                            <th class="th-sm">Quantity
                             </th>
                             <th class="th-sm">Measurement
                             </th>

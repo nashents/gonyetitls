@@ -15,6 +15,12 @@ class Store extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+
+    /** Sage Intacct link (entity_type store_warehouse) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'store_warehouse');
+    }
     public function inventories(){
         return $this->hasMany('App\Models\Inventory');
     }

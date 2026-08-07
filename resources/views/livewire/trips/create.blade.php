@@ -2140,11 +2140,18 @@
                                                     @if ($expenses->count() > 0)
                                                         <tbody>
                                                             @foreach ($expenses as $expense)
-                                                                @php $id = $expense->id; @endphp
+                                                                @php
+                                                                    $id = $expense->id;
+                                                                    $rowHasInput = !empty($expense_id[$id] ?? null)
+                                                                        || !empty($category[$id] ?? null)
+                                                                        || !empty($expense_currency_id[$id] ?? null)
+                                                                        || !empty($expense_vendor_id[$id] ?? null)
+                                                                        || !empty($amount[$id] ?? null);
+                                                                @endphp
                                                                 <tr>
                                                                     <td>
                                                                         <div class="mb-10">
-                                                                            <input type="checkbox" wire:model="expense_id.{{ $id }}" value="{{ $id }}" class="line-style" />
+                                                                            <input type="checkbox" wire:model="expense_id.{{ $id }}" value="{{ $id }}" class="line-style" {{ $rowHasInput ? 'required' : '' }} />
                                                                             <label class="radio-label">{{ $expense->name }}</label>
                                                                             @error('expense_id.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
                                                                         </div>
@@ -2152,7 +2159,7 @@
 
                                                                     <td>
                                                                         <div class="form-group">
-                                                                            <select class="form-control" wire:model="category.{{ $id }}">
+                                                                            <select class="form-control" wire:model="category.{{ $id }}" {{ $rowHasInput ? 'required' : '' }}>
                                                                                 <option value="">Select Category</option>
                                                                                 <option value="Customer">Customer</option>
                                                                                 <option value="Self">Self</option>
@@ -2174,7 +2181,7 @@
                                                                     </td>
                                                                     <td>
                                                                         <div class="form-group">
-                                                                            <select class="form-control" wire:model="expense_currency_id.{{ $id }}" {{ !isset($company->currency_id) ? 'disabled' : '' }}>
+                                                                            <select class="form-control" wire:model="expense_currency_id.{{ $id }}" {{ !isset($company->currency_id) ? 'disabled' : '' }} {{ $rowHasInput ? 'required' : '' }}>
                                                                                 <option value="">Select Currency</option>
                                                                                 @foreach ($currencies as $currency)
                                                                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -2209,7 +2216,7 @@
                                                                     </td>
                                                                     <td>
                                                                         <div class="form-group">
-                                                                            <select class="form-control" wire:model="expense_vendor_id.{{ $id }}">
+                                                                            <select class="form-control" wire:model="expense_vendor_id.{{ $id }}" {{ $rowHasInput ? 'required' : '' }}>
                                                                                 <option value="">Select Vendor</option>
                                                                                 @foreach ($vendors as $vendor)
                                                                                     <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
@@ -2221,7 +2228,7 @@
                                                                     </td>
                                                                     <td>
                                                                         <div class="form-group">
-                                                                            <input type="number" step="any" min="0" class="form-control" wire:model="amount.{{ $id }}" placeholder="Enter Expense Amount" {{ empty($expense_id[$id]) ? 'disabled' : '' }} />
+                                                                            <input type="number" step="any" min="0" class="form-control" wire:model="amount.{{ $id }}" placeholder="Enter Expense Amount" {{ empty($expense_id[$id]) ? 'disabled' : '' }} {{ $rowHasInput ? 'required' : '' }} />
                                                                             @error('amount.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
                                                                         </div>
                                                                     </td>

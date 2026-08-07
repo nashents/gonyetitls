@@ -106,6 +106,21 @@
                                     <tr>
                                         <td>
                                             {{$purchase->purchase_number}}
+                                            @if ($this->sageEnabled)
+                                                @php $sm = $purchase->sageMapping; $ss = optional($sm)->sync_status; $approved = $purchase->authorization === 'approved'; @endphp
+                                                <br>
+                                                <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                       title="{{ optional($sm)->last_error ?? '' }}">Sage PO: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                                @if ($approved)
+                                                    @if ($ss === 'synced')
+                                                        <a href="#" wire:click.prevent="syncPurchaseToSage({{ $purchase->id }})" wire:loading.attr="disabled" title="Re-sync to Sage"><i class="fa fa-refresh"></i></a>
+                                                    @elseif (in_array($ss, ['failed','requires_attention']))
+                                                        <a href="#" wire:click.prevent="syncPurchaseToSage({{ $purchase->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
+                                                    @else
+                                                        <a href="#" wire:click.prevent="syncPurchaseToSage({{ $purchase->id }})" wire:loading.attr="disabled" title="Sync to Sage"><i class="fa fa-cloud-upload"></i> Sync</a>
+                                                    @endif
+                                                @endif
+                                            @endif
                                             @if ($purchase->employee)
                                                 <br>
                                                 <small><strong>RequestedBy:</strong> {{$purchase->employee ? $purchase->employee->name : ""}} {{$purchase->employee ? $purchase->employee->surname : ""}}</small>

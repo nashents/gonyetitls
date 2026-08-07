@@ -44,6 +44,11 @@ interface SageDriver extends IntegrationDriver
 
     public function updateProject(string $projectId, array $project): array;
 
+    // ── WAREHOUSE (Store) ────────────────────────────────────────
+    public function createWarehouse(array $warehouse): array;
+
+    public function updateWarehouse(string $warehouseId, array $warehouse): array;
+
     /** Read records; on success `data` is a list of associative rows (+ resultId/remaining). */
     public function readByQuery(string $object, array $fields, string $query, int $pageSize = 200): array;
 

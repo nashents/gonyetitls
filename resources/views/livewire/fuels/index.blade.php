@@ -164,6 +164,20 @@
                                                         <small><strong>By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small><br>
                                                         <small><strong>On:</strong> {{ $fuel->created_at }}</small>
                                                     </div>
+                                                    @if ($this->sageEnabled)
+                                                        @php $sm = $fuel->sageMapping; $ss = optional($sm)->sync_status; $approved = $fuel->authorization === 'approved'; @endphp
+                                                        <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                               title="{{ optional($sm)->last_error ?? '' }}">Sage Diesel: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                                        @if ($approved)
+                                                            @if ($ss === 'synced')
+                                                                <a href="#" wire:click.prevent="syncFuelToSage({{ $fuel->id }})" wire:loading.attr="disabled" title="Re-sync to Sage"><i class="fa fa-refresh"></i></a>
+                                                            @elseif (in_array($ss, ['failed','requires_attention']))
+                                                                <a href="#" wire:click.prevent="syncFuelToSage({{ $fuel->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
+                                                            @else
+                                                                <a href="#" wire:click.prevent="syncFuelToSage({{ $fuel->id }})" wire:loading.attr="disabled" title="Sync to Sage"><i class="fa fa-cloud-upload"></i> Sync</a>
+                                                            @endif
+                                                        @endif
+                                                    @endif
                                                 </td>
 
                                                 {{-- Fuel Request --}}
@@ -627,6 +641,16 @@
                                         @endforeach
                                     </select>
                                     @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    @if ($selectedSourceHorse)
+                                        <div class="fuel-balance-card">
+                                            <strong>Available Fuel Balance</strong>
+                                            @if (is_numeric($source_horse_balance))
+                                                <span>{{ number_format($source_horse_balance, 2) }} L</span>
+                                            @else
+                                                <span class="text-danger">Not set</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                                 @endif
                             </div>
@@ -1084,6 +1108,16 @@
                                         @endforeach
                                     </select>
                                     @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    @if ($selectedSourceHorse)
+                                        <div class="fuel-balance-card">
+                                            <strong>Available Fuel Balance</strong>
+                                            @if (is_numeric($source_horse_balance))
+                                                <span>{{ number_format($source_horse_balance, 2) }} L</span>
+                                            @else
+                                                <span class="text-danger">Not set</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                                 @endif
                             </div>

@@ -52,6 +52,12 @@ class SageSyncService
         return $this->run($product, 'product');
     }
 
+    /** Store → Sage WAREHOUSE. */
+    public function syncStore(\App\Models\Store $store): array
+    {
+        return $this->run($store, 'store');
+    }
+
     /** Fuel order → Sage "PR - Diesel" (supplier = fuelling station). */
     public function syncFuel(\App\Models\Fuel $fuel): array
     {
@@ -134,6 +140,8 @@ class SageSyncService
                 $result = (new SageEmployeeService($driver, $integration))->ensureForDriver($model);
             } elseif ($type === 'product') {
                 $result = (new SageItemService($driver, $integration))->ensureProduct($model);
+            } elseif ($type === 'store') {
+                $result = (new SageWarehouseService($driver, $integration))->ensureStore($model);
             } elseif ($type === 'fuel') {
                 $result = (new SageFuelDieselService($driver, $integration))->syncFuel($model);
             } elseif ($type === 'purchase') {
@@ -174,8 +182,8 @@ class SageSyncService
             return $model->company_id;
         }
 
-        // Products have no company_id — push to the acting user's company.
-        if ($type === 'product') {
+        // Products and stores have no company_id — push to the acting user's company.
+        if ($type === 'product' || $type === 'store') {
             $user = auth()->user();
             return optional(optional($user)->employee)->company_id ?? optional($user)->company_id;
         }

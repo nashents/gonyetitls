@@ -11,18 +11,22 @@ use App\Services\Sage\Concerns\ManagesMappings;
 use App\Services\SageIntacctService;
 
 /**
- * Syncs a Gonyeti Fuel order to a Sage "PR - Diesel" document.
+ * Syncs an APPROVED Gonyeti Fuel order to a Sage "PO - Diesel" document (Order
+ * class — same create_potransaction path as the standard Purchase order).
  *
  *  • supplier   = the fuelling station (the fuel's Container — matched to a Sage
  *                 VENDOR by name, created if missing);
  *  • line       = one diesel item (config fuel.item_*), qty = litres, price = unit
- *                 price, attached to the trip PROJECT when the fuel is on a trip
- *                 (+ horse CLASS + driver EMPLOYEE);
- *  • header     = REG (truck reg) + Driver custom fields (required by the
- *                 definition), entity-scoped so the Convert action is available.
+ *                 price, carrying the PROJECT (horse project, else the trip
+ *                 project) + horse CLASS + driver EMPLOYEE;
+ *  • header     = REG + Driver custom fields. NOTE: on this instance "PO - Diesel"
+ *                 ALSO enforces a REQUIRED, VALIDATED REG picklist (same as
+ *                 "PR - Diesel") — real registrations are rejected until the client
+ *                 either aligns that picklist or switches the field to free-text.
+ *                 We send the truck reg; a picklist mismatch → requires_attention.
  *
- * Idempotent: mapping entity_type="fuel_pr_diesel", local_id=fuel_id — an
- * already-created document is skipped.
+ * Only authorized (approved) fuels sync (gate below). Idempotent: mapping
+ * entity_type="fuel_po_diesel", local_id=fuel_id — an already-created doc skips.
  */
 class SageFuelDieselService
 {
@@ -43,7 +47,14 @@ class SageFuelDieselService
 
     public function syncFuel(Fuel $fuel): array
     {
-        $entity  = 'fuel_pr_diesel';
+        $entity  = 'fuel_po_diesel';
+
+        // Only push authorized (approved) fuel orders — never a draft/pending one.
+        // Single gate honoured by both the FuelObserver and the manual index button.
+        if (strcasecmp((string) $fuel->authorization, 'approved') !== 0) {
+            return $this->result(true, 'skipped', null, null, $entity, $fuel);
+        }
+
         $mapping = $this->mappingFor($this->integration, $entity, $fuel);
         $mapping->local_model     = get_class($fuel);
         $mapping->local_reference = $this->referenceNo($fuel);
@@ -75,9 +86,13 @@ class SageFuelDieselService
             return $this->fail($mapping, $entity, $fuel, 'Diesel item sync failed: ' . ($diesel['error'] ?? 'unknown'), IntegrationMapping::STATUS_FAILED);
         }
 
-        [$projectId, $classId] = $this->resolveTripProjectAndClass($fuel);
-        $employeeId            = $this->resolveDriverEmployee($fuel);
-        $vendorContact         = $this->vendorContactName($vendorSageId) ?: $container->name;
+        // PO - Diesel carries the PROJECT (in place of PR - Diesel's REG picklist).
+        [$projectId, $classId] = $this->resolveProjectAndClass($fuel);
+        if (! $projectId) {
+            return $this->fail($mapping, $entity, $fuel, 'PO - Diesel requires a project — link this fuel to a synced trip (or sync its horse) first.', IntegrationMapping::STATUS_REQUIRES_ATTENTION);
+        }
+        $employeeId    = $this->resolveDriverEmployee($fuel);
+        $vendorContact = $this->vendorContactName($vendorSageId) ?: $container->name;
 
         $qty = (float) ($fuel->quantity ?: 0);
         if ($qty <= 0) {
@@ -102,8 +117,13 @@ class SageFuelDieselService
             'classid'      => $classId ?: null,
         ];
 
+        // "PO - Diesel" carries the PROJECT (on the line) AND a required REG/Driver
+        // header. REG is a validated picklist on this instance, so a real reg is
+        // rejected until the client aligns the picklist (or makes it free-text);
+        // we send the truck reg + driver name and let a mismatch surface as
+        // requires_attention (classifySageError catches "is not valid").
         $header = [
-            'transactiontype' => (string) config('sageintacct.purchasing.diesel_type', 'PR - Diesel'),
+            'transactiontype' => (string) config('sageintacct.fuel.type', 'PO - Diesel'),
             'datecreated'     => $fuel->date ?: now()->toDateString(),
             'datedue'         => $fuel->date ?: now()->toDateString(),
             'vendorid'        => $vendorSageId,
@@ -200,24 +220,26 @@ class SageFuelDieselService
     }
 
     /**
-     * Attach to the trip's Sage PROJECT (+ horse CLASS) when the fuel is on a
-     * trip. Uses existing mappings; syncs the trip once if not yet in Sage.
+     * The Sage PROJECT (+ horse CLASS) for the fuel line. Prefers the HORSE's own
+     * project — a long-lived SUB - TRUCKS project that stays open for purchasing —
+     * because a TRIP project is usually "Completed", a status Sage blocks from
+     * purchasing submittal. Falls back to the trip project only when the horse has
+     * none. Uses existing mappings (trips/horses sync on creation — no sync here).
      *
      * @return array{0:?string,1:?string}  [projectId, classId]
      */
-    protected function resolveTripProjectAndClass(Fuel $fuel): array
+    protected function resolveProjectAndClass(Fuel $fuel): array
     {
         $projectId = null;
         $classId   = null;
 
-        // Attach to the trip project when the trip is already synced to Sage.
-        // (Trips sync on creation; we don't trigger a heavy trip sync here.)
-        if ($fuel->trip_id) {
-            $projectId = $this->mappingExternalId('trip_project', $fuel->trip_id);
+        if ($fuel->horse_id) {
+            $projectId = $this->mappingExternalId('horse_project', $fuel->horse_id);
+            $classId   = $this->mappingExternalId('horse_class', $fuel->horse_id);
         }
 
-        if ($fuel->horse_id) {
-            $classId = $this->mappingExternalId('horse_class', $fuel->horse_id);
+        if (! $projectId && $fuel->trip_id) {
+            $projectId = $this->mappingExternalId('trip_project', $fuel->trip_id);
         }
 
         return [$projectId, $classId];
@@ -263,13 +285,13 @@ class SageFuelDieselService
             : null;
     }
 
-    /** REG custom field (truck registration) — the fuel's horse. */
+    /** REG custom field (free-text on PO - Diesel) — the fuel's truck registration. */
     protected function truckRegistration(Fuel $fuel): string
     {
         return (string) (optional($fuel->horse)->registration_number ?: '');
     }
 
-    /** Driver custom field — the fuel's driver name. */
+    /** Driver custom field (free-text on PO - Diesel) — the fuel's driver name. */
     protected function driverName(Fuel $fuel): string
     {
         $employee = optional($fuel->driver)->employee;
