@@ -147,6 +147,12 @@ class Trailer extends Model implements Auditable
                     ->where('entity_type', 'trailer_vehicle');
     }
 
+    /** FanTracker tracker mapping for this trailer (drives live mileage/position pulls). */
+    public function fanTrackerMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'trailer_tracker');
+    }
+
     protected $fillable = [
         'user_id',
         'trailer_type_id',

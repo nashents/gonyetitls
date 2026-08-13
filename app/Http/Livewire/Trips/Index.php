@@ -159,6 +159,8 @@ class Index extends Component
         'filter_consignee_id'    => ['except' => ''],
         'filter_from'            => ['except' => ''],
         'filter_to'              => ['except' => ''],
+        'filter_invoice_status'  => ['except' => ''],
+        'filter_pod_status'      => ['except' => ''],
     ];
 
     public $title;
@@ -199,6 +201,8 @@ class Index extends Component
     public $filter_consignee_id;
     public $filter_from;
     public $filter_to;
+    public $filter_invoice_status;
+    public $filter_pod_status;
     public $drivers;
     public $currencies;
     public $cargos;
@@ -352,6 +356,8 @@ class Index extends Component
         $this->filter_from           = null;
         $this->filter_to             = null;
         $this->filter_trip_status    = null;
+        $this->filter_invoice_status = null;
+        $this->filter_pod_status     = null;
 
         $this->resetPage();
 
@@ -1520,6 +1526,23 @@ class Index extends Component
             if (filled($this->{$property})) {
                 $trips->where($column, $this->{$property});
             }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invoice / POD Status Filters
+        |--------------------------------------------------------------------------
+        */
+        if ($this->filter_invoice_status === 'invoiced') {
+            $trips->whereHas('invoices');
+        } elseif ($this->filter_invoice_status === 'not_invoiced') {
+            $trips->whereDoesntHave('invoices');
+        }
+
+        if ($this->filter_pod_status === 'uploaded') {
+            $trips->whereHas('pod');
+        } elseif ($this->filter_pod_status === 'pending') {
+            $trips->whereDoesntHave('pod');
         }
 
         /*

@@ -30,8 +30,11 @@ use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Models\InvoicePayment;
 use App\Models\TransactionType;
+use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SageSyncService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
@@ -744,6 +747,51 @@ class Index extends Component
     }
 
 
+    /** Sage integration gate — controls the invoice sync badge/button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /**
+     * Manually push an invoice to Sage — Job Card Invoice (invoice to a
+     * transporter) or OE sales invoice (invoice to a customer). Only authorized
+     * (approved) invoices sync — the service enforces the same gate.
+     */
+    public function syncInvoiceToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $invoice = Invoice::find($id);
+        if (! $invoice) {
+            return;
+        }
+
+        if (strcasecmp((string) $invoice->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) invoices can be synced to Sage.',
+            ]);
+            return;
+        }
+
+        try {
+            $result = app(SageSyncService::class)->syncInvoice($invoice);
+            $ok     = ! empty($result['success']) && ! empty($result['external_id']);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => $ok ? 'success' : 'warning',
+                'message' => $ok
+                    ? 'Invoice synced to Sage (' . $result['external_id'] . ').'
+                    : 'Sage sync: ' . ($result['error'] ?? 'could not sync this invoice.'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Sage invoice manual push failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Sage sync failed for this invoice.']);
+        }
+    }
+
     public function render()
     {
 
@@ -802,7 +850,7 @@ class Index extends Component
         $cur = Auth::user()->employee?->company?->currency_id;
 
                 $query = Invoice::query()
-                ->with(['customer:id,name','transporter:id,name', 'currency']);
+                ->with(['customer:id,name','transporter:id,name', 'currency', 'sageMapping']);
 
                 if ($this->status === 'unpaid') {
                     $query->where('currency_id',$cur)->where('status', '!=', 'Paid');

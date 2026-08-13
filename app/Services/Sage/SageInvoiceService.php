@@ -37,6 +37,13 @@ class SageInvoiceService
     public function syncInvoice(Invoice $invoice): array
     {
         $entity  = 'sales_invoice';
+
+        // Only push authorized (approved) invoices — never a draft/pending one.
+        // Single gate honoured by both the InvoiceObserver and the manual button.
+        if (strcasecmp((string) $invoice->authorization, 'approved') !== 0) {
+            return $this->result(true, 'skipped', null, null, $entity, $invoice);
+        }
+
         $mapping = $this->mappingFor($this->integration, $entity, $invoice);
         $mapping->local_model     = get_class($invoice);
         $mapping->local_reference = $this->referenceNo($invoice);
@@ -50,7 +57,12 @@ class SageInvoiceService
             $mapping->save();
         }
 
-        $isTransporter = ! empty($invoice->transporter_id);
+        // Doc type by "Invoice To": Transporter → Job Card Invoice (customer = the
+        // transporter), Customer → OE sales invoice. Prefer the explicit invoice_to
+        // flag; fall back to transporter_id for older invoices without it set.
+        $isTransporter = $invoice->invoice_to
+            ? strcasecmp((string) $invoice->invoice_to, 'Transporter') === 0
+            : ! empty($invoice->transporter_id);
         $type          = $isTransporter
             ? (string) config('sageintacct.invoice.jobcard_type', 'Job Card Invoice')
             : (string) config('sageintacct.invoice.oe_type', 'OE sales invoice');
@@ -67,7 +79,9 @@ class SageInvoiceService
             return $this->result(true, 'skipped', null, null, $entity, $invoice);
         }
 
-        $currency = optional($invoice->currency)->code;
+        // Invoice currency ISO code lives in currencies.name (there is no `code`
+        // column) — a customer-facing invoice posts in its own billed currency.
+        $currency = optional($invoice->currency)->name;
 
         $header = [
             'transactiontype' => $type,

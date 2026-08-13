@@ -54,6 +54,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleAssignment;
 use App\Models\Vendor;
 use App\Services\Cartrack\CartrackSyncService;
+use App\Services\FanTracker\FanTrackerSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -446,6 +447,7 @@ class Create extends Component
    
     public $odometer;
     public $odometer_is_live_from_cartrack = false;
+    public $odometer_is_live_from_fantracker = false;
     public $fuel_comments;
     public $customer_updates = False;
     public $fuel_consumption_loaded_standard;
@@ -745,11 +747,18 @@ class Create extends Component
                  $trailer_assignments = $horse->trailer_assignments->where('status',1);
                 $this->odometer = $horse->mileage;
                 $this->odometer_is_live_from_cartrack = false;
+                $this->odometer_is_live_from_fantracker = false;
 
                 $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($horse);
                 if (! empty($cartrackSnapshot['mileage'])) {
                     $this->odometer = $cartrackSnapshot['mileage'];
                     $this->odometer_is_live_from_cartrack = true;
+                } else {
+                    $fanTrackerSnapshot = app(FanTrackerSyncService::class)->currentSnapshot($horse);
+                    if (! empty($fanTrackerSnapshot['mileage'])) {
+                        $this->odometer = $fanTrackerSnapshot['mileage'];
+                        $this->odometer_is_live_from_fantracker = true;
+                    }
                 }
 
                 $this->fuel_tank_capacity = $horse->fuel_tank_capacity;
@@ -793,11 +802,18 @@ class Create extends Component
             if($vehicle){
                 $this->odometer = $vehicle->mileage;
                 $this->odometer_is_live_from_cartrack = false;
+                $this->odometer_is_live_from_fantracker = false;
 
                 $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($vehicle);
                 if (! empty($cartrackSnapshot['mileage'])) {
                     $this->odometer = $cartrackSnapshot['mileage'];
                     $this->odometer_is_live_from_cartrack = true;
+                } else {
+                    $fanTrackerSnapshot = app(FanTrackerSyncService::class)->currentSnapshot($vehicle);
+                    if (! empty($fanTrackerSnapshot['mileage'])) {
+                        $this->odometer = $fanTrackerSnapshot['mileage'];
+                        $this->odometer_is_live_from_fantracker = true;
+                    }
                 }
 
                 $this->fuel_tank_capacity = $vehicle->fuel_tank_capacity;

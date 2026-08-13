@@ -60,6 +60,13 @@ class Invoice extends Model implements Auditable
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }
+
+    /** Sage Intacct link (entity_type sales_invoice) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'sales_invoice');
+    }
+
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

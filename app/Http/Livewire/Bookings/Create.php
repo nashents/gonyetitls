@@ -21,6 +21,7 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\Cartrack\CartrackSyncService;
+use App\Services\FanTracker\FanTrackerSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -86,6 +87,7 @@ class Create extends Component
     public $mileage;
     public $hours;
     public $mileage_is_live_from_cartrack = false;
+    public $mileage_is_live_from_fantracker = false;
     public $service_types;
     public $service_type_id;
     public $booking_number;
@@ -172,10 +174,11 @@ class Create extends Component
         }
     }
 
-    /** Overwrite $this->mileage with a live Cartrack reading when the equipment is matched; otherwise keep the stored value. */
+    /** Overwrite $this->mileage with a live Cartrack/FanTracker reading when the equipment is matched (Cartrack takes precedence); otherwise keep the stored value. */
     protected function applyLiveCartrackMileage($equipment): void
     {
         $this->mileage_is_live_from_cartrack = false;
+        $this->mileage_is_live_from_fantracker = false;
 
         if (! $equipment) {
             return;
@@ -186,6 +189,14 @@ class Create extends Component
         if (! empty($snapshot['mileage'])) {
             $this->mileage = $snapshot['mileage'];
             $this->mileage_is_live_from_cartrack = true;
+            return;
+        }
+
+        $fanTrackerSnapshot = app(FanTrackerSyncService::class)->currentSnapshot($equipment);
+
+        if (! empty($fanTrackerSnapshot['mileage'])) {
+            $this->mileage = $fanTrackerSnapshot['mileage'];
+            $this->mileage_is_live_from_fantracker = true;
         }
     }
 

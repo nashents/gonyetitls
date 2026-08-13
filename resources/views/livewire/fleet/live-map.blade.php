@@ -12,14 +12,14 @@
                             </div>
                         </div>
         <div class="panel-body p-20">
-                            @if (! $this->cartrackEnabled && ! $this->ezyTrackEnabled)
+                            @if (! $this->cartrackEnabled && ! $this->ezyTrackEnabled && ! $this->fanTrackerEnabled)
                                 <p class="text-muted">
-                                    No tracking provider is active for your company yet. Set up Cartrack and/or EzyTrack under
+                                    No tracking provider is active for your company yet. Set up Cartrack, EzyTrack and/or FanTracker under
                                     <a href="{{ route('company_integrations.index') }}">Integrations</a> first.
                                 </p>
                             @else
                                 @if ($apiError)
-                                    <p class="text-danger">Cartrack request failed: {{ $apiError }}</p>
+                                    <p class="text-danger">Tracking request failed: {{ $apiError }}</p>
                                 @endif
                                 @if ($this->cartrackEnabled && empty($markers))
                                     <p class="text-muted">
@@ -31,6 +31,12 @@
                                     <p class="text-muted">
                                         EzyTrack devices show up once linked under
                                         <a href="{{ route('fleet.ezytrack-device-mappings') }}">EzyTrack Device Mapping</a>.
+                                    </p>
+                                @endif
+                                @if ($this->fanTrackerEnabled && empty($markers))
+                                    <p class="text-muted">
+                                        No live FanTracker positions yet. Run <code>php artisan fantracker:match-vehicles</code>
+                                        to link your fleet (trackers must be labelled with the vehicle's registration number), then check back shortly.
                                     </p>
                                 @endif
                             @endif

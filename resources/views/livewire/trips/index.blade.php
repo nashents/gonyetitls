@@ -35,15 +35,15 @@
                                 };
 
                                 $statusMap = [
-                                    'Offloaded'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
-                                    'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
-                                    'Loading Point'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'secondary'],
-                                    'Loaded'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'info'],
-                                    'Started'          => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
-                                    'InTransit'        => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
-                                    'Offloading Point' => ['row' => '#82B1FF', 'cell' => 'table-info', 'badge' => 'info'],
-                                    'OnHold'           => ['row' => '#d9534f', 'cell' => 'table-danger', 'badge' => 'danger'],
-                                    'Cancelled'        => ['row' => '#C4A484', 'cell' => 'table-light', 'badge' => 'light'],
+                                    'Offloaded'        => ['row' => '#E8F5E9', 'border' => '#2E7D32', 'cell' => 'table-success', 'badge' => 'success'],
+                                    'Scheduled'        => ['row' => '#FFF3E0', 'border' => '#E65100', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                    'Loading Point'    => ['row' => '#F5F5F5', 'border' => '#616161', 'cell' => 'table-secondary', 'badge' => 'secondary'],
+                                    'Loaded'           => ['row' => '#E1F5FE', 'border' => '#0277BD', 'cell' => 'table-info', 'badge' => 'info'],
+                                    'Started'          => ['row' => '#E3F2FD', 'border' => '#1565C0', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                    'InTransit'        => ['row' => '#E3F2FD', 'border' => '#1565C0', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                    'Offloading Point' => ['row' => '#E8F0FE', 'border' => '#1E88E5', 'cell' => 'table-info', 'badge' => 'info'],
+                                    'OnHold'           => ['row' => '#FFEBEE', 'border' => '#C62828', 'cell' => 'table-danger', 'badge' => 'danger'],
+                                    'Cancelled'        => ['row' => '#EFEBE9', 'border' => '#8D6E63', 'cell' => 'table-light', 'badge' => 'light'],
                                 ];
                             @endphp
                             @if (isset($trips))
@@ -313,6 +313,36 @@
                                                     <!-- /input-group -->
                                                 </div>
                                             </div>
+                                            <div class="row">
+                                                @if ($notDriver)
+                                                    <div class="col-md-3">
+                                                        <div class="input-group ">
+                                                            <span class="input-group-addon">
+                                                                Invoice Status
+                                                            </span>
+                                                            <select wire:model.debounce.300ms="filter_invoice_status" class="form-control  " aria-label="..." >
+                                                                    <option value="">All Trips</option>
+                                                                    <option value="invoiced">Invoiced</option>
+                                                                    <option value="not_invoiced">Not Invoiced</option>
+                                                            </select>
+                                                        </div>
+                                                        <!-- /input-group -->
+                                                    </div>
+                                                @endif
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            POD Status
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_pod_status" class="form-control  " aria-label="..." >
+                                                                <option value="">All Trips</option>
+                                                                <option value="uploaded">POD Uploaded</option>
+                                                                <option value="pending">Pending POD Upload</option>
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                            </div>
                                         @endif
 
                                         <div class="row mt-15">
@@ -390,7 +420,7 @@
                                         @forelse($trips as $trip)
 
                                             @php
-                                                $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
+                                                $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'border' => null, 'cell' => '', 'badge' => 'secondary'];
                                                 // $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
                                                 //                     ? $trip->trip_status_date
                                                 //                     : $trip->end_date;
@@ -445,7 +475,7 @@
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
+                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td>
                                                     @php $syncable = $trip->is_sage_syncable; @endphp
                                                     @if ($this->sageEnabled && $syncable)

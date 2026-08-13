@@ -170,6 +170,12 @@ class Horse extends Model implements Auditable
                     ->where('entity_type', 'horse_vehicle');
     }
 
+    /** FanTracker tracker mapping for this horse (drives live mileage/position pulls). */
+    public function fanTrackerMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'horse_tracker');
+    }
+
     protected $fillable=[
     'user_id',
     'horse_make_id',

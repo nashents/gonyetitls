@@ -142,9 +142,12 @@ return [
 
     // Fuel (Gonyeti Fuel order → Sage PR - Diesel).
     'fuel' => [
-        // Fuel orders post to the "PO - Diesel" definition (Order class). Unlike
-        // "PR - Diesel" (Quote) it needs NO REG/Driver picklists — it carries the
-        // trip/horse PROJECT on the line instead.
+        // Fuel orders post to the "PO - Diesel" definition (Order class). NOTE:
+        // as of 2026-08-07 both PR- and PO - Diesel STILL enforce the required,
+        // validated REG picklist (Sage has not yet switched them to CLASS +
+        // EMPLOYEE), so the truck reg is rejected → requires_attention until they
+        // do. Flip to 'PR - Diesel' + drop the REG/Driver custom fields the moment
+        // that change lands (verified via API, not just the UI's "required" flag).
         'type'      => env('SAGE_INTACCT_FUEL_TYPE', 'PO - Diesel'),
         // Explicit diesel ITEMID to use on the line; when null, an item named
         // `item_name` is ensured (linked by name, else created).

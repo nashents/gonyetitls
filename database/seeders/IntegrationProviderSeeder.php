@@ -53,6 +53,22 @@ class IntegrationProviderSeeder extends Seeder
                 'default_config'       => json_encode(['mode' => 'push']),
                 'is_active'            => true,
             ],
+            [
+                'key'                  => 'fantracker',
+                'name'                 => 'FanTracker',
+                'type'                 => 'tracking',
+                'driver'               => 'App\\Integrations\\FanTracker\\FanTrackerDriver',
+                // FanTracker is a white-labelled Navixy platform deployment. Auth is a
+                // session hash obtained from POST {base_url}/user/auth (login+password),
+                // then passed as "hash" in every subsequent call's JSON body. base_url is
+                // the tenant's own portal root + the white-label API path (confirmed live
+                // against the test env: the public docs' api.{region}.navixy.com/v2 path
+                // does NOT apply to white-label tenants — the SPA's own static/app_config.js
+                // points at {origin}/api-v2/, not /v2), e.g. https://app.fantracker.net/api-v2.
+                'required_credentials' => json_encode(['base_url', 'login', 'password']),
+                'default_config'       => json_encode(['session_ttl_hours' => 12, 'timeout' => 30]),
+                'is_active'            => true,
+            ],
 
             // --- ACCOUNTING ---
             [

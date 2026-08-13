@@ -67,6 +67,8 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">CreatedBy
+                                    </th>
                                     <th class="th-sm">Employee
                                     </th>
                                     <th class="th-sm">Type
@@ -94,6 +96,9 @@
                                 <tbody>
                                     @forelse ($leaves as $leave)
                                   <tr>
+                                    <td>
+                                        {{$leave->user?->name}} {{$leave->user?->surname}}
+                                    </td>
                                     <td>
                                         {{ucfirst($leave->employee ? $leave->employee->name : '')}} {{ucfirst($leave->employee ? $leave->employee->surname : '')}}
                                         @if ($leave->department)

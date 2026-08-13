@@ -9,6 +9,7 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Services\Cartrack\Concerns\ResolvesCartrackIntegration;
 use App\Services\EzyTrack\Concerns\ResolvesEzyTrackIntegration;
+use App\Services\FanTracker\Concerns\ResolvesFanTrackerIntegration;
 use App\Services\Integrations\IntegrationGate;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -23,13 +24,18 @@ use Livewire\Component;
  *  - EzyTrack: reads the locally cached state of whichever devices have
  *    pushed us a position (see EzyTrackPositionIngestor), resolved via the
  *    manual links made on the "EzyTrack Device Mapping" screen.
+ *  - FanTracker: pulls tracker/get_states for the whole fleet and resolves
+ *    it via the IntegrationMapping cache built by `fantracker:match-vehicles`.
  *
- * Either source shows Gonyeti fleet numbers instead of raw provider ids.
+ * Every source shows Gonyeti fleet numbers instead of raw provider ids.
  */
 class LiveMap extends Component
 {
     use ResolvesCartrackIntegration;
     use ResolvesEzyTrackIntegration;
+    use ResolvesFanTrackerIntegration {
+        ResolvesCartrackIntegration::companyIdForFleetModel insteadof ResolvesFanTrackerIntegration;
+    }
 
     /** Refresh cadence for the browser poll — the underlying fetch is itself cached (see ResolvesCartrackIntegration::cachedFleetSnapshot). */
     public int $pollSeconds = 30;
@@ -48,6 +54,12 @@ class LiveMap extends Component
         'vehicle_ezytrack_device' => [Vehicle::class, 'Vehicle'],
     ];
 
+    protected const FANTRACKER_ENTITY_MODELS = [
+        'horse_tracker'   => [Horse::class, 'Horse'],
+        'trailer_tracker' => [Trailer::class, 'Trailer'],
+        'vehicle_tracker' => [Vehicle::class, 'Vehicle'],
+    ];
+
     /** Follows the app-wide convention: every integration's UI states plainly when it isn't active, rather than silently showing nothing. */
     public function getCartrackEnabledProperty(): bool
     {
@@ -59,11 +71,17 @@ class LiveMap extends Component
         return IntegrationGate::enabledForUser('ezytrack');
     }
 
+    public function getFanTrackerEnabledProperty(): bool
+    {
+        return IntegrationGate::enabledForUser('fantracker');
+    }
+
     public function render()
     {
         $markers = array_merge(
             $this->cartrackEnabled ? $this->markers() : [],
-            $this->ezyTrackEnabled ? $this->ezyTrackMarkers() : []
+            $this->ezyTrackEnabled ? $this->ezyTrackMarkers() : [],
+            $this->fanTrackerEnabled ? $this->fanTrackerMarkers() : []
         );
 
         return view('livewire.fleet.live-map', [
@@ -180,6 +198,65 @@ class LiveMap extends Component
                 'latitude'    => (float) $device->latitude,
                 'longitude'   => (float) $device->longitude,
                 'last_update' => optional($device->last_gps_at)->toDateTimeString(),
+            ];
+        }
+
+        return $markers;
+    }
+
+    /** FanTracker markers: tracker/get_states for the whole fleet, resolved through the mapping built by `fantracker:match-vehicles`. */
+    protected function fanTrackerMarkers(): array
+    {
+        $companyId = $this->currentCompanyId();
+        $integration = $this->activeFanTrackerIntegration($companyId);
+
+        if (! $integration) {
+            return [];
+        }
+
+        $result = $this->cachedFleetStates($integration);
+
+        if (! ($result['success'] ?? false)) {
+            $this->apiError = $result['error'] ?? 'FanTracker request failed.';
+            return [];
+        }
+
+        $mappings = IntegrationMapping::where('company_integration_id', $integration->id)
+            ->whereIn('entity_type', array_keys(self::FANTRACKER_ENTITY_MODELS))
+            ->get()
+            ->keyBy('external_id');
+
+        $markers = [];
+
+        foreach ((array) data_get($result['data'], 'states', []) as $trackerId => $node) {
+            $latitude  = data_get($node, 'gps.location.lat');
+            $longitude = data_get($node, 'gps.location.lng');
+
+            if ($latitude === null || $longitude === null) {
+                continue;
+            }
+
+            $mapping = $mappings->get((string) $trackerId);
+
+            $label = 'Unknown vehicle';
+            $type  = null;
+
+            if ($mapping) {
+                [$modelClass, $typeLabel] = self::FANTRACKER_ENTITY_MODELS[$mapping->entity_type];
+                $model = $modelClass::find($mapping->local_id);
+                if ($model) {
+                    $label = $model->fleet_number ?? $model->registration_number ?? $label;
+                    $type  = $typeLabel;
+                }
+            }
+
+            $markers[] = [
+                'label'       => $label,
+                'type'        => $type,
+                'source'      => 'FanTracker',
+                'latitude'    => (float) $latitude,
+                'longitude'   => (float) $longitude,
+                'last_update' => data_get($node, 'last_update'),
             ];
         }
 

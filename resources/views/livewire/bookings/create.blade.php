@@ -92,6 +92,9 @@
                                             @if ($mileage_is_live_from_cartrack)
                                                 <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
                                             @endif
+                                            @if ($mileage_is_live_from_fantracker)
+                                                <span class="badge badge-success" title="Pulled live from FanTracker">Live from FanTracker</span>
+                                            @endif
                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" {{$type == "Asset" ? "disabled" : ""}} placeholder="Enter Mileage" required>
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
