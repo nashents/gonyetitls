@@ -245,7 +245,9 @@ class LiveMap extends Component
                 [$modelClass, $typeLabel] = self::FANTRACKER_ENTITY_MODELS[$mapping->entity_type];
                 $model = $modelClass::find($mapping->local_id);
                 if ($model) {
-                    $label = $model->fleet_number ?? $model->registration_number ?? $label;
+                    // FanTracker matches are made ON registration_number (see FanTrackerVehicleMatcher),
+                    // so show that first — fleet_number can carry unrelated/placeholder data (e.g. "N/A").
+                    $label = $model->registration_number ?: $model->fleet_number ?: $label;
                     $type  = $typeLabel;
                 }
             }

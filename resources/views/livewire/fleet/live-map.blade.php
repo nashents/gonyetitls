@@ -33,10 +33,10 @@
                                         <a href="{{ route('fleet.ezytrack-device-mappings') }}">EzyTrack Device Mapping</a>.
                                     </p>
                                 @endif
-                                @if ($this->fanTrackerEnabled && empty($markers))
+                                @if ($this->fanTrackerEnabled)
                                     <p class="text-muted">
-                                        No live FanTracker positions yet. Run <code>php artisan fantracker:match-vehicles</code>
-                                        to link your fleet (trackers must be labelled with the vehicle's registration number), then check back shortly.
+                                        FanTracker trackers show up once linked under
+                                        <a href="{{ route('fleet.fantracker-device-mappings') }}">FanTracker Device Mapping</a>.
                                     </p>
                                 @endif
                             @endif

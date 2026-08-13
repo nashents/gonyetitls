@@ -1399,14 +1399,14 @@ class Index extends Component
     }
 
 
-    /** Sage integration gate — controls the fuel PO - Diesel sync badge/button. */
+    /** Sage integration gate — controls the fuel PR - Diesel sync badge/button. */
     public function getSageEnabledProperty()
     {
         return SageIntegration::enabledForUser();
     }
 
     /**
-     * Manually push a fuel order to Sage as a "PO - Diesel" (badge Sync / Re-sync
+     * Manually push a fuel order to Sage as a "PR - Diesel" (badge Sync / Re-sync
      * / Retry). Only authorized (approved) fuels sync — the service enforces the
      * same gate.
      */
@@ -1435,7 +1435,7 @@ class Index extends Component
             $this->dispatchBrowserEvent('alert', [
                 'type'    => $ok ? 'success' : 'warning',
                 'message' => $ok
-                    ? 'Fuel order synced to Sage PO - Diesel (' . $result['external_id'] . ').'
+                    ? 'Fuel order synced to Sage PR - Diesel (' . $result['external_id'] . ').'
                     : 'Sage sync: ' . ($result['error'] ?? 'could not sync this fuel order.'),
             ]);
         } catch (\Throwable $e) {

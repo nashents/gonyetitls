@@ -641,9 +641,10 @@ class SidebarComposer
         $in_transport_management = $isManagement && $inTransport;
 
         // Gates the Live Fleet Map menu (any active "tracking" category integration)
-        // and the EzyTrack Device Mapping sub-item (ezytrack specifically).
+        // and the EzyTrack / FanTracker Device Mapping sub-items (provider specific).
         $hasTrackingIntegration = IntegrationGate::enabledForUserType('tracking');
         $hasEzyTrackIntegration = IntegrationGate::enabledForUser('ezytrack');
+        $hasFanTrackerIntegration = IntegrationGate::enabledForUser('fantracker');
 
            // Build your context keys ONCE (map your booleans + ids here)
         $ctx = [
@@ -669,6 +670,7 @@ class SidebarComposer
             'isNotDriver'    => (bool) $not_driver,
             'hasTrackingIntegration' => (bool) $hasTrackingIntegration,
             'hasEzyTrackIntegration' => (bool) $hasEzyTrackIntegration,
+            'hasFanTrackerIntegration' => (bool) $hasFanTrackerIntegration,
             'hasStoresDeptHead'    => (bool) $stdepartment_head,
             'hasWorkshopDeptHead'    => (bool) $wsdepartment_head,
             'hasHRDeptHead'    => (bool) $hrdepartment_head,

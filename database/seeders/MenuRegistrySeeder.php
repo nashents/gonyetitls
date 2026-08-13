@@ -1440,11 +1440,18 @@ class MenuRegistrySeeder extends Seeder
             $all(['isSuperAdmin']),
         ]);
 
-        // EzyTrack Device Mapping needs the ezytrack provider specifically —
-        // a company with only Cartrack active shouldn't see this sub-item.
+        // EzyTrack / FanTracker Device Mapping need the ezytrack / fantracker
+        // provider specifically — a company with only Cartrack active
+        // shouldn't see either sub-item.
         $vHasEzyTrack = $any([
             $all(['isNotDriver', 'inTransport', 'hasEzyTrackIntegration']),
             $all(['isNotDriver', 'inWorkshop', 'hasEzyTrackIntegration']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        $vHasFanTracker = $any([
+            $all(['isNotDriver', 'inTransport', 'hasFanTrackerIntegration']),
+            $all(['isNotDriver', 'inWorkshop', 'hasFanTrackerIntegration']),
             $all(['isSuperAdmin']),
         ]);
 
@@ -1458,6 +1465,7 @@ class MenuRegistrySeeder extends Seeder
         ]);
         $upsertSub($m, ['name'=>'Live Fleet Map','slug'=>'live-fleet-map-view','icon'=>'fas fa-map-marker-alt','route_name'=>'fleet.live-map','sort_order'=>10]);
         $upsertSub($m, ['name'=>'EzyTrack Device Mapping','slug'=>'ezytrack-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.ezytrack-device-mappings','sort_order'=>20,'visibility'=>$vHasEzyTrack]);
+        $upsertSub($m, ['name'=>'FanTracker Device Mapping','slug'=>'fantracker-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.fantracker-device-mappings','sort_order'=>30,'visibility'=>$vHasFanTracker]);
 
         // Assignments
         $m = $upsertModule($g, [

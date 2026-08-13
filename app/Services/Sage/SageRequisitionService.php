@@ -134,16 +134,10 @@ class SageRequisitionService
 
         $header = SageRequisitionMapper::header($trip, $vendorId, $vendorSageId, $vendorContact, optional($first->currency)->code, $docType);
 
-        // The Dispatch Sheet definition requires the REG (truck registration) +
-        // Driver custom fields. They are validated pick-lists in Sage, so these
-        // values must match entries configured there (else Sage flags the doc for
-        // attention). Sourced from the trip's horse + driver.
-        if ($isDispatch) {
-            $header['customfields'] = [
-                (string) config('sageintacct.purchasing.dispatch_reg_field', 'REG')       => $this->truckRegistration($trip),
-                (string) config('sageintacct.purchasing.dispatch_driver_field', 'Driver') => $this->driverName($trip),
-            ];
-        }
+        // The Dispatch Sheet definition now uses the CLASS + EMPLOYEE dimensions
+        // (carried on each line, like trip-project requisitions). Sage made the old
+        // REG/Driver pick-lists optional (2026-08-07, API-verified), so we no longer
+        // send them — the class + employee on the lines identify the truck/driver.
 
         $res = $this->driver->createRequisition($header, $lines);
 
@@ -212,21 +206,6 @@ class SageRequisitionService
         $s = mb_strtolower(preg_replace('/[^a-z0-9\s]/i', ' ', (string) $s));
 
         return trim(preg_replace('/\s+/', ' ', $s));
-    }
-
-    /** Truck registration for the Dispatch Sheet REG field (trip's horse). */
-    protected function truckRegistration(Trip $trip): string
-    {
-        return (string) (optional($trip->horse)->registration_number ?: '');
-    }
-
-    /** Driver name for the Dispatch Sheet Driver field (trip's driver). */
-    protected function driverName(Trip $trip): string
-    {
-        $employee = optional($trip->driver)->employee;
-        $name     = trim(trim((string) optional($employee)->name) . ' ' . trim((string) optional($employee)->surname));
-
-        return $name !== '' ? $name : (string) optional(optional($trip->driver)->employee)->employee_number;
     }
 
     /** Fetch the vendor's contact name for pay-to / return-to. */

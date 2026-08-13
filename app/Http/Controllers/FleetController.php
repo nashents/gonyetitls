@@ -13,4 +13,9 @@ class FleetController extends Controller
     {
         return view('fleet.ezytrack-device-mappings');
     }
+
+    public function fanTrackerDeviceMappings()
+    {
+        return view('fleet.fantracker-device-mappings');
+    }
 }
