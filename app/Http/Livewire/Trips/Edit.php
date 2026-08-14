@@ -739,7 +739,7 @@ class Edit extends Component
     {
         if (!is_null($this->selectedFrom) ) {
             if (!is_null($id)) {
-                $this->routes = Route::with('truck_stops:id,name')->where('status',1)->where('from',$this->selectedFrom)
+                $this->routes = Route::where('status',1)->where('from',$this->selectedFrom)
                                     ->where('to',$id)->orderBy('name','asc')->get();
             
             }
@@ -1083,12 +1083,12 @@ class Edit extends Component
         $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->defined_transporter_rates = Rate::where('category','Transporter')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->containers = Container::orderBy('name','asc')->latest()->get();
-        $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
+        $this->transporters = Transporter::where('authorization','approved')->orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->trip_groups = TripGroup::where('status',1)->latest()->get();
         $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
-        $this->routes = Route::with('truck_stops:id,name')->orderBy('name','asc')->get();
+        $this->routes = Route::orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->truck_stops = TruckStop::orderBy('name','asc')->get();
         $trip_truck_stops = $this->trip->truck_stops;
@@ -1266,7 +1266,7 @@ class Edit extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
-        $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
+        $this->borders = Border::orderBy('name','asc')->get();
         $this->clearing_agents = ClearingAgent::orderBy('name','asc')->get();
         
       
@@ -3677,7 +3677,7 @@ class Edit extends Component
                     'message'=>"Trip Tracking Groups Refreshed Successfully!!."
                 ]);
             }elseif($category == "borders"){
-                $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
+                $this->borders = Border::orderBy('name','asc')->get();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Borders Refreshed Successfully!!."
@@ -3715,7 +3715,7 @@ class Edit extends Component
                 ]);
             }
             elseif($category == 'transporters'){
-                $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
+                $this->transporters = Transporter::where('authorization','approved')->orderBy('name','asc')->get();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Transporters Refreshed Successfully!!."
@@ -3864,10 +3864,10 @@ class Edit extends Component
             }
             elseif($category == 'routes'){
                 if (isset($this->selectedFrom) && isset($this->selectedTo)) {
-                    $this->routes = Route::with('truck_stops:id,name')->where('status',1)->where('from',$this->selectedFrom)
+                    $this->routes = Route::where('status',1)->where('from',$this->selectedFrom)
                     ->where('to',$this->selectedTo)->orderBy('name','asc')->get();
                 }else{
-                    $this->routes = Route::with('truck_stops:id,name')->where('status',1)->orderBy('name','asc')->get();
+                    $this->routes = Route::where('status',1)->orderBy('name','asc')->get();
                 }
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',

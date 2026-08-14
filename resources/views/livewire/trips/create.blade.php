@@ -2131,12 +2131,12 @@
                                                     
                                                     <thead>
                                                         <tr>
-                                                            <th>Expense</th>
-                                                            <th>Category</th>
+                                                            <th>Expense<span class="required" style="color: red">*</span></th>
+                                                            <th>Category<span class="required" style="color: red">*</span></th>
                                                             <th>Payment Method</th>
-                                                            <th>Currency</th>
-                                                            <th>Vendor</th>
-                                                            <th>Amount</th>
+                                                            <th>Currency<span class="required" style="color: red">*</span></th>
+                                                            <th>Vendor<span class="required" style="color: red">*</span></th>
+                                                            <th>Amount<span class="required" style="color: red">*</span></th>
                                                         </tr>
                                                     </thead>
 
@@ -2145,11 +2145,7 @@
                                                             @foreach ($expenses as $expense)
                                                                 @php
                                                                     $id = $expense->id;
-                                                                    $rowHasInput = !empty($expense_id[$id] ?? null)
-                                                                        || !empty($category[$id] ?? null)
-                                                                        || !empty($expense_currency_id[$id] ?? null)
-                                                                        || !empty($expense_vendor_id[$id] ?? null)
-                                                                        || !empty($amount[$id] ?? null);
+                                                                    $rowHasInput = !empty($expense_id[$id] ?? null);
                                                                 @endphp
                                                                 <tr>
                                                                     <td>
