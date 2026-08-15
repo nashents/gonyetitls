@@ -86,6 +86,9 @@ WithBatchInserts
                 $currencyId                = $this->resolveCurrency($currency);
                 $accountId                 = $this->resolveAccount($expense_account ?? '');
                 [$entityColumn, $entityId] = ($bill_for && $value) ? $this->resolveEntity($bill_for, (string) $value) : [null, null];
+                // If the entity couldn't be matched, drop bill_for/value entirely
+                // rather than leaving a dangling category with no linked record.
+                $resolvedBillFor = $entityColumn ? $bill_for : null;
 
                 $line_subtotal = (float) $qty * (float) $unit_price;
                 $line_total    = $total ? (float) $total : $line_subtotal;
@@ -93,8 +96,8 @@ WithBatchInserts
                 $bill                     = new Bill();
                 $bill->user_id            = Auth::id();
                 $bill->vendor_id          = $vendorId;
-                $bill->bill_for           = $bill_for;
-                $bill->category           = $bill_for;
+                $bill->bill_for           = $resolvedBillFor;
+                $bill->category           = $resolvedBillFor;
                 $bill->currency_id        = $currencyId;
                 $bill->bill_number        = $this->billNumber();
                 $bill->bill_date          = $bill_date;
@@ -265,8 +268,9 @@ WithBatchInserts
                 default       => throw new \Exception("Unknown bill_for: {$bill_for}"),
             };
 
-            throw_if(!$id, \Exception::class, "{$bill_for} not found: {$value}");
-            $this->entityCache[$cache_key] = [$column, $id];
+            // If the named entity can't be matched, drop the link rather than
+            // failing the whole row — the bill still gets imported.
+            $this->entityCache[$cache_key] = $id ? [$column, $id] : [null, null];
         }
 
         return $this->entityCache[$cache_key];
