@@ -85,7 +85,11 @@ WithBatchInserts
                 $vendorId                  = $vendor_name ? $this->resolveVendor($vendor_name) : null;
                 $currencyId                = $this->resolveCurrency($currency);
                 $accountId                 = $this->resolveAccount($expense_account ?? '');
-                [$entityColumn, $entityId] = $bill_for ? $this->resolveEntity($bill_for, $value) : [null, null];
+
+                if ($bill_for) {
+                    throw_if(!$value, \Exception::class, "value is required when bill_for is set ({$bill_for})");
+                }
+                [$entityColumn, $entityId] = $bill_for ? $this->resolveEntity($bill_for, (string) $value) : [null, null];
 
                 $line_subtotal = (float) $qty * (float) $unit_price;
                 $line_total    = $total ? (float) $total : $line_subtotal;
