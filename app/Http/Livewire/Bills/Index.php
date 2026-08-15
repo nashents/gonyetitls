@@ -190,19 +190,16 @@ class Index extends Component
             ExcelFacade::import($import, $this->importFile);
 
             $this->importFile = null;
-            $this->dispatchBrowserEvent('alert', [
-                'type'    => 'success',
-                'message' => 'Bills imported successfully!',
-            ]);
+            session()->flash('success', 'Bills imported successfully!');
 
         } catch (ExcelValidationException $e) {
+            $lines = [];
             foreach ($e->failures() as $failure) {
-                $this->addError('importFile', "Row {$failure->row()}: " . implode(', ', $failure->errors()));
+                $lines[] = "Row {$failure->row()}: " . implode(', ', $failure->errors());
             }
+            session()->flash('error', implode(' | ', $lines));
         } catch (\Exception $e) {
-            foreach (explode("\n", $e->getMessage()) as $line) {
-                $this->addError('importFile', $line);
-            }
+            session()->flash('error', $e->getMessage());
         }
 
         return redirect(request()->header('Referer'));
