@@ -44,7 +44,7 @@ class CreditNoteController extends Controller
         $credit_note = CreditNote::find($id);
         $credit_note_items = $credit_note->credit_note_items;
         $invoice = $credit_note->invoice;
-        $invoice_items = $invoice->invoice_items;
+        $invoice_items = $invoice ? $invoice->invoice_items : collect();
         $company = $credit_note->company;
         return view('credit_notes.preview')->with([
             'credit_note' => $credit_note,
@@ -57,7 +57,7 @@ class CreditNoteController extends Controller
     public function print($id){
         $credit_note = CreditNote::find($id);
         $invoice = $credit_note->invoice;
-        $invoice_items = $invoice->invoice_items;
+        $invoice_items = $invoice ? $invoice->invoice_items : collect();
         $credit_note_items = $credit_note->credit_note_items;
         $company = $credit_note->company;
         return view('credit_notes.print')->with([
@@ -71,7 +71,7 @@ class CreditNoteController extends Controller
     public function generatePDF($id){
         $credit_note = CreditNote::find($id);
         $invoice = $credit_note->invoice;
-        $invoice_items = $invoice->invoice_items;
+        $invoice_items = $invoice ? $invoice->invoice_items : collect();
         $credit_note_items = $credit_note->credit_note_items;
         $company = $credit_note->company;
         $data = [

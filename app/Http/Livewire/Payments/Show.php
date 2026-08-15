@@ -10,7 +10,10 @@ class Show extends Component
     public $payment;
 
     public function mount($id){
-        $this->payment = Payment::find($id);
+        $this->payment = Payment::with([
+            'invoice_payments.invoice',
+            'bill_payments.bill',
+        ])->find($id);
     }
     public function render()
     {

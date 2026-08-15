@@ -13,7 +13,9 @@ use App\Models\BankAccount;
 use App\Models\Destination;
 use App\Models\Notification;
 use App\Models\CreditNoteItem;
+use App\Models\InvoiceItem;
 use App\Models\InvoiceProduct;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PendingNotificationEmails;
@@ -50,8 +52,6 @@ class Create extends Component
     public $exchange_rate;
     public $exchange_amount;
     public $description;
-    public $amount;
-    public $qty;
     public $subtotal;
     public $total;
     public $invoice_total;
@@ -62,41 +62,86 @@ class Create extends Component
     public $product_name;
     public $product_description;
     public $company;
+    public $invoiceItems = [];
+    public $rows = [];
+    public $invoice_attached = 'Yes';
 
     public $inputs = [];
     public $i = 1;
     public $n = 1;
-    
+
     public function add($i)
     {
         $i = $i + 1;
         $this->i = $i;
         array_push($this->inputs ,$i);
     }
-    
+
     public function remove($i)
     {
         unset($this->inputs[$i]);
     }
-    
+
     private function resetInputFields(){
         $this->product_name = '';
+    }
+
+    public function updatedInvoiceAttached($value){
+        $this->selectedInvoice = null;
+        $this->invoice = null;
+        $this->invoiceItems = [];
+        $this->selectedCustomer = null;
+        $this->customer = null;
+        $this->currency_id = null;
+        $this->rows = [];
+        $this->recalculateTotals();
     }
 
     public function updatedSelectedInvoice($id){
         if (!is_null($id)) {
             $this->invoice = Invoice::find($this->selectedInvoice);
             $this->currency_id = $this->invoice->currency_id;
-            $this->tax_rate =  $this->invoice->tax_;
             $this->tax_rate =  $this->invoice->tax_rate;
-            $this->tax_amount =  $this->invoice->tax_amount;
-            $this->amount =  $this->invoice->subtotal;
-            $this->subtotal =  $this->invoice->subtotal;
-            $this->total =  $this->invoice->total;
             $this->selectedCustomer =  $this->invoice->customer_id;
             $this->customer = Customer::find( $this->invoice->customer_id);
             $this->initials = $this->customer->initials;
+            $this->invoiceItems = $this->invoice->invoice_items;
+            $this->rows = [];
+            $this->recalculateTotals();
         }
+    }
+
+    public function updatedSelectedCustomer($id){
+        if ($this->invoice_attached === 'No' && !is_null($id)) {
+            $this->customer = Customer::find($id);
+            $this->initials = $this->customer->initials;
+        }
+    }
+
+    public function addFromInvoiceItem($invoiceItemId){
+        $invoiceItem = InvoiceItem::where('invoice_id', $this->selectedInvoice)->find($invoiceItemId);
+        if ($invoiceItem) {
+            $this->rows[] = [
+                'description' => $invoiceItem->description ?: $invoiceItem->trip_details,
+                'amount' => $invoiceItem->subtotal,
+            ];
+            $this->recalculateTotals();
+        }
+    }
+
+    public function addRow(){
+        $this->rows[] = ['description' => '', 'amount' => ''];
+    }
+
+    public function removeRow($index){
+        unset($this->rows[$index]);
+        $this->rows = array_values($this->rows);
+        $this->recalculateTotals();
+    }
+
+    private function recalculateTotals(){
+        $this->subtotal = collect($this->rows)->sum(fn($row) => (float) ($row['amount'] ?? 0));
+        $this->total = $this->subtotal + (float) ($this->tax_amount ?? 0);
     }
 
     public function storeProduct(){
@@ -180,15 +225,18 @@ class Create extends Component
     public function mount(){
         $this->credit_note_number = $this->credit_noteNumber();
         $this->currencies = Currency::all();
-        $this->qty = 1;
         $this->invoice_products = InvoiceProduct::orderBy('name','asc')->get();
         $this->invoices = Invoice::where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->customers = Customer::orderBy('name','asc')->get();
         $this->company_id = Auth::user()->employee->company->id;
         $this->company = Auth::user()->employee->company;
     }
 
     public function updated($value){
         $this->validateOnly($value);
+        if (Str::startsWith($value, 'rows.') || $value === 'tax_amount') {
+            $this->recalculateTotals();
+        }
     }
     protected $messages =[
 
@@ -197,29 +245,40 @@ class Create extends Component
 
     ];
 
-    protected $rules = [
-        'selectedInvoice' => 'required',
-        'currency_id' => 'required',
-        'credit_note_number' => 'required',
-        'item' => 'required',
-        'description' => 'required',
-        'qty' => 'required',
-        'amount' => 'required',
-        'date' => 'required',
+    protected $validationAttributes = [
+        'rows.*.description' => 'description',
+        'rows.*.amount' => 'amount',
     ];
 
-   
+    protected function rules(){
+        $rules = [
+            'currency_id' => 'required',
+            'credit_note_number' => 'required',
+            'date' => 'required',
+            'rows' => 'required|array|min:1',
+            'rows.*.description' => 'required|string',
+            'rows.*.amount' => 'required|numeric',
+        ];
+
+        if ($this->invoice_attached === 'Yes') {
+            $rules['selectedInvoice'] = 'required';
+        } else {
+            $rules['selectedCustomer'] = 'required';
+        }
+
+        return $rules;
+    }
 
     public function store(){
-        
+        $this->validate();
+        $this->recalculateTotals();
+
         $credit_note = new CreditNote;
         $credit_note->user_id = Auth::user()->id;
         $credit_note->company_id = Auth::user()->employee->company_id;
-        $credit_note->customer_id = $this->invoice->customer_id;
         $credit_note->currency_id = $this->currency_id;
         $credit_note->tax_rate = $this->tax_rate;
         $credit_note->tax_amount = $this->tax_amount;
-        $credit_note->invoice_id = $this->selectedInvoice;
         $credit_note->credit_note_number = $this->credit_note_number;
         $credit_note->date = $this->date;
         $credit_note->memo = $this->memo;
@@ -229,7 +288,30 @@ class Create extends Component
         $credit_note->exchange_rate = $this->exchange_rate;
         $credit_note->subtotal = $this->subtotal;
         $credit_note->total = $this->total;
+
+        if ($this->invoice_attached === 'Yes') {
+            $credit_note->customer_id = $this->invoice->customer_id;
+            $credit_note->invoice_id = $this->selectedInvoice;
+            $credit_note->invoice_amount = $this->invoice->total;
+            $credit_note->invoice_balance = $this->invoice->total - $this->total;
+        } else {
+            $credit_note->customer_id = $this->selectedCustomer;
+            $credit_note->invoice_id = null;
+            $credit_note->invoice_amount = null;
+            $credit_note->invoice_balance = null;
+        }
+
         $credit_note->save();
+
+        foreach ($this->rows as $row) {
+            $credit_note->credit_note_items()->create([
+                'user_id' => Auth::user()->id,
+                'description' => $row['description'],
+                'qty' => 1,
+                'amount' => $row['amount'],
+                'subtotal' => $row['amount'],
+            ]);
+        }
 
         $notifications = Notification::where('when','before')->where('category','Credit Note Authorization')->where('status',1)->get();
         

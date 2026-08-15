@@ -925,6 +925,15 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 40,
         ]);
 
+        $upsertModule($g, [
+            'name' => 'Bulk Catch-up Payments',
+            'slug' => 'bulk-catchup-payments',
+            'icon' => 'fas fa-tasks',
+            'route_name' => 'accounts.bulk_catchup',
+            'sort_order' => 50,
+            'visibility' => $any([$all(['isAdmin','inFinance']), $all(['isSuperAdmin'])]),
+        ]);
+
         // ----------------------------
         // GROUP: Asset Management (Finance or Super)
         // ----------------------------

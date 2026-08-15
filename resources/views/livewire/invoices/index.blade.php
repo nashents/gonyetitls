@@ -282,17 +282,15 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('invoices.show',$invoice->id)}}"  ><i class="fas fa-eye color-default"></i> View</a></li>
 
-                                                @if ($invoice->authorization == "approved")
-                                                    @if ($company->invoice_template == "classic")
-                                                        <li><a href="{{route('invoices.classic',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
-                                                    @elseif ($company->invoice_template == "transport")     
-                                                        <li><a href="{{route('invoices.transport',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
-                                                    @elseif ($company->invoice_template == "modern")     
-                                                        <li><a href="{{route('invoices.modern',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
-                                                    @endif
-                                                    @if ($invoice->balance > 0 )
-                                                        <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
-                                                    @endif
+                                                @if ($company->invoice_template == "classic")
+                                                    <li><a href="{{route('invoices.classic',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                @elseif ($company->invoice_template == "transport")
+                                                    <li><a href="{{route('invoices.transport',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                @elseif ($company->invoice_template == "modern")
+                                                    <li><a href="{{route('invoices.modern',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                @endif
+                                                @if ($invoice->authorization == "approved" && $invoice->balance > 0 )
+                                                    <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
                                                 @endif
 
                                                 {{-- @if ($invoice->payments->isEmpty()) --}}

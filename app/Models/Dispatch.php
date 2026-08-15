@@ -18,6 +18,12 @@ class Dispatch extends Model implements Auditable
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
     }
+    public function reversed_by(){
+        return $this->belongsTo('App\Models\User', 'reversed_by_id');
+    }
+    public function bills(){
+        return $this->hasMany('App\Models\Bill');
+    }
       public function movements(){
         return $this->hasMany('App\Models\Movement');
     }
@@ -58,7 +64,16 @@ class Dispatch extends Model implements Auditable
 
     protected $casts = [
         'expand'      => 'boolean',
+        'reversed_at' => 'datetime',
     ];
 
+    public function canBeReversed(): bool
+    {
+        return $this->authorization === 'approved' && is_null($this->reversed_at);
+    }
 
+    public function isReversed(): bool
+    {
+        return ! is_null($this->reversed_at);
+    }
 }

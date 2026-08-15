@@ -4338,6 +4338,18 @@
     </script>
 
     <script type="text/javascript">
+        window.addEventListener('show-quickFuelBalanceModal', event => {
+            $('#quickFuelBalanceModal').modal('show');
+        })
+    </script>
+
+    <script type="text/javascript">
+    window.addEventListener('hide-quickFuelBalanceModal', event => {
+        $('#quickFuelBalanceModal').modal('hide');
+    })
+    </script>
+
+    <script type="text/javascript">
         window.addEventListener('hide-trip_typeModal', event => {
             $('#trip_typeModal').modal('hide');
         })
@@ -4738,6 +4750,16 @@
     <script type="text/javascript">
     window.addEventListener('hide-authorizationModal', event => {
         $('#authorizationModal').modal('hide');
+    })
+    </script>
+    <script type="text/javascript">
+    window.addEventListener('show-reverseModal', event => {
+        $('#reverseModal').modal('show');
+    })
+    </script>
+    <script type="text/javascript">
+    window.addEventListener('hide-reverseModal', event => {
+        $('#reverseModal').modal('hide');
     })
     </script>
     <script type="text/javascript">

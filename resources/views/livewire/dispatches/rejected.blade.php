@@ -149,6 +149,9 @@
                                     <td> {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{number_format($dispatch->total ? $dispatch->total : 0 , 2)}}</td>
                                      <td>
                                         <span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        @if ($dispatch->isReversed())
+                                            <span class="badge bg-dark">reversed</span>
+                                        @endif
                                         @php
                                             $user = App\Models\User::find($dispatch->authorized_by_id);
                                         @endphp
@@ -164,6 +167,14 @@
                                         @if ($dispatch->authorization_comments)
                                             <br>
                                          <strong>Comments:</strong> {{$dispatch->authorization_comments}}
+                                        @endif
+                                        @if ($dispatch->isReversed())
+                                            <br>
+                                          <strong>ReversedBy:</strong> {{$dispatch->reversed_by ? $dispatch->reversed_by->name.' '.$dispatch->reversed_by->surname : ""}}
+                                            <br>
+                                          <strong>ReversedOn:</strong> {{$dispatch->reversed_at->format('Y-m-d')}}
+                                            <br>
+                                          <strong>ReversalReason:</strong> {{$dispatch->reversal_comments}}
                                         @endif
                                         </small>
                                     </td>

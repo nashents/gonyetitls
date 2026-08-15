@@ -18,8 +18,9 @@ Invoice Print |@if (Auth::user()->employee->company)
 <div class="container">
     <div class="card">
         <div class="card-body">
+            <div id="print-area">
             <div id="invoice">
-                
+
                 <div class="invoice overflow-auto">
                     <div style="min-width: 600px">
                         <header>
@@ -29,7 +30,7 @@ Invoice Print |@if (Auth::user()->employee->company)
                                 </div>
                                 <div class="col company-details">
                                     <h4 class="name" >
-                                        <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->color : Auth::us()->color }}">
+                                        <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
                                      {{$company->name}}
                                         </a>
                                     </h4>
@@ -125,14 +126,12 @@ Invoice Print |@if (Auth::user()->employee->company)
                                   
                                          <tr>
                                             <td class="text-center">
-                                              @if (isset($item->trip_details))
+                                              @if ($item->description)
+                                              {{$item->description}}
+                                              @elseif ($item->trip_details)
                                               {{$item->trip_details}}
-                                              @else
-                                                @if ($item->inventory)
-                                                    @if ($item->inventory->product)
-                                                    {{$item->inventory->product->name}}  {{$item->inventory->product->description}}
-                                                    @endif
-                                                @endif
+                                              @elseif ($item->inventory && $item->inventory->product)
+                                              {{$item->inventory->product->name}}  {{$item->inventory->product->description}}
                                               @endif
                                           </td>
                                             <td class="qty text-center"> {{$item->qty}}</td>
@@ -251,6 +250,29 @@ Invoice Print |@if (Auth::user()->employee->company)
                                         <td>  {{ $sale->currency ? $sale->currency->symbol : "" }}{{number_format($receipt->balance,2)}}</td>
                                     </tr>
                                 </tfoot>
+                                @else
+                                <tbody>
+                                    <tr>
+                                        <td class="text-center">Customer Deposit</td>
+                                        <td class="qty text-center">1</td>
+                                        <td class="unit text-center">{{ $receipt->currency ? $receipt->currency->symbol : "" }}{{number_format($receipt->amount,2)}}</td>
+                                        <td class="unit text-center">{{ $receipt->currency ? $receipt->currency->symbol : "" }}{{number_format($receipt->amount,2)}}</td>
+                                        <td class="unit text-center">{{ $receipt->currency ? $receipt->currency->symbol : "" }}{{number_format(0,2)}}</td>
+                                        <td class="unit text-center">{{ $receipt->currency ? $receipt->currency->symbol : "" }}{{number_format($receipt->amount,2)}}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3"></td>
+                                        <td colspan="2">Payment Method</td>
+                                        <td class="unit text-center">{{$receipt->payment ? $receipt->payment->mode_of_payment : ""}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3"></td>
+                                        <td colspan="2">Amount Paid {{ $receipt->currency ? $receipt->currency->name : "" }}</td>
+                                        <td class="unit text-center">{{ $receipt->currency ? $receipt->currency->symbol : "" }}{{number_format($receipt->amount,2)}}</td>
+                                    </tr>
+                                </tfoot>
                                 @endif
         
                     
@@ -271,7 +293,7 @@ Invoice Print |@if (Auth::user()->employee->company)
                         <footer style=" bottom: 0px; left: 0px; right: 0px; ">
                             {{$receipt->footer}}
                             <br>
-                            <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">    
+                            <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">    
                         </footer>
                     </center>  
                    
@@ -279,6 +301,7 @@ Invoice Print |@if (Auth::user()->employee->company)
                     <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
                     <div></div>
                 </div>
+            </div>
             </div>
         </div>
     </div>

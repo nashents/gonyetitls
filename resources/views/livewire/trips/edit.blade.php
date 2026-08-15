@@ -1938,8 +1938,40 @@
                                        @error('fuel_order') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                    @if ($fuel_order == True)
+                                   @if ($selectedHorse)
+                                   <div class="form-group">
+                                       <label>Fuel Source<span class="required" style="color: red">*</span></label>
+                                       <div class="mb-10">
+                                           <input type="radio" wire:model.debounce.300ms="fuel_source" value="station" class="line-style" required/>
+                                           <label for="one" class="radio-label">Fueling Station</label>
+                                           <input type="radio" wire:model.debounce.300ms="fuel_source" value="truck" class="line-style" required/>
+                                           <label for="one" class="radio-label">Another Truck</label>
+                                       </div>
+                                   </div>
+                                   @endif
                                    <div class="row">
                                        <div class="col-md-4">
+                                           @if ($selectedHorse && $fuel_source == "truck")
+                                           <div class="form-group">
+                                               <label for="source_horse">Source Truck<span class="required" style="color: red">*</span></label>
+                                               <select wire:model.debounce.300ms="selectedSourceHorse" class="form-control" required>
+                                                   <option value="">Select Source Truck</option>
+                                                   @foreach ($horses as $horse)
+                                                       @continue($horse->id == $selectedHorse)
+                                                       <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                   @endforeach
+                                               </select>
+                                               @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                               @if ($selectedSourceHorse)
+                                                   @if (is_numeric($source_horse_balance))
+                                                       <small style="color:green">Available fuel balance is {{ $source_horse_balance }} Litres</small>
+                                                   @else
+                                                       <br><small class="text-danger">Not set.</small>
+                                                       <a href="#" wire:click.prevent="openSourceHorseBalanceModal({{ $selectedSourceHorse }})">Click here to update</a>
+                                                   @endif
+                                               @endif
+                                           </div>
+                                           @else
                                            <div class="form-group">
                                                <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                               <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -1954,11 +1986,12 @@
                                                    @if ($selected_container->purchase_type == "Bulk Buy")
                                                        @if (isset($container_balance))
                                                            <br>
-                                                           <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>    
+                                                           <small style="color:green">Available fuel balance is {{ $container_balance }}Litres</small>
                                                        @endif
-                                                   @endif 
+                                                   @endif
                                                @endif
                                            </div>
+                                           @endif
                                        </div>
                                        <div class="col-md-4">
                                            <div class="form-group">
@@ -1977,6 +2010,41 @@
                                                <label for="date">Fillup Date</label>
                                                <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date"/>
                                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                           </div>
+                                       </div>
+                                   </div>
+                                   @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
+                                       <div class="form-group">
+                                           <label>Select where to deduct from<span class="required" style="color: red">*</span></label>
+                                           <div class="mb-10">
+                                               <input type="radio" wire:model.debounce.300ms="deduct_from" value="account"  class="line-style"  required/>
+                                               <label for="one" class="radio-label">Account Balance($) {{ isset($account_balance) ? "(".$account_balance.")" : "" }}</label>
+                                               <input type="radio" wire:model.debounce.300ms="deduct_from" value="quantity"  class="line-style"  required/>
+                                               <label for="one" class="radio-label">Quantity Balance(l)</label>
+                                           </div>
+                                       </div>
+                                   @endif
+                                   <div class="row">
+                                       <div class="col-md-6">
+                                           <div class="form-group">
+                                               <label for="fuel_type">Fuel Type<span class="required" style="color: red">*</span></label>
+                                               <select class="form-control" wire:model.debounce.300ms="fuel_type" required @if($fuel_type_locked) disabled @endif>
+                                                   <option value="">Select Fuel Type</option>
+                                                   <option value="Diesel">Diesel</option>
+                                                   <option value="Petrol">Petrol</option>
+                                               </select>
+                                               @error('fuel_type') <span class="text-danger error">{{ $message }}</span>@enderror
+                                           </div>
+                                       </div>
+                                       <div class="col-md-6">
+                                           <div class="form-group">
+                                               <label for="is_full_tank">Full Tank Refill?<span class="required" style="color: red">*</span></label>
+                                               <select class="form-control" wire:model.defer="is_full_tank" required>
+                                                   <option value="">Select Option</option>
+                                                   <option value="1">Yes - Tank Filled Completely</option>
+                                                   <option value="0">No - Partial Refill</option>
+                                               </select>
+                                               @error('is_full_tank') <span class="text-danger error">{{ $message }}</span>@enderror
                                            </div>
                                        </div>
                                    </div>
@@ -2164,5 +2232,30 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="quickFuelBalanceModal" tabindex="-1" role="dialog" aria-labelledby="quickFuelBalanceModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="quickFuelBalanceModalLabel"><i class="fa fa-tint"></i> Update Truck Fuel Balance <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateSourceHorseBalance()">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="quickBalanceValue">Available Fuel Balance (Litres)<span class="required" style="color: red">*</span></label>
+                            <input type="number" step="any" min="0" class="form-control" wire:model.defer="quickBalanceValue" placeholder="Enter available fuel balance">
+                            @error('quickBalanceValue') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </div>

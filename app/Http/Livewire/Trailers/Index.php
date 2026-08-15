@@ -136,17 +136,17 @@ class Index extends Component
         $this->chasis_number = '';
         $this->color = '';
         $this->cargo_type = '';
-        $this->measurement_id = '';
-        $this->cargo_id = '';
+        $this->measurement_id = [];
+        $this->cargo_id = [];
         $this->custom_ref = '';
         $this->no_of_wheels = '';
         $this->nvm = '';
         $this->gvm = '';
         $this->origin = '';
-        $this->capacity = '';
+        $this->capacity = [];
         $this->condition = '';
         $this->manufacturer = '';
-        $this->documents = '';
+        $this->documents = [];
         $this->start_date = '';
         $this->end_date = '';
         $this->compartments = '';
@@ -265,11 +265,11 @@ public function activate($id){
             foreach ($this->capacity as $key => $value) {
                 $capacity = new Capacity;
                 $capacity->trailer_id = $trailer->id;
-                if (isset($this->cargo_id[$key])) {
+                if (!empty($this->cargo_id[$key])) {
                     $capacity->cargo_id = $this->cargo_id[$key];
-              
+
                 }
-                if (isset($this->measurement_id[$key])) {
+                if (!empty($this->measurement_id[$key])) {
                     $capacity->measurement_id = $this->measurement_id[$key];
                 }
                 if (isset($this->capacity[$key])) {
@@ -439,10 +439,10 @@ public function activate($id){
                     foreach ($this->capacity as $key => $value) {
                         $capacity = new Capacity;
                         $capacity->trailer_id = $trailer->id;
-                        if (isset($this->cargo_id[$key])) {
+                        if (!empty($this->cargo_id[$key])) {
                             $capacity->cargo_id = $this->cargo_id[$key];
                         }
-                        if (isset($this->measurement_id[$key])) {
+                        if (!empty($this->measurement_id[$key])) {
                             $capacity->measurement_id = $this->measurement_id[$key];
                         }
                         if (isset($this->capacity[$key])) {

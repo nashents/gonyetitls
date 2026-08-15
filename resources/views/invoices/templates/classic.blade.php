@@ -250,7 +250,7 @@ Invoice Preview | Gonyeti Transport Ltd
                                     <footer style="text-align: center; bottom: 0px; left: 0px; right: 0px;">
                                         This document was electronically generated. E&amp;OE.
                                         <br>
-                                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{ asset('images/basilmark-logo.png') }}" alt="" style="width: 20%; height:20%">
+                                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{ asset('images/logo.png') }}" alt="" style="width: 20%; height:20%">
                                     </footer>
                                 </center>
                             </div>

@@ -30,6 +30,10 @@ class AccountController extends Controller
     {
         return view('accounts.tax');
     }
+    public function bulkCatchUp()
+    {
+        return view('accounts.bulk-catch-up');
+    }
 
     /**
      * Show the form for creating a new resource.

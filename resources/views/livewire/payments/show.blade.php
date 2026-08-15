@@ -68,7 +68,11 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Proof Of Payment</th>
-                                <td class="w-20 line-height-35"><a href="{{ asset('myfiles/documents/'.$payment->pop) }}"><i class="fas fa-file"></i>{{ $payment->pop }}</a></td>
+                                <td class="w-20 line-height-35">
+                                    @if ($payment->pop)
+                                    <a href="{{ asset('myfiles/documents/'.$payment->pop) }}"><i class="fas fa-file"></i>{{ $payment->pop }}</a>
+                                    @endif
+                                </td>
                             </tr>
                            
                             @endif
@@ -128,8 +132,62 @@
                             </td>
                             </tr>
                             @endif
-                            
-                           
+
+                            @if (in_array($payment->transaction_category, ['Customer Deposits', 'Vendor Payments']))
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Drawdown Balance</th>
+                                <td class="w-20 line-height-35">{{ $payment->currency ? $payment->currency->symbol : "" }}{{ number_format($payment->drawdown_balance ?? 0, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Drawdown Transactions</th>
+                                <td class="w-20 line-height-35">
+                                    @php
+                                        $drawdowns = $payment->transaction_category === 'Customer Deposits'
+                                            ? $payment->invoice_payments
+                                            : $payment->bill_payments;
+                                    @endphp
+                                    @if ($drawdowns->count() > 0)
+                                        <table class="table table-bordered table-condensed" style="margin: 0 auto;">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ $payment->transaction_category === 'Customer Deposits' ? 'Invoice#' : 'Bill#' }}</th>
+                                                    <th>Amount Drawn</th>
+                                                    <th>Source</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($drawdowns as $drawdown)
+                                                <tr>
+                                                    <td>
+                                                        @if ($payment->transaction_category === 'Customer Deposits')
+                                                            @if ($drawdown->invoice)
+                                                            <a href="{{ route('invoices.show', $drawdown->invoice->id) }}" style="color: blue">{{ $drawdown->invoice->invoice_number }}</a>
+                                                            @else
+                                                            <em>Invoice deleted</em>
+                                                            @endif
+                                                        @else
+                                                            @if ($drawdown->bill)
+                                                            <a href="{{ route('bills.show', $drawdown->bill->id) }}" style="color: blue">{{ $drawdown->bill->bill_number }}</a>
+                                                            @else
+                                                            <em>Bill deleted</em>
+                                                            @endif
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $payment->currency ? $payment->currency->symbol : "" }}{{ number_format($drawdown->amount, 2) }}</td>
+                                                    <td>{{ ucfirst($drawdown->source) }}</td>
+                                                    <td>{{ Carbon\Carbon::parse($drawdown->created_at)->format('d M Y') }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    @else
+                                        <span class="label label-success">Untouched - no drawdown transactions recorded against this {{ $payment->transaction_category === 'Customer Deposits' ? 'deposit' : 'prepayment' }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
+
                             @if ($payment->notes)
                             <tr>
                                 <th class="w-10 text-center line-height-35">Notes</th>

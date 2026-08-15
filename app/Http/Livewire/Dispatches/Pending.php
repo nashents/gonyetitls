@@ -124,6 +124,8 @@ class Pending extends Component
         $assignment->save();
 
         $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
+        $movement->dispatch_id = $dispatch->id;
+        $movement->dispatch_item_id = $dispatch_item->id;
         $movement->user_id = $assignment->user_id;
         $movement->tyre_id = $assignment->tyre_id;
         
@@ -149,6 +151,8 @@ class Pending extends Component
     public function createTicketInventory($dispatch_item){
         $dispatch = $dispatch_item->dispatch;
         $ticket_inventory = new  TicketInventory;
+        $ticket_inventory->dispatch_id = $dispatch->id;
+        $ticket_inventory->dispatch_item_id = $dispatch_item->id;
         $ticket_inventory->ticket_id = $dispatch->ticket_id ?? null;
         $ticket_inventory->product_id = $dispatch_item->product_id ?? null;
         $ticket_inventory->inventory_id =  $dispatch_item->inventory_id ?? null;
@@ -167,6 +171,7 @@ class Pending extends Component
     public function createTicketExpense($dispatch_item){
         $dispatch = $dispatch_item->dispatch;
         $ticket_expense = new  TicketExpense;
+        $ticket_expense->dispatch_id = $dispatch->id;
         $ticket_expense->ticket_id = $dispatch->ticket_id;
         $ticket_expense->currency_id =  $dispatch_item->currency_id;
         $ticket_expense->payment_method_id =  $dispatch_item->payment_method_id;

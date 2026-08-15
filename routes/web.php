@@ -54,6 +54,7 @@ Route::get('loan/reports','LoanController@reports')->name('loans.reports');
 
 Route::get('accounts/receivable','AccountController@accountsReceivable')->name('accounts.receivable');
 Route::get('accounts/payable','AccountController@accountsPayable')->name('accounts.payable');
+Route::get('accounts/bulk-catch-up','AccountController@bulkCatchUp')->name('accounts.bulk_catchup');
 
 Route::get('admins/management','AdminController@manage')->name('admins.manage');
 

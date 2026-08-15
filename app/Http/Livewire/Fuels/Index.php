@@ -104,6 +104,8 @@ class Index extends Component
     public $fuel_source = 'station';
     public $selectedSourceHorse;
     public $source_horse_balance;
+    public $quickBalanceHorseId;
+    public $quickBalanceValue;
     public $fuel_type_locked = false;
     public $selectedCategory;
     public $selectedCategoryValue;
@@ -565,6 +567,37 @@ class Index extends Component
         } else {
             $this->source_horse_balance = Null;
         }
+    }
+
+    /** Quick popup to set a truck's fuel_balance directly from the fuel order form, when it hasn't been set yet. */
+    public function openSourceHorseBalanceModal($horseId)
+    {
+        $this->quickBalanceHorseId = $horseId;
+        $this->quickBalanceValue = Horse::find($horseId)?->fuel_balance;
+        $this->dispatchBrowserEvent('show-quickFuelBalanceModal');
+    }
+
+    public function updateSourceHorseBalance()
+    {
+        $this->validate([
+            'quickBalanceValue' => 'required|numeric|min:0',
+        ]);
+
+        $horse = Horse::find($this->quickBalanceHorseId);
+        if ($horse) {
+            $horse->fuel_balance = $this->quickBalanceValue;
+            $horse->update();
+
+            if ($this->selectedSourceHorse == $horse->id) {
+                $this->source_horse_balance = $horse->fuel_balance;
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-quickFuelBalanceModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Truck Fuel Balance Updated Successfully!!',
+        ]);
     }
 
     public function updatedSelectedVehicle($id)

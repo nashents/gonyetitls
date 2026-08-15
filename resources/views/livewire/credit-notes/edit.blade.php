@@ -42,42 +42,126 @@
 
 
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="name">Attach to Invoice?</label>
+                                        <div class="mb-10">
+                                            <input type="radio" wire:model="invoice_attached" value="Yes" class="line-style" id="edit_invoice_attached_yes" />
+                                            <label for="edit_invoice_attached_yes" class="radio-label">Yes</label>
+                                            <input type="radio" wire:model="invoice_attached" value="No" class="line-style" id="edit_invoice_attached_no" />
+                                            <label for="edit_invoice_attached_no" class="radio-label">No</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if ($invoice_attached === 'Yes')
+                            <div class="row">
+                                <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="country">Invoice(s)<span class="required" style="color: red">*</span></label>
                                         <input type="text" wire:model.debounce.300ms="search" placeholder="Search with invoice number, customer, date..." class="form-control">
-                                        <select wire:model.debounce.300ms="selectedInvoice" class="form-control" size="4" required >
+                                        <select wire:model="selectedInvoice" class="form-control" size="4" required >
                                            <option value="" disabled>Select Invoice</option>
                                             @foreach ($invoices as $invoice)
-                                                <option value="{{$invoice->id}}">{{$invoice->invoice_number}} | {{$invoice->customer ? $invoice->customer->name : ""}} | {{ $invoice->date }} | {{ $invoice->currency ? $invoice->currency->name : "" }} {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->total,2)}} </option> 
+                                                <option value="{{$invoice->id}}">{{$invoice->invoice_number}} | {{$invoice->customer ? $invoice->customer->name : ""}} | {{ $invoice->date }} | {{ $invoice->currency ? $invoice->currency->name : "" }} {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->total,2)}} </option>
                                             @endforeach
                                        </select>
                                         @error('selectedInvoice') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                            </div>
+                            @else
+                            <div class="row">
+                                <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" min="1" max="1" class="form-control" wire:model.debounce.300ms="qty" disabled required >
-                                        @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="name">Amount<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount"  required disabled>
-                                        @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        <label for="vat">Customer<span class="required" style="color: red">*</span></label>
+                                       <select class="form-control" wire:model="selectedCustomer" required>
+                                        <option value="">Select Customer</option>
+                                        @foreach ($customers as $customerOption)
+                                                <option value="{{ $customerOption->id }}">{{ $customerOption->name }} </option>
+                                        @endforeach
+                                       </select>
+                                        @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
+                            @endif
+
+                            @if ($invoice_attached === 'Yes' && $invoice)
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Invoice Line Items <small>(click "Add" to credit a specific item, or add a custom line below)</small></label>
+                                    <table class="table table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Description</th>
+                                                <th class="text-right">Invoice Amount</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse ($invoiceItems as $invoiceItem)
+                                                <tr>
+                                                    <td>{{ $invoiceItem->description ?: $invoiceItem->trip_details }}</td>
+                                                    <td class="text-right">{{ $invoice->currency ? $invoice->currency->symbol : "" }}{{ number_format($invoiceItem->subtotal, 2) }}</td>
+                                                    <td class="text-right">
+                                                        <button type="button" class="btn btn-xs bg-primary" wire:click="addFromInvoiceItem({{ $invoiceItem->id }})"><i class="fa fa-plus"></i> Add</button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr><td colspan="3">No line items found on this invoice.</td></tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            @endif
+
+                            @if (($invoice_attached === 'Yes' && $invoice) || ($invoice_attached === 'No' && $selectedCustomer))
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Credit Note Item(s)<span class="required" style="color: red">*</span></label>
+                                    <table class="table table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Description</th>
+                                                <th style="width:200px" class="text-right">Amount</th>
+                                                <th style="width:60px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($rows as $index => $row)
+                                                <tr wire:key="credit-note-row-{{ $index }}">
+                                                    <td>
+                                                        <input type="text" class="form-control" wire:model.debounce.300ms="rows.{{ $index }}.description" placeholder="Enter description" required>
+                                                        @error('rows.'.$index.'.description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="rows.{{ $index }}.amount" placeholder="0.00" required>
+                                                        @error('rows.'.$index.'.amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-xs bg-danger" wire:click="removeRow({{ $index }})"><i class="fa fa-trash"></i></button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                    @error('rows') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <button type="button" class="btn btn-sm bg-gray" wire:click="addRow"><i class="fa fa-plus"></i> Add Custom Line</button>
+                                </div>
+                            </div>
+                            @endif
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="vat">Currency<span class="required" style="color: red">*</span></label>
-                                       <select class="form-control" wire:model.debounce.300ms="currency_id" required disabled>
+                                       <select class="form-control" wire:model.debounce.300ms="currency_id" required @if ($invoice_attached === 'Yes') disabled @endif>
                                         <option value="">Select Currency</option>
                                         @foreach ($currencies as $currency)
-                                                <option value="{{ $currency->id }}">{{ $currency->name }} </option>                                        
+                                                <option value="{{ $currency->id }}">{{ $currency->name }} </option>
                                         @endforeach
                                        </select>
                                         @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -89,22 +173,37 @@
                                                 <label for="customer">Exchange Rate</label>
                                                 <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate" placeholder="The exchange rate @ trip date">
                                                 @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div> 
+                                            </div>
                                         @endif
                                     @endif
-                                @endif  
+                                @endif
                                     </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="vat">Tax Amount</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="tax_amount"  disabled/>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="tax_amount"/>
                                         @error('tax_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
-                            
+
                                 </div>
-                                
+
                             </div>
-           
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Subtotal</label>
+                                        <input type="text" class="form-control" value="{{ number_format($subtotal ?? 0, 2) }}" disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Total</label>
+                                        <input type="text" class="form-control" value="{{ number_format($total ?? 0, 2) }}" disabled>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">

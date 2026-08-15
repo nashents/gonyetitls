@@ -131,6 +131,16 @@ class Edit extends Component
     public $trip_fuel;
     public $fuel_balance;
     public $fuel_tank_capacity;
+    public $account_balance;
+    public $fuel_type;
+    public $fuel_type_locked = false;
+    public $is_full_tank;
+    public $deduct_from = "quantity";
+    public $fuel_source = "station";
+    public $selectedSourceHorse;
+    public $source_horse_balance;
+    public $quickBalanceHorseId;
+    public $quickBalanceValue;
     public $selectedHorse;
     public $selectedVehicle;
     public $trailers;
@@ -858,11 +868,75 @@ class Edit extends Component
             }
         
             $this->container_balance = $this->container->balance;
+            $this->account_balance = $this->container->account_balance;
             $this->selectedFuelCurrency = $this->container->currency_id;
+            $containerFuelType = $this->container->fuel_type;
+            $containerFuelType = $containerFuelType ? ucfirst(strtolower($containerFuelType)) : null;
+            $this->fuel_type_locked = (bool) $containerFuelType;
+            $this->fuel_type = $containerFuelType ?: 'Diesel';
             }
     }
 
- 
+    public function updatedFuelSource($value)
+    {
+        if ($value == 'truck') {
+            $this->selectedContainer = Null;
+            $this->selected_container = Null;
+            $this->container_balance = Null;
+            $this->account_balance = Null;
+        } else {
+            $this->selectedSourceHorse = Null;
+            $this->source_horse_balance = Null;
+        }
+        $this->fuel_type = Null;
+        $this->fuel_type_locked = false;
+    }
+
+    public function updatedSelectedSourceHorse($id)
+    {
+        if (!is_null($id)) {
+            $sourceHorse = Horse::find($id);
+            $sourceFuelType = $sourceHorse?->fuel_type;
+            $sourceFuelType = $sourceFuelType ? ucfirst(strtolower($sourceFuelType)) : null;
+            $this->fuel_type_locked = (bool) $sourceFuelType;
+            $this->fuel_type = $sourceFuelType ?: 'Diesel';
+            $this->source_horse_balance = $sourceHorse?->fuel_balance;
+        } else {
+            $this->source_horse_balance = Null;
+        }
+    }
+
+    /** Quick popup to set a truck's fuel_balance directly from the fuel order section, when it hasn't been set yet. */
+    public function openSourceHorseBalanceModal($horseId)
+    {
+        $this->quickBalanceHorseId = $horseId;
+        $this->quickBalanceValue = Horse::find($horseId)?->fuel_balance;
+        $this->dispatchBrowserEvent('show-quickFuelBalanceModal');
+    }
+
+    public function updateSourceHorseBalance()
+    {
+        $this->validate([
+            'quickBalanceValue' => 'required|numeric|min:0',
+        ]);
+
+        $horse = Horse::find($this->quickBalanceHorseId);
+        if ($horse) {
+            $horse->fuel_balance = $this->quickBalanceValue;
+            $horse->update();
+
+            if ($this->selectedSourceHorse == $horse->id) {
+                $this->source_horse_balance = $horse->fuel_balance;
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-quickFuelBalanceModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Truck Fuel Balance Updated Successfully!!',
+        ]);
+    }
+
     public function updatedSelectedHorse($id)
     {
         if (!is_null($id) ) {
@@ -1281,6 +1355,8 @@ class Edit extends Component
             $this->selectedFuelCurrency = $this->fuel->currency_id;
             $this->selectedContainer = $this->fuel->container_id;
             $this->selected_container = Container::find($this->fuel->container_id);
+            $this->container_balance = $this->selected_container?->balance;
+            $this->account_balance = $this->selected_container?->account_balance;
             $this->fuel_amount = $this->fuel->amount;
             $this->fuel_quantity = $this->fuel->quantity;
             $this->odometer = $this->fuel->odometer;
@@ -1291,7 +1367,14 @@ class Edit extends Component
             $this->fuel_exchange_rate = $this->fuel->exchange_rate;
             $this->fuel_exchange_amount = $this->fuel->exchange_amount;
             $this->fuel_category = $this->fuel->category;
-            
+            $this->fuel_type = $this->fuel->fuel_type ? ucfirst(strtolower($this->fuel->fuel_type)) : null;
+            $this->is_full_tank = $this->fuel->is_full_tank;
+            $this->deduct_from = $this->fuel->deduct_from ?: "quantity";
+            $this->fuel_source = $this->fuel->source_horse_id ? 'truck' : 'station';
+            $this->selectedSourceHorse = $this->fuel->source_horse_id;
+            $this->source_horse_balance = $this->fuel->source_horse_id ? $this->fuel->source_horse?->fuel_balance : Null;
+            $this->fuel_type_locked = (bool) ($this->fuel->source_horse_id ? $this->fuel->source_horse?->fuel_type : $this->selected_container?->fuel_type);
+
          }
         
 
@@ -2853,22 +2936,31 @@ class Edit extends Component
             $fuel = $trip->fuels->where('fillup',1)->first();
 
             if (isset($fuel)) {
-            
+
                     $container = Container::find($this->selectedContainer);
-                   
+
                     $fuel->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
                     $fuel->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
                     $fuel->currency_id = $this->selectedFuelCurrency;
                     $fuel->trip_id = $trip->id;
-                    
+
                     if (isset($this->selectedVehicle)) {
                         $fuel->type = "Vehicle";
                     }elseif(isset($this->selectedHorse)){
                         $fuel->type = "Horse";
                     }
-                    
+
                     $fuel->driver_id = $this->driver_id ? $this->driver_id : Null;
-                    $fuel->container_id = $this->selectedContainer ? $this->selectedContainer : Null;
+                    if ($this->selectedHorse && $this->fuel_source == "truck" && $this->selectedSourceHorse) {
+                        $fuel->source_horse_id = $this->selectedSourceHorse;
+                        $fuel->container_id = Null;
+                    } else {
+                        $fuel->container_id = $this->selectedContainer ? $this->selectedContainer : Null;
+                        $fuel->source_horse_id = Null;
+                    }
+                    $fuel->fuel_type = $this->fuel_type;
+                    $fuel->is_full_tank = $this->is_full_tank;
+                    $fuel->deduct_from = $this->deduct_from;
                     $fuel->date = $this->date;
                     $fuel->unit_price = $this->unit_price;
                     $fuel->quantity = $this->fuel_quantity;
@@ -2893,7 +2985,7 @@ class Edit extends Component
                         $bill->currency_id = $fuel->currency_id;
                         $bill->total = $fuel->amount;
                         $bill->balance = $fuel->amount;
-                        if($fuel->container->purchase_type == "Once Off Buy"){
+                        if($fuel->container && $fuel->container->purchase_type == "Once Off Buy"){
                             $bill->to_be_paid = True;
                         }else{
                             $bill->to_be_paid = False;
@@ -2948,7 +3040,16 @@ class Edit extends Component
                 $fuel->trip_id = $trip->id;
                 $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
                 $fuel->driver_id = Driver::where('id', $this->driver_id)->exists() ? $this->driver_id : null;
-                $fuel->container_id = Container::where('id', $this->selectedContainer)->exists() ? $this->selectedContainer : null;
+                if ($this->selectedHorse && $this->fuel_source == "truck" && $this->selectedSourceHorse) {
+                    $fuel->source_horse_id = $this->selectedSourceHorse;
+                    $fuel->container_id = null;
+                } else {
+                    $fuel->container_id = Container::where('id', $this->selectedContainer)->exists() ? $this->selectedContainer : null;
+                    $fuel->source_horse_id = null;
+                }
+                $fuel->fuel_type = $this->fuel_type;
+                $fuel->is_full_tank = $this->is_full_tank;
+                $fuel->deduct_from = $this->deduct_from;
                 $fuel->date = $this->date;
                 $fuel->unit_price = $this->unit_price;
                 $fuel->quantity = $this->fuel_quantity;
@@ -3024,8 +3125,16 @@ class Edit extends Component
                         $vehicle->update();
                     }
 
+                    if ($fuel->source_horse_id) {
+                        $source_horse = Horse::find($fuel->source_horse_id);
+                        if ($source_horse && isset($source_horse->fuel_balance) && is_numeric($source_horse->fuel_balance) && isset($fuel->quantity) && is_numeric($fuel->quantity)) {
+                            $source_horse->fuel_balance = $source_horse->fuel_balance - $fuel->quantity;
+                            $source_horse->update();
+                        }
+                    }
+
                     $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-                    
+
                     if(isset($last_mileage)){
                         if($last_mileage < $fuel->odometer){
                             $mileage = new Mileage;
@@ -3040,7 +3149,7 @@ class Edit extends Component
                             $mileage->save();
                         }
                     }
-                
+
                     $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
 
                     if(isset($last_hours)){
@@ -3059,18 +3168,21 @@ class Edit extends Component
                     }
 
                     if($container && $container->purchase_type == "Bulk Buy"){
-                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
-                            if($container->balance >= $fuel->quantity){
-                                $container->balance = $container->balance - $fuel->quantity;
-                            } 
-                        }
-                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
-                            if($container->account_balance >= $fuel->amount){
-                                $container->account_balance = $container->account_balance - $fuel->amount;
+                        if ($fuel->deduct_from == "account") {
+                            if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                                if($container->account_balance >= $fuel->amount){
+                                    $container->account_balance = $container->account_balance - $fuel->amount;
+                                }
+                            }
+                        } else {
+                            if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
+                                if($container->balance >= $fuel->quantity){
+                                    $container->balance = $container->balance - $fuel->quantity;
+                                }
                             }
                         }
                         $container->update();
-                    } 
+                    }
 
                     $account = Account::where('name','Trip Expense')->get()->first();
 
@@ -3086,7 +3198,7 @@ class Edit extends Component
                         $bill->account_id = $account->id;
                         $bill->account_type_id = $account->account_type->id;
                     }
-                    if($fuel->container->purchase_type == "Once Off Buy"){
+                    if($fuel->container && $fuel->container->purchase_type == "Once Off Buy"){
                         $bill->to_be_paid = True;
                     }else{
                         $bill->to_be_paid = False;

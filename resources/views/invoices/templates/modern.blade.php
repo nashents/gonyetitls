@@ -479,7 +479,7 @@
             <div class="inv-footer-brand">
                 <div class="dot"></div>
                 <span>Powered by</span>
-                <img src="{{ asset('images/basilmark-logo.png') }}" alt="Basilmark" style="height:14px">
+                <img src="{{ asset('images/logo.png') }}" alt="Gonyeti" style="height:14px">
             </div>
         </div>
 

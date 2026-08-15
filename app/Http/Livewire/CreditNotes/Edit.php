@@ -8,6 +8,8 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\CreditNote;
+use App\Models\InvoiceItem;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -56,41 +58,108 @@ class Edit extends Component
     public $credit_note_id;
     public $invoice_amount;
     public $invoice_balance;
+    public $invoiceItems = [];
+    public $rows = [];
+    public $invoice_attached = 'Yes';
 
     public function mount($id){
 
         $this->credit_note = CreditNote::find($id);
         $this->currencies = Currency::all();
         $this->invoices = Invoice::where('authorization','approved')->orderBy('created_at','desc')->get();
-        $this->invoice = Invoice::where('invoice_number', 'LIKE', '%'.$this->search.'%')
-                                ->where('authorization','approved')->first();
-        if (isset( $this->invoice)) {
-            $this->selectedInvoice = $this->invoice->id;
-        }
+        $this->customers = Customer::orderBy('name','asc')->get();
 
         $this->memo = $this->credit_note->memo;
         $this->footer = $this->credit_note->footer;
         $this->user_id = $this->credit_note->user_id;
         $this->company_id = $this->credit_note->company_id;
-        $this->qty = 1;
         $this->currency_id = $this->credit_note->currency_id;
         $this->subheading = $this->credit_note->subheading;
         $this->date = $this->credit_note->date;
         $this->credit_note_id = $this->credit_note->id;
         $this->credit_note_reason = $this->credit_note->credit_note_reason;
         $this->tax_rate = $this->credit_note->tax_rate;
+        $this->tax_amount = $this->credit_note->tax_amount;
         $this->selectedInvoice = $this->credit_note->invoice_id;
+        $this->invoice = $this->credit_note->invoice;
+        $this->invoiceItems = $this->invoice ? $this->invoice->invoice_items : collect();
         $this->invoice_amount = $this->credit_note->invoice_amount;
         $this->invoice_balance = $this->credit_note->invoice_balance;
         $this->credit_note_number = $this->credit_note->credit_note_number;
         $this->total = $this->credit_note->total;
-        $this->amount = $this->credit_note->subtotal;
         $this->subtotal = $this->credit_note->subtotal;
-    
+        $this->selectedCustomer = $this->credit_note->customer_id;
+        $this->invoice_attached = $this->credit_note->invoice_id ? 'Yes' : 'No';
 
+        $this->rows = $this->credit_note->credit_note_items->map(function ($item) {
+            return [
+                'description' => $item->description,
+                'amount' => $item->amount,
+            ];
+        })->values()->toArray();
+
+        if (empty($this->rows)) {
+            $this->rows = [['description' => '', 'amount' => '']];
+        }
     }
+
+    public function updatedInvoiceAttached($value){
+        $this->selectedInvoice = null;
+        $this->invoice = null;
+        $this->invoiceItems = [];
+        $this->selectedCustomer = null;
+        $this->customer = null;
+        $this->currency_id = null;
+        $this->rows = [];
+        $this->recalculateTotals();
+    }
+
+    public function updatedSelectedInvoice($id){
+        if (!is_null($id)) {
+            $this->invoice = Invoice::find($this->selectedInvoice);
+            $this->currency_id = $this->invoice->currency_id;
+            $this->tax_rate = $this->invoice->tax_rate;
+            $this->invoiceItems = $this->invoice->invoice_items;
+        }
+    }
+
+    public function updatedSelectedCustomer($id){
+        if ($this->invoice_attached === 'No' && !is_null($id)) {
+            $this->customer = Customer::find($id);
+        }
+    }
+
+    public function addFromInvoiceItem($invoiceItemId){
+        $invoiceItem = InvoiceItem::where('invoice_id', $this->selectedInvoice)->find($invoiceItemId);
+        if ($invoiceItem) {
+            $this->rows[] = [
+                'description' => $invoiceItem->description ?: $invoiceItem->trip_details,
+                'amount' => $invoiceItem->subtotal,
+            ];
+            $this->recalculateTotals();
+        }
+    }
+
+    public function addRow(){
+        $this->rows[] = ['description' => '', 'amount' => ''];
+    }
+
+    public function removeRow($index){
+        unset($this->rows[$index]);
+        $this->rows = array_values($this->rows);
+        $this->recalculateTotals();
+    }
+
+    private function recalculateTotals(){
+        $this->subtotal = collect($this->rows)->sum(fn($row) => (float) ($row['amount'] ?? 0));
+        $this->total = $this->subtotal + (float) ($this->tax_amount ?? 0);
+    }
+
     public function updated($value){
         $this->validateOnly($value);
+        if (Str::startsWith($value, 'rows.') || $value === 'tax_amount') {
+            $this->recalculateTotals();
+        }
     }
     protected $messages =[
 
@@ -99,19 +168,24 @@ class Edit extends Component
 
     ];
 
-    protected $rules = [
-        'selectedInvoice' => 'required',
-        'currency_id' => 'required',
-        'credit_note_number' => 'required',
-        // 'memo' => 'required',
-        // 'subheading' => 'required',
-        'item' => 'required',
-        'description' => 'required',
-        'qty' => 'required',
-        'amount' => 'required',
-        'date' => 'required',
-        // 'footer' => 'required',
-    ];
+    protected function rules(){
+        $rules = [
+            'currency_id' => 'required',
+            'credit_note_number' => 'required',
+            'date' => 'required',
+            'rows' => 'required|array|min:1',
+            'rows.*.description' => 'required|string',
+            'rows.*.amount' => 'required|numeric',
+        ];
+
+        if ($this->invoice_attached === 'Yes') {
+            $rules['selectedInvoice'] = 'required';
+        } else {
+            $rules['selectedCustomer'] = 'required';
+        }
+
+        return $rules;
+    }
 
 
 
@@ -119,15 +193,15 @@ class Edit extends Component
     public function update()
     {
         if ($this->credit_note_id) {
-            $invoice = Invoice::find($this->selectedInvoice);
+            $this->validate();
+            $this->recalculateTotals();
+
             $credit_note = CreditNote::find($this->credit_note_id);
             $credit_note->user_id = Auth::user()->id;
             $credit_note->company_id = Auth::user()->employee->company_id;
-            $credit_note->customer_id = $invoice->customer_id;
             $credit_note->currency_id = $this->currency_id;
             $credit_note->tax_rate = $this->tax_rate;
             $credit_note->tax_amount = $this->tax_amount;
-            $credit_note->invoice_id = $this->selectedInvoice;
             $credit_note->credit_note_number = $this->credit_note_number;
             $credit_note->date = $this->date;
             $credit_note->memo = $this->memo;
@@ -137,7 +211,33 @@ class Edit extends Component
             $credit_note->exchange_rate = $this->exchange_rate;
             $credit_note->subtotal = $this->subtotal;
             $credit_note->total = $this->total;
+
+            if ($this->invoice_attached === 'Yes') {
+                $invoice = Invoice::find($this->selectedInvoice);
+                $credit_note->customer_id = $invoice->customer_id;
+                $credit_note->invoice_id = $this->selectedInvoice;
+                $credit_note->invoice_amount = $invoice->total;
+                $credit_note->invoice_balance = $invoice->total - $this->total;
+            } else {
+                $credit_note->customer_id = $this->selectedCustomer;
+                $credit_note->invoice_id = null;
+                $credit_note->invoice_amount = null;
+                $credit_note->invoice_balance = null;
+            }
+
             $credit_note->update();
+
+            $credit_note->credit_note_items()->delete();
+            foreach ($this->rows as $row) {
+                $credit_note->credit_note_items()->create([
+                    'user_id' => Auth::user()->id,
+                    'description' => $row['description'],
+                    'qty' => 1,
+                    'amount' => $row['amount'],
+                    'subtotal' => $row['amount'],
+                ]);
+            }
+
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Credit Note Updated Successfully!!"

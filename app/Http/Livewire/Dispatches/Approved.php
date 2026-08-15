@@ -8,6 +8,7 @@ use App\Models\Dispatch;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Dispatches\DispatchReversalService;
 
 class Approved extends Component
 {
@@ -24,11 +25,48 @@ class Approved extends Component
     public $dispatch_id;
     public $company;
     public $department;
+    public $reversal_comments;
 
     public function mount($department){
         $this->department = $department;
         $this->company = Auth::user()->employee->company;
-        
+
+    }
+
+    public function reverse($id){
+        $dispatch = Dispatch::find($id);
+        $this->dispatch_id = $dispatch->id;
+        $this->dispatch = $dispatch;
+        $this->reversal_comments = null;
+        $this->dispatchBrowserEvent('show-reverseModal');
+    }
+
+    public function confirmReverse(){
+
+        $this->validate([
+            'reversal_comments' => 'required|string|min:3',
+        ], [
+            'reversal_comments.required' => 'Please explain why this dispatch is being reversed.',
+        ]);
+
+        $dispatch = Dispatch::findOrFail($this->dispatch_id);
+
+        try {
+            app(DispatchReversalService::class)->reverse($dispatch, $this->reversal_comments, Auth::id());
+        } catch (\Throwable $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
+            return;
+        }
+
+        $this->reversal_comments = null;
+        $this->dispatchBrowserEvent('hide-reverseModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Dispatch reversed successfully — moved to Rejected.',
+        ]);
     }
 
 

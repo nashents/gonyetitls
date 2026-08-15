@@ -293,7 +293,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                             <footer style=" position:fixed; bottom: 0px; left: 0px; right: 0px; ">
                                 {{$invoice->footer}}
                                 <br>
-                                <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">    
+                                <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">    
                             </footer>
                         </center>  
                     </div>

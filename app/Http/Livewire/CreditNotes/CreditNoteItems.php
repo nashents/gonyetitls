@@ -86,12 +86,14 @@ class CreditNoteItems extends Component
 
         }
 
-        $invoice = Invoice::find($this->invoice->id);
         $credit_note = CreditNote::find($this->credit_note->id);
-        $credit_note->invoice_amount = $invoice->total;
         $this->new_credit_note_total = $this->total + $this->credit_note_items_total;
         $credit_note->total = $this->new_credit_note_total;
-        $credit_note->invoice_balance = $invoice->total -  $this->new_credit_note_total;
+        if ($this->invoice) {
+            $invoice = Invoice::find($this->invoice->id);
+            $credit_note->invoice_amount = $invoice->total;
+            $credit_note->invoice_balance = $invoice->total - $this->new_credit_note_total;
+        }
         $credit_note->update();
 
         $this->dispatchBrowserEvent('hide-addcredit_noteItemModal');
@@ -131,12 +133,13 @@ class CreditNoteItems extends Component
                 }
             $credit_note_item->update();
             $this->total = CreditNoteItem::where('credit_note_id',$this->credit_note->id)->sum('subtotal');
-           
-            $invoice = Invoice::find($this->invoice->id);
+
             $credit_note = CreditNote::find($this->credit_note->id);
             $this->invoice_amount =  $credit_note->invoice_amount;
             $credit_note->total = $this->total;
-            $credit_note->invoice_balance = $this->invoice_amount - $this->total;
+            if ($this->invoice) {
+                $credit_note->invoice_balance = $this->invoice_amount - $this->total;
+            }
             $credit_note->update();
 
             $this->dispatchBrowserEvent('hide-editCredit_noteItemModal');

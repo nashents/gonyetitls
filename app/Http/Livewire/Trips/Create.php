@@ -441,9 +441,19 @@ class Create extends Component
     public $horse_fuel_total;
     public $vehicle_fuel_total;
     public $container_balance;
+    public $account_balance;
     public $unit_price = 0;
     public $fuel_amount;
-   
+    public $fuel_type;
+    public $fuel_type_locked = false;
+    public $is_full_tank;
+    public $deduct_from = "quantity";
+    public $fuel_source = "station";
+    public $selectedSourceHorse;
+    public $source_horse_balance;
+    public $quickBalanceHorseId;
+    public $quickBalanceValue;
+
     public $odometer;
     public $odometer_is_live_from_cartrack = false;
     public $odometer_is_live_from_fantracker = false;
@@ -488,11 +498,74 @@ class Create extends Component
             }
             
             $this->container_balance = $container->balance;
+            $this->account_balance = $container->account_balance;
             $this->selectedFuelCurrency = $container->currency_id;
+            $containerFuelType = $container->fuel_type;
+            $containerFuelType = $containerFuelType ? ucfirst(strtolower($containerFuelType)) : null;
+            $this->fuel_type_locked = (bool) $containerFuelType;
+            $this->fuel_type = $containerFuelType ?: 'Diesel';
         }
     }
 
-   
+    public function updatedFuelSource($value)
+    {
+        if ($value == 'truck') {
+            $this->selectedContainer = Null;
+            $this->selected_container = Null;
+            $this->container_balance = Null;
+            $this->account_balance = Null;
+        } else {
+            $this->selectedSourceHorse = Null;
+            $this->source_horse_balance = Null;
+        }
+        $this->fuel_type = Null;
+        $this->fuel_type_locked = false;
+    }
+
+    public function updatedSelectedSourceHorse($id)
+    {
+        if (!is_null($id)) {
+            $sourceHorse = Horse::find($id);
+            $sourceFuelType = $sourceHorse?->fuel_type;
+            $sourceFuelType = $sourceFuelType ? ucfirst(strtolower($sourceFuelType)) : null;
+            $this->fuel_type_locked = (bool) $sourceFuelType;
+            $this->fuel_type = $sourceFuelType ?: 'Diesel';
+            $this->source_horse_balance = $sourceHorse?->fuel_balance;
+        } else {
+            $this->source_horse_balance = Null;
+        }
+    }
+
+    /** Quick popup to set a truck's fuel_balance directly from the fuel order section, when it hasn't been set yet. */
+    public function openSourceHorseBalanceModal($horseId)
+    {
+        $this->quickBalanceHorseId = $horseId;
+        $this->quickBalanceValue = Horse::find($horseId)?->fuel_balance;
+        $this->dispatchBrowserEvent('show-quickFuelBalanceModal');
+    }
+
+    public function updateSourceHorseBalance()
+    {
+        $this->validate([
+            'quickBalanceValue' => 'required|numeric|min:0',
+        ]);
+
+        $horse = Horse::find($this->quickBalanceHorseId);
+        if ($horse) {
+            $horse->fuel_balance = $this->quickBalanceValue;
+            $horse->update();
+
+            if ($this->selectedSourceHorse == $horse->id) {
+                $this->source_horse_balance = $horse->fuel_balance;
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-quickFuelBalanceModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Truck Fuel Balance Updated Successfully!!',
+        ]);
+    }
 
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
@@ -2440,13 +2513,22 @@ class Create extends Component
                         $fuel->trip_id = $trip->id;
                         $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
                         $fuel->driver_id = Driver::where('id', $this->driver_id)->exists() ? $this->driver_id : null;
-                        $fuel->container_id = Container::where('id', $this->selectedContainer)->exists() ? $this->selectedContainer : null;
+                        if ($this->selectedHorse && $this->fuel_source == "truck" && $this->selectedSourceHorse) {
+                            $fuel->source_horse_id = $this->selectedSourceHorse;
+                            $fuel->container_id = null;
+                        } else {
+                            $fuel->container_id = Container::where('id', $this->selectedContainer)->exists() ? $this->selectedContainer : null;
+                            $fuel->source_horse_id = null;
+                        }
+                        $fuel->fuel_type = $this->fuel_type;
+                        $fuel->is_full_tank = $this->is_full_tank;
+                        $fuel->deduct_from = $this->deduct_from;
                         $fuel->date = $this->date;
                         $fuel->unit_price = $this->unit_price;
                         $fuel->quantity = $this->fuel_quantity;
                         $fuel->amount = $this->fuel_amount;
-                       
-                      
+
+
                         $fuel->odometer = $this->odometer;
                         $fuel->hours = $this->hours;
                         $fuel->category = $this->fuel_category;

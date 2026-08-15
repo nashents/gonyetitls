@@ -271,6 +271,16 @@ class Index extends Component
     public $fuel_exchange_amount;
     public $fuel_quantity = 0 ;
     public $container_balance;
+    public $account_balance;
+    public $fuel_type;
+    public $fuel_type_locked = false;
+    public $is_full_tank;
+    public $deduct_from = "quantity";
+    public $fuel_source = "station";
+    public $selectedSourceHorse;
+    public $source_horse_balance;
+    public $quickBalanceHorseId;
+    public $quickBalanceValue;
     public $unit_price = 0;
     public $fuel_amount;
     public $mileage;
@@ -428,6 +438,14 @@ class Index extends Component
         $this->selectedFuelCurrency = Null;
         $this->selectedHorse = Null;
         $this->selectedVehicle = Null;
+        $this->fuel_type = Null;
+        $this->fuel_type_locked = false;
+        $this->is_full_tank = Null;
+        $this->deduct_from = "quantity";
+        $this->account_balance = Null;
+        $this->fuel_source = "station";
+        $this->selectedSourceHorse = Null;
+        $this->source_horse_balance = Null;
 
     }
 
@@ -828,11 +846,76 @@ class Index extends Component
                     $container = Container::find($id);
                     $this->selected_container = Container::find($id);
                     $this->container_balance = $container->balance;
+                    $this->account_balance = $container->account_balance;
                     $this->selectedFuelCurrency = $container->currency_id;
+                    $containerFuelType = $container->fuel_type;
+                    $containerFuelType = $containerFuelType ? ucfirst(strtolower($containerFuelType)) : null;
+                    $this->fuel_type_locked = (bool) $containerFuelType;
+                    $this->fuel_type = $containerFuelType ?: 'Diesel';
                 }
             }
 
-            
+            public function updatedFuelSource($value)
+            {
+                if ($value == 'truck') {
+                    $this->selectedContainer = Null;
+                    $this->selected_container = Null;
+                    $this->container_balance = Null;
+                    $this->account_balance = Null;
+                } else {
+                    $this->selectedSourceHorse = Null;
+                    $this->source_horse_balance = Null;
+                }
+                $this->fuel_type = Null;
+                $this->fuel_type_locked = false;
+            }
+
+            public function updatedSelectedSourceHorse($id)
+            {
+                if (!is_null($id)) {
+                    $sourceHorse = Horse::find($id);
+                    $sourceFuelType = $sourceHorse?->fuel_type;
+                    $sourceFuelType = $sourceFuelType ? ucfirst(strtolower($sourceFuelType)) : null;
+                    $this->fuel_type_locked = (bool) $sourceFuelType;
+                    $this->fuel_type = $sourceFuelType ?: 'Diesel';
+                    $this->source_horse_balance = $sourceHorse?->fuel_balance;
+                } else {
+                    $this->source_horse_balance = Null;
+                }
+            }
+
+            /** Quick popup to set a truck's fuel_balance directly from the fuel order section, when it hasn't been set yet. */
+            public function openSourceHorseBalanceModal($horseId)
+            {
+                $this->quickBalanceHorseId = $horseId;
+                $this->quickBalanceValue = Horse::find($horseId)?->fuel_balance;
+                $this->dispatchBrowserEvent('show-quickFuelBalanceModal');
+            }
+
+            public function updateSourceHorseBalance()
+            {
+                $this->validate([
+                    'quickBalanceValue' => 'required|numeric|min:0',
+                ]);
+
+                $horse = Horse::find($this->quickBalanceHorseId);
+                if ($horse) {
+                    $horse->fuel_balance = $this->quickBalanceValue;
+                    $horse->update();
+
+                    if ($this->selectedSourceHorse == $horse->id) {
+                        $this->source_horse_balance = $horse->fuel_balance;
+                    }
+                }
+
+                $this->dispatchBrowserEvent('hide-quickFuelBalanceModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => 'Truck Fuel Balance Updated Successfully!!',
+                ]);
+            }
+
+
 
         public function updatedAllHorses($status){
         if(!is_null($status)){
@@ -1896,7 +1979,16 @@ class Index extends Component
                 $fuel->shift_id = $shift->id;
                 $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
                 $fuel->driver_id = $this->driver_id ?? null;
-                $fuel->container_id = $this->selectedContainer ?? null;
+                if ($this->selectedHorse && $this->fuel_source == "truck" && $this->selectedSourceHorse) {
+                    $fuel->source_horse_id = $this->selectedSourceHorse;
+                    $fuel->container_id = null;
+                } else {
+                    $fuel->container_id = $this->selectedContainer ?? null;
+                    $fuel->source_horse_id = null;
+                }
+                $fuel->fuel_type = $this->fuel_type;
+                $fuel->is_full_tank = $this->is_full_tank;
+                $fuel->deduct_from = $this->deduct_from;
                 $fuel->date = $this->date;
                 $fuel->unit_price = $this->unit_price;
                 $fuel->quantity = $this->fuel_quantity;
@@ -2061,8 +2153,11 @@ class Index extends Component
   
     $fuel = $shift->fuel;
     if($fuel){
-    $this->selectedFuelCurrency = $fuel->currency_id;          
+    $this->selectedFuelCurrency = $fuel->currency_id;
     $this->selectedContainer=  $fuel->container_id;
+    $this->selected_container = Container::find($fuel->container_id);
+    $this->container_balance = $this->selected_container?->balance;
+    $this->account_balance = $this->selected_container?->account_balance;
     $this->account_id =  $fuel->account_id;
     $this->date = $fuel->date;
     $this->unit_price = $fuel->unit_price;
@@ -2074,6 +2169,13 @@ class Index extends Component
     $this->fuel_exchange_amount = $fuel->exchange_amount;
     $this->fuel_exchange_rate = $fuel->exchange_rate;
      $this->fuel_comments = $fuel->comments;
+    $this->fuel_type = $fuel->fuel_type ? ucfirst(strtolower($fuel->fuel_type)) : null;
+    $this->is_full_tank = $fuel->is_full_tank;
+    $this->deduct_from = $fuel->deduct_from ?: "quantity";
+    $this->fuel_source = $fuel->source_horse_id ? 'truck' : 'station';
+    $this->selectedSourceHorse = $fuel->source_horse_id;
+    $this->source_horse_balance = $fuel->source_horse_id ? $fuel->source_horse?->fuel_balance : Null;
+    $this->fuel_type_locked = (bool) ($fuel->source_horse_id ? $fuel->source_horse?->fuel_type : $this->selected_container?->fuel_type);
     }
 
     $this->dispatchBrowserEvent('show-shiftEditModal');
@@ -2199,7 +2301,11 @@ class Index extends Component
                         'currency_id'     => $this->selectedFuelCurrency,
                         'type'            => $type,
                         'driver_id'       => $this->driver_id ?? null,
-                        'container_id'    => $this->selectedContainer ?? null,
+                        'container_id'    => ($this->selectedHorse && $this->fuel_source == "truck" && $this->selectedSourceHorse) ? null : ($this->selectedContainer ?? null),
+                        'source_horse_id' => ($this->selectedHorse && $this->fuel_source == "truck" && $this->selectedSourceHorse) ? $this->selectedSourceHorse : null,
+                        'fuel_type'       => $this->fuel_type,
+                        'is_full_tank'    => $this->is_full_tank,
+                        'deduct_from'     => $this->deduct_from,
                         'date'            => $this->date,
                         'unit_price'      => $this->unit_price,
                         'quantity'        => $this->fuel_quantity,

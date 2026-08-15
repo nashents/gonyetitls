@@ -210,7 +210,7 @@
                     <footer style=" bottom: 0px; left: 0px; right: 0px; ">
                         
                         <br>
-                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">    
+                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">    
                     </footer>
                 </center>  
             </div>

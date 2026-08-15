@@ -648,6 +648,7 @@
                                                 <span>{{ number_format($source_horse_balance, 2) }} L</span>
                                             @else
                                                 <span class="text-danger">Not set</span>
+                                                <a href="#" wire:click.prevent="openSourceHorseBalanceModal({{ $selectedSourceHorse }})">Click here to update</a>
                                             @endif
                                         </div>
                                     @endif
@@ -1115,6 +1116,7 @@
                                                 <span>{{ number_format($source_horse_balance, 2) }} L</span>
                                             @else
                                                 <span class="text-danger">Not set</span>
+                                                <a href="#" wire:click.prevent="openSourceHorseBalanceModal({{ $selectedSourceHorse }})">Click here to update</a>
                                             @endif
                                         </div>
                                     @endif
@@ -2095,6 +2097,30 @@
         </div>
     </div>
 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="quickFuelBalanceModal" tabindex="-1" role="dialog" aria-labelledby="quickFuelBalanceModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="quickFuelBalanceModalLabel"><i class="fa fa-tint"></i> Update Truck Fuel Balance <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateSourceHorseBalance()">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="quickBalanceValue">Available Fuel Balance (Litres)<span class="required" style="color: red">*</span></label>
+                            <input type="number" step="any" min="0" class="form-control" wire:model.defer="quickBalanceValue" placeholder="Enter available fuel balance">
+                            @error('quickBalanceValue') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </div>
 
