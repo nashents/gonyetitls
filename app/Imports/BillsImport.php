@@ -12,7 +12,6 @@ use App\Models\Currency;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\Horse;
-use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Trailer;
 use App\Models\Transporter;
@@ -113,16 +112,14 @@ WithBatchInserts
                 $bill->subtotal           = $line_subtotal;
                 $bill->tax_amount         = 0;
                 $bill->total              = $line_total;
-                $bill->balance            = 0;
-                $bill->status             = 'Paid';
-                $bill->authorization      = 'approved';
-                $bill->authorization_date = now();
+                $bill->balance            = $line_total;
+                $bill->status             = 'Unpaid';
+                // Stay "pending" until the expense line below exists, so the
+                // BillObserver doesn't post a journal entry with no debit line.
+                $bill->authorization      = 'pending';
+                $bill->to_be_paid         = true;
                 $bill->authorized_by_id   = Auth::id();
                 $bill->save();
-
-               
-
-                $this->recordPayment($bill, $currencyId, $accountId, $line_total);
 
                 $account = Account::find($accountId);
 
@@ -139,33 +136,12 @@ WithBatchInserts
                 $expense->account_type_id = $account?->account_type?->id;
                 $expense->save();
 
-               
+                // Approve now that the expense line exists — this is what
+                // triggers BillObserver -> BillJournalService::post().
+                $bill->authorization      = 'approved';
+                $bill->authorization_date = now();
+                $bill->save();
             });
-        }
-    }
-
-    protected function recordPayment(Bill $bill, int $currencyId, int $accountId, float $amount): void
-    {
-        $account = Account::find($accountId);
-
-        $payment                      = new Payment();
-        $payment->vendor_id           = $bill->vendor_id;
-        $payment->bill_id             = $bill->id;
-        $payment->movement            = 'Dbt';
-        $payment->description         = $bill->notes;
-        $payment->user_id             = Auth::id();
-        $payment->currency_id         = $currencyId;
-        $payment->payment_number      = $this->paymentNumber();
-        $payment->category            = 'Bill';
-        $payment->account_id          = $accountId;
-        $payment->amount              = $amount;
-        $payment->balance             = 0;
-        $payment->date                = $bill->bill_date;
-        $payment->save();
-
-        if ($account) {
-            $account->balance = ($account->balance ?? 0) - $amount;
-            $account->save();
         }
     }
 
@@ -199,22 +175,6 @@ WithBatchInserts
         }
 
         return null;
-    }
-
-    protected function paymentNumber(): string
-    {
-        $user = Auth::user();
-
-        $str = "";
-        $str = $user->employee->company?->name;
-
-        $words    = explode(' ', $str);
-        $initials = isset($words[1][0]) ? $words[0][0] . $words[1][0] : $words[0][0];
-
-        $last   = Payment::latest()->orderBy('id', 'desc')->first();
-        $number = $last ? $last->id + 1 : 1;
-
-        return $initials . 'P' . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
 
     // ── Bill number generator ─────────────────────────────────────────────

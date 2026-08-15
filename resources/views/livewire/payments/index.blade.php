@@ -249,7 +249,7 @@
                     <div class="modal-footer no-border">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button onClick="this.form.submit(); this.disabled=true; this.value='Sending…'; " class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                            <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>
