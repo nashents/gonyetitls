@@ -247,11 +247,25 @@
                                                         $payment = \App\Models\Payment::where('payment_number', $result->number)
                                                                     ->first();
                                                         // use $payment
+                                                    } elseif ($result->transaction_type === 'debit_note') {
+                                                        $debit_note = \App\Models\DebitNote::where('debit_note_number', $result->number)
+                                                                    ->where('authorization', 'approved')
+                                                                    ->first();
+                                                        // use $debit_note
                                                     }
                                                 @endphp
                                                 @if ($result->transaction_type === 'bill')
                                                     <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
                                                     Due {{ $bill->expiry }}
+                                                @elseif ($result->transaction_type === 'debit_note' && isset($debit_note))
+                                                    Debit Note# {{ $result->number }}
+                                                    @if ($debit_note->bill)
+                                                        for
+                                                        <a href="{{ route('bills.show', $debit_note->bill->id) }}"
+                                                           target="_blank" rel="noopener noreferrer" style="color: blue">
+                                                            Bill# {{ $debit_note->bill->bill_number }}
+                                                        </a>
+                                                    @endif
                                                 @elseif ($result->transaction_type === 'payment')
                                                 <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment
                                                 @if (isset($payment->bill))

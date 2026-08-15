@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
  * Mirrors CustomerLedgerService for the vendor/bill side: the balance is
  * never stored on bills/payments — it is always derived by replaying the
  * vendor's transaction history (approved bills increase the balance,
- * payments reduce it) in chronological order.
+ * payments and approved debit notes reduce it) in chronological order.
  */
 class VendorLedgerService
 {
@@ -59,11 +59,30 @@ class VendorLedgerService
             ->where('currency_id', $currencyId)
             ->whereNull('deleted_at');
 
+        $debitNotes = DB::table('debit_notes')
+            ->select([
+                'id',
+                DB::raw("'debit_note' as transaction_type"),
+                'debit_note_number as number',
+                'currency_id',
+                'date',
+                'date as transaction_date',
+                'created_at',
+                DB::raw('CAST(total AS DECIMAL(20,2)) as amount'),
+                DB::raw('CAST(total AS DECIMAL(20,2)) as balance'),
+                DB::raw('CAST(total AS DECIMAL(20,2)) * -1 as signed_amount'),
+                DB::raw('1 as type_priority'),
+            ])
+            ->where('vendor_id', $vendorId)
+            ->where('currency_id', $currencyId)
+            ->where('authorization', 'approved')
+            ->whereNull('deleted_at');
+
         $rows = DB::query()
-            ->fromSub($bills->unionAll($payments), 'ledger')
+            ->fromSub($bills->unionAll($payments)->unionAll($debitNotes), 'ledger')
             ->orderBy('date')
             ->orderBy('created_at')
-            ->orderBy('type_priority') // bills settle before payments on an exact tie
+            ->orderBy('type_priority') // bills settle before payments/debit notes on an exact tie
             ->orderBy('id')
             ->get();
 

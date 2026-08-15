@@ -187,13 +187,21 @@
                                             {{-- Transactions --}}
                                             @forelse ($data['results'] as $result)
                                                 @php
-                                                    $bill    = \App\Models\Bill::where('bill_number', $result->number)->where('authorization', 'approved')->first();
-                                                    $payment = \App\Models\Payment::where('payment_number', $result->number)->first();
+                                                    $bill       = \App\Models\Bill::where('bill_number', $result->number)->where('authorization', 'approved')->first();
+                                                    $payment    = \App\Models\Payment::where('payment_number', $result->number)->first();
+                                                    $debit_note = $result->transaction_type === 'debit_note'
+                                                        ? \App\Models\DebitNote::where('debit_note_number', $result->number)->where('authorization', 'approved')->first()
+                                                        : null;
                                                 @endphp
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::parse($result->transaction_date)->format('F j, Y') }}</td>
                                                     <td>
-                                                        @if ($bill)
+                                                        @if ($debit_note)
+                                                            Debit Note# {{ $result->number }}
+                                                            @if ($debit_note->bill)
+                                                                for <a href="{{ route('bills.show', $debit_note->bill->id) }}" target="_blank" style="color:blue">Bill# {{ $debit_note->bill->bill_number }}</a>
+                                                            @endif
+                                                        @elseif ($bill)
                                                             <a href="{{ route('bills.show', $bill->id) }}" target="_blank" style="color:blue">
                                                                 Bill# {{ $result->number }}
                                                             </a><br>
