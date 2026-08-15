@@ -3,7 +3,7 @@
 namespace App\Http\View\Composers;
 
 use App\Models\{
-    Allocation, Attendance, Agent, Bill, Booking, Company, CreditNote, Customer, Department, DepartmentHead, Dispatch, Fuel, FuelRequest,
+    Allocation, Attendance, Agent, Bill, Booking, Company, CreditNote, Customer, DebitNote, Department, DepartmentHead, Dispatch, Fuel, FuelRequest,
     GatePass, Incident, Invoice, Leave, Loan, ModuleGroup, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
     Transporter, TransportOrder, Trip, User, WasteCollection, WasteDisposal,
 };
@@ -325,6 +325,17 @@ class SidebarComposer
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $credit_notesDeletedCount = CreditNote::onlyTrashed()
+        ->whereDate('created_at', Carbon::today())->get()->count();
+        $debit_notesPendingCount = DebitNote::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $debit_notesApprovedCount = DebitNote::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $debit_notesRejectedCount = DebitNote::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $debit_notesDeletedCount = DebitNote::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
         $requisitionsPendingCount = Requisition::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -743,6 +754,12 @@ class SidebarComposer
         'credit_notes_approved_count' => (int) ($credit_notesApprovedCount ?? 0),
         'credit_notes_rejected_count' => (int) ($credit_notesRejectedCount ?? 0),
         'credit_notes_deleted_count'  => (int) ($credit_notesDeletedCount ?? 0),
+
+        // Debit Notes
+        'debit_notes_pending_count'  => (int) ($debit_notesPendingCount ?? 0),
+        'debit_notes_approved_count' => (int) ($debit_notesApprovedCount ?? 0),
+        'debit_notes_rejected_count' => (int) ($debit_notesRejectedCount ?? 0),
+        'debit_notes_deleted_count'  => (int) ($debit_notesDeletedCount ?? 0),
 
         // Bills
         'bills_pending_count'  => (int) ($billsPendingCount ?? 0),

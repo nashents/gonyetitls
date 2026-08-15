@@ -604,6 +604,7 @@ Route::resource('workshop_services','WorkshopServiceController');
 Route::resource('visitors','VisitorController');
 Route::resource('groups','GroupController');
 Route::resource('credit_notes','CreditNoteController');
+Route::resource('debit_notes','DebitNoteController');
 Route::resource('expense_categories','ExpenseCategoryController');
 Route::resource('tickets','TicketController');
 Route::resource('taxes','TaxController');
@@ -781,6 +782,10 @@ Route::get('credit_notes/{id}/print','CreditNoteController@print')->name('credit
 Route::get('credit_notes/{id}/preview','CreditNoteController@preview')->name('credit_notes.preview');
 Route::get('credit_notes/{credit_note}/export-to-pdf','CreditNoteController@generatePdf')->name('credit_notes.pdf');
 
+Route::get('debit_notes/{id}/print','DebitNoteController@print')->name('debit_notes.print');
+Route::get('debit_notes/{id}/preview','DebitNoteController@preview')->name('debit_notes.preview');
+Route::get('debit_notes/{debit_note}/export-to-pdf','DebitNoteController@generatePdf')->name('debit_notes.pdf');
+
 Route::get('quotations/{id}/email','QuotationController@email')->name('quotations.email');
 Route::get('quotations/{id}/print','QuotationController@print')->name('quotations.print');
 Route::get('quotations/{id}/preview','QuotationController@preview')->name('quotations.preview');
@@ -928,6 +933,11 @@ Route::get('credit_notes/deleted','CreditNoteController@deleted')->name('credit_
 Route::get('credit_notes/authorization/pending','CreditNoteController@pending')->name('credit_notes.pending');
 Route::get('credit_notes/authorization/approved','CreditNoteController@approved')->name('credit_notes.approved');
 Route::get('credit_notes/authorization/rejected','CreditNoteController@rejected')->name('credit_notes.rejected');
+
+Route::get('debit_notes/deleted','DebitNoteController@deleted')->name('debit_notes.deleted');
+Route::get('debit_notes/authorization/pending','DebitNoteController@pending')->name('debit_notes.pending');
+Route::get('debit_notes/authorization/approved','DebitNoteController@approved')->name('debit_notes.approved');
+Route::get('debit_notes/authorization/rejected','DebitNoteController@rejected')->name('debit_notes.rejected');
 
 Route::get('/employees/{id}/profile','EmployeeController@getProfile')->name('profile');
 Route::post('/employees/{id}/change-password','EmployeeController@changePassword')->name('password.change');

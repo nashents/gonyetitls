@@ -803,6 +803,28 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Approved Bills','slug'=>'approved-bills','icon'=>'fas fa-check','route_name'=>'bills.approved','sort_order'=>40,'badge_key'=>'bills_approved_count','visibility'=>$billManageVis]);
         $upsertSub($m, ['name'=>'Rejected Bills','slug'=>'rejected-bills','icon'=>'fas fa-ban','route_name'=>'bills.rejected','sort_order'=>50,'badge_key'=>'bills_rejected_count','visibility'=>$billManageVis]);
 
+        // Debit Notes
+        $m = $upsertModule($g, [
+            'name' => 'Debit Notes',
+            'slug' => 'debit-notes',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'debit_notes.*',
+            'sort_order' => 15,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+        $upsertSub($m, ['name'=>'Create','slug'=>'create-debit-note','icon'=>'fas fa-plus','route_name'=>'debit_notes.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage D Notes','slug'=>'manage-debit-notes','icon'=>'fas fa-list','route_name'=>'debit_notes.index','sort_order'=>20]);
+
+        $dnManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending D Notes','slug'=>'pending-debit-notes','icon'=>'fas fa-clock','route_name'=>'debit_notes.pending','sort_order'=>30,'badge_key'=>'debit_notes_pending_count','visibility'=>$dnManageVis]);
+        $upsertSub($m, ['name'=>'Approved D Notes','slug'=>'approved-debit-notes','icon'=>'fas fa-check','route_name'=>'debit_notes.approved','sort_order'=>40,'badge_key'=>'debit_notes_approved_count','visibility'=>$dnManageVis]);
+        $upsertSub($m, ['name'=>'Rejected D Notes','slug'=>'rejected-debit-notes','icon'=>'fas fa-ban','route_name'=>'debit_notes.rejected','sort_order'=>50,'badge_key'=>'debit_notes_rejected_count','visibility'=>$dnManageVis]);
+        $upsertSub($m, ['name'=>'Deleted D Notes','slug'=>'deleted-debit-notes','icon'=>'fas fa-trash','route_name'=>'debit_notes.deleted','sort_order'=>60,'badge_key'=>'debit_notes_deleted_count','visibility'=>$dnManageVis]);
+
         // Vendor Statements (Finance or Super)
         $m = $upsertModule($g, [
             'name' => 'Vendor Statements',
