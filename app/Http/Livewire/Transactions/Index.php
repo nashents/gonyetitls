@@ -35,6 +35,7 @@ class Index extends Component
 
     public $payments;
     public $payment;
+    public $journalEntries;
     public $last_payment;
     public $horses;
     public $horse_id;
@@ -225,6 +226,8 @@ class Index extends Component
 
         $this->lines = [$this->blankLine(), $this->blankLine()];
 
+        $this->loadJournalEntries();
+
         $this->dispatchBrowserEvent('hide-journalModal');
 
         $this->dispatchBrowserEvent('alert',[
@@ -260,6 +263,21 @@ class Index extends Component
         ];
     }
 
+    /**
+     * Manual journal entries (Add Journal Entry modal) have no Payment row,
+     * so they're invisible to the $payments query that drives the rest of
+     * the table. Loaded separately and rendered as extra rows in the same
+     * table.
+     */
+    protected function loadJournalEntries(){
+        $this->journalEntries = JournalEntry::whereNull('payment_id')
+            ->where('is_manual', true)
+            ->with('journal_entry_lines.account', 'journal_entry_lines.currency')
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+    }
+
     public function mount(){
 
       $this->date          = now()->toDateString();
@@ -276,7 +294,9 @@ class Index extends Component
         }else{
             $this->payments = collect();
         }
-        
+
+        $this->loadJournalEntries();
+
 
         $account_type_names = ['Cash & Bank', 'Business Owner Contribution & Drawing', 'Other Short-Term Asset', 'Due to You & Other Business Owners', 'Other Short-Term Liability']; 
         $this->transaction_account_types = AccountType::whereIn('name', $account_type_names)->get();
@@ -594,6 +614,28 @@ class Index extends Component
         ]);
         return redirect(request()->header('Referer'));
     }
+    }
+
+    public function fixDataIssues(){
+        $report = app(\App\Services\Accounting\PaymentDataIntegrityService::class)->run();
+
+        if ($report['fixed'] === 0) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"No data issues found. Checked {$report['checked']} record(s) — everything looks correct."
+            ]);
+        } else {
+            $summary = collect($report['checks'])
+                ->map(fn($check) => "{$check['name']}: fixed {$check['fixed']} of {$check['checked']}")
+                ->implode(' | ');
+
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Fixed {$report['fixed']} issue(s). {$summary}"
+            ]);
+        }
+
+        return redirect(request()->header('Referer'));
     }
 
     public function postToLedger($paymentId){

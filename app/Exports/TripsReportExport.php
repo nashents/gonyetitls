@@ -194,13 +194,14 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
                 SUM(COALESCE(delivery_notes.loaded_weight, 0)) as total_weight,
                 SUM(COALESCE(delivery_notes.loaded_litreage_at_20, 0)) as total_volume,
                 SUM(
-                    CASE
+                    (CASE
                         WHEN trips.starting_mileage IS NOT NULL
                          AND trips.ending_mileage IS NOT NULL
                          AND trips.ending_mileage >= trips.starting_mileage
                         THEN (trips.ending_mileage - trips.starting_mileage)
                         ELSE COALESCE(trips.distance, 0)
-                    END
+                    END)
+                    + (SELECT COALESCE(SUM(er.distance + 0), 0) FROM empty_runs er WHERE er.trip_id = trips.id AND er.deleted_at IS NULL)
                 ) as total_distance,
                 SUM(COALESCE(delivery_notes.offloaded_weight, 0)) as total_offloaded_weight,
                 SUM(COALESCE(delivery_notes.offloaded_litreage_at_20, 0)) as total_offloaded_volume,
@@ -592,6 +593,9 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         } else {
             $actual_distance = $trip->distance ?? "";
         }
+        $emptyrun_distance = (float) $trip->emptyruns()->sum('distance');
+        $total_trip_distance = (is_numeric($actual_distance) ? (float) $actual_distance : 0) + $emptyrun_distance;
+        $distance_cell = "Lp-Op Distance: " . ($actual_distance !== "" ? $actual_distance : 0) . "\nTotal Distance: " . $total_trip_distance;
 
         $pod = TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
         $invoice_item = InvoiceItem::where('trip_id', $trip->id)->first();
@@ -857,7 +861,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $trip->trip_fuel ? $trip->trip_fuel . ' L' : "",
             $trip->starting_mileage ?: "",
             $trip->ending_mileage ?: "",
-            $actual_distance,
+            $distance_cell,
             $trip->cargo ? $trip->cargo->name : "",
             $weight,
             $loaded_weight,
@@ -937,7 +941,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             'Approximate Fuel',
             'Starting Mileage',
             'Ending Mileage',
-            'Distance',
+            'Distances',
             'Cargo',
             'Scheduled Weight (Tons)',
             'Loaded Weight (Tons)',

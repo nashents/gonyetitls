@@ -72,7 +72,7 @@ class Index extends Component
                     if(isset($this->name[$key])){
                     $bank_account->name = $this->name[$key];
                     }
-                    if(isset($this->currency_id[$key])){
+                    if(!empty($this->currency_id[$key])){
                     $bank_account->currency_id = $this->currency_id[$key];
                     }
                     if(isset($this->type[$key])){
@@ -137,7 +137,7 @@ class Index extends Component
         $bank_account->account_number = $this->account_number;
         $bank_account->account_name = $this->account_name;
         $bank_account->branch = $this->branch;
-        $bank_account->currency_id = $this->currency_id;
+        $bank_account->currency_id = !empty($this->currency_id) ? $this->currency_id : null;
         $bank_account->branch_code = $this->branch_code;
         $bank_account->swift_code = $this->swift_code;
         $bank_account->status = $this->status;

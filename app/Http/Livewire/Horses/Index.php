@@ -7,6 +7,7 @@ use App\Models\Bill;
 use App\Models\Booking;
 use App\Models\Checklist;
 use App\Models\Currency;
+use App\Models\EmptyRun;
 use App\Models\Horse;
 use App\Models\Incident;
 use App\Models\Inspection;
@@ -86,11 +87,13 @@ class Index extends Component
     public function getKpisProperty(): array
     {
         $horses = Horse::all();
-        $totalKm = Trip::whereIn('horse_id', $horses->pluck('id'))
+        $tripIds = Trip::whereIn('horse_id', $horses->pluck('id'))
         ->whereBetween('created_at', [$this->from, $this->to])
         ->where('authorization', 'approved')
         ->where('trip_status', '!=', 'Cancelled')
-        ->sum('distance') ?: 1;
+        ->pluck('id');
+        $totalKm = (Trip::whereIn('id', $tripIds)->sum('distance')
+            + EmptyRun::whereIn('trip_id', $tripIds)->sum('distance')) ?: 1;
         $totalHorses = $horses->count() ?: 1;
 
         $scheduledInspections = Checklist::whereBetween('next_inspection_at', [$this->from, $this->to])->count() ?: 1;

@@ -504,6 +504,9 @@ WithCustomStartCell
             }else{
                 $distance = "";
             }
+            $emptyrun_distance = (float) $trip->emptyruns()->sum('distance');
+            $total_trip_distance = (is_numeric($distance) ? (float) $distance : 0) + $emptyrun_distance;
+            $distance_cell = "Lp-Op Distance: " . ($distance !== "" ? $distance : 0) . "\nTotal Distance: " . $total_trip_distance;
 
             $trip_freight = $trip->freight ? number_format($trip->freight,2) : 0 ;
             $currency_name = $trip->currency ? $trip->currency->name : "";
@@ -602,7 +605,7 @@ WithCustomStartCell
                     $fromRouteLabels ?: "",
                     $toRouteLabels ?: "",
                     $starting_mileage." - ".$ending_mileage ,
-                    $distance,
+                    $distance_cell,
                     $fuel,
                     $fuel_amount,
                     $trip->cargo ? $trip->cargo->name : "",
@@ -633,7 +636,7 @@ WithCustomStartCell
                 'From',
                 'To',
                 'Mileage',
-                'Distance',
+                'Distances',
                 'Fuel',
                 'Fuel Amount',
                 'Cargo',

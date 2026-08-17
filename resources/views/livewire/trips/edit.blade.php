@@ -1651,6 +1651,7 @@
                                             <label for="distance">Trip Distance</label>
                                             <input type="number" min="1" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Trip Distance (Kms)"  >
                                             @error('distance') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small class="text-muted">This is the distance from the loading point to the offloading point.</small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

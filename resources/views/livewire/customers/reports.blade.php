@@ -34,6 +34,11 @@
                                         <div class="col-md-12">
                                             <div class="btn-group pull-right mt-10" >
                                                <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
+                                                @if (isset($search) && $customers->count() > 0)
+                                                <a href="#" wire:click.prevent="exportCustomersExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                                <a href="#" wire:click.prevent="exportCustomersCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                                <a href="#" wire:click.prevent="exportCustomersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                                @endif
                                                 <button type="submit" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Generate Report</button>
                                             </div>
                                         </div>
@@ -67,6 +72,12 @@
                                     </th>
                                     <th class="th-sm">Street Address
                                     </th>
+                                    @if ($canViewRevenue)
+                                    <th class="th-sm">Trip Revenue
+                                    </th>
+                                    <th class="th-sm">Invoiced Revenue
+                                    </th>
+                                    @endif
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -86,6 +97,10 @@
                                     <td>{{$customer->city}}</td>
                                     <td>{{$customer->suburb}}</td>
                                     <td>{{$customer->street_address}}</td>
+                                    @if ($canViewRevenue)
+                                    <td>{{ number_format($customer->trip_revenue ?? 0, 2) }}</td>
+                                    <td>{{ number_format($customer->invoiced_revenue ?? 0, 2) }}</td>
+                                    @endif
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

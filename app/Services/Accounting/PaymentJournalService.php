@@ -10,6 +10,20 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentJournalService
 {
+    private const POSTABLE_CATEGORIES = [
+        'customer', 'vendor', 'invoice', 'bill', 'sale', 'recovery', 'withdrawal', 'deposit',
+    ];
+
+    /**
+     * Whether this payment resolves to a category post() actually knows how to
+     * book. Used by the data-integrity repair job so it doesn't create empty
+     * JournalEntry headers for payments that fall outside every known flow.
+     */
+    public function canPost(Payment $payment): bool
+    {
+        return in_array($this->resolveCategory($payment), self::POSTABLE_CATEGORIES, true);
+    }
+
     public function post(Payment $payment): JournalEntry
     {
         $existing = JournalEntry::where('payment_id', $payment->id)->first();

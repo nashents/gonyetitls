@@ -58,11 +58,12 @@ WithCustomStartCell
                     DB::raw('count(*) as total_trips'),
                     DB::raw("
                         SUM(
-                            CASE 
-                                WHEN trips.starting_mileage IS NOT NULL AND trips.ending_mileage IS NOT NULL 
-                                THEN trips.ending_mileage - trips.starting_mileage 
-                                ELSE trips.distance 
-                            END
+                            (CASE
+                                WHEN trips.starting_mileage IS NOT NULL AND trips.ending_mileage IS NOT NULL
+                                THEN trips.ending_mileage - trips.starting_mileage
+                                ELSE trips.distance
+                            END)
+                            + (SELECT COALESCE(SUM(er.distance + 0), 0) FROM empty_runs er WHERE er.trip_id = trips.id AND er.deleted_at IS NULL)
                         ) as total_kilometers
                     "),
                     DB::raw("
@@ -106,11 +107,12 @@ WithCustomStartCell
                     DB::raw('count(*) as total_trips'),
                     DB::raw("
                         SUM(
-                            CASE 
-                                WHEN trips.starting_mileage IS NOT NULL AND trips.ending_mileage IS NOT NULL 
-                                THEN trips.ending_mileage - trips.starting_mileage 
-                                ELSE trips.distance 
-                            END
+                            (CASE
+                                WHEN trips.starting_mileage IS NOT NULL AND trips.ending_mileage IS NOT NULL
+                                THEN trips.ending_mileage - trips.starting_mileage
+                                ELSE trips.distance
+                            END)
+                            + (SELECT COALESCE(SUM(er.distance + 0), 0) FROM empty_runs er WHERE er.trip_id = trips.id AND er.deleted_at IS NULL)
                         ) as total_kilometers
                     "),
                     DB::raw("

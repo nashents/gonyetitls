@@ -329,6 +329,9 @@ WithCustomStartCell
             }else {
                 $actual_distance = "";
             }
+            $emptyrun_distance = (float) $trip->emptyruns()->sum('distance');
+            $total_trip_distance = (is_numeric($actual_distance) ? (float) $actual_distance : 0) + $emptyrun_distance;
+            $distance_cell = "Lp-Op Distance: " . ($actual_distance !== "" ? $actual_distance : 0) . "\nTotal Distance: " . $total_trip_distance;
           
 
             $pod = TripDocument::where('trip_id',$trip->id)->where('title','POD')->get()->first();
@@ -639,7 +642,7 @@ WithCustomStartCell
                     $trip->trip_fuel ? $trip->trip_fuel.' L' : "",
                     $trip->starting_mileage ? $trip->starting_mileage : "" ,
                     $trip->ending_mileage ? $trip->ending_mileage : "",
-                    $actual_distance,
+                    $distance_cell,
                     $trip->cargo ? $trip->cargo->name : "",
                     $weight,
                     $loaded_weight,
@@ -720,7 +723,7 @@ WithCustomStartCell
                 'Approximate Fuel',
                 'Starting Mileage',
                 'Ending Mileage',
-                'Distance',
+                'Distances',
                 'Cargo',
                 'Scheduled Weight (Tons)',
                 'Loaded Weight (Tons)',

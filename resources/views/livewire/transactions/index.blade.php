@@ -31,6 +31,7 @@
                                     <button type="button" wire:click.prevent="showDepositModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Deposit</button>
                                     <button type="button"  wire:click.prevent="showWithdrawalModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Withdrawal</button>
                                     <button type="button"  data-toggle="modal" data-target="#journalModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Journal Entry</button>
+                                    <button type="button" wire:click="fixDataIssues" onclick="return confirm('Scan payment records for known data issues and correct them now?') || event.stopImmediatePropagation()" class="btn btn-default border-warning btn-rounded btn-wide"><i class="fa fa-wrench"></i> Fix Data Issues</button>
 
                                 </div>
                            
@@ -59,7 +60,7 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($payments->count()>0)
+                                @if ($payments->count()>0 || $journalEntries->count()>0)
                                 <tbody>
                                   @foreach ($payments as $payment)
 
@@ -125,6 +126,38 @@
                                         </div>
                                        
                                 </td>
+                                  </tr>
+                                  @endforeach
+                                  @foreach ($journalEntries as $entry)
+                                  <tr>
+                                    <td>{{Carbon\Carbon::parse($entry->date)->format('d M Y')}}</td>
+                                    <td>
+                                        {{ $entry->description ?: 'Manual Journal Entry' }}
+                                        @if ($entry->reference)
+                                        <br><small>Ref: {{ $entry->reference }}</small>
+                                        @endif
+                                    </td>
+                                    <td>Journal Entry</td>
+                                    <td>
+                                        {{ $entry->journal_entry_lines->pluck('account.name')->filter()->unique()->implode(', ') }}
+                                    </td>
+                                    <td>{{ $entry->journal_number }}</td>
+                                    <td>{{ optional($entry->journal_entry_lines->first()->currency ?? null)->name }}</td>
+                                    <td>
+                                        {{ optional($entry->journal_entry_lines->first()->currency ?? null)->symbol }}{{ number_format($entry->journal_entry_lines->sum('debit'), 2) }}
+                                    </td>
+                                    <td>
+                                        @if ($entry->status === 'posted')
+                                            <span class="badge bg-success">Posted</span>
+                                        @else
+                                            <span class="badge bg-warning">Draft</span>
+                                        @endif
+                                    </td>
+                                    <td class="w-10 line-height-35 table-dropdown">
+                                        @if ($entry->journal_entry_lines->first())
+                                        <a href="{{ route('accounts.show', $entry->journal_entry_lines->first()->account_id) }}" style="color: blue"><i class="fa fa-eye color-default"></i> View</a>
+                                        @endif
+                                    </td>
                                   </tr>
                                   @endforeach
                                 </tbody>

@@ -57,6 +57,7 @@ class HorsesExport implements
         $tripRows = Trip::query()
             ->whereNotNull('horse_id')
             ->whereBetween('start_date', [$this->from, $this->to])
+            ->withSum('emptyruns as emptyrun_distance', 'distance')
             ->get([
                 'id',
                 'horse_id',
@@ -80,12 +81,13 @@ class HorsesExport implements
             $startMileage = is_numeric($trip->starting_mileage) ? (float) $trip->starting_mileage : null;
             $endMileage   = is_numeric($trip->ending_mileage) ? (float) $trip->ending_mileage : null;
             $distance     = is_numeric($trip->distance) ? (float) $trip->distance : 0;
+            $emptyrunDistance = is_numeric($trip->emptyrun_distance) ? (float) $trip->emptyrun_distance : 0;
 
             if (!is_null($startMileage) && !is_null($endMileage) && $endMileage >= $startMileage) {
-                return $endMileage - $startMileage;
+                return $endMileage - $startMileage + $emptyrunDistance;
             }
 
-            return $distance;
+            return $distance + $emptyrunDistance;
         });
 
         $totalWeight = (float) $tripRows->sum(function ($trip) {

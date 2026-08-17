@@ -1472,18 +1472,19 @@ class MenuRegistrySeeder extends Seeder
         ]);
 
         // EzyTrack / FanTracker Device Mapping need the ezytrack / fantracker
-        // provider specifically — a company with only Cartrack active
-        // shouldn't see either sub-item.
+        // provider specifically — a company with only Cartrack (or only the
+        // other provider) active shouldn't see either sub-item, so no
+        // isSuperAdmin override here unlike $vHasTracking above: showing both
+        // buttons to a super admin auditing a single-provider client is
+        // exactly the leak we don't want.
         $vHasEzyTrack = $any([
             $all(['isNotDriver', 'inTransport', 'hasEzyTrackIntegration']),
             $all(['isNotDriver', 'inWorkshop', 'hasEzyTrackIntegration']),
-            $all(['isSuperAdmin']),
         ]);
 
         $vHasFanTracker = $any([
             $all(['isNotDriver', 'inTransport', 'hasFanTrackerIntegration']),
             $all(['isNotDriver', 'inWorkshop', 'hasFanTrackerIntegration']),
-            $all(['isSuperAdmin']),
         ]);
 
         $m = $upsertModule($g, [
