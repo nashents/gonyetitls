@@ -702,14 +702,14 @@ class Index extends Component
     {
 
         if ($this->source_destination == "Customer") {
-            $this->transaction_type_id = TransactionType::where('name','Deposit')->first();
+            $this->transaction_type_id = optional(TransactionType::where('name','Deposit')->first())->id;
             $this->transaction_category = "Customer Deposits";
             if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) { 
             $this->last_payment = Payment::where('customer_id',$this->selectedCustomer)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
         }
 
         }elseif ($this->source_destination == "Vendor") {
-            $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first();
+            $this->transaction_type_id = optional(TransactionType::where('name','Withdrawal')->first())->id;
             $this->transaction_category = "Vendor Payments";
             if (isset($this->selectedVendor) && isset($this->selectedCurrency)) { 
             $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();

@@ -22,6 +22,7 @@ use App\Models\TransactionType;
 use App\Models\Transporter;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\Accounting\PaymentJournalService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -271,7 +272,7 @@ class Index extends Component
         $this->selectedAccount = "All";
 
         if ($this->selectedAccount == "All") {
-            $this->payments = Payment::orderBy('created_at','desc')->get();
+            $this->payments = Payment::with('journalEntry.journal_entry_lines')->orderBy('created_at','desc')->get();
         }else{
             $this->payments = collect();
         }
@@ -320,9 +321,9 @@ class Index extends Component
     public function updatedSelectedAccount($id){
         if (!is_null($id)) {
             if ($id == "All") {
-                $this->payments = Payment::orderBy('created_at','desc')->get();
+                $this->payments = Payment::with('journalEntry.journal_entry_lines')->orderBy('created_at','desc')->get();
             }else {
-                $this->payments = Payment::where('account_id', $id)->orderBy('date','desc')->get();
+                $this->payments = Payment::with('journalEntry.journal_entry_lines')->where('account_id', $id)->orderBy('date','desc')->get();
             }
 
           
@@ -380,10 +381,10 @@ class Index extends Component
     public function updatedSelectedType($type){
         if (!is_null($type)) {
             if (isset($this->selectedCategory)) {
-                $this->payments = Payment::where('type', $type)
+                $this->payments = Payment::with('journalEntry.journal_entry_lines')->where('type', $type)
                                            ->where('category', $this->selectedCategory)->get();
             }else {
-                $this->payments = Payment::where('type', $type)->get();
+                $this->payments = Payment::with('journalEntry.journal_entry_lines')->where('type', $type)->get();
             }
           
         }
@@ -453,7 +454,8 @@ class Index extends Component
 
         $new_transaction_category = str_replace("\n", "", $this->transaction_category);
         $payment->transaction_category = $new_transaction_category;
-        
+        $payment->category = 'deposit';
+
         if(isset($this->customer_id) && isset($this->selectedCurrency) &&   $new_transaction_category == "Customer Deposits"){
             if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
                 $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
@@ -537,13 +539,14 @@ class Index extends Component
         $payment->movement = "Dbt";
         $payment->description = $this->description;
         $payment->transaction_category = $this->transaction_category;
+        $payment->category = 'withdrawal';
         $payment->notes = $this->notes;
         $payment->currency_id = $account->currency->id;
         $payment->amount = $this->amount;
         $payment->exchange_rate = $this->exchange_rate;
         $payment->exchange_amount = $this->exchange_amount;
-        $payment->save();     
-        
+        $payment->save();
+
 
         $account->balance = $current_balance - $this->amount;
         $account->update();
@@ -593,29 +596,42 @@ class Index extends Component
     }
     }
 
+    public function postToLedger($paymentId){
+        $payment = Payment::findOrFail($paymentId);
+
+        app(PaymentJournalService::class)->post($payment);
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Transaction posted to the ledger successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
+    }
+
     public function search(){
         if (isset($this->selectedCategory) && $this->selectedType == NULL) {
-            $this->payments = Payment::whereBetween('date',[$this->from, $this->to] )
+            $this->payments = Payment::with('journalEntry.journal_entry_lines')->whereBetween('date',[$this->from, $this->to] )
             ->where('category', $this->selectedCategory)->latest()->get();
         }elseif (isset($this->selectedType) && $this->selectedCategory == NULL) {
-            $this->payments = Payment::whereBetween('date',[$this->from, $this->to] )
+            $this->payments = Payment::with('journalEntry.journal_entry_lines')->whereBetween('date',[$this->from, $this->to] )
             ->where('type', $this->selectedType)->latest()->get();
         }elseif (isset($this->selectedCategory) && isset($this->selectedType)) {
-            $this->payments = Payment::whereBetween('date',[$this->from, $this->to] )
+            $this->payments = Payment::with('journalEntry.journal_entry_lines')->whereBetween('date',[$this->from, $this->to] )
             ->where('type', $this->selectedType)
             ->where('category', $this->selectedCategory)->latest()->get();
         }else{
-            $this->payments = Payment::whereBetween('date',[$this->from, $this->to] )->latest()->get();
+            $this->payments = Payment::with('journalEntry.journal_entry_lines')->whereBetween('date',[$this->from, $this->to] )->latest()->get();
         }
        
     }
     public function updatedSelectedCategory($category){
         if (!is_null($category)) {
             if (isset($this->selectedType)) {
-                $this->payments = Payment::where('category', $category)
+                $this->payments = Payment::with('journalEntry.journal_entry_lines')->where('category', $category)
                                            ->where('type', $this->selectedType)->get();
             }else {
-                $this->payments = Payment::where('category', $category)->get();
+                $this->payments = Payment::with('journalEntry.journal_entry_lines')->where('category', $category)->get();
             }
         }
       

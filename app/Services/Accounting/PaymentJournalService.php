@@ -12,26 +12,28 @@ class PaymentJournalService
 {
     public function post(Payment $payment): JournalEntry
     {
-        if (JournalEntry::where('payment_id', $payment->id)->exists()) {
-            return JournalEntry::where('payment_id', $payment->id)->first();
+        $existing = JournalEntry::where('payment_id', $payment->id)->first();
+        if ($existing && $existing->journal_entry_lines()->exists()) {
+            return $existing;
         }
 
-        $payment->loadMissing(['account', 'customer', 'vendor', 'currency', 'invoice', 'bill', 'sale', 'recovery']);
+        $payment->loadMissing(['account', 'customer', 'vendor', 'currency', 'invoice', 'bill', 'sale', 'recovery', 'transaction_type']);
 
-        $rate   = (float) ($payment->exchange_rate ?? 1);
-        $amount = (float) $payment->amount;
+        $rate    = (float) ($payment->exchange_rate ?? 1);
+        $amount  = (float) $payment->amount;
+        $category = $this->resolveCategory($payment);
 
         $cashBankAccount = $this->resolveCashBankAccount($payment);
 
-        return DB::transaction(function () use ($payment, $rate, $amount, $cashBankAccount) {
+        return DB::transaction(function () use ($payment, $rate, $amount, $category, $cashBankAccount, $existing) {
 
-            $entry = JournalEntry::create([
+            $entry = $existing ?? JournalEntry::create([
                'company_id'     => $payment->company_id ? $payment->company_id : Auth::user()->employee->company_id,
                 'payment_id'     => $payment->id,
                 'journal_number' => $this->generateNumber(),
                 'date'           => $payment->date,
                 'reference'      => $payment->payment_number,
-                'description'    => $this->resolveDescription($payment),
+                'description'    => $this->resolveDescription($payment, $category),
                 'is_manual'      => false,
                 'status'         => 'posted',
                 'created_by_id'  => Auth::id(),
@@ -39,18 +41,37 @@ class PaymentJournalService
                 'posted_at'      => now(),
             ]);
 
-            match (strtolower($payment->category)) {
-                'customer' => $this->postCustomerWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
-                'vendor'   => $this->postVendorWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
-                'invoice'  => $this->postInvoicePayment($entry, $payment, $amount, $rate, $cashBankAccount),
-                'bill'     => $this->postBillPayment($entry, $payment, $amount, $rate, $cashBankAccount),
-                'sale'     => $this->postSalePayment($entry, $payment, $amount, $rate, $cashBankAccount),
-                'recovery' => $this->postRecoveryPayment($entry, $payment, $amount, $rate, $cashBankAccount),
-                default    => null,
+            match ($category) {
+                'customer'   => $this->postCustomerWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'vendor'     => $this->postVendorWalletPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'invoice'    => $this->postInvoicePayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'bill'       => $this->postBillPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'sale'       => $this->postSalePayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'recovery'   => $this->postRecoveryPayment($entry, $payment, $amount, $rate, $cashBankAccount),
+                'withdrawal' => $this->postWithdrawal($entry, $payment, $amount, $rate, $cashBankAccount),
+                'deposit'    => $this->postDeposit($entry, $payment, $amount, $rate, $cashBankAccount),
+                default      => null,
             };
 
             return $entry;
         });
+    }
+
+    /**
+     * category is set explicitly by most flows, but older withdrawal/deposit
+     * records (and any created before category was wired up) only carry a
+     * transaction_type relation - fall back to that so manual re-posting can
+     * still resolve them.
+     */
+    private function resolveCategory(Payment $payment): ?string
+    {
+        if ($payment->category) {
+            return strtolower($payment->category);
+        }
+
+        $typeName = optional($payment->transaction_type)->name;
+
+        return $typeName ? strtolower($typeName) : null;
     }
 
     // ── 1. Customer Wallet Top-up ─────────────────────────────────────────────
@@ -286,7 +307,103 @@ class PaymentJournalService
         ]);
     }
 
+    // ── 7. Withdrawal ─────────────────────────────────────────────────────────
+    // Transactions component: category = withdrawal, transaction_category = contra account name
+    // DR Contra account (e.g. expense)   CR Cash/Bank
+    private function postWithdrawal(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $contraAccount = $this->resolveContraAccount($payment, 'Uncategorized Expense');
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $contraAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => $payment->vendor_id,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Withdrawal - {$contraAccount->name} - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => $payment->vendor_id,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Withdrawal from {$cashBankAccount->name} - {$payment->payment_number}",
+        ]);
+    }
+
+    // ── 8. Deposit ────────────────────────────────────────────────────────────
+    // Transactions component: category = deposit, transaction_category = contra account name
+    // DR Cash/Bank   CR Contra account (e.g. income)
+    private function postDeposit(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $contraAccount = $this->resolveContraAccount($payment, 'Uncategorized Income');
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => $amount,
+            'credit'          => 0,
+            'exchange_debit'  => $amount * $rate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Deposit to {$cashBankAccount->name} - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $contraAccount->id,
+            'customer_id'     => $payment->customer_id,
+            'vendor_id'       => null,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Deposit - {$contraAccount->name} - {$payment->payment_number}",
+        ]);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Withdrawal/deposit modals let the user pick any chart-of-accounts entry
+     * as the contra account via transaction_category (which stores the
+     * account NAME, not an id). Falls back to the Uncategorized Expense/
+     * Income account used as the modal's own default.
+     */
+    private function resolveContraAccount(Payment $payment, string $fallbackName): Account
+    {
+        if ($payment->transaction_category) {
+            $account = Account::where('name', $payment->transaction_category)->first();
+            if ($account) {
+                return $account;
+            }
+        }
+
+        return Account::where('name', $fallbackName)->firstOrFail();
+    }
 
     /**
      * Payments record which Chart of Accounts "Cash & Bank" account the money
@@ -303,16 +420,18 @@ class PaymentJournalService
         return Account::where('name', 'Cash on Hand')->firstOrFail();
     }
 
-    private function resolveDescription(Payment $payment): string
+    private function resolveDescription(Payment $payment, ?string $category = null): string
     {
-        return match (strtolower($payment->category)) {
-            'customer' => "Customer Deposit - {$payment->customer?->name} - {$payment->payment_number}",
-            'vendor'   => "Vendor Prepayment - {$payment->vendor?->name} - {$payment->payment_number}",
-            'invoice'  => "Invoice Payment - {$payment->customer?->name} - {$payment->payment_number}",
-            'bill'     => "Bill Payment - {$payment->vendor?->name} - {$payment->payment_number}",
-            'sale'     => "Sale Payment - {$payment->customer?->name} - {$payment->payment_number}",
-            'recovery' => "Recovery Payment - {$payment->driver?->employee?->name} - {$payment->payment_number}",
-            default    => "Payment - {$payment->payment_number}",
+        return match ($category ?? $this->resolveCategory($payment)) {
+            'customer'   => "Customer Deposit - {$payment->customer?->name} - {$payment->payment_number}",
+            'vendor'     => "Vendor Prepayment - {$payment->vendor?->name} - {$payment->payment_number}",
+            'invoice'    => "Invoice Payment - {$payment->customer?->name} - {$payment->payment_number}",
+            'bill'       => "Bill Payment - {$payment->vendor?->name} - {$payment->payment_number}",
+            'sale'       => "Sale Payment - {$payment->customer?->name} - {$payment->payment_number}",
+            'recovery'   => "Recovery Payment - {$payment->driver?->employee?->name} - {$payment->payment_number}",
+            'withdrawal' => "Withdrawal - {$payment->transaction_category} - {$payment->payment_number}",
+            'deposit'    => "Deposit - {$payment->transaction_category} - {$payment->payment_number}",
+            default      => "Payment - {$payment->payment_number}",
         };
     }
 

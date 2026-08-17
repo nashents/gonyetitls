@@ -91,4 +91,7 @@ class Payment extends Model implements Auditable
     public function bank_account(){
         return $this->belongsTo('App\Models\BankAccount');
     }
+    public function journalEntry(){
+        return $this->hasOne('App\Models\JournalEntry');
+    }
 }

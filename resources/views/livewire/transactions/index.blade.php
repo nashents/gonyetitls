@@ -53,6 +53,8 @@
                                     </th>
                                     <th class="th-sm">Amount
                                     </th>
+                                    <th class="th-sm">Ledger
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -68,6 +70,10 @@
                                             {{$payment->customer ? $payment->customer->name : ""}} Payment for invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> <br>
                                         @elseif($payment->bill)
                                         Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
+                                        @elseif ($payment->customer && strtolower((string) $payment->category) === 'customer')
+                                        <a href="{{ route('customers.show',$payment->customer->id) }}" style="color: blue">{{$payment->customer->name}}</a> deposit awaiting allocation <br>
+                                        @elseif ($payment->vendor && strtolower((string) $payment->category) === 'vendor')
+                                        <a href="{{ route('vendors.show',$payment->vendor->id) }}" style="color: blue">{{$payment->vendor->name}}</a> prepayment awaiting allocation <br>
                                         @endif
                                         @if ($payment->description)
                                         {{$payment->description}}
@@ -94,9 +100,16 @@
                                             {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
                                             <br>
                                             @endif
-                                            @if ($payment->exchange_rate)
+                                            @if ($payment->currency_id && Auth::user()->employee->company && $payment->currency_id != Auth::user()->employee->company->currency_id)
                                             <small style="color: green">{{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($payment->exchange_amount,2)}} @ {{$payment->exchange_rate}}</small>
                                             @endif
+                                    </td>
+                                    <td>
+                                        @if ($payment->journalEntry && $payment->journalEntry->journal_entry_lines->count() > 0)
+                                            <span class="badge bg-success">Posted</span>
+                                        @else
+                                            <a href="#" wire:click.prevent="postToLedger({{ $payment->id }})" class="badge bg-danger" title="Click to post this transaction to the ledger">Not Posted</a>
+                                        @endif
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
