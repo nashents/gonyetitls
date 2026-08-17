@@ -217,8 +217,9 @@
                             </main>
                             <center> 
                                 <footer style="position:fixed; bottom: 0px; left: 0px; right: 0px; ">
-                                  
-                                    <strong style="font-size: 18px;">Powered By Gonyeti</strong>    
+                                    @if ($company->show_branding ?? true)
+                                        <strong style="font-size: 18px;">Powered By Gonyeti</strong>
+                                    @endif
                                 </footer>
                             </center>  
                         </div>

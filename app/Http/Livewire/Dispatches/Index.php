@@ -63,6 +63,7 @@ class Index extends Component
     public $trailer_id;
     public $vehicle_id;
     public $dispatch_id;
+    public $reversal_comments;
     public $branches;
     public $branch_id;
     public $tickets;
@@ -1460,6 +1461,42 @@ class Index extends Component
              $this->dispatchBrowserEvent('show-dispatchDeleteModal');
 
         }
+    }
+
+    public function reverse($id){
+        $dispatch = Dispatch::find($id);
+        $this->dispatch_id = $dispatch->id;
+        $this->dispatch = $dispatch;
+        $this->reversal_comments = null;
+        $this->dispatchBrowserEvent('show-reverseModal');
+    }
+
+    public function confirmReverse(){
+
+        $this->validate([
+            'reversal_comments' => 'required|string|min:3',
+        ], [
+            'reversal_comments.required' => 'Please explain why this dispatch is being reversed.',
+        ]);
+
+        $dispatch = Dispatch::findOrFail($this->dispatch_id);
+
+        try {
+            app(\App\Services\Dispatches\DispatchReversalService::class)->reverse($dispatch, $this->reversal_comments, Auth::id());
+        } catch (\Throwable $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
+            return;
+        }
+
+        $this->reversal_comments = null;
+        $this->dispatchBrowserEvent('hide-reverseModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Dispatch reversed successfully — moved to Rejected.',
+        ]);
     }
 
     public function refresh($category){

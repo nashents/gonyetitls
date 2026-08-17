@@ -292,8 +292,10 @@ Invoice Print |@if (Auth::user()->employee->company)
                     <center> 
                         <footer style=" bottom: 0px; left: 0px; right: 0px; ">
                             {{$receipt->footer}}
-                            <br>
-                            <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">    
+                            @if ($company->show_branding ?? true)
+                                <br>
+                                <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">
+                            @endif
                         </footer>
                     </center>  
                    

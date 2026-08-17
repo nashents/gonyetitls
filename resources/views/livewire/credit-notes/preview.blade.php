@@ -186,8 +186,10 @@
                 <center> 
                     <footer style=" bottom: 0px; left: 0px; right: 0px; ">
                         {{$credit_note->footer}}
-                        <br>
-                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">    
+                        @if ($company->show_branding ?? true)
+                            <br>
+                            <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">
+                        @endif
                     </footer>
                 </center>  
             </div>

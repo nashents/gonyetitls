@@ -241,11 +241,13 @@
         {{-- ── FOOTER ── --}}
         <div class="inv-doc-footer">
             <div>{{ $invoice->footer }}</div>
-            <div class="inv-footer-brand">
-                <div class="dot"></div>
-                <span>Powered by</span>
-                <img src="{{ asset('images/logo.png') }}" alt="Gonyeti" style="height:14px">
-            </div>
+            @if ($company->show_branding ?? true)
+                <div class="inv-footer-brand">
+                    <div class="dot"></div>
+                    <span>Powered by</span>
+                    <img src="{{ asset('images/logo.png') }}" alt="Gonyeti" style="height:14px">
+                </div>
+            @endif
         </div>
 
     </div>

@@ -308,7 +308,13 @@
                 </script>
                 {{-- ── END TEMPLATE SELECTOR ──────────────────────────────────────────────── --}}
 
-
+                <div class="mb-10 mt-10">
+                    <input type="checkbox" wire:model.debounce.300ms="show_branding"   class="line-style" />
+                    <label for="one" class="radio-label">Show Gonyeti branding on printable documents</label>
+                    @error('show_branding') <span class="text-danger error">{{ $message }}</span>@enderror
+                    <br>
+                    <small style="color: green">Uncheck to hide the "Powered By" Gonyeti logo/name on invoices, quotations, purchase orders, requisitions, receipts, credit notes and debit notes.</small>
+                </div>
 
                <div class="row">
                     <div class="col-md-4">

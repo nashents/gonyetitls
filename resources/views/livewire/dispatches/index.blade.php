@@ -95,8 +95,26 @@
                                 <tbody>
                                     @forelse ($dispatches as $dispatch)
                                   <tr>
-                                    <td>{{$dispatch->dispatch_number}}</td>
-                                    <td>{{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}}</td>
+                                    <td>
+                                        {{$dispatch->dispatch_number}}
+                                        @if ($dispatch->isReversed())
+                                            <br>
+                                            <span class="badge bg-dark">reversed</span>
+                                            <small>
+                                                <br>
+                                                <strong>ReversedBy:</strong> {{$dispatch->reversed_by ? $dispatch->reversed_by->name.' '.$dispatch->reversed_by->surname : ""}}
+                                                <br>
+                                                <strong>ReversedOn:</strong> {{$dispatch->reversed_at->format('Y-m-d')}}
+                                                <br>
+                                                <strong>Reason:</strong> {{$dispatch->reversal_comments}}
+                                            </small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        {{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}}
+                                        <br>
+                                        <small><strong>DispatchedOn:</strong> {{$dispatch->created_at ? $dispatch->created_at->format('d M, Y') : ""}}</small>
+                                    </td>
                                     <td>{{$dispatch->date}}</td>
                                     <td>
                                         @php
@@ -201,6 +219,9 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('dispatches.show', $dispatch->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="{{route('dispatches.preview',$dispatch->id)}}"   ><i class="fas fa-file color-warning"></i> Preview</a></li>
+                                                @if ($dispatch->canBeReversed())
+                                                    <li><a href="#" wire:click.prevent="reverse({{$dispatch->id}})"><i class="fas fa-undo color-danger"></i> Reverse</a></li>
+                                                @endif
                                                 @if ($dispatch->authorization == "pending" || Auth::user()->is_admin())
                                                     {{-- <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li> --}}
                                                     <li><a href="#" wire:click="showDelete({{$dispatch->id}})"  ><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -265,7 +286,35 @@
         </div>
     </div>
 </div>
- 
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="reverseModal" tabindex="-1" role="dialog" aria-labelledby="reverseModalLabel" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="reverseModalLabel"><i class="fas fa-undo"></i> Reverse Dispatch @if($dispatch) #{{$dispatch->dispatch_number}} @endif <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="confirmReverse()" >
+                <div class="modal-body">
+                    <p>This will restore the stock/asset/tyre balance it deducted, delete the bill it raised, and move the dispatch to <strong>Rejected</strong>. This cannot be undone.</p>
+                    <div class="form-group">
+                        <label for="reversal_comments">Reason for reversal<span class="required" style="color: red">*</span></label>
+                        <textarea class="form-control" wire:model.debounce.300ms="reversal_comments" cols="30" rows="3" placeholder="Why is this approved dispatch being reversed?"></textarea>
+                        @error('reversal_comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-danger btn-wide btn-rounded"><i class="fa fa-undo"></i>Reverse</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="dispatchModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-90" role="document">
             <div class="modal-content">

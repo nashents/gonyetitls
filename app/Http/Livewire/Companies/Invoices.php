@@ -66,6 +66,7 @@ class Invoices extends Component
     public $invoice_subheading;
     public $quotation_title;
     public $quotation_subheading;
+    public $show_branding;
 
 
 
@@ -123,6 +124,7 @@ class Invoices extends Component
         $this->invoice_title = $company->invoice_title;
         $this->invoice_due_when = $company->invoice_due_when;
         $this->quote_valid_until = $company->quote_valid_until;
+        $this->show_branding = $company->show_branding;
     }
 
     public function update(){
@@ -179,6 +181,7 @@ class Invoices extends Component
         $company->quotation_subheading = $this->quotation_subheading;
         $company->invoice_title = $this->invoice_title;
         $company->invoice_subheading = $this->invoice_subheading;
+        $company->show_branding = $this->show_branding;
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[
