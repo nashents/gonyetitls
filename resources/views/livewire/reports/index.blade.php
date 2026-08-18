@@ -154,18 +154,29 @@
                         </div>
                
                         <hr>
-                        <div class="col-md-6">
-                            <div class="panel-heading">
-                                <div class="panel-title">
-                                    <h5><a href="{{route('reports.account_transactions')}}" style="color:blue">Account Transactions(General Ledger)</a></h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="panel-heading">
+                                    <div class="panel-title">
+                                        <h5><a href="{{route('reports.account_transactions')}}" style="color:blue">Account Transactions(General Ledger)</a></h5>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    Your complete financial activity: A detailed list of all transactions and totals for every account in your Chart of Accounts.
                                 </div>
                             </div>
-                            <div class="panel-body">
-                                Your complete financial activity: A detailed list of all transactions and totals for every account in your Chart of Accounts.
+                            <div class="col-md-6">
+                                <div class="panel-heading">
+                                    <div class="panel-title">
+                                        <h5><a href="{{route('reports.fleet_subledger')}}" style="color:blue">Fleet Control Accounts</a></h5>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    Control-account-style totals for horses, trailers, vehicles, and drivers, drawn from the same posted ledger as the Trial Balance.
+                                </div>
                             </div>
-                           
                         </div>
-                     
+
                     </section>
                 </div>
 

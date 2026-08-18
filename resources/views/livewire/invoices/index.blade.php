@@ -108,6 +108,9 @@
                                 <a href="#" wire:click="showBulkInvoices()"  class="btn btn-default"><i class="fa fa-copy"></i>Bulk Invoices</a>
                                 @endif
                                 <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Invoices Payments</a>
+                                @if ($this->unpostedInvoicesCount > 0)
+                                    <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedInvoicesCount }} approved invoice(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every approved, unposted invoice to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedInvoicesCount }})</a>
+                                @endif
                             </div>
                            
                             
@@ -145,6 +148,8 @@
                                     <th class="th-sm">Due
                                     </th>
                                     <th class="th-sm">Auth
+                                    </th>
+                                    <th class="th-sm">Ledger
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -270,8 +275,19 @@
                                         @endif
                                         @if ($invoice->comments)
                                             <br>
-                                            <small style="background-color: orange"><strong >Comments: </strong> {{$invoice->comments}}</small>  
-                                        @endif 
+                                            <small style="background-color: orange"><strong >Comments: </strong> {{$invoice->comments}}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($invoice->journal_entry)
+                                            <span class="badge bg-success" title="Journal {{ $invoice->journal_entry->journal_number }}">Posted</span>
+                                        @elseif ($invoice->authorization == 'approved')
+                                            <span class="badge bg-danger">Not Posted</span>
+                                            <br>
+                                            <a href="#" wire:click.prevent="postToLedger({{ $invoice->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Post to General Ledger"><i class="fa fa-book"></i> Post to Ledger</a>
+                                        @else
+                                            <span class="badge bg-secondary">N/A</span>
+                                        @endif
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

@@ -19,6 +19,9 @@ class Invoice extends Model implements Auditable
     public function invoice_products(){
         return $this->hasMany('App\Models\InvoiceProduct');
     }
+    public function journal_entry(){
+        return $this->hasOne(JournalEntry::class);
+    }
     public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');
     }

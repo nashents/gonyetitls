@@ -428,6 +428,7 @@ Route::get('reports/balance-sheet/print','ReportController@balanceSheetPrint')->
 Route::get('reports/trial-balance','ReportController@trialBalance')->name('reports.trial-balance');
 Route::get('reports/trial-balance/pdf','ReportController@trialBalancePdf')->name('reports.trial_balance.pdf');
 Route::get('reports/trial-balance/print','ReportController@trialBalancePrint')->name('reports.trial_balance.print');
+Route::get('reports/fleet-subledger','ReportController@fleetSubledger')->name('reports.fleet_subledger');
 Route::get('reports/sales-tax','ReportController@salesTax')->name('reports.sales_tax');
 Route::get('reports/sales-tax/pdf','ReportController@salesTaxPdf')->name('reports.sales_tax.pdf');
 Route::get('reports/sales-tax/print','ReportController@salesTaxPrint')->name('reports.sales_tax.print');

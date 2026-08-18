@@ -19,6 +19,9 @@ class DebitNote extends Model implements Auditable
     public function company(){
         return $this->belongsTo('App\Models\Company');
     }
+    public function journal_entry(){
+        return $this->hasOne(JournalEntry::class);
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

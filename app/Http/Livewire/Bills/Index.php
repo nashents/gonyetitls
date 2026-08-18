@@ -588,6 +588,66 @@ class Index extends Component
         ]);
     }
 
+    public function getUnpostedBillsCountProperty()
+    {
+        return app(\App\Services\Accounting\LedgerBackfillService::class)->missingBillsQuery()->count();
+    }
+
+    /**
+     * Posts every approved, to-be-paid bill with no JournalEntry yet - the
+     * same query/logic as `php artisan ledger:backfill`, just triggered
+     * from the list page instead of the CLI.
+     */
+    public function bulkPostToLedger()
+    {
+        $result = app(\App\Services\Accounting\LedgerBackfillService::class)->runBills();
+        $posted = count($result['posted']);
+        $errors = count($result['errors']);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $errors > 0 ? 'warning' : 'success',
+            'message' => "Posted {$posted} of {$result['total']} bill(s) to the ledger."
+                . ($errors > 0 ? " {$errors} failed - see logs." : ''),
+        ]);
+    }
+
+    /**
+     * Manually push an approved bill to the general ledger. Covers bills
+     * that were approved without ever triggering BillObserver (e.g. bills
+     * created already-approved in one save, which never fire an
+     * isDirty('authorization') transition) - the same gap the ledger
+     * backfill command closes for historical records.
+     */
+    public function postToLedger($id)
+    {
+        $bill = Bill::find($id);
+        if (! $bill) {
+            return;
+        }
+
+        if (strcasecmp((string) $bill->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) bills can be posted to the ledger.',
+            ]);
+            return;
+        }
+
+        try {
+            app(\App\Services\Accounting\BillJournalService::class)->post($bill);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Bill posted to the general ledger.',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Manual bill ledger post failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not post this bill to the ledger: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     public function render()
     {
 
@@ -638,7 +698,7 @@ class Index extends Component
                     'invoice','transporter','container','top_up','trip',
                     'horse','driver','purchase','currency','payments',
                     // add these if the relationships exist and you use them in search:
-                    'vehicle','trailer','ticket','vendor',
+                    'vehicle','trailer','ticket','vendor','journal_entry',
                 ])
                 ->where('to_be_paid', true);
               if ($this->status === 'unpaid') {

@@ -74,6 +74,9 @@
                                 <div class="panel-title" style="margin-left:-15px;" >
                                     <div class="col-lg-3">
                                         <a href="" data-toggle="modal" data-target="#paymentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Record payment</a>
+                                        @if ($this->unpostedPaymentsCount > 0)
+                                            <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedPaymentsCount }} payment(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every unposted payment to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedPaymentsCount }})</a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -102,6 +105,8 @@
                                         <th class="th-sm">Currency
                                         </th>
                                         <th class="th-sm">Amt
+                                        </th>
+                                        <th class="th-sm">Ledger
                                         </th>
                                         <th class="th-sm">Actions
                                         </th>
@@ -178,6 +183,15 @@
                                             @endif
                                             @if ($payment->exchange_rate)
                                                 <small style="color: green">{{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($payment->exchange_amount,2)}} @ {{$payment->exchange_rate}}</small>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($payment->journalEntry)
+                                                <span class="badge bg-success" title="Journal {{ $payment->journalEntry->journal_number }}">Posted</span>
+                                            @else
+                                                <span class="badge bg-danger">Not Posted</span>
+                                                <br>
+                                                <a href="#" wire:click.prevent="postToLedger({{ $payment->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Post to General Ledger"><i class="fa fa-book"></i> Post to Ledger</a>
                                             @endif
                                         </td>
                                          <td class="w-10 line-height-35 table-dropdown">

@@ -792,6 +792,66 @@ class Index extends Component
         }
     }
 
+    public function getUnpostedInvoicesCountProperty()
+    {
+        return app(\App\Services\Accounting\LedgerBackfillService::class)->missingInvoicesQuery()->count();
+    }
+
+    /**
+     * Posts every approved invoice with no JournalEntry yet - the same
+     * query/logic as `php artisan ledger:backfill`, just triggered from
+     * the list page instead of the CLI.
+     */
+    public function bulkPostToLedger()
+    {
+        $result = app(\App\Services\Accounting\LedgerBackfillService::class)->runInvoices();
+        $posted = count($result['posted']);
+        $errors = count($result['errors']);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $errors > 0 ? 'warning' : 'success',
+            'message' => "Posted {$posted} of {$result['total']} invoice(s) to the ledger."
+                . ($errors > 0 ? " {$errors} failed - see logs." : ''),
+        ]);
+    }
+
+    /**
+     * Manually push an approved invoice to the general ledger. Covers
+     * invoices approved without ever triggering InvoiceObserver (e.g.
+     * invoices created already-approved in one save, which never fire an
+     * isDirty('authorization') transition) - the same gap the ledger
+     * backfill command closes for historical records.
+     */
+    public function postToLedger($id)
+    {
+        $invoice = Invoice::find($id);
+        if (! $invoice) {
+            return;
+        }
+
+        if (strcasecmp((string) $invoice->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) invoices can be posted to the ledger.',
+            ]);
+            return;
+        }
+
+        try {
+            app(\App\Services\Accounting\InvoiceJournalService::class)->post($invoice);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Invoice posted to the general ledger.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Manual invoice ledger post failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not post this invoice to the ledger: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     public function render()
     {
 
@@ -850,7 +910,7 @@ class Index extends Component
         $cur = Auth::user()->employee?->company?->currency_id;
 
                 $query = Invoice::query()
-                ->with(['customer:id,name','transporter:id,name', 'currency', 'sageMapping']);
+                ->with(['customer:id,name','transporter:id,name', 'currency', 'sageMapping', 'journal_entry']);
 
                 if ($this->status === 'unpaid') {
                     $query->where('currency_id',$cur)->where('status', '!=', 'Paid');

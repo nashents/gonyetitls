@@ -38,11 +38,74 @@ class Index extends Component
 
     public function mount(){
 
-        $this->credit_notes = CreditNote::latest()->get();
+        $this->credit_notes = CreditNote::with('journal_entry')->latest()->get();
         $this->customers = Customer::all();
         $this->currencies = Currency::all();
         $this->invoices = Invoice::latest()->get();
 
+    }
+
+    public function getUnpostedCreditNotesCountProperty()
+    {
+        return app(\App\Services\Accounting\LedgerBackfillService::class)->missingCreditNotesQuery()->count();
+    }
+
+    /**
+     * Posts every approved credit note with no JournalEntry yet - the same
+     * query/logic as `php artisan ledger:backfill`, just triggered from
+     * the list page instead of the CLI.
+     */
+    public function bulkPostToLedger()
+    {
+        $result = app(\App\Services\Accounting\LedgerBackfillService::class)->runCreditNotes();
+        $posted = count($result['posted']);
+        $errors = count($result['errors']);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $errors > 0 ? 'warning' : 'success',
+            'message' => "Posted {$posted} of {$result['total']} credit note(s) to the ledger."
+                . ($errors > 0 ? " {$errors} failed - see logs." : ''),
+        ]);
+
+        $this->credit_notes = CreditNote::with('journal_entry')->latest()->get();
+    }
+
+    /**
+     * Manually push an approved credit note to the general ledger. Covers
+     * credit notes approved without ever triggering CreditNoteObserver
+     * (e.g. created already-approved in one save, which never fires an
+     * isDirty('authorization') transition) - the same gap fixed for
+     * bills/invoices via the ledger backfill.
+     */
+    public function postToLedger($id)
+    {
+        $creditNote = CreditNote::find($id);
+        if (! $creditNote) {
+            return;
+        }
+
+        if (strcasecmp((string) $creditNote->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) credit notes can be posted to the ledger.',
+            ]);
+            return;
+        }
+
+        try {
+            app(\App\Services\Accounting\CreditNoteJournalService::class)->post($creditNote);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Credit note posted to the general ledger.',
+            ]);
+            $this->credit_notes = CreditNote::with('journal_entry')->latest()->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Manual credit note ledger post failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not post this credit note to the ledger: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     public function credit_noteNumber(){

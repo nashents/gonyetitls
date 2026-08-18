@@ -12,6 +12,9 @@
 
                             <div class="panel-title">
                                 <a href="{{route('credit_notes.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Credit Note</a>
+                                @if ($this->unpostedCreditNotesCount > 0)
+                                    <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedCreditNotesCount }} approved credit note(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every approved, unposted credit note to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedCreditNotesCount }})</a>
+                                @endif
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -33,6 +36,8 @@
                                     <th class="th-sm">Total
                                     </th>
                                     <th class="th-sm">Authorization
+                                    </th>
+                                    <th class="th-sm">Ledger
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -57,6 +62,17 @@
                                         @endif
                                     </td> 
                                     <td><span class="badge bg-{{($credit_note->authorization == 'approved') ? 'success' : (($credit_note->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($credit_note->authorization == 'approved') ? 'approved' : (($credit_note->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                        @if ($credit_note->journal_entry)
+                                            <span class="badge bg-success" title="Journal {{ $credit_note->journal_entry->journal_number }}">Posted</span>
+                                        @elseif ($credit_note->authorization == 'approved')
+                                            <span class="badge bg-danger">Not Posted</span>
+                                            <br>
+                                            <a href="#" wire:click.prevent="postToLedger({{ $credit_note->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Post to General Ledger"><i class="fa fa-book"></i> Post to Ledger</a>
+                                        @else
+                                            <span class="badge bg-secondary">N/A</span>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

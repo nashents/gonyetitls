@@ -464,6 +464,75 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-paymentDeleteModal');
     }
 
+    public function getUnpostedPaymentsCountProperty()
+    {
+        $service = app(\App\Services\Accounting\PaymentJournalService::class);
+
+        return app(\App\Services\Accounting\LedgerBackfillService::class)
+            ->missingPaymentsQuery()
+            ->get()
+            ->filter(fn ($p) => $service->canPost($p))
+            ->count();
+    }
+
+    /**
+     * Posts every payment with no JournalEntry yet that PaymentJournalService
+     * knows how to book - the same query/logic as `php artisan
+     * ledger:backfill`, just triggered from the list page instead of the CLI.
+     */
+    public function bulkPostToLedger()
+    {
+        $result = app(\App\Services\Accounting\LedgerBackfillService::class)->runPayments();
+        $posted = count($result['posted']);
+        $errors = count($result['errors']);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $errors > 0 ? 'warning' : 'success',
+            'message' => "Posted {$posted} of {$result['total']} payment(s) to the ledger."
+                . ($errors > 0 ? " {$errors} failed - see logs." : ''),
+        ]);
+    }
+
+    /**
+     * Manually push a payment to the general ledger. Payments have no
+     * approval workflow - PaymentObserver already tries to post on
+     * creation, but wraps it in a try/catch that only logs failures, so a
+     * payment can silently end up with no JournalEntry. Gated the same way
+     * PaymentDataIntegrityService gates its repair pass: only categories
+     * PaymentJournalService actually knows how to book.
+     */
+    public function postToLedger($id)
+    {
+        $payment = Payment::find($id);
+        if (! $payment) {
+            return;
+        }
+
+        $service = app(\App\Services\Accounting\PaymentJournalService::class);
+
+        if (! $service->canPost($payment)) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'This payment type is not one the ledger poster recognizes - needs manual review.',
+            ]);
+            return;
+        }
+
+        try {
+            $service->post($payment);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Payment posted to the general ledger.',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Manual payment ledger post failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not post this payment to the ledger: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     public function destroy()
     {
         DB::transaction(function () {
@@ -724,7 +793,7 @@ class Index extends Component
         }
 
         $query = Payment::query()
-        ->with(['customer:id,name','vendor:id,name', 'currency:id,name,symbol', 'transaction_type:id,name']);
+        ->with(['customer:id,name','vendor:id,name', 'currency:id,name,symbol', 'transaction_type:id,name', 'journalEntry']);
 
         switch ($this->movement) {
         case 'Debit':

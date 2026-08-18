@@ -169,6 +169,9 @@
                             <div class="panel-title" style="margin-top:10px; margin-left:-1px">
                                 <a href="{{route('bills.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Bill</a>
                                 <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Bills Payments</a>
+                                @if ($this->unpostedBillsCount > 0)
+                                    <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedBillsCount }} approved bill(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every approved, unposted bill to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedBillsCount }})</a>
+                                @endif
                             </div>
                             
                       
@@ -205,6 +208,8 @@
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Auth
+                                    </th>
+                                    <th class="th-sm">Ledger
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -362,8 +367,19 @@
                                         @endif
                                         @if ($bill->comments)
                                             <br>
-                                            <small style="background-color: orange"><strong >Comments: </strong> {{$bill->comments}}</small>  
-                                        @endif 
+                                            <small style="background-color: orange"><strong >Comments: </strong> {{$bill->comments}}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($bill->journal_entry)
+                                            <span class="badge bg-success" title="Journal {{ $bill->journal_entry->journal_number }}">Posted</span>
+                                        @elseif ($bill->authorization == 'approved')
+                                            <span class="badge bg-danger">Not Posted</span>
+                                            <br>
+                                            <a href="#" wire:click.prevent="postToLedger({{ $bill->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Post to General Ledger"><i class="fa fa-book"></i> Post to Ledger</a>
+                                        @else
+                                            <span class="badge bg-secondary">N/A</span>
+                                        @endif
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

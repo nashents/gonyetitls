@@ -18,8 +18,6 @@ class Index extends Component
     public $details;
     public $summary = "summary";
 
-    public $accounts = [];
-
     public $default_currency;
     public $default_currency_id;
 
@@ -34,8 +32,19 @@ class Index extends Component
         $this->to = Carbon::today()->format('Y-m-d');
         $this->from = Carbon::now()->firstOfYear()->format('Y-m-d');
 
-        $this->accounts = Account::orderBy('name')->get(['id', 'name'])->all();
-        $this->account_id = $this->accounts[0]->id ?? null;
+        $this->account_id = $this->accounts->first()->id ?? null;
+    }
+
+    /**
+     * Computed rather than a stored public property: a plain array of
+     * Eloquent models in a public property doesn't survive Livewire's
+     * dehydrate/rehydrate cycle between requests (unlike a single Model or
+     * a genuine Collection) - it comes back as plain arrays, breaking
+     * `$account->id` in the view on every request after the first.
+     */
+    public function getAccountsProperty()
+    {
+        return Account::orderBy('name')->get(['id', 'name']);
     }
 
     public function set_report($value)
@@ -94,6 +103,8 @@ class Index extends Component
                 : $this->opening_balance;
         }
 
-        return view('livewire.reports.account-transactions.index');
+        return view('livewire.reports.account-transactions.index', [
+            'accounts' => $this->accounts,
+        ]);
     }
 }

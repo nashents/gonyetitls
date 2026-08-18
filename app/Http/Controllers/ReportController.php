@@ -221,6 +221,10 @@ class ReportController extends Controller
         return view('reports.trial_balance');
     }
 
+    public function fleetSubledger(){
+        return view('reports.fleet_subledger');
+    }
+
     public function salesTax(){
         return view('reports.sales_tax.index');
     }

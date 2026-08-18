@@ -15,6 +15,9 @@ class Bill extends Model implements Auditable
     public function bill_expenses(){
         return $this->hasMany('App\Models\BillExpense');
     }
+    public function journal_entry(){
+        return $this->hasOne(JournalEntry::class);
+    }
     public function dispatch(){
         return $this->belongsTo('App\Models\Dispatch');
     }
