@@ -12,6 +12,18 @@ class CreditNoteItem extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    protected $fillable = [
+        'user_id',
+        'credit_note_id',
+        'invoice_product_id',
+        'item',
+        'description',
+        'qty',
+        'amount',
+        'subtotal',
+        'subtotal_inclusive',
+    ];
+
     public function credit_note(){
         return $this->belongsTo('App\Models\CreditNote');
     }
