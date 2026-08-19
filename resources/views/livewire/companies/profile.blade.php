@@ -30,7 +30,8 @@
         <li role="presentation"><a href="#budgets" aria-controls="budgtes" role="tab" data-toggle="tab">Budgets</a></li>
         @if (Auth::user()->is_admin())
                 <li role="presentation"><a href="#integrations" aria-controls="integrations" role="tab" data-toggle="tab">Integrations</a></li>
-        @endif 
+                <li role="presentation"><a href="#reset-data" aria-controls="reset-data" role="tab" data-toggle="tab">Data Reset</a></li>
+        @endif
     </ul>
     <div class="tab-content bg-white p-15">
         <div role="tabpanel" class="tab-pane active" id="personal">
@@ -164,6 +165,9 @@
         @if (Auth::user()->is_admin())
             <div role="tabpanel" class="tab-pane" id="integrations">
                 @livewire('company-integrations.index', ['id' => $company->id])
+            </div>
+            <div role="tabpanel" class="tab-pane" id="reset-data">
+                @livewire('companies.reset-data')
             </div>
         @endif
     

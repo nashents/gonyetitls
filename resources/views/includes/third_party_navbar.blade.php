@@ -51,7 +51,7 @@
                         <ul class="dropdown-menu profile-dropdown">
                             <li class="profile-menu bg-gray">
                                 <div class="">
-                                    <img src="{{asset('images/avatar.png')}}" alt="{{ucfirst(Auth::user()->name)}} {{ucfirst(Auth::user()->surname)}}" class="img-circle profile-img">
+                                    <img src="{{ Auth::user()->profile_url }}" alt="{{ucfirst(Auth::user()->name)}} {{ucfirst(Auth::user()->surname)}}" class="img-circle profile-img">
                                     <div class="profile-name">
                                         <h6>{{ucfirst(Auth::user()->name)}} {{ucfirst(Auth::user()->surname)}}</h6>
                                         {{-- <a href="{{route('profile',Auth::user()->id)}}">View Profile</a> --}}

@@ -81,7 +81,7 @@
         {{-- user info --}}
         <div class="user-info closed">
             @if ($user)
-                <img src="{{ asset('images/uploads/'.$user->profile) }}"
+                <img src="{{ $user->profile_url }}"
                      alt="{{ $user->name }} {{ $user->surname }}"
                      class="img-circle profile-img" style="width:90px;height:90px">
             @endif

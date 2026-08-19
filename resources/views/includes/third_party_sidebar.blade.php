@@ -26,7 +26,7 @@
 <div class="left-sidebar fixed-sidebar bg-black-300 box-shadow tour-three">
     <div class="sidebar-content">
         <div class="user-info closed">
-            <img src="{{asset('images/uploads/'.Auth::user()->profile)}}" alt="{{Auth::user()->name}} {{Auth::user()->surname ? Auth::user()->surname : ""}}" class="img-circle profile-img" style="width: 90px; height:90px">
+            <img src="{{ Auth::user()->profile_url }}" alt="{{Auth::user()->name}} {{Auth::user()->surname ? Auth::user()->surname : ""}}" class="img-circle profile-img" style="width: 90px; height:90px">
             <h6 class="title">{{Auth::user()->name}} {{Auth::user()->surname ? Auth::user()->surname : ""}}</h6>
             {{-- <small class="info">Company</small> --}}
         </div>

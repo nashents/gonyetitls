@@ -62,13 +62,26 @@ class User extends Authenticatable implements Auditable
     ];
 
     public function is_admin(){
-        
+
         if($this->is_admin){
             return true;
         }else{
             return false;
         }
 
+    }
+
+    /**
+     * URL of the user's profile picture, falling back to the default
+     * avatar when none is set or the uploaded file was deleted from disk.
+     */
+    public function getProfileUrlAttribute()
+    {
+        if (! empty($this->profile) && file_exists(public_path('images/uploads/'.$this->profile))) {
+            return asset('images/uploads/'.$this->profile);
+        }
+
+        return asset('images/avatar.png');
     }
 
     public function fuel_requests(){

@@ -11,7 +11,7 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-md-8 col-md-offset-2">
-                            <img src="{{asset('images/uploads/'.Auth::user()->profile)}}" alt="{{Auth::user()->name}} {{Auth::user()->surname}}" class="img-responsive">
+                            <img src="{{ Auth::user()->profile_url }}" alt="{{Auth::user()->name}} {{Auth::user()->surname}}" class="img-responsive">
                             <div class="text-center">
                                 <button type="button" class="btn btn-primary btn-xs btn-labeled mt-10" data-toggle="modal" data-target="#profilePictureModal">Update Profile<span class="btn-label btn-label-right"><i class="fa fa-pencil"></i></span></button>
                             </div>

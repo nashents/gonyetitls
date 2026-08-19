@@ -416,9 +416,7 @@
 
                                 <li class="profile-menu bg-gray">
                                     <div class="">
-                                        @if (!empty($user->profile))
-                                            <img src="{{ asset('images/uploads/'.$user->profile) }}" alt="{{ ucfirst($user->name) }} {{ ucfirst($user->surname) }}" class="img-circle profile-img" style="width: 50px; height:50px">
-                                        @endif
+                                        <img src="{{ $user->profile_url }}" alt="{{ ucfirst($user->name) }} {{ ucfirst($user->surname) }}" class="img-circle profile-img" style="width: 50px; height:50px">
                                         <div class="profile-name">
                                             <h6>{{ ucfirst($user->name) }} {{ ucfirst($user->surname) }}</h6>
                                         </div>
