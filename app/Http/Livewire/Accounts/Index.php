@@ -530,7 +530,7 @@ class Index extends Component
                   $q2->whereHas('account_type', fn ($t) => $t->where('name', 'Cash & Bank'))
                      ->where(function ($q3) use ($companyId) {
                          $q3->whereNull('bank_account_id')
-                            ->orWhereHas('bank_account', fn ($b) => $b->where('company_id', $companyId));
+                            ->orWhereHas('bank_account', fn ($b) => $b->whereNotNull('company_id')->where('company_id', $companyId));
                      });
               });
         });
@@ -551,7 +551,10 @@ class Index extends Component
         }
 
         $this->account_types =  AccountType::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::whereNotNull('company_id')
+            ->where('company_id', $this->company->id ?? 0)
+            ->where('currency_id', $this->selectedCurrency)
+            ->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
 

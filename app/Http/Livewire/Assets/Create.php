@@ -456,6 +456,7 @@ class Create extends Component
         $goods_received->department = $this->department;
         $goods_received->employee_id = Auth::user()->employee->id;
         $goods_received->date = $this->purchase_date;
+        $goods_received->authorization = 'pending';
         $goods_received->save();
 
         $this->selectedGoodsReceived = $goods_received->id;
@@ -572,7 +573,9 @@ class Create extends Component
                     }else{
                         $asset->goods_received_id = $this->createGRV();
                     }
-                    
+
+                    $goodsReceived = GoodsReceived::find($asset->goods_received_id);
+
                     if (isset($this->selectedProduct[$key])) {
                         $asset->product_id = $this->selectedProduct[$key];
                     }
@@ -653,7 +656,7 @@ class Create extends Component
                     $asset->warranty_exp_date = $this->warranty_exp_date;
                     $asset->life = $this->life;
                     $asset->description = $this->description;
-                    $asset->status = 1;
+                    $asset->status = ($goodsReceived && $goodsReceived->authorization === 'pending') ? 0 : 1;
                     $asset->disposed = 0;
                     $asset->save();
 

@@ -508,6 +508,9 @@ Route::get('breakdowns/{driver}/driver/','DriverController@breakdowns')->name('d
 Route::get('goods_receiveds/{goods_received}/preview','GoodsReceivedController@preview')->name('goods_receiveds.preview');
 Route::get('goods-received/tyres/','GoodsReceivedController@tyres')->name('goods_receiveds.tyres');
 Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goods_receiveds.assets');
+Route::get('goods_receiveds/pending','GoodsReceivedController@pending')->name('goods_receiveds.pending');
+Route::get('goods_receiveds/approved','GoodsReceivedController@approved')->name('goods_receiveds.approved');
+Route::get('goods_receiveds/rejected','GoodsReceivedController@rejected')->name('goods_receiveds.rejected');
 Route::get('goods_returned/{goods_returned}/preview','GoodsReturnedController@preview')->name('goods_returneds.preview');
 Route::get('goods-returned/tyres/','GoodsReturnedController@tyres')->name('goods_returneds.tyres');
 Route::get('goods-receireturnedved/assets/','GoodsReturnedController@assets')->name('goods_returneds.assets');

@@ -293,7 +293,7 @@
                     <div class="modal-header">
                         <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Drivers <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                     </div>
-                    <form wire:submit.prevent="importEmployees()">
+                    <form wire:submit.prevent="importDrivers()">
                         <div class="modal-body">
                             <div class="form-group">
                                 <label for="name">Upload Driver(s) Excel File<span class="required" style="color: red">*</span></label>

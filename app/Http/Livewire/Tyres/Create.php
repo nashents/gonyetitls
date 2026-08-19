@@ -407,6 +407,7 @@ class Create extends Component
         $goods_received->vendor_id = $this->vendor_id;
         $goods_received->employee_id = Auth::user()->employee->id;
         $goods_received->date = $this->purchase_date;
+        $goods_received->authorization = 'pending';
         $goods_received->save();
 
         $this->selectedGoodsReceived = $goods_received->id;
@@ -529,6 +530,8 @@ class Create extends Component
                 }else{
                     $tyre->goods_received_id = $this->createGRV();
                 }
+
+                $goodsReceived = GoodsReceived::find($tyre->goods_received_id);
                 $tyre->product_id = $this->selectedProduct[$key];
                 $tyre->account_id = $this->selectedAccount;
                 if (isset($this->selectedPurchaseProduct[$key])) {
@@ -632,7 +635,7 @@ class Create extends Component
                 $tyre->life = $this->life;
                 $tyre->residual_value = $this->residual_value;
                 $tyre->description = $this->description;
-                $tyre->status = 1;
+                $tyre->status = ($goodsReceived && $goodsReceived->authorization === 'pending') ? 0 : 1;
                 $tyre->disposed = 0;
 
                 $tyre->save();

@@ -98,7 +98,22 @@
                                             <br>
                                             <small class="text-muted">
                                                <strong>PurchaseOrder#:</strong> {{$po->purchase_number}}
-                                            </small>  
+                                            </small>
+                                        @endif
+                                        @if ($this->sageEnabled)
+                                            @php $sm = $goods_received->sageMapping; $ss = optional($sm)->sync_status; $approved = $goods_received->authorization === 'approved'; @endphp
+                                            <br>
+                                            <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ optional($sm)->last_error ?? '' }}">Sage Receipt: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                            @if ($approved)
+                                                @if ($ss === 'synced')
+                                                    <a href="#" wire:click.prevent="syncGoodsReceivedToSage({{ $goods_received->id }})" wire:loading.attr="disabled" title="Re-sync to Sage"><i class="fa fa-refresh"></i></a>
+                                                @elseif (in_array($ss, ['failed','requires_attention']))
+                                                    <a href="#" wire:click.prevent="syncGoodsReceivedToSage({{ $goods_received->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Retry Sage sync"><i class="fa fa-refresh"></i> Retry</a>
+                                                @else
+                                                    <a href="#" wire:click.prevent="syncGoodsReceivedToSage({{ $goods_received->id }})" wire:loading.attr="disabled" title="Sync to Sage"><i class="fa fa-cloud-upload"></i> Sync</a>
+                                                @endif
+                                            @endif
                                         @endif
                                     </td>
                                     
@@ -129,7 +144,11 @@
                                         @endif 
                                     </td>
                                     <td></td>
-                                   <td><span class="badge bg-{{$goods_received->status == 1 ? "warning" : "success"}}">{{$goods_received->status == 1 ? "Open" : "Closed"}}</span></td>
+                                   <td>
+                                        <span class="badge bg-{{$goods_received->status == 1 ? "warning" : "success"}}">{{$goods_received->status == 1 ? "Open" : "Closed"}}</span>
+                                        <br>
+                                        <span class="badge bg-{{$goods_received->authorization === 'approved' ? 'success' : ($goods_received->authorization === 'rejected' ? 'danger' : 'warning')}}">{{ucfirst($goods_received->authorization)}}</span>
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

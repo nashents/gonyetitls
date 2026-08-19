@@ -110,6 +110,13 @@ class SagePurchaseService
     public function syncGoodsReceipt(GoodsReceived $gr): array
     {
         $entity  = 'goods_receipt';
+
+        // Only push an authorized (approved) GRV — never a draft/pending one.
+        // Single gate honoured by both the observer and the manual index button.
+        if (strcasecmp((string) $gr->authorization, 'approved') !== 0) {
+            return $this->result(true, 'skipped', null, null, $entity, $gr);
+        }
+
         $mapping = $this->mappingFor($this->integration, $entity, $gr);
         $mapping->local_model     = get_class($gr);
         $mapping->local_reference = $this->receiptRef($gr);
@@ -148,13 +155,20 @@ class SagePurchaseService
         }
         $vendorContact = $this->vendorContactName($vendorSageId) ?: optional($vendor)->name;
 
-        // Received lines = the inventories linked to this goods received.
+        // Received lines = the inventory / tyre / asset additions linked to this
+        // GRV (all three share product_id + qty + amount). Each converts a matching
+        // open PO line via its <sourcelinekey>.
+        $received = collect()
+            ->concat($gr->inventories)
+            ->concat($gr->tyres)
+            ->concat($gr->assets);
+
         $lines = [];
-        foreach ($gr->inventories as $inv) {
-            if (! $inv->product) {
+        foreach ($received as $rcv) {
+            if (! $rcv->product) {
                 continue;
             }
-            $item = $this->itemService->ensureProduct($inv->product);
+            $item = $this->itemService->ensureProduct($rcv->product);
             if (empty($item['success']) || empty($item['external_id'])) {
                 return $this->fail($mapping, $entity, $gr, 'Item sync failed: ' . ($item['error'] ?? 'unknown'), IntegrationMapping::STATUS_FAILED);
             }
@@ -167,10 +181,10 @@ class SagePurchaseService
 
             $lines[] = [
                 'itemid'        => $itemId,
-                'itemdesc'      => optional($inv->product)->name ?: 'Received item',
-                'quantity'      => $this->qty($inv->qty),
+                'itemdesc'      => optional($rcv->product)->name ?: 'Received item',
+                'quantity'      => $this->qty($rcv->qty),
                 'unit'          => (string) config('sageintacct.purchasing.line_unit', 'Each'),
-                'price'         => $this->unitPrice($inv->amount, $inv->qty),
+                'price'         => $this->unitPrice($rcv->amount, $rcv->qty),
                 'sourcelinekey' => $lineKey,
                 'locationid'    => config('sageintacct.project.location_id'),
                 'departmentid'  => config('sageintacct.project.department_id'),

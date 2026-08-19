@@ -4,7 +4,7 @@ namespace App\Http\View\Composers;
 
 use App\Models\{
     Allocation, Attendance, Agent, Bill, Booking, Company, CreditNote, Customer, DebitNote, Department, DepartmentHead, Dispatch, Fuel, FuelRequest,
-    GatePass, Incident, Invoice, Leave, Loan, ModuleGroup, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
+    GatePass, GoodsReceived, Incident, Invoice, Leave, Loan, ModuleGroup, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
     Transporter, TransportOrder, Trip, User, WasteCollection, WasteDisposal,
 };
 
@@ -581,6 +581,15 @@ class SidebarComposer
         ->where('department','inventory')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $goods_receivedsPendingCount = GoodsReceived::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $goods_receivedsApprovedCount = GoodsReceived::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $goods_receivedsRejectedCount = GoodsReceived::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
          $tyre_transfersPendingCount = Transfer::where('authorization','pending')
         ->where('department','tyre')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -868,6 +877,11 @@ class SidebarComposer
         'inventory_dispatches_pending_count'  => (int) ($inventory_dispatchesPendingCount ?? 0),
         'inventory_dispatches_approved_count' => (int) ($inventory_dispatchesApprovedCount ?? 0),
         'inventory_dispatches_rejected_count' => (int) ($inventory_dispatchesRejectedCount ?? 0),
+
+        // Goods Received (unified queue across departments)
+        'goods_receiveds_pending_count'  => (int) ($goods_receivedsPendingCount ?? 0),
+        'goods_receiveds_approved_count' => (int) ($goods_receivedsApprovedCount ?? 0),
+        'goods_receiveds_rejected_count' => (int) ($goods_receivedsRejectedCount ?? 0),
 
         // Tyre Transfers
         'tyre_transfers_pending_count'  => (int) ($tyre_transfersPendingCount ?? 0),

@@ -27,6 +27,9 @@ class GoodsReceived extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function authorized_by(){
+        return $this->belongsTo('App\Models\User', 'authorized_by_id');
+    }
     public function assets(){
         return $this->hasMany('App\Models\Asset');
     }
@@ -35,5 +38,21 @@ class GoodsReceived extends Model implements Auditable
     }
     public function tyres(){
         return $this->hasMany('App\Models\Tyre');
+    }
+
+    /** Sage Intacct link (entity_type goods_receipt) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'goods_receipt');
+    }
+
+    public function isPending(): bool
+    {
+        return $this->authorization === 'pending';
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->authorization === 'approved';
     }
 }

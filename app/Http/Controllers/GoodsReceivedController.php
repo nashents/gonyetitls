@@ -31,6 +31,18 @@ class GoodsReceivedController extends Controller
     {
         return view('goods_receiveds.tyres');
     }
+    public function pending()
+    {
+        return view('goods_receiveds.pending');
+    }
+    public function approved()
+    {
+        return view('goods_receiveds.approved');
+    }
+    public function rejected()
+    {
+        return view('goods_receiveds.rejected');
+    }
 
     /**
      * Show the form for creating a new resource.

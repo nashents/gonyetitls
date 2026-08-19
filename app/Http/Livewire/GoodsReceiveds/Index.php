@@ -6,9 +6,12 @@ use App\Models\Employee;
 use App\Models\GoodsReceived;
 use App\Models\Purchase;
 use App\Models\Vendor;
+use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SageSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -208,6 +211,51 @@ class Index extends Component
     }
 
 
+    /** Sage integration gate — controls the GRV receipt sync badge/button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /**
+     * Manually push a GRV to Sage as a "Receipt" (Shipping Receipt) — the receipt
+     * converts the linked PO, with inventory / tyre / asset additions as its lines.
+     * Only authorized (approved) GRVs sync — the service enforces the same gate.
+     */
+    public function syncGoodsReceivedToSage($id)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $gr = GoodsReceived::find($id);
+        if (! $gr) {
+            return;
+        }
+
+        if (strcasecmp((string) $gr->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) goods-received notes can be synced to Sage.',
+            ]);
+            return;
+        }
+
+        try {
+            $result = app(SageSyncService::class)->syncGoodsReceived($gr);
+            $ok     = ! empty($result['success']) && ! empty($result['external_id']);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => $ok ? 'success' : 'warning',
+                'message' => $ok
+                    ? 'GRV synced to Sage receipt (' . $result['external_id'] . ').'
+                    : 'Sage sync: ' . ($result['error'] ?? 'could not sync this GRV.'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Sage goods-receipt manual push failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Sage sync failed for this GRV.']);
+        }
+    }
+
     public function render()
     {
         $query = Purchase::query()
@@ -241,7 +289,7 @@ class Index extends Component
             ->get();
 
         $query = GoodsReceived::query()
-            ->with(['vendor', 'employee'])
+            ->with(['vendor', 'employee', 'sageMapping'])
             ->where('department', $this->department);
 
         // Date filter
