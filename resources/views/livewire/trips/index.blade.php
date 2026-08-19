@@ -728,6 +728,25 @@
                                                                 ),
                                                                 2
                                                             ) }}
+
+                                                        @if($trip->currency_id && (int) $trip->currency_id !== (int) $company->currency_id)
+                                                            <hr class="my-1">
+                                                            <small>
+                                                                {{ $company->currency?->name }} {{ $company->currency?->symbol }}
+                                                                {{ number_format(
+                                                                        (float) (is_numeric($trip->exchange_customer_freight)
+                                                                            ? $trip->exchange_customer_freight
+                                                                            : preg_replace('/[^\d\.\-]/', '', (string) ($trip->exchange_customer_freight ?? 0))
+                                                                        ),
+                                                                        2
+                                                                    ) }}
+                                                                <br>
+                                                                <strong>Rate:</strong>
+                                                                {{ is_numeric($trip->exchange_rate)
+                                                                    ? number_format((float) $trip->exchange_rate, 4)
+                                                                    : ($trip->exchange_rate ?: '-') }}
+                                                            </small>
+                                                        @endif
                                                     </td>
                                                 @endif
 

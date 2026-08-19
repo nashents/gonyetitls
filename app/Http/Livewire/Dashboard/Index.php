@@ -617,7 +617,12 @@ class Index extends Component
 
         // ── PENDING AUTHORIZATIONS ────────────────────────────────────────
 
-        $kpis['pending_trips_auth']        = Trip::whereNull('deleted_at')->where('authorization','pending')->count();
+        $kpis['pending_trips_auth']        = Trip::whereNull('deleted_at')
+            ->where(function ($q) {
+                $q->where('authorization', 'pending')
+                    ->orWhereNull('authorization')
+                    ->orWhere('authorization', '');
+            })->count();
         $kpis['pending_invoices_auth']     = Invoice::whereNull('deleted_at')->where('authorization','pending')->count();
         $kpis['pending_bills_auth']        = Bill::whereNull('deleted_at')->where('authorization','pending')->count();
         $kpis['pending_fuel_auth']         = Fuel::whereNull('deleted_at')->where('authorization','pending')->count();

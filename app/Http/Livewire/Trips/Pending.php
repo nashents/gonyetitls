@@ -1578,20 +1578,16 @@ class Pending extends Component
             $q->where('user_id', $user->id);
         });
 
-        // Date filter
+        // Date filter — a pending-authorization queue should show everything
+        // outstanding by default, not just this month's trips, otherwise an
+        // older unactioned trip silently disappears from the list. Only
+        // restrict by date when the user explicitly picks a range.
         if ($this->notificationsOnly) {
             $query->whereYear($this->trip_filter, now()->year);
-        }else{
-            $query->when(
-                !empty($this->from) && !empty($this->to),
-                function ($q) {
-                    $q->whereBetween($this->trip_filter, [$this->from, $this->to]);
-                },
-                function ($q) {
-                    $q->whereMonth($this->trip_filter, date('m'))
-                    ->whereYear($this->trip_filter, date('Y'));
-                }
-            );
+        } else {
+            $query->when(!empty($this->from) && !empty($this->to), function ($q) {
+                $q->whereBetween($this->trip_filter, [$this->from, $this->to]);
+            });
         }
 
         // Search filter

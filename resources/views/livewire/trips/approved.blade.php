@@ -92,15 +92,15 @@
                                     };
 
                                     $statusMap = [
-                                        'Offloaded'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
-                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
-                                        'Loading Point'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'secondary'],
-                                        'Loaded'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'info'],
-                                        'Started'          => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
-                                        'InTransit'        => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
-                                        'Offloading Point' => ['row' => '#82B1FF', 'cell' => 'table-info', 'badge' => 'info'],
-                                        'OnHold'           => ['row' => '#d9534f', 'cell' => 'table-danger', 'badge' => 'danger'],
-                                        'Cancelled'        => ['row' => '#C4A484', 'cell' => 'table-light', 'badge' => 'light'],
+                                        'Offloaded'        => ['row' => '#E8F5E9', 'border' => '#2E7D32', 'cell' => 'table-success', 'badge' => 'success'],
+                                        'Scheduled'        => ['row' => '#FFF3E0', 'border' => '#E65100', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                        'Loading Point'    => ['row' => '#F5F5F5', 'border' => '#616161', 'cell' => 'table-secondary', 'badge' => 'secondary'],
+                                        'Loaded'           => ['row' => '#E1F5FE', 'border' => '#0277BD', 'cell' => 'table-info', 'badge' => 'info'],
+                                        'Started'          => ['row' => '#E3F2FD', 'border' => '#1565C0', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                        'InTransit'        => ['row' => '#E3F2FD', 'border' => '#1565C0', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                        'Offloading Point' => ['row' => '#E8F0FE', 'border' => '#1E88E5', 'cell' => 'table-info', 'badge' => 'info'],
+                                        'OnHold'           => ['row' => '#FFEBEE', 'border' => '#C62828', 'cell' => 'table-danger', 'badge' => 'danger'],
+                                        'Cancelled'        => ['row' => '#EFEBE9', 'border' => '#8D6E63', 'cell' => 'table-light', 'badge' => 'light'],
                                     ];
                                 @endphp
                               
@@ -127,13 +127,13 @@
                                         <tbody>
                                         @forelse($trips as $trip)
                                             @php
-                                                $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
+                                                $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'border' => null, 'cell' => '', 'badge' => 'secondary'];
                                                 $offloadedDate = $trip->delivery_note?->offloaded_date;
                                                 $pod = $trip->pod;
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
+                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td>
                                                     <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong>
                                                     <br>
@@ -350,6 +350,25 @@
                                                                 ),
                                                                 2
                                                             ) }}
+
+                                                        @if($trip->currency_id && (int) $trip->currency_id !== (int) $company->currency_id)
+                                                            <hr class="my-1">
+                                                            <small>
+                                                                {{ $company->currency?->name }} {{ $company->currency?->symbol }}
+                                                                {{ number_format(
+                                                                        (float) (is_numeric($trip->exchange_customer_freight)
+                                                                            ? $trip->exchange_customer_freight
+                                                                            : preg_replace('/[^\d\.\-]/', '', (string) ($trip->exchange_customer_freight ?? 0))
+                                                                        ),
+                                                                        2
+                                                                    ) }}
+                                                                <br>
+                                                                <strong>Rate:</strong>
+                                                                {{ is_numeric($trip->exchange_rate)
+                                                                    ? number_format((float) $trip->exchange_rate, 4)
+                                                                    : ($trip->exchange_rate ?: '-') }}
+                                                            </small>
+                                                        @endif
                                                     </td>
                                                 @endif
 
