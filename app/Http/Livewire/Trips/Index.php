@@ -815,6 +815,79 @@ class Index extends Component
     }
 
 
+      /**
+       * One-off data fix for the historical bug where a foreign-currency trip's
+       * exchange_customer_freight/exchange_transporter_freight (and turnover) were
+       * never (re)calculated when freight was derived via rate/weight/distance
+       * instead of being typed directly into the freight field.
+       */
+      public function fixForexAmounts()
+      {
+          $canFix = !$this->company->rates_managed_by_finance
+              || in_array('Finance', $this->department_names)
+              || in_array('Super Admin', $this->role_names);
+
+          if (!$canFix) {
+              $this->dispatchBrowserEvent('alert', [
+                  'type'    => 'danger',
+                  'message' => 'You are not authorized to run this fix.',
+              ]);
+              return;
+          }
+
+          $baseCurrencyId = $this->company->currency_id;
+
+          $trips = Trip::query()
+              ->whereNotNull('currency_id')
+              ->where('currency_id', '!=', $baseCurrencyId)
+              ->get(['id', 'currency_id', 'freight', 'transporter_freight', 'exchange_rate', 'exchange_customer_freight', 'exchange_transporter_freight', 'turnover']);
+
+          $fixed = 0;
+
+          foreach ($trips as $trip) {
+              $rate = is_numeric($trip->exchange_rate) ? (float) $trip->exchange_rate : null;
+
+              if (!$rate || $rate <= 0) {
+                  continue;
+              }
+
+              $changed = false;
+
+              if (is_numeric($trip->freight) && (float) $trip->freight > 0) {
+                  $correctCustomerFx = round($rate * (float) $trip->freight, 2);
+                  $currentCustomerFx = is_numeric($trip->exchange_customer_freight) ? round((float) $trip->exchange_customer_freight, 2) : null;
+
+                  if ($currentCustomerFx !== $correctCustomerFx) {
+                      $trip->exchange_customer_freight = $correctCustomerFx;
+                      $trip->turnover = $correctCustomerFx;
+                      $changed = true;
+                  }
+              }
+
+              if (is_numeric($trip->transporter_freight) && (float) $trip->transporter_freight > 0) {
+                  $correctTransporterFx = round($rate * (float) $trip->transporter_freight, 2);
+                  $currentTransporterFx = is_numeric($trip->exchange_transporter_freight) ? round((float) $trip->exchange_transporter_freight, 2) : null;
+
+                  if ($currentTransporterFx !== $correctTransporterFx) {
+                      $trip->exchange_transporter_freight = $correctTransporterFx;
+                      $changed = true;
+                  }
+              }
+
+              if ($changed) {
+                  $trip->save();
+                  $fixed++;
+              }
+          }
+
+          $this->dispatchBrowserEvent('alert', [
+              'type'    => $fixed ? 'success' : 'info',
+              'message' => $fixed
+                  ? "Fixed forex amounts on {$fixed} trip(s)."
+                  : 'No trips needed a forex amount fix.',
+          ]);
+      }
+
       public function editLocations(){
         $this->intransit_trips = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',

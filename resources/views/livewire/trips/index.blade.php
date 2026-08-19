@@ -372,6 +372,9 @@
                                                         <li><a href="{{ route('trips.summary',['trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
                                                         @endif
                                                         <li><a href="#" wire:click="exportPodTrackerExcel()"><i class="fa fa-download"></i>POD Tracker</a></li>
+                                                        @if ($showFreight)
+                                                            <li><a href="#" wire:click.prevent="fixForexAmounts()" wire:loading.attr="disabled" onclick="return confirm('Recalculate the FX freight amounts for every foreign-currency trip whose exchange rate/freight are set but the converted amount is missing or out of date? This updates historical trips.')"><i class="fa fa-money"></i>Fix Forex Amounts</a></li>
+                                                        @endif
                                                         @if ($this->sageEnabled)
                                                         <li><a href="#" wire:click="bulkSyncToSage" wire:loading.attr="disabled"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</a></li>
                                                         @endif

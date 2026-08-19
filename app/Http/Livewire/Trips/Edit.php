@@ -2460,8 +2460,13 @@ class Edit extends Component
             $trip->weight = $this->weight;
           
             $trip->freight = $this->freight;
-           
+
             $trip->transporter_freight = $this->transporter_freight;
+
+            // Safety net: ensure the FX amounts reflect the final freight/rate values
+            // regardless of which field-update order the user triggered them in.
+            $this->calculateForeignExchange();
+
             $trip->exchange_rate = $this->exchange_rate;
             $trip->exchange_customer_freight = $this->exchange_customer_freight;
             $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
@@ -3567,14 +3572,15 @@ class Edit extends Component
                     $this->transporter_freight = $this->transporter_rate ;
                 }elseif($this->cargo_type == "Liquid"){
                     $this->transporter_freight = $this->transporter_rate;
-                } 
+                }
             }
-            
+
         }
 
+        $this->calculateForeignExchange();
     }
 
-    
+
         public function updatedSearchHorse()
     {
         $term = trim((string) $this->searchHorse);

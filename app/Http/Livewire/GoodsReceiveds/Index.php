@@ -130,6 +130,7 @@ class Index extends Component
             $goods_received->driver_name = $this->driver_name;
             $goods_received->condition = $this->condition;
             $goods_received->comments = $this->comments;
+            $goods_received->authorization = 'pending';
             $goods_received->save();
 
             $this->dispatchBrowserEvent('hide-goods_receivedModal');
