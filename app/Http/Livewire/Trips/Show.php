@@ -819,7 +819,7 @@ class Show extends Component
                         'cargo'=> $this->cargo,
                         'litreage'=> $this->litreage,
                         'quantity'=> $this->quantity,
-                        'units_of_measure'=> $this->units_of_measure,
+                        'uom'=> $this->units_of_measure?->name,
                         'weight'=> $this->weight,
                        );
         

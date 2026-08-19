@@ -641,16 +641,16 @@ public function updatingSearch()
                                 'cargo'=> $this->cargo,
                                 'litreage'=> $this->litreage,
                                 'quantity'=> $this->quantity,
-                                'measurement'=> $this->measurement,
+                                'uom'=> $this->measurement,
                                 'weight'=> $this->weight,
                                );
-                
+
                                if (isset(Auth::user()->company)) {
                                 $company = Auth::user()->company;
                                 }elseif (isset(Auth::user()->employee->company)) {
                                     $company = Auth::user()->employee->company;
                                 }
-                
+
                                Mail::to($this->loading_point_email)->send(new TransportOrderMail($data, $company));
                         }
                         
@@ -1258,7 +1258,7 @@ public function updatingSearch()
                                 'cargo'=> $this->cargo,
                                 'litreage'=> $this->litreage,
                                 'quantity'=> $this->quantity,
-                                'measurement'=> $this->measurement,
+                                'uom'=> $this->measurement,
                                 'weight'=> $this->weight,
                             );
                 
