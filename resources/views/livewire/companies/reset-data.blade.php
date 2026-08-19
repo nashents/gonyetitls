@@ -16,6 +16,10 @@
             balances are reset to 0</strong> (e.g. account/bank balances, fuel balances, tyre balances) since the
             transactions behind those balances are being wiped.
         </p>
+        <p class="mb-0 mt-5">
+            The dashboard's cached KPIs (revenue, pending authorizations, fuel stock, etc.) are also cleared so the
+            dashboard reflects the reset immediately instead of showing stale figures for up to 10 minutes.
+        </p>
         <p class="mb-0 mt-5"><strong>This action cannot be undone. Take a database backup before proceeding.</strong></p>
     </div>
 

@@ -2502,6 +2502,7 @@ class Create extends Component
 
                     if ($this->fuel_order) {
                         $fuel_fillup = $trip->fuels->where('fillup', 1)->first();
+                        
                         $container = Container::find($this->selectedContainer);
                     
                         $fuel = new Fuel;

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -239,6 +240,16 @@ class CompanyDataResetService
                     $results["{$table}.{$column}"] = 'FAILED: ' . $e->getMessage();
                 }
             }
+        }
+
+        // Dashboard KPIs (revenue, pending authorizations, fuel stock, etc.)
+        // are cached for up to 10 minutes (see Dashboard\Index::loadAllKpis)
+        // and would otherwise keep showing pre-reset figures until they expire.
+        try {
+            Cache::flush();
+            $results['[cache]'] = 'flushed';
+        } catch (\Throwable $e) {
+            $results['[cache]'] = 'FAILED: ' . $e->getMessage();
         }
 
         Log::info('company:reset-data executed', [
