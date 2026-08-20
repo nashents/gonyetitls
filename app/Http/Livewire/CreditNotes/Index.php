@@ -107,6 +107,36 @@ class Index extends Component
         }
     }
 
+    /**
+     * For a credit note that was already posted, then edited afterward -
+     * CreditNoteJournalService posts once and never again, and editing a
+     * credit note never touches the ledger at all, so the original (now
+     * wrong) journal entry otherwise sits in the Trial Balance forever.
+     * Reverses it and posts a fresh one from the credit note's current
+     * figures.
+     */
+    public function resyncLedger($id)
+    {
+        $creditNote = CreditNote::find($id);
+        if (! $creditNote) {
+            return;
+        }
+
+        try {
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncCreditNote($creditNote);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Credit note resynced to the general ledger.',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Credit note ledger resync failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not resync this credit note to the ledger: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     public function credit_noteNumber(){
        
         if (isset(Auth::user()->company)) {

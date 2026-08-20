@@ -947,6 +947,36 @@ class Index extends Component
         }
     }
 
+    /**
+     * For an invoice that was already posted, then edited afterward (e.g. a
+     * corrected exchange_rate) - InvoiceJournalService posts once and never
+     * again, and editing an invoice never touches the ledger at all, so the
+     * original (now wrong) journal entry otherwise sits in the Trial
+     * Balance forever. Reverses it and posts a fresh one from the invoice's
+     * current figures.
+     */
+    public function resyncLedger($id)
+    {
+        $invoice = Invoice::find($id);
+        if (! $invoice) {
+            return;
+        }
+
+        try {
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncInvoice($invoice);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Invoice resynced to the general ledger.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Invoice ledger resync failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not resync this invoice to the ledger: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     public function render()
     {
 

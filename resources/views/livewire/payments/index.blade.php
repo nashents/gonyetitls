@@ -179,10 +179,26 @@
                                         <td>
                                             @if ($payment->amount)
                                                 {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
-                                                <br>
                                             @endif
-                                            @if ($payment->exchange_rate)
-                                                <small style="color: green">{{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($payment->exchange_amount,2)}} @ {{$payment->exchange_rate}}</small>
+
+                                            @php $payCompany = Auth::user()->employee->company ?? null; @endphp
+                                            @if ($payment->currency_id && $payCompany && (int) $payment->currency_id !== (int) $payCompany->currency_id)
+                                                <hr class="my-1">
+                                                <small>
+                                                    {{ $payCompany->currency?->name }} {{ $payCompany->currency?->symbol }}
+                                                    {{ number_format(
+                                                            (float) (is_numeric($payment->exchange_amount)
+                                                                ? $payment->exchange_amount
+                                                                : preg_replace('/[^\d\.\-]/', '', (string) ($payment->exchange_amount ?? 0))
+                                                            ),
+                                                            2
+                                                        ) }}
+                                                    <br>
+                                                    <strong>Rate:</strong>
+                                                    {{ is_numeric($payment->exchange_rate)
+                                                        ? number_format((float) $payment->exchange_rate, 4)
+                                                        : ($payment->exchange_rate ?: '-') }}
+                                                </small>
                                             @endif
                                         </td>
                                         <td>

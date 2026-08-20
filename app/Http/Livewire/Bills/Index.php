@@ -648,6 +648,36 @@ class Index extends Component
         }
     }
 
+    /**
+     * For a bill that was already posted, then edited afterward (e.g. a
+     * corrected exchange_rate) - BillJournalService posts once and never
+     * again, and editing a bill never touches the ledger at all, so the
+     * original (now wrong) journal entry otherwise sits in the Trial
+     * Balance forever. Reverses it and posts a fresh one from the bill's
+     * current figures.
+     */
+    public function resyncLedger($id)
+    {
+        $bill = Bill::find($id);
+        if (! $bill) {
+            return;
+        }
+
+        try {
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncBill($bill);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Bill resynced to the general ledger.',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Bill ledger resync failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not resync this bill to the ledger: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     public function render()
     {
 

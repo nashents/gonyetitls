@@ -103,12 +103,14 @@ class Approved extends Component
         
                 $bill = new Bill;
                 $bill->user_id = Auth::user()->id;
+                $bill->company_id = Auth::user()->employee->company_id;
                 $bill->bill_number = $this->billNumber();
                 $bill->trip_id = $fuel->trip->id;
                 $bill->category = "Trip Expense";
                 $bill->fuel_id = $fuel->id;
                 $bill->bill_date = $fuel->date;
                 $bill->currency_id = $fuel->currency_id;
+                $bill->exchange_rate = $fuel->exchange_rate;
                 $bill->total = $fuel->amount;
                 $bill->balance = $fuel->amount;
                 $bill->save();
@@ -119,8 +121,9 @@ class Approved extends Component
                 $bill_expense->user_id = Auth::user()->id;
                 $bill_expense->bill_id = $bill->id;
                 $bill_expense->currency_id = $bill->currency_id;
-                if (isset($expense)) {
+                if (isset($fuel_expense)) {
                     $bill_expense->expense_id = $fuel_expense->id;
+                    $bill_expense->account_id = $fuel_expense->account_id;
                 }
                 $bill_expense->qty = $fuel->quantity;
                 $bill_expense->amount = $fuel->unit_price;

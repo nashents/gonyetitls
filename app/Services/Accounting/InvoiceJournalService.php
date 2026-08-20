@@ -12,9 +12,12 @@ class InvoiceJournalService
 {
     public function post(Invoice $invoice): JournalEntry
     {
-        // Prevent duplicate journal entries
-        if (JournalEntry::where('invoice_id', $invoice->id)->exists()) {
-            return JournalEntry::where('invoice_id', $invoice->id)->first();
+        // Prevent duplicate journal entries - a reversed entry (see
+        // LedgerResyncService) doesn't count, so a resync can post a fresh
+        // one afterward.
+        $existing = JournalEntry::where('invoice_id', $invoice->id)->where('status', '!=', 'reversed')->first();
+        if ($existing) {
+            return $existing;
         }
 
         // Resolve control accounts

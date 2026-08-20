@@ -281,6 +281,25 @@
                                                 <td class="text-right">
                                                     {{ optional($fuel->currency)->symbol }}{{ number_format($fuel->amount ?? 0, 2) }}
                                                     <div class="fuel-meta text-muted"><small>{{ optional($fuel->currency)->name }}</small></div>
+
+                                                    @if ($fuel->currency_id && $company && (int) $fuel->currency_id !== (int) $company->currency_id)
+                                                        <hr class="my-1">
+                                                        <small>
+                                                            {{ $company->currency?->name }} {{ $company->currency?->symbol }}
+                                                            {{ number_format(
+                                                                    (float) (is_numeric($fuel->exchange_amount)
+                                                                        ? $fuel->exchange_amount
+                                                                        : preg_replace('/[^\d\.\-]/', '', (string) ($fuel->exchange_amount ?? 0))
+                                                                    ),
+                                                                    2
+                                                                ) }}
+                                                            <br>
+                                                            <strong>Rate:</strong>
+                                                            {{ is_numeric($fuel->exchange_rate)
+                                                                ? number_format((float) $fuel->exchange_rate, 4)
+                                                                : ($fuel->exchange_rate ?: '-') }}
+                                                        </small>
+                                                    @endif
                                                 </td>
 
                                                 {{-- Authorization --}}

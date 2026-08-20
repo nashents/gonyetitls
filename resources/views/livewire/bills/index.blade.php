@@ -336,6 +336,25 @@
                                     <td>
                                         @if ($bill->total)
                                              {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->total,2)}}
+
+                                             @if ($bill->currency_id && $company && (int) $bill->currency_id !== (int) $company->currency_id)
+                                                <hr class="my-1">
+                                                <small>
+                                                    {{ $company->currency?->name }} {{ $company->currency?->symbol }}
+                                                    {{ number_format(
+                                                            (float) (is_numeric($bill->exchange_amount)
+                                                                ? $bill->exchange_amount
+                                                                : preg_replace('/[^\d\.\-]/', '', (string) ($bill->exchange_amount ?? 0))
+                                                            ),
+                                                            2
+                                                        ) }}
+                                                    <br>
+                                                    <strong>Rate:</strong>
+                                                    {{ is_numeric($bill->exchange_rate)
+                                                        ? number_format((float) $bill->exchange_rate, 4)
+                                                        : ($bill->exchange_rate ?: '-') }}
+                                                </small>
+                                            @endif
                                         @endif
                                     </td>
                                    <td>
@@ -373,6 +392,8 @@
                                     <td>
                                         @if ($bill->journal_entry)
                                             <span class="badge bg-success" title="Journal {{ $bill->journal_entry->journal_number }}">Posted</span>
+                                            <br>
+                                            <a href="#" wire:click.prevent="resyncLedger({{ $bill->id }})" wire:loading.attr="disabled" onclick="return confirm('Reverse the existing journal entry and repost this bill using its current figures? Use this after correcting a mistake (e.g. exchange rate) on an already-posted bill.')" style="color:#337ab7" title="Reverse and repost using this bill's current figures"><i class="fa fa-refresh"></i> Resync to Ledger</a>
                                         @elseif ($bill->authorization == 'approved')
                                             <span class="badge bg-danger">Not Posted</span>
                                             <br>

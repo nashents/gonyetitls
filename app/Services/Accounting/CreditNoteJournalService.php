@@ -12,9 +12,12 @@ class CreditNoteJournalService
 {
     public function post(CreditNote $creditNote): JournalEntry
     {
-        // Prevent duplicate journal entries
-        if (JournalEntry::where('credit_note_id', $creditNote->id)->exists()) {
-            return JournalEntry::where('credit_note_id', $creditNote->id)->first();
+        // Prevent duplicate journal entries - a reversed entry (see
+        // LedgerResyncService) doesn't count, so a resync can post a fresh
+        // one afterward.
+        $existing = JournalEntry::where('credit_note_id', $creditNote->id)->where('status', '!=', 'reversed')->first();
+        if ($existing) {
+            return $existing;
         }
 
         // Resolve control accounts (same accounts the invoice was originally posted to)

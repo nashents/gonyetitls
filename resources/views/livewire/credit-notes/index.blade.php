@@ -65,6 +65,8 @@
                                     <td>
                                         @if ($credit_note->journal_entry)
                                             <span class="badge bg-success" title="Journal {{ $credit_note->journal_entry->journal_number }}">Posted</span>
+                                            <br>
+                                            <a href="#" wire:click.prevent="resyncLedger({{ $credit_note->id }})" wire:loading.attr="disabled" onclick="return confirm('Reverse the existing journal entry and repost this credit note using its current figures? Use this after correcting a mistake (e.g. exchange rate) on an already-posted credit note.')" style="color:#337ab7" title="Reverse and repost using this credit note's current figures"><i class="fa fa-refresh"></i> Resync to Ledger</a>
                                         @elseif ($credit_note->authorization == 'approved')
                                             <span class="badge bg-danger">Not Posted</span>
                                             <br>

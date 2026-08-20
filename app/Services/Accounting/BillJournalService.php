@@ -12,9 +12,11 @@ class BillJournalService
 {
     public function post(Bill $bill): JournalEntry
     {
-        // Prevent duplicate
-        if (JournalEntry::where('bill_id', $bill->id)->exists()) {
-            return JournalEntry::where('bill_id', $bill->id)->first();
+        // Prevent duplicate - a reversed entry (see LedgerResyncService)
+        // doesn't count, so a resync can post a fresh one afterward.
+        $existing = JournalEntry::where('bill_id', $bill->id)->where('status', '!=', 'reversed')->first();
+        if ($existing) {
+            return $existing;
         }
 
         $bill->loadMissing(['bill_expenses.account', 'vendor']);

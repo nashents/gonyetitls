@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Bill;
 use App\Services\Accounting\BillJournalService;
+use Illuminate\Support\Facades\Log;
 
 class BillObserver
 {
@@ -16,7 +17,7 @@ class BillObserver
     public function created(Bill $bill)
     {
         if ($bill->isDirty('authorization') && $bill->authorization === 'approved' && $bill->to_be_paid == True) {
-            app(BillJournalService::class)->post($bill);
+            $this->post($bill);
         }
     }
 
@@ -29,7 +30,27 @@ class BillObserver
     public function updated(Bill $bill)
     {
         if ($bill->isDirty('authorization') && $bill->authorization === 'approved' && $bill->to_be_paid == True) {
+            $this->post($bill);
+        }
+    }
+
+    /**
+     * A posting failure here (e.g. a missing control account, or a bill
+     * created with incomplete data by a flow that skipped a required
+     * field) must never roll back the approval itself - without this catch,
+     * an uncaught exception here propagates out of the model event into
+     * whatever DB::transaction() the approval action is wrapped in,
+     * silently reverting the authorization change too and leaving the user
+     * with no indication anything went wrong. Matches PaymentObserver's
+     * catch-and-log pattern; the bill is picked up by the existing
+     * "unposted bills" count and manual "Post to Ledger" retry instead.
+     */
+    private function post(Bill $bill): void
+    {
+        try {
             app(BillJournalService::class)->post($bill);
+        } catch (\Throwable $e) {
+            Log::error('BillJournalService failed: ' . $e->getMessage());
         }
     }
 

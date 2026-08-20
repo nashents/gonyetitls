@@ -12,9 +12,12 @@ class DebitNoteJournalService
 {
     public function post(DebitNote $debitNote): JournalEntry
     {
-        // Prevent duplicate journal entries
-        if (JournalEntry::where('debit_note_id', $debitNote->id)->exists()) {
-            return JournalEntry::where('debit_note_id', $debitNote->id)->first();
+        // Prevent duplicate journal entries - a reversed entry (see
+        // LedgerResyncService) doesn't count, so a resync can post a fresh
+        // one afterward.
+        $existing = JournalEntry::where('debit_note_id', $debitNote->id)->where('status', '!=', 'reversed')->first();
+        if ($existing) {
+            return $existing;
         }
 
         $debitNote->loadMissing(['debit_note_items.bill_expense', 'vendor']);
