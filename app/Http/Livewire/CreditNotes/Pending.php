@@ -19,24 +19,12 @@ class Pending extends Component
     public $invoice_total;
     public $invoice_balance;
     public $invoice_id;
-    public $credit_notes;
     public $credit_note_id;
     public $trip_id;
     public $authorize;
     public $comments;
     public $credit_note;
 
-    public function mount(){
-        $period = Auth::user()->employee->company->period;
-        if (isset( $period)) {
-            if ($period != "all") {
-                $this->credit_notes = CreditNote::where('authorization', 'pending')->whereYear('created_at',$period)->latest()->get();
-            }else {
-                $this->credit_notes = CreditNote::where('authorization', 'pending')->latest()->get();
-            }
-        }
-
-    }
     public function authorize($id){
         $credit_note = CreditNote::find($id);
         $this->credit_note_id = $credit_note->id;
