@@ -32,6 +32,7 @@ use App\Models\InvoicePayment;
 use App\Models\TransactionType;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
+use App\Services\Accounting\InvoiceDeletionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -129,6 +130,13 @@ class Index extends Component
     public $range;
     public $authorization;
     public $status;
+
+    // Bulk delete invoices for trips done within a chosen date range
+    public $bulk_delete_trip_filter = 'end_date';
+    public $bulk_delete_from;
+    public $bulk_delete_to;
+    public $bulk_delete_reason;
+    public $bulk_delete_invoices;
 
 
     public $inputs = [];
@@ -396,6 +404,93 @@ class Index extends Component
     public function showBulkInvoices(){
             $this->trip_filter = "created_at";
             $this->dispatchBrowserEvent('show-bulkInvoicesModal');
+    }
+
+    public function showBulkDeleteInvoices(){
+        $this->bulk_delete_trip_filter = $this->bulk_delete_trip_filter ?: 'end_date';
+        $this->dispatchBrowserEvent('show-bulkDeleteInvoicesModal');
+    }
+
+    /**
+     * Builds the query for invoices whose linked trips fall in the chosen
+     * date range - shared by the preview (render) and the actual delete.
+     */
+    protected function bulkDeleteTripFilter(): string
+    {
+        $allowedFilters = ['end_date', 'start_date', 'trip_status_date', 'created_at'];
+
+        return in_array($this->bulk_delete_trip_filter, $allowedFilters, true)
+            ? $this->bulk_delete_trip_filter
+            : 'end_date';
+    }
+
+    protected function bulkDeleteInvoicesQuery()
+    {
+        $filter = $this->bulkDeleteTripFilter();
+
+        return Invoice::whereHas('invoice_items.trip', function ($q) use ($filter) {
+            if (filled($this->bulk_delete_from)) {
+                $q->where($filter, '>=', $this->bulk_delete_from);
+            }
+            if (filled($this->bulk_delete_to)) {
+                $q->where($filter, '<=', $this->bulk_delete_to);
+            }
+        });
+    }
+
+    /**
+     * Bulk-deletes every invoice for trips done within the chosen date
+     * range, reversing their payments and journal entries via the same
+     * InvoiceDeletionService used by the single-invoice delete action.
+     * Each invoice is deleted in its own transaction so one failure (e.g. a
+     * payment whose journal is cleared against a bank statement) doesn't
+     * abort the rest of the batch.
+     */
+    public function bulkDeleteInvoicesByTripDate(){
+
+        if (! Auth::user()->is_admin()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Only administrators can bulk delete invoices.',
+            ]);
+            return;
+        }
+
+        $this->validate([
+            'bulk_delete_from' => 'nullable|date',
+            'bulk_delete_to' => 'required|date',
+        ]);
+
+        $invoices = $this->bulkDeleteInvoicesQuery()->get();
+
+        $deleted = 0;
+        $failed = [];
+        $reason = $this->bulk_delete_reason ?: "Bulk deleted - trip {$this->bulk_delete_trip_filter} between "
+            . ($this->bulk_delete_from ?: '...') . ' and ' . $this->bulk_delete_to;
+
+        foreach ($invoices as $invoice) {
+            try {
+                app(InvoiceDeletionService::class)->delete($invoice, Auth::id(), $reason);
+                $deleted++;
+            } catch (\Throwable $e) {
+                Log::warning("Bulk invoice delete failed for invoice {$invoice->id}: " . $e->getMessage());
+                $failed[] = $invoice->invoice_number . ': ' . $e->getMessage();
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-bulkDeleteInvoicesModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => count($failed) > 0 ? 'warning' : 'success',
+            'message' => "{$deleted} invoice(s) deleted and their payments/journal entries reversed."
+                . (count($failed) > 0 ? ' ' . count($failed) . ' failed - see logs: ' . implode('; ', $failed) : ''),
+        ]);
+
+        $this->bulk_delete_from = null;
+        $this->bulk_delete_to = null;
+        $this->bulk_delete_reason = null;
+        $this->bulk_delete_invoices = null;
+
+        return redirect(request()->header('Referer'));
     }
 
     public function setDescription($id){
@@ -888,6 +983,14 @@ class Index extends Component
             $this->uninvoiced_trips = Trip::where('trip_status','!=', 'Cancelled')->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )->doesntHave('invoice_items')->get();
         }else{
             $this->uninvoiced_trips = Trip::where('trip_status','!=', 'Cancelled')->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('authorization','approved')->doesntHave('invoice_items')->get();
+        }
+
+        if (filled($this->bulk_delete_to)) {
+            $this->bulk_delete_invoices = $this->bulkDeleteInvoicesQuery()
+                ->with(['customer:id,name', 'currency', 'invoice_items.trip:id,trip_number,' . $this->bulkDeleteTripFilter()])
+                ->get();
+        } else {
+            $this->bulk_delete_invoices = collect();
         }
 
         $this->amount;

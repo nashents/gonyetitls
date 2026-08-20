@@ -69,6 +69,7 @@ class Create extends Component
     public $inputs = [];
     public $i = 1;
     public $n = 1;
+    public $isSubmitting = false;
 
     public function add($i)
     {
@@ -270,7 +271,18 @@ class Create extends Component
     }
 
     public function store(){
-        $this->validate();
+        if ($this->isSubmitting) {
+            return;
+        }
+        $this->isSubmitting = true;
+
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->isSubmitting = false;
+            throw $e;
+        }
+
         $this->recalculateTotals();
 
         $credit_note = new CreditNote;

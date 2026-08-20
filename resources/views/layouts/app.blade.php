@@ -1577,7 +1577,18 @@
                 $('#bulkInvoicesModal').modal('hide');
             })
         </script>
-  
+
+    <script type="text/javascript">
+            window.addEventListener('show-bulkDeleteInvoicesModal', event => {
+                $('#bulkDeleteInvoicesModal').modal('show');
+            })
+        </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-bulkDeleteInvoicesModal', event => {
+                $('#bulkDeleteInvoicesModal').modal('hide');
+            })
+        </script>
+
   <script type="text/javascript">
             window.addEventListener('show-bulkyCloseTicketModal', event => {
                 $('#bulkyCloseTicketModal').modal('show');

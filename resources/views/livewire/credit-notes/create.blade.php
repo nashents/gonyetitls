@@ -134,11 +134,11 @@
                                                     @foreach ($rows as $index => $row)
                                                         <tr wire:key="credit-note-row-{{ $index }}">
                                                             <td>
-                                                                <input type="text" class="form-control" wire:model.debounce.300ms="rows.{{ $index }}.description" placeholder="Enter description" required>
+                                                                <input type="text" class="form-control" wire:model.lazy="rows.{{ $index }}.description" placeholder="Enter description" required>
                                                                 @error('rows.'.$index.'.description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                             </td>
                                                             <td>
-                                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="rows.{{ $index }}.amount" placeholder="0.00" required>
+                                                                <input type="number" step="any" class="form-control" wire:model.lazy="rows.{{ $index }}.amount" placeholder="0.00" required>
                                                                 @error('rows.'.$index.'.amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                             </td>
                                                             <td class="text-center">
@@ -224,7 +224,7 @@
                                 <div class="modal-footer">
                                     <div class="btn-group" role="group">
                                         <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                                        <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="store" wire:loading.class="opacity-50 cursor-not-allowed"><i class="fa fa-save"></i>Save</button>
                                     </div>
                                     <!-- /.btn-group -->
                                 </div>

@@ -106,6 +106,7 @@
                                 <a href="{{route('invoices.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Invoice</a>
                                 @if (Auth::user()->is_admin())
                                 <a href="#" wire:click="showBulkInvoices()"  class="btn btn-default"><i class="fa fa-copy"></i>Bulk Invoices</a>
+                                <a href="#" wire:click="showBulkDeleteInvoices()"  class="btn btn-default border-danger"><i class="fa fa-trash"></i>Bulk Delete Invoices</a>
                                 @endif
                                 <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Invoices Payments</a>
                                 @if ($this->unpostedInvoicesCount > 0)
@@ -410,6 +411,79 @@
         </div>
     </div>
 
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bulkDeleteInvoicesModal" tabindex="-1" role="dialog" aria-labelledby="bulkDeleteInvoicesModalLabel" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="bulkDeleteInvoicesModalLabel"><i class="fa fa-trash color-danger"></i> Bulk delete invoices by trip date<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="bulkDeleteInvoicesByTripDate()">
+                <div class="modal-body">
+                    <p class="text-danger"><strong>Warning:</strong> this permanently deletes every matching invoice, reversing any payments and journal entries recorded against them (and any bills raised off them). This cannot be undone from the UI.</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-addon">Trip Date</span>
+                                <select wire:model.debounce.300ms="bulk_delete_trip_filter" class="form-control" aria-label="...">
+                                    <option value="end_date">Trip Ended</option>
+                                    <option value="trip_status_date">Trip Status Changed</option>
+                                    <option value="start_date">Trip Started</option>
+                                    <option value="created_at">Trip Created At</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-addon">From</span>
+                                <input type="date" wire:model.debounce.300ms="bulk_delete_from" class="form-control" aria-label="...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-addon">To<span class="required" style="color: red">*</span></span>
+                                <input type="date" wire:model.debounce.300ms="bulk_delete_to" class="form-control" aria-label="..." required>
+                            </div>
+                            @error('bulk_delete_to') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:10px">
+                        <label for="bulk_delete_reason">Reason (optional)</label>
+                        <input type="text" id="bulk_delete_reason" class="form-control" wire:model.debounce.300ms="bulk_delete_reason" placeholder="e.g. Trips done before 1 Aug - client requested cleanup">
+                    </div>
+
+                    @if (isset($bulk_delete_invoices) && filled($bulk_delete_to))
+                        <p style="margin-top:10px">
+                            <strong>{{ $bulk_delete_invoices->count() }}</strong> invoice(s) matched. Total value:
+                            @foreach ($bulk_delete_invoices->groupBy('currency_id') as $currency_invoices)
+                                {{ $currency_invoices->first()->currency ? $currency_invoices->first()->currency->symbol : '' }}{{ number_format($currency_invoices->sum('total'), 2) }}&nbsp;
+                            @endforeach
+                        </p>
+                        @if ($bulk_delete_invoices->count() > 0)
+                            <div style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:5px">
+                                <ul style="margin-bottom:0">
+                                    @foreach ($bulk_delete_invoices as $invoice)
+                                        <li>{{ $invoice->invoice_number }} - {{ $invoice->customer ? $invoice->customer->name : '' }} - {{ $invoice->currency ? $invoice->currency->symbol : '' }}{{ number_format($invoice->total,2) }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        @if (isset($bulk_delete_invoices) && $bulk_delete_invoices->count() > 0)
+                            <button type="submit" class="btn btn-danger btn-wide btn-rounded" onclick="return confirm('Permanently delete {{ $bulk_delete_invoices->count() }} invoice(s) and reverse their payments/journal entries? This cannot be undone.')"><i class="fa fa-trash"></i>Delete {{ $bulk_delete_invoices->count() }} Invoice(s)</button>
+                        @else
+                            <button type="submit" class="btn btn-danger btn-wide btn-rounded" disabled><i class="fa fa-trash"></i>Delete</button>
+                        @endif
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
