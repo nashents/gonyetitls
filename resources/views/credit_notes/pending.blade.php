@@ -48,11 +48,3 @@
 
 @endsection
 
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#credit_notesTable').DataTable();
-    } );
-    </script>
-@endsection
-

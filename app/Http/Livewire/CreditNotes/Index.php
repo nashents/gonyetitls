@@ -12,14 +12,17 @@ use App\Models\Customer;
 use App\Models\CreditNote;
 use App\Models\Destination;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
     use WithFileUploads;
+    use WithPagination;
 
-    public $credit_notes;
+    protected $paginationTheme = 'bootstrap';
+
     public $credit_note;
     public $credit_note_id;
     public $invoices;
@@ -38,7 +41,6 @@ class Index extends Component
 
     public function mount(){
 
-        $this->credit_notes = CreditNote::with('journal_entry')->latest()->get();
         $this->customers = Customer::all();
         $this->currencies = Currency::all();
         $this->invoices = Invoice::latest()->get();
@@ -66,8 +68,6 @@ class Index extends Component
             'message' => "Posted {$posted} of {$result['total']} credit note(s) to the ledger."
                 . ($errors > 0 ? " {$errors} failed - see logs." : ''),
         ]);
-
-        $this->credit_notes = CreditNote::with('journal_entry')->latest()->get();
     }
 
     /**
@@ -98,7 +98,6 @@ class Index extends Component
                 'type'    => 'success',
                 'message' => 'Credit note posted to the general ledger.',
             ]);
-            $this->credit_notes = CreditNote::with('journal_entry')->latest()->get();
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Manual credit note ledger post failed: ' . $e->getMessage());
             $this->dispatchBrowserEvent('alert', [
@@ -218,6 +217,8 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.credit-notes.index');
+        return view('livewire.credit-notes.index', [
+            'credit_notes' => CreditNote::with('journal_entry')->latest()->paginate(10),
+        ]);
     }
 }

@@ -46,11 +46,3 @@
 
 @endsection
 
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#fuelsTable').DataTable();
-    } );
-    </script>
-@endsection
-

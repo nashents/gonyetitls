@@ -5,10 +5,15 @@ namespace App\Http\Livewire\CreditNotes;
 use App\Models\Invoice;
 use Livewire\Component;
 use App\Models\CreditNote;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Approved extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
     public $invoices;
     public $authorization;
     public $invoice;
@@ -87,9 +92,8 @@ catch(\Exception $e){
       }
     public function render()
     {
-        $this->credit_notes = CreditNote::where('authorization', 'approved')->latest()->get();
         return view('livewire.credit-notes.approved',[
-            'credit_notes' => $this->credit_notes
+            'credit_notes' => CreditNote::where('authorization', 'approved')->latest()->paginate(10)
         ]);
     }
 }

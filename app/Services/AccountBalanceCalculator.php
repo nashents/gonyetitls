@@ -30,7 +30,7 @@ class AccountBalanceCalculator
         return JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $this->companyId)
-            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.status', '!=', 'draft')
             ->where('journal_entries.date', '<=', $date)
             ->selectRaw('journal_entry_lines.account_id, SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as balance')
             ->groupBy('journal_entry_lines.account_id')

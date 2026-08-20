@@ -56,7 +56,7 @@ class FleetSubledgerCalculator
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
             ->where('journal_entries.company_id', $this->companyId)
-            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.status', '!=', 'draft')
             ->whereNotNull("journal_entry_lines.{$column}")
             ->whereBetween('journal_entries.date', [$this->dateFrom, $this->dateTo])
             ->selectRaw("

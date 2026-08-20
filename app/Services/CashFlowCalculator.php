@@ -35,7 +35,7 @@ class CashFlowCalculator
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->whereIn('journal_entry_lines.account_id', $cashAccountIds)
             ->where('journal_entries.company_id', $this->companyId)
-            ->where('journal_entries.status', 'posted');
+            ->where('journal_entries.status', '!=', 'draft');
     }
 
     /**

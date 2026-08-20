@@ -30,7 +30,7 @@ class BalanceSheetCalculator
             ->join('account_types', 'account_types.id', '=', 'accounts.account_type_id')
             ->join('account_type_groups', 'account_type_groups.id', '=', 'account_types.account_type_group_id')
             ->where('journal_entries.company_id', $this->companyId)
-            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.status', '!=', 'draft')
             ->where('journal_entries.date', '<=', $this->asOfDate);
     }
 

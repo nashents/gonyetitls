@@ -12,7 +12,7 @@
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                            <table id="credit_notesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
 
@@ -74,6 +74,13 @@
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                              <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($credit_notes))
+                                        {{ $credit_notes->links() }}
+                                    @endif
+                                </ul>
+                            </nav>
 
                             <!-- /.col-md-12 -->
                         </div>

@@ -5,10 +5,15 @@ namespace App\Http\Livewire\CreditNotes;
 use App\Models\Invoice;
 use Livewire\Component;
 use App\Models\CreditNote;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Pending extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
     public $invoices;
     public $invoice;
     public $invoice_total;
@@ -85,9 +90,8 @@ class Pending extends Component
       }
     public function render()
     {
-        $this->credit_notes = CreditNote::where('authorization', 'pending')->latest()->get();
         return view('livewire.credit-notes.pending',[
-            'credit_notes' => $this->credit_notes
+            'credit_notes' => CreditNote::where('authorization', 'pending')->latest()->paginate(10)
         ]);
     }
 }
