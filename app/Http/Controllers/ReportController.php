@@ -66,21 +66,34 @@ class ReportController extends Controller
         $cogsAccounts = AccountType::where('name', 'Cost Of Goods Sold')->first()?->accounts ?? collect();
         $opexAccounts = AccountType::where('name', 'Operating Expense')->first()?->accounts ?? collect();
 
+        // Every other Income/Expenses-group account type not named above -
+        // see the matching comment in Reports/IncomeStatements/Index.php.
+        $otherIncomeAccounts = Account::whereHas('account_type', fn ($q) => $q->whereHas('account_type_group', fn ($q2) => $q2->where('name', 'Income')))
+            ->whereNotIn('id', $incomeAccounts->pluck('id'))
+            ->get();
+
+        $otherExpensesAccounts = Account::whereHas('account_type', fn ($q) => $q->whereHas('account_type_group', fn ($q2) => $q2->where('name', 'Expenses')))
+            ->whereNotIn('id', $cogsAccounts->pluck('id')->merge($opexAccounts->pluck('id')))
+            ->get();
+
         $calculator = new IncomeStatementCalculator(
             $from,
             $to,
             $selectedType === IncomeStatementReport::CASH_BASIS,
-            $company?->currency_id
+            $company?->currency_id,
+            $company?->id
         );
 
-        [$totalIncome, $incomeByAccount] = $calculator->incomeAmounts();
+        [$totalIncome, $incomeByAccount] = $calculator->incomeAmounts($incomeAccounts->pluck('id')->all());
         [$totalCogs, $cogsByAccount] = $calculator->expenseAmounts($cogsAccounts->pluck('id')->all());
         [$totalOpex, $opexByAccount] = $calculator->expenseAmounts($opexAccounts->pluck('id')->all());
+        [$totalOtherIncome, $otherIncomeByAccount] = $calculator->incomeAmounts($otherIncomeAccounts->pluck('id')->all());
+        [$totalOtherExpenses, $otherExpensesByAccount] = $calculator->expenseAmounts($otherExpensesAccounts->pluck('id')->all());
 
         $grossProfit = $totalIncome - $totalCogs;
         $grossProfitPercentage = $totalIncome != 0 ? round(($grossProfit / $totalIncome) * 100, 2) : 0.0;
 
-        $netProfit = $grossProfit - $totalOpex;
+        $netProfit = $grossProfit - $totalOpex + $totalOtherIncome - $totalOtherExpenses;
         $netProfitPercentage = $totalIncome != 0 ? round(($netProfit / $totalIncome) * 100, 2) : 0.0;
 
         return [
@@ -93,12 +106,18 @@ class ReportController extends Controller
             'income_accounts' => $incomeAccounts,
             'cost_of_goods_sold_accounts' => $cogsAccounts,
             'operating_expenses_accounts' => $opexAccounts,
+            'other_income_accounts' => $otherIncomeAccounts,
+            'other_expenses_accounts' => $otherExpensesAccounts,
             'income_by_account' => $incomeByAccount,
             'cost_of_goods_sold_by_account' => $cogsByAccount,
             'operating_expenses_by_account' => $opexByAccount,
+            'other_income_by_account' => $otherIncomeByAccount,
+            'other_expenses_by_account' => $otherExpensesByAccount,
             'total_income' => $totalIncome,
             'total_cost_of_goods_sold' => $totalCogs,
             'total_operating_expenses' => $totalOpex,
+            'total_other_income' => $totalOtherIncome,
+            'total_other_expenses' => $totalOtherExpenses,
             'gross_profit' => $grossProfit,
             'gross_profit_percentage' => $grossProfitPercentage,
             'net_profit' => $netProfit,

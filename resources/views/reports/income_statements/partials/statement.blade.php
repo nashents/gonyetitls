@@ -11,6 +11,8 @@
     $incomeItems = collect($income_accounts)->map(fn ($a) => ['label' => $a->name, 'amount' => $income_by_account[$a->id] ?? 0])->all();
     $cogsItems = collect($cost_of_goods_sold_accounts)->map(fn ($a) => ['label' => $a->name, 'amount' => $cost_of_goods_sold_by_account[$a->id] ?? 0])->all();
     $opexItems = collect($operating_expenses_accounts)->map(fn ($a) => ['label' => $a->name, 'amount' => $operating_expenses_by_account[$a->id] ?? 0])->all();
+    $otherIncomeItems = collect($other_income_accounts)->map(fn ($a) => ['label' => $a->name, 'amount' => $other_income_by_account[$a->id] ?? 0])->all();
+    $otherExpensesItems = collect($other_expenses_accounts)->map(fn ($a) => ['label' => $a->name, 'amount' => $other_expenses_by_account[$a->id] ?? 0])->all();
 @endphp
 
 @include('reports.shared._line_items', [
@@ -44,6 +46,24 @@
     'totalLabel' => 'Total Operating Expenses',
     'items' => $opexItems,
     'total' => $total_operating_expenses,
+    'currencyCode' => $currencyCode,
+    'compact' => $compact,
+])
+
+@include('reports.shared._line_items', [
+    'sectionTitle' => 'Other Income',
+    'totalLabel' => 'Total Other Income',
+    'items' => $otherIncomeItems,
+    'total' => $total_other_income,
+    'currencyCode' => $currencyCode,
+    'compact' => $compact,
+])
+
+@include('reports.shared._line_items', [
+    'sectionTitle' => 'Other Expenses',
+    'totalLabel' => 'Total Other Expenses',
+    'items' => $otherExpensesItems,
+    'total' => $total_other_expenses,
     'currencyCode' => $currencyCode,
     'compact' => $compact,
 ])

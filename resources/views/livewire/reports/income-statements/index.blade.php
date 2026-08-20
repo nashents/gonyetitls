@@ -201,6 +201,28 @@
                                                 <!-- /.col-md-6 -->
                                             </div>
                                             <hr style="width:100%;", size="3", color=black>
+                                            <div class="col-xs-12 p-n">
+                                                <div class="col-xs-5 p-n">
+                                                  <span style="margin-left:5px">Other Income</span>
+                                                </div>
+                                                <!-- /.col-md-6 -->
+                                                <div class="col-xs-6 p-n">
+                                                <span style="float: right">{{$default_currency->name}} {{$default_currency->symbol}}{{$this->fmt($total_other_income)}}</span>
+                                                </div>
+                                                <!-- /.col-md-6 -->
+                                            </div>
+                                            <hr style="width:100%;", size="3", color=black>
+                                            <div class="col-xs-12 p-n">
+                                                <div class="col-xs-5 p-n">
+                                                  <span style="margin-left:5px">Other Expenses</span>
+                                                </div>
+                                                <!-- /.col-md-6 -->
+                                                <div class="col-xs-6 p-n">
+                                                <span style="float: right">{{$default_currency->name}} {{$default_currency->symbol}}{{$this->fmt($total_other_expenses)}}</span>
+                                                </div>
+                                                <!-- /.col-md-6 -->
+                                            </div>
+                                            <hr style="width:100%;", size="3", color=black>
                                             <div class="col-xs-12 p-n" style="background-color: #D3D3D3; ">
                                                 <div class="col-xs-5 p-n" style="margin-top: 10px; margin-bottom: -10px;">
                                                     <strong><span style="margin-left:5px">NET PROFIT</span></strong>
@@ -307,6 +329,58 @@
 
                                             @foreach ($operating_expenses_accounts as $account)
                                                 @php $amount = $operating_expenses_by_account[$account->id] ?? 0; @endphp
+                                                @if ($amount != 0)
+                                                        <div class="col-xs-12 p-n">
+                                                            <div class="col-xs-5 p-n">
+                                                            <span style="margin-left:5px">{{$account->name}}</span>
+                                                            </div>
+                                                            <!-- /.col-md-6 -->
+
+                                                            <div class="col-xs-6 p-n">
+                                                            <span style="float: right">{{$default_currency->name}} {{$default_currency->symbol}}{{$this->fmt($amount)}}</span>
+                                                            </div>
+                                                            <!-- /.col-md-6 -->
+                                                        </div>
+                                                        <hr style="width:100%;", size="3", color=black>
+                                                @endif
+                                            @endforeach
+
+                                            <div class="col-xs-12 p-n" style="background-color: #D3D3D3">
+                                                <div class="col-xs-5 p-n">
+                                                  <strong><span style="margin-left:5px">Other Income</span> </strong>
+                                                </div>
+                                                <!-- /.col-md-6 -->
+                                            </div>
+                                            <hr style="width:100%", size="3", color=black>
+
+                                            @foreach ($other_income_accounts as $account)
+                                                @php $amount = $other_income_by_account[$account->id] ?? 0; @endphp
+                                                @if ($amount != 0)
+                                                        <div class="col-xs-12 p-n">
+                                                            <div class="col-xs-5 p-n">
+                                                            <span style="margin-left:5px">{{$account->name}}</span>
+                                                            </div>
+                                                            <!-- /.col-md-6 -->
+
+                                                            <div class="col-xs-6 p-n">
+                                                            <span style="float: right">{{$default_currency->name}} {{$default_currency->symbol}}{{$this->fmt($amount)}}</span>
+                                                            </div>
+                                                            <!-- /.col-md-6 -->
+                                                        </div>
+                                                        <hr style="width:100%;", size="3", color=black>
+                                                @endif
+                                            @endforeach
+
+                                            <div class="col-xs-12 p-n" style="background-color: #D3D3D3">
+                                                <div class="col-xs-5 p-n">
+                                                  <strong><span style="margin-left:5px">Other Expenses</span> </strong>
+                                                </div>
+                                                <!-- /.col-md-6 -->
+                                            </div>
+                                            <hr style="width:100%", size="3", color=black>
+
+                                            @foreach ($other_expenses_accounts as $account)
+                                                @php $amount = $other_expenses_by_account[$account->id] ?? 0; @endphp
                                                 @if ($amount != 0)
                                                         <div class="col-xs-12 p-n">
                                                             <div class="col-xs-5 p-n">

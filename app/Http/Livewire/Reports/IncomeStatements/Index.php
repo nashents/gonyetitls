@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Reports\IncomeStatements;
 
 use Carbon\Carbon;
 use Livewire\Component;
+use App\Models\Account;
 use App\Models\AccountType;
 use Illuminate\Support\Facades\Auth;
 use App\Services\IncomeStatementCalculator;
@@ -28,10 +29,22 @@ class Index extends Component
     public $operating_expenses_account_type;
     public $operating_expenses_accounts;
 
+    // Every other Income/Expenses-group account type not named above -
+    // Discount, Other Income, Gain on Foreign Exchange, Uncategorized
+    // Income on the income side; Payroll Expense, Loss on Foreign Exchange,
+    // Payment Processing Fee, Uncategorized Expense on the expense side -
+    // shown as their own section so ledger-only activity (payroll, FX
+    // gain/loss, credit/debit notes) never inflates the totals without a
+    // visible row explaining why.
+    public $other_income_accounts;
+    public $other_expenses_accounts;
+
     // Per-account breakdowns: [account_id => amount] for the "details" view.
     public $income_by_account = [];
     public $cost_of_goods_sold_by_account = [];
     public $operating_expenses_by_account = [];
+    public $other_income_by_account = [];
+    public $other_expenses_by_account = [];
 
     public $default_currency;
     public $default_currency_id;
@@ -39,6 +52,8 @@ class Index extends Component
     public $total_income = 0;
     public $total_cost_of_goods_sold = 0;
     public $total_operating_expenses = 0;
+    public $total_other_income = 0;
+    public $total_other_expenses = 0;
 
     public $gross_profit = 0;
     public $gross_profit_percentage = 0;
@@ -58,6 +73,14 @@ class Index extends Component
 
         $this->operating_expenses_account_type = AccountType::where('name', 'Operating Expense')->first();
         $this->operating_expenses_accounts = $this->operating_expenses_account_type?->accounts ?? collect();
+
+        $this->other_income_accounts = Account::whereHas('account_type', fn ($q) => $q->whereHas('account_type_group', fn ($q2) => $q2->where('name', 'Income')))
+            ->whereNotIn('id', $this->income_accounts->pluck('id'))
+            ->get();
+
+        $this->other_expenses_accounts = Account::whereHas('account_type', fn ($q) => $q->whereHas('account_type_group', fn ($q2) => $q2->where('name', 'Expenses')))
+            ->whereNotIn('id', $this->cost_of_goods_sold_accounts->pluck('id')->merge($this->operating_expenses_accounts->pluck('id')))
+            ->get();
     }
 
     public function set_report($value)
@@ -113,16 +136,24 @@ class Index extends Component
                 $this->from,
                 $this->to,
                 $this->selectedType === self::CASH_BASIS,
-                $this->default_currency_id
+                $this->default_currency_id,
+                $company?->id
             );
 
-            [$this->total_income, $this->income_by_account] = $calculator->incomeAmounts();
+            $incomeAccountIds = $this->income_accounts->pluck('id')->all();
+            [$this->total_income, $this->income_by_account] = $calculator->incomeAmounts($incomeAccountIds);
 
             $cogsAccountIds = $this->cost_of_goods_sold_accounts->pluck('id')->all();
             [$this->total_cost_of_goods_sold, $this->cost_of_goods_sold_by_account] = $calculator->expenseAmounts($cogsAccountIds);
 
             $opexAccountIds = $this->operating_expenses_accounts->pluck('id')->all();
             [$this->total_operating_expenses, $this->operating_expenses_by_account] = $calculator->expenseAmounts($opexAccountIds);
+
+            $otherIncomeAccountIds = $this->other_income_accounts->pluck('id')->all();
+            [$this->total_other_income, $this->other_income_by_account] = $calculator->incomeAmounts($otherIncomeAccountIds);
+
+            $otherExpensesAccountIds = $this->other_expenses_accounts->pluck('id')->all();
+            [$this->total_other_expenses, $this->other_expenses_by_account] = $calculator->expenseAmounts($otherExpensesAccountIds);
         }
 
         $this->gross_profit = $this->total_income - $this->total_cost_of_goods_sold;
@@ -130,7 +161,7 @@ class Index extends Component
             ? round(($this->gross_profit / $this->total_income) * 100, 2)
             : 0.0;
 
-        $this->net_profit = $this->gross_profit - $this->total_operating_expenses;
+        $this->net_profit = $this->gross_profit - $this->total_operating_expenses + $this->total_other_income - $this->total_other_expenses;
         $this->net_profit_percentage = $this->total_income != 0
             ? round(($this->net_profit / $this->total_income) * 100, 2)
             : 0.0;
