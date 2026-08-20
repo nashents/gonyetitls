@@ -179,6 +179,9 @@ class PaymentJournalService
         Account $cashBankAccount
     ): void {
         $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
+        $invoiceRate = $this->bookingRate($payment->invoice, $rate);
+        $bookedValue = $amount * $invoiceRate;
+        $settledValue = $amount * $rate;
 
         $entry->journal_entry_lines()->create([
             'account_id'      => $cashBankAccount->id,
@@ -186,7 +189,7 @@ class PaymentJournalService
             'vendor_id'       => null,
             'debit'           => $amount,
             'credit'          => 0,
-            'exchange_debit'  => $amount * $rate,
+            'exchange_debit'  => $settledValue,
             'exchange_credit' => 0,
             'currency_id'     => $payment->currency_id,
             'exchange_rate'   => $rate,
@@ -200,11 +203,17 @@ class PaymentJournalService
             'debit'           => 0,
             'credit'          => $amount,
             'exchange_debit'  => 0,
-            'exchange_credit' => $amount * $rate,
+            'exchange_credit' => $bookedValue,
             'currency_id'     => $payment->currency_id,
-            'exchange_rate'   => $rate,
+            'exchange_rate'   => $invoiceRate,
             'description'     => "AR settlement - Invoice #{$payment->invoice?->invoice_number} - {$payment->payment_number}",
         ]);
+
+        $this->postFxDifference(
+            $entry, $bookedValue, $settledValue, isPayable: false,
+            dimensions: ['customer_id' => $payment->customer_id],
+            description: "Realized FX " . ($settledValue >= $bookedValue ? 'gain' : 'loss') . " - Invoice #{$payment->invoice?->invoice_number} - {$payment->payment_number}"
+        );
     }
 
     // ── 4. Direct Bill Payment ────────────────────────────────────────────────
@@ -218,6 +227,9 @@ class PaymentJournalService
         Account $cashBankAccount
     ): void {
         $apAccount = Account::where('name', 'Accounts Payable')->firstOrFail();
+        $billRate = $this->bookingRate($payment->bill, $rate);
+        $bookedValue = $amount * $billRate;
+        $settledValue = $amount * $rate;
 
         $entry->journal_entry_lines()->create([
             'account_id'      => $apAccount->id,
@@ -225,10 +237,10 @@ class PaymentJournalService
             'customer_id'     => null,
             'debit'           => $amount,
             'credit'          => 0,
-            'exchange_debit'  => $amount * $rate,
+            'exchange_debit'  => $bookedValue,
             'exchange_credit' => 0,
             'currency_id'     => $payment->currency_id,
-            'exchange_rate'   => $rate,
+            'exchange_rate'   => $billRate,
             'description'     => "AP settlement - Bill #{$payment->bill?->bill_number} - {$payment->payment_number}",
         ]);
 
@@ -239,11 +251,17 @@ class PaymentJournalService
             'debit'           => 0,
             'credit'          => $amount,
             'exchange_debit'  => 0,
-            'exchange_credit' => $amount * $rate,
+            'exchange_credit' => $settledValue,
             'currency_id'     => $payment->currency_id,
             'exchange_rate'   => $rate,
             'description'     => "Cash payment - Bill #{$payment->bill?->bill_number} - {$payment->payment_number}",
         ]);
+
+        $this->postFxDifference(
+            $entry, $bookedValue, $settledValue, isPayable: true,
+            dimensions: ['vendor_id' => $payment->vendor_id],
+            description: "Realized FX " . ($bookedValue >= $settledValue ? 'gain' : 'loss') . " - Bill #{$payment->bill?->bill_number} - {$payment->payment_number}"
+        );
     }
 
     // ── 5. Direct Sale Payment ────────────────────────────────────────────────
@@ -257,6 +275,9 @@ class PaymentJournalService
         Account $cashBankAccount
     ): void {
         $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
+        $saleRate = $this->bookingRate($payment->sale, $rate);
+        $bookedValue = $amount * $saleRate;
+        $settledValue = $amount * $rate;
 
         $entry->journal_entry_lines()->create([
             'account_id'      => $cashBankAccount->id,
@@ -264,7 +285,7 @@ class PaymentJournalService
             'vendor_id'       => null,
             'debit'           => $amount,
             'credit'          => 0,
-            'exchange_debit'  => $amount * $rate,
+            'exchange_debit'  => $settledValue,
             'exchange_credit' => 0,
             'currency_id'     => $payment->currency_id,
             'exchange_rate'   => $rate,
@@ -278,11 +299,17 @@ class PaymentJournalService
             'debit'           => 0,
             'credit'          => $amount,
             'exchange_debit'  => 0,
-            'exchange_credit' => $amount * $rate,
+            'exchange_credit' => $bookedValue,
             'currency_id'     => $payment->currency_id,
-            'exchange_rate'   => $rate,
+            'exchange_rate'   => $saleRate,
             'description'     => "AR settlement - Sale #{$payment->sale_id} - {$payment->payment_number}",
         ]);
+
+        $this->postFxDifference(
+            $entry, $bookedValue, $settledValue, isPayable: false,
+            dimensions: ['customer_id' => $payment->customer_id],
+            description: "Realized FX " . ($settledValue >= $bookedValue ? 'gain' : 'loss') . " - Sale #{$payment->sale_id} - {$payment->payment_number}"
+        );
     }
 
     // ── 6. Driver Recovery Payment ────────────────────────────────────────────
@@ -296,13 +323,16 @@ class PaymentJournalService
         Account $cashBankAccount
     ): void {
         $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
+        $recoveryRate = $this->bookingRate($payment->recovery, $rate);
+        $bookedValue = $amount * $recoveryRate;
+        $settledValue = $amount * $rate;
 
         $entry->journal_entry_lines()->create([
             'account_id'      => $cashBankAccount->id,
             'driver_id'       => $payment->driver_id,
             'debit'           => $amount,
             'credit'          => 0,
-            'exchange_debit'  => $amount * $rate,
+            'exchange_debit'  => $settledValue,
             'exchange_credit' => 0,
             'currency_id'     => $payment->currency_id,
             'exchange_rate'   => $rate,
@@ -315,11 +345,17 @@ class PaymentJournalService
             'debit'           => 0,
             'credit'          => $amount,
             'exchange_debit'  => 0,
-            'exchange_credit' => $amount * $rate,
+            'exchange_credit' => $bookedValue,
             'currency_id'     => $payment->currency_id,
-            'exchange_rate'   => $rate,
+            'exchange_rate'   => $recoveryRate,
             'description'     => "AR settlement - Recovery #{$payment->recovery_id} - {$payment->payment_number}",
         ]);
+
+        $this->postFxDifference(
+            $entry, $bookedValue, $settledValue, isPayable: false,
+            dimensions: ['driver_id' => $payment->driver_id],
+            description: "Realized FX " . ($settledValue >= $bookedValue ? 'gain' : 'loss') . " - Recovery #{$payment->recovery_id} - {$payment->payment_number}"
+        );
     }
 
     // ── 7. Withdrawal ─────────────────────────────────────────────────────────
@@ -397,6 +433,63 @@ class PaymentJournalService
             'currency_id'     => $payment->currency_id,
             'exchange_rate'   => $rate,
             'description'     => "Deposit - {$contraAccount->name} - {$payment->payment_number}",
+        ]);
+    }
+
+    // ── Realized FX gain/loss ────────────────────────────────────────────────
+
+    /**
+     * A source document's own booking rate, as a safe float - exchange_rate
+     * is a nullable string column on Invoice/Bill/Sale/Recovery, so this
+     * guards the same way DebitNoteJournalService does.
+     */
+    private function bookingRate($document, float $fallback): float
+    {
+        return $document && is_numeric($document->exchange_rate) ? (float) $document->exchange_rate : $fallback;
+    }
+
+    /**
+     * Posts the difference between a receivable/payable's original booked
+     * reporting-currency value and its actual settlement reporting-currency
+     * value to Gain/Loss on Foreign Exchange - what lets AR/AP clear to
+     * exactly zero in reporting currency even when the exchange rate moved
+     * between the invoice/bill date and the payment date (realized FX
+     * gain/loss per IAS 21 para 28). No-ops below 1 cent so same-currency,
+     * same-rate (or base-currency) settlements never post a zero-value line.
+     *
+     * A payable (AP) settlement gains when it cost less, in reporting
+     * currency, to pay off than the liability was booked at; a receivable
+     * (AR) settlement gains when more reporting-currency value was
+     * collected than the receivable was booked at - mirror images of each
+     * other, hence $isPayable flips which side $bookedValue/$settledValue
+     * fall on.
+     */
+    private function postFxDifference(
+        JournalEntry $entry,
+        float $bookedValue,
+        float $settledValue,
+        bool $isPayable,
+        array $dimensions,
+        string $description
+    ): void {
+        $gain = $isPayable ? ($bookedValue - $settledValue) : ($settledValue - $bookedValue);
+
+        if (abs($gain) < 0.01) {
+            return;
+        }
+
+        $account = Account::where('name', $gain > 0 ? 'Gain on Foreign Exchange' : 'Loss on Foreign Exchange')->firstOrFail();
+        $value = round(abs($gain), 2);
+
+        $entry->journal_entry_lines()->create($dimensions + [
+            'account_id'      => $account->id,
+            'debit'           => $gain > 0 ? 0 : $value,
+            'credit'          => $gain > 0 ? $value : 0,
+            'exchange_debit'  => $gain > 0 ? 0 : $value,
+            'exchange_credit' => $gain > 0 ? $value : 0,
+            'currency_id'     => null,
+            'exchange_rate'   => 1,
+            'description'     => $description,
         ]);
     }
 
