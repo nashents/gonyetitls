@@ -38,6 +38,7 @@ class PaymentJournalService
         $category = $this->resolveCategory($payment);
 
         $cashBankAccount = $this->resolveCashBankAccount($payment);
+        $this->assertCurrencyMatchesAccount($payment, $cashBankAccount);
 
         return DB::transaction(function () use ($payment, $rate, $amount, $category, $cashBankAccount, $existing) {
 
@@ -432,6 +433,32 @@ class PaymentJournalService
         }
 
         return Account::where('name', 'Cash on Hand')->firstOrFail();
+    }
+
+    /**
+     * The Cash & Bank account this payment clears through has its own fixed
+     * currency (accounts.currency_id) - bank reconciliation matches this
+     * account's journal lines against the actual bank statement in that
+     * exact currency, so a payment posted with a different currency_id would
+     * silently mislabel the line and break every future reconciliation
+     * against it. Every current UI is expected to only offer accounts whose
+     * currency already matches the payment (see e.g. Invoices/Index.php,
+     * Bills/Index.php), so this should never fire in normal use - it exists
+     * to catch a mismatched selection before it reaches the ledger, since
+     * there's no way to correct it after posting without a real bank-side
+     * exchange rate the system doesn't capture.
+     */
+    private function assertCurrencyMatchesAccount(Payment $payment, Account $cashBankAccount): void
+    {
+        if (!$cashBankAccount->currency_id || !$payment->currency_id) {
+            return;
+        }
+
+        if ((int) $cashBankAccount->currency_id !== (int) $payment->currency_id) {
+            throw new \RuntimeException(
+                "Payment currency does not match the currency of \"{$cashBankAccount->name}\" - select an account held in the same currency as this payment, or record the currency conversion separately."
+            );
+        }
     }
 
     private function resolveDescription(Payment $payment, ?string $category = null): string

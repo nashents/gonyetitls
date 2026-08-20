@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Company;
 use App\Models\JournalEntryLine;
 
 /**
@@ -31,15 +32,24 @@ class AccountTransactionsCalculator
             ->where('journal_entries.status', '!=', 'draft');
     }
 
+    /** See TrialBalanceCalculator::reportingCurrencyId() for the rule this applies. */
+    private function reportingCurrencyId(): ?int
+    {
+        return Company::find($this->companyId)?->currency_id;
+    }
+
     /**
      * Net balance of every posted line for this account strictly before
      * the report's start date.
      */
     public function openingBalance(): float
     {
+        $base = (int) $this->reportingCurrencyId();
+
         $raw = (float) $this->baseQuery()
             ->where('journal_entries.date', '<', $this->from)
-            ->selectRaw('COALESCE(SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit), 0) as balance')
+            ->selectRaw("COALESCE(SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END), 0) as balance")
             ->value('balance');
 
         return $this->creditNormal ? -1 * $raw : $raw;
@@ -50,6 +60,8 @@ class AccountTransactionsCalculator
      */
     public function transactions(float $openingBalance): array
     {
+        $base = (int) $this->reportingCurrencyId();
+
         $lines = $this->baseQuery()
             ->whereDate('journal_entries.date', '>=', $this->from)
             ->whereDate('journal_entries.date', '<=', $this->to)
@@ -61,16 +73,20 @@ class AccountTransactionsCalculator
                 'journal_entries.reference',
                 'journal_entries.description as entry_description',
                 'journal_entry_lines.description as line_description',
+                'journal_entry_lines.currency_id',
                 'journal_entry_lines.debit',
                 'journal_entry_lines.credit',
+                'journal_entry_lines.exchange_debit',
+                'journal_entry_lines.exchange_credit',
             ]);
 
         $running = $openingBalance;
         $rows = [];
 
         foreach ($lines as $line) {
-            $debit = (float) $line->debit;
-            $credit = (float) $line->credit;
+            $isBaseCurrency = is_null($line->currency_id) || (int) $line->currency_id === $base;
+            $debit = $isBaseCurrency ? (float) $line->debit : (float) $line->exchange_debit;
+            $credit = $isBaseCurrency ? (float) $line->credit : (float) $line->exchange_credit;
             $delta = $this->creditNormal ? ($credit - $debit) : ($debit - $credit);
             $running += $delta;
 

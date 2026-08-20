@@ -126,7 +126,10 @@
                                         <thead>
                                             <tr>
                                                 <th>Description</th>
-                                                <th style="width:200px" class="text-right">Amount</th>
+                                                <th style="width:170px">Tax Category</th>
+                                                <th style="width:130px" class="text-right">Amount</th>
+                                                <th style="width:110px" class="text-right">VAT</th>
+                                                <th style="width:130px" class="text-right">Total (Incl)</th>
                                                 <th style="width:60px"></th>
                                             </tr>
                                         </thead>
@@ -134,12 +137,27 @@
                                             @foreach ($rows as $index => $row)
                                                 <tr wire:key="credit-note-row-{{ $index }}">
                                                     <td>
-                                                        <input type="text" class="form-control" wire:model.debounce.300ms="rows.{{ $index }}.description" placeholder="Enter description" required>
+                                                        <input type="text" class="form-control" wire:model.lazy="rows.{{ $index }}.description" placeholder="Enter description" required>
                                                         @error('rows.'.$index.'.description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </td>
                                                     <td>
-                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="rows.{{ $index }}.amount" placeholder="0.00" required>
+                                                        <select class="form-control" wire:model="rows.{{ $index }}.tax_id" required>
+                                                            <option value="">Select Tax</option>
+                                                            @foreach ($tax_accounts as $tax)
+                                                                <option value="{{ $tax->id }}">{{ $tax->abbreviation }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('rows.'.$index.'.tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="any" class="form-control" wire:model.lazy="rows.{{ $index }}.amount" placeholder="0.00" required>
                                                         @error('rows.'.$index.'.amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </td>
+                                                    <td class="text-right">
+                                                        {{ number_format($row['tax_amount'] ?? 0, 2) }}
+                                                    </td>
+                                                    <td class="text-right">
+                                                        {{ number_format($row['subtotal_incl'] ?? 0, 2) }}
                                                     </td>
                                                     <td class="text-center">
                                                         <button type="button" class="btn btn-xs bg-danger" wire:click="removeRow({{ $index }})"><i class="fa fa-trash"></i></button>
@@ -181,8 +199,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="vat">Tax Amount</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="tax_amount"/>
-                                        @error('tax_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        <input type="text" class="form-control" value="{{ number_format($tax_amount ?? 0, 2) }}" disabled>
                                     </div>
 
                                 </div>

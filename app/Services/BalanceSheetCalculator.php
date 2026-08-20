@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Company;
 use App\Models\JournalEntryLine;
 
 /**
@@ -20,6 +21,12 @@ class BalanceSheetCalculator
         private int $companyId,
         private string $asOfDate
     ) {
+    }
+
+    /** See TrialBalanceCalculator::reportingCurrencyId() for the rule this applies. */
+    private function reportingCurrencyId(): ?int
+    {
+        return Company::find($this->companyId)?->currency_id;
     }
 
     private function baseQuery()
@@ -44,13 +51,16 @@ class BalanceSheetCalculator
      */
     public function groupBalances(string $groupName, bool $creditNormal = false): array
     {
+        $base = (int) $this->reportingCurrencyId();
+
         $rows = $this->baseQuery()
             ->where('account_type_groups.name', $groupName)
-            ->selectRaw('
+            ->selectRaw("
                 accounts.id as account_id,
                 accounts.name as account_name,
-                SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as raw_balance
-            ')
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                    - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as raw_balance
+            ")
             ->groupBy('accounts.id', 'accounts.name')
             ->get();
 

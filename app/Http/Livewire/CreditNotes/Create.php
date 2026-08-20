@@ -15,6 +15,7 @@ use App\Models\Notification;
 use App\Models\CreditNoteItem;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceProduct;
+use App\Models\Tax;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -65,6 +66,7 @@ class Create extends Component
     public $invoiceItems = [];
     public $rows = [];
     public $invoice_attached = 'Yes';
+    public $tax_accounts = [];
 
     public $inputs = [];
     public $i = 1;
@@ -122,16 +124,21 @@ class Create extends Component
     public function addFromInvoiceItem($invoiceItemId){
         $invoiceItem = InvoiceItem::where('invoice_id', $this->selectedInvoice)->find($invoiceItemId);
         if ($invoiceItem) {
+            $index = count($this->rows);
             $this->rows[] = [
                 'description' => $invoiceItem->description ?: $invoiceItem->trip_details,
                 'amount' => $invoiceItem->subtotal,
+                'tax_id' => $invoiceItem->tax_id,
+                'tax_amount' => 0,
+                'subtotal_incl' => 0,
             ];
+            $this->recalculateRowTax($index);
             $this->recalculateTotals();
         }
     }
 
     public function addRow(){
-        $this->rows[] = ['description' => '', 'amount' => ''];
+        $this->rows[] = ['description' => '', 'amount' => '', 'tax_id' => '', 'tax_amount' => 0, 'subtotal_incl' => 0];
     }
 
     public function removeRow($index){
@@ -140,9 +147,29 @@ class Create extends Component
         $this->recalculateTotals();
     }
 
+    private function recalculateRowTax($index){
+        if (!isset($this->rows[$index])) {
+            return;
+        }
+
+        $amount = (float) ($this->rows[$index]['amount'] ?? 0);
+        $taxId = $this->rows[$index]['tax_id'] ?? null;
+        $rate = 0;
+
+        if ($taxId) {
+            $tax = Tax::find($taxId);
+            $rate = $tax->rate ?? 0;
+        }
+
+        $taxAmount = $amount * ($rate / 100);
+        $this->rows[$index]['tax_amount'] = $taxAmount;
+        $this->rows[$index]['subtotal_incl'] = $amount + $taxAmount;
+    }
+
     private function recalculateTotals(){
         $this->subtotal = collect($this->rows)->sum(fn($row) => (float) ($row['amount'] ?? 0));
-        $this->total = $this->subtotal + (float) ($this->tax_amount ?? 0);
+        $this->tax_amount = collect($this->rows)->sum(fn($row) => (float) ($row['tax_amount'] ?? 0));
+        $this->total = $this->subtotal + $this->tax_amount;
     }
 
     public function storeProduct(){
@@ -231,11 +258,19 @@ class Create extends Component
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->company_id = Auth::user()->employee->company->id;
         $this->company = Auth::user()->employee->company;
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name', 'Value Added Tax');
+        })->orderBy('name', 'asc')->get();
     }
 
     public function updated($value){
         $this->validateOnly($value);
-        if (Str::startsWith($value, 'rows.') || $value === 'tax_amount') {
+        if (Str::startsWith($value, 'rows.')) {
+            $segments = explode('.', $value);
+            $index = $segments[1] ?? null;
+            if ($index !== null && isset($this->rows[$index])) {
+                $this->recalculateRowTax($index);
+            }
             $this->recalculateTotals();
         }
     }
@@ -249,6 +284,7 @@ class Create extends Component
     protected $validationAttributes = [
         'rows.*.description' => 'description',
         'rows.*.amount' => 'amount',
+        'rows.*.tax_id' => 'tax category',
     ];
 
     protected function rules(){
@@ -259,6 +295,7 @@ class Create extends Component
             'rows' => 'required|array|min:1',
             'rows.*.description' => 'required|string',
             'rows.*.amount' => 'required|numeric',
+            'rows.*.tax_id' => 'required',
         ];
 
         if ($this->invoice_attached === 'Yes') {
@@ -322,6 +359,9 @@ class Create extends Component
                 'qty' => 1,
                 'amount' => $row['amount'],
                 'subtotal' => $row['amount'],
+                'tax_id' => $row['tax_id'] ?: null,
+                'tax_amount' => $row['tax_amount'] ?? 0,
+                'subtotal_inclusive' => $row['subtotal_incl'] ?? $row['amount'],
             ]);
         }
 

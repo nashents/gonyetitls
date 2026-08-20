@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
+use App\Models\Company;
 use App\Models\JournalEntryLine;
 
 /**
@@ -43,6 +44,12 @@ class FleetSubledgerCalculator
         return self::DIMENSIONS[$this->dimension];
     }
 
+    /** See TrialBalanceCalculator::reportingCurrencyId() for the rule this applies. */
+    private function reportingCurrencyId(): ?int
+    {
+        return Company::find($this->companyId)?->currency_id;
+    }
+
     /**
      * Raw lines: one row per unit + account combination, so the view can
      * show each unit's control-account total with its real-account
@@ -51,6 +58,7 @@ class FleetSubledgerCalculator
     private function lines(): Collection
     {
         $column = $this->config()['column'];
+        $base = (int) $this->reportingCurrencyId();
 
         return JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
@@ -63,9 +71,10 @@ class FleetSubledgerCalculator
                 journal_entry_lines.{$column} as unit_id,
                 accounts.id as account_id,
                 accounts.name as account_name,
-                SUM(journal_entry_lines.debit) as total_debit,
-                SUM(journal_entry_lines.credit) as total_credit,
-                SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as balance
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END) as total_debit,
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as total_credit,
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                    - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as balance
             ")
             ->groupBy("journal_entry_lines.{$column}", 'accounts.id', 'accounts.name')
             ->get();

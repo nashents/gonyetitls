@@ -122,16 +122,24 @@ Credit Note | @if (Auth::user()->employee->company)
                           <table>
                                 <thead>
                                     <tr>
+                                        <th class="text-center"><strong>HS Code</strong></th>
                                         <th class="text-center"> <strong>Description</strong></th>
                                         <th class="text-right"><strong>Qty</strong></th>
-                                        <th class="text-right"><strong>Amount</strong></th>
-                                        <th class="text-right"><strong>Subtotal</strong></th>
+                                        <th class="text-right"><strong>Price</strong></th>
+                                        <th class="text-right"><strong>Total</strong><small>(Excl)</small></th>
+                                        <th class="text-right"><strong>VAT Amount</strong></th>
+                                        <th class="text-right"><strong>Total</strong><small>(Incl)</small></th>
                                     </tr>
                                 </thead>
                                 <tbody>
 
                                     @forelse ($credit_note_items as $credit_note_item)
                                          <tr>
+                                            <td class="unit text-center">
+                                                @if ($credit_note_item->tax && $credit_note_item->tax->hs_code)
+                                                    {{$credit_note_item->tax->hs_code}}
+                                                @endif
+                                            </td>
                                             <td class="text-center">
                                                 {{$credit_note_item->description}}
                                             </td>
@@ -146,27 +154,33 @@ Credit Note | @if (Auth::user()->employee->company)
                                                     {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->subtotal,2)}}
                                                 @endif
                                             </td>
+                                            <td class="unit text-right">
+                                                {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->tax_amount ?: 0,2)}}
+                                            </td>
+                                            <td class="unit text-right">
+                                                {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->subtotal_inclusive ?: $credit_note_item->amount,2)}}
+                                            </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="4" class="text-center">No items</td></tr>
+                                        <tr><td colspan="7" class="text-center">No items</td></tr>
                                     @endforelse
 
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="3">SUB-TOTAL {{ $credit_note->currency ? $credit_note->currency->name : "" }} <small>(Excl)</small></td>
+                                        <td colspan="6">SUB-TOTAL {{ $credit_note->currency ? $credit_note->currency->name : "" }} <small>(Excl)</small></td>
                                         <td>
                                             {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note->subtotal,2)}}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3">VAT TOTAL</td>
+                                        <td colspan="6">VAT TOTAL</td>
                                         <td>
                                             {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note->tax_amount ?: 0,2)}}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3">CREDIT NOTE TOTAL {{ $credit_note->currency ? $credit_note->currency->name : "" }} </td>
+                                        <td colspan="6">CREDIT NOTE TOTAL {{ $credit_note->currency ? $credit_note->currency->name : "" }} </td>
                                         <td>
                                             @if ($credit_note->total)
                                                   {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note->total,2)}}

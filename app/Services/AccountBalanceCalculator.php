@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use App\Models\Account;
+use App\Models\Company;
 use App\Models\JournalEntryLine;
 
 /**
@@ -25,14 +26,24 @@ class AccountBalanceCalculator
     ) {
     }
 
+    /** See TrialBalanceCalculator::reportingCurrencyId() for the rule this applies. */
+    private function reportingCurrencyId(): ?int
+    {
+        return Company::find($this->companyId)?->currency_id;
+    }
+
     private function balancesAsOf(string $date): array
     {
+        $base = (int) $this->reportingCurrencyId();
+
         return JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $this->companyId)
             ->where('journal_entries.status', '!=', 'draft')
             ->where('journal_entries.date', '<=', $date)
-            ->selectRaw('journal_entry_lines.account_id, SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as balance')
+            ->selectRaw("journal_entry_lines.account_id,
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                    - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as balance")
             ->groupBy('journal_entry_lines.account_id')
             ->pluck('balance', 'account_id')
             ->map(fn ($v) => (float) $v)

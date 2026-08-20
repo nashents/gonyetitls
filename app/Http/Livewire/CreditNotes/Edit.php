@@ -9,6 +9,7 @@ use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\CreditNote;
 use App\Models\InvoiceItem;
+use App\Models\Tax;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -61,6 +62,7 @@ class Edit extends Component
     public $invoiceItems = [];
     public $rows = [];
     public $invoice_attached = 'Yes';
+    public $tax_accounts = [];
 
     public function mount($id){
 
@@ -68,6 +70,9 @@ class Edit extends Component
         $this->currencies = Currency::all();
         $this->invoices = Invoice::where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->tax_accounts = Tax::whereHas('account', function ($query) {
+            return $query->where('name', 'Value Added Tax');
+        })->orderBy('name', 'asc')->get();
 
         $this->memo = $this->credit_note->memo;
         $this->footer = $this->credit_note->footer;
@@ -95,11 +100,14 @@ class Edit extends Component
             return [
                 'description' => $item->description,
                 'amount' => $item->amount,
+                'tax_id' => $item->tax_id,
+                'tax_amount' => $item->tax_amount,
+                'subtotal_incl' => $item->subtotal_inclusive,
             ];
         })->values()->toArray();
 
         if (empty($this->rows)) {
-            $this->rows = [['description' => '', 'amount' => '']];
+            $this->rows = [['description' => '', 'amount' => '', 'tax_id' => '', 'tax_amount' => 0, 'subtotal_incl' => 0]];
         }
     }
 
@@ -132,16 +140,21 @@ class Edit extends Component
     public function addFromInvoiceItem($invoiceItemId){
         $invoiceItem = InvoiceItem::where('invoice_id', $this->selectedInvoice)->find($invoiceItemId);
         if ($invoiceItem) {
+            $index = count($this->rows);
             $this->rows[] = [
                 'description' => $invoiceItem->description ?: $invoiceItem->trip_details,
                 'amount' => $invoiceItem->subtotal,
+                'tax_id' => $invoiceItem->tax_id,
+                'tax_amount' => 0,
+                'subtotal_incl' => 0,
             ];
+            $this->recalculateRowTax($index);
             $this->recalculateTotals();
         }
     }
 
     public function addRow(){
-        $this->rows[] = ['description' => '', 'amount' => ''];
+        $this->rows[] = ['description' => '', 'amount' => '', 'tax_id' => '', 'tax_amount' => 0, 'subtotal_incl' => 0];
     }
 
     public function removeRow($index){
@@ -150,14 +163,39 @@ class Edit extends Component
         $this->recalculateTotals();
     }
 
+    private function recalculateRowTax($index){
+        if (!isset($this->rows[$index])) {
+            return;
+        }
+
+        $amount = (float) ($this->rows[$index]['amount'] ?? 0);
+        $taxId = $this->rows[$index]['tax_id'] ?? null;
+        $rate = 0;
+
+        if ($taxId) {
+            $tax = Tax::find($taxId);
+            $rate = $tax->rate ?? 0;
+        }
+
+        $taxAmount = $amount * ($rate / 100);
+        $this->rows[$index]['tax_amount'] = $taxAmount;
+        $this->rows[$index]['subtotal_incl'] = $amount + $taxAmount;
+    }
+
     private function recalculateTotals(){
         $this->subtotal = collect($this->rows)->sum(fn($row) => (float) ($row['amount'] ?? 0));
-        $this->total = $this->subtotal + (float) ($this->tax_amount ?? 0);
+        $this->tax_amount = collect($this->rows)->sum(fn($row) => (float) ($row['tax_amount'] ?? 0));
+        $this->total = $this->subtotal + $this->tax_amount;
     }
 
     public function updated($value){
         $this->validateOnly($value);
-        if (Str::startsWith($value, 'rows.') || $value === 'tax_amount') {
+        if (Str::startsWith($value, 'rows.')) {
+            $segments = explode('.', $value);
+            $index = $segments[1] ?? null;
+            if ($index !== null && isset($this->rows[$index])) {
+                $this->recalculateRowTax($index);
+            }
             $this->recalculateTotals();
         }
     }
@@ -176,6 +214,7 @@ class Edit extends Component
             'rows' => 'required|array|min:1',
             'rows.*.description' => 'required|string',
             'rows.*.amount' => 'required|numeric',
+            'rows.*.tax_id' => 'required',
         ];
 
         if ($this->invoice_attached === 'Yes') {
@@ -235,6 +274,9 @@ class Edit extends Component
                     'qty' => 1,
                     'amount' => $row['amount'],
                     'subtotal' => $row['amount'],
+                    'tax_id' => $row['tax_id'] ?: null,
+                    'tax_amount' => $row['tax_amount'] ?? 0,
+                    'subtotal_inclusive' => $row['subtotal_incl'] ?? $row['amount'],
                 ]);
             }
 

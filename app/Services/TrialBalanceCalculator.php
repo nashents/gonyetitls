@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
+use App\Models\Company;
 use App\Models\JournalEntryLine;
 
 /**
@@ -22,8 +23,22 @@ class TrialBalanceCalculator
     ) {
     }
 
+    /**
+     * Every line is summed in the company's reporting currency: its native
+     * debit/credit when it was posted directly in that currency, otherwise
+     * the exchange_debit/exchange_credit already converted at posting time
+     * (see InvoiceJournalService et al.) - mirrors the same rule
+     * IncomeStatementCalculator::reportingAmount() applies for the P&L.
+     */
+    private function reportingCurrencyId(): ?int
+    {
+        return Company::find($this->companyId)?->currency_id;
+    }
+
     public function lines(): Collection
     {
+        $base = (int) $this->reportingCurrencyId();
+
         $lines = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
@@ -33,16 +48,17 @@ class TrialBalanceCalculator
             ->where('journal_entries.status', '!=', 'draft')
             ->whereBetween('journal_entries.date', [$this->dateFrom, $this->dateTo])
             ->when($this->search, fn ($q) => $q->where('accounts.name', 'like', "%{$this->search}%"))
-            ->selectRaw('
+            ->selectRaw("
                 accounts.id as account_id,
                 accounts.name as account_name,
                 account_types.name as account_type_name,
                 account_type_groups.name as account_type_group_name,
                 account_type_groups.id as account_type_group_id,
-                SUM(journal_entry_lines.debit) as total_debit,
-                SUM(journal_entry_lines.credit) as total_credit,
-                SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as balance
-            ')
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END) as total_debit,
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as total_credit,
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                    - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as balance
+            ")
             ->groupBy(
                 'accounts.id',
                 'accounts.name',

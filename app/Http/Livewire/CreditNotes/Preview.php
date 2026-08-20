@@ -15,7 +15,7 @@ class Preview extends Component
     public function mount($credit_note, $credit_note_items, $company){
         $this->credit_note = $credit_note;
         $this->invoice = $credit_note->invoice;
-        $this->invoice_items = $this->invoice->invoice_items;
+        $this->invoice_items = $this->invoice ? $this->invoice->invoice_items : collect();
         $this->credit_note_items = $credit_note_items;
         $this->company = $company;
     }

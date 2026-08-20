@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use App\Models\AccountType;
+use App\Models\Company;
 use App\Models\JournalEntryLine;
 
 /**
@@ -29,6 +30,12 @@ class CashFlowCalculator
         return AccountType::where('name', 'Cash & Bank')->first()?->accounts->pluck('id')->all() ?? [];
     }
 
+    /** See TrialBalanceCalculator::reportingCurrencyId() for the rule this applies. */
+    private function reportingCurrencyId(): ?int
+    {
+        return Company::find($this->companyId)?->currency_id;
+    }
+
     private function baseQuery(array $cashAccountIds)
     {
         return JournalEntryLine::query()
@@ -51,9 +58,12 @@ class CashFlowCalculator
             return 0.0;
         }
 
+        $base = (int) $this->reportingCurrencyId();
+
         return (float) $this->baseQuery($cashAccountIds)
             ->where('journal_entries.date', '<=', $date)
-            ->selectRaw('COALESCE(SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit), 0) as balance')
+            ->selectRaw("COALESCE(SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END), 0) as balance")
             ->value('balance');
     }
 
@@ -75,6 +85,8 @@ class CashFlowCalculator
             return ['receipts' => 0.0, 'payments' => 0.0, 'other' => 0.0];
         }
 
+        $base = (int) $this->reportingCurrencyId();
+
         $rows = $this->baseQuery($cashAccountIds)
             ->leftJoin('payments', 'payments.id', '=', 'journal_entries.payment_id')
             ->whereDate('journal_entries.date', '>=', $this->from)
@@ -85,7 +97,8 @@ class CashFlowCalculator
                     WHEN LOWER(payments.category) IN ('vendor', 'bill') THEN 'payments'
                     ELSE 'other'
                 END as bucket,
-                SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as net
+                SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END)
+                    - SUM(CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END) as net
             ")
             ->groupBy('bucket')
             ->pluck('net', 'bucket');

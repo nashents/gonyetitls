@@ -16,10 +16,12 @@ class CreditNoteItem extends Model implements Auditable
         'user_id',
         'credit_note_id',
         'invoice_product_id',
+        'tax_id',
         'item',
         'description',
         'qty',
         'amount',
+        'tax_amount',
         'subtotal',
         'subtotal_inclusive',
     ];
@@ -29,5 +31,8 @@ class CreditNoteItem extends Model implements Auditable
     }
     public function invoice_product(){
         return $this->belongsTo('App\Models\InvoiceProduct');
+    }
+    public function tax(){
+        return $this->belongsTo('App\Models\Tax');
     }
 }
