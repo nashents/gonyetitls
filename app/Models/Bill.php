@@ -75,6 +75,9 @@ class Bill extends Model implements Auditable
     public function top_up(){
         return $this->belongsTo('App\Models\TopUp');
     }
+    public function goods_received(){
+        return $this->belongsTo('App\Models\GoodsReceived');
+    }
     public function container(){
         return $this->belongsTo('App\Models\Container');
     }

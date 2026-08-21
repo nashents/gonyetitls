@@ -16,6 +16,7 @@ use Livewire\WithPagination;
 use App\Models\TicketExpense;
 use App\Models\TyreAssignment;
 use App\Models\TicketInventory;
+use App\Services\Accounting\InventoryJournalService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -304,9 +305,11 @@ class Pending extends Component
                             }
 
                             $item->save();
- 
+
                     }
-                
+
+                    app(InventoryJournalService::class)->postDispatchBill($bill);
+
                     $this->dispatchBrowserEvent('hide-authorizationModal');
                     $this->dispatchBrowserEvent('alert', [
                         'type' => 'success',

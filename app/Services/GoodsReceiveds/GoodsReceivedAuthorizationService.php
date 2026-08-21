@@ -3,16 +3,23 @@
 namespace App\Services\GoodsReceiveds;
 
 use App\Models\GoodsReceived;
+use App\Services\Accounting\InventoryJournalService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class GoodsReceivedAuthorizationService
 {
+    public function __construct(private InventoryJournalService $inventoryJournal)
+    {
+    }
+
     /**
      * Authorize (approve/reject) a pending GRV. Approving flips the suspended
      * inventory/tyre/asset rows it created to status=1 — the moment they actually
-     * become available stock. Rejecting only touches the GRV header; the items
-     * stay suspended (status=0) rather than being deleted.
+     * become available stock — and posts the receipt to the GL (debit Spares
+     * Inventory, credit Accounts Payable; see InventoryJournalService).
+     * Rejecting only touches the GRV header; the items stay suspended
+     * (status=0) rather than being deleted, and nothing is posted.
      */
     public function authorize(GoodsReceived $goodsReceived, string $decision, ?string $comments, int $userId): GoodsReceived
     {
@@ -45,6 +52,8 @@ class GoodsReceivedAuthorizationService
                     $asset->status = 1;
                     $asset->save();
                 }
+
+                $this->inventoryJournal->postReceipt($goodsReceived->fresh());
             }
 
             return $goodsReceived;

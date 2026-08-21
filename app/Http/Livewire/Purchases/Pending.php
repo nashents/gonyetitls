@@ -111,13 +111,24 @@ class Pending extends Component
             
         if ($this->authorize == "approved") {
 
+            // Inventory-department POs no longer post a Bill here - a PO is
+            // a commitment, not a liability (quantities/pricing can still
+            // change, and the goods may never arrive). The GL posting now
+            // happens at GRV approval instead, once the spares are actually
+            // received - see InventoryJournalService::postReceipt(), wired
+            // through GoodsReceivedAuthorizationService. Posting here too
+            // would double-count the same stock once at PO, again at GRV.
+            // Asset/tyre POs are unchanged pending a similar GRV-based
+            // review for those departments.
+            if ($this->department !== 'inventory') {
+
             $bill = new Bill;
             $bill->user_id = Auth::user()->id;
             $bill->bill_number = $this->billNumber();
             $bill->purchase_id = $purchase->id;
             $bill->category = "Purchase Order";
             $bill->bill_date = $purchase->date;
-            
+
             $account_type = Account::find($purchase->account_id)->account_type;
             $bill->account_id = $purchase->account_id;
             if (isset($account_type)) {
@@ -156,8 +167,10 @@ class Pending extends Component
                     $bill_expense->tax_amount = $purchase_product->tax_amount;
                     $bill_expense->subtotal_incl = $purchase_product->subtotal_incl;
                     $bill_expense->save();
-        
+
                 }
+            }
+
             }
 
             $notifications = Notification::where('when','after')->where('category','Purchase Order Authorization')->where('status',1)->get();

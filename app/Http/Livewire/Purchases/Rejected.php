@@ -90,13 +90,18 @@ class Rejected extends Component
             
         if ($this->authorize == "approved") {
 
+            // Inventory-department POs no longer post a Bill here - see the
+            // matching note in Purchases/Pending.php. GRV approval now owns
+            // this posting (InventoryJournalService::postReceipt()).
+            if ($this->department !== 'inventory') {
+
             $bill = new Bill;
             $bill->user_id = Auth::user()->id;
             $bill->bill_number = $this->billNumber();
             $bill->purchase_id = $purchase->id;
             $bill->category = "Purchase Order";
             $bill->bill_date = $purchase->date;
-            
+
             $account_type = Account::find($purchase->account_id)->account_type;
             $bill->account_id = $purchase->account_id;
             if (isset($account_type)) {
@@ -135,11 +140,12 @@ class Rejected extends Component
                     $bill_expense->tax_amount = $purchase_product->tax_amount;
                     $bill_expense->subtotal_incl = $purchase_product->subtotal_incl;
                     $bill_expense->save();
-        
+
                 }
             }
 
-           
+            }
+
             $this->dispatchBrowserEvent('hide-purchaseAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

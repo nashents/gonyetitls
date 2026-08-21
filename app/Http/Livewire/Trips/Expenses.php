@@ -177,6 +177,7 @@ class Expenses extends Component
     {
         if (!is_null($id)) {
             $expense = Expense::find($id);
+            $lastTripExpense = TripExpense::where('expense_id', $id)->latest('id')->first();
 
             if ($key !== null) {
                 // Make sure $this->amount is an array
@@ -187,10 +188,14 @@ class Expenses extends Component
                 $this->amount[$key] = $expense->amount ?? null;
                 $this->selectedCurrency[$key] = $expense->currency_id ?? null;
                 $this->payment_method_id[$key] = $expense->payment_method_id ?? null;
+                $this->category[$key] = $lastTripExpense->category ?? null;
+                $this->selectedVendor[$key] = $lastTripExpense->vendor_id ?? null;
             } else {
                 $this->amount = $expense->amount ?? null;
                 $this->selectedCurrency = $expense->currency_id ?? null;
                 $this->payment_method_id = $expense->payment_method_id ?? null;
+                $this->category = $lastTripExpense->category ?? null;
+                $this->selectedVendor = $lastTripExpense->vendor_id ?? null;
             }
         }
     }

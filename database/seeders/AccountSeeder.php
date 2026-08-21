@@ -306,6 +306,7 @@ class AccountSeeder extends Seeder
 
             //inventory
             [ 'currency_id' => Null, 'account_type_group_id' =>  $inventory->account_type_group->id,'account_type_id' => $inventory ? $inventory->id : "",'name' => 'Fuel Inventory','abbreviation' => '','rate' => '', 'description' => 'Value of fuel purchased in bulk and held in containers/tanks, not yet dispensed to a fuel order.', 'hs_code' => ''],
+            [ 'currency_id' => Null, 'account_type_group_id' =>  $inventory->account_type_group->id,'account_type_id' => $inventory ? $inventory->id : "",'name' => 'Spares Inventory','abbreviation' => '','rate' => '', 'description' => 'Value of spares/stock received against a purchase order, not yet dispatched/consumed.', 'hs_code' => ''],
 
             //equity
             [ 'currency_id' => Null, 'account_type_group_id' =>  $business_owner_contribution_and_drawing->account_type_group->id,'account_type_id' => $business_owner_contribution_and_drawing ? $business_owner_contribution_and_drawing->id : "", 'name' => 'Common Shares', 'abbreviation' => '', 'rate' => '', 'description' => "Common shares of a corporation can be issued to business owners, investors, and employees.", 'hs_code' => ''],

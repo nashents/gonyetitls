@@ -754,11 +754,14 @@ class Create extends Component
                 foreach ($route_expenses as $route_expense) {
                     $id = $route_expense->expense_id;
 
+                    $lastTripExpense = TripExpense::where('expense_id', $id)->latest('id')->first();
+
                     $this->expense_id[$id] = $id;
                     $this->category[$id] = $route_expense->category;
                     $this->expense_currency_id[$id] = $route_expense->currency_id;
                     $this->payment_method_id[$id] = $route_expense->payment_method_id;
                     $this->amount[$id] = $route_expense->amount;
+                    $this->expense_vendor_id[$id] = $lastTripExpense->vendor_id ?? null;
 
                     // Optional: handle exchange rate & converted amount if relevant
                     if ($route_expense->currency_id != ($this->company->currency_id ?? null)) {
@@ -1335,10 +1338,12 @@ class Create extends Component
 
         foreach($this->expenses as $expense){
                 $id = $expense->id;
-                $this->category[$id] = $expense->category;
+                $lastTripExpense = TripExpense::where('expense_id', $id)->latest('id')->first();
+                $this->category[$id] = $lastTripExpense->category ?? $expense->category;
                 $this->expense_currency_id[$id] = $expense->currency_id;
                 $this->amount[$id] = $expense->amount;
                 $this->payment_method_id[$id] = $expense->payment_method_id;
+                $this->expense_vendor_id[$id] = $lastTripExpense->vendor_id ?? null;
                 // Optional: handle exchange rate & converted amount if relevant
                 if ($expense->currency_id != ($this->company->currency_id ?? null)) {
                     $this->expense_exchange_rate[$id] = $expense->exchange_rate;
