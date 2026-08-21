@@ -20,7 +20,7 @@ class CreditNote extends Model implements Auditable
         return $this->belongsTo('App\Models\Company');
     }
     public function journal_entry(){
-        return $this->hasOne(JournalEntry::class);
+        return $this->hasOne(JournalEntry::class)->where('status', '!=', 'reversed')->latestOfMany('id');
     }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');

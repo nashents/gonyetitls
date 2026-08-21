@@ -30,6 +30,7 @@
                                 <li role="presentation" ><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" >Trip Expenses</a></li>
                                 <li role="presentation" ><a class="" href="#delivery_note" aria-controls="delivery_note" role="tab" data-toggle="tab" >Offloading Details</a></li>
                                 <li role="presentation" ><a class="" href="#locations" aria-controls="locations" role="tab" data-toggle="tab" >Location Updates</a></li>
+                                <li role="presentation" ><a class="" href="#trip_updates" aria-controls="trip_updates" role="tab" data-toggle="tab" >Trip Updates</a></li>
                                 <li role="presentation" ><a class="" href="#breakdowns" aria-controls="breakdowns" role="tab" data-toggle="tab" >Incident(s)</a></li>
                             </ul>
                             <!-- Tab panes -->
@@ -1305,6 +1306,25 @@
                                                 </div>
                                                 <div class="panel-body overflow-x-auto">
                                                    @livewire('trips.locations', ['trip' => $trip])
+                                                </div>
+                                                <!-- /.panel-body -->
+                                            </div>
+                                            <!-- /.panel -->
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div role="tabpanel" class="tab-pane " id="trip_updates">
+                                    <div class="col-md-12 p-n">
+                                        <div class="col-md-12">
+                                            <div class="panel panel-info">
+                                                <div class="panel-heading">
+                                                    <div class="panel-title">
+                                                        <h5>Trip Update(s)</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="panel-body overflow-x-auto">
+                                                   @livewire('trips.trip-updates', ['trip' => $trip])
                                                 </div>
                                                 <!-- /.panel-body -->
                                             </div>

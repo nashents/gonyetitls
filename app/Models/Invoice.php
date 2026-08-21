@@ -20,7 +20,7 @@ class Invoice extends Model implements Auditable
         return $this->hasMany('App\Models\InvoiceProduct');
     }
     public function journal_entry(){
-        return $this->hasOne(JournalEntry::class);
+        return $this->hasOne(JournalEntry::class)->where('status', '!=', 'reversed')->latestOfMany('id');
     }
     public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');

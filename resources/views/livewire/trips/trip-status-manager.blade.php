@@ -21,33 +21,50 @@
                 <form wire:submit.prevent="update">
                     <div class="modal-body">
 
+                        {{-- ===== UPDATE TYPE TOGGLE ===== --}}
+                        <div class="form-group form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="isCustomUpdate" wire:model="isCustomUpdate">
+                            <label class="form-check-label" for="isCustomUpdate">
+                                Custom Update <span class="text-muted">(log a note/reason without changing the trip's status, e.g. driver still waiting at {{ $trip_status }})</span>
+                            </label>
+                        </div>
+
                         {{-- ===== STATUS / DATE / NOTES ===== --}}
                         <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>Trip Status <span class="text-danger">*</span></label>
-                                    <select class="form-control"
-                                            wire:model="selectedStatus"
-                                            required>
-                                        <option value="">Select Status</option>
-                                        @foreach ([
-                                            'Scheduled', 'Started',
-                                            'Loading Point', 'Loaded',
-                                            'InTransit',
-                                            'Offloading Point', 'Offloaded',
-                                            'OnHold', 'Cancelled',
-                                        ] as $s)
-                                            <option value="{{ $s }}">{{ $s }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedStatus')
-                                        <span class="text-danger small">{{ $message }}</span>
-                                    @enderror
+                            @if ($isCustomUpdate)
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Current Status</label>
+                                        <input type="text" class="form-control" value="{{ $trip_status }}" disabled>
+                                    </div>
                                 </div>
-                            </div>
+                            @else
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Trip Status <span class="text-danger">*</span></label>
+                                        <select class="form-control"
+                                                wire:model="selectedStatus"
+                                                required>
+                                            <option value="">Select Status</option>
+                                            @foreach ([
+                                                'Scheduled', 'Started',
+                                                'Loading Point', 'Loaded',
+                                                'InTransit',
+                                                'Offloading Point', 'Offloaded',
+                                                'OnHold', 'Cancelled',
+                                            ] as $s)
+                                                <option value="{{ $s }}">{{ $s }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedStatus')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endif
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Status Date <span class="text-danger">*</span></label>
+                                    <label>{{ $isCustomUpdate ? 'Update Date' : 'Status Date' }} <span class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control"
                                            wire:model.debounce.300ms="trip_status_date"
                                            required>
@@ -58,11 +75,12 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Status Notes</label>
+                                    <label>{{ $isCustomUpdate ? 'Update Reason' : 'Status Notes' }} @if ($isCustomUpdate)<span class="text-danger">*</span>@endif</label>
                                     <textarea class="form-control"
                                               wire:model.debounce.300ms="trip_status_description"
                                               rows="2"
-                                              placeholder="Additional notes..."></textarea>
+                                              placeholder="{{ $isCustomUpdate ? 'e.g. Driver has been at loading point for 2 days due to...' : 'Additional notes...' }}"
+                                              @if ($isCustomUpdate) required @endif></textarea>
                                     @error('trip_status_description')
                                         <span class="text-danger small">{{ $message }}</span>
                                     @enderror
@@ -70,6 +88,9 @@
                             </div>
                         </div>
 
+                        @if ($isCustomUpdate)
+                            {{-- Custom updates only log a note against the trip's current status. --}}
+                        @else
                         {{-- ===== MILEAGE / HOURS ===== --}}
                         <div class="row">
                             <div class="col-md-3">
@@ -542,6 +563,8 @@
                             @endif {{-- /path A vs B --}}
 
                         @endif {{-- /Loaded|Offloaded --}}
+
+                        @endif {{-- /isCustomUpdate else --}}
 
                     </div>{{-- /modal-body --}}
 

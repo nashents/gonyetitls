@@ -23,5 +23,10 @@ class TripStatus extends Model implements Auditable
         'status',
         'date',
         'description',
+        'is_custom_update',
+    ];
+
+    protected $casts = [
+        'is_custom_update' => 'boolean',
     ];
 }

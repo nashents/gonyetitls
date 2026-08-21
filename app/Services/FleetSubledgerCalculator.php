@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Collection;
 use App\Models\Company;
 use App\Models\JournalEntryLine;
+use App\Services\Accounting\JournalEntryPairFilter;
 
 /**
  * Fleet sub-ledger: per-horse/trailer/vehicle/driver debit/credit totals for
@@ -60,6 +61,11 @@ class FleetSubledgerCalculator
         $column = $this->config()['column'];
         $base = (int) $this->reportingCurrencyId();
 
+        // Reversed originals whose reversal also falls in this date range
+        // are fully-cancelling noise for the gross Debit/Credit totals (net
+        // balance is unaffected either way) - see JournalEntryPairFilter.
+        $cancelledIds = JournalEntryPairFilter::cancelledEntryIds($this->companyId, $this->dateFrom, $this->dateTo);
+
         return JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
@@ -67,6 +73,7 @@ class FleetSubledgerCalculator
             ->where('journal_entries.status', '!=', 'draft')
             ->whereNotNull("journal_entry_lines.{$column}")
             ->whereBetween('journal_entries.date', [$this->dateFrom, $this->dateTo])
+            ->when(!empty($cancelledIds), fn ($q) => $q->whereNotIn('journal_entries.id', $cancelledIds))
             ->selectRaw("
                 journal_entry_lines.{$column} as unit_id,
                 accounts.id as account_id,

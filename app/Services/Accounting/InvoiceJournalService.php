@@ -14,8 +14,15 @@ class InvoiceJournalService
     {
         // Prevent duplicate journal entries - a reversed entry (see
         // LedgerResyncService) doesn't count, so a resync can post a fresh
-        // one afterward.
-        $existing = JournalEntry::where('invoice_id', $invoice->id)->where('status', '!=', 'reversed')->first();
+        // one afterward. The reversal record itself must also be excluded
+        // here: JournalReversalService copies invoice_id onto it, and its
+        // status is 'posted' (only the original it reversed flips to
+        // 'reversed'), so without this it gets mistaken for "already
+        // posted" and handed back in place of a genuinely fresh entry.
+        $existing = JournalEntry::where('invoice_id', $invoice->id)
+            ->where('status', '!=', 'reversed')
+            ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
+            ->first();
         if ($existing) {
             return $existing;
         }

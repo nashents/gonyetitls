@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Collection;
 use App\Models\Company;
 use App\Models\JournalEntryLine;
+use App\Services\Accounting\JournalEntryPairFilter;
 
 /**
  * Trial Balance: per-account debit/credit totals for a date range, built
@@ -39,6 +40,11 @@ class TrialBalanceCalculator
     {
         $base = (int) $this->reportingCurrencyId();
 
+        // Reversed originals whose reversal also falls in this date range
+        // are fully-cancelling noise for gross Debit/Credit totals (net
+        // balance is unaffected either way) - see JournalEntryPairFilter.
+        $cancelledIds = JournalEntryPairFilter::cancelledEntryIds($this->companyId, $this->dateFrom, $this->dateTo);
+
         $lines = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
@@ -47,6 +53,7 @@ class TrialBalanceCalculator
             ->where('journal_entries.company_id', $this->companyId)
             ->where('journal_entries.status', '!=', 'draft')
             ->whereBetween('journal_entries.date', [$this->dateFrom, $this->dateTo])
+            ->when(!empty($cancelledIds), fn ($q) => $q->whereNotIn('journal_entries.id', $cancelledIds))
             ->when($this->search, fn ($q) => $q->where('accounts.name', 'like', "%{$this->search}%"))
             ->selectRaw("
                 accounts.id as account_id,
