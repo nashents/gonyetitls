@@ -112,6 +112,9 @@
                                 @if ($this->unpostedInvoicesCount > 0)
                                     <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedInvoicesCount }} approved invoice(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every approved, unposted invoice to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedInvoicesCount }})</a>
                                 @endif
+                                @if (Auth::user()->is_admin())
+                                    <a href="#" wire:click.prevent="fixForexAmounts()" wire:loading.attr="disabled" onclick="return confirm('Recalculate the FX amounts for every foreign-currency invoice whose exchange rate/total are set but the converted amount is missing or out of date? This updates historical invoices.')" class="btn btn-default btn-rounded btn-wide" title="Recalculate exchange_amount from exchange_rate and total for foreign-currency invoices"><i class="fa fa-money"></i> Fix Forex Amounts</a>
+                                @endif
                             </div>
                            
                             

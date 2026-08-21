@@ -911,6 +911,79 @@ class Index extends Component
     }
 
     /**
+     * One-off data fix for foreign-currency invoices whose header
+     * exchange_amount doesn't match exchange_rate * total (e.g. edited after
+     * the rate changed), plus any invoice_items whose own exchange_amount is
+     * stale against exchange_rate * subtotal_incl. Mirrors
+     * Trips::fixForexAmounts().
+     */
+    public function fixForexAmounts()
+    {
+        if (!Auth::user()->is_admin()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'danger',
+                'message' => 'You are not authorized to run this fix.',
+            ]);
+            return;
+        }
+
+        $baseCurrencyId = $this->company->currency_id;
+
+        $invoices = Invoice::query()
+            ->whereNotNull('currency_id')
+            ->where('currency_id', '!=', $baseCurrencyId)
+            ->whereNotNull('exchange_rate')
+            ->get(['id', 'currency_id', 'total', 'exchange_rate', 'exchange_amount']);
+
+        $fixed = 0;
+        $itemsFixed = 0;
+
+        foreach ($invoices as $invoice) {
+            $rate = is_numeric($invoice->exchange_rate) ? (float) $invoice->exchange_rate : null;
+
+            if (!$rate || $rate <= 0) {
+                continue;
+            }
+
+            if (is_numeric($invoice->total) && (float) $invoice->total > 0) {
+                $correct = round($rate * (float) $invoice->total, 2);
+                $current = is_numeric($invoice->exchange_amount) ? round((float) $invoice->exchange_amount, 2) : null;
+
+                if ($current !== $correct) {
+                    $invoice->exchange_amount = $correct;
+                    $invoice->save();
+                    $fixed++;
+                }
+            }
+
+            $items = InvoiceItem::where('invoice_id', $invoice->id)->get(['id', 'subtotal_incl', 'exchange_amount']);
+
+            foreach ($items as $item) {
+                if (!is_numeric($item->subtotal_incl) || (float) $item->subtotal_incl <= 0) {
+                    continue;
+                }
+
+                $correctItem = round($rate * (float) $item->subtotal_incl, 2);
+                $currentItem = is_numeric($item->exchange_amount) ? round((float) $item->exchange_amount, 2) : null;
+
+                if ($currentItem !== $correctItem) {
+                    $item->exchange_amount = $correctItem;
+                    $item->exchange_rate = $rate;
+                    $item->save();
+                    $itemsFixed++;
+                }
+            }
+        }
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ($fixed || $itemsFixed) ? 'success' : 'info',
+            'message' => ($fixed || $itemsFixed)
+                ? "Fixed forex amounts on {$fixed} invoice(s) and {$itemsFixed} invoice item(s)."
+                : 'No invoices needed a forex amount fix.',
+        ]);
+    }
+
+    /**
      * Manually push an approved invoice to the general ledger. Covers
      * invoices approved without ever triggering InvoiceObserver (e.g.
      * invoices created already-approved in one save, which never fire an

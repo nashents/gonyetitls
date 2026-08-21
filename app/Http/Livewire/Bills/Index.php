@@ -9,6 +9,7 @@ use App\Models\Account;
 use App\Models\Asset;
 use App\Models\BankAccount;
 use App\Models\Bill;
+use App\Models\BillExpense;
 use App\Models\BillPayment;
 use App\Models\Currency;
 use App\Models\Customer;
@@ -608,6 +609,78 @@ class Index extends Component
             'type'    => $errors > 0 ? 'warning' : 'success',
             'message' => "Posted {$posted} of {$result['total']} bill(s) to the ledger."
                 . ($errors > 0 ? " {$errors} failed - see logs." : ''),
+        ]);
+    }
+
+    /**
+     * One-off data fix for foreign-currency bills whose header exchange_amount
+     * doesn't match exchange_rate * total (e.g. edited after the rate
+     * changed), plus any bill_expenses whose own exchange_amount is stale
+     * against exchange_rate * subtotal_incl. Mirrors Trips::fixForexAmounts().
+     */
+    public function fixForexAmounts()
+    {
+        if (!Auth::user()->is_admin()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'danger',
+                'message' => 'You are not authorized to run this fix.',
+            ]);
+            return;
+        }
+
+        $baseCurrencyId = $this->company->currency_id;
+
+        $bills = Bill::query()
+            ->whereNotNull('currency_id')
+            ->where('currency_id', '!=', $baseCurrencyId)
+            ->whereNotNull('exchange_rate')
+            ->get(['id', 'currency_id', 'total', 'exchange_rate', 'exchange_amount']);
+
+        $fixed = 0;
+        $expensesFixed = 0;
+
+        foreach ($bills as $bill) {
+            $rate = is_numeric($bill->exchange_rate) ? (float) $bill->exchange_rate : null;
+
+            if (!$rate || $rate <= 0) {
+                continue;
+            }
+
+            if (is_numeric($bill->total) && (float) $bill->total > 0) {
+                $correct = round($rate * (float) $bill->total, 2);
+                $current = is_numeric($bill->exchange_amount) ? round((float) $bill->exchange_amount, 2) : null;
+
+                if ($current !== $correct) {
+                    $bill->exchange_amount = $correct;
+                    $bill->save();
+                    $fixed++;
+                }
+            }
+
+            $expenses = BillExpense::where('bill_id', $bill->id)->get(['id', 'subtotal_incl', 'exchange_amount']);
+
+            foreach ($expenses as $expense) {
+                if (!is_numeric($expense->subtotal_incl) || (float) $expense->subtotal_incl <= 0) {
+                    continue;
+                }
+
+                $correctExpense = round($rate * (float) $expense->subtotal_incl, 2);
+                $currentExpense = is_numeric($expense->exchange_amount) ? round((float) $expense->exchange_amount, 2) : null;
+
+                if ($currentExpense !== $correctExpense) {
+                    $expense->exchange_amount = $correctExpense;
+                    $expense->exchange_rate = $rate;
+                    $expense->save();
+                    $expensesFixed++;
+                }
+            }
+        }
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ($fixed || $expensesFixed) ? 'success' : 'info',
+            'message' => ($fixed || $expensesFixed)
+                ? "Fixed forex amounts on {$fixed} bill(s) and {$expensesFixed} bill expense(s)."
+                : 'No bills needed a forex amount fix.',
         ]);
     }
 

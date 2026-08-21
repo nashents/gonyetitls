@@ -172,6 +172,9 @@
                                 @if ($this->unpostedBillsCount > 0)
                                     <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedBillsCount }} approved bill(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every approved, unposted bill to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedBillsCount }})</a>
                                 @endif
+                                @if (Auth::user()->is_admin())
+                                    <a href="#" wire:click.prevent="fixForexAmounts()" wire:loading.attr="disabled" onclick="return confirm('Recalculate the FX amounts for every foreign-currency bill whose exchange rate/total are set but the converted amount is missing or out of date? This updates historical bills.')" class="btn btn-default btn-rounded btn-wide" title="Recalculate exchange_amount from exchange_rate and total for foreign-currency bills"><i class="fa fa-money"></i> Fix Forex Amounts</a>
+                                @endif
                             </div>
                             
                       
