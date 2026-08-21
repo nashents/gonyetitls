@@ -81,6 +81,11 @@ class TripTypeController extends Controller
      */
     public function destroy(TripType $tripType)
     {
+        if ($tripType->is_locked) {
+            Session::flash('error', 'This trip type is a core system trip type required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $tripType->delete();
         Session::flash('success','Trip Type successfully deleted');
         return redirect()->back();

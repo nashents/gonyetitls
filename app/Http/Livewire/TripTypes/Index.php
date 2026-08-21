@@ -70,6 +70,13 @@ class Index extends Component
         if ($this->trip_type_id) {
             try{
             $trip_type = TripType::find($this->trip_type_id);
+            if ($trip_type->is_locked && $this->name !== $trip_type->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This trip type is a core system trip type - its name cannot be changed."
+                ]);
+                return;
+            }
             $trip_type->update([
                 'user_id' => $this->user_id,
                 'name' => $this->name,

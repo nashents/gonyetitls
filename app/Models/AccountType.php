@@ -29,5 +29,6 @@ class AccountType extends Model implements Auditable
         'user_id',
         'name',
         'account_type_group_id',
+        'is_locked',
     ];
 }

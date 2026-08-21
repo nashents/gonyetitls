@@ -82,6 +82,11 @@ class LossGroupController extends Controller
      */
     public function destroy(LossGroup $lossGroup)
     {
+        if ($lossGroup->is_locked) {
+            Session::flash('error', 'This loss group is a core system group required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $losses = $lossGroup->losses;
         if (isset($losses)) {
             foreach ($losses as $loss) {

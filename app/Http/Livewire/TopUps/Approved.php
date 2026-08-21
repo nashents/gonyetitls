@@ -96,7 +96,7 @@ class Approved extends Component
 
     if (isset($top_up->amount) && $top_up->amount > 0) {
 
-        $account = Account::where('name','Fuel')->get()->first();
+        $account = Account::where('name','Fuel - Ops')->get()->first();
 
         $bill = new Bill;
         $bill->user_id = Auth::user()->id;

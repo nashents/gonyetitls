@@ -16,9 +16,10 @@ class LossCategorySeeder extends Seeder
     {
         $loss_categories = ['Personal Factors', 'Job Factors', 'Substandard Acts', 'Substandard Conditions'];
         foreach($loss_categories as $category){
-            LossCategory::create([
-                'name' => $category
-            ]);
+            LossCategory::updateOrCreate(
+                ['name' => $category],
+                ['name' => $category, 'is_locked' => true]
+            );
         }
     }
 }

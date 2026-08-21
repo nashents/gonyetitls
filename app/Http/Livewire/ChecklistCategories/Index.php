@@ -84,6 +84,13 @@ class Index extends Component
         if ($this->checklist_category_id) {
             try{
            $checklist_category = ChecklistCategory::find($this->checklist_category_id);
+           if ($checklist_category->is_locked && $this->name !== $checklist_category->name) {
+               $this->dispatchBrowserEvent('alert',[
+                   'type'=>'error',
+                   'message'=>"This checklist category is a core system category - its name cannot be changed."
+               ]);
+               return;
+           }
            $checklist_category->name = $this->name;
            $checklist_category->update();
 

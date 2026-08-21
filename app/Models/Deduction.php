@@ -30,7 +30,9 @@ class Deduction extends Model implements Auditable
 
     protected $fillable = [
         'name',
+        'type',
         'status',
+        'is_locked',
     ];
    
 }

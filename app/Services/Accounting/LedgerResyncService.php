@@ -55,12 +55,19 @@ class LedgerResyncService
         });
     }
 
-    public function resyncBill(Bill $bill, ?string $reason = null): JournalEntry
+    /**
+     * $force skips the isUnchanged() shortcut - needed when a bill's own
+     * total/rate/currency never changed but its bill_expenses were repaired
+     * (e.g. a bill_expense.account_id that was null, so BillJournalService
+     * silently skipped the debit leg last time) - isUnchanged() only looks
+     * at the Accounts Payable line, which was already correct either way.
+     */
+    public function resyncBill(Bill $bill, ?string $reason = null, bool $force = false): JournalEntry
     {
-        return DB::transaction(function () use ($bill, $reason) {
+        return DB::transaction(function () use ($bill, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('bill_id', $bill->id));
 
-            if ($existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
                 return $existing;
             }
 

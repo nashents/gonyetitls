@@ -16,9 +16,10 @@ class DepartmentSeeder extends Seeder
     {
         $departments = ['Information Technology', 'Human Resources', 'Finance', 'Transport & Logistics', 'Stores', 'Services','Workshop','Security','HSEQ'];
         foreach($departments as $department){
-            Department::create([
-                'name' => $department
-            ]);
+            Department::updateOrCreate(
+                ['name' => $department],
+                ['name' => $department, 'is_locked' => true]
+            );
         }
     }
 }

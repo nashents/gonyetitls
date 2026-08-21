@@ -82,6 +82,11 @@ class AccountTypeController extends Controller
      */
     public function destroy(AccountType $accountType)
     {
+        if ($accountType->is_locked) {
+            Session::flash('error', 'This account type is a core system account type required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $accountType->delete();
         Session::flash('success','Account Type Deleted Successfully');
         return redirect()->back();

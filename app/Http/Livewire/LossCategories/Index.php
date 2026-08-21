@@ -67,6 +67,13 @@ class Index extends Component
         if ($this->loss_category_id) {
 
             $loss_category = LossCategory::find($this->loss_category_id);
+            if ($loss_category->is_locked && $this->name !== $loss_category->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This loss category is a core system category - its name cannot be changed."
+                ]);
+                return;
+            }
             $loss_category->name = $this->name;
             $loss_category->update();
 

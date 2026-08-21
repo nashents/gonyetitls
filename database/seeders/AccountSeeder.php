@@ -245,6 +245,7 @@ class AccountSeeder extends Seeder
         $business_owner_contribution_and_drawing = AccountType::where('name','Business Owner Contribution & Drawing')->get()->first();
         $retained_earnings_profit = AccountType::where('name','Retained Earnings: Profit')->get()->first();
         
+        $inventory = AccountType::where('name','Inventory')->get()->first();
         $other_short_term_asset = AccountType::where('name','Other Short-Term Asset')->get()->first();
         $expected_payments_from_customers = AccountType::where('name','Expected Payments from Customers')->get()->first();
         $expected_payments_to_vendors = AccountType::where('name','Expected Payments to Vendors')->get()->first();
@@ -259,7 +260,16 @@ class AccountSeeder extends Seeder
         
         $currency = Currency::where('name','USD')->first();
 
-        $accounts = [    
+        // One-time rename: the old single "Fuel" account is being split into
+        // "Fuel - Ops" (non-trip fuel, stays Operating Expense) and a new
+        // "Fuel - COGS" account below (trip-attached fuel). Renaming in place
+        // (rather than creating a fresh account) preserves its id and any
+        // history, and must run before the updateOrCreate loop below so that
+        // loop's "Fuel - Ops" entry finds this renamed row instead of
+        // creating a second one.
+        Account::where('name', 'Fuel')->update(['name' => 'Fuel - Ops']);
+
+        $accounts = [
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id, 'name' => 'Accounting Fees','abbreviation' => '','rate' => '' , 'description' => 'Accounting or bookkeeping services for your business.', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => 'Advertising & Promotion','abbreviation' => '','rate' => '', 'description' => 'Advertising or other costs to promote your business. Includes web or social media promotion.', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => 'Bank Service Charges','abbreviation' => '','rate' => '', 'description' => 'Fees you pay to your bank like transaction charges, monthly charges, and overdraft charges.', 'hs_code' => ''],
@@ -268,7 +278,7 @@ class AccountSeeder extends Seeder
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => 'Computer - Internet','abbreviation' => '','rate' => '', 'description' => 'Internet services for your business. Does not include data access for mobile devices.', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => 'Computer - Software','abbreviation' => '','rate' => '', 'description' => 'Apps, software, and web or cloud services you use for business on your mobile phone or computer. Includes one-time purchases and subscriptions.', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => 'Depriciation - Expense','abbreviation' => '','rate' => '', 'description' => 'The amount of depreciation reported on the income statement. To determine the appropriate depreciation expense for a period, estimate the average useful life of the fixed asset in question. For example, if you paid $1,800 for a computer for your business, and the computer has an estimated useful life of 3 years, each monthly income statement will report a depreciation expense of $50 for 36 months.', 'hs_code' => ''],
-            [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' =>  'Fuel','abbreviation' => '','rate' => '', 'description' => '', 'hs_code' => ''],
+            [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' =>  'Fuel - Ops','abbreviation' => '','rate' => '', 'description' => 'Fuel not attached to a trip (standby, workshop, generator use).', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => 'Insurance - Vehicles','abbreviation' => '','rate' => '', 'description' => 'Insurance for the vehicle you use for business.', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' =>  'Interest Expense','abbreviation' => '','rate' => '', 'description' => 'Interest your business pays on loans and other forms of debt, including business loans, credit cards, mortgages, and vehicle payments.', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $operating_expense->account_type_group->id, 'account_type_id' =>  $operating_expense->id,'name' => ' Meals & Entertainment','abbreviation' => '','rate' => '', 'description' => 'Food and beverages you consume while conducting business, with clients and vendors, or entertaining customers.', 'hs_code' => ''],
@@ -292,7 +302,11 @@ class AccountSeeder extends Seeder
             [ 'currency_id' => Null, 'account_type_group_id' =>  $cost_of_goods_sold->account_type_group->id,'account_type_id' => $cost_of_goods_sold ? $cost_of_goods_sold->id : "",'name' => 'Creditor Payment','abbreviation' => '','rate' => '', 'description' => '', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $cost_of_goods_sold->account_type_group->id,'account_type_id' => $cost_of_goods_sold ? $cost_of_goods_sold->id : "",'name' => 'Merchandise','abbreviation' => '','rate' => '', 'description' => '', 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $cost_of_goods_sold->account_type_group->id,'account_type_id' => $cost_of_goods_sold ? $cost_of_goods_sold->id : "",'name' => 'Trip Expense','abbreviation' => '','rate' => '', 'description' => '', 'hs_code' => ''],
-            
+            [ 'currency_id' => Null, 'account_type_group_id' =>  $cost_of_goods_sold->account_type_group->id,'account_type_id' => $cost_of_goods_sold ? $cost_of_goods_sold->id : "",'name' => 'Fuel - COGS','abbreviation' => '','rate' => '', 'description' => 'Fuel attached to a trip - a direct cost of that trip\'s revenue.', 'hs_code' => ''],
+
+            //inventory
+            [ 'currency_id' => Null, 'account_type_group_id' =>  $inventory->account_type_group->id,'account_type_id' => $inventory ? $inventory->id : "",'name' => 'Fuel Inventory','abbreviation' => '','rate' => '', 'description' => 'Value of fuel purchased in bulk and held in containers/tanks, not yet dispensed to a fuel order.', 'hs_code' => ''],
+
             //equity
             [ 'currency_id' => Null, 'account_type_group_id' =>  $business_owner_contribution_and_drawing->account_type_group->id,'account_type_id' => $business_owner_contribution_and_drawing ? $business_owner_contribution_and_drawing->id : "", 'name' => 'Common Shares', 'abbreviation' => '', 'rate' => '', 'description' => "Common shares of a corporation can be issued to business owners, investors, and employees.", 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $retained_earnings_profit->account_type_group->id,'account_type_id' => $retained_earnings_profit ? $retained_earnings_profit->id : "",'name' => 'Retained Earnings/Deficit','abbreviation' => '','rate' => '', 'description' => "Retained earnings are the total net income your business has earned from its first day to the current date, minus any dividends you've already distributed. If the amount of retained earnings is negative, report it as a deficit.", 'hs_code' => ''],

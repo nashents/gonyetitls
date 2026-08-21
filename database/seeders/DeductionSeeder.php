@@ -26,9 +26,15 @@ class DeductionSeeder extends Seeder
             ['type' => 'After Tax','name' => 'Trailer Damage','status' => 1],  
             ['type' => 'After Tax','name' => 'Nights Recovery','status' => 1],  
             ['type' => 'After Tax','name' => 'Overload Fine','status' => 1],  
-            ['type' => 'Before Tax','name' => 'PAYE','status' => 1],  
-            ['type' => 'Before Tax','name' => 'AIDS Levy','status' => 1],  
+            ['type' => 'Before Tax','name' => 'PAYE','status' => 1],
+            ['type' => 'Before Tax','name' => 'AIDS Levy','status' => 1],
             ];
-            Deduction::insert($deductions);
+
+            foreach ($deductions as $deduction) {
+                Deduction::updateOrCreate(
+                    ['name' => $deduction['name']],
+                    $deduction + ['is_locked' => true]
+                );
+            }
     }
 }

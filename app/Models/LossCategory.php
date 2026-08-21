@@ -21,4 +21,10 @@ class LossCategory extends Model implements Auditable
     public function losses(){
         return $this->hasMany('App\Models\Loss');
     }
+
+    protected $fillable = [
+        'user_id',
+        'name',
+        'is_locked',
+    ];
 }

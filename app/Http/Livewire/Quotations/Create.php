@@ -679,7 +679,10 @@ public function quotationNumber(){
         $quotation->footer = $this->footer;
         $quotation->for_trips = $this->for_trips;
         $quotation->save();
-        $quotation->bank_accounts()->sync($this->bank_account_id);
+        $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
+        if (!empty($validAccounts)) {
+            $quotation->bank_accounts()->sync($validAccounts);
+        }
 
         
       

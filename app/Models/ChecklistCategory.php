@@ -22,6 +22,7 @@ class ChecklistCategory extends Model implements Auditable
     protected $fillable = [
         'name',
         'user_id',
+        'is_locked',
     ];
 
     

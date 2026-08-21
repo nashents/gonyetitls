@@ -12,6 +12,24 @@ class BillJournalService
 {
     public function post(Bill $bill): JournalEntry
     {
+        return $this->postInternal($bill, Account::where('name', 'Accounts Payable')->firstOrFail());
+    }
+
+    /**
+     * Same as post() but credits $creditAccount instead of Accounts Payable -
+     * for a bill that draws down a liability already recognized elsewhere
+     * (e.g. Bulk Buy fuel consumption drawing down the Fuel Inventory asset
+     * that was booked to AP at top-up time), rather than a genuine new
+     * payable. Crediting AP again in that case would fabricate a liability
+     * with nothing left to ever clear it.
+     */
+    public function postWithCreditAccount(Bill $bill, Account $creditAccount): JournalEntry
+    {
+        return $this->postInternal($bill, $creditAccount);
+    }
+
+    private function postInternal(Bill $bill, Account $creditAccount): JournalEntry
+    {
         // Prevent duplicate - a reversed entry (see LedgerResyncService)
         // doesn't count, so a resync can post a fresh one afterward. The
         // reversal record itself must also be excluded here: it carries the
@@ -30,10 +48,9 @@ class BillJournalService
 
         $rate = $bill->exchange_rate ?? 1;
 
-        $apAccount  = Account::where('name', 'Accounts Payable')->firstOrFail();
         $vatAccount = Account::where('name', 'Value Added Tax')->firstOrFail();
 
-        return DB::transaction(function () use ($bill, $apAccount, $vatAccount, $rate) {
+        return DB::transaction(function () use ($bill, $creditAccount, $vatAccount, $rate) {
 
             $entry = JournalEntry::create([
                 'company_id'     => $bill->company_id ? $bill->company_id : Auth::user()->employee->company_id,
@@ -65,6 +82,7 @@ class BillJournalService
                     'trailer_id'      => $bill->trailer_id,
                     'driver_id'       => $bill->driver_id,
                     'transporter_id'  => $bill->transporter_id,
+                    'container_id'    => $bill->container_id,
                     'debit'           => $subtotal,
                     'credit'          => 0,
                     'exchange_debit'  => $subtotal * (is_numeric($rate) ? (float) $rate : 0),
@@ -92,19 +110,23 @@ class BillJournalService
                 ]);
             }
 
-            // ── CR Accounts Payable (full bill total) ────────────────────
+            // ── CR $creditAccount (full bill total) - Accounts Payable for a
+            // genuine new payable, or another account (e.g. Fuel Inventory)
+            // when this bill draws down a liability already recognized
+            // elsewhere - see postWithCreditAccount(). ────────────────────
             $total = is_numeric($bill->total) ? (float) $bill->total : 0;
 
             $entry->journal_entry_lines()->create([
-                'account_id'      => $apAccount->id,
+                'account_id'      => $creditAccount->id,
                 'vendor_id'       => $bill->vendor_id,
+                'container_id'    => $bill->container_id,
                 'debit'           => 0,
                 'credit'          => $total,
                 'exchange_debit'  => 0,
                 'exchange_credit' => $total * (is_numeric($rate) ? (float) $rate : 0),
                 'currency_id'     => $bill->currency_id,
                 'exchange_rate'   => $rate,
-                'description'     => "AP - Bill {$bill->bill_number}",
+                'description'     => "{$creditAccount->name} - Bill {$bill->bill_number}",
             ]);
 
             return $entry;

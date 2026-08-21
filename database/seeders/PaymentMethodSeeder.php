@@ -20,6 +20,12 @@ class PaymentMethodSeeder extends Seeder
             ['user_id' => 3, 'name'=>'IceCash'],
             ['user_id' => 3, 'name'=>'Korridor'],
         ];
-        PaymentMethod::insert($payment_methods);
+
+        foreach ($payment_methods as $payment_method) {
+            PaymentMethod::updateOrCreate(
+                ['name' => $payment_method['name']],
+                $payment_method + ['is_locked' => true]
+            );
+        }
     }
 }

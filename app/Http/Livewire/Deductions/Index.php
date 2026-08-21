@@ -106,6 +106,13 @@ class Index extends Component
         if ($this->deduction_id) {
             try{
             $deduction = Deduction::find($this->deduction_id);
+            if ($deduction->is_locked && $this->name !== $deduction->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This deduction is a core system deduction - its name cannot be changed."
+                ]);
+                return;
+            }
             $deduction->user_id = Auth::user()->id;
             $deduction->name = $this->name;
             $deduction->calculate_by = $this->calculate_by;

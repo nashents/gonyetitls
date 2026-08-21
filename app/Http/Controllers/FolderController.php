@@ -82,6 +82,11 @@ class FolderController extends Controller
      */
     public function destroy(Folder $folder)
     {
+        if ($folder->is_locked) {
+            Session::flash('error', 'This folder is a core system folder required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $documents = $folder->documents;
         if (isset($documents)) {
                 foreach ($documents as $document) {

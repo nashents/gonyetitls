@@ -21,4 +21,11 @@ class LossGroup extends Model implements Auditable
     public function losses(){
         return $this->hasMany('App\Models\Loss');
     }
+
+    protected $fillable = [
+        'user_id',
+        'loss_category_id',
+        'name',
+        'is_locked',
+    ];
 }

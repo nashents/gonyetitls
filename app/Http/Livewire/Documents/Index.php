@@ -348,6 +348,15 @@ class Index extends Component
 
     public function deleteFolder(): void
     {
+        if ($this->folder && $this->folder->is_locked) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'This folder is a core system folder and cannot be deleted.',
+            ]);
+            $this->dispatchBrowserEvent('hide-folderDeleteModal');
+            return;
+        }
+
         if ($this->folder) {
             $this->folder->documents()->delete();
             $this->folder->delete();
@@ -423,6 +432,14 @@ class Index extends Component
         $folder = Folder::find($this->folder_id);
 
         if (!$folder) {
+            return;
+        }
+
+        if ($folder->is_locked && $this->folder_title !== $folder->title) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'This folder is a core system folder - its name cannot be changed.',
+            ]);
             return;
         }
 

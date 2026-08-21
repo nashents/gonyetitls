@@ -89,6 +89,11 @@ class ChecklistCategoryController extends Controller
      */
     public function destroy(ChecklistCategory $checklistCategory)
     {
+        if ($checklistCategory->is_locked) {
+            Session::flash('error', 'This checklist category is a core system category required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $checklistCategory->delete();
         Session::flash('success','Checklist Deleted Successfully!!');
         return redirect()->back();

@@ -116,7 +116,7 @@ class Rejected extends Component
 
         if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
 
-            $account = Account::where('name','Fuel')->get()->first();
+            $account = Account::where('name','Fuel - Ops')->get()->first();
             $billAmount = $top_up->amount ? $top_up->amount : $top_up->account_amount;
             $bill = new Bill;
             $bill->user_id = Auth::user()->id;

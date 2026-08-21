@@ -40,8 +40,9 @@ class LedgerBackfillService
     public function preview(): array
     {
         return [
-            'bills'    => $this->previewBills(),
-            'invoices' => $this->previewInvoices(),
+            'bills'      => $this->previewBills(),
+            'invoices'   => $this->previewInvoices(),
+            'fuel_bills' => $this->previewFuelBills(),
         ];
     }
 
@@ -53,6 +54,7 @@ class LedgerBackfillService
             'payments'     => $this->runPayments(),
             'credit_notes' => $this->runCreditNotes(),
             'debit_notes'  => $this->runDebitNotes(),
+            'fuel_bills'   => $this->runFuelBills(),
         ];
     }
 
@@ -60,11 +62,70 @@ class LedgerBackfillService
     // Bills
     // ---------------------------------------------------------------
 
+    /**
+     * Fuel-order bills (fuel_id set) are excluded here and handled by
+     * missingFuelBillsQuery()/runFuelBills() instead - they can't gate on
+     * to_be_paid the way every other bill does. A Bulk Buy fuel consumption
+     * bill is correctly to_be_paid=false forever (it draws down inventory
+     * already paid for, not a new payable), which would make it permanently
+     * invisible here otherwise - see FuelJournalService for the accounting
+     * model.
+     */
     public function missingBillsQuery()
     {
-        return Bill::where('authorization', 'approved')
+        return Bill::whereNull('fuel_id')
+            ->where('authorization', 'approved')
             ->where('to_be_paid', true)
             ->whereDoesntHave('journal_entry');
+    }
+
+    /**
+     * Approved fuel-order bills with no JournalEntry, regardless of
+     * to_be_paid - see missingBillsQuery()'s note above.
+     */
+    public function missingFuelBillsQuery()
+    {
+        return Bill::whereNotNull('fuel_id')
+            ->whereHas('fuel', fn ($q) => $q->where('authorization', 'approved'))
+            ->whereDoesntHave('journal_entry');
+    }
+
+    protected function previewFuelBills(): array
+    {
+        $missing = $this->missingFuelBillsQuery()->get(['id', 'bill_number', 'bill_date', 'total']);
+
+        return [
+            'missing_count' => $missing->count(),
+            'missing_ids'   => $missing->pluck('id')->all(),
+        ];
+    }
+
+    public function runFuelBills(): array
+    {
+        $result = $this->emptyResult();
+        $service = app(FuelJournalService::class);
+
+        $this->withImpersonation(function () use ($service, &$result) {
+            $this->missingFuelBillsQuery()->chunkById(200, function ($bills) use ($service, &$result) {
+                foreach ($bills as $bill) {
+                    $result['total']++;
+                    try {
+                        if (! $bill->user_id) {
+                            throw new \RuntimeException('Bill has no user_id - cannot resolve its company.');
+                        }
+                        $this->impersonate($bill->user_id);
+
+                        $entry = $service->postConsumption($bill->fuel);
+                        $result['posted'][] = ['id' => $bill->id, 'number' => $bill->bill_number, 'journal_number' => $entry->journal_number];
+                    } catch (\Throwable $e) {
+                        $result['errors'][] = ['id' => $bill->id, 'number' => $bill->bill_number, 'message' => $e->getMessage()];
+                        Log::error("LedgerBackfillService: failed to post fuel bill #{$bill->id}: " . $e->getMessage());
+                    }
+                }
+            });
+        });
+
+        return $result;
     }
 
     protected function previewBills(): array

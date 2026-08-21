@@ -141,10 +141,13 @@ class PayrollControlAccountSeeder extends Seeder
             ],
         ];
 
+        // updateOrCreate (not firstOrCreate) so re-running this in production
+        // retroactively sets is_locked on the 12 rows it created before this
+        // flag existed, not just on rows created from now on.
         foreach ($accounts as $account) {
-            Account::firstOrCreate(
+            Account::updateOrCreate(
                 ['name' => $account['name']],
-                $account
+                $account + ['is_locked' => true]
             );
         }
     }

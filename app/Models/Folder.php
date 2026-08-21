@@ -24,5 +24,6 @@ class Folder extends Model implements Auditable
         'user_id',
         'title',
         'category',
+        'is_locked',
     ];
 }

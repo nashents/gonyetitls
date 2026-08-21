@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Account;
 use App\Models\Branch;
+use App\Models\Container;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Driver;
@@ -35,6 +36,7 @@ class JournalEntryLine extends Model implements Auditable
         'transporter_id',
         'vehicle_id',
         'trailer_id',
+        'container_id',
         'description',
         'debit',
         'exchange_debit',
@@ -113,6 +115,11 @@ class JournalEntryLine extends Model implements Auditable
     public function trailer()
     {
         return $this->belongsTo(Trailer::class);
+    }
+
+    public function container()
+    {
+        return $this->belongsTo(Container::class);
     }
 
     public function bank_reconciliation()

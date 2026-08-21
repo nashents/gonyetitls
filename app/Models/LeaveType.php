@@ -36,5 +36,6 @@ class LeaveType extends Model implements Auditable
         'requires_management_approval',
         'active',
         'description',
+        'is_locked',
     ];
 }

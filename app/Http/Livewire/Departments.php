@@ -74,6 +74,13 @@ class Departments extends Component
         if ($this->department_id) {
             try{
             $department = Department::find($this->department_id);
+            if ($department->is_locked && $this->name !== $department->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This department is a core system department - its name cannot be changed."
+                ]);
+                return;
+            }
             $department->update([
                 'name' => $this->name,
                 'department_code' => $this->department_code,

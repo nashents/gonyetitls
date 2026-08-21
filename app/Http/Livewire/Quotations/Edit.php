@@ -713,8 +713,8 @@ class Edit extends Component
         $quotation->footer = $this->footer;
         $quotation->for_trips = $this->for_trips;
         $quotation->update();
-        $quotation->bank_accounts()->detach();
-        $quotation->bank_accounts()->sync($this->bank_account_id);
+        $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
+        $quotation->bank_accounts()->sync($validAccounts);
 
         if($this->cost_item_id){
             foreach($this->cost_item_id as $index => $cost_item_id){

@@ -52,6 +52,7 @@ class Department extends Model implements Auditable
         'name',
         'department_code',
         'description',
+        'is_locked',
     ];
 
 }

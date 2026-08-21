@@ -82,6 +82,11 @@ class DeductionController extends Controller
      */
     public function destroy(Deduction $deduction)
     {
+        if ($deduction->is_locked) {
+            Session::flash('error', 'This deduction is a core system deduction required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $deduction->delete();
         Session::flash('Deduction Deleted Successfully!!');
         return redirect()->back();

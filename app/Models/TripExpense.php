@@ -42,6 +42,10 @@ class TripExpense extends Model implements Auditable
 
     public function getCanDeleteAttribute()
     {
+        if (auth()->check() && auth()->user()->is_admin()) {
+            return true;
+        }
+
         if (!$this->bill) {
             return false;
         }
@@ -52,6 +56,10 @@ class TripExpense extends Model implements Auditable
 
     public function getCanEditAttribute()
     {
+        if (auth()->check() && auth()->user()->is_admin()) {
+            return true;
+        }
+
         return $this->can_delete && !$this->fuel;
     }
 

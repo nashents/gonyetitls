@@ -2,20 +2,16 @@
 
 namespace App\Http\Livewire\Fuels;
 
-use App\Models\Bill;
 use App\Models\Fuel;
 use App\Models\Hour;
 use App\Models\User;
 use App\Models\Horse;
-use App\Models\Account;
-use App\Models\Expense;
 use App\Models\Mileage;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Container;
 use App\Mail\FuelOrderMail;
-use App\Models\BillExpense;
 use Livewire\WithPagination;
 use App\Models\TransportOrder;
 use Illuminate\Support\Facades\DB;
@@ -100,40 +96,6 @@ class Pending extends Component
       }
 
       
-    public function billNumber(){
-
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-    
-        $bill = Bill::latest()->orderBy('id','desc')->first();
-    
-        if (!$bill) {
-            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $bill->id + 1;
-            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-    
-        return  $bill_number;
-    
-    
-    }
-
     public function showBulkyAuthorize(){
         $this->dispatchBrowserEvent('show-bulkyAuthorizationModal');
     }
@@ -303,79 +265,7 @@ class Pending extends Component
                         $container->update();
                     }
 
-                    $expense = Expense::where('name','Fuel Topup')->get()->first();
-
-
-                    $bill = new Bill;
-
-                    if($fuel->trip){
-                        $bill->trip_id = $fuel->trip_id;
-                        $trip_expense = $fuel->trip_expense;
-                        if(isset($trip_expense)){
-                            $bill->trip_expense_id = $trip_expense->id;
-                        }
-                        $bill->category = "Trip Expense - Fuel Order";
-                        $account = Account::where('name','Trip Expense')->get()->first();
-                    }else{
-                        $bill->category = "Fuel";
-                        $account = Account::where('name','Fuel')->get()->first();
-                    }
-                    $bill->user_id = Auth::user()->id;
-                    $bill->bill_number = $this->billNumber();
-                  
-                    if (isset($account)) {
-                        $bill->account_id = $account->id;
-                        $bill->account_type_id = $account->account_type->id;
-                    }
-    
-                    if($fuel->container->purchase_type == "Once Off Buy"){
-                        $bill->to_be_paid = True;
-                    }else{
-                        $bill->to_be_paid = False;
-                    }
-    
-                    $bill->fuel_id = $fuel->id;
-                    $bill->bill_date = $fuel->date;
-                    $bill->horse_id = $fuel->horse_id;
-                    $bill->vehicle_id = $fuel->vehicle_id;
-                    $bill->asset_id = $fuel->asset_id;
-                    $bill->currency_id = $fuel->currency_id;
-                    if($fuel->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill->exchange_rate = $fuel->exchange_rate;
-                        $bill->exchange_amount = $fuel->exchange_amount;
-                    }
-                    $bill->subtotal = $fuel->amount;
-                    $bill->total = $fuel->amount;
-                    $bill->balance = $fuel->amount;
-                    $bill->authorized_by_id = Auth::user()->id;
-                    $bill->authorization = $this->authorize;
-                    $bill->comments = $this->comments;
-                    $bill->save();
-    
-                    $bill_expense = new BillExpense;
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-                    if($fuel->trip){
-                        if (isset($expense)) {
-                            $bill_expense->expense_id = $expense->id;
-                        }
-                    }
-                  
-                    if (isset($account)) {
-                        $bill_expense->account_id = $account->id;
-                        $bill_expense->account_type_id = $account->account_type->id;
-                    }
-                    $bill_expense->qty = $fuel->quantity;
-                     if($fuel->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill_expense->exchange_rate = $fuel->exchange_rate;
-                        $bill_expense->exchange_amount = $fuel->exchange_amount;
-                    }
-                    $bill_expense->amount = $fuel->unit_price;
-                    $bill_expense->subtotal = $fuel->amount;
-                    $bill_expense->subtotal_incl = $fuel->amount;
-                    $bill_expense->save();
-
+                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
 
                     // sending fuel order email to station
                     $trip = $fuel->trip;
@@ -592,81 +482,7 @@ class Pending extends Component
                     }
 
 
-                    $expense = Expense::where('name','Fuel Topup')->get()->first();
-               
-
-                    $bill = new Bill;
-                    if($fuel->trip){
-                        $bill->trip_id = $fuel->trip_id;
-                        $trip_expense = $fuel->trip_expense;
-                        if(isset($trip_expense)){
-                            $bill->trip_expense_id = $trip_expense->id;
-                        }
-                    
-                        $bill->category = "Trip Expense - Fuel Order";
-                        $account = Account::where('name','Trip Expense')->get()->first();
-                    }else{
-                        $bill->category = "Fuel";
-                        $account = Account::where('name','Fuel')->get()->first();
-                    }
-                    $bill->user_id = Auth::user()->id;
-                    $bill->bill_number = $this->billNumber();
-                
-                    if (isset($account)) {
-                        $bill->account_id = $account->id;
-                        $bill->account_type_id = $account->account_type->id;
-                    }
-
-                    if($fuel->container->purchase_type == "Once Off Buy"){
-                        $bill->to_be_paid = True;
-                    }else{
-                        $bill->to_be_paid = False;
-                    }
-                
-                    $bill->fuel_id = $fuel->id;
-                    $bill->bill_date = $fuel->date;
-                    $bill->currency_id = $fuel->currency_id;
-                    $bill->horse_id = $fuel->horse_id;
-                    $bill->vehicle_id = $fuel->vehicle_id;
-                    $bill->asset_id = $fuel->asset_id;
-                    if($fuel->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill->exchange_rate = $fuel->exchange_rate;
-                        $bill->exchange_amount = $fuel->exchange_amount;
-                    }
-                    $bill->subtotal = $fuel->amount;
-                    $bill->total = $fuel->amount;
-                    $bill->balance = $fuel->amount;
-                    $bill->authorized_by_id = Auth::user()->id;
-                    $bill->authorization = $this->authorize;
-                    $bill->comments = $this->comments;
-                    $bill->save();
-
-                    $bill_expense = new BillExpense;
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-
-                    if($fuel->trip){
-                        if (isset($expense)) {
-                            $bill_expense->expense_id = $expense->id;
-                        }
-                    }
-                
-                    if (isset($account)) {
-                        $bill_expense->account_id = $account->id;
-                        $bill_expense->account_type_id = $account->account_type->id;
-                    }
-                    $bill_expense->qty = $fuel->quantity;
-                    $bill_expense->amount = $fuel->unit_price;
-                    $bill_expense->subtotal = $fuel->amount;
-                    $bill_expense->subtotal_incl = $fuel->amount;
-                    if($fuel->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill_expense->exchange_rate = $fuel->exchange_rate;
-                        $bill_expense->exchange_amount = $fuel->exchange_amount;
-                    }
-                    $bill_expense->save();
-       
-
+                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
 
                     // sending fuel order email to station
                     $trip = $fuel->trip;

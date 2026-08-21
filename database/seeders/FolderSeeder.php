@@ -16,10 +16,10 @@ class FolderSeeder extends Seeder
     {
         $folders = ['Uncategorized'];
         foreach($folders as $folder){
-            Folder::create([
-                'user_id' => 3,
-                'title' => $folder
-            ]);
+            Folder::updateOrCreate(
+                ['title' => $folder],
+                ['user_id' => 3, 'title' => $folder, 'is_locked' => true]
+            );
         }
     }
 }

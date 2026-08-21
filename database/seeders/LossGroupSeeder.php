@@ -43,6 +43,13 @@ class LossGroupSeeder extends Seeder
             ['user_id' => '3','loss_category_id' => $conditions->id, 'name' => 'Abuse or Misuse'],
            ];
 
-           LossGroup::insert($loss_groups);
+           // Matched on name + loss_category_id (not name alone) since several
+           // group names repeat across different loss categories above.
+           foreach ($loss_groups as $loss_group) {
+               LossGroup::updateOrCreate(
+                   ['name' => $loss_group['name'], 'loss_category_id' => $loss_group['loss_category_id']],
+                   $loss_group + ['is_locked' => true]
+               );
+           }
     }
 }

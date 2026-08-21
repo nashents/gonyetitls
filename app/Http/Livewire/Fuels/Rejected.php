@@ -278,7 +278,7 @@ class Rejected extends Component
                         $account = Account::where('name','Trip Expense')->get()->first();
                     }else{
                         $bill->category = "Fuel";
-                        $account = Account::where('name','Fuel')->get()->first();
+                        $account = Account::where('name','Fuel - Ops')->get()->first();
                     }
                     $bill->user_id = Auth::user()->id;
                     $bill->bill_number = $this->billNumber();
@@ -572,7 +572,7 @@ class Rejected extends Component
                     $account = Account::where('name','Trip Expense')->get()->first();
                 }else{
                     $bill->category = "Fuel";
-                    $account = Account::where('name','Fuel')->get()->first();
+                    $account = Account::where('name','Fuel - Ops')->get()->first();
                 }
                 $bill->user_id = Auth::user()->id;
                 $bill->bill_number = $this->billNumber();

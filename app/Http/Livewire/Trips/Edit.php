@@ -33,6 +33,7 @@ use App\Models\OffloadingPoint;
 use App\Models\Quotation;
 use App\Models\Rate;
 use App\Models\Route;
+use App\Services\Accounting\TripExpenseRepairService;
 use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Trailer;
@@ -3446,6 +3447,8 @@ class Edit extends Component
         }
 
         $this->recalculateExpenses($trip->id);
+
+        app(TripExpenseRepairService::class)->repair($trip);
 
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',

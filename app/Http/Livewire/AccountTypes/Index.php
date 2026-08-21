@@ -80,6 +80,13 @@ class Index extends Component
         if ($this->account_type_id) {
             try{
             $account_type = AccountType::find($this->account_type_id);
+            if ($account_type->is_locked && $this->name !== $account_type->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This account type is a core system account type - its name cannot be changed."
+                ]);
+                return;
+            }
             $account_type->update([
                 'user_id' => Auth::user()->id,
                 'name' => $this->name,

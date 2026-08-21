@@ -82,6 +82,11 @@ class PaymentMethodController extends Controller
      */
     public function destroy(PaymentMethod $paymentMethod)
     {
+        if ($paymentMethod->is_locked) {
+            Session::flash('error', 'This payment method is a core system payment method required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $paymentMethod->delete();
         Session::flash('success','Payment Method Deleted Successfully');
         return redirect()->back();

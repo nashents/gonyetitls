@@ -169,6 +169,14 @@ class Index extends Component
         try {
             $leave_type = LeaveType::findOrFail($this->leave_type_id);
 
+            if ($leave_type->is_locked && $this->name !== $leave_type->name) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'error',
+                    'message' => 'This leave type is a core system leave type - its name cannot be changed.'
+                ]);
+                return;
+            }
+
             $leave_type->update([
                 'name' => $this->name,
                 'code' => $this->code,
@@ -207,6 +215,15 @@ class Index extends Component
     {
         try {
             $leave_type = LeaveType::findOrFail($id);
+
+            if ($leave_type->is_locked) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'error',
+                    'message' => 'This leave type is a core system leave type and cannot be deleted.'
+                ]);
+                return;
+            }
+
             $leave_type->delete();
 
             $this->dispatchBrowserEvent('alert', [

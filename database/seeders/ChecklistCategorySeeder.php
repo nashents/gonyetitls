@@ -15,14 +15,14 @@ class ChecklistCategorySeeder extends Seeder
     public function run()
     {
         $checklist_categories = [
-            'Stock on board', 
+            'Stock on board',
             'Tyre Inspection'
         ];
         foreach($checklist_categories as $checklist_category){
-            ChecklistCategory::create([
-                'user_id' => 3,
-                'name' => $checklist_category
-            ]);
+            ChecklistCategory::updateOrCreate(
+                ['name' => $checklist_category],
+                ['user_id' => 3, 'name' => $checklist_category, 'is_locked' => true]
+            );
         }
     }
 }

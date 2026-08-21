@@ -85,6 +85,13 @@ class Index extends Component
         if ($this->loss_group_id) {
 
             $loss_group = LossGroup::find($this->loss_group_id);
+            if ($loss_group->is_locked && $this->name !== $loss_group->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This loss group is a core system group - its name cannot be changed."
+                ]);
+                return;
+            }
             $loss_group->name = $this->name;
             $loss_group->loss_category_id = $this->loss_category_id;
             $loss_group->update();

@@ -82,6 +82,11 @@ class LeaveTypeController extends Controller
      */
     public function destroy(LeaveType $leaveType)
     {
+        if ($leaveType->is_locked) {
+            Session::flash('error', 'This leave type is a core system leave type required by the application and cannot be deleted.');
+            return redirect()->route('leave_types.index');
+        }
+
         $leaveType->delete();
         Session::flash('success','Leave Type successfully deleted');
         return redirect()->route('leave_types.index');

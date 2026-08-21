@@ -19,9 +19,10 @@ class TripType extends Model implements Auditable
         return $this->hasMany('App\Models\TransportOrder');
     }
 
-    protected $filable =[
+    protected $fillable = [
         'name',
         'user_id',
         'description',
+        'is_locked',
     ];
 }

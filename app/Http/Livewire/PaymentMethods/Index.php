@@ -73,6 +73,13 @@ class Index extends Component
         if ($this->payment_method_id) {
             try {
             $payment_method = PaymentMethod::find($this->payment_method_id);
+            if ($payment_method->is_locked && $this->name !== $payment_method->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This payment method is a core system payment method - its name cannot be changed."
+                ]);
+                return;
+            }
             $payment_method->update([
                 'user_id' => Auth::user()->id,
                 'name' => $this->name,

@@ -172,7 +172,7 @@ class LeaveTypeSeeder extends Seeder
     foreach ($leaveTypes as $leaveType) {
         LeaveType::withTrashed()->updateOrCreate(
             ['name' => $leaveType['name']],
-            $leaveType
+            $leaveType + ['is_locked' => true]
         );
     }
     }

@@ -16,9 +16,10 @@ class TripTypeSeeder extends Seeder
     {
         $trip_types = ['Local','Cross Border', 'Return', 'Intransit' , 'Inward' , 'Outward'];
         foreach($trip_types as $trip_type){
-            TripType::create([
-                'name' => $trip_type
-            ]);
+            TripType::updateOrCreate(
+                ['name' => $trip_type],
+                ['name' => $trip_type, 'is_locked' => true]
+            );
         }
     }
 }

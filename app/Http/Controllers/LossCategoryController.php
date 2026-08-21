@@ -82,6 +82,11 @@ class LossCategoryController extends Controller
      */
     public function destroy(LossCategory $lossCategory)
     {
+        if ($lossCategory->is_locked) {
+            Session::flash('error', 'This loss category is a core system category required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $loss_groups = $lossCategory->loss_groups;
         if (isset($loss_groups)) {
             foreach ($loss_groups as $loss_group) {

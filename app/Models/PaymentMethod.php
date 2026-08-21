@@ -34,6 +34,7 @@ class PaymentMethod extends Model implements Auditable
 
     protected $fillable =[
         'user_id',
-        'name'
+        'name',
+        'is_locked',
     ];
 }

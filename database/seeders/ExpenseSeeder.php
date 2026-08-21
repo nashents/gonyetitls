@@ -17,7 +17,11 @@ class ExpenseSeeder extends Seeder
     public function run()
     {
 
-        $fuel = Account::where('name','Fuel')->get()->first();
+        // "Fuel Topup"'s account_id here is only a cosmetic default - the
+        // real GL routing (Fuel - COGS vs Fuel - Ops) is resolved per-bill
+        // by FuelJournalService, which reads bill_expenses.account_id, not
+        // this Expense's own account_id.
+        $fuel = Account::where('name','Fuel - Ops')->get()->first();
         $creditor_payment = Account::where('name','Creditor Payment')->get()->first();
         
         $expenses = [

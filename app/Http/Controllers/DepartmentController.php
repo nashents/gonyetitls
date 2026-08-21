@@ -83,6 +83,11 @@ class DepartmentController extends Controller
      */
     public function destroy(Department $department)
     {
+        if ($department->is_locked) {
+            Session::flash('error', 'This department is a core system department required by the application and cannot be deleted.');
+            return redirect()->route('departments.index');
+        }
+
         $department->delete();
         Session::flash('success','Department successfully deleted');
         return redirect()->route('departments.index');

@@ -61,6 +61,11 @@ class AccountTypeSeeder extends Seeder
       
            ];
 
-           AccountType::insert($account_types);
+           foreach ($account_types as $account_type) {
+               AccountType::updateOrCreate(
+                   ['name' => $account_type['name']],
+                   $account_type + ['is_locked' => true]
+               );
+           }
     }
 }
