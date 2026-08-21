@@ -21,6 +21,7 @@ class Dates extends Component
     public $default_weight;
     public $interest;
     public $rates_managed_by_finance;
+    public $show_financials_to_drivers;
 
 
 
@@ -36,12 +37,14 @@ class Dates extends Component
         $this->default_weight = $company->default_weight;
         $this->frequency = $company->exchange_rate_frequency;
         $this->rates_managed_by_finance = $company->rates_managed_by_finance;
+        $this->show_financials_to_drivers = $company->show_financials_to_drivers;
 
     }
 
     public function update(){
         $company = Company::find($this->company_id);
         $company->rates_managed_by_finance = $this->rates_managed_by_finance;
+        $company->show_financials_to_drivers = $this->show_financials_to_drivers;
         $company->currency_id = $this->currency_id;
         $company->exchange_rate_frequency = $this->frequency;
         $company->valuation_method = $this->valuation_method;

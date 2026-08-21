@@ -50,6 +50,7 @@ class Create extends Component
 
     public $experience;
     public $license_number;
+    public $license_expiry_date;
     public $countries;
     public $selectedCountry;
     public $provinces;
@@ -519,6 +520,7 @@ class Create extends Component
         $driver->driver_number = $this->driverNumber();
         $driver->transporter_id = $this->transporter_id;
         $driver->license_number = $this->license_number;
+        $driver->license_expiry_date = $this->license_expiry_date;
         $driver->passport_number = $this->passport_number;
         $driver->class = $this->class;
         $driver->experience = $this->experience;

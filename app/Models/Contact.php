@@ -24,6 +24,9 @@ class Contact extends Model implements Auditable
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }
+    public function consignee(){
+        return $this->belongsTo('App\Models\Consignee');
+    }
     public function broker(){
         return $this->belongsTo('App\Models\Broker');
     }
@@ -34,6 +37,7 @@ class Contact extends Model implements Auditable
     protected $fillable=[
         'transporter_id',
         'customer_id',
+        'consignee_id',
         'broker_id',
         'vendor_id',
         'category',
@@ -41,5 +45,6 @@ class Contact extends Model implements Auditable
         'surname',
         'email',
         'phonenumber',
+        'department',
     ];
 }

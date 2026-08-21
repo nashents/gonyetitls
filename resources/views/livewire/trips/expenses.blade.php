@@ -28,6 +28,8 @@
                 </th>
                 <th class="th-sm">Conversion
                 </th>
+                <th class="th-sm">Trip Sheet
+                </th>
                 @if (Auth::user()->category == "employee" || Auth::user()->category == "admin")
                 <th class="th-sm">Actions
                 </th>
@@ -73,7 +75,14 @@
                 </td>
                 <td>
                     @if (isset($trip_expense->exchange_rate))
-                        Currency conversion: {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($trip_expense->exchange_amount,2)}} at {{ $trip_expense->exchange_rate}} 
+                        Currency conversion: {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($trip_expense->exchange_amount,2)}} at {{ $trip_expense->exchange_rate}}
+                    @endif
+                </td>
+                <td>
+                    @if ($trip_expense->visible_on_trip_sheet)
+                        <span class="badge badge-success"><i class="fa fa-eye"></i> Visible</span>
+                    @else
+                        <span class="badge badge-secondary"><i class="fa fa-eye-slash"></i> Hidden</span>
                     @endif
                 </td>
                 @if (Auth::user()->category == "employee" || Auth::user()->category == "admin")
@@ -109,7 +118,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="10">
+                <td colspan="11">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Trip Expenses Captured....
                     </div>
@@ -275,6 +284,18 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.debounce.300ms="visible_on_trip_sheet.0" value="1"> Visible on Trip Sheet
+                                    </label>
+                                </div>
+                                <small class="text-muted">Uncheck to hide this expense from the driver's trip sheet (e.g. fuel).</small>
+                            </div>
+                        </div>
+                    </div>
 
                 @foreach ($inputs as $key => $value)
                     <div class="form-group" >
@@ -392,6 +413,18 @@
                         <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                     </div>
                 </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.debounce.300ms="visible_on_trip_sheet.{{$value}}" value="1"> Visible on Trip Sheet
+                                    </label>
+                                </div>
+                                <small class="text-muted">Uncheck to hide this expense from the driver's trip sheet (e.g. fuel).</small>
+                            </div>
+                        </div>
                     </div>
                 @endforeach
 
@@ -550,7 +583,18 @@
 
                         </div>
 
-                       
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.debounce.300ms="visible_on_trip_sheet" value="1"> Visible on Trip Sheet
+                                    </label>
+                                </div>
+                                <small class="text-muted">Uncheck to hide this expense from the driver's trip sheet (e.g. fuel).</small>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
                 <div class="modal-footer">

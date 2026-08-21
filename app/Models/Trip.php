@@ -78,6 +78,9 @@ class Trip extends Model implements Auditable
     public function trip_statuses(){
         return $this->hasMany('App\Models\TripStatus');
     }
+    public function cmr_detail(){
+        return $this->hasOne('App\Models\TripCmrDetail');
+    }
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }

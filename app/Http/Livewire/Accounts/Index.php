@@ -292,6 +292,13 @@ class Index extends Component
             $account = Account::find($this->account_id);
             $locked = optional($account->account_type)->name === 'Cash & Bank';
             $account->user_id = Auth::user()->id;
+            if ($account->is_locked && $this->name !== $account->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This account is a core system account - its name cannot be changed."
+                ]);
+                return;
+            }
             $account->name = $this->name;
             $account->account_reference = $this->account_reference;
             $account->code = $this->code ? $this->code : null;

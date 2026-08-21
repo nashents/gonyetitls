@@ -524,7 +524,7 @@ Route::get('invoices/templates/b','InvoiceController@templateB')->name('invoices
 Route::get('order','TransportOrderController@order')->name('order');
 Route::get('transportation/order/{trip}/preview','TransportOrderController@preview')->name('transport_orders.preview');
 Route::get('transportation/order/{trip}/print','TransportOrderController@print')->name('transport_orders.print');
-Route::get('transportation/order/{trip}//export-to-pdf','TransportOrderController@generatePDF')->name('transport_orders.pdf');
+Route::get('transportation/order/{trip}/export-to-pdf','TransportOrderController@generatePDF')->name('transport_orders.pdf');
 
 
 

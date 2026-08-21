@@ -51,6 +51,7 @@ class Expenses extends Component
     public $selected_currency;
     public $vendors;
     public $selectedVendor;
+    public $visible_on_trip_sheet;
 
     public $total_customer_expenses;
     public $total_transporter_expenses;
@@ -66,6 +67,7 @@ class Expenses extends Component
         $i = $i + 1;
         $this->i = $i;
         $this->trip_expense_type[$i] = "expense";
+        $this->visible_on_trip_sheet[$i] = true;
         array_push($this->inputs ,$i);
     }
 
@@ -73,6 +75,7 @@ class Expenses extends Component
     {
         unset($this->inputs[$i]);
         unset($this->trip_expense_type[$i]);
+        unset($this->visible_on_trip_sheet[$i]);
     }
 
     public function addExpense()
@@ -80,6 +83,7 @@ class Expenses extends Component
         $index = count($this->inputs); // Get new index
         $this->inputs[] = $index; // Add new input field index
         $this->trip_expense_type[$index] = "expense"; // Default each new entry to 'expense'
+        $this->visible_on_trip_sheet[$index] = true;
     }
 
     private function resetInputFields(){
@@ -93,6 +97,7 @@ class Expenses extends Component
         $this->edit = Null;
         $this->selectedCurrency = Null;
         $this->selectedVendor = Null;
+        $this->visible_on_trip_sheet = Null;
         $this->total_customer_expenses = 0;
         $this->total_transporter_expenses = 0;
         $this->total_expenses = 0;
@@ -134,12 +139,14 @@ class Expenses extends Component
     }
 
     public function mount($trip){
-   
+
     $this->trip_expense_type[0] = "expense";
+    $this->visible_on_trip_sheet[0] = true;
     foreach ($this->inputs as $index) {
         $this->trip_expense_type[$index] = $this->trip_expense_type[$index] ?? 'expense';
+        $this->visible_on_trip_sheet[$index] = $this->visible_on_trip_sheet[$index] ?? true;
     }
-    
+
     $this->trip = $trip;
     $this->trip_id = $trip->addid;
     $this->currencies = Currency::orderBy('name')->get();
@@ -305,6 +312,7 @@ class Expenses extends Component
                     }
                 
                     $trip_expense->category = $this->category[$key] ?? null;
+                    $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet[$key] ?? true;
                     $trip_expense->amount = $this->amount[$key] ?? 0;
                     $trip_expense->exchange_rate = $this->exchange_rate[$key] ?? null;
 
@@ -459,6 +467,7 @@ class Expenses extends Component
             $this->trip_expense_type = "allowance";
         }
         $this->category = $expense->category;
+        $this->visible_on_trip_sheet = $expense->visible_on_trip_sheet;
         $this->amount = $expense->amount;
         $this->exchange_rate = $expense->exchange_rate;
         $this->exchange_amount = $expense->exchange_amount;
@@ -490,6 +499,7 @@ class Expenses extends Component
                 }
 
                 $trip_expense->category = $this->category;
+                $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet;
                 $trip_expense->exchange_rate = $this->exchange_rate;
                 $trip_expense->exchange_amount = $this->exchange_amount;
                 $trip_expense->currency_id = $this->selectedCurrency;

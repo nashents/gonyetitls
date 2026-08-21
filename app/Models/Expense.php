@@ -63,5 +63,6 @@ class Expense extends Model implements Auditable
         'item_type',
         'tax_id',
         'status',
+        'is_locked',
     ];
 }

@@ -35,15 +35,25 @@
   $user      = Auth::user();
   $deptNames = $user->employee?->departments?->pluck('name')->toArray() ?? [];
   $roleNames = $user->roles->pluck('name')->toArray();
-  $showFinancials = !optional($user->employee?->company)->rates_managed_by_finance
-                    || in_array('Finance', $deptNames)
-                    || in_array('Super Admin', $roleNames);
+
+  // This document is the one handed to the driver, so financials are hidden
+  // by default; the company must explicitly opt in via show_financials_to_drivers,
+  // and internal Finance-only restrictions still apply on top of that.
+  $showFinancials = optional($company)->show_financials_to_drivers && (
+                        !optional($company)->rates_managed_by_finance
+                        || in_array('Finance', $deptNames)
+                        || in_array('Super Admin', $roleNames)
+                    );
 
   // trip -> trip_transport_orders -> transport_order -> customer
   $tripTransportOrders = $trip->trip_transport_orders ?? collect();
 
-  $authorizer = App\Models\User::find($trip->authorized_by_id);
-  $dn         = $trip->delivery_note;
+  $authorizer     = App\Models\User::find($trip->authorized_by_id);
+  $dn             = $trip->delivery_note;
+  $visibleExpenses = $trip->trip_expenses->where('visible_on_trip_sheet', true);
+  $cmrDetail       = $trip->cmr_detail;
+  $consignorContact = $trip->customer?->contacts?->first();
+  $consigneeContact = $trip->consignee?->contacts?->first();
 @endphp
 
   <!-- Action bar -->
@@ -133,6 +143,56 @@
         @endif
       </div>
     </section>
+
+    <!-- ===== Parties (Consignor / Consignee) ===== -->
+    @if($trip->customer || $trip->consignee)
+    <section class="grid-2" style="margin-top:12px;">
+      @if($trip->customer)
+      <div class="card">
+        <h3>Consignor</h3>
+        <div class="kv">
+          <div class="k">Name</div><div class="v">{{$trip->customer->name}}</div>
+          @if($trip->customer->street_address || $trip->customer->city)
+          <div class="k">Address</div>
+          <div class="v">{{$trip->customer->street_address}} {{$trip->customer->suburb}} {{$trip->customer->city}} {{$trip->customer->country}}</div>
+          @endif
+          @if($trip->customer->phonenumber)
+          <div class="k">Phone</div><div class="v">{{$trip->customer->phonenumber}}</div>
+          @endif
+          @if($trip->customer->email)
+          <div class="k">Email</div><div class="v">{{$trip->customer->email}}</div>
+          @endif
+          @if($consignorContact)
+          <div class="k">Contact Person</div>
+          <div class="v">{{$consignorContact->name}} {{$consignorContact->surname}} @if($consignorContact->phonenumber) · {{$consignorContact->phonenumber}} @endif</div>
+          @endif
+        </div>
+      </div>
+      @endif
+      @if($trip->consignee)
+      <div class="card">
+        <h3>Consignee</h3>
+        <div class="kv">
+          <div class="k">Name</div><div class="v">{{$trip->consignee->name}}</div>
+          @if($trip->consignee->street_address || $trip->consignee->city)
+          <div class="k">Address</div>
+          <div class="v">{{$trip->consignee->street_address}} {{$trip->consignee->suburb}} {{$trip->consignee->city}} {{$trip->consignee->country}}</div>
+          @endif
+          @if($trip->consignee->phonenumber)
+          <div class="k">Phone</div><div class="v">{{$trip->consignee->phonenumber}}</div>
+          @endif
+          @if($trip->consignee->email)
+          <div class="k">Email</div><div class="v">{{$trip->consignee->email}}</div>
+          @endif
+          @if($consigneeContact)
+          <div class="k">Contact Person</div>
+          <div class="v">{{$consigneeContact->name}} {{$consigneeContact->surname}} @if($consigneeContact->phonenumber) · {{$consigneeContact->phonenumber}} @endif</div>
+          @endif
+        </div>
+      </div>
+      @endif
+    </section>
+    @endif
 
     <!-- ===== Transport Orders ===== -->
     @if($tripTransportOrders->count() > 0)
@@ -242,6 +302,21 @@
           <div class="k">ID Number</div>
           <div class="v">{{$trip->driver?->employee?->idnumber ?? '—'}}</div>
 
+          @if($trip->driver?->license_number)
+          <div class="k">License #</div>
+          <div class="v">{{$trip->driver->license_number}} @if($trip->driver->class) (Class {{$trip->driver->class}}) @endif</div>
+          @endif
+
+          @if($trip->driver?->license_expiry_date)
+          <div class="k">License Expiry</div>
+          <div class="v">{{\Carbon\Carbon::parse($trip->driver->license_expiry_date)->format('d M Y')}}</div>
+          @endif
+
+          @if($trip->driver?->passport_number)
+          <div class="k">Passport #</div>
+          <div class="v">{{$trip->driver->passport_number}}</div>
+          @endif
+
           @if($trip->notes)
           <div class="k">Instructions</div>
           <div class="v">{{$trip->notes}}</div>
@@ -273,6 +348,34 @@
 
         @if($trip->offloading_point)
         <div class="k">Offloading Point</div><div class="v">{{$trip->offloading_point->name}}</div>
+        @endif
+
+        @if($trip->arrive_loading_point)
+        <div class="k">Arrive Loading Point</div>
+        <div class="v">{{preg_match($pattern, $trip->arrive_loading_point) ? \Carbon\Carbon::parse($trip->arrive_loading_point)->format('d M Y H:i') : $trip->arrive_loading_point}}</div>
+        @endif
+
+        @if($trip->depart_loading_point)
+        <div class="k">Depart Loading Point</div>
+        <div class="v">{{preg_match($pattern, $trip->depart_loading_point) ? \Carbon\Carbon::parse($trip->depart_loading_point)->format('d M Y H:i') : $trip->depart_loading_point}}</div>
+        @endif
+
+        @if($trip->arrive_offloading_point)
+        <div class="k">Arrive Offloading Point</div>
+        <div class="v">{{preg_match($pattern, $trip->arrive_offloading_point) ? \Carbon\Carbon::parse($trip->arrive_offloading_point)->format('d M Y H:i') : $trip->arrive_offloading_point}}</div>
+        @endif
+
+        @if($trip->depart_offloading_point)
+        <div class="k">Depart Offloading Point</div>
+        <div class="v">{{preg_match($pattern, $trip->depart_offloading_point) ? \Carbon\Carbon::parse($trip->depart_offloading_point)->format('d M Y H:i') : $trip->depart_offloading_point}}</div>
+        @endif
+
+        @if($cmrDetail?->number_of_packages)
+        <div class="k">Packages</div><div class="v">{{$cmrDetail->number_of_packages}}</div>
+        @endif
+
+        @if($cmrDetail?->marks_and_numbers)
+        <div class="k">Marks &amp; Numbers</div><div class="v">{{$cmrDetail->marks_and_numbers}}</div>
         @endif
 
         @if($trip->route)
@@ -429,7 +532,7 @@
     @endif
 
     <!-- ===== Trip Expenses ===== -->
-    @if($trip->trip_expenses->count() > 0)
+    @if($visibleExpenses->count() > 0)
     <section class="card" style="margin-top:12px;">
       <h3>Trip Expenses &amp; Allowances</h3>
       <table class="tbl" role="table" aria-label="Trip Expenses">
@@ -444,7 +547,7 @@
           </tr>
         </thead>
         <tbody>
-          @foreach($trip->trip_expenses as $tripExpense)
+          @foreach($visibleExpenses as $tripExpense)
           @php
             $isAllowance = $tripExpense->allowance_id && $tripExpense->allowance;
             $typeLabel   = $isAllowance ? 'Allowance' : 'Expense';
@@ -464,7 +567,7 @@
         <tfoot>
           <tr>
             <td colspan="5" class="right"><strong>Total</strong></td>
-            <td class="right"><strong>{{number_format($trip->trip_expenses->sum('amount'), 2)}}</strong></td>
+            <td class="right"><strong>{{number_format($visibleExpenses->sum('amount'), 2)}}</strong></td>
           </tr>
         </tfoot>
       </table>
@@ -486,6 +589,35 @@
         <div class="k">Freight</div><div class="v">{{$trip->currency?->symbol}}{{number_format($trip->freight, 2)}}</div>
         @endif
       </div>
+    </section>
+    @endif
+
+    <!-- ===== Insurance & Waybill Details ===== -->
+    @if($cmrDetail && ($cmrDetail->insurer_name || $cmrDetail->insurance_policy_number || $cmrDetail->insurance_cover_amount || $cmrDetail->freight_payment_terms))
+    <section class="card" style="margin-top:12px;">
+      <h3>Insurance &amp; Payment Terms</h3>
+      <div class="kv">
+        @if($cmrDetail->insurer_name)
+        <div class="k">Insurer</div><div class="v">{{$cmrDetail->insurer_name}}</div>
+        @endif
+        @if($cmrDetail->insurance_policy_number)
+        <div class="k">Policy #</div><div class="v">{{$cmrDetail->insurance_policy_number}}</div>
+        @endif
+        @if($cmrDetail->insurance_cover_amount)
+        <div class="k">Cover Amount</div><div class="v">{{$trip->currency?->symbol}}{{number_format($cmrDetail->insurance_cover_amount, 2)}}</div>
+        @endif
+        @if($cmrDetail->freight_payment_terms)
+        <div class="k">Freight Terms</div><div class="v">{{ucfirst($cmrDetail->freight_payment_terms)}}</div>
+        @endif
+      </div>
+    </section>
+    @endif
+
+    <!-- ===== Special Agreements ===== -->
+    @if($cmrDetail?->special_agreements)
+    <section class="card" style="margin-top:12px;">
+      <h3>Special Agreements</h3>
+      <div class="notes">{{$cmrDetail->special_agreements}}</div>
     </section>
     @endif
 

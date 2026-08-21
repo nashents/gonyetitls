@@ -81,6 +81,11 @@ class ExpenseController extends Controller
      */
     public function destroy(Expense $expense)
     {
+        if ($expense->is_locked) {
+            Session::flash('error', 'This expense is a core system expense required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $expense->delete();
         Session::flash('success','Expense Deleted Successfully!!');
         return redirect()->back();

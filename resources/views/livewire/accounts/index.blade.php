@@ -162,8 +162,10 @@
                                                                         <li><a href="#"  wire:click="showTransaction({{$account->id}})" ><i class="fas fa-credit-card color-primary" ></i> Transact</a></li>
                                                                         @if (!$account->user_id == Null)
                                                                         <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
-                                                                        <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                                         @endif
+                                                                        @unless ($account->is_locked)
+                                                                        <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                                        @endunless
                                                                        
                                                                     </ul>
                                                                 </div>

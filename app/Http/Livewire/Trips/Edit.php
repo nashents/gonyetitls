@@ -39,6 +39,7 @@ use App\Models\Trailer;
 use App\Models\Transporter;
 use App\Models\TransportOrder;
 use App\Models\Trip;
+use App\Models\TripCmrDetail;
 use App\Models\TripDestination;
 use App\Models\TripExpense;
 use App\Models\TripGroup;
@@ -221,6 +222,15 @@ class Edit extends Component
     public $transporter_freight;
     public $profit;
     public $notes;
+
+    // CMR / international waybill details
+    public $insurer_name;
+    public $insurance_policy_number;
+    public $insurance_cover_amount;
+    public $special_agreements;
+    public $marks_and_numbers;
+    public $number_of_packages;
+    public $freight_payment_terms;
 
     public $trip_destinations;
     public $destinations_selectedTo = [];
@@ -1508,6 +1518,15 @@ class Edit extends Component
          $this->selectedStatus = $this->trip->trip_status;
          $this->comments = $this->trip->comments;
 
+         $cmrDetail = $this->trip->cmr_detail;
+         $this->insurer_name = $cmrDetail->insurer_name ?? null;
+         $this->insurance_policy_number = $cmrDetail->insurance_policy_number ?? null;
+         $this->insurance_cover_amount = $cmrDetail->insurance_cover_amount ?? null;
+         $this->special_agreements = $cmrDetail->special_agreements ?? null;
+         $this->marks_and_numbers = $cmrDetail->marks_and_numbers ?? null;
+         $this->number_of_packages = $cmrDetail->number_of_packages ?? null;
+         $this->freight_payment_terms = $cmrDetail->freight_payment_terms ?? null;
+
       }
 
       public function updatedAllHorses($status){
@@ -2477,7 +2496,25 @@ class Edit extends Component
         }
 
         $trip->update();
-       
+
+        if (
+            $this->insurer_name || $this->insurance_policy_number || $this->insurance_cover_amount
+            || $this->special_agreements || $this->marks_and_numbers || $this->number_of_packages
+            || $this->freight_payment_terms
+        ) {
+            TripCmrDetail::updateOrCreate(
+                ['trip_id' => $trip->id],
+                [
+                    'insurer_name'             => $this->insurer_name,
+                    'insurance_policy_number'  => $this->insurance_policy_number,
+                    'insurance_cover_amount'   => $this->insurance_cover_amount,
+                    'special_agreements'       => $this->special_agreements,
+                    'marks_and_numbers'        => $this->marks_and_numbers,
+                    'number_of_packages'       => $this->number_of_packages,
+                    'freight_payment_terms'    => $this->freight_payment_terms,
+                ]
+            );
+        }
 
         $this->trip = $trip;
 

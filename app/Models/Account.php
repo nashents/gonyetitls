@@ -86,5 +86,6 @@ class Account extends Model implements Auditable
         'code',
         'description',
         'hs_code',
+        'is_locked',
     ];
 }

@@ -21,11 +21,17 @@ class ExpenseSeeder extends Seeder
         $creditor_payment = Account::where('name','Creditor Payment')->get()->first();
         
         $expenses = [
-            ['user_id' => '3','account_id' => $fuel->id, 'name' => 'Fuel Topup','type' => 'Direct'],
-            ['user_id' => '3','account_id' => $creditor_payment->id, 'name' => 'Transporter Payment','type' => 'Direct'],
+            ['user_id' => Null,'account_id' => $fuel->id, 'name' => 'Fuel Topup','type' => 'Direct', 'is_locked' => true],
+            ['user_id' => Null,'account_id' => $creditor_payment->id, 'name' => 'Transporter Payment','type' => 'Direct', 'is_locked' => true],
            ];
 
-           Expense::insert($expenses);
+           // These two expenses are looked up by hardcoded name throughout the
+           // fuel/trip billing flows (Expense::where('name', 'Fuel Topup')/'Transporter Payment').
+           // updateOrCreate (not insert) so re-running the seeder in prod repairs
+           // a missing row instead of erroring/duplicating on the unique name.
+           foreach ($expenses as $expense) {
+               Expense::updateOrCreate(['name' => $expense['name']], $expense);
+           }
 
     }
 }

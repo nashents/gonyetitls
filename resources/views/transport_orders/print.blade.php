@@ -14,6 +14,24 @@
     @endif
 @endsection
 @section('content')
+@php
+    $user      = Auth::user();
+    $deptNames = $user->employee?->departments?->pluck('name')->toArray() ?? [];
+    $roleNames = $user->roles->pluck('name')->toArray();
+
+    // This document is the one handed to the driver, so financials are hidden
+    // by default; the company must explicitly opt in via show_financials_to_drivers,
+    // and internal Finance-only restrictions still apply on top of that.
+    $showFinancials = optional($company)->show_financials_to_drivers && (
+                          !optional($company)->rates_managed_by_finance
+                          || in_array('Finance', $deptNames)
+                          || in_array('Super Admin', $roleNames)
+                      );
+
+    $cmrDetail        = $trip->cmr_detail ?? null;
+    $consignorContact = $trip->customer?->contacts?->first();
+    $consigneeContact = $trip->consignee?->contacts?->first();
+@endphp
 <div class="container">
     <div class="card">
         <div class="card-body">
@@ -119,6 +137,15 @@
                                         <td class="text-center">
                                             @if ($trip->driver)
                                                 {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}} {{$trip->driver->employee ? $trip->driver->employee->idnumber : ""}}
+                                                @if ($trip->driver->license_number)
+                                                    <br>License: {{$trip->driver->license_number}}
+                                                    @if ($trip->driver->license_expiry_date)
+                                                        (Exp: {{\Carbon\Carbon::parse($trip->driver->license_expiry_date)->format('d M Y')}})
+                                                    @endif
+                                                @endif
+                                                @if ($trip->driver->passport_number)
+                                                    <br>Passport: {{$trip->driver->passport_number}}
+                                                @endif
                                             @endif
                                         </td>
                                     </tr>
@@ -141,22 +168,53 @@
                                             </tr>
                                             @endif
 
-                                            @if ($trip->driver_allowances->count()>0)
+                                            @if ($showFinancials && $trip->driver_allowances->count()>0)
                                                 @foreach ($trip->driver_allowances as $allowance)
                                                 <tr>
                                                     <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
-                                                    <td class="text-center"> 
+                                                    <td class="text-center">
                                                         {{ $allowance->currency ? $allowance->currency->name : ""}} {{ $allowance->currency ? $allowance->currency->symbol : ""}}{{ number_format($allowance->amount)}}
                                                     </td>
                                                 </tr>
                                                 @endforeach
                                             @endif
 
+                                            @if ($showFinancials && ($trip->rate || $trip->freight))
+                                            <tr>
+                                                <th class="text-center"><strong>Freight</strong></th>
+                                                <td class="text-center">
+                                                    {{$trip->currency ? $trip->currency->symbol : ""}}{{ $trip->freight ? number_format($trip->freight, 2) : "" }}
+                                                    @if ($trip->rate)
+                                                        (Rate: {{$trip->currency ? $trip->currency->symbol : ""}}{{ number_format($trip->rate, 2) }})
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            @endif
+
                                     <tr>
-                                        <th class="text-center"><strong>Customer</strong></th>
-                                        <td class="text-center"> {{$trip->customer ? $trip->customer->name : ""}}</td>
+                                        <th class="text-center"><strong>Customer (Consignor)</strong></th>
+                                        <td class="text-center">
+                                            {{$trip->customer ? $trip->customer->name : ""}}
+                                            @if ($consignorContact)
+                                                <br>Contact: {{$consignorContact->name}} {{$consignorContact->surname}} {{$consignorContact->phonenumber ? '· '.$consignorContact->phonenumber : ''}}
+                                            @endif
+                                        </td>
                                     </tr>
-                                
+                                    @if ($trip->consignee)
+                                    <tr>
+                                        <th class="text-center"><strong>Consignee</strong></th>
+                                        <td class="text-center">
+                                            {{$trip->consignee->name}}
+                                            @if ($trip->consignee->street_address || $trip->consignee->city)
+                                                <br>{{$trip->consignee->street_address}} {{$trip->consignee->suburb}} {{$trip->consignee->city}} {{$trip->consignee->country}}
+                                            @endif
+                                            @if ($consigneeContact)
+                                                <br>Contact: {{$consigneeContact->name}} {{$consigneeContact->surname}} {{$consigneeContact->phonenumber ? '· '.$consigneeContact->phonenumber : ''}}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endif
+
                                     <tr>
                                         <th class="text-center"><strong>From</strong></th>
                                         <td class="text-center">
@@ -279,7 +337,41 @@
                                     </td>
                                 </tr> 
                                 @endif
-                                    
+
+                                    @if ($cmrDetail?->number_of_packages)
+                                    <tr>
+                                        <th class="text-center"><strong>Packages</strong></th>
+                                        <td class="text-center">{{$cmrDetail->number_of_packages}}</td>
+                                    </tr>
+                                    @endif
+                                    @if ($cmrDetail?->marks_and_numbers)
+                                    <tr>
+                                        <th class="text-center"><strong>Marks &amp; Numbers</strong></th>
+                                        <td class="text-center">{{$cmrDetail->marks_and_numbers}}</td>
+                                    </tr>
+                                    @endif
+                                    @if ($showFinancials && $cmrDetail?->freight_payment_terms)
+                                    <tr>
+                                        <th class="text-center"><strong>Freight Terms</strong></th>
+                                        <td class="text-center">{{ucfirst($cmrDetail->freight_payment_terms)}}</td>
+                                    </tr>
+                                    @endif
+                                    @if ($cmrDetail?->insurer_name || $cmrDetail?->insurance_policy_number)
+                                    <tr>
+                                        <th class="text-center"><strong>Insurance</strong></th>
+                                        <td class="text-center">
+                                            {{$cmrDetail->insurer_name}}
+                                            @if ($cmrDetail->insurance_policy_number) (Policy: {{$cmrDetail->insurance_policy_number}}) @endif
+                                        </td>
+                                    </tr>
+                                    @endif
+                                    @if ($cmrDetail?->special_agreements)
+                                    <tr>
+                                        <th class="text-center"><strong>Special Agreements</strong></th>
+                                        <td class="text-center">{{$cmrDetail->special_agreements}}</td>
+                                    </tr>
+                                    @endif
+
                                     <tr>
                                         <th class="text-center"><strong>Checked By</strong></th>
                                         <td class="text-center"> {{$trip->user ? $trip->user->name : ""}}</td>

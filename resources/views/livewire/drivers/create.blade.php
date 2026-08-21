@@ -162,6 +162,13 @@
                                             @error('license_number') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="license_expiry_date">License Expiry Date</label>
+                                            <input type="date" class="form-control" wire:model.debounce.300ms="license_expiry_date" />
+                                            @error('license_expiry_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4">

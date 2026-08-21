@@ -48,7 +48,10 @@ class TransportOrderController extends Controller
     public function print($id){
         $company = Auth::user()->employee->company;
         $trip = Trip::with([
-        'customer:id,name',
+        'customer:id,name,street_address,suburb,city,country,phonenumber,email',
+        'customer.contacts',
+        'consignee:id,name,street_address,suburb,city,country,phonenumber,email',
+        'consignee.contacts',
         'driver.employee',
         'horse' => function ($q) {
             $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
@@ -58,12 +61,16 @@ class TransportOrderController extends Controller
             ]);
         },
         'transporter:id,name',
+        'cmr_detail',
         ])->find($id);
+
+        abort_if(!$trip, 404);
+
         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
         $origin = Destination::find($trip->from);
         $destination = Destination::find($trip->to);
         $authorizer = User::find($trip->authorized_by_id);
-      
+
         return view('transport_orders.print')->with([
             'trip' => $trip,
             'company' => $company,
@@ -75,16 +82,34 @@ class TransportOrderController extends Controller
     }
 
     public function generatePDF($id){
+        // Route param is a Trip id (matches preview()/print() above, and the
+        // `transport_orders.order` view itself reads $trip throughout).
         $company = Auth::user()->employee->company;
-        $to = TransportOrder::with([
-        'customer:id,name',
+        $trip = Trip::with([
+        'customer:id,name,street_address,suburb,city,country,phonenumber,email',
+        'customer.contacts',
+        'consignee:id,name,street_address,suburb,city,country,phonenumber,email',
+        'consignee.contacts',
+        'driver.employee',
+        'horse' => function ($q) {
+            $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
+            ->with([
+                'horse_make:id,name',
+                'horse_model:id,name',
+            ]);
+        },
+        'transporter:id,name',
+        'cmr_detail',
         ])->find($id);
+
+        abort_if(!$trip, 404);
+
         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-        $origin = Destination::find($to->from);
-        $destination = Destination::find($to->to);
-        $authorizer = User::find($to->authorized_by_id);
+        $origin = Destination::find($trip->from);
+        $destination = Destination::find($trip->to);
+        $authorizer = User::find($trip->authorized_by_id);
         $data = [
-            'transport_order' => $to,
+            'trip' => $trip,
             'company' => $company,
             'origin' => $origin,
             'destination' => $destination,

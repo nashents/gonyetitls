@@ -88,10 +88,12 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('expenses.show', $expense->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                @if ($expense->user_id != Null && !in_array($expense->name, ['Fuel Topup', 'Transporter Payment']))
+                                                @if ($expense->user_id != Null)
                                                 <li><a href="#"  wire:click="edit({{$expense->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#expenseDeleteModal{{ $expense->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
+                                                @unless ($expense->is_locked)
+                                                <li><a href="#" data-toggle="modal" data-target="#expenseDeleteModal{{ $expense->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                                
                                             </ul>
                                         </div>

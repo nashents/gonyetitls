@@ -29,6 +29,10 @@ class Preview extends Component
         'trip_expenses.expense',
         'trip_expenses.currency',
         'trip_expenses.payment_method',
+        'customer.contacts',
+        'consignee.contacts',
+        'driver.employee',
+        'cmr_detail',
         // ... rest of trip relations
     ]);
         return view('livewire.trips.preview',[

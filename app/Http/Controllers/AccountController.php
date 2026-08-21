@@ -98,6 +98,11 @@ class AccountController extends Controller
      */
     public function destroy(Account $account)
     {
+        if ($account->is_locked) {
+            Session::flash('error', 'This account is a core system account required by the application and cannot be deleted.');
+            return redirect()->back();
+        }
+
         $bill_expenses = $account->bill_expenses;
         if (isset($bill_expenses)) {
             foreach ($bill_expenses as $bill_expense) {

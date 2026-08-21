@@ -50,6 +50,7 @@ class Edit extends Component
 
     public $experience;
     public $license_number;
+    public $license_expiry_date;
     public $use_email_as_username;
 
     public $user;
@@ -230,6 +231,7 @@ class Edit extends Component
         $this->user_id = $driver->user->id;
         $this->user_id = $employee->user_id;
         $this->license_number = $driver->license_number;
+        $this->license_expiry_date = $driver->license_expiry_date;
         $this->driver_number = $driver->driver_number;
         $this->class = $driver->class;
         $this->transporter_id = $driver->transporter_id;
@@ -446,6 +448,7 @@ class Edit extends Component
           $driver->transporter_id = $this->transporter_id;
           $driver->employee_id = $employee->id;
           $driver->license_number = $this->license_number;
+          $driver->license_expiry_date = $this->license_expiry_date;
           $driver->passport_number = $this->passport_number;
           $driver->class = $this->class;
           $driver->experience = $this->experience;

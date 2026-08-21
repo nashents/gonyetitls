@@ -82,6 +82,14 @@
                         @error('rates_managed_by_finance') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="mb-10" style="margin-top:30px;">
+                        <input type="checkbox" wire:model.debounce.300ms="show_financials_to_drivers"   class="line-style" />
+                        <label for="one" class="radio-label">Show Rate & Freight to Drivers</label>
+                        <small class="form-text text-muted">When unchecked (default), rate and freight amounts are hidden from the Trip Sheet and Transportation Order documents given to drivers. Check to include this financial info on those documents.</small>
+                        @error('show_financials_to_drivers') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                </div>
             </div>
          
             <div class="btn-group" role="group" style="float: right;">

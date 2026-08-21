@@ -182,9 +182,31 @@
                                    
                                     <tr>
                                         <th class="text-center"><strong>Driver</strong></th>
-                                        <td class="text-center">{{$trip->driver ? $trip->driver->employee->name : ""}} {{$trip->driver ? $trip->driver->employee->surname : ""}} {{$trip->driver ? $trip->driver->employee->idnumber : ""}}</td>
+                                        <td class="text-center">
+                                            {{$trip->driver ? $trip->driver->employee->name : ""}} {{$trip->driver ? $trip->driver->employee->surname : ""}} {{$trip->driver ? $trip->driver->employee->idnumber : ""}}
+                                            @if ($trip->driver && $trip->driver->license_number)
+                                                <br>License: {{$trip->driver->license_number}}
+                                                @if ($trip->driver->license_expiry_date)
+                                                    (Exp: {{\Carbon\Carbon::parse($trip->driver->license_expiry_date)->format('d M Y')}})
+                                                @endif
+                                            @endif
+                                            @if ($trip->driver && $trip->driver->passport_number)
+                                                <br>Passport: {{$trip->driver->passport_number}}
+                                            @endif
+                                        </td>
                                     </tr>
-                                    @if ($trip->driver_allowances->count()>0)
+                                    @if ($trip->consignee)
+                                    <tr>
+                                        <th class="text-center"><strong>Consignee</strong></th>
+                                        <td class="text-center">
+                                            {{$trip->consignee->name}}
+                                            @if ($trip->consignee->street_address || $trip->consignee->city)
+                                                <br>{{$trip->consignee->street_address}} {{$trip->consignee->suburb}} {{$trip->consignee->city}} {{$trip->consignee->country}}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endif
+                                    @if (optional($company)->show_financials_to_drivers && $trip->driver_allowances->count()>0)
                                     @foreach ($trip->driver_allowances as $allowance)
                                     <tr>
                                         <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
@@ -503,7 +525,7 @@
                                         </td>
                                     </tr>
                                     @endif
-                                    @if ((isset($trip->delivery_note->loaded_freight) && $trip->delivery_note->loaded_freight > 0) && (isset($trip->delivery_note->offloaded_freight) && $trip->delivery_note->offloaded_freight > 0))
+                                    @if (optional($company)->show_financials_to_drivers && (isset($trip->delivery_note->loaded_freight) && $trip->delivery_note->loaded_freight > 0) && (isset($trip->delivery_note->offloaded_freight) && $trip->delivery_note->offloaded_freight > 0))
                                     <tr>
                                         <th class="text-center"><strong> Freight Loss</strong></th>
                                         <td class="text-center"> 
@@ -546,6 +568,12 @@
                                         }
                                     @endphp 
 
+                                    {{--
+                                        This document is the one handed to the driver, so financials are hidden
+                                        by default; the company must explicitly opt in via show_financials_to_drivers,
+                                        and internal Finance-only restrictions still apply on top of that.
+                                    --}}
+                                    @if (optional($company)->show_financials_to_drivers)
                                     @if (Auth::user()->employee->company->rates_managed_by_finance == True)
                                         @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
                                                 @if ($trip->currency)
@@ -587,7 +615,43 @@
                                             </tr>
                                         @endif
                                     @endif
-                                  
+                                    @endif
+
+                                    @php $cmrDetail = $trip->cmr_detail; @endphp
+                                    @if ($cmrDetail?->number_of_packages)
+                                    <tr>
+                                        <th class="text-center"><strong>Packages</strong></th>
+                                        <td class="text-center">{{$cmrDetail->number_of_packages}}</td>
+                                    </tr>
+                                    @endif
+                                    @if ($cmrDetail?->marks_and_numbers)
+                                    <tr>
+                                        <th class="text-center"><strong>Marks &amp; Numbers</strong></th>
+                                        <td class="text-center">{{$cmrDetail->marks_and_numbers}}</td>
+                                    </tr>
+                                    @endif
+                                    @if (optional($company)->show_financials_to_drivers && $cmrDetail?->freight_payment_terms)
+                                    <tr>
+                                        <th class="text-center"><strong>Freight Terms</strong></th>
+                                        <td class="text-center">{{ucfirst($cmrDetail->freight_payment_terms)}}</td>
+                                    </tr>
+                                    @endif
+                                    @if ($cmrDetail?->insurer_name || $cmrDetail?->insurance_policy_number)
+                                    <tr>
+                                        <th class="text-center"><strong>Insurance</strong></th>
+                                        <td class="text-center">
+                                            {{$cmrDetail->insurer_name}}
+                                            @if ($cmrDetail->insurance_policy_number) (Policy: {{$cmrDetail->insurance_policy_number}}) @endif
+                                        </td>
+                                    </tr>
+                                    @endif
+                                    @if ($cmrDetail?->special_agreements)
+                                    <tr>
+                                        <th class="text-center"><strong>Special Agreements</strong></th>
+                                        <td class="text-center">{{$cmrDetail->special_agreements}}</td>
+                                    </tr>
+                                    @endif
+
                                     <tr>
                                         <th class="text-center"><strong>Trip Status</strong></th>
                                         <td class="text-center"> {{$trip->trip_status}}</td>

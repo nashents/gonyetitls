@@ -170,6 +170,13 @@ class Index extends Component
         if ($this->expense_id) {
             try{
             $expense = Expense::find($this->expense_id);
+            if ($expense->is_locked && $this->name !== $expense->name) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"This expense is a core system expense - its name cannot be changed."
+                ]);
+                return;
+            }
             $expense->user_id = Auth::user()->id;
             $expense->account_id = $this->account_id;
             $expense->payment_method_id = $this->payment_method_id;

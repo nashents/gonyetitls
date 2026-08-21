@@ -52,6 +52,7 @@ class AccountSeeder extends Seeder
                 'rate'                 => $data['rate'] ?? null,
                 'description'          => $data['description'] ?? null,
                 'hs_code'              => $data['hs_code'] ?? null,
+                'is_locked'            => true,
             ]
         );
     }
@@ -88,6 +89,7 @@ class AccountSeeder extends Seeder
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'hs_code'               => '',
+                'is_locked'             => true,
             ]
         );
 
@@ -226,7 +228,7 @@ class AccountSeeder extends Seeder
         foreach ($accounts as $account) {
             Account::firstOrCreate(
                 ['name' => $account['name']],
-                $account
+                $account + ['is_locked' => true]
             );
         }
         
@@ -317,7 +319,15 @@ class AccountSeeder extends Seeder
            
         ];
 
-        Account::insert($accounts);
+        // updateOrCreate (not insert) so this list is idempotent and safe to
+        // re-run in production to repair a missing seeded account, rather than
+        // duplicating every account that already exists.
+        foreach ($accounts as $account) {
+            Account::updateOrCreate(
+                ['name' => $account['name']],
+                $account + ['is_locked' => true]
+            );
+        }
 
         $sales_taxes = \App\Models\AccountType::where('name', 'Sales Taxes')->first();
 
@@ -348,6 +358,7 @@ class AccountSeeder extends Seeder
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'hs_code'               => '',
+                'is_locked'             => true,
             ]
         );
     }

@@ -2103,10 +2103,73 @@
                                         @error('comments') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                
+
                             </div>
-                              
-                                <hr>   
+
+                                <hr>
+
+                            <h6 class="underline mt-20 mb-20"><strong>Insurance &amp; Waybill Details</strong></h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Insurer Name</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="insurer_name" placeholder="Enter insurer name">
+                                        @error('insurer_name') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Insurance Policy Number</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="insurance_policy_number" placeholder="Enter policy number">
+                                        @error('insurance_policy_number') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Insurance Cover Amount</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="insurance_cover_amount" placeholder="Enter cover amount">
+                                        @error('insurance_cover_amount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Marks &amp; Numbers</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="marks_and_numbers" placeholder="Package marks / numbers">
+                                        @error('marks_and_numbers') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Number of Packages</label>
+                                        <input type="number" class="form-control" wire:model.debounce.300ms="number_of_packages" placeholder="Enter number of packages">
+                                        @error('number_of_packages') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Freight Payment Terms</label>
+                                        <select class="form-control" wire:model.debounce.300ms="freight_payment_terms">
+                                            <option value="">Select Terms</option>
+                                            <option value="prepaid">Prepaid</option>
+                                            <option value="collect">Collect</option>
+                                        </select>
+                                        @error('freight_payment_terms') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Special Agreements</label>
+                                        <textarea wire:model.debounce.300ms="special_agreements" class="form-control" placeholder="Special agreements between consignor and carrier (e.g. CMR box 7)" cols="30" rows="2"></textarea>
+                                        @error('special_agreements') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                                <hr>
 
                             <h6 class="underline mt-20 mb-20"><a href="{{ route('expenses.index') }}" target="_blank" style="color: blue"><strong>Add Trip Expense(s)</strong></a></h6>
                             <div class="mb-10">
