@@ -399,6 +399,10 @@
                        <textarea wire:model.debounce.300="comments" class="form-control" cols="30" rows="5"></textarea>
                         @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <div class="form-group">
+                        <input type="checkbox" wire:model.debounce.300ms="stay_on_page" class="line-style" id="stay_on_page_bulk" />
+                        <label for="stay_on_page_bulk" class="radio-label">Stay on this page after authorizing (don't redirect to Approved/Rejected)</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -412,7 +416,7 @@
         </div>
     </div>
 
- 
+
         <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="authorizationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -434,6 +438,10 @@
                             <label for="reason">Comments</label>
                            <textarea wire:model.debounce.300="comments" class="form-control" cols="30" rows="5"></textarea>
                             @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" wire:model.debounce.300ms="stay_on_page" class="line-style" id="stay_on_page" />
+                            <label for="stay_on_page" class="radio-label">Stay on this page after authorizing (don't redirect to Approved/Rejected)</label>
                         </div>
                     </div>
                     <div class="modal-footer">

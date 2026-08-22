@@ -19,11 +19,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use App\Mail\AuthorizationNotificationMail;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     
@@ -76,7 +77,7 @@ class Pending extends Component
 
             if($this->authorize == "approved"){
                 session()->flash('success', 'Fuel Order Approved Successfully !!');
-                return redirect()->route('fuels.approved');
+                return $this->redirectOrStay('fuels.approved');
             }
         }
     }
@@ -151,7 +152,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $selected_fuels = Fuel::WhereIn('id',$this->selectedRows)->get();
         
@@ -342,15 +343,15 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Bulk Fuel Order(s) Approved Successfully !!"
                 ]);
-                return redirect()->route('fuels.approved');
+                return $this->redirectOrStay('fuels.approved');
             }else {
-    
+
                 $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Bulk Fuel Order(s) Rejected Successfully"
                 ]);
-                return redirect()->route('fuels.rejected');
+                return $this->redirectOrStay('fuels.rejected');
             }
      
 
@@ -369,9 +370,9 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
-  
+
         $fuel = Fuel::find($this->fuel_id);
         $fuel->authorized_by_id = Auth::user()->id;
         $fuel->authorization = $this->authorize;
@@ -538,7 +539,7 @@ class Pending extends Component
                                 'type'=>'success',
                                 'message'=>"Fuel Order Approved & Email to Station Sent Successfully"
                             ]);
-                            return redirect()->route('fuels.approved');
+                            return $this->redirectOrStay('fuels.approved');
 
                         } else {
                             $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
@@ -546,7 +547,7 @@ class Pending extends Component
                                 'type'=>'success',
                                 'message'=>"Fuel Order Approved But Email Not Sent."
                             ]);
-                            return redirect()->route('fuels.approved');
+                            return $this->redirectOrStay('fuels.approved');
                         }
 
                     }
@@ -561,7 +562,7 @@ class Pending extends Component
                         'message'=>"Fuel Order Approved Successfully !!"
                     ]);
 
-                    return redirect()->route('fuels.approved');
+                    return $this->redirectOrStay('fuels.approved');
 
 
 
@@ -585,10 +586,10 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Fuel Order Rejected Successfully"
             ]);
-            return redirect()->route('fuels.rejected');
+            return $this->redirectOrStay('fuels.rejected');
         }
-  
-    }); 
+
+    });
 
       }
 

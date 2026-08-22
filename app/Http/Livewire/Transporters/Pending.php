@@ -8,9 +8,12 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
+    use HasStayOnPageAuthorization;
+
     public $transporters;
     public $transporter_id;
     public $trip_id;
@@ -50,14 +53,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Transporter Approved Successfully"
             ]);
-            return redirect()->route('transporters.approved');
+            return $this->redirectOrStay('transporters.approved');
         }else {
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Transporter Rejected Successfully"
             ]);
-            return redirect()->route('transporters.rejected');
+            return $this->redirectOrStay('transporters.rejected');
         }
 }
 catch(\Exception $e){

@@ -318,7 +318,11 @@
                                                 @elseif($bill_expense->inventory)
                                                     {{ $bill_expense->inventory->product->brand ? $bill_expense->inventory->product->brand->name : ""}} {{ $bill_expense->inventory->product ? $bill_expense->inventory->product->name : ""}}
                                                 @endif
-                                                @if (!$loop->last),@endif
+                                                @if ($bill_expense->account)
+                                                    <br><small class="text-muted">{{ $bill_expense->account->name }}</small>
+                                                    <br><small class="text-muted">{{ $bill_expense->account->code }}</small>
+                                                @endif
+                                                @if (!$loop->last)<br>@endif
                                             @endforeach
                                         @endif
                                     </td>

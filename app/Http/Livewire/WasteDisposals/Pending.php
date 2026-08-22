@@ -7,10 +7,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -54,7 +55,7 @@ class Pending extends Component
 
     public function update(){
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
         
         $this->validate();
 
@@ -73,7 +74,7 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Waste disposal Approved Successfully!!"
             ]);
-             return redirect()->route('waste_disposals.approved');
+             return $this->redirectOrStay('waste_disposals.approved');
 
         }
 
@@ -83,7 +84,7 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Waste disposal Rejected Successfully!!"
             ]);
-             return redirect()->route('waste_disposals.rejected');
+             return $this->redirectOrStay('waste_disposals.rejected');
 
        
         

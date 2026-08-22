@@ -6,9 +6,12 @@ use App\Models\Bill;
 use Livewire\Component;
 use App\Models\DebitNote;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
+    use HasStayOnPageAuthorization;
+
     public $bills;
     public $bill;
     public $bill_total;
@@ -64,14 +67,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Debit Note Approved Successfully"
             ]);
-            return redirect()->route('debit_notes.approved');
+            return $this->redirectOrStay('debit_notes.approved');
         }else {
             $this->dispatchBrowserEvent('hide-debit_noteAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Debit Note Rejected Successfully"
             ]);
-            return redirect()->route('debit_notes.rejected');
+            return $this->redirectOrStay('debit_notes.rejected');
         }
 
       }

@@ -4,6 +4,7 @@ namespace App\Http\Livewire\InventoryPurchases;
 
 use App\Models\Bill;
 use Livewire\Component;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use App\Models\Purchase;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -112,14 +113,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Purchase Order Approved Successfully"
             ]);
-            return redirect()->route('inventory_purchases.approved');
+            return $this->redirectOrStay('inventory_purchases.approved');
         }else {
             $this->dispatchBrowserEvent('hide-purchaseAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Purchase Order Approved Successfully"
             ]);
-            return redirect()->route('inventory_purchases.rejected');
+            return $this->redirectOrStay('inventory_purchases.rejected');
         }
         }
       }

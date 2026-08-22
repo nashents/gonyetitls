@@ -14,11 +14,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     
     protected $paginationTheme = 'bootstrap';
@@ -99,7 +100,7 @@ class Pending extends Component
     public function update()
 
     {
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
             $requisition = Requisition::with(['user', 'requisition_items'])
                 ->findOrFail($this->requisition_id);
@@ -137,7 +138,7 @@ class Pending extends Component
                     'message' => "Requisition Rejected Successfully"
                 ]);
 
-                return redirect()->route('requisitions.rejected');
+                return $this->redirectOrStay('requisitions.rejected');
             }
 
             /*
@@ -164,7 +165,7 @@ class Pending extends Component
                     'message' => "Requisition Approved Successfully"
                 ]);
 
-                return redirect()->route('requisitions.approved');
+                return $this->redirectOrStay('requisitions.approved');
             }
 
             /*
@@ -187,7 +188,7 @@ class Pending extends Component
                     'message' => "First Authorization Captured. Awaiting Second Authorization."
                 ]);
 
-                return redirect()->route('requisitions.pending');
+                return $this->redirectOrStay('requisitions.pending');
             }
 
             /*
@@ -232,7 +233,7 @@ class Pending extends Component
                     'message' => "Requisition Fully Approved Successfully"
                 ]);
 
-                return redirect()->route('requisitions.approved');
+                return $this->redirectOrStay('requisitions.approved');
             }
 
         });

@@ -7,10 +7,11 @@ use Livewire\Component;
 use App\Models\CreditNote;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -57,14 +58,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Credit Note Approved Successfully"
             ]);
-            return redirect()->route('credit_notes.approved');
+            return $this->redirectOrStay('credit_notes.approved');
         }else {
             $this->dispatchBrowserEvent('hide-credit_noteAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Credit Note Rejected Successfully"
             ]);
-            return redirect()->route('credit_notes.rejected');
+            return $this->redirectOrStay('credit_notes.rejected');
         }
 // }
 // catch(\Exception $e){

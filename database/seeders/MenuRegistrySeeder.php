@@ -956,6 +956,14 @@ class MenuRegistrySeeder extends Seeder
         ]);
 
         $upsertModule($g, [
+            'name' => 'Account Transactions (GL)',
+            'slug' => 'account-transactions',
+            'icon' => 'fas fa-book',
+            'route_name' => 'reports.account_transactions',
+            'sort_order' => 45,
+        ]);
+
+        $upsertModule($g, [
             'name' => 'Bulk Catch-up Payments',
             'slug' => 'bulk-catchup-payments',
             'icon' => 'fas fa-tasks',
@@ -1033,7 +1041,7 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 40,
         ]);
         $upsertSub($m, ['name'=>'Manage Goods Received','slug'=>'manage-assets-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.assets','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Authorization','slug'=>'pending-assets-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_pending_count','visibility'=>$assetPOVis]);
+        $upsertSub($m, ['name'=>'Pending GRVs','slug'=>'pending-assets-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_pending_count','visibility'=>$assetPOVis]);
         $upsertSub($m, ['name'=>'Approved GRVs','slug'=>'approved-assets-grvs','icon'=>'fas fa-check','route_name'=>'goods_receiveds.approved','sort_order'=>30,'badge_key'=>'goods_receiveds_approved_count','visibility'=>$assetPOVis]);
         $upsertSub($m, ['name'=>'Rejected GRVs','slug'=>'rejected-assets-grvs','icon'=>'fas fa-ban','route_name'=>'goods_receiveds.rejected','sort_order'=>40,'badge_key'=>'goods_receiveds_rejected_count','visibility'=>$assetPOVis]);
        
@@ -2125,7 +2133,7 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 50,
         ]);
         $upsertSub($m, ['name'=>'Manage Goods Received','slug'=>'manage-inventory-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Authorization','slug'=>'pending-inventory-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_pending_count','visibility'=>$invPOVis]);
+        $upsertSub($m, ['name'=>'Pending GRVs','slug'=>'pending-inventory-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_pending_count','visibility'=>$invPOVis]);
         $upsertSub($m, ['name'=>'Approved GRVs','slug'=>'approved-inventory-grvs','icon'=>'fas fa-check','route_name'=>'goods_receiveds.approved','sort_order'=>30,'badge_key'=>'goods_receiveds_approved_count','visibility'=>$invPOVis]);
         $upsertSub($m, ['name'=>'Rejected GRVs','slug'=>'rejected-inventory-grvs','icon'=>'fas fa-ban','route_name'=>'goods_receiveds.rejected','sort_order'=>40,'badge_key'=>'goods_receiveds_rejected_count','visibility'=>$invPOVis]);
 
@@ -2222,7 +2230,7 @@ class MenuRegistrySeeder extends Seeder
         ]);
 
         $upsertSub($m, ['name'=>'Manage Goods Received','slug'=>'manage-tyre-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.tyres','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Authorization','slug'=>'pending-tyre-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_pending_count','visibility'=>$tyrePOVis]);
+        $upsertSub($m, ['name'=>'Pending GRVs','slug'=>'pending-tyre-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_pending_count','visibility'=>$tyrePOVis]);
         $upsertSub($m, ['name'=>'Approved GRVs','slug'=>'approved-tyre-grvs','icon'=>'fas fa-check','route_name'=>'goods_receiveds.approved','sort_order'=>30,'badge_key'=>'goods_receiveds_approved_count','visibility'=>$tyrePOVis]);
         $upsertSub($m, ['name'=>'Rejected GRVs','slug'=>'rejected-tyre-grvs','icon'=>'fas fa-ban','route_name'=>'goods_receiveds.rejected','sort_order'=>40,'badge_key'=>'goods_receiveds_rejected_count','visibility'=>$tyrePOVis]);
 

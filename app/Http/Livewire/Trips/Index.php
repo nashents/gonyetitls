@@ -381,8 +381,17 @@ class Index extends Component
 
     public function markCompleted(){
 
-        DB::transaction(function () {
-            $trip = Trip::find($this->trip_id);
+        $trip = Trip::find($this->trip_id);
+
+        if ((int) $this->mark_completed === 1 && $trip->trip_status !== 'Offloaded') {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Only Offloaded trips can be marked Completed."
+            ]);
+            return;
+        }
+
+        DB::transaction(function () use ($trip) {
             $trip->status = $this->mark_completed;
             $trip->closed_by = Auth::user()->id;
             $trip->update();

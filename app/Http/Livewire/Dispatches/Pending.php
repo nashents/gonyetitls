@@ -21,11 +21,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AuthorizationNotificationMail;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
     protected $paginationTheme = 'bootstrap';
     public $from;
     public $to;
@@ -192,7 +193,7 @@ class Pending extends Component
 
     public function update()
     {
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
             $dispatch = Dispatch::find($this->dispatch_id);
 
@@ -317,11 +318,11 @@ class Pending extends Component
                     ]);
 
                     if ($this->department == "tyre") {
-                        return redirect()->route('tyre_dispatches.approved');
+                        return $this->redirectOrStay('tyre_dispatches.approved');
                     }elseif ($this->department == "inventory") {
-                        return redirect()->route('inventory_dispatches.approved');
+                        return $this->redirectOrStay('inventory_dispatches.approved');
                     }elseif ($this->department == "asset") {
-                        return redirect()->route('asset_dispatches.approved');
+                        return $this->redirectOrStay('asset_dispatches.approved');
                     }
                     
                     //ticket ends here
@@ -336,11 +337,11 @@ class Pending extends Component
             ]);
 
             if ($this->department == "tyre") {
-                return redirect()->route('tyre_dispatches.rejected');
+                return $this->redirectOrStay('tyre_dispatches.rejected');
             }elseif ($this->department == "inventory") {
-                return redirect()->route('inventory_dispatches.rejected');
+                return $this->redirectOrStay('inventory_dispatches.rejected');
             }elseif ($this->department == "asset") {
-                return redirect()->route('asset_dispatches.rejected');
+                return $this->redirectOrStay('asset_dispatches.rejected');
             }
         });
     }

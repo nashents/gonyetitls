@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Purchases;
 use App\Models\Bill;
 use App\Models\Account;
 use Livewire\Component;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use App\Models\Purchase;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BillExpense;
@@ -19,7 +20,7 @@ use App\Mail\SendPurchaseOrderUpdateMail;
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public bool $notificationsOnly = false;
@@ -91,7 +92,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-      DB::transaction(function () {
+      return DB::transaction(function () {
 
 
         $purchase = Purchase::find($this->purchase_id);
@@ -210,11 +211,11 @@ class Pending extends Component
                 'message'=>"Purchase Order Approved Successfully"
             ]);
             if ($this->department == "tyre") {
-                return redirect()->route('tyre_purchases.approved');
+                return $this->redirectOrStay('tyre_purchases.approved');
             }elseif($this->department == "inventory"){
-                return redirect()->route('inventory_purchases.approved');
+                return $this->redirectOrStay('inventory_purchases.approved');
             }elseif($this->department == "asset"){
-                return redirect()->route('purchases.approved');
+                return $this->redirectOrStay('purchases.approved');
             }
            
         }else {
@@ -224,11 +225,11 @@ class Pending extends Component
                 'message'=>"Purchase Order Approved Successfully"
             ]);
             if ($this->department == "tyre") {
-                return redirect()->route('tyre_purchases.rejected');
+                return $this->redirectOrStay('tyre_purchases.rejected');
             }elseif($this->department == "inventory"){
-                return redirect()->route('inventory_purchases.rejected');
+                return $this->redirectOrStay('inventory_purchases.rejected');
             }elseif($this->department == "asset"){
-                return redirect()->route('purchases.rejected');
+                return $this->redirectOrStay('purchases.rejected');
             }
           
         }

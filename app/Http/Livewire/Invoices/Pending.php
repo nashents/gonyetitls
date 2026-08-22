@@ -6,6 +6,8 @@ namespace App\Http\Livewire\Invoices;
 
 use App\Models\Invoice;
 
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
+
 use Livewire\Component;
 
 use Livewire\WithPagination;
@@ -18,7 +20,7 @@ use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
     // public $invoices;
 
     protected $paginationTheme = 'bootstrap';
@@ -69,7 +71,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-          DB::transaction(function () {
+          return DB::transaction(function () {
 
            $selected_invoices = Invoice::WhereIn('id',$this->selectedRows)->get();
            
@@ -98,14 +100,14 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Bulk Invoice(s) Approved Successfully"
                 ]);
-                return redirect()->route('invoices.approved');
+                return $this->redirectOrStay('invoices.approved');
             }else {
                 $this->dispatchBrowserEvent('hide-bulkyAuthorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Bulk Invoice(s) Rejected Successfully"
                 ]);
-                return redirect()->route('invoices.rejected');
+                return $this->redirectOrStay('invoices.rejected');
             }
 
         
@@ -157,7 +159,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
     //   try{
             $invoice = Invoice::find($this->invoice_id);
             $invoice->authorized_by_id = Auth::user()->id;
@@ -182,14 +184,14 @@ class Pending extends Component
                 'message'=>"Invoice Approved Successfully"
             ]);
 
-            return redirect()->route('invoices.approved');
+            return $this->redirectOrStay('invoices.approved');
         }else {
             $this->dispatchBrowserEvent('hide-invoiceAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Invoice Rejected Successfully"
             ]);
-            return redirect()->route('invoices.rejected');
+            return $this->redirectOrStay('invoices.rejected');
         }
 // }
 // catch(\Exception $e){

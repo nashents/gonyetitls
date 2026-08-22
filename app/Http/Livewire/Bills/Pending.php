@@ -19,11 +19,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use App\Mail\AuthorizationNotificationMail;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     public $selectedRows = [];
     public $selectPageRows = false;
@@ -72,7 +73,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-          DB::transaction(function () {
+          return DB::transaction(function () {
 
         $selected_bills = Bill::WhereIn('id',$this->selectedRows)->get();
         
@@ -100,14 +101,14 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Bulk Bill(s) Approved Successfully"
                 ]);
-                return redirect()->route('bills.approved');
+                return $this->redirectOrStay('bills.approved');
          }else {
             $this->dispatchBrowserEvent('hide-bulkyAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bulk Bill(s) Rejected Successfully"
             ]);
-            return redirect()->route('bills.rejected');
+            return $this->redirectOrStay('bills.rejected');
          }
 
      
@@ -206,8 +207,8 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-          DB::transaction(function () {
-    
+          return DB::transaction(function () {
+
             $bill = Bill::find($this->bill_id);
             $bill->authorized_by_id = Auth::user()->id;
             $bill->authorization = $this->authorize;
@@ -230,15 +231,15 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Bill Approved Successfully"
             ]);
-            return redirect()->route('bills.approved');
-            
+            return $this->redirectOrStay('bills.approved');
+
         }else {
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bill Rejected Successfully"
             ]);
-            return redirect()->route('bills.rejected');
+            return $this->redirectOrStay('bills.rejected');
         }
 
     });

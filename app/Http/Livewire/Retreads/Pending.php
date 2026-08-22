@@ -8,11 +8,12 @@ use Livewire\Component;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -125,14 +126,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Retread Approved Successfully"
             ]);
-            return redirect()->route('retreads.approved');
+            return $this->redirectOrStay('retreads.approved');
         }else {
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Retread Rejected Successfully"
             ]);
-            return redirect()->route('retreads.rejected');
+            return $this->redirectOrStay('retreads.rejected');
         }
 // }
 // catch(\Exception $e){

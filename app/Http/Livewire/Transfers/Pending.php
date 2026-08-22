@@ -16,10 +16,11 @@ use Illuminate\Support\Facades\Storage;
 use App\Mail\SendtransferOrderUpdateMail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\Notification;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -52,7 +53,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
 
         $transfer = Transfer::find($this->transfer_id);
@@ -100,9 +101,9 @@ class Pending extends Component
                 'message'=>"Transfer Order Approved Successfully"
             ]);
             if ($this->department == "tyre") {
-                return redirect()->route('tyre_transfers.approved');
+                return $this->redirectOrStay('tyre_transfers.approved');
             }elseif($this->department == "inventory"){
-                return redirect()->route('inventory_transfers.approved');
+                return $this->redirectOrStay('inventory_transfers.approved');
             }
            
         }else {
@@ -112,9 +113,9 @@ class Pending extends Component
                 'message'=>"Transfer Order Approved Successfully"
             ]);
             if ($this->department == "tyre") {
-                return redirect()->route('tyre_transfers.rejected');
+                return $this->redirectOrStay('tyre_transfers.rejected');
             }elseif($this->department == "inventory"){
-                return redirect()->route('inventory_transfers.rejected');
+                return $this->redirectOrStay('inventory_transfers.rejected');
             }
           
         }

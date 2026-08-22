@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\GoodsReceiveds;
 
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use App\Mail\AuthorizationNotificationMail;
 use App\Models\GoodsReceived;
 use App\Services\GoodsReceiveds\GoodsReceivedAuthorizationService;
@@ -14,7 +15,7 @@ use Livewire\WithPagination;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -48,7 +49,12 @@ class Pending extends Component
             return;
         }
 
-        $goods_received = GoodsReceived::findOrFail($this->goods_received_id);
+        $goods_received = GoodsReceived::find($this->goods_received_id);
+
+        if (! $goods_received) {
+            $this->addError('authorize', 'This GRV could not be found.');
+            return;
+        }
 
         $goods_received = app(GoodsReceivedAuthorizationService::class)->authorize(
             $goods_received,
@@ -72,8 +78,11 @@ class Pending extends Component
                 : "GRV Rejected Successfully",
         ]);
 
-        $this->authorize = null;
-        $this->comments = null;
+        if ($this->authorize === 'approved') {
+            return $this->redirectOrStay('goods_receiveds.approved');
+        }
+
+        return $this->redirectOrStay('goods_receiveds.rejected');
     }
 
     public function render()

@@ -12,11 +12,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     public $selectedRows = [];
     public $selectPageRows = false;
@@ -83,7 +84,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $selected_transport_orders = TransportOrder::WhereIn('id',$this->selectedRows)->get();
         
@@ -112,14 +113,14 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Bulk Transport Order(s) pending Successfully"
                 ]);
-                return redirect()->route('transport_orders.approved');
+                return $this->redirectOrStay('transport_orders.approved');
          }else {
             $this->dispatchBrowserEvent('hide-bulkyAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bulk Transport Order(s) Rejected Successfully"
             ]);
-            return redirect()->route('transport_orders.rejected');
+            return $this->redirectOrStay('transport_orders.rejected');
          }
 
          $this->reset(['selectedRows','selectPageRows']);
@@ -208,8 +209,8 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-          DB::transaction(function () {
-    
+          return DB::transaction(function () {
+
             $transport_order = TransportOrder::find($this->transport_order_id);
             $transport_order->authorized_by_id = Auth::user()->id;
             $transport_order->authorization = $this->authorize;
@@ -232,15 +233,15 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Transport Order pending Successfully"
             ]);
-            return redirect()->route('transport_orders.approved');
-            
+            return $this->redirectOrStay('transport_orders.approved');
+
         }else {
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Transport Order Rejected Successfully"
             ]);
-            return redirect()->route('transport_orders.rejected');
+            return $this->redirectOrStay('transport_orders.rejected');
         }
 
     });

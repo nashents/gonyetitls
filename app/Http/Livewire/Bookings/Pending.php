@@ -18,11 +18,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AuthorizationNotificationMail;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     
     protected $paginationTheme = 'bootstrap';
@@ -142,7 +143,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $selected_bookings = Booking::WhereIn('id',$this->selectedRows)->get();
         
@@ -288,16 +289,16 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Bulk Booking(s) Approved Successfully !!"
                 ]);
-                return redirect()->route('bookings.approved');
+                return $this->redirectOrStay('bookings.approved');
 
             }else {
-    
+
                 $this->dispatchBrowserEvent('hide-bookingAuthorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Bulk Booking(s) Rejected Successfully"
                 ]);
-                return redirect()->route('bookings.rejected');
+                return $this->redirectOrStay('bookings.rejected');
             }
      
         }
@@ -308,7 +309,7 @@ class Pending extends Component
 
       public function update(){
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $this->validate([
             'authorize' => 'required',
@@ -446,7 +447,7 @@ class Pending extends Component
             'type'=>'success',
             'message'=>"Booking Approved Successfully"
         ]);
-        return redirect()->route('bookings.approved');
+        return $this->redirectOrStay('bookings.approved');
         }
         else {
 
@@ -455,7 +456,7 @@ class Pending extends Component
             'type'=>'success',
             'message'=>"Booking Rejected Successfully"
         ]);
-        return redirect()->route('bookings.rejected');
+        return $this->redirectOrStay('bookings.rejected');
 
             }
         });

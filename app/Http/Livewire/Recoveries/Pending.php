@@ -5,9 +5,12 @@ namespace App\Http\Livewire\Recoveries;
 use Livewire\Component;
 use App\Models\Recovery;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
+    use HasStayOnPageAuthorization;
+
     protected $recoveries;
     public $recovery_id;
     public $trip_id;
@@ -39,14 +42,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Recovery Approved Successfully"
             ]);
-            return redirect()->route('recoveries.approved');
+            return $this->redirectOrStay('recoveries.approved');
         }else {
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Recovery Rejected Successfully"
             ]);
-            return redirect()->route('recoveries.rejected');
+            return $this->redirectOrStay('recoveries.rejected');
         }
 }
 catch(\Exception $e){

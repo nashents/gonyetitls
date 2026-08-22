@@ -31,7 +31,7 @@
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
             							<li><a href="{{route('goods_receiveds.index')}}"><i class="fas fa-list"></i> Goods Received</a></li>
-            							<li class="active"> <i class="fas fa-clock"></i> Pending Authorization</li>
+            							<li class="active"> <i class="fas fa-clock"></i> Pending GRVs</li>
             						</ul>
                                 </div>
                             </div>

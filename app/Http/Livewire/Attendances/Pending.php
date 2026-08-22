@@ -9,10 +9,11 @@ use Livewire\WithPagination;
 use App\Models\AttendanceRegister;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -56,7 +57,7 @@ class Pending extends Component
 
     public function update(){
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
         
         $this->validate();
 
@@ -75,7 +76,7 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Attendance Register Approved Successfully!!"
             ]);
-             return redirect()->route('attendances.approved');
+             return $this->redirectOrStay('attendances.approved');
 
         }
 
@@ -85,7 +86,7 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Attendance Register Rejected Successfully!!"
             ]);
-             return redirect()->route('attendances.rejected');
+             return $this->redirectOrStay('attendances.rejected');
 
        
         

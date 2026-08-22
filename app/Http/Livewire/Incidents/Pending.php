@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Incidents;
 
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use App\Models\Incident;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use Livewire\WithPagination;
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -40,8 +41,8 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-          DB::transaction(function () {
-    
+          return DB::transaction(function () {
+
             $incident = Incident::find($this->incident_id);
             $incident->authorized_by_id = Auth::user()->id;
             $incident->authorization = $this->authorize;
@@ -56,15 +57,15 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Incident Approved Successfully"
                 ]);
-                return redirect()->route('incidents.approved');
-            
+                return $this->redirectOrStay('incidents.approved');
+
             }else {
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Incident Rejected Successfully"
                 ]);
-                return redirect()->route('incidents.rejected');
+                return $this->redirectOrStay('incidents.rejected');
             }
 
     });

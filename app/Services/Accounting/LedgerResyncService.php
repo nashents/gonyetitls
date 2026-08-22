@@ -2,6 +2,7 @@
 
 namespace App\Services\Accounting;
 
+use App\Models\Account;
 use App\Models\Bill;
 use App\Models\CreditNote;
 use App\Models\DebitNote;
@@ -95,6 +96,32 @@ class LedgerResyncService
             );
 
             return $this->creditNoteJournal->post($creditNote->fresh());
+        });
+    }
+
+    /**
+     * Same as resyncBill() but for a bill posted via
+     * BillJournalService::postWithCreditAccount() (e.g. Bulk Buy fuel
+     * consumption crediting Fuel Inventory instead of Accounts Payable) -
+     * the control account whose line carries the bill's total isn't
+     * Accounts Payable for these, so it must be passed in explicitly rather
+     * than assumed.
+     */
+    public function resyncBillWithCreditAccount(Bill $bill, Account $creditAccount, ?string $reason = null, bool $force = false): JournalEntry
+    {
+        return DB::transaction(function () use ($bill, $creditAccount, $reason, $force) {
+            $existing = $this->currentEntry(JournalEntry::where('bill_id', $bill->id));
+
+            if (!$force && $existing && $this->isUnchanged($existing, $creditAccount->name, (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
+                return $existing;
+            }
+
+            $this->reverseExisting(
+                JournalEntry::where('bill_id', $bill->id),
+                $reason ?? "Bill {$bill->bill_number} resynced to current figures"
+            );
+
+            return $this->billJournal->postWithCreditAccount($bill->fresh(), $creditAccount);
         });
     }
 

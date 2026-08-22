@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\FuelRequests;
 
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use App\Mail\AuthorizationNotificationMail;
 use App\Models\FuelRequest;
 use Carbon\Carbon;
@@ -17,7 +18,7 @@ class Pending extends Component
 {
     use WithFileUploads;
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -149,7 +150,7 @@ class Pending extends Component
 
     public function update(){
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $fuel_request = FuelRequest::find($this->fuel_request_id);
         $fuel_request->authorized_by_id = Auth::user()->id;
@@ -208,12 +209,12 @@ class Pending extends Component
             
             $this->dispatchBrowserEvent('hide-fuelRequestAuthorizationModal');
             Session::flash('success','Fuel Request approved successfully');
-            return redirect()->route('fuel_requests.approved');
-            
+            return $this->redirectOrStay('fuel_requests.approved');
+
         }else {
             $this->dispatchBrowserEvent('hide-fuelRequestAuthorizationModal');
             Session::flash('success','Fuel Request Rejected Successfully!!');
-            return redirect()->route('fuel_requests.rejected');
+            return $this->redirectOrStay('fuel_requests.rejected');
         }
 
         });
@@ -227,7 +228,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
             $selected_requests = FuelRequest::WhereIn('id',$this->selectedRows)->get();
             
@@ -295,14 +296,14 @@ class Pending extends Component
             if ($this->authorize == "approved") {
                 $this->dispatchBrowserEvent('hide-fuelRequestAuthorizationModal');
                 Session::flash('success','Fuel Request approved successfully');
-                return redirect()->route('fuel_requests.approved');
-                
+                return $this->redirectOrStay('fuel_requests.approved');
+
             }else {
                 $this->dispatchBrowserEvent('hide-fuelRequestAuthorizationModal');
                 Session::flash('success','Fuel Request Rejected Successfully!!');
-                return redirect()->route('fuel_requests.rejected');
+                return $this->redirectOrStay('fuel_requests.rejected');
             }
-  
+
         });
     }
 

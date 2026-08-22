@@ -1359,10 +1359,20 @@ class Index extends Component
                     }
                   
                     $vehicle->update();
-    
+
                 }
+
+                // Fuel order was already approved (a Bill/JournalEntry
+                // exists) and is being edited again - e.g. correcting a
+                // wrong exchange_rate/amount entered before approval.
+                // Re-run the same posting service approval uses; it's
+                // idempotent and now resyncs (reverses + reposts) the
+                // ledger instead of silently leaving the stale entry, so
+                // the Bill/BillExpense/JournalEntry chain stays in sync
+                // with whatever the fuel order says now.
+                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
             }
-        
+
             $this->dispatchBrowserEvent('hide-fuelEditModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
@@ -1405,8 +1415,13 @@ class Index extends Component
                         }
                         $container->update();
                     }
+
+            // Reverses the fuel order's JournalEntry (and removes its
+            // Bill/BillExpense) instead of leaving them orphaned in the
+            // ledger once the fuel order itself is gone.
+            app(\App\Services\Accounting\FuelJournalService::class)->reverseConsumption($fuel);
         }
-        
+
         $fuel->delete();
 
         

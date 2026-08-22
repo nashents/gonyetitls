@@ -81,6 +81,8 @@
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
+                                    <th class="th-sm">Auth
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -146,8 +148,20 @@
                                     <td></td>
                                    <td>
                                         <span class="badge bg-{{$goods_received->status == 1 ? "warning" : "success"}}">{{$goods_received->status == 1 ? "Open" : "Closed"}}</span>
-                                        <br>
+                                    </td>
+                                    <td>
                                         <span class="badge bg-{{$goods_received->authorization === 'approved' ? 'success' : ($goods_received->authorization === 'rejected' ? 'danger' : 'warning')}}">{{ucfirst($goods_received->authorization)}}</span>
+                                        <small>
+                                        @if ($goods_received->authorized_by)
+                                            <br><strong>AuthBy:</strong> {{$goods_received->authorized_by->name}} {{$goods_received->authorized_by->surname}}
+                                        @endif
+                                        @if ($goods_received->authorization_date)
+                                            <br><strong>On:</strong> {{ \Carbon\Carbon::parse($goods_received->authorization_date)->format('Y-m-d') }}
+                                        @endif
+                                        @if ($goods_received->authorization_comments)
+                                            <br><strong>Comments:</strong> {{$goods_received->authorization_comments}}
+                                        @endif
+                                        </small>
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -168,7 +182,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="11">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Goods Received Found ....
                                         </div>

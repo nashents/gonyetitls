@@ -179,6 +179,10 @@
                            <textarea wire:model.debounce.300="comments" class="form-control" cols="30" rows="5"></textarea>
                             @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
+                        <div class="form-group">
+                            <input type="checkbox" wire:model.debounce.300ms="stay_on_page" class="line-style" id="stay_on_page" />
+                            <label for="stay_on_page" class="radio-label">Stay on this page after authorizing (don't redirect to Approved/Rejected)</label>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <div class="btn-group" role="group">

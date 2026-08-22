@@ -30,10 +30,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
       public function paginationView()
@@ -345,7 +346,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
         // try{
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $trip = Trip::find($this->trip_id);
         $trip->authorized_by_id = Auth::user()->id;
@@ -869,7 +870,7 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Trip & Fuel Order Approved Successfully!!"
                 ]);
-               return redirect()->route('trips.approved');
+               return $this->redirectOrStay('trips.approved');
             }else {
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->resetInputFields();
@@ -877,7 +878,7 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Trip Approved Successfully!!"
                 ]);
-               return redirect()->route('trips.approved');
+               return $this->redirectOrStay('trips.approved');
             }
             
         }else {
@@ -888,7 +889,7 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Trip & Fuel Order Rejected Successfully!!"
                 ]);
-                return redirect()->route('trips.rejected');
+                return $this->redirectOrStay('trips.rejected');
             }else{
 
                 $this->dispatchBrowserEvent('hide-authorizationModal');
@@ -897,7 +898,7 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Trip Rejected Successfully!!"
                 ]);
-                return redirect()->route('trips.rejected');
+                return $this->redirectOrStay('trips.rejected');
             }
           
 
@@ -937,7 +938,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
            $selected_trips = Trip::WhereIn('id',$this->selectedRows)->get();
            
@@ -1393,8 +1394,8 @@ class Pending extends Component
                             'type'=>'success',
                             'message'=>" All Selected Trip(s) & Fuel Order(s) Approved Successfully!!"
                         ]);
-                      
-                        return redirect()->route('trips.approved');
+
+                        return $this->redirectOrStay('trips.approved');
                         }else {
                         $this->dispatchBrowserEvent('hide-authorizationModal');
                         $this->resetInputFields();
@@ -1403,7 +1404,7 @@ class Pending extends Component
                             'type'=>'success',
                             'message'=>"All Selected Trip(s) Approved Successfully!!"
                         ]);
-                        return redirect()->route('trips.approved');
+                        return $this->redirectOrStay('trips.approved');
                         }
                 }else {
                     if ($trip->fuel) {
@@ -1414,7 +1415,7 @@ class Pending extends Component
                             'type'=>'success',
                             'message'=>" All Selected Trip(s) & Fuel Order(s) Rejected Successfully!!"
                         ]);
-                        return redirect()->route('trips.rejected');
+                        return $this->redirectOrStay('trips.rejected');
                     }else{
 
                         $this->dispatchBrowserEvent('hide-authorizationModal');
@@ -1424,7 +1425,7 @@ class Pending extends Component
                             'type'=>'success',
                             'message'=>"All Selected Trip(s) Rejected Successfully!!"
                         ]);
-                        return redirect()->route('trips.rejected');
+                        return $this->redirectOrStay('trips.rejected');
                     }
 
             }

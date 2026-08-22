@@ -14,11 +14,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AuthorizationNotificationMail;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 
 class Pending extends Component
 {
 
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -96,7 +97,7 @@ class Pending extends Component
 
         public function authorizeSelectedRows(){
 
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
         $selected_top_ups = TopUP::WhereIn('id',$this->selectedRows)->get();
         
@@ -198,15 +199,15 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Bulk Fuel Top Up(s) Approved Successfully !!"
                 ]);
-                return redirect()->route('top_ups.approved');
+                return $this->redirectOrStay('top_ups.approved');
             }else {
-    
+
                 $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Bulk Fuel Top Up(s) Rejected Successfully"
                 ]);
-                return redirect()->route('top_ups.rejected');
+                return $this->redirectOrStay('top_ups.rejected');
             }
      
 
@@ -227,9 +228,9 @@ class Pending extends Component
       }
 
       public function update(){
-      
 
-      DB::transaction(function () {
+
+      return DB::transaction(function () {
    
             $top_up = TopUp::find($this->top_up_id);
             $top_up->authorized_by_id = Auth::user()->id;
@@ -324,15 +325,15 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Fuel Top Up Approved Successfully"
                 ]);
-                return redirect()->route('top_ups.approved');
-                
+                return $this->redirectOrStay('top_ups.approved');
+
             }else {
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Fuel Top Rejected Successfully"
                 ]);
-                return redirect()->route('top_ups.rejected');
+                return $this->redirectOrStay('top_ups.rejected');
             }
 
         });

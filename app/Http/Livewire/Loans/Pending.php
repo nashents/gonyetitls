@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Loans;
 
 use App\Models\Loan;
 use App\Models\User;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Session;
 
 class Pending extends Component
 {
-    use WithPagination;
+    use WithPagination, HasStayOnPageAuthorization;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -48,14 +49,14 @@ class Pending extends Component
                 'type'=>'success',
                 'message'=>"Loan Approved Successfully"
             ]);
-            return redirect()->route('loans.approved');
+            return $this->redirectOrStay('loans.approved');
         }else {
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Loan Rejected Successfully"
             ]);
-            return redirect()->route('loans.rejected');
+            return $this->redirectOrStay('loans.rejected');
         }
 }
 catch(\Exception $e){

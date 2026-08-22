@@ -37,7 +37,8 @@ class FuelJournalService
 {
     public function __construct(
         private BillJournalService $billJournal,
-        private JournalReversalService $journalReversal
+        private JournalReversalService $journalReversal,
+        private LedgerResyncService $ledgerResync
     ) {
     }
 
@@ -165,12 +166,28 @@ class FuelJournalService
 
             $bill = $bill->fresh();
 
+            // resyncBill*, not a bare post() - postConsumption() is called
+            // again whenever the fuel order is edited after approval (see
+            // Fuels/Index::update()), and by then a JournalEntry usually
+            // already exists for this bill. post()'s own dedup guard would
+            // just hand that stale entry back unchanged; resync compares
+            // the bill's now-current total/rate/currency against what's
+            // actually posted and only reverses + reposts when they differ
+            // - a no-op for a plain approval (nothing posted yet) or an
+            // edit that didn't touch the amount/rate.
             if ($isOnceOffBuy) {
-                return $this->billJournal->post($bill);
+                return $this->ledgerResync->resyncBill(
+                    $bill,
+                    "Fuel order #{$fuel->id} consumption posted/updated"
+                );
             }
 
             $fuelInventory = Account::where('name', 'Fuel Inventory')->firstOrFail();
-            return $this->billJournal->postWithCreditAccount($bill, $fuelInventory);
+            return $this->ledgerResync->resyncBillWithCreditAccount(
+                $bill,
+                $fuelInventory,
+                "Fuel order #{$fuel->id} consumption posted/updated"
+            );
         });
     }
 

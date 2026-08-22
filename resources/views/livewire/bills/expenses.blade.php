@@ -2,7 +2,7 @@
     <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead >
             <tr>
-                <th class="th-sm">Category
+                <th class="th-sm">Expense Account
                 </th>
                 <th class="th-sm">Item
                 </th>
@@ -31,9 +31,13 @@
                         </td>
                         <td>
                             @if ($bill_expense->expense)
-                                {{ $bill_expense->expense ? $bill_expense->expense->name : ""}}
+                                {{ $bill_expense->expense->name }}
                             @elseif($bill_expense->product)
                                 {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
+                            @endif
+                            @if ($bill_expense->account)
+                                <br><small class="text-muted">{{ $bill_expense->account->name }}</small>
+                                <br><small class="text-muted">{{ $bill_expense->account->code }}</small>
                             @endif
                         </td>
                         <td>{{ $bill_expense->description}}</td>

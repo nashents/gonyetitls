@@ -3,14 +3,15 @@
 namespace App\Http\Livewire\GatePasses;
 
 use Livewire\Component;
+use App\Http\Livewire\Concerns\HasStayOnPageAuthorization;
 use App\Models\GatePass;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Pending extends Component
 {
-    
-    use WithPagination;
+
+    use WithPagination, HasStayOnPageAuthorization;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -142,15 +143,15 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Gate Pass Approved Successfully"
                 ]);
-                return redirect()->route('gate_passes.approved',['department' => $this->department]);
-                
+                return $this->redirectOrStay('gate_passes.approved',['department' => $this->department]);
+
             }else {
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Gate Pass Rejected Successfully"
                 ]);
-                return redirect()->route('gate_passes.rejected',['department'=> $this->department]);
+                return $this->redirectOrStay('gate_passes.rejected',['department'=> $this->department]);
             }
         }
     }
@@ -202,14 +203,14 @@ class Pending extends Component
                     'type'=>'success',
                     'message'=>"Gate Pass Approved Successfully"
                 ]);
-                return redirect()->route('gate_passes.approved',['department'=> $this->department]);
+                return $this->redirectOrStay('gate_passes.approved',['department'=> $this->department]);
             }else {
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Gate Pass Rejected Successfully"
                 ]);
-                return redirect()->route('gate_passes.rejected',['department'=> $this->department]);
+                return $this->redirectOrStay('gate_passes.rejected',['department'=> $this->department]);
             }
 
            }
