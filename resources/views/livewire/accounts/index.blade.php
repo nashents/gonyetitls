@@ -294,8 +294,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Category</label>
-                                    <select wire:model.debounce.300ms="transaction_category" class="form-control">
+                                <label for="name">Category<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="transaction_category" class="form-control" required>
                                         <option value="">Select Category Type</option>
                                         @foreach ($account_types as $account_type)
                                         <optgroup label="{{ $account_type->name }}">

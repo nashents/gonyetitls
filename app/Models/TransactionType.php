@@ -15,4 +15,8 @@ class TransactionType extends Model implements Auditable
     public function payments(){
         return $this->hasMany('App\Models\Payment');
     }
+
+    protected $fillable = [
+        'name',
+    ];
 }

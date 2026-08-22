@@ -33,6 +33,7 @@ class TripTransportOrder extends Model implements Auditable
 
         'sequence_no',
         'status',
+        'completed',
         'notes',
     ];
 
@@ -46,6 +47,7 @@ class TripTransportOrder extends Model implements Auditable
         'sequence_no'        => 'integer',
         'exchange_amount'        => 'float',
          'allocated_litreage' => 'float',
+        'completed'          => 'boolean',
     ];
 
     

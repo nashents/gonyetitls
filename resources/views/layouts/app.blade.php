@@ -2615,6 +2615,16 @@
             })
         </script>
         <script type="text/javascript">
+            window.addEventListener('show-transferModal', event => {
+                $('#transferModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-transferModal', event => {
+                $('#transferModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
             window.addEventListener('show-incomeEditModal', event => {
                 $('#incomeEditModal').modal('show');
             })
@@ -4357,6 +4367,30 @@
     <script type="text/javascript">
     window.addEventListener('hide-quickFuelBalanceModal', event => {
         $('#quickFuelBalanceModal').modal('hide');
+    })
+    </script>
+
+    <script type="text/javascript">
+        window.addEventListener('show-editAuthorizationRequestModal', event => {
+            $('#editAuthorizationRequestModal').modal('show');
+        })
+    </script>
+
+    <script type="text/javascript">
+    window.addEventListener('hide-editAuthorizationRequestModal', event => {
+        $('#editAuthorizationRequestModal').modal('hide');
+    })
+    </script>
+
+    <script type="text/javascript">
+        window.addEventListener('show-editAuthorizationDecisionModal', event => {
+            $('#editAuthorizationDecisionModal').modal('show');
+        })
+    </script>
+
+    <script type="text/javascript">
+    window.addEventListener('hide-editAuthorizationDecisionModal', event => {
+        $('#editAuthorizationDecisionModal').modal('hide');
     })
     </script>
 

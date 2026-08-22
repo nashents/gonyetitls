@@ -71,6 +71,11 @@ class User extends Authenticatable implements Auditable
 
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->roles()->where('name', 'Super Admin')->exists();
+    }
+
     /**
      * URL of the user's profile picture, falling back to the default
      * avatar when none is set or the uploaded file was deleted from disk.

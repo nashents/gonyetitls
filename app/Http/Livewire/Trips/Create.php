@@ -1330,9 +1330,7 @@ class Create extends Component
         $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->trip_types = TripType::orderBy('name','asc')->get();
-        $this->expenses = Expense::whereHas('account', function($q){
-            $q->where('name', 'Trip Expense');
-         })->orderBy('name','asc')->get();
+        $this->expenses = Expense::orderBy('name','asc')->get();
 
         
 
@@ -3508,9 +3506,7 @@ class Create extends Component
             ]);
         }
         elseif($category == 'expenses'){
-            $this->expenses = Expense::whereHas('account', function($q){
-                $q->where('name', 'Trip Expense');
-             })->orderBy('name','asc')->get();
+            $this->expenses = Expense::orderBy('name','asc')->get();
              $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Expenses Refreshed Successfully!!."

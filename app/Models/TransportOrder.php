@@ -83,6 +83,7 @@ class TransportOrder extends Model implements Auditable
     protected $casts = [
         'multiple_destinations'      => 'boolean',
         'deal_id' => 'integer',
+        'completed' => 'boolean',
     ];
 
     protected $fillable = [
@@ -117,6 +118,7 @@ class TransportOrder extends Model implements Auditable
     'units_of_measure_id',
     'weight',
     'status',
+    'completed',
     'rate',
     'freight',
     'transporter_rate',

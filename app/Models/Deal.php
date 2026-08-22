@@ -15,6 +15,10 @@ class Deal extends Model implements Auditable
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 
+    protected $casts = [
+        'completed' => 'boolean',
+    ];
+
     public function currency()
     {
         return $this->belongsTo(Currency::class);

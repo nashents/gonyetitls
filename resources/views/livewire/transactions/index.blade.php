@@ -30,6 +30,7 @@
                                     <label for="">Transactions</label>
                                     <button type="button" wire:click.prevent="showDepositModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Deposit</button>
                                     <button type="button"  wire:click.prevent="showWithdrawalModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Withdrawal</button>
+                                    <button type="button"  wire:click.prevent="showTransferModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Transfer</button>
                                     <button type="button"  data-toggle="modal" data-target="#journalModal" class="btn btn-default border-primary btn-rounded btn-wide">Add Journal Entry</button>
                                     <button type="button" wire:click="fixDataIssues" onclick="return confirm('Scan payment records for known data issues and correct them now?') || event.stopImmediatePropagation()" class="btn btn-default border-warning btn-rounded btn-wide"><i class="fa fa-wrench"></i> Fix Data Issues</button>
 
@@ -458,8 +459,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Category</label>
-                                    <select wire:model.debounce.300ms="transaction_category" class="form-control">
+                                <label for="name">Category<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="transaction_category" class="form-control" required>
                                         <option value="">Select Category Type</option>
                                         @foreach ($account_types as $account_type)
                                         <optgroup label="{{ $account_type->name }}">
@@ -607,8 +608,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Category</label>
-                                    <select wire:model.debounce.300ms="transaction_category" class="form-control">
+                                <label for="name">Category<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="transaction_category" class="form-control" required>
                                         <option value="">Select Category Type</option>
                                         @foreach ($account_types as $account_type)
                                         <optgroup label="{{ $account_type->name }}">
@@ -680,6 +681,118 @@
                         </div>
                     </div>
                    
+                    </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-exchange-alt"></i> Transfer between accounts <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="storeTransferTransaction()" >
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Date" required />
+                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Description</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="description">
+                                @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">From Account<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="account_id" class="form-control" required>
+                                        <option value="">Select Account</option>
+                                        @foreach ($transaction_account_types as $account_type)
+                                            <optgroup label="{{ $account_type->name }}">
+                                                @foreach ($account_type->accounts as $account)
+                                                    <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : "" }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endforeach
+                                    </select>
+                                @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Amount Out<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount" required />
+                                @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            @if (!is_null($selectedCurrency))
+                            @if (Auth::user()->employee->company)
+                                @if ($selectedCurrency != Auth::user()->employee->company->currency_id)
+                                <div class="form-group">
+                                    <label for="name">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate" placeholder="Exchange Rate" required>
+                                    @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                                @endif
+                            @endif
+                        @endif
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">To Account<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="to_account_id" class="form-control" required>
+                                        <option value="">Select Account</option>
+                                        @foreach ($transaction_account_types as $account_type)
+                                            <optgroup label="{{ $account_type->name }}">
+                                                @foreach ($account_type->accounts as $account)
+                                                    <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : "" }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endforeach
+                                    </select>
+                                @error('to_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Amount In<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="to_amount" placeholder="Enter Amount" required />
+                                <small>Same as Amount Out for a same-currency transfer. If the two accounts hold different currencies, enter what actually arrived - any difference (in reporting currency) posts as a realized FX gain/loss.</small>
+                                @error('to_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            @if (!is_null($to_currency_id))
+                            @if (Auth::user()->employee->company)
+                                @if ($to_currency_id != Auth::user()->employee->company->currency_id)
+                                <div class="form-group">
+                                    <label for="name">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="to_exchange_rate" placeholder="Exchange Rate" required>
+                                    @error('to_exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                                @endif
+                            @endif
+                        @endif
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="name">Notes</label>
+                               <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="3" placeholder="Enter Notes"></textarea>
+                                @error('notes') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

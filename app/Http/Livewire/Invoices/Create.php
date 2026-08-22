@@ -1295,7 +1295,43 @@ class Create extends Component
  
   
 
+    private function selectedTripsAreAllCompleted(): bool
+    {
+        if ($this->source == "Trip") {
+            $tripIds = $this->multi_select
+                ? (array) $this->selectedMultiTrip
+                : array_filter((array) $this->selectedTrip);
+
+            foreach ($tripIds as $tripId) {
+                $trip = Trip::find($tripId);
+                if (!$trip || (int) $trip->status !== 1) {
+                    return false;
+                }
+            }
+        }
+
+        if ($this->source == "TTO") {
+            $ttoIds = $this->multi_select
+                ? (array) $this->selectedMultiTTO
+                : array_filter((array) $this->selectedTTO);
+
+            foreach ($ttoIds as $ttoId) {
+                $tto = TripTransportOrder::find($ttoId);
+                if (!$tto || !$tto->trip || (int) $tto->trip->status !== 1) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     public function store(){
+
+        if (!$this->selectedTripsAreAllCompleted()) {
+            $this->addError('selectedTrip', 'One or more selected trips are not marked Completed. Only completed trips can be invoiced.');
+            return;
+        }
 
         DB::transaction(function () {
 
@@ -2079,6 +2115,7 @@ class Create extends Component
             $query = Trip::query()
             ->with('transporter:id,name','customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
+            ->where('status', 1)
             ->where('trip_status','!=', 'Cancelled')
             ->has('trip_transport_orders', '<=', 1)
             ->when($this->invoice_to === 'Customer', function ($q) {
@@ -2144,7 +2181,8 @@ class Create extends Component
                 'transport_order.currency',
             ])
             ->whereHas('trip', function ($q) {
-                $q->where('trip_status', '!=', 'Cancelled');
+                $q->where('trip_status', '!=', 'Cancelled')
+                  ->where('status', 1);
             })
             ->when($this->invoice_to === 'Customer', function ($q) {
                 $q->where('currency_id', $this->selectedCurrency);

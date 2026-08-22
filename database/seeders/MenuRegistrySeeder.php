@@ -1865,6 +1865,10 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Tracking Groups','slug'=>'tracking-groups','icon'=>'fas fa-list','route_name'=>'trip_groups.index','sort_order'=>70,  'visibility' => $any([
                 $all(['isNotDriver']),
             ]),]);
+        $upsertSub($m, ['name'=>'Pending Edit Authorizations','slug'=>'pending-trip-edit-authorizations','icon'=>'fas fa-user-clock','route_name'=>'trip_edit_authorizers.pending','sort_order'=>75,'badge_key'=>'trip_edit_authorizations_pending_count','visibility'=>$any([
+                $all(['isTripEditAuthorizer']),
+                $all(['isSuperAdmin']),
+            ]),]);
 
         // Gatepass (Logistics) - not driver
         $m = $upsertModule($g, [
@@ -2341,6 +2345,16 @@ class MenuRegistrySeeder extends Seeder
         //     'sort_order' => 20,
         //     'visibility' => null,
         // ]);
+
+        // Trip Edit Authorizers (Super Admin only)
+        $upsertModule($g, [
+            'name' => 'Trip Edit Authorizers',
+            'slug' => 'trip-edit-authorizers',
+            'icon' => 'fas fa-user-shield',
+            'route_name' => 'trip_edit_authorizers.index',
+            'sort_order' => 30,
+            'visibility' => $any([$all(['isSuperAdmin'])]),
+        ]);
 
         // ----------------------------
         // GROUP: Profile Settings (public)

@@ -12,6 +12,22 @@
                             </div>
                         </div>
                         <div class="panel-body">
+                            @if ($isLocked && !$hasActiveEditGrant)
+                                <div class="alert alert-warning">
+                                    <strong><i class="fa fa-lock"></i> This trip is marked Completed and is locked for editing.</strong>
+                                    <p class="mb-10">Request authorization from a Trip Edit Authorizer to make changes.</p>
+                                    @if ($hasPendingEditRequest)
+                                        <span class="badge badge-warning">Authorization request pending</span>
+                                    @else
+                                        <button type="button" class="btn btn-sm bg-warning" wire:click="requestEditAuthorization"><i class="fa fa-unlock-alt"></i> Request Authorization to Edit</button>
+                                    @endif
+                                </div>
+                            @elseif ($isLocked && $hasActiveEditGrant)
+                                <div class="alert alert-info">
+                                    <strong><i class="fa fa-unlock"></i> One-time edit access granted.</strong>
+                                    This trip will re-lock automatically as soon as you save.
+                                </div>
+                            @endif
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                  <h6 class="underline mt-20 mb-20"><strong>Order Details</strong></h6>
                                 <div class="mb-10">
@@ -2316,6 +2332,31 @@
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
                             <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="editAuthorizationRequestModal" tabindex="-1" role="dialog" aria-labelledby="editAuthorizationRequestModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="editAuthorizationRequestModalLabel"><i class="fa fa-unlock-alt"></i> Request Edit Authorization <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                </div>
+                <form wire:submit.prevent="submitEditAuthorizationRequest()">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editAuthorizationReason">Reason<span class="required" style="color: red">*</span></label>
+                            <textarea class="form-control" wire:model.defer="editAuthorizationReason" placeholder="Why do you need to edit this completed trip?"></textarea>
+                            @error('editAuthorizationReason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Submit Request</button>
                         </div>
                     </div>
                 </form>

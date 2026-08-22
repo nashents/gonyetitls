@@ -28,6 +28,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\Sage\SageSyncService;
 use App\Services\Sage\SageIntegration;
+use App\Services\TripCompletionCascadeService;
 use App\Jobs\Sage\SyncTripToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -379,11 +380,16 @@ class Index extends Component
     }
 
     public function markCompleted(){
-       
-        $trip = Trip::find($this->trip_id);
-        $trip->status = $this->mark_completed;
-        $trip->closed_by = Auth::user()->id;
-        $trip->update();
+
+        DB::transaction(function () {
+            $trip = Trip::find($this->trip_id);
+            $trip->status = $this->mark_completed;
+            $trip->closed_by = Auth::user()->id;
+            $trip->update();
+
+            app(TripCompletionCascadeService::class)->syncForTrip($trip);
+        });
+
         $this->dispatchBrowserEvent('hide-completedModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',

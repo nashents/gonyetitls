@@ -61,6 +61,10 @@ class Index extends Component
     public $selectedCurrency;
     public $exchange_amount;
     public $account_id;
+    public $to_account_id;
+    public $to_amount;
+    public $to_currency_id;
+    public $to_exchange_rate = 1;
     public $customer = null;
     public $vendor = null;
     public $selectedAccount;
@@ -355,9 +359,16 @@ class Index extends Component
         if (!is_null($id)) {
             $account = Account::find($id);
             $this->selectedCurrency = $account->currency_id;
-          
+
         }
-      
+
+    }
+
+    public function updatedToAccountId($id){
+        if (!is_null($id)) {
+            $account = Account::find($id);
+            $this->to_currency_id = $account->currency_id;
+        }
     }
 
     public function paymentNumber(){
@@ -430,6 +441,17 @@ class Index extends Component
                         $account->balance = (float) $account->balance + (float) $payment->amount;
                         $account->save();
                     }
+                }
+            }
+
+            // Transfers also move the destination account's balance -
+            // reverse that leg too.
+            if ($payment && $payment->category === 'transfer' && $payment->to_account_id) {
+                $toAccount = Account::lockForUpdate()->find($payment->to_account_id);
+
+                if ($toAccount && is_numeric($toAccount->balance) && is_numeric($payment->to_amount)) {
+                    $toAccount->balance = (float) $toAccount->balance - (float) $payment->to_amount;
+                    $toAccount->save();
                 }
             }
 
@@ -527,6 +549,74 @@ class Index extends Component
 
         return redirect(request()->header('Referer'));
        
+    }
+
+    public function showTransferModal(){
+        $transaction_type = TransactionType::where('name','Transfer')->first();
+        $this->transaction_type_id = optional($transaction_type)->id;
+        $this->dispatchBrowserEvent('show-transferModal');
+    }
+
+    public function storeTransferTransaction(){
+
+        $this->validate([
+            'date'            => 'required',
+            'account_id'      => 'required',
+            'to_account_id'   => 'required|different:account_id',
+            'amount'          => 'required|numeric|gt:0',
+            'to_amount'       => 'required|numeric|gt:0',
+        ]);
+
+        $account = Account::find($this->account_id);
+        $toAccount = Account::find($this->to_account_id);
+        $current_balance = $account->balance;
+
+        if ($current_balance < $this->amount) {
+            $this->dispatchBrowserEvent('hide-transferModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Transfer failed, amount exceeds the source account's floating balance!!"
+            ]);
+            return redirect(request()->header('Referer'));
+        }
+
+        DB::transaction(function () use ($account, $toAccount) {
+
+            $payment = new Payment;
+            $payment->user_id = Auth::user()->id;
+            $payment->payment_number = $this->paymentNumber();
+            $payment->account_id = $this->account_id;
+            $payment->to_account_id = $this->to_account_id;
+            $payment->date = $this->date;
+            $payment->transaction_type_id = $this->transaction_type_id;
+            $payment->movement = "Dbt";
+            $payment->description = $this->description;
+            $payment->transaction_category = "Transfer";
+            $payment->category = 'transfer';
+            $payment->notes = $this->notes;
+            $payment->currency_id = $account->currency_id;
+            $payment->amount = $this->amount;
+            $payment->exchange_rate = $this->exchange_rate;
+            $payment->to_currency_id = $toAccount->currency_id;
+            $payment->to_amount = $this->to_amount;
+            $payment->to_exchange_rate = $this->to_exchange_rate;
+            $payment->save();
+
+            $account->balance = (float) $account->balance - (float) $this->amount;
+            $account->update();
+
+            $toAccount->balance = (float) $toAccount->balance + (float) $this->to_amount;
+            $toAccount->update();
+        });
+
+        $this->dispatchBrowserEvent('hide-transferModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Transfer Transaction Added Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
     }
 
     public function showWithdrawalModal(){

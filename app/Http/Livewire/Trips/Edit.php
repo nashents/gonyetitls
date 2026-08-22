@@ -41,6 +41,8 @@ use App\Models\Transporter;
 use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripCmrDetail;
+use App\Models\TripEditAuthorizationRequest;
+use App\Models\TripEditAuthorizer;
 use App\Models\TripDestination;
 use App\Models\TripExpense;
 use App\Models\TripGroup;
@@ -65,6 +67,12 @@ class Edit extends Component
     public $trip;
     public $trip_id;
     public $trip_number;
+
+    public $isLocked = false;
+    public $hasActiveEditGrant = false;
+    public $activeGrant;
+    public $editAuthorizationReason;
+    public $hasPendingEditRequest = false;
     public $with_quotation;
     public $selectedQuotation;
     public $quotations;
@@ -1158,6 +1166,23 @@ class Edit extends Component
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','vehicle','vehicle.vehicle_make','vehicle.vehicle_model','horse','horse.horse_make','horse.horse_model',
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
+
+        $this->isLocked = $this->trip && (int) $this->trip->status === 1;
+        if ($this->isLocked) {
+            $this->activeGrant = TripEditAuthorizationRequest::where('trip_id', $this->trip->id)
+                ->where('user_id', Auth::user()->id)
+                ->where('status', 'approved')
+                ->whereNull('consumed_at')
+                ->latest()
+                ->first();
+            $this->hasActiveEditGrant = (bool) $this->activeGrant;
+
+            $this->hasPendingEditRequest = TripEditAuthorizationRequest::where('trip_id', $this->trip->id)
+                ->where('user_id', Auth::user()->id)
+                ->where('status', 'pending')
+                ->exists();
+        }
+
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->quotations = Quotation::with('customer')
@@ -2377,6 +2402,48 @@ class Edit extends Component
 
     }
 
+    public function requestEditAuthorization(){
+        $this->editAuthorizationReason = null;
+        $this->dispatchBrowserEvent('show-editAuthorizationRequestModal');
+    }
+
+    public function submitEditAuthorizationRequest(){
+
+        $this->validate([
+            'editAuthorizationReason' => 'required|string|max:1000',
+        ], [
+            'editAuthorizationReason.required' => 'Please give a reason for requesting edit access.',
+        ]);
+
+        $alreadyPending = TripEditAuthorizationRequest::where('trip_id', $this->trip_id)
+            ->where('user_id', Auth::user()->id)
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($alreadyPending) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"You already have a pending authorization request for this trip."
+            ]);
+            return;
+        }
+
+        TripEditAuthorizationRequest::create([
+            'trip_id' => $this->trip_id,
+            'user_id' => Auth::user()->id,
+            'reason' => $this->editAuthorizationReason,
+            'status' => 'pending',
+        ]);
+
+        $this->hasPendingEditRequest = true;
+
+        $this->dispatchBrowserEvent('hide-editAuthorizationRequestModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Authorization Request Submitted Successfully!!"
+        ]);
+    }
+
     public function update(){
 
         DB::transaction(function () {
@@ -2390,6 +2457,21 @@ class Edit extends Component
         }
 
         $trip = Trip::find($this->trip_id);
+
+        $locked = $trip && (int) $trip->status === 1;
+        $grant = null;
+        if ($locked) {
+            $grant = TripEditAuthorizationRequest::where('trip_id', $trip->id)
+                ->where('user_id', Auth::user()->id)
+                ->where('status', 'approved')
+                ->whereNull('consumed_at')
+                ->latest()
+                ->first();
+
+            if (!$grant) {
+                abort(403, 'This trip is completed and locked for editing. Request authorization before editing it.');
+            }
+        }
 
         $hasTransportOrders = $trip && $trip->trip_transport_orders()->exists();
 
@@ -2497,6 +2579,12 @@ class Edit extends Component
         }
 
         $trip->update();
+
+        if ($grant) {
+            $grant->update(['consumed_at' => now()]);
+            $this->hasActiveEditGrant = false;
+            $this->activeGrant = null;
+        }
 
         if (
             $this->insurer_name || $this->insurance_policy_number || $this->insurance_cover_amount
@@ -4067,9 +4155,7 @@ class Edit extends Component
                 ]);
             }
             elseif($category == 'expenses'){
-                $this->expenses = Expense::whereHas('account', function($q){
-                    $q->where('name', 'Trip Expense');
-                 })->orderBy('name','asc')->get();
+                $this->expenses = Expense::orderBy('name','asc')->get();
                  $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Expenses Refreshed Successfully!!."

@@ -2,20 +2,18 @@
 
 namespace App\Http\Livewire\Trips;
 
-use App\Models\Bill;
 use App\Models\Trip;
-use App\Models\Account;
 use App\Models\Expense;
 use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Currency;
 use App\Models\Allowance;
-use App\Models\BillExpense;
 use App\Models\TripExpense;
 use App\Models\PaymentMethod;
 use App\Models\AllowanceDriver;
 use App\Models\ExpenseCategory;
 use App\Models\Vendor;
+use App\Services\Accounting\TripExpenseJournalService;
 use Illuminate\Support\Facades\Auth;
 
 class Expenses extends Component
@@ -104,40 +102,6 @@ class Expenses extends Component
 
     }
 
-    public function billNumber(){
-
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-        $bill = Bill::latest()->orderBy('id','desc')->first();
-
-        if (!$bill) {
-            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $bill->id + 1;
-            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $bill_number;
-
-
-    }
-
     public function mount($trip){
 
     $this->trip_expense_type[0] = "expense";
@@ -153,9 +117,7 @@ class Expenses extends Component
     $this->vendors = Vendor::orderBy('name')->get();
     $this->allowances = Allowance::orderBy('name')->get();
     $this->payment_methods = PaymentMethod::orderBy('name')->get();
-    $this->expenses = Expense::whereHas('account', function($q){
-        $q->where('name', 'Trip Expense');
-     })->get();
+    $this->expenses = Expense::get();
    
     }
 
@@ -203,9 +165,7 @@ class Expenses extends Component
        public function refresh($category){
 
         if($category == "expenses"){
-            $this->expenses = Expense::whereHas('account', function($q){
-                $q->where('name', 'Trip Expense');
-             })->orderBy('name','asc')->get();
+            $this->expenses = Expense::orderBy('name','asc')->get();
              $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Expenses Refreshed Successfully!!."
@@ -334,51 +294,8 @@ class Expenses extends Component
                    
                     $trip_expense->save();
 
-                    $account = Account::where('name','Trip Expense')->get()->first();
-    
-                    $bill = new Bill;
-                    $bill->user_id = Auth::user()->id;
-                    $bill->bill_number = $this->billNumber();
-                    $bill->trip_id = $this->trip->id;
-                    $bill->trip_expense_id = $trip_expense->id;
-                    $bill->horse_id = $this->trip->horse_id;
-                    $bill->driver_id = $this->trip->driver_id;
-                    if (isset($account)) {
-                        $bill->account_id = $account->id;
-                        $bill->account_type_id = $account->account_type->id;
-                    }
-                    $bill->bill_date = $this->trip->start_date;
-                    $bill->currency_id = $trip_expense->currency_id;
-                    $bill->vendor_id = $trip_expense->vendor_id;
-                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill->exchange_rate = $trip_expense ->exchange_rate;
-                        $bill->exchange_amount = $trip_expense->exchange_amount;
-                    }
-                    $bill->total = $trip_expense->amount;
-                    $bill->subtotal = $trip_expense->amount;
-                    $bill->balance = $trip_expense->amount;
-                    $bill->save();
-        
-                    $bill_expense = new BillExpense;
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-                    $bill_expense->expense_id = $trip_expense->expense_id;
-                    $bill_expense->allowance_id = $trip_expense->allowance_id;
-                    if (isset($account)) {
-                        $bill_expense->account_id = $account->id;
-                        $bill_expense->account_type_id = $account->account_type->id;
-                    }
-                    $bill_expense->qty = 1;
-                    if($this->selectedCurrency[$key] != Auth::user()->employee->company->currency_id){
-                        $bill_expense->exchange_rate = $this->exchange_rate[$key];
-                        $bill_expense->exchange_amount = $this->exchange_amount[$key];
-                    }
-                    $bill_expense->amount = $trip_expense->amount;
-                    $bill_expense->subtotal = $trip_expense->amount;
-                    $bill_expense->subtotal_incl = $trip_expense->amount;
-                    $bill_expense->save();
-        
+                    app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
+
                     $this->recalculateExpenses($this->trip->id);
                 }
 
@@ -511,44 +428,8 @@ class Expenses extends Component
                 $trip_expense->vendor_id = $this->selectedVendor;
                 $trip_expense->payment_method_id = $this->payment_method_id;
                 $trip_expense->update();
-                
 
-                $bill = $trip_expense->bill;
-               
-                if (isset($bill)) {   
-                
-                    $bill->trip_id = $this->trip->id;
-                    $bill->horse_id = $this->trip->horse_id;
-                    $bill->driver_id = $this->trip->driver_id;
-                    $bill->bill_date = $this->trip->start_date;
-                    $bill->currency_id = $this->trip->currency_id;
-                    $bill->vendor_id = $trip_expense->vendor_id;
-                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill->exchange_rate = $trip_expense ->exchange_rate;
-                        $bill->exchange_amount = $trip_expense->exchange_amount;
-                    }
-                    $bill->subtotal = $trip_expense->amount;
-                    $bill->total = $trip_expense->amount;
-                    $bill->balance = $trip_expense->amount;
-                    $bill->update();
-        
-                    $bill_expense = BillExpense::where('bill_id',$bill->id)
-                                                ->where('expense_id',$this->selectedExpense)->orWhere('allowance_id',$this->selectedAllowance)->get()->first();
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-                    $bill_expense->expense_id = $trip_expense->expense_id;
-                    $bill_expense->qty = 1;
-                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
-                        $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
-                        $bill_expense->exchange_amount = $trip_expense->exchange_amount;
-                    }
-                    $bill_expense->amount = $trip_expense->amount;
-                    $bill_expense->subtotal = $trip_expense->amount;
-                    $bill_expense->subtotal_incl = $trip_expense->amount;
-                    $bill_expense->update();
-
-                }
+                app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
 
                 $this->recalculateExpenses($this->trip->id);
 
@@ -601,10 +482,8 @@ class Expenses extends Component
     public function render()
     {
     
-        $this->expenses = Expense::whereHas('account', function($q){
-            $q->where('name', 'Trip Expense');
-            })->get();
-             
+        $this->expenses = Expense::get();
+
         $this->trip_expenses = TripExpense::where('trip_id',$this->trip->id)->get();
 
         return view('livewire.trips.expenses');

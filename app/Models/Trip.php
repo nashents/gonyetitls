@@ -46,6 +46,11 @@ class Trip extends Model implements Auditable
         return $this->hasMany(TripTransportOrder::class);
     }
 
+    public function edit_authorization_requests()
+    {
+        return $this->hasMany(TripEditAuthorizationRequest::class);
+    }
+
     public function transport_orders()
     {
         return $this->belongsToMany(

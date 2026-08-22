@@ -156,7 +156,15 @@ class LedgerResyncService
             return false;
         }
 
-        $postedAmount = (float) ($line->debit ?: $line->credit);
+        // NOT ($line->debit ?: $line->credit) - debit/credit are cast
+        // decimal:2 strings, and PHP only treats the exact string '0' as
+        // falsy, so a zero side stored as '0.00' is truthy and always wins
+        // the ?: - silently picking the empty side whenever the control
+        // account is credited (every Bill/DebitNote's AP line), making this
+        // always report "changed" and reverse+repost on every call even
+        // when nothing did. max() picks whichever side actually holds the
+        // amount regardless of which one that is.
+        $postedAmount = max((float) $line->debit, (float) $line->credit);
         $postedRate   = (float) ($line->exchange_rate ?? 1);
 
         return round($postedAmount, 2) === round($currentTotal, 2)

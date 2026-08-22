@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class PaymentJournalService
 {
     private const POSTABLE_CATEGORIES = [
-        'customer', 'vendor', 'invoice', 'bill', 'sale', 'recovery', 'withdrawal', 'deposit',
+        'customer', 'vendor', 'invoice', 'bill', 'sale', 'recovery', 'withdrawal', 'deposit', 'transfer',
     ];
 
     /**
@@ -26,12 +26,24 @@ class PaymentJournalService
 
     public function post(Payment $payment): JournalEntry
     {
-        $existing = JournalEntry::where('payment_id', $payment->id)->first();
+        // Excludes reversed entries AND the reversal record itself - matching
+        // every other *JournalService (BillJournalService, etc.). The
+        // reversal record carries the same payment_id with status 'posted'
+        // (only the entry it reversed flips to 'reversed'), so without also
+        // excluding it by its REV-% reference, it gets mistaken for "already
+        // posted" and handed back instead of a genuinely fresh entry -
+        // meaning a payment whose original entry was reversed (e.g. to
+        // correct a wrong contra account) could never get a correct one
+        // posted afterward.
+        $existing = JournalEntry::where('payment_id', $payment->id)
+            ->where('status', '!=', 'reversed')
+            ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
+            ->first();
         if ($existing && $existing->journal_entry_lines()->exists()) {
             return $existing;
         }
 
-        $payment->loadMissing(['account', 'customer', 'vendor', 'currency', 'invoice', 'bill', 'sale', 'recovery', 'transaction_type']);
+        $payment->loadMissing(['account', 'to_account', 'customer', 'vendor', 'currency', 'invoice', 'bill', 'sale', 'recovery', 'transaction_type']);
 
         $rate    = (float) ($payment->exchange_rate ?? 1);
         $amount  = (float) $payment->amount;
@@ -65,6 +77,7 @@ class PaymentJournalService
                 'recovery'   => $this->postRecoveryPayment($entry, $payment, $amount, $rate, $cashBankAccount),
                 'withdrawal' => $this->postWithdrawal($entry, $payment, $amount, $rate, $cashBankAccount),
                 'deposit'    => $this->postDeposit($entry, $payment, $amount, $rate, $cashBankAccount),
+                'transfer'   => $this->postTransfer($entry, $payment, $amount, $rate, $cashBankAccount),
                 default      => null,
             };
 
@@ -436,6 +449,57 @@ class PaymentJournalService
         ]);
     }
 
+    // ── 9. Inter-account Transfer ─────────────────────────────────────────────
+    // Transactions component: category = transfer, account_id = source,
+    // to_account_id = destination. The two legs are independent amounts (not
+    // just one amount converted at a single rate) because a real transfer
+    // between accounts in different currencies settles at whatever the bank
+    // actually converted it at - the user records what left the source
+    // account and what arrived in the destination account, and any
+    // difference between the two, in reporting currency, is a realized FX
+    // gain/loss on the conversion (or would net to zero for a same-currency
+    // transfer).
+    // DR destination Cash/Bank   CR source Cash/Bank   [+ FX gain/loss]
+    private function postTransfer(
+        JournalEntry $entry,
+        Payment $payment,
+        float $amount,
+        float $rate,
+        Account $cashBankAccount
+    ): void {
+        $toAccount = $payment->to_account ?? Account::findOrFail($payment->to_account_id);
+        $toRate = (float) ($payment->to_exchange_rate ?? 1);
+        $toAmount = (float) $payment->to_amount;
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $toAccount->id,
+            'debit'           => $toAmount,
+            'credit'          => 0,
+            'exchange_debit'  => $toAmount * $toRate,
+            'exchange_credit' => 0,
+            'currency_id'     => $payment->to_currency_id,
+            'exchange_rate'   => $toRate,
+            'description'     => "Transfer in - {$toAccount->name} - {$payment->payment_number}",
+        ]);
+
+        $entry->journal_entry_lines()->create([
+            'account_id'      => $cashBankAccount->id,
+            'debit'           => 0,
+            'credit'          => $amount,
+            'exchange_debit'  => 0,
+            'exchange_credit' => $amount * $rate,
+            'currency_id'     => $payment->currency_id,
+            'exchange_rate'   => $rate,
+            'description'     => "Transfer out - {$cashBankAccount->name} - {$payment->payment_number}",
+        ]);
+
+        $this->postFxDifference(
+            $entry, $amount * $rate, $toAmount * $toRate, isPayable: false,
+            dimensions: [],
+            description: "Realized FX on transfer - {$cashBankAccount->name} to {$toAccount->name} - {$payment->payment_number}"
+        );
+    }
+
     // ── Realized FX gain/loss ────────────────────────────────────────────────
 
     /**
@@ -565,6 +629,7 @@ class PaymentJournalService
             'recovery'   => "Recovery Payment - {$payment->driver?->employee?->name} - {$payment->payment_number}",
             'withdrawal' => "Withdrawal - {$payment->transaction_category} - {$payment->payment_number}",
             'deposit'    => "Deposit - {$payment->transaction_category} - {$payment->payment_number}",
+            'transfer'   => "Transfer - {$payment->account?->name} to {$payment->to_account?->name} - {$payment->payment_number}",
             default      => "Payment - {$payment->payment_number}",
         };
     }

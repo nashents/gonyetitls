@@ -5,7 +5,7 @@ namespace App\Http\View\Composers;
 use App\Models\{
     Allocation, Attendance, Agent, Bill, Booking, Company, CreditNote, Customer, DebitNote, Department, DepartmentHead, Dispatch, Fuel, FuelRequest,
     GatePass, GoodsReceived, Incident, Invoice, Leave, Loan, ModuleGroup, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
-    Transporter, TransportOrder, Trip, User, WasteCollection, WasteDisposal,
+    Transporter, TransportOrder, Trip, TripEditAuthorizationRequest, TripEditAuthorizer, User, WasteCollection, WasteDisposal,
 };
 
 use App\Services\Integrations\IntegrationGate;
@@ -120,6 +120,7 @@ class SidebarComposer
         $isDirector      = in_array('Directors', $rank_names);
         $isSuperAdmin      = in_array('Super Admin', $role_names);
         $isAdmin           = in_array('Admin', $role_names);
+        $isTripEditAuthorizer = TripEditAuthorizer::where('user_id', $user->id)->where('status', 1)->exists();
         $isUser           = in_array('User', $role_names);
         $inHR              = in_array('Human Resources', $department_names);
         $inFinance         = in_array('Finance', $department_names);
@@ -206,6 +207,10 @@ class SidebarComposer
         $transportOrdersPendingCount = TransportOrder::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+
+        $tripEditAuthorizationsPendingCount = TripEditAuthorizationRequest::where('status', 'pending')
+        ->whereHas('trip', fn($q) => $q->where('user_id', '!=', $user->id))
+        ->count();
         // ->whereDate('created_at', Carbon::today())->get()->count();
         $transportOrdersApprovedCount = TransportOrder::where('authorization','approved')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -671,6 +676,7 @@ class SidebarComposer
              // roles / flags (use what you computed, not session())
             'isAdmin'       => (bool) $isAdmin,
             'isSuperAdmin'  => (bool) $isSuperAdmin,
+            'isTripEditAuthorizer' => (bool) $isTripEditAuthorizer,
             'isHOD'  => (bool) $isHOD,
             'isUser'        => (bool) $isUser,
             'isManagement'  => (bool) $isManagement,
@@ -779,6 +785,9 @@ class SidebarComposer
         'transport_orders_pending_count'  => (int) ($transportOrdersPendingCount ?? 0),
         'transport_orders_approved_count' => (int) ($transportOrdersApprovedCount ?? 0),
         'transport_orders_rejected_count' => (int) ($transportOrdersRejectedCount ?? 0),
+
+        // Trip Edit Authorizations
+        'trip_edit_authorizations_pending_count' => (int) ($tripEditAuthorizationsPendingCount ?? 0),
 
         // Requisitions
         'requisitions_pending_count'  => (int) ($requisitionsPendingCount ?? 0),
