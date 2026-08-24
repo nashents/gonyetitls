@@ -89,7 +89,7 @@
                             <select wire:model.debounce.300ms="user_id" class="form-control" required>
                                 <option value="">Select User</option>
                                 @foreach ($users as $user)
-                                    <option value="{{$user->id}}">{{$user->name}} {{$user->surname}} &lt;{{$user->email}}&gt;</option>
+                                    <option value="{{$user->id}}">{{$user->name}} {{$user->surname}}</option>
                                 @endforeach
                             </select>
                             @error('user_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -127,7 +127,7 @@
                             <select wire:model.debounce.300ms="user_id" class="form-control" required>
                                 <option value="">Select User</option>
                                 @foreach ($users as $user)
-                                    <option value="{{$user->id}}">{{$user->name}} {{$user->surname}} &lt;{{$user->email}}&gt;</option>
+                                    <option value="{{$user->id}}">{{$user->name}} {{$user->surname}}</option>
                                 @endforeach
                             </select>
                             @error('user_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

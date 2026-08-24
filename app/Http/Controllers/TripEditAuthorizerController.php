@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 class TripEditAuthorizerController extends Controller
 {
     /**
-     * Display the Trip Edit Authorizers admin CRUD (Super Admin only).
+     * The Trip Edit Authorizers admin CRUD now lives on the Notifications
+     * page, alongside notification-recipient management, so both "who to
+     * notify" and "who can authorize trip edits" are configured in one place.
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        return view('trip-edit-authorizers.index');
+        return redirect()->route('notifications.index');
     }
 
     /**

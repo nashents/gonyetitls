@@ -21,7 +21,7 @@ class Index extends Component
         abort_unless(Auth::user()->isSuperAdmin(), 403);
 
         $this->status = 1;
-        $this->users = User::orderBy('name', 'asc')->get();
+        $this->users = User::where('category', 'employee')->where('active', 1)->orderBy('name', 'asc')->get();
     }
 
     protected $rules = [

@@ -148,7 +148,7 @@
                                                 @foreach($accountsByGroup as $groupName => $accounts)
                                                 <optgroup label="{{ $groupName }}">
                                                     @foreach($accounts as $account)
-                                                    <option value="{{ $account['code'] }}">{{ $account['code'] }} — {{ $account['name'] }}</option>
+                                                    <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
                                                     @endforeach
                                                 </optgroup>
                                                 @endforeach
@@ -178,7 +178,7 @@
                                                 @foreach($accountsByGroup as $groupName => $accounts)
                                                 <optgroup label="{{ $groupName }}">
                                                     @foreach($accounts as $account)
-                                                    <option value="{{ $account['code'] }}">{{ $account['code'] }} — {{ $account['name'] }}</option>
+                                                    <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
                                                     @endforeach
                                                 </optgroup>
                                                 @endforeach

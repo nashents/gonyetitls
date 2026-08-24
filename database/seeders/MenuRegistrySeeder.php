@@ -2361,12 +2361,14 @@ class MenuRegistrySeeder extends Seeder
         //     'visibility' => null,
         // ]);
 
-        // Trip Edit Authorizers (Super Admin only)
+        // Notifications & Trip Edit Authorizers (Super Admin only) — one page
+        // to configure both who gets notification emails and who can
+        // authorize edits to completed/locked trips.
         $upsertModule($g, [
-            'name' => 'Trip Edit Authorizers',
+            'name' => 'Notifications',
             'slug' => 'trip-edit-authorizers',
             'icon' => 'fas fa-user-shield',
-            'route_name' => 'trip_edit_authorizers.index',
+            'route_name' => 'notifications.index',
             'sort_order' => 30,
             'visibility' => $any([$all(['isSuperAdmin'])]),
         ]);

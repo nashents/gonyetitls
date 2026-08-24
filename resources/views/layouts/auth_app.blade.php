@@ -540,6 +540,22 @@
             })
         </script>
 
+        <script type="text/javascript">
+            window.addEventListener('hide-tripEditAuthorizerModal', event => {
+                $('#tripEditAuthorizerModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('show-tripEditAuthorizerEditModal', event => {
+                $('#tripEditAuthorizerEditModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-tripEditAuthorizerEditModal', event => {
+                $('#tripEditAuthorizerEditModal').modal('hide');
+            })
+        </script>
+
     <script type="text/javascript">
             window.addEventListener('show-training_requirementModal', event => {
                 $('#training_requirementModal').modal('show');

@@ -65,8 +65,12 @@ class Kernel extends ConsoleKernel
         // now() directly (Trip::isTemporarilyUnlocked), so a trip already
         // re-locks the instant its window expires even without this running.
         // This just clears the stale timestamp/attribution for a clean UI.
+        // Daily (not hourly): this server's Forge cron only invokes
+        // `schedule:run` once nightly to save memory, so anything finer than
+        // ->daily() here would be misleading - it would still only actually
+        // run once a night regardless of the label.
         $schedule->command('trips:relock-expired')
-        ->hourly()
+        ->daily()
         ->withoutOverlapping()
         ->onOneServer();
     }

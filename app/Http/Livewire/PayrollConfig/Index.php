@@ -68,7 +68,6 @@ class Index extends Component
     private function loadAccounts(): void
     {
         $accounts = Account::with('account_type_group')
-            ->where('user_id', $this->company->admin_id)
             ->orderBy('code')
             ->get();
 

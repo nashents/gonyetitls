@@ -5,12 +5,14 @@ Namespace App\Http\Livewire\Notifications;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Notification;
+use App\Models\TripEditAuthorizer;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
-    
+
     public $notifications;
     public $email;
     public $status;
@@ -18,11 +20,18 @@ class Index extends Component
     public $employees;
     public $category;
     public $when;
- 
+
     public $notification_id;
     public $user_id;
     public $notification;
-  
+
+    public $isSuperAdmin = false;
+    public $trip_edit_authorizers;
+    public $trip_edit_authorizer_users;
+    public $trip_edit_authorizer_id;
+    public $trip_edit_authorizer_user_id;
+    public $trip_edit_authorizer_status;
+
 
     public $inputs = [];
     public $i = 1;
@@ -34,7 +43,7 @@ class Index extends Component
         $this->i = $i;
         array_push($this->inputs ,$i);
     }
-  
+
 
     public function remove($i)
     {
@@ -45,6 +54,12 @@ class Index extends Component
         $this->status = 1;
         $this->notifications = Notification::orderBy('created_at','desc');
         $this->employees = Employee::where('email','!=','')->where('email','!=',Null)->orderBy('name','asc')->get();
+
+        $this->isSuperAdmin = Auth::user()->isSuperAdmin();
+        if ($this->isSuperAdmin) {
+            $this->trip_edit_authorizer_status = 1;
+            $this->trip_edit_authorizer_users = User::where('category', 'employee')->where('active', 1)->orderBy('name', 'asc')->get();
+        }
     }
 
     public function updated($value){
@@ -138,9 +153,88 @@ class Index extends Component
     }
 
 
+    private function resetTripEditAuthorizerFields(){
+        $this->trip_edit_authorizer_id = null;
+        $this->trip_edit_authorizer_user_id = null;
+        $this->trip_edit_authorizer_status = 1;
+    }
+
+    public function storeTripEditAuthorizer(){
+        abort_unless($this->isSuperAdmin, 403);
+
+        $this->validate([
+            'trip_edit_authorizer_user_id' => 'required',
+        ]);
+
+        DB::transaction(function () {
+            $authorizer = new TripEditAuthorizer;
+            $authorizer->user_id = $this->trip_edit_authorizer_user_id;
+            $authorizer->created_by = Auth::user()->id;
+            $authorizer->status = $this->trip_edit_authorizer_status;
+            $authorizer->save();
+
+            $this->dispatchBrowserEvent('hide-tripEditAuthorizerModal');
+            $this->resetTripEditAuthorizerFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Trip Edit Authorizer Added Successfully!!"
+            ]);
+        });
+    }
+
+    public function editTripEditAuthorizer($id){
+        abort_unless($this->isSuperAdmin, 403);
+
+        $authorizer = TripEditAuthorizer::find($id);
+        $this->trip_edit_authorizer_id = $authorizer->id;
+        $this->trip_edit_authorizer_user_id = $authorizer->user_id;
+        $this->trip_edit_authorizer_status = $authorizer->status;
+        $this->dispatchBrowserEvent('show-tripEditAuthorizerEditModal');
+    }
+
+    public function updateTripEditAuthorizer(){
+        abort_unless($this->isSuperAdmin, 403);
+
+        $this->validate([
+            'trip_edit_authorizer_user_id' => 'required',
+        ]);
+
+        DB::transaction(function () {
+            if ($this->trip_edit_authorizer_id) {
+                $authorizer = TripEditAuthorizer::find($this->trip_edit_authorizer_id);
+                $authorizer->user_id = $this->trip_edit_authorizer_user_id;
+                $authorizer->status = $this->trip_edit_authorizer_status;
+                $authorizer->update();
+
+                $this->dispatchBrowserEvent('hide-tripEditAuthorizerEditModal');
+                $this->resetTripEditAuthorizerFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Trip Edit Authorizer Updated Successfully!!"
+                ]);
+            }
+        });
+    }
+
+    public function deleteTripEditAuthorizer($id){
+        abort_unless($this->isSuperAdmin, 403);
+
+        $authorizer = TripEditAuthorizer::find($id);
+        if ($authorizer) {
+            $authorizer->delete();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Trip Edit Authorizer Removed Successfully!!"
+            ]);
+        }
+    }
+
     public function render()
     {
         $this->notifications = Notification::latest()->get();
+        if ($this->isSuperAdmin) {
+            $this->trip_edit_authorizers = TripEditAuthorizer::with('user', 'creator')->latest()->get();
+        }
         return view('livewire.notifications.index',[
             'notifications'=>   $this->notifications
         ]);
