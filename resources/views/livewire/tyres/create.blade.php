@@ -13,12 +13,8 @@
                         <div class="panel-body">
                         <form wire:submit.prevent="store()" >
                              <div class="form-group">
-                                    <label for="country">Goods Received Vouchers
-                                            @if (!is_null($selectedPurchase) || !is_null($selectedTransfer) )
-                                                <span class="required" style="color: red">*</span>
-                                            @endif
-                                    </label>
-                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" {{!is_null($selectedPurchase) || !is_null($selectedTransfer) ? "required" : "" }} >
+                                    <label for="country">Goods Received Vouchers <span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" required>
                                         <option value="">Select GRV</option>
                                         @foreach ($goods_receiveds as $goods_received)
                                          <option value="{{$goods_received->id}}">GRV#: {{$goods_received->goods_received_number}} Receiveing Date: {{$goods_received->date}} ReceivedBy: {{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}} Vendor: {{$goods_received->vendor ? $goods_received->vendor->name : ""}} {{$goods_received->delivery_number ? "Delivery#: ".$goods_received->delivery_number : ""}} {{$goods_received->delivery_date ? "Delivery Date: ".$goods_received->delivery_date : ""}} {{$goods_received->driver_name ? "Driver Name: ".$goods_received->driver_name : ""}} </option>
@@ -94,11 +90,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="name">Currencies</label>
-                                        <select wire:model.debounce.300ms="selectedCurrency" class="form-control">
+                                        <label for="name">Currencies <span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
                                             <option value="">Select Currency</option>
                                         @foreach ($currencies as $currency)
-                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                         @endforeach
                                         </select>
                                         @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror

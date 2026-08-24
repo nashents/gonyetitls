@@ -55,11 +55,11 @@
                                
                                 <div class="col-md-4">              
                                     <div class="form-group">
-                                        <label for="name">Currencies</label>
-                                        <select wire:model.debounce.300ms="selectedCurrency" class="form-control">
+                                        <label for="name">Currencies <span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
                                             <option value="">Select Currency</option>
                                         @foreach ($currencies as $currency)
-                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                         @endforeach
                                         </select>
                                         @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror

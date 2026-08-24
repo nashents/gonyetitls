@@ -442,12 +442,13 @@ class Edit extends Component
     }
 
     protected $rules = [
-        
+
         'selectedProduct' => 'required',
         'qty' => 'required',
         'amount' => 'required',
         'purchase_date' => 'required',
-       
+        'selectedCurrency' => 'required',
+
     ];
 
     public function billNumber(){
@@ -522,6 +523,8 @@ class Edit extends Component
 
 
     public function update(){
+
+        $this->validate();
 
         DB::transaction(function () {
 

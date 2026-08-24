@@ -305,6 +305,8 @@ class Create extends Component
     protected $rules = [
         'selectedProduct' => 'required',
         'purchase_date' => 'required',
+        'selectedGoodsReceived' => 'required',
+        'selectedCurrency' => 'required',
     ];
    
 
@@ -421,50 +423,7 @@ class Create extends Component
       
     }
 
-        public function goodsReceivedNumber(){
-
-     if (isset($this->company)) {
-            $str = $this->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
- 
-        $goods_received = GoodsReceived::orderBy('id','desc')->first();
-
-        if (!$goods_received) {
-            $goods_received_number =  $initials .'GR'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $goods_received->id + 1;
-            $goods_received_number =  $initials .'GR'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $goods_received_number;
-
-    }
-
-        
-    public function createGRV(){
-
-        $goods_received = new GoodsReceived;
-        $goods_received->goods_received_number = $this->goodsReceivedNumber();
-        $goods_received->user_id = Auth::user()->id;
-        $goods_received->vendor_id = $this->vendor_id;
-        $goods_received->department = $this->department;
-        $goods_received->employee_id = Auth::user()->employee->id;
-        $goods_received->date = $this->purchase_date;
-        $goods_received->authorization = 'pending';
-        $goods_received->save();
-
-        $this->selectedGoodsReceived = $goods_received->id;
-        
-        return $this->selectedGoodsReceived;
-    }
-
-    public function updatedSelectedPurchase($id)
+        public function updatedSelectedPurchase($id)
     {
         if (!is_null($id) ) {
             $purchase_order = Purchase::find($id);
@@ -550,6 +509,8 @@ class Create extends Component
 
     public function store(){
 
+        $this->validate();
+
         DB::transaction(function () {
 
         if (isset($this->selectedProduct)) {
@@ -568,11 +529,7 @@ class Create extends Component
                     $total = 0;
 
 
-                    if ($this->selectedGoodsReceived) {
-                      $asset->goods_received_id = $this->selectedGoodsReceived;
-                    }else{
-                        $asset->goods_received_id = $this->createGRV();
-                    }
+                    $asset->goods_received_id = $this->selectedGoodsReceived;
 
                     $goodsReceived = GoodsReceived::find($asset->goods_received_id);
 

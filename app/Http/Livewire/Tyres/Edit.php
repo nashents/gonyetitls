@@ -250,6 +250,7 @@ class Edit extends Component
         'serial_number.0' => 'required',
         'selectedProduct.0' => 'required',
         'vendor_id' => 'required',
+        'selectedCurrency' => 'required',
       ];
 
         public function updatedSelectedPurchase($id)
@@ -489,6 +490,10 @@ public function updatedSelectedTax($id){
     }
 
     public function update(){
+
+        $this->validate([
+            'selectedCurrency' => 'required',
+        ]);
 
         DB::transaction(function () {
 

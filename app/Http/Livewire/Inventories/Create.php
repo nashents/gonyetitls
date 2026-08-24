@@ -334,6 +334,8 @@ class Create extends Component
     protected $rules = [
         'selectedProduct' => 'required',
         'purchase_date' => 'required',
+        'selectedGoodsReceived' => 'required',
+        'selectedCurrency' => 'required',
     ];
    
 
@@ -612,50 +614,7 @@ class Create extends Component
 
     }
 
-      public function goodsReceivedNumber(){
-
-     if (isset($this->company)) {
-            $str = $this->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
- 
-        $goods_received = GoodsReceived::orderBy('id','desc')->first();
-
-        if (!$goods_received) {
-            $goods_received_number =  $initials .'GR'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $goods_received->id + 1;
-            $goods_received_number =  $initials .'GR'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $goods_received_number;
-
-    }
-
-        
-    public function createGRV(){
-
-        $goods_received = new GoodsReceived;
-        $goods_received->goods_received_number = $this->goodsReceivedNumber();
-        $goods_received->user_id = Auth::user()->id;
-        $goods_received->department = $this->department;
-        $goods_received->vendor_id = $this->vendor_id;
-        $goods_received->employee_id = Auth::user()->employee->id;
-        $goods_received->date = $this->purchase_date;
-        $goods_received->authorization = 'pending';
-        $goods_received->save();
-
-        $this->selectedGoodsReceived = $goods_received->id;
-
-        return $this->selectedGoodsReceived;
-    }
-
-    public function calculateExchangeAmount($total = null){
+      public function calculateExchangeAmount($total = null){
         if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
             $this->exchange_amount = $this->exchange_rate * $total;
         }
@@ -664,6 +623,8 @@ class Create extends Component
 
 
     public function store(){
+
+        $this->validate();
 
             DB::transaction(function () {
 
@@ -682,11 +643,7 @@ class Create extends Component
                     $subtotal_incl = 0;
                     $total = 0;
 
-                    if ($this->selectedGoodsReceived) {
-                      $inventory->goods_received_id = $this->selectedGoodsReceived;
-                    }else{
-                        $inventory->goods_received_id = $this->createGRV();
-                    }
+                    $inventory->goods_received_id = $this->selectedGoodsReceived;
 
                     $goodsReceived = GoodsReceived::find($inventory->goods_received_id);
 

@@ -240,6 +240,9 @@ class Create extends Component
         'position' => 'required',
         'axle' => 'required',
 
+        'selectedGoodsReceived' => 'required',
+        'selectedCurrency' => 'required',
+
       ];
 
           public function updatedSelectedPurchase($id)
@@ -372,49 +375,6 @@ class Create extends Component
         }
     }
 
-    public function goodsReceivedNumber(){
-
-     if (isset($this->company)) {
-            $str = $this->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
- 
-        $goods_received = GoodsReceived::orderBy('id','desc')->first();
-
-        if (!$goods_received) {
-            $goods_received_number =  $initials .'GR'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $goods_received->id + 1;
-            $goods_received_number =  $initials .'GR'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $goods_received_number;
-
-    }
-
-        
-    public function createGRV(){
-
-        $goods_received = new GoodsReceived;
-        $goods_received->goods_received_number = $this->goodsReceivedNumber();
-        $goods_received->user_id = Auth::user()->id;
-        $goods_received->department = $this->department;
-        $goods_received->vendor_id = $this->vendor_id;
-        $goods_received->employee_id = Auth::user()->employee->id;
-        $goods_received->date = $this->purchase_date;
-        $goods_received->authorization = 'pending';
-        $goods_received->save();
-
-        $this->selectedGoodsReceived = $goods_received->id;
-
-        return $this->selectedGoodsReceived;
-    }
-
     public function updatedSelectedTax($id, $key){
         if(!is_null($id)){
             $tax = Tax::find($id);
@@ -505,6 +465,11 @@ class Create extends Component
 
       public function store(){
 
+          $this->validate([
+              'selectedGoodsReceived' => 'required',
+              'selectedCurrency' => 'required',
+          ]);
+
           DB::transaction(function () {
 
           if (isset($this->selectedProduct)) {
@@ -525,11 +490,7 @@ class Create extends Component
                 $qty = 1;
               
 
-                if ($this->selectedGoodsReceived) {
-                    $tyre->goods_received_id = $this->selectedGoodsReceived;
-                }else{
-                    $tyre->goods_received_id = $this->createGRV();
-                }
+                $tyre->goods_received_id = $this->selectedGoodsReceived;
 
                 $goodsReceived = GoodsReceived::find($tyre->goods_received_id);
                 $tyre->product_id = $this->selectedProduct[$key];
