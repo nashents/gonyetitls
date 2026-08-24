@@ -37,6 +37,13 @@ class MenuRegistrySeeder extends Seeder
         // what caused the ezytrack row to revert to stale credentials before.
         $this->call(IntegrationProviderSeeder::class);
 
+        // Same reasoning as IntegrationProviderSeeder above: AccountSeeder's
+        // accounts loop uses updateOrCreate keyed by name, so it's safe to
+        // re-run on every deploy - it repairs any GL account (e.g. "Spares
+        // Inventory") missing from an instance seeded before that account
+        // was added, instead of needing a manual db:seed per instance.
+        $this->call(AccountSeeder::class);
+
 
         $companies = Company::where('type', '!=', 'Admin')->get();
 

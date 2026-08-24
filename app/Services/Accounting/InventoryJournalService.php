@@ -54,7 +54,12 @@ class InventoryJournalService
                 return null;
             }
 
-            $spareInventory = Account::where('name', 'Spares Inventory')->firstOrFail();
+            $spareInventory = Account::where('name', 'Spares Inventory')->first();
+
+            if (! $spareInventory) {
+                throw new \RuntimeException("Required GL account 'Spares Inventory' was not found. Run AccountSeeder or create it manually before authorizing GRVs.");
+            }
+
             $currencyId = $goodsReceived->purchase?->currency_id ?? $lines->first()['ref']->currency_id ?? null;
 
             $bill = Bill::where('goods_received_id', $goodsReceived->id)->first() ?: new Bill;
@@ -126,7 +131,11 @@ class InventoryJournalService
             return null;
         }
 
-        $spareInventory = Account::where('name', 'Spares Inventory')->firstOrFail();
+        $spareInventory = Account::where('name', 'Spares Inventory')->first();
+
+        if (! $spareInventory) {
+            throw new \RuntimeException("Required GL account 'Spares Inventory' was not found. Run AccountSeeder or create it manually before authorizing dispatches.");
+        }
 
         return $this->billJournal->postWithCreditAccount($bill, $spareInventory);
     }

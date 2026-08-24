@@ -1266,8 +1266,8 @@ class Edit extends Component
 
                 $this->current_selectedTransportOrder[$key] = $trip_transport_order->transport_order_id;
                 $transport_order = TransportOrder::find($trip_transport_order->transport_order_id);
-                $cargo = Cargo::find($transport_order->cargo_id);
-                $this->current_cargo_type[$key] = $cargo->type;
+                $cargo = $transport_order ? Cargo::find($transport_order->cargo_id) : null;
+                $this->current_cargo_type[$key] = $cargo?->type;
                 $this->current_allocated_quantity[$key] = $trip_transport_order->allocated_quantity ?: $transport_order->quantity;
                 $this->current_allocated_weight[$key] = $trip_transport_order->allocated_weight ?: $transport_order->weight;
                 $this->current_allocated_litreage[$key] = $trip_transport_order->allocated_litreage ?: $transport_order->litreage;

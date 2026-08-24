@@ -1450,7 +1450,9 @@ class Index extends Component
     public function updatedSelectedStore($id){
         if(!is_null($id)){
             $store = Store::find($id);
-            $this->loadProducts($store->id);
+            if ($store) {
+                $this->loadProducts($store->id);
+            }
         }
     }
 
