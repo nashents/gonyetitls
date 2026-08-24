@@ -25,7 +25,13 @@ class GoodsReceivedAuthorizationService
     {
         return DB::transaction(function () use ($goodsReceived, $decision, $comments, $userId) {
 
-            $goodsReceived = GoodsReceived::lockForUpdate()->findOrFail($goodsReceived->id);
+            $goodsReceived = GoodsReceived::lockForUpdate()->find($goodsReceived->id);
+
+            if (! $goodsReceived) {
+                throw ValidationException::withMessages([
+                    'goods_received' => 'This GRV could not be found.',
+                ]);
+            }
 
             if ($goodsReceived->authorization !== 'pending') {
                 throw ValidationException::withMessages([

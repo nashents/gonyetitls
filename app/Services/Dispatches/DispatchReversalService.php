@@ -32,7 +32,13 @@ class DispatchReversalService
     {
         return DB::transaction(function () use ($dispatch, $reason, $reversedById) {
 
-            $dispatch = Dispatch::with('dispatch_items')->lockForUpdate()->findOrFail($dispatch->id);
+            $dispatch = Dispatch::with('dispatch_items')->lockForUpdate()->find($dispatch->id);
+
+            if (! $dispatch) {
+                throw ValidationException::withMessages([
+                    'dispatch' => 'This dispatch could not be found.',
+                ]);
+            }
 
             if ($dispatch->authorization !== 'approved') {
                 throw ValidationException::withMessages([
