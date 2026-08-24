@@ -59,6 +59,10 @@ class Index extends Component
     // Sage sync — selected trip ids for bulk sync.
     public $sageSelected = [];
 
+    // Bulk mark-completed — selected trip ids and the decision applied to all of them.
+    public $bulkCompleteSelected = [];
+    public $bulk_mark_completed;
+
     /** Whether the acting user's company has an active Sage integration. */
     public function getSageEnabledProperty()
     {
@@ -405,8 +409,64 @@ class Index extends Component
             'message'=>"Trip Completed Successfully!!"
         ]);
     }
-   
-        
+
+    public function showBulkMarkCompleted(){
+        if (empty(array_filter($this->bulkCompleteSelected))) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'warning',
+                'message'=>"Select at least one trip to mark completed."
+            ]);
+            return;
+        }
+
+        $this->bulk_mark_completed = null;
+        $this->dispatchBrowserEvent('show-bulkCompletedModal');
+    }
+
+    public function bulkMarkCompleted(){
+
+        $this->validate([
+            'bulk_mark_completed' => 'required|in:0,1',
+        ], [
+            'bulk_mark_completed.required' => 'Please select a status.',
+        ]);
+
+        $ids = array_filter($this->bulkCompleteSelected);
+
+        $completed = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($ids, &$completed, &$skipped) {
+            $trips = Trip::whereIn('id', $ids)->get();
+
+            foreach ($trips as $trip) {
+
+                if ((int) $this->bulk_mark_completed === 1 && $trip->trip_status !== 'Offloaded') {
+                    $skipped++;
+                    continue;
+                }
+
+                $trip->status = $this->bulk_mark_completed;
+                $trip->closed_by = Auth::user()->id;
+                $trip->update();
+
+                app(TripCompletionCascadeService::class)->syncForTrip($trip);
+                $completed++;
+            }
+        });
+
+        $this->bulkCompleteSelected = [];
+
+        $this->dispatchBrowserEvent('hide-bulkCompletedModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=> "{$completed} trip(s) updated"
+                . ($skipped ? ", {$skipped} skipped (not Offloaded)" : '')
+                . '.'
+        ]);
+    }
+
+
     public function exportPodTrackerExcel(Excel $excel){
 
         return $excel->download(new PodTracker($this->from, $this->to, $this->trip_filter, $this->search,), 'pod_tracking_' .time().'.xlsx');

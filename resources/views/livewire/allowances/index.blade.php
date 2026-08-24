@@ -21,6 +21,8 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Account
+                                    </th>
                                     <th class="th-sm">Ccy
                                     </th>
                                     <th class="th-sm">Description
@@ -48,6 +50,7 @@
                                     @foreach ($allowances as $allowance)
                                   <tr>
                                     <td>{{$allowance->name}}</td>
+                                    <td>{{$allowance->account ? $allowance->account->name : ""}}</td>
                                     <td>{{$allowance->currency ? $allowance->currency->name : ""}}</td>
                                     <td>{{$allowance->description}}</td>
                                     <td>{{$allowance->calculate_by}}</td>
@@ -124,7 +127,22 @@
                             </div>
                         </div>
                     </div>
-                   
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Account<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="account_id" class="form-control" required>
+                                <option value="">Select Account</option>
+                                @foreach ($accounts as $account)
+                                    <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                @endforeach
+                               </select>
+                               <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Payroll Expense Account</a></small> <br>
+                                @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <h5 class="underline mt-10">Select item calculation.</h5>
                     <div class="row">
                         <div class="col-md-6">
@@ -239,6 +257,21 @@
                                     @endforeach
                                 </select>
                                 @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Account<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="account_id" class="form-control" required>
+                                <option value="">Select Account</option>
+                                @foreach ($accounts as $account)
+                                    <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                @endforeach
+                               </select>
+                               <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Payroll Expense Account</a></small> <br>
+                                @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

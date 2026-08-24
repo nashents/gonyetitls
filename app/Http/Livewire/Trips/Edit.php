@@ -72,6 +72,9 @@ class Edit extends Component
     public $hasActiveEditGrant = false;
     public $activeGrant;
     public $editAuthorizationReason;
+    public $isAdmin = false;
+    public $isTemporarilyUnlocked = false;
+    public $unlockHours = 24;
     public $hasPendingEditRequest = false;
     public $with_quotation;
     public $selectedQuotation;
@@ -1167,7 +1170,9 @@ class Edit extends Component
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
 
-        $this->isLocked = $this->trip && (int) $this->trip->status === 1;
+        $this->isAdmin = Auth::user()->is_admin();
+        $this->isTemporarilyUnlocked = (bool) ($this->trip && $this->trip->isTemporarilyUnlocked());
+        $this->isLocked = $this->trip && (int) $this->trip->status === 1 && ! $this->isTemporarilyUnlocked;
         if ($this->isLocked) {
             $this->activeGrant = TripEditAuthorizationRequest::where('trip_id', $this->trip->id)
                 ->where('user_id', Auth::user()->id)
@@ -2402,6 +2407,63 @@ class Edit extends Component
 
     }
 
+    /** Admin-only bypass of the edit-authorization request workflow: unlocks
+     *  the completed trip for a fixed window instead of a one-time grant.
+     */
+    public function showUnlockTrip(){
+        if (! Auth::user()->is_admin()) {
+            return;
+        }
+
+        $this->unlockHours = 24;
+        $this->dispatchBrowserEvent('show-unlockTripModal');
+    }
+
+    public function unlockTrip(){
+        if (! Auth::user()->is_admin()) {
+            abort(403);
+        }
+
+        $this->validate([
+            'unlockHours' => 'required|integer|min:1|max:168',
+        ]);
+
+        $trip = Trip::find($this->trip_id);
+        $trip->unlocked_until = now()->addHours((int) $this->unlockHours);
+        $trip->unlocked_by = Auth::id();
+        $trip->save();
+
+        $this->isLocked = false;
+        $this->isTemporarilyUnlocked = true;
+        $this->trip = $trip;
+
+        $this->dispatchBrowserEvent('hide-unlockTripModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip unlocked for editing for {$this->unlockHours} hour(s)."
+        ]);
+    }
+
+    public function relockTrip(){
+        if (! Auth::user()->is_admin()) {
+            abort(403);
+        }
+
+        $trip = Trip::find($this->trip_id);
+        $trip->unlocked_until = null;
+        $trip->unlocked_by = null;
+        $trip->save();
+
+        $this->isTemporarilyUnlocked = false;
+        $this->isLocked = (int) $trip->status === 1;
+        $this->trip = $trip;
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip re-locked."
+        ]);
+    }
+
     public function requestEditAuthorization(){
         $this->editAuthorizationReason = null;
         $this->dispatchBrowserEvent('show-editAuthorizationRequestModal');
@@ -2458,7 +2520,7 @@ class Edit extends Component
 
         $trip = Trip::find($this->trip_id);
 
-        $locked = $trip && (int) $trip->status === 1;
+        $locked = $trip && (int) $trip->status === 1 && ! $trip->isTemporarilyUnlocked();
         $grant = null;
         if ($locked) {
             $grant = TripEditAuthorizationRequest::where('trip_id', $trip->id)

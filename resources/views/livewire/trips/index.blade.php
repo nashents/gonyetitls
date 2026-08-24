@@ -378,6 +378,7 @@
                                                         @if ($this->sageEnabled)
                                                         <li><a href="#" wire:click="bulkSyncToSage" wire:loading.attr="disabled"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</a></li>
                                                         @endif
+                                                        <li><a href="#" wire:click.prevent="showBulkMarkCompleted"><i class="fa fa-check-circle"></i>Bulk Mark as Completed</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -483,6 +484,9 @@
                                                     @php $syncable = $trip->is_sage_syncable; @endphp
                                                     @if ($this->sageEnabled && $syncable)
                                                     <input type="checkbox" wire:model="sageSelected" value="{{ $trip->id }}" title="Select for Sage bulk sync">
+                                                    @endif
+                                                    @if (!$trip->status && $trip->trip_status === 'Offloaded')
+                                                    <input type="checkbox" wire:model="bulkCompleteSelected" value="{{ $trip->id }}" title="Select for bulk Mark as Completed">
                                                     @endif
                                                     <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong> <br>
                                                     <small><strong>Manifest#: {{$trip->manifest_number}}</strong></small>
@@ -891,6 +895,83 @@
                                 </select>
 
                                 @error('mark_completed')
+                                    <span class="error" style="color:red">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <div class="btn-group" role="group">
+
+                                <button type="button"
+                                        class="btn btn-gray btn-wide btn-rounded"
+                                        data-dismiss="modal">
+                                    <i class="fa fa-times"></i>
+                                    Close
+                                </button>
+
+                                <button type="submit"
+                                        class="btn bg-success btn-wide btn-rounded">
+                                    <i class="fa fa-save"></i>
+                                    Save Changes
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false"
+            class="modal"
+            id="bulkCompletedModal"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="bulkCompletedModalLabel"
+            data-backdrop-color="blue">
+
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="bulkCompletedModalLabel">
+                            <i class="fas fa-check-circle"></i>
+                            Bulk Update Trip Status - {{ count(array_filter($bulkCompleteSelected)) }} trip(s) selected
+
+                            <button type="button"
+                                    class="close"
+                                    data-dismiss="modal"
+                                    aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </h4>
+                    </div>
+
+                    <form wire:submit.prevent="bulkMarkCompleted()">
+
+                        <div class="modal-body">
+
+                            <div class="form-group">
+                                <label>Trip Status</label>
+
+                                <select class="form-control"
+                                        wire:model.debounce.300ms="bulk_mark_completed"
+                                        required>
+
+                                    <option value="">Select Status</option>
+                                    <option value="0">Open</option>
+                                    <option value="1">Completed</option>
+
+                                </select>
+                                <small style="color: green">Only trips with trip status "Offloaded" can be set to Completed - others in the selection are skipped.</small>
+
+                                @error('bulk_mark_completed')
                                     <span class="error" style="color:red">
                                         {{ $message }}
                                     </span>

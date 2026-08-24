@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Allowances;
 
 use Livewire\Component;
+use App\Models\Account;
 use App\Models\Currency;
 use App\Models\Allowance;
 use App\Models\Tax;
@@ -25,12 +26,17 @@ class Index extends Component
     public $taxes;
     public $tax_id;
     public $type;
+    public $accounts;
+    public $account_id;
 
     public function mount(){
         $this->allowances = Allowance::orderBy('name','asc')->get();
         $this-> currencies = Currency::orderBy('name','asc')->get();
         $this->taxes = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
+        })->orderBy('name','asc')->get();
+        $this->accounts = Account::whereHas('account_type', function ($query) {
+            $query->where('name', 'Payroll Expense');
         })->orderBy('name','asc')->get();
     }
 
@@ -40,6 +46,7 @@ class Index extends Component
     protected $rules = [
         'calculate_by' => 'required',
         'name' => 'required|unique:allowances,name,NULL,id,deleted_at,NULL|string|min:2',
+        'account_id' => 'required',
     ];
 
     private function resetInputFields(){
@@ -52,6 +59,7 @@ class Index extends Component
         $this->description = '';
         $this->tax_id = '';
         $this->type = '';
+        $this->account_id = '';
     }
 
     public function store(){
@@ -73,6 +81,7 @@ class Index extends Component
         $allowance->description = $this->description;
         $allowance->tax_id = $this->tax_id;
         $allowance->type = $this->type;
+        $allowance->account_id = $this->account_id;
         $allowance->status =1;
         $allowance->save();
 
@@ -106,6 +115,7 @@ class Index extends Component
     $this->description = $allowance->description;
     $this->tax_id = $allowance->tax_id;
     $this->type = $allowance->type;
+    $this->account_id = $allowance->account_id;
     $this->allowance_id = $allowance->id;
     $this->status = $allowance->status;
     $this->dispatchBrowserEvent('show-allowanceEditModal');
@@ -133,6 +143,7 @@ class Index extends Component
             $allowance->description = $this->description;
             $allowance->tax_id = $this->tax_id;
             $allowance->type = $this->type;
+            $allowance->account_id = $this->account_id;
             $allowance->status = $this->status;
             $allowance->update();
 
@@ -159,7 +170,7 @@ class Index extends Component
 
     public function render()
     {
-        $this->allowances = Allowance::with('tax')->orderBy('name','asc')->get();
+        $this->allowances = Allowance::with('tax','account')->orderBy('name','asc')->get();
         return view('livewire.allowances.index',[
             'allowances'=>   $this->allowances
         ]);

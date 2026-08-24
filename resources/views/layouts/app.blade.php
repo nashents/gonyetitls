@@ -339,6 +339,16 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-bulkCompletedModal', event => {
+                $('#bulkCompletedModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-bulkCompletedModal', event => {
+                $('#bulkCompletedModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-goods_returnedModal', event => {
                 $('#goods_returnedModal').modal('show');
             })
@@ -4379,6 +4389,18 @@
     <script type="text/javascript">
     window.addEventListener('hide-editAuthorizationRequestModal', event => {
         $('#editAuthorizationRequestModal').modal('hide');
+    })
+    </script>
+
+    <script type="text/javascript">
+        window.addEventListener('show-unlockTripModal', event => {
+            $('#unlockTripModal').modal('show');
+        })
+    </script>
+
+    <script type="text/javascript">
+    window.addEventListener('hide-unlockTripModal', event => {
+        $('#unlockTripModal').modal('hide');
     })
     </script>
 

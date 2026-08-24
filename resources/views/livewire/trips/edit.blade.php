@@ -21,11 +21,22 @@
                                     @else
                                         <button type="button" class="btn btn-sm bg-warning" wire:click="requestEditAuthorization"><i class="fa fa-unlock-alt"></i> Request Authorization to Edit</button>
                                     @endif
+                                    @if ($isAdmin)
+                                        <button type="button" class="btn btn-sm bg-info" wire:click="showUnlockTrip"><i class="fa fa-clock"></i> Unlock Temporarily (Admin)</button>
+                                    @endif
                                 </div>
                             @elseif ($isLocked && $hasActiveEditGrant)
                                 <div class="alert alert-info">
                                     <strong><i class="fa fa-unlock"></i> One-time edit access granted.</strong>
                                     This trip will re-lock automatically as soon as you save.
+                                </div>
+                            @elseif ($isTemporarilyUnlocked)
+                                <div class="alert alert-info">
+                                    <strong><i class="fa fa-unlock"></i> Temporarily unlocked for editing (admin).</strong>
+                                    Unlocked until {{ $trip->unlocked_until->format('Y-m-d H:i') }}.
+                                    @if ($isAdmin)
+                                        <button type="button" class="btn btn-sm bg-gray" wire:click="relockTrip"><i class="fa fa-lock"></i> Re-lock Now</button>
+                                    @endif
                                 </div>
                             @endif
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
@@ -2357,6 +2368,32 @@
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
                             <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Submit Request</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="unlockTripModal" tabindex="-1" role="dialog" aria-labelledby="unlockTripModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="unlockTripModalLabel"><i class="fa fa-clock"></i> Unlock Trip Temporarily <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                </div>
+                <form wire:submit.prevent="unlockTrip()">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="unlockHours">Unlock for how many hours?<span class="required" style="color: red">*</span></label>
+                            <input type="number" min="1" max="168" class="form-control" wire:model.defer="unlockHours">
+                            <small style="color: green">Defaults to 24 hours. The trip re-locks automatically once this expires.</small>
+                            @error('unlockHours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-unlock"></i>Unlock</button>
                         </div>
                     </div>
                 </form>

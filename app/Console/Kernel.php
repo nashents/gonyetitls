@@ -60,6 +60,15 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('holidays:generate ' . (now()->year + 1))
             ->yearlyOn(12, 1, '00:10');
+
+        // Housekeeping only - the lock check itself compares unlocked_until to
+        // now() directly (Trip::isTemporarilyUnlocked), so a trip already
+        // re-locks the instant its window expires even without this running.
+        // This just clears the stale timestamp/attribution for a clean UI.
+        $schedule->command('trips:relock-expired')
+        ->hourly()
+        ->withoutOverlapping()
+        ->onOneServer();
     }
 
     /**
