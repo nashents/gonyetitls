@@ -47,29 +47,32 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Country Code <small class="text-muted">(ISO 2-letter)</small></label>
-                                            <input wire:model.defer="country" type="text" class="form-control" maxlength="2" placeholder="ZW">
+                                            <input wire:model.defer="country" type="text" class="form-control @error('country') is-invalid @enderror" maxlength="2" placeholder="ZW">
+                                            @error('country') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Default Payroll Currency</label>
-                                            <select wire:model.defer="selectedCurrency" class="form-control">
+                                            <select wire:model.defer="selectedCurrency" class="form-control @error('selectedCurrency') is-invalid @enderror">
                                                 <option value="">Select currency</option>
                                                 @foreach($currencies as $currency)
-                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                                 @endforeach
                                             </select>
+                                            @error('selectedCurrency') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-5">
                                         <div class="form-group">
                                             <label>Proration Method</label>
-                                            <select wire:model.defer="proration_method" class="form-control">
+                                            <select wire:model.defer="proration_method" class="form-control @error('proration_method') is-invalid @enderror">
                                                 <option value="calendar_days">Calendar Days (actual / days in month)</option>
                                                 <option value="working_days">Working Days (actual worked / work days)</option>
-                                                <option value="fixed_divisor">Fixed Divisor (÷ 30 always)</option>
-                                                <option value="none">None — always pay full amount</option>
+                                                <option value="fixed_30">Fixed 30 Days (÷ 30 always)</option>
+                                                <option value="scheduled_days">Scheduled Days (per pay frequency schedule)</option>
                                             </select>
+                                            @error('proration_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
                                 </div>

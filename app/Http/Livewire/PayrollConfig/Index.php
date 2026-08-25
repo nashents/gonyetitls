@@ -187,11 +187,19 @@ class Index extends Component
     {
         $this->authorize('update', PayrollCompanyConfig::class);
 
-        $this->validate([
-            'country'          => 'required|string|size:2',
-            'selectedCurrency' => 'required|exists:currencies,id',
-            'proration_method' => 'required',
-        ]);
+        try {
+            $this->validate([
+                'country'          => 'required|string|size:2',
+                'selectedCurrency' => 'required|exists:currencies,id',
+                'proration_method' => 'required|in:calendar_days,working_days,fixed_30,scheduled_days',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // These three fields only live on the General tab — if the user is
+            // on another tab when validation fails, jump them there so the
+            // (now-visible) field errors aren't silently off-screen.
+            $this->activeTab = 'general';
+            throw $e;
+        }
 
         $data = [
             'company_id'                              => $this->company->id,

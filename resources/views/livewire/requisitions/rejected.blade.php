@@ -109,7 +109,7 @@
                                                 @else
                                                     Payment Requisition
                                                 @endif <br>
-                                                <strong>CreatedBy:</strong> {{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}} <br>
+                                                <strong>CreatedBy:</strong> {{ucfirst($requisition->user ? $requisition->user->name : "")}} {{ucfirst($requisition->user ? $requisition->user->surname : "")}} <br>
                                                 <strong>CreatedOn:</strong> {{$requisition->created_at}}
                                             </small>
                                         </td>

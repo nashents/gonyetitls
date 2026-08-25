@@ -49,6 +49,7 @@ class Manage extends Component
     public $days;
     public $days_calculation;
     public $leave_filter = 'all';
+    public $holidays_in_range = [];
 
 
     public function updated($value){
@@ -73,6 +74,7 @@ class Manage extends Component
         $this->leave_type_id = Null;
         $this->is_backdated = False;
         $this->ignore_public_holidays = False;
+        $this->holidays_in_range = [];
     }
 
      public function exportLeavesCSV(Excel $excel){
@@ -250,6 +252,7 @@ class Manage extends Component
         $this->from = $leave->from;
         $this->days = $leave->days;
         $this->reason = $leave->reason;
+        $this->holidays_in_range = $this->holidaysBetween($this->from, $this->to);
         $this->dispatchBrowserEvent('show-leaveEditModal');
 
         }
@@ -372,8 +375,11 @@ class Manage extends Component
     {
         if (blank($this->from) || blank($this->to)) {
             $this->days = 0;
+            $this->holidays_in_range = [];
             return;
         }
+
+        $this->holidays_in_range = $this->holidaysBetween($this->from, $this->to);
 
         $this->days = $this->calculateLeaveDays(
             $this->from,
@@ -382,6 +388,28 @@ class Manage extends Component
             $this->ignore_public_holidays
         );
 
+    }
+
+    public function holidaysBetween($from, $to)
+    {
+        $startDate = Carbon::parse($from)->startOfDay();
+        $endDate   = Carbon::parse($to)->startOfDay();
+
+        if ($startDate->gt($endDate)) {
+            return [];
+        }
+
+        return PublicHoliday::whereBetween('date', [
+            $startDate->toDateString(),
+            $endDate->toDateString()
+        ])
+        ->orderBy('date')
+        ->get(['name', 'date'])
+        ->map(fn ($holiday) => [
+            'name' => $holiday->name,
+            'date' => Carbon::parse($holiday->date)->format('d F Y'),
+        ])
+        ->all();
     }
 
     public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends', $ignore_public_holidays = false)

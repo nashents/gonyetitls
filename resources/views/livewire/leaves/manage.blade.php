@@ -328,6 +328,19 @@
                             </div>
                         </div>
                         <!-- /.col-md-6 -->
+                        @if (!empty($holidays_in_range))
+                        <div class="col-md-12">
+                            <div class="alert alert-warning py-5 px-10 mb-0">
+                                <i class="fa fa-info-circle"></i>
+                                The selected date range includes the following public holiday(s), which are not counted as leave days unless "Ignore Public Holidays" is checked:
+                                <ul class="mb-0">
+                                    @foreach ($holidays_in_range as $holiday)
+                                        <li>{{ $holiday['date'] }} &mdash; {{ $holiday['name'] }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                     <div class="row">
                         <div class="col-md-12">
@@ -482,6 +495,19 @@
                             </div>
                         </div>
                         <!-- /.col-md-6 -->
+                        @if (!empty($holidays_in_range))
+                        <div class="col-md-12">
+                            <div class="alert alert-warning py-5 px-10 mb-0">
+                                <i class="fa fa-info-circle"></i>
+                                The selected date range includes the following public holiday(s), which are not counted as leave days unless "Ignore Public Holidays" is checked:
+                                <ul class="mb-0">
+                                    @foreach ($holidays_in_range as $holiday)
+                                        <li>{{ $holiday['date'] }} &mdash; {{ $holiday['name'] }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                         <div class="row">
                             <div class="col-md-12">
