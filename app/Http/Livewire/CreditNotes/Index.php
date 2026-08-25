@@ -123,7 +123,10 @@ class Index extends Component
         }
 
         try {
-            app(\App\Services\Accounting\LedgerResyncService::class)->resyncCreditNote($creditNote);
+            // force: true - a manual, human-confirmed click should always
+            // reverse+repost, not silently no-op via isUnchanged()'s
+            // control-account-only check (mirrors the Bills fix).
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncCreditNote($creditNote, null, force: true);
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'success',
                 'message' => 'Credit note resynced to the general ledger.',

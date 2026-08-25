@@ -38,12 +38,12 @@ class LedgerResyncService
     ) {
     }
 
-    public function resyncInvoice(Invoice $invoice, ?string $reason = null): JournalEntry
+    public function resyncInvoice(Invoice $invoice, ?string $reason = null, bool $force = false): JournalEntry
     {
-        return DB::transaction(function () use ($invoice, $reason) {
+        return DB::transaction(function () use ($invoice, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('invoice_id', $invoice->id));
 
-            if ($existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $invoice->total, $invoice->exchange_rate, $invoice->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $invoice->total, $invoice->exchange_rate, $invoice->currency_id)) {
                 return $existing;
             }
 
@@ -81,12 +81,12 @@ class LedgerResyncService
         });
     }
 
-    public function resyncCreditNote(CreditNote $creditNote, ?string $reason = null): JournalEntry
+    public function resyncCreditNote(CreditNote $creditNote, ?string $reason = null, bool $force = false): JournalEntry
     {
-        return DB::transaction(function () use ($creditNote, $reason) {
+        return DB::transaction(function () use ($creditNote, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('credit_note_id', $creditNote->id));
 
-            if ($existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $creditNote->total, $creditNote->exchange_rate, $creditNote->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $creditNote->total, $creditNote->exchange_rate, $creditNote->currency_id)) {
                 return $existing;
             }
 
@@ -125,12 +125,12 @@ class LedgerResyncService
         });
     }
 
-    public function resyncDebitNote(DebitNote $debitNote, ?string $reason = null): JournalEntry
+    public function resyncDebitNote(DebitNote $debitNote, ?string $reason = null, bool $force = false): JournalEntry
     {
-        return DB::transaction(function () use ($debitNote, $reason) {
+        return DB::transaction(function () use ($debitNote, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('debit_note_id', $debitNote->id));
 
-            if ($existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $debitNote->total, $debitNote->exchange_rate, $debitNote->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $debitNote->total, $debitNote->exchange_rate, $debitNote->currency_id)) {
                 return $existing;
             }
 

@@ -1036,7 +1036,10 @@ class Index extends Component
         }
 
         try {
-            app(\App\Services\Accounting\LedgerResyncService::class)->resyncInvoice($invoice);
+            // force: true - a manual, human-confirmed click should always
+            // reverse+repost, not silently no-op via isUnchanged()'s
+            // control-account-only check (mirrors the Bills fix).
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncInvoice($invoice, null, force: true);
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'success',
                 'message' => 'Invoice resynced to the general ledger.',

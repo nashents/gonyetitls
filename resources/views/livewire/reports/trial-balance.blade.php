@@ -84,9 +84,138 @@
                                                             <i class="fas fa-exclamation-triangle"></i>
                                                             Out of Balance by {{ number_format(abs($totals['debit'] - $totals['credit']), 2) }}
                                                         </span>
+                                                        <br><br>
+                                                        <button type="button" class="btn btn-sm btn-default hidden-print" wire:click="diagnoseImbalance" wire:loading.attr="disabled">
+                                                            <i class="fa fa-search"></i> Diagnose Why
+                                                        </button>
                                                     @endif
                                                 </div>
                                             </div>
+
+                                            @if ($imbalanceDiagnosis !== null)
+                                                <div class="row hidden-print" style="margin-top: 15px;">
+                                                    <div class="col-md-10 col-md-offset-1">
+                                                        <div class="panel" style="border: 1px solid #ddd;">
+                                                            <div class="panel-heading">
+                                                                <div class="panel-title">Imbalance Diagnosis</div>
+                                                            </div>
+                                                            <div class="panel-body">
+                                                                @if (count($imbalanceDiagnosis) === 0)
+                                                                    <p class="text-muted mb-0">No self-imbalanced journal entries found in this date range. The gap may come from a reversal pair split across a date boundary rather than a broken posting - try widening the date range.</p>
+                                                                @else
+                                                                    <table class="table table-sm table-bordered">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Journal #</th>
+                                                                                <th>Reference</th>
+                                                                                <th>Date</th>
+                                                                                <th>Source</th>
+                                                                                <th class="text-right">Off by</th>
+                                                                                <th>Status</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach ($imbalanceDiagnosis as $row)
+                                                                                <tr>
+                                                                                    <td>{{ $row['journal_number'] }}</td>
+                                                                                    <td>{{ $row['reference'] }}</td>
+                                                                                    <td>{{ $row['date'] }}</td>
+                                                                                    <td>{{ ucfirst(str_replace('_', ' ', $row['source_type'])) }}</td>
+                                                                                    <td class="text-right">{{ number_format(abs($row['diff']), 2) }}</td>
+                                                                                    <td>
+                                                                                        @if ($row['fixable'])
+                                                                                            <span class="badge badge-warning">Auto-fixable</span>
+                                                                                        @else
+                                                                                            <span class="badge badge-secondary">Needs manual review</span>
+                                                                                        @endif
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+
+                                                                    @if (collect($imbalanceDiagnosis)->contains('fixable', true))
+                                                                        <button type="button" class="btn btn-sm bg-danger" wire:click="repairImbalance" wire:loading.attr="disabled"
+                                                                            onclick="return confirm('Reverse and repost every auto-fixable entry listed above, using each document\'s current figures? This posts real correcting journal entries.')">
+                                                                            <i class="fa fa-wrench"></i> Fix Auto-Fixable Entries
+                                                                        </button>
+                                                                    @endif
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            @if ($repairSummary !== null)
+                                                <div class="row hidden-print" style="margin-top: 15px;">
+                                                    <div class="col-md-10 col-md-offset-1">
+                                                        <div class="panel" style="border: 1px solid #ddd;">
+                                                            <div class="panel-heading">
+                                                                <div class="panel-title">Repair Summary</div>
+                                                            </div>
+                                                            <div class="panel-body">
+                                                                <p>
+                                                                    Before: debit {{ number_format($repairSummary['before']['debit'], 2) }} / credit {{ number_format($repairSummary['before']['credit'], 2) }}
+                                                                    (off by {{ number_format(abs($repairSummary['before']['diff']), 2) }})<br>
+                                                                    After: debit {{ number_format($repairSummary['after']['debit'], 2) }} / credit {{ number_format($repairSummary['after']['credit'], 2) }}
+                                                                    (off by {{ number_format(abs($repairSummary['after']['diff']), 2) }})
+                                                                </p>
+
+                                                                @if (count($repairSummary['fixed']) > 0)
+                                                                    <strong>Fixed ({{ count($repairSummary['fixed']) }}):</strong>
+                                                                    <table class="table table-sm table-bordered">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Type</th>
+                                                                                <th>Reference</th>
+                                                                                <th>Old Journal #</th>
+                                                                                <th>New Journal #</th>
+                                                                                <th class="text-right">Amount corrected</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach ($repairSummary['fixed'] as $row)
+                                                                                <tr>
+                                                                                    <td>{{ ucfirst(str_replace('_', ' ', $row['document_type'])) }}</td>
+                                                                                    <td>{{ $row['reference'] }}</td>
+                                                                                    <td>{{ $row['old_journal_number'] }}</td>
+                                                                                    <td>{{ $row['new_journal_number'] }}</td>
+                                                                                    <td class="text-right">{{ number_format($row['corrected_amount'], 2) }}</td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                @endif
+
+                                                                @if (count($repairSummary['skipped']) > 0)
+                                                                    <strong>Needs manual review ({{ count($repairSummary['skipped']) }}):</strong>
+                                                                    <table class="table table-sm table-bordered">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Journal #</th>
+                                                                                <th>Reference</th>
+                                                                                <th class="text-right">Off by</th>
+                                                                                <th>Why it wasn't auto-fixed</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach ($repairSummary['skipped'] as $row)
+                                                                                <tr>
+                                                                                    <td>{{ $row['journal_number'] }}</td>
+                                                                                    <td>{{ $row['reference'] }}</td>
+                                                                                    <td class="text-right">{{ number_format(abs($row['diff']), 2) }}</td>
+                                                                                    <td>{{ $row['reason'] }}</td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
 
                                             <!-- /.col-md-12 -->
                                         </div>
