@@ -1828,7 +1828,7 @@ class Create extends Component
                     
                 foreach ($this->destinations_selectedTo as $key => $destinationId) {
 
-                    $offloadingPointId = $this->destinations_offloading_point_id[$key] ?? null;
+                    $offloadingPointId = ($this->destinations_offloading_point_id[$key] ?? null) ?: null;
 
                     TripDestination::updateOrCreate(
                         [
@@ -1857,7 +1857,7 @@ class Create extends Component
                 [
                     'transport_order_id'  => $transport_order->id,
                     'destination_id'      => $this->selectedTo,
-                    'offloading_point_id' => $this->offloading_point_id,
+                    'offloading_point_id' => $this->offloading_point_id ?: null,
                 ],
                 [
                     'user_id'             => $userId,
@@ -1885,7 +1885,7 @@ class Create extends Component
 
                 foreach ($this->destinations_selectedFrom as $key => $destinationId) {
 
-                    $loadingPointId = $this->destinations_loading_point_id[$key] ?? null;
+                    $loadingPointId = ($this->destinations_loading_point_id[$key] ?? null) ?: null;
 
                     TripOrigin::updateOrCreate(
                         [
@@ -1914,7 +1914,7 @@ class Create extends Component
                 [
                     'transport_order_id'  => $transport_order->id,
                     'destination_id'      => $this->selectedFrom,
-                    'loading_point_id' => $this->loading_point_id,
+                    'loading_point_id' => $this->loading_point_id ?: null,
                 ],
                 [
                     'user_id'             => $userId,

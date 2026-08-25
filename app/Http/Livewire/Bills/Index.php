@@ -737,7 +737,10 @@ class Index extends Component
         }
 
         try {
-            app(\App\Services\Accounting\LedgerResyncService::class)->resyncBill($bill);
+            // force: true - a manual, human-confirmed click should always
+            // reverse+repost, not silently no-op via isUnchanged()'s
+            // control-account-only check (see Bill::getIsLedgerOutOfSyncAttribute).
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncBill($bill, null, force: true);
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'success',
                 'message' => 'Bill resynced to the general ledger.',
@@ -801,7 +804,8 @@ class Index extends Component
                     'invoice','transporter','container','top_up','trip',
                     'horse','driver','purchase','currency','payments',
                     // add these if the relationships exist and you use them in search:
-                    'vehicle','trailer','ticket','vendor','journal_entry',
+                    'vehicle','trailer','ticket','vendor',
+                    'journal_entry.journal_entry_lines','bill_expenses',
                 ])
                 ->where('to_be_paid', true);
               if ($this->status === 'unpaid') {

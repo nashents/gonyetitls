@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Trip Edit Authorizers | @if (isset(Auth::user()->employee->company))
+    Pending Edit Authorizations | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -30,26 +30,18 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fas fa-user-shield"></i> Trip Edit Authorizers</li>
+            							<li class="active"> <i class="fas fa-user-clock"></i> Pending Edit Authorizations</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
 
-                        @livewire('trip-edit-authorizers.index')
+                        @livewire('edit-authorizers.pending')
 
 
                     </div>
 
 
 
-@endsection
-
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#tripEditAuthorizersTable').DataTable();
-    } );
-    </script>
 @endsection

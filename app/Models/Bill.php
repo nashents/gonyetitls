@@ -2,15 +2,82 @@
 
 namespace App\Models;
 
+use App\Contracts\EditAuthorizable;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Bill extends Model implements Auditable
+class Bill extends Model implements Auditable, EditAuthorizable
 {
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
+
+    public function edit_authorization_requests()
+    {
+        return $this->morphMany(EditAuthorizationRequest::class, 'editable');
+    }
+
+    public function editAuthModule(): string
+    {
+        return 'bills';
+    }
+
+    public function editAuthOwnerId(): ?int
+    {
+        return $this->user_id;
+    }
+
+    public function editAuthLabel(): string
+    {
+        return 'Bill '.$this->bill_number;
+    }
+
+    protected static ?int $vatAccountIdCache = null;
+
+    /**
+     * Whether the posted journal entry's per-account debit breakdown still
+     * matches the bill_expenses' current account allocation. Catches the
+     * case LedgerResyncService::isUnchanged() deliberately doesn't - a
+     * bill_expense.account_id reassigned to a different account with the
+     * same subtotal (so the bill's total, and therefore the Accounts
+     * Payable control line, never changes) leaves the journal entry's debit
+     * lines silently wrong even after a non-forced resync.
+     */
+    public function getIsLedgerOutOfSyncAttribute(): bool
+    {
+        $entry = $this->journal_entry;
+
+        if (! $entry) {
+            return false;
+        }
+
+        static::$vatAccountIdCache ??= Account::where('name', 'Value Added Tax')->value('id');
+        $vatAccountId = static::$vatAccountIdCache;
+
+        $expenseTotals = $this->bill_expenses
+            ->whereNotNull('account_id')
+            ->groupBy('account_id')
+            ->map(fn ($rows) => round((float) $rows->sum('subtotal'), 2));
+
+        $lineTotals = $entry->journal_entry_lines
+            ->filter(fn ($line) => (float) $line->debit > 0 && $line->account_id && $line->account_id != $vatAccountId)
+            ->groupBy('account_id')
+            ->map(fn ($rows) => round((float) $rows->sum('debit'), 2));
+
+        if ($expenseTotals->keys()->diff($lineTotals->keys())->isNotEmpty()
+            || $lineTotals->keys()->diff($expenseTotals->keys())->isNotEmpty()) {
+            return true;
+        }
+
+        foreach ($expenseTotals as $accountId => $amount) {
+            if (abs($lineTotals[$accountId] - $amount) > 0.01) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public function bill_expenses(){
         return $this->hasMany('App\Models\BillExpense');

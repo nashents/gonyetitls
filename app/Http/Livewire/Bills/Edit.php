@@ -18,6 +18,8 @@ use App\Models\Transporter;
 use App\Models\Trip;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\Accounting\LedgerResyncService;
+use App\Services\EditAuthorizationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -107,7 +109,13 @@ class Edit extends Component
     public $inputs = [];
     public $i = 1;
     public $n = 1;
-    
+
+    public $isLocked = false;
+    public $hasActiveEditGrant = false;
+    public $hasPendingEditRequest = false;
+    public $activeGrant;
+    public $editAuthorizationReason;
+
     public function add($i)
     {
         $i = $i + 1;
@@ -344,7 +352,46 @@ class Edit extends Component
         $this->due_date = $this->bill->due_date;
         $this->notes = $this->bill->notes;
 
+        $this->isLocked = $this->bill->authorization === 'approved';
+        if ($this->isLocked) {
+            $editAuthService = app(EditAuthorizationService::class);
+            $this->activeGrant = $editAuthService->activeGrant($this->bill, Auth::user());
+            $this->hasActiveEditGrant = (bool) $this->activeGrant;
+            $this->hasPendingEditRequest = $editAuthService->hasPendingRequest($this->bill, Auth::user());
+        }
+    }
 
+    public function requestEditAuthorization(){
+        $this->editAuthorizationReason = null;
+        $this->dispatchBrowserEvent('show-editAuthorizationRequestModal');
+    }
+
+    public function submitEditAuthorizationRequest(){
+        $this->validate([
+            'editAuthorizationReason' => 'required|string|max:1000',
+        ], [
+            'editAuthorizationReason.required' => 'Please give a reason for requesting edit access.',
+        ]);
+
+        $editAuthService = app(EditAuthorizationService::class);
+
+        if ($editAuthService->hasPendingRequest($this->bill, Auth::user())) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"You already have a pending authorization request for this bill."
+            ]);
+            return;
+        }
+
+        $editAuthService->requestEdit($this->bill, Auth::user(), $this->editAuthorizationReason);
+
+        $this->hasPendingEditRequest = true;
+
+        $this->dispatchBrowserEvent('hide-editAuthorizationRequestModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Authorization Request Submitted Successfully!!"
+        ]);
     }
 
     public function updated($value){
@@ -493,17 +540,20 @@ class Edit extends Component
         $bill->notes = $this->notes;
         $bill->update();
 
-        if ($bill->authorization === 'approved') {
-            $this->dispatchBrowserEvent('alert', [
-                'type'    => 'success',
-                'message' => 'Bill updated. Financial values are locked after bill approval.'
-            ]);
+        $locked = $bill->authorization === 'approved';
+        $grant = null;
+        if ($locked) {
+            $grant = app(EditAuthorizationService::class)->activeGrant($bill, Auth::user());
 
-            return redirect()->route('bills.index');
-        
+            if (!$grant) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type'    => 'error',
+                    'message' => 'This bill is approved and locked. Request authorization before editing financial line items.'
+                ]);
+
+                return redirect()->route('bills.index');
+            }
         }
-
-
 
         if (isset($this->bill_expenses)) {
             foreach($this->bill_expenses as $key => $expense){
@@ -646,6 +696,17 @@ class Edit extends Component
         }
         $bill->update();
 
+        if ($grant) {
+            app(EditAuthorizationService::class)->consume($grant);
+            $this->hasActiveEditGrant = false;
+            $this->activeGrant = null;
+
+            app(LedgerResyncService::class)->resyncBill(
+                $bill->fresh(),
+                "Line item correction (grant #{$grant->id}): {$grant->reason}",
+                force: true
+            );
+        }
 
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -653,7 +714,7 @@ class Edit extends Component
         ]);
 
         return redirect()->route('bills.index');
-        
+
     });
     }
 

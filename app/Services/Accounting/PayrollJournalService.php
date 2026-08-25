@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\DB;
  * InvoiceJournalService / BillJournalService / PaymentJournalService:
  * idempotent, resolves named control accounts, wraps in a transaction.
  *
- * DR Salaries & Wages Expense (gross)
- * DR <statutory> Employer Contribution Expense (employer cost, per type)
+ * DR Salaries & Wages Expense (gross, split Admin/Drivers)
+ * DR <statutory> Employer Contribution Expense (employer cost, per type, split Admin/Drivers)
  * CR PAYE / AIDS Levy / NSSA Employee / NSSA Employer / NEC / Pension Payable
  * CR Payroll Suspense (loans, salary advance recoveries, other deductions)
  * CR Salaries & Wages Payable (net pay owed to staff)
@@ -25,6 +25,18 @@ use Illuminate\Support\Facades\DB;
  * Employer-portion contributions are both an expense and a payable of the
  * same amount, so they net out — the entry always balances by construction
  * as long as net = gross - total_deductions for every payroll line.
+ *
+ * Each employee's payroll line is classified as "driver" cost (COGS) or
+ * "admin" cost (Ops) by whether the employee has a linked Driver record
+ * (App\Models\Driver::employee_id). The split only affects which expense
+ * account a DR line hits — the CR/payable side stays consolidated per
+ * statutory authority regardless of employee type.
+ *
+ * The split is opt-in per company via
+ * PayrollCompanyConfig::split_payroll_expenses_by_employee_type. When off
+ * (the default), every expense line posts to the *_admin GL accounts
+ * regardless of employee type — a single line per category, same as before
+ * the split existed.
  */
 class PayrollJournalService
 {
@@ -36,7 +48,7 @@ class PayrollJournalService
         }
 
         $payroll = $run->payrolls()
-            ->with(['payroll_salaries.payroll_salary_items.deduction', 'payroll_salaries.salary'])
+            ->with(['payroll_salaries.payroll_salary_items.deduction', 'payroll_salaries.salary', 'payroll_salaries.employee.driver'])
             ->first();
 
         if (!$payroll) {
@@ -63,11 +75,24 @@ class PayrollJournalService
 
             $currencyId = $run->currency_id;
 
-            // ── DR: expenses ────────────────────────────────────────────────
-            $this->line($entry, $config?->gl_wages_expense_account, 'Salaries & Wages Expense', $totals['gross'], 0, $currencyId, "Gross salaries - {$run->name}");
-            $this->line($entry, $config?->gl_nssa_employer_expense_account, 'NSSA Employer Contribution Expense', $totals['nssa_employer'], 0, $currencyId, "NSSA employer cost - {$run->name}");
-            $this->line($entry, $config?->gl_nec_employer_expense_account, 'NEC Employer Contribution Expense', $totals['nec_employer'], 0, $currencyId, "NEC employer cost - {$run->name}");
-            $this->line($entry, $config?->gl_pension_employer_expense_account, 'Pension Employer Contribution Expense', $totals['pension_employer'], 0, $currencyId, "Pension employer cost - {$run->name}");
+            // ── DR: expenses ───────────────────────────────────────────────
+            if ($config?->split_payroll_expenses_by_employee_type) {
+                // Split Admin/Ops vs Drivers/COGS
+                $this->line($entry, $config?->gl_wages_expense_account_admin, 'Salaries & Wages Expense - Admin', $totals['gross_admin'], 0, $currencyId, "Gross salaries (admin) - {$run->name}");
+                $this->line($entry, $config?->gl_wages_expense_account_drivers, 'Salaries & Wages Expense - Drivers', $totals['gross_drivers'], 0, $currencyId, "Gross salaries (drivers) - {$run->name}");
+                $this->line($entry, $config?->gl_nssa_employer_expense_account_admin, 'NSSA Employer Contribution Expense - Admin', $totals['nssa_employer_admin'], 0, $currencyId, "NSSA employer cost (admin) - {$run->name}");
+                $this->line($entry, $config?->gl_nssa_employer_expense_account_drivers, 'NSSA Employer Contribution Expense - Drivers', $totals['nssa_employer_drivers'], 0, $currencyId, "NSSA employer cost (drivers) - {$run->name}");
+                $this->line($entry, $config?->gl_nec_employer_expense_account_admin, 'NEC Employer Contribution Expense - Admin', $totals['nec_employer_admin'], 0, $currencyId, "NEC employer cost (admin) - {$run->name}");
+                $this->line($entry, $config?->gl_nec_employer_expense_account_drivers, 'NEC Employer Contribution Expense - Drivers', $totals['nec_employer_drivers'], 0, $currencyId, "NEC employer cost (drivers) - {$run->name}");
+                $this->line($entry, $config?->gl_pension_employer_expense_account_admin, 'Pension Employer Contribution Expense - Admin', $totals['pension_employer_admin'], 0, $currencyId, "Pension employer cost (admin) - {$run->name}");
+                $this->line($entry, $config?->gl_pension_employer_expense_account_drivers, 'Pension Employer Contribution Expense - Drivers', $totals['pension_employer_drivers'], 0, $currencyId, "Pension employer cost (drivers) - {$run->name}");
+            } else {
+                // Lean: one line per category for all employees, drivers included
+                $this->line($entry, $config?->gl_wages_expense_account_admin, 'Salaries & Wages Expense - Admin', $totals['gross'], 0, $currencyId, "Gross salaries - {$run->name}");
+                $this->line($entry, $config?->gl_nssa_employer_expense_account_admin, 'NSSA Employer Contribution Expense - Admin', $totals['nssa_employer'], 0, $currencyId, "NSSA employer cost - {$run->name}");
+                $this->line($entry, $config?->gl_nec_employer_expense_account_admin, 'NEC Employer Contribution Expense - Admin', $totals['nec_employer'], 0, $currencyId, "NEC employer cost - {$run->name}");
+                $this->line($entry, $config?->gl_pension_employer_expense_account_admin, 'Pension Employer Contribution Expense - Admin', $totals['pension_employer'], 0, $currencyId, "Pension employer cost - {$run->name}");
+            }
 
             // ── CR: payables ────────────────────────────────────────────────
             $this->line($entry, $config?->gl_paye_liability_account, 'PAYE Payable', 0, $totals['paye'], $currencyId, "PAYE withheld - {$run->name}");
@@ -94,15 +119,22 @@ class PayrollJournalService
     {
         $totals = [
             'gross' => 0.0, 'net' => 0.0, 'total_deductions' => 0.0,
+            'gross_admin' => 0.0, 'gross_drivers' => 0.0,
             'paye' => 0.0, 'aids_levy' => 0.0,
             'nssa_employee' => 0.0, 'nssa_employer' => 0.0,
+            'nssa_employer_admin' => 0.0, 'nssa_employer_drivers' => 0.0,
             'nec_employee' => 0.0, 'nec_employer' => 0.0,
+            'nec_employer_admin' => 0.0, 'nec_employer_drivers' => 0.0,
             'pension_employee' => 0.0, 'pension_employer' => 0.0,
+            'pension_employer_admin' => 0.0, 'pension_employer_drivers' => 0.0,
             'other_deductions' => 0.0,
         ];
 
         foreach ($payroll->payroll_salaries as $payrollSalary) {
+            $isDriver = (bool) $payrollSalary->employee?->driver;
+
             $totals['gross']            += (float) $payrollSalary->gross;
+            $totals[$isDriver ? 'gross_drivers' : 'gross_admin'] += (float) $payrollSalary->gross;
             $totals['total_deductions'] += (float) $payrollSalary->total_deductions;
 
             $employeeNamedTotal = 0.0;
@@ -132,9 +164,17 @@ class PayrollJournalService
             $totals['other_deductions'] += max(0, (float) $payrollSalary->total_deductions - $employeeNamedTotal);
 
             if ($payrollSalary->salary) {
-                $totals['nssa_employer']    += (float) $payrollSalary->salary->nssa_employer_amount;
-                $totals['nec_employer']     += (float) $payrollSalary->salary->nec_employer_amount;
-                $totals['pension_employer'] += (float) $payrollSalary->salary->pension_employer_amount;
+                $nssaEmployer    = (float) $payrollSalary->salary->nssa_employer_amount;
+                $necEmployer     = (float) $payrollSalary->salary->nec_employer_amount;
+                $pensionEmployer = (float) $payrollSalary->salary->pension_employer_amount;
+
+                $totals['nssa_employer']    += $nssaEmployer;
+                $totals['nec_employer']     += $necEmployer;
+                $totals['pension_employer'] += $pensionEmployer;
+
+                $totals[$isDriver ? 'nssa_employer_drivers' : 'nssa_employer_admin']       += $nssaEmployer;
+                $totals[$isDriver ? 'nec_employer_drivers' : 'nec_employer_admin']         += $necEmployer;
+                $totals[$isDriver ? 'pension_employer_drivers' : 'pension_employer_admin'] += $pensionEmployer;
             }
         }
 

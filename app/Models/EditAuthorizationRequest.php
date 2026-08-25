@@ -5,12 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TripEditAuthorizationRequest extends Model
+class EditAuthorizationRequest extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'trip_id',
+        'editable_type',
+        'editable_id',
+        'module',
+        'owner_id',
         'user_id',
         'reason',
         'status',
@@ -25,9 +28,9 @@ class TripEditAuthorizationRequest extends Model
         'consumed_at' => 'datetime',
     ];
 
-    public function trip()
+    public function editable()
     {
-        return $this->belongsTo(Trip::class, 'trip_id');
+        return $this->morphTo();
     }
 
     public function requester()
@@ -38,5 +41,20 @@ class TripEditAuthorizationRequest extends Model
     public function decider()
     {
         return $this->belongsTo(User::class, 'decided_by');
+    }
+
+    public function scopeForModule($query, string $module)
+    {
+        return $query->where('module', $module);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeApprovedUnconsumed($query)
+    {
+        return $query->where('status', 'approved')->whereNull('consumed_at');
     }
 }

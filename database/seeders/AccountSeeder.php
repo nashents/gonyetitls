@@ -97,6 +97,7 @@ class AccountSeeder extends Seeder
          // Resolve account types
         $dueForPayroll  = AccountType::where('name', 'Due for Payroll')->firstOrFail();
         $payrollExpense = AccountType::where('name', 'Payroll Expense')->firstOrFail();
+        $costOfGoodsSoldForPayroll = AccountType::where('name', 'Cost Of Goods Sold')->firstOrFail();
 
         $accounts = [
 
@@ -182,42 +183,82 @@ class AccountSeeder extends Seeder
                 'hs_code'               => '',
             ],
 
-            // ── Payroll Expenses ──────────────────────────────────────────
+            // ── Payroll Expenses (split Admin/Ops vs Drivers/COGS) ─────────
             [
-                'name'                  => 'Salaries & Wages Expense',
+                'name'                  => 'Salaries & Wages Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,
                 'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Gross salaries and wages expense for all employees.',
+                'description'           => 'Gross salaries and wages expense for admin/office employees.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
                 'hs_code'               => '',
             ],
             [
-                'name'                  => 'NSSA Employer Contribution Expense',
-                'account_type_id'       => $payrollExpense->id,
-                'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of NSSA contributions.',
+                'name'                  => 'Salaries & Wages Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSoldForPayroll->id,
+                'account_type_group_id' => $costOfGoodsSoldForPayroll->account_type_group_id,
+                'description'           => 'Gross salaries and wages expense for drivers - a direct cost of hauling.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
                 'hs_code'               => '',
             ],
             [
-                'name'                  => 'NEC Employer Contribution Expense',
+                'name'                  => 'NSSA Employer Contribution Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,
                 'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of NEC levy contributions.',
+                'description'           => 'Employer cost of NSSA contributions for admin/office employees.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
                 'hs_code'               => '',
             ],
             [
-                'name'                  => 'Pension Employer Contribution Expense',
+                'name'                  => 'NSSA Employer Contribution Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSoldForPayroll->id,
+                'account_type_group_id' => $costOfGoodsSoldForPayroll->account_type_group_id,
+                'description'           => 'Employer cost of NSSA contributions for drivers - a direct cost of hauling.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,
                 'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of pension fund contributions.',
+                'description'           => 'Employer cost of NEC levy contributions for admin/office employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSoldForPayroll->id,
+                'account_type_group_id' => $costOfGoodsSoldForPayroll->account_type_group_id,
+                'description'           => 'Employer cost of NEC levy contributions for drivers - a direct cost of hauling.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense - Admin',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions for admin/office employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSoldForPayroll->id,
+                'account_type_group_id' => $costOfGoodsSoldForPayroll->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions for drivers - a direct cost of hauling.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,

@@ -4,8 +4,8 @@ Namespace App\Http\Livewire\Notifications;
 
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\EditAuthorizer;
 use App\Models\Notification;
-use App\Models\TripEditAuthorizer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +31,8 @@ class Index extends Component
     public $trip_edit_authorizer_id;
     public $trip_edit_authorizer_user_id;
     public $trip_edit_authorizer_status;
+    public $trip_edit_authorizer_module;
+    public $edit_authorization_modules;
 
 
     public $inputs = [];
@@ -58,7 +60,9 @@ class Index extends Component
         $this->isSuperAdmin = Auth::user()->isSuperAdmin();
         if ($this->isSuperAdmin) {
             $this->trip_edit_authorizer_status = 1;
+            $this->trip_edit_authorizer_module = 'trips';
             $this->trip_edit_authorizer_users = User::where('category', 'employee')->where('active', 1)->orderBy('name', 'asc')->get();
+            $this->edit_authorization_modules = collect(config('edit_authorization'))->map(fn ($cfg, $key) => ['key' => $key, 'label' => $cfg['label']])->values();
         }
     }
 
@@ -157,6 +161,7 @@ class Index extends Component
         $this->trip_edit_authorizer_id = null;
         $this->trip_edit_authorizer_user_id = null;
         $this->trip_edit_authorizer_status = 1;
+        $this->trip_edit_authorizer_module = 'trips';
     }
 
     public function storeTripEditAuthorizer(){
@@ -164,11 +169,13 @@ class Index extends Component
 
         $this->validate([
             'trip_edit_authorizer_user_id' => 'required',
+            'trip_edit_authorizer_module' => 'required',
         ]);
 
         DB::transaction(function () {
-            $authorizer = new TripEditAuthorizer;
+            $authorizer = new EditAuthorizer;
             $authorizer->user_id = $this->trip_edit_authorizer_user_id;
+            $authorizer->module = $this->trip_edit_authorizer_module;
             $authorizer->created_by = Auth::user()->id;
             $authorizer->status = $this->trip_edit_authorizer_status;
             $authorizer->save();
@@ -177,7 +184,7 @@ class Index extends Component
             $this->resetTripEditAuthorizerFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Trip Edit Authorizer Added Successfully!!"
+                'message'=>"Edit Authorizer Added Successfully!!"
             ]);
         });
     }
@@ -185,10 +192,11 @@ class Index extends Component
     public function editTripEditAuthorizer($id){
         abort_unless($this->isSuperAdmin, 403);
 
-        $authorizer = TripEditAuthorizer::find($id);
+        $authorizer = EditAuthorizer::find($id);
         $this->trip_edit_authorizer_id = $authorizer->id;
         $this->trip_edit_authorizer_user_id = $authorizer->user_id;
         $this->trip_edit_authorizer_status = $authorizer->status;
+        $this->trip_edit_authorizer_module = $authorizer->module;
         $this->dispatchBrowserEvent('show-tripEditAuthorizerEditModal');
     }
 
@@ -197,12 +205,14 @@ class Index extends Component
 
         $this->validate([
             'trip_edit_authorizer_user_id' => 'required',
+            'trip_edit_authorizer_module' => 'required',
         ]);
 
         DB::transaction(function () {
             if ($this->trip_edit_authorizer_id) {
-                $authorizer = TripEditAuthorizer::find($this->trip_edit_authorizer_id);
+                $authorizer = EditAuthorizer::find($this->trip_edit_authorizer_id);
                 $authorizer->user_id = $this->trip_edit_authorizer_user_id;
+                $authorizer->module = $this->trip_edit_authorizer_module;
                 $authorizer->status = $this->trip_edit_authorizer_status;
                 $authorizer->update();
 
@@ -210,7 +220,7 @@ class Index extends Component
                 $this->resetTripEditAuthorizerFields();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
-                    'message'=>"Trip Edit Authorizer Updated Successfully!!"
+                    'message'=>"Edit Authorizer Updated Successfully!!"
                 ]);
             }
         });
@@ -219,12 +229,12 @@ class Index extends Component
     public function deleteTripEditAuthorizer($id){
         abort_unless($this->isSuperAdmin, 403);
 
-        $authorizer = TripEditAuthorizer::find($id);
+        $authorizer = EditAuthorizer::find($id);
         if ($authorizer) {
             $authorizer->delete();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Trip Edit Authorizer Removed Successfully!!"
+                'message'=>"Edit Authorizer Removed Successfully!!"
             ]);
         }
     }
@@ -233,7 +243,7 @@ class Index extends Component
     {
         $this->notifications = Notification::latest()->get();
         if ($this->isSuperAdmin) {
-            $this->trip_edit_authorizers = TripEditAuthorizer::with('user', 'creator')->latest()->get();
+            $this->trip_edit_authorizers = EditAuthorizer::with('user', 'creator')->latest()->get();
         }
         return view('livewire.notifications.index',[
             'notifications'=>   $this->notifications

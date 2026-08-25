@@ -141,9 +141,13 @@
 
                             $isSuperAdmin = in_array('Super Admin', $role_names);
                             $isAdmin      = in_array('Admin', $role_names);
+                            $isEditAuthorizer = $isEditAuthorizer ?? false;
 
-                            // Only Admins + Super Admin see pending notifications
-                            $canSeeDropdown = $isSuperAdmin || $isAdmin;
+                            // Admins + Super Admin see pending notifications; an Edit
+                            // Authorizer (see EditAuthorizationService) sees this dropdown
+                            // too even if they hold neither role, since pending edit
+                            // authorization requests are scoped per-authorizer, not per-department.
+                            $canSeeDropdown = $isSuperAdmin || $isAdmin || $isEditAuthorizer;
 
                             $pendingMap = [
                                 'trips' => ['label' => 'Trip', 'route' => 'trips.pending', 'icon'  => 'fa-truck'],
@@ -168,6 +172,7 @@
                                 'fuel_requests' => ['label' => 'Fuel Request', 'route' => 'fuel_requests.pending', 'icon'  => 'fa-gas-pump'],
                                 'attendances' => ['label' => 'Attendance', 'route' => 'attendances.pending', 'icon'  => 'fa-clock-o'],
                                 'overdue_tickets' => ['label' => 'Overdue Ticket','route' => 'tickets.index', 'icon'  => 'fa-wrench'],
+                                'edit_authorizations' => ['label' => 'Edit Authorization', 'route' => 'edit_authorizers.pending', 'icon'  => 'fa-user-clock'],
 
                             ];
 
@@ -198,6 +203,12 @@
                                     ->unique()
                                     ->values()
                                     ->toArray();
+
+                                // Edit-authorization visibility is per-authorizer
+                                // (see EditAuthorizationService), not per-department.
+                                if ($isEditAuthorizer) {
+                                    $allowedKeys[] = 'edit_authorizations';
+                                }
                             }
 
                             // IMPORTANT: total is ALWAYS sum of what they can see

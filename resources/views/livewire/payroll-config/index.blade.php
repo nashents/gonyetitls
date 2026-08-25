@@ -32,6 +32,11 @@
                                         <i class="fa fa-calendar"></i> Pay Frequencies
                                     </a>
                                 </li>
+                                <li class="{{ $activeTab === 'history' ? 'active' : '' }}">
+                                    <a href="#" wire:click.prevent="$set('activeTab','history')">
+                                        <i class="fa fa-history"></i> History
+                                    </a>
+                                </li>
                             </ul>
 
                             <div class="tab-content p-20">
@@ -116,7 +121,7 @@
                                             <div class="panel-body py-2 px-3 d-flex align-items-center justify-content-between">
                                                 <span>{{ $label }}</span>
                                                 <div class="toggle-switch">
-                                                    <input type="checkbox" wire:model.defer="{{ $field }}" id="toggle_{{ $field }}" style="display:none;">
+                                                    <input type="checkbox" {{ $this->$field ? 'checked' : '' }} disabled id="toggle_{{ $field }}" style="display:none;">
                                                     <label for="toggle_{{ $field }}" class="btn btn-sm {{ $this->$field ? 'btn-success' : 'btn-default' }}" wire:click="$toggle('{{ $field }}')">
                                                         {{ $this->$field ? 'ON' : 'OFF' }}
                                                     </label>
@@ -132,23 +137,41 @@
                                 @if($activeTab === 'gl')
                                 <p class="text-muted mb-3"><i class="fa fa-info-circle"></i> These accounts drive the actual payroll journal entry posted for each pay run. Accounts are grouped by their chart-of-accounts category so you can see whether you're picking an Expense or a Liability account. Leave a field blank to fall back to the default account of that name.</p>
 
-                                <h6 class="text-muted">Debit lines (expenses)</h6>
+                                <div class="panel panel-default mb-3">
+                                    <div class="panel-body py-2 px-3 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <span>Split payroll expenses by employee type</span>
+                                            <div class="text-muted small">On: driver payroll cost posts separately to Cost of Goods Sold accounts, admin/office cost stays Operating Expense. Off: every employee, drivers included, posts to one shared expense line.</div>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <input type="checkbox" {{ $split_payroll_expenses_by_employee_type ? 'checked' : '' }} disabled id="toggle_split_payroll" style="display:none;">
+                                            <label for="toggle_split_payroll" class="btn btn-sm {{ $split_payroll_expenses_by_employee_type ? 'btn-success' : 'btn-default' }}" wire:click="$toggle('split_payroll_expenses_by_employee_type')">
+                                                {{ $split_payroll_expenses_by_employee_type ? 'ON' : 'OFF' }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h6 class="text-muted">Debit lines (expenses){{ $split_payroll_expenses_by_employee_type ? ' — Admin / Ops' : '' }}</h6>
                                 <div class="row mb-3">
                                     @foreach([
-                                        ['gl_wages_account',                    'Wages Expense Account',                    'fa-money'],
-                                        ['gl_nssa_employer_expense_account',    'NSSA Employer Contribution Expense',       'fa-shield'],
-                                        ['gl_nec_employer_expense_account',     'NEC Employer Contribution Expense',       'fa-briefcase'],
-                                        ['gl_pension_employer_expense_account', 'Pension Employer Contribution Expense',   'fa-university'],
+                                        ['gl_wages_account_admin',                    'Wages Expense Account'.($split_payroll_expenses_by_employee_type ? ' - Admin' : ''),                    'fa-money'],
+                                        ['gl_nssa_employer_expense_account_admin',    'NSSA Employer Contribution Expense'.($split_payroll_expenses_by_employee_type ? ' - Admin' : ''),       'fa-shield'],
+                                        ['gl_nec_employer_expense_account_admin',     'NEC Employer Contribution Expense'.($split_payroll_expenses_by_employee_type ? ' - Admin' : ''),        'fa-briefcase'],
+                                        ['gl_pension_employer_expense_account_admin', 'Pension Employer Contribution Expense'.($split_payroll_expenses_by_employee_type ? ' - Admin' : ''),    'fa-university'],
                                     ] as [$field, $label, $icon])
                                     <div class="col-md-6 mb-3">
                                         <div class="form-group">
                                             <label><i class="fa {{ $icon }}"></i> {{ $label }}</label>
                                             <select wire:model.defer="{{ $field }}" class="form-control">
                                                 <option value="">— none —</option>
-                                                @foreach($accountsByGroup as $groupName => $accounts)
+                                                @foreach($accountsByGroup as $groupName => $typeGroups)
                                                 <optgroup label="{{ $groupName }}">
+                                                    @foreach($typeGroups as $typeName => $accounts)
+                                                    <option value="" disabled>— {{ $typeName }} —</option>
                                                     @foreach($accounts as $account)
                                                     <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
+                                                    @endforeach
                                                     @endforeach
                                                 </optgroup>
                                                 @endforeach
@@ -157,6 +180,38 @@
                                     </div>
                                     @endforeach
                                 </div>
+
+                                @if($split_payroll_expenses_by_employee_type)
+                                <h6 class="text-muted">Debit lines (expenses) &mdash; Drivers / COGS</h6>
+                                <p class="text-muted small mb-2">Posted for any payroll line whose employee has a linked Driver record &mdash; routes driver payroll cost to Cost of Goods Sold instead of Operating Expense.</p>
+                                <div class="row mb-3">
+                                    @foreach([
+                                        ['gl_wages_account_drivers',                    'Wages Expense Account - Drivers',                    'fa-money'],
+                                        ['gl_nssa_employer_expense_account_drivers',    'NSSA Employer Contribution Expense - Drivers',       'fa-shield'],
+                                        ['gl_nec_employer_expense_account_drivers',     'NEC Employer Contribution Expense - Drivers',        'fa-briefcase'],
+                                        ['gl_pension_employer_expense_account_drivers', 'Pension Employer Contribution Expense - Drivers',    'fa-university'],
+                                    ] as [$field, $label, $icon])
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label><i class="fa {{ $icon }}"></i> {{ $label }}</label>
+                                            <select wire:model.defer="{{ $field }}" class="form-control">
+                                                <option value="">— none —</option>
+                                                @foreach($accountsByGroup as $groupName => $typeGroups)
+                                                <optgroup label="{{ $groupName }}">
+                                                    @foreach($typeGroups as $typeName => $accounts)
+                                                    <option value="" disabled>— {{ $typeName }} —</option>
+                                                    @foreach($accounts as $account)
+                                                    <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
+                                                    @endforeach
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @endif
 
                                 <h6 class="text-muted">Credit lines (liabilities / payables)</h6>
                                 <div class="row">
@@ -175,10 +230,13 @@
                                             <label><i class="fa {{ $icon }}"></i> {{ $label }}</label>
                                             <select wire:model.defer="{{ $field }}" class="form-control">
                                                 <option value="">— none —</option>
-                                                @foreach($accountsByGroup as $groupName => $accounts)
+                                                @foreach($accountsByGroup as $groupName => $typeGroups)
                                                 <optgroup label="{{ $groupName }}">
+                                                    @foreach($typeGroups as $typeName => $accounts)
+                                                    <option value="" disabled>— {{ $typeName }} —</option>
                                                     @foreach($accounts as $account)
                                                     <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
+                                                    @endforeach
                                                     @endforeach
                                                 </optgroup>
                                                 @endforeach
@@ -233,10 +291,50 @@
                                 </table>
                                 @endif
 
+                                {{-- HISTORY TAB --}}
+                                @if($activeTab === 'history')
+                                <p class="text-muted mb-3"><i class="fa fa-info-circle"></i> Every save to this company's payroll configuration is recorded here — who changed it, when, and the before/after value of each field.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>When</th>
+                                                <th>Who</th>
+                                                <th>Event</th>
+                                                <th>Changes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($auditHistory as $entry)
+                                            <tr>
+                                                <td class="text-nowrap">{{ $entry['created_at'] }}</td>
+                                                <td>{{ $entry['user'] }}</td>
+                                                <td><span class="badge bg-info text-white">{{ ucfirst($entry['event']) }}</span></td>
+                                                <td>
+                                                    @forelse($entry['changes'] as $field => $values)
+                                                    <div>
+                                                        <strong>{{ $field }}:</strong>
+                                                        <span class="text-muted">{{ is_bool($values['old'] ?? null) ? ($values['old'] ? 'Yes' : 'No') : ($values['old'] ?? '—') }}</span>
+                                                        <i class="fa fa-long-arrow-right mx-1"></i>
+                                                        <span>{{ is_bool($values['new'] ?? null) ? ($values['new'] ? 'Yes' : 'No') : ($values['new'] ?? '—') }}</span>
+                                                    </div>
+                                                    @empty
+                                                    <span class="text-muted">—</span>
+                                                    @endforelse
+                                                </td>
+                                            </tr>
+                                            @empty
+                                            <tr><td colspan="4" class="text-center text-muted">No changes recorded yet.</td></tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @endif
+
                             </div>{{-- /tab-content --}}
 
-                            {{-- Save button (not for frequencies tab) --}}
-                            @if($activeTab !== 'frequencies')
+                            {{-- Save button (not for frequencies/history tabs) --}}
+                            @if(!in_array($activeTab, ['frequencies', 'history']))
                             <div class="panel-footer px-20 py-3">
                                 <button wire:click="saveConfig" wire:loading.attr="disabled" class="btn btn-primary">
                                     <span wire:loading wire:target="saveConfig"><i class="fa fa-spinner fa-spin"></i></span>
@@ -302,6 +400,31 @@
                     <button class="btn btn-primary" wire:click="saveFrequency" wire:loading.attr="disabled">
                         <span wire:loading wire:target="saveFrequency"><i class="fa fa-spinner fa-spin"></i></span>
                         Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Mid-year change confirm modal --}}
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Confirm: Change Payroll Expense Split</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fa fa-warning"></i> This company already has posted payroll for {{ now()->year }}. Changing this setting now means payroll runs before today and after today will route wages to different GL accounts, which can distort Cost of Goods Sold / Operating Expense comparisons within the same year.
+                    </div>
+                    <p>Do you want to save this change anyway?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" wire:click="cancelSaveConfig" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" wire:click="confirmSaveConfig" wire:loading.attr="disabled">
+                        <span wire:loading wire:target="confirmSaveConfig"><i class="fa fa-spinner fa-spin"></i></span>
+                        Yes, save anyway
                     </button>
                 </div>
             </div>

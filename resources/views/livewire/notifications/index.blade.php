@@ -83,7 +83,7 @@
                     <div class="panel">
                         <div class="panel-heading">
                             <div class="panel-title">
-                                <a href="#" data-toggle="modal" data-target="#tripEditAuthorizerModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Trip Edit Authorizer</a>
+                                <a href="#" data-toggle="modal" data-target="#tripEditAuthorizerModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Edit Authorizer</a>
                             </div>
                         </div>
                         <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
@@ -92,6 +92,7 @@
                                 <thead>
                                   <tr>
                                     <th class="th-sm">User</th>
+                                    <th class="th-sm">Module</th>
                                     <th class="th-sm">Assigned By</th>
                                     <th class="th-sm">Status</th>
                                     <th class="th-sm">Action</th>
@@ -102,6 +103,7 @@
                                     @foreach ($trip_edit_authorizers as $authorizer)
                                   <tr>
                                     <td>{{$authorizer->user ? $authorizer->user->name : ""}} {{$authorizer->user ? $authorizer->user->surname : ""}}</td>
+                                    <td>{{ config('edit_authorization.'.$authorizer->module.'.label', ucfirst($authorizer->module)) }}</td>
                                     <td>{{$authorizer->creator ? $authorizer->creator->name : ""}} {{$authorizer->creator ? $authorizer->creator->surname : ""}}</td>
                                     <td><span class="badge bg-{{$authorizer->status == 1 ? "success" : "danger"}}">{{$authorizer->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -119,7 +121,7 @@
                                             <div class="modal-dialog" role="document">
                                                 <div class="modal-content bg-danger">
                                                     <div class="modal-body">
-                                                        <center><strong>Remove this Trip Edit Authorizer?</strong></center>
+                                                        <center><strong>Remove this Edit Authorizer?</strong></center>
                                                     </div>
                                                     <div class="modal-footer no-border">
                                                         <div class="btn-group" role="group">
@@ -385,7 +387,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="tripEditAuthorizerModalLabel"><i class="fas fa-plus"></i> Add Trip Edit Authorizer <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                    <h4 class="modal-title" id="tripEditAuthorizerModalLabel"><i class="fas fa-plus"></i> Add Edit Authorizer <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
                 </div>
                 <form wire:submit.prevent="storeTripEditAuthorizer()">
                     <div class="modal-body">
@@ -398,6 +400,15 @@
                                 @endforeach
                             </select>
                             @error('trip_edit_authorizer_user_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="trip_edit_authorizer_module">Module<span class="required" style="color: red">*</span></label>
+                            <select wire:model.debounce.300ms="trip_edit_authorizer_module" class="form-control" required>
+                                @foreach ($edit_authorization_modules as $mod)
+                                    <option value="{{$mod['key']}}">{{$mod['label']}}</option>
+                                @endforeach
+                            </select>
+                            @error('trip_edit_authorizer_module') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                         <div class="form-group">
                             <label for="trip_edit_authorizer_status">Status</label>
@@ -423,7 +434,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="tripEditAuthorizerEditModalLabel"><i class="fas fa-edit"></i> Edit Trip Edit Authorizer <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                    <h4 class="modal-title" id="tripEditAuthorizerEditModalLabel"><i class="fas fa-edit"></i> Edit Authorizer <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
                 </div>
                 <form wire:submit.prevent="updateTripEditAuthorizer()">
                     <div class="modal-body">
@@ -436,6 +447,15 @@
                                 @endforeach
                             </select>
                             @error('trip_edit_authorizer_user_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="trip_edit_authorizer_module">Module<span class="required" style="color: red">*</span></label>
+                            <select wire:model.debounce.300ms="trip_edit_authorizer_module" class="form-control" required>
+                                @foreach ($edit_authorization_modules as $mod)
+                                    <option value="{{$mod['key']}}">{{$mod['label']}}</option>
+                                @endforeach
+                            </select>
+                            @error('trip_edit_authorizer_module') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                         <div class="form-group">
                             <label for="trip_edit_authorizer_status">Status</label>

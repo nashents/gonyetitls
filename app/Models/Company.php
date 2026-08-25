@@ -70,6 +70,19 @@ class Company extends Model  implements Auditable
         return $this->hasMany('App\Models\Trip');
     }
 
+    /**
+     * Falls back to the default company logo when none is set or the
+     * uploaded file was deleted from disk.
+     */
+    public function getLogoAttribute($value)
+    {
+        if (! empty($value) && file_exists(public_path('images/uploads/'.$value))) {
+            return $value;
+        }
+
+        return 'logo.png';
+    }
+
     protected $fillable = [
         'user_id',
         'admin_id',

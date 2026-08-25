@@ -345,6 +345,25 @@ class MenuRegistrySeeder extends Seeder
             'route_name' => 'reminders.copy',
             'sort_order' => 20,
         ]);
+
+        // Pending Edit Authorizations - cross-module (trips, bills, ...),
+        // so it lives here rather than nested under any one department's
+        // module - visible to whoever is an authorizer for at least one
+        // module (see EditAuthorizationService::isAuthorizer), regardless
+        // of department or admin status.
+        $upsertModule($g, [
+            'name' => 'Pending Edit Authorizations',
+            'slug' => 'pending-edit-authorizations',
+            'icon' => 'fas fa-user-clock',
+            'route_name' => 'edit_authorizers.pending',
+            'sort_order' => 32,
+            'badge_key' => 'edit_authorizations_pending_count',
+            'visibility' => $any([
+                $all(['isEditAuthorizer']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
         // Attendance Register
          $m = $upsertModule($g, [
             'name' => 'Attendance Register',
@@ -565,7 +584,11 @@ class MenuRegistrySeeder extends Seeder
             'icon'=>'fas fa-sliders-h',
             'route_name'=>'payroll-config.index',
             'sort_order'=>60,
-            'visibility' => $any([$all(['isAdmin','inHR']), $all(['isSuperAdmin'])]),
+            // Matches PayrollCompanyConfigPolicy — GL account routing (incl. the
+            // driver/admin COGS-Ops split) is a finance/controller decision, not
+            // an HR one, so this follows the same isAdmin+inFinance rule already
+            // used for other GL-adjacent settings pages rather than inHR.
+            'visibility' => $any([$all(['isAdmin','inFinance']), $all(['isSuperAdmin'])]),
         ]);
 
         // My Payslip (public)
@@ -1879,10 +1902,6 @@ class MenuRegistrySeeder extends Seeder
             ]),]);
         $upsertSub($m, ['name'=>'Tracking Groups','slug'=>'tracking-groups','icon'=>'fas fa-list','route_name'=>'trip_groups.index','sort_order'=>70,  'visibility' => $any([
                 $all(['isNotDriver']),
-            ]),]);
-        $upsertSub($m, ['name'=>'Pending Edit Authorizations','slug'=>'pending-trip-edit-authorizations','icon'=>'fas fa-user-clock','route_name'=>'trip_edit_authorizers.pending','sort_order'=>75,'badge_key'=>'trip_edit_authorizations_pending_count','visibility'=>$any([
-                $all(['isTripEditAuthorizer']),
-                $all(['isSuperAdmin']),
             ]),]);
 
         // Gatepass (Logistics) - not driver

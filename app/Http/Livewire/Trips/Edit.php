@@ -41,8 +41,7 @@ use App\Models\Transporter;
 use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripCmrDetail;
-use App\Models\TripEditAuthorizationRequest;
-use App\Models\TripEditAuthorizer;
+use App\Services\EditAuthorizationService;
 use App\Models\TripDestination;
 use App\Models\TripExpense;
 use App\Models\TripGroup;
@@ -1174,18 +1173,10 @@ class Edit extends Component
         $this->isTemporarilyUnlocked = (bool) ($this->trip && $this->trip->isTemporarilyUnlocked());
         $this->isLocked = $this->trip && (int) $this->trip->status === 1 && ! $this->isTemporarilyUnlocked;
         if ($this->isLocked) {
-            $this->activeGrant = TripEditAuthorizationRequest::where('trip_id', $this->trip->id)
-                ->where('user_id', Auth::user()->id)
-                ->where('status', 'approved')
-                ->whereNull('consumed_at')
-                ->latest()
-                ->first();
+            $editAuthService = app(EditAuthorizationService::class);
+            $this->activeGrant = $editAuthService->activeGrant($this->trip, Auth::user());
             $this->hasActiveEditGrant = (bool) $this->activeGrant;
-
-            $this->hasPendingEditRequest = TripEditAuthorizationRequest::where('trip_id', $this->trip->id)
-                ->where('user_id', Auth::user()->id)
-                ->where('status', 'pending')
-                ->exists();
+            $this->hasPendingEditRequest = $editAuthService->hasPendingRequest($this->trip, Auth::user());
         }
 
         $this->user = Auth::user();
@@ -1606,7 +1597,7 @@ class Edit extends Component
 
                 foreach ($this->trip_destinations as $key => $td) {
 
-                    $offloadingPointId = $this->current_destinations_offloading_point_id[$key] ?? null;
+                    $offloadingPointId = ($this->current_destinations_offloading_point_id[$key] ?? null) ?: null;
                     $destinationId = $this->current_destinations_selectedTo[$key] ?? null;
 
                     $tripDestination = TripDestination::find($td->id);
@@ -1634,7 +1625,7 @@ class Edit extends Component
                     
                 foreach ($this->destinations_selectedTo as $key => $destinationId) {
 
-                    $offloadingPointId = $this->destinations_offloading_point_id[$key] ?? null;
+                    $offloadingPointId = ($this->destinations_offloading_point_id[$key] ?? null) ?: null;
 
                     TripDestination::updateOrCreate(
                         [
@@ -1667,7 +1658,7 @@ class Edit extends Component
                 [
                     'trip_transport_order_id'  => $trip_transport_order->id,
                     'destination_id'      => $this->selectedTo,
-                    'offloading_point_id' => $this->offloading_point_id,
+                    'offloading_point_id' => $this->offloading_point_id ?: null,
                 ],
                 [
                     'transport_order_id'  => $trip_transport_order->transport_order_id,
@@ -1695,7 +1686,7 @@ class Edit extends Component
 
                 foreach ($this->trip_origins as $key => $to) {
 
-                    $loadingPointId = $this->current_destinations_loading_point_id[$key] ?? null;
+                    $loadingPointId = ($this->current_destinations_loading_point_id[$key] ?? null) ?: null;
                     $destinationId = $this->current_destinations_selectedFrom[$key] ?? null;
 
                     $tripOrigin = TripOrigin::find($to->id);
@@ -1721,7 +1712,7 @@ class Edit extends Component
                 
                 foreach ($this->destinations_selectedFrom as $key => $destinationId) {
 
-                    $loadingPointId = $this->destinations_loading_point_id[$key] ?? null;
+                    $loadingPointId = ($this->destinations_loading_point_id[$key] ?? null) ?: null;
 
                     TripOrigin::updateOrCreate(
                         [
@@ -1751,7 +1742,7 @@ class Edit extends Component
                 [
                     'trip_transport_order_id'  => $trip_transport_order->transport_order_id,
                     'destination_id'      => $this->selectedFrom,
-                    'loading_point_id' => $this->loading_point_id,
+                    'loading_point_id' => $this->loading_point_id ?: null,
                 ],
                 [
                     'transport_order_id'  => $trip_transport_order->transport_order_id,
@@ -2477,12 +2468,9 @@ class Edit extends Component
             'editAuthorizationReason.required' => 'Please give a reason for requesting edit access.',
         ]);
 
-        $alreadyPending = TripEditAuthorizationRequest::where('trip_id', $this->trip_id)
-            ->where('user_id', Auth::user()->id)
-            ->where('status', 'pending')
-            ->exists();
+        $editAuthService = app(EditAuthorizationService::class);
 
-        if ($alreadyPending) {
+        if ($editAuthService->hasPendingRequest($this->trip, Auth::user())) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
                 'message'=>"You already have a pending authorization request for this trip."
@@ -2490,12 +2478,7 @@ class Edit extends Component
             return;
         }
 
-        TripEditAuthorizationRequest::create([
-            'trip_id' => $this->trip_id,
-            'user_id' => Auth::user()->id,
-            'reason' => $this->editAuthorizationReason,
-            'status' => 'pending',
-        ]);
+        $editAuthService->requestEdit($this->trip, Auth::user(), $this->editAuthorizationReason);
 
         $this->hasPendingEditRequest = true;
 
@@ -2523,12 +2506,7 @@ class Edit extends Component
         $locked = $trip && (int) $trip->status === 1 && ! $trip->isTemporarilyUnlocked();
         $grant = null;
         if ($locked) {
-            $grant = TripEditAuthorizationRequest::where('trip_id', $trip->id)
-                ->where('user_id', Auth::user()->id)
-                ->where('status', 'approved')
-                ->whereNull('consumed_at')
-                ->latest()
-                ->first();
+            $grant = app(EditAuthorizationService::class)->activeGrant($trip, Auth::user());
 
             if (!$grant) {
                 abort(403, 'This trip is completed and locked for editing. Request authorization before editing it.');
@@ -2643,7 +2621,7 @@ class Edit extends Component
         $trip->update();
 
         if ($grant) {
-            $grant->update(['consumed_at' => now()]);
+            app(EditAuthorizationService::class)->consume($grant);
             $this->hasActiveEditGrant = false;
             $this->activeGrant = null;
         }

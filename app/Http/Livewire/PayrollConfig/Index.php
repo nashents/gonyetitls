@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Currency;
 use App\Models\PayrollCompanyConfig;
 use App\Models\PayrollFrequency;
+use App\Models\PayrollRun;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,14 +27,19 @@ class Index extends Component
     public $require_approval_for_reversal = true;
     public $auto_deduct_loans = true;
     public $auto_deduct_salary_advances = true;
-    public $gl_wages_account;
+    public $split_payroll_expenses_by_employee_type = false;
+    public $gl_wages_account_admin;
+    public $gl_wages_account_drivers;
     public $gl_nssa_account;
     public $gl_paye_account;
     public $gl_pension_account;
     public $gl_nec_account;
-    public $gl_nssa_employer_expense_account;
-    public $gl_nec_employer_expense_account;
-    public $gl_pension_employer_expense_account;
+    public $gl_nssa_employer_expense_account_admin;
+    public $gl_nssa_employer_expense_account_drivers;
+    public $gl_nec_employer_expense_account_admin;
+    public $gl_nec_employer_expense_account_drivers;
+    public $gl_pension_employer_expense_account_admin;
+    public $gl_pension_employer_expense_account_drivers;
     public $gl_nssa_employee_account;
     public $gl_aids_levy_account;
     public $gl_payroll_suspense_account;
@@ -55,28 +61,75 @@ class Index extends Component
     public $company;
     public $activeTab = 'general';
     public $accountsByGroup = [];
+    public $auditHistory = [];
+
+    // Tracks the last-saved value so saveConfig() can detect a real change
+    // to the split toggle (vs. re-saving other fields with it left alone).
+    public $originalSplitPayrollExpenses = false;
+
+    // Holds a built $data array while a mid-year confirmation is pending.
+    public $pendingConfigData = null;
 
     public function mount()
     {
+        $this->authorize('view', PayrollCompanyConfig::class);
+
         $this->company    = Auth::user()->employee->company;
         $this->currencies = Currency::orderBy('name')->get();
         $this->loadConfig();
         $this->loadFrequencies();
         $this->loadAccounts();
+        $this->loadAuditHistory();
+    }
+
+    /**
+     * Who changed what and when for this company's payroll config, reusing
+     * the owen-it/laravel-auditing data already being captured on every
+     * save (PayrollCompanyConfig implements Auditable) — no separate
+     * tracking needed, just a view onto the existing `audits` table.
+     */
+    private function loadAuditHistory(): void
+    {
+        if (!$this->config_id) {
+            $this->auditHistory = [];
+            return;
+        }
+
+        $config = PayrollCompanyConfig::find($this->config_id);
+
+        $this->auditHistory = $config
+            ? $config->audits()->with('user')->latest()->limit(50)->get()
+                ->map(fn ($audit) => [
+                    'user'       => trim(($audit->user?->name ?? 'Unknown') . ' ' . ($audit->user?->surname ?? '')),
+                    'event'      => $audit->event,
+                    'created_at' => optional($audit->created_at)->format('Y-m-d H:i'),
+                    'changes'    => $audit->getModified(),
+                ])
+                ->toArray()
+            : [];
     }
 
     private function loadAccounts(): void
     {
-        $accounts = Account::with('account_type_group')
+        $accounts = Account::with(['account_type', 'account_type_group'])
             ->orderBy('code')
             ->get();
 
+        // Two-level: account_type_group (e.g. "Expenses") as the outer optgroup,
+        // account_type (e.g. "Cost Of Goods Sold" vs "Operating Expense") as a
+        // sub-heading within it, so COGS vs Ops is visible without losing the
+        // top-level Assets/Liabilities/Expenses context.
         $this->accountsByGroup = $accounts
             ->groupBy(fn ($account) => $account->account_type_group->name ?? 'Other')
-            ->map(fn ($group) => $group->map(fn ($account) => [
-                'code' => $account->code,
-                'name' => $account->name,
-            ])->values())
+            ->sortKeys()
+            ->map(fn ($group) => $group
+                ->groupBy(fn ($account) => $account->account_type->name ?? 'Other')
+                ->sortKeys()
+                ->map(fn ($typeGroup) => $typeGroup->map(fn ($account) => [
+                    'code' => $account->code,
+                    'name' => $account->name,
+                ])->values())
+                ->toArray())
             ->toArray();
     }
 
@@ -98,14 +151,20 @@ class Index extends Component
             $this->require_approval_for_reversal = $cfg->require_approval_for_reversal;
             $this->auto_deduct_loans             = $cfg->auto_deduct_loans;
             $this->auto_deduct_salary_advances   = $cfg->auto_deduct_salary_advances;
-            $this->gl_wages_account              = $cfg->gl_wages_expense_account;
+            $this->split_payroll_expenses_by_employee_type = $cfg->split_payroll_expenses_by_employee_type;
+            $this->originalSplitPayrollExpenses  = $cfg->split_payroll_expenses_by_employee_type;
+            $this->gl_wages_account_admin         = $cfg->gl_wages_expense_account_admin;
+            $this->gl_wages_account_drivers       = $cfg->gl_wages_expense_account_drivers;
             $this->gl_nssa_account               = $cfg->gl_nssa_liability_account;
             $this->gl_paye_account               = $cfg->gl_paye_liability_account;
             $this->gl_pension_account            = $cfg->gl_pension_liability_account;
             $this->gl_nec_account                = $cfg->gl_nec_liability_account;
-            $this->gl_nssa_employer_expense_account   = $cfg->gl_nssa_employer_expense_account;
-            $this->gl_nec_employer_expense_account    = $cfg->gl_nec_employer_expense_account;
-            $this->gl_pension_employer_expense_account= $cfg->gl_pension_employer_expense_account;
+            $this->gl_nssa_employer_expense_account_admin   = $cfg->gl_nssa_employer_expense_account_admin;
+            $this->gl_nssa_employer_expense_account_drivers = $cfg->gl_nssa_employer_expense_account_drivers;
+            $this->gl_nec_employer_expense_account_admin    = $cfg->gl_nec_employer_expense_account_admin;
+            $this->gl_nec_employer_expense_account_drivers  = $cfg->gl_nec_employer_expense_account_drivers;
+            $this->gl_pension_employer_expense_account_admin   = $cfg->gl_pension_employer_expense_account_admin;
+            $this->gl_pension_employer_expense_account_drivers = $cfg->gl_pension_employer_expense_account_drivers;
             $this->gl_nssa_employee_account      = $cfg->gl_nssa_employee_liability_account;
             $this->gl_aids_levy_account          = $cfg->gl_aids_levy_liability_account;
             $this->gl_payroll_suspense_account   = $cfg->gl_payroll_suspense_account;
@@ -126,6 +185,8 @@ class Index extends Component
 
     public function saveConfig()
     {
+        $this->authorize('update', PayrollCompanyConfig::class);
+
         $this->validate([
             'country'          => 'required|string|size:2',
             'selectedCurrency' => 'required|exists:currencies,id',
@@ -146,14 +207,19 @@ class Index extends Component
             'require_approval_for_reversal'           => $this->require_approval_for_reversal,
             'auto_deduct_loans'                       => $this->auto_deduct_loans,
             'auto_deduct_salary_advances'             => $this->auto_deduct_salary_advances,
-            'gl_wages_expense_account'                => $this->gl_wages_account,
+            'split_payroll_expenses_by_employee_type' => $this->split_payroll_expenses_by_employee_type,
+            'gl_wages_expense_account_admin'           => $this->gl_wages_account_admin,
+            'gl_wages_expense_account_drivers'         => $this->gl_wages_account_drivers,
             'gl_nssa_liability_account'               => $this->gl_nssa_account,
             'gl_paye_liability_account'               => $this->gl_paye_account,
             'gl_pension_liability_account'            => $this->gl_pension_account,
             'gl_nec_liability_account'                => $this->gl_nec_account,
-            'gl_nssa_employer_expense_account'        => $this->gl_nssa_employer_expense_account,
-            'gl_nec_employer_expense_account'         => $this->gl_nec_employer_expense_account,
-            'gl_pension_employer_expense_account'     => $this->gl_pension_employer_expense_account,
+            'gl_nssa_employer_expense_account_admin'   => $this->gl_nssa_employer_expense_account_admin,
+            'gl_nssa_employer_expense_account_drivers' => $this->gl_nssa_employer_expense_account_drivers,
+            'gl_nec_employer_expense_account_admin'    => $this->gl_nec_employer_expense_account_admin,
+            'gl_nec_employer_expense_account_drivers'  => $this->gl_nec_employer_expense_account_drivers,
+            'gl_pension_employer_expense_account_admin'   => $this->gl_pension_employer_expense_account_admin,
+            'gl_pension_employer_expense_account_drivers' => $this->gl_pension_employer_expense_account_drivers,
             'gl_nssa_employee_liability_account'      => $this->gl_nssa_employee_account,
             'gl_aids_levy_liability_account'          => $this->gl_aids_levy_account,
             'gl_payroll_suspense_account'             => $this->gl_payroll_suspense_account,
@@ -163,12 +229,71 @@ class Index extends Component
             'updated_by'                              => Auth::id(),
         ];
 
+        $splitChanged = $data['split_payroll_expenses_by_employee_type'] !== $this->originalSplitPayrollExpenses;
+
+        if ($splitChanged && $this->hasPostedPayrollThisCalendarYear()) {
+            $this->pendingConfigData = $data;
+            $this->dispatchBrowserEvent('show-confirm-modal');
+            return;
+        }
+
+        $this->persistConfig($data);
+    }
+
+    /**
+     * Company already has GL-posted payroll runs dated this calendar year —
+     * changing the split toggle now would make wages/employer-contribution
+     * expenses route inconsistently (some months split COGS/Ops, some not)
+     * within the same reporting year. Doesn't block the change, just gates
+     * whether saveConfig() asks for confirmation first.
+     */
+    private function hasPostedPayrollThisCalendarYear(): bool
+    {
+        return PayrollRun::where('company_id', $this->company->id)
+            ->whereYear('payroll_date', now()->year)
+            ->whereIn('status', ['posted', 'archived'])
+            ->exists();
+    }
+
+    /**
+     * User confirmed they want the split-toggle change applied despite
+     * existing payroll history this calendar year.
+     */
+    public function confirmSaveConfig()
+    {
+        $this->authorize('update', PayrollCompanyConfig::class);
+
+        if ($this->pendingConfigData) {
+            $this->persistConfig($this->pendingConfigData);
+        }
+
+        $this->pendingConfigData = null;
+        $this->dispatchBrowserEvent('hide-confirm-modal');
+    }
+
+    /**
+     * User backed out of the mid-year change — revert just the toggle (the
+     * field that triggered the guard) so the form doesn't silently show a
+     * value that was never saved; leave every other edited field as-is.
+     */
+    public function cancelSaveConfig()
+    {
+        $this->split_payroll_expenses_by_employee_type = $this->originalSplitPayrollExpenses;
+        $this->pendingConfigData = null;
+        $this->dispatchBrowserEvent('hide-confirm-modal');
+    }
+
+    private function persistConfig(array $data): void
+    {
         if ($this->config_id) {
             PayrollCompanyConfig::where('id', $this->config_id)->update($data);
         } else {
             $created = PayrollCompanyConfig::create($data);
             $this->config_id = $created->id;
         }
+
+        $this->originalSplitPayrollExpenses = $data['split_payroll_expenses_by_employee_type'];
+        $this->loadAuditHistory();
 
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Payroll configuration saved.']);
     }

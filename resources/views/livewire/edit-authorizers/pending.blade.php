@@ -10,7 +10,7 @@
                                 @include('includes.messages')
                             </div>
                             <div class="panel-title">
-                                Pending Trip Edit Authorizations
+                                Pending Edit Authorizations
                             </div>
                         </div>
                         <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
@@ -18,7 +18,8 @@
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Trip Number</th>
+                                    <th class="th-sm">Module</th>
+                                    <th class="th-sm">Record</th>
                                     <th class="th-sm">Requested By</th>
                                     <th class="th-sm">Reason</th>
                                     <th class="th-sm">Requested At</th>
@@ -29,7 +30,8 @@
                                 <tbody>
                                     @foreach ($requests as $request)
                                   <tr>
-                                    <td>{{$request->trip?->trip_number}}</td>
+                                    <td>{{ ucfirst($request->module) }}</td>
+                                    <td>{{ $request->editable?->editAuthLabel() }}</td>
                                     <td>{{$request->requester?->name}} {{$request->requester?->surname}}</td>
                                     <td>{{$request->reason}}</td>
                                     <td>{{$request->created_at?->format('Y-m-d H:i')}}</td>
@@ -66,7 +68,7 @@
                 <form wire:submit.prevent="update()">
                     <div class="modal-body">
                         @if ($editAuthorizationRequest)
-                            <p><strong>Trip:</strong> {{$editAuthorizationRequest->trip?->trip_number}}</p>
+                            <p><strong>{{ ucfirst($editAuthorizationRequest->module) }}:</strong> {{$editAuthorizationRequest->editable?->editAuthLabel()}}</p>
                             <p><strong>Requested By:</strong> {{$editAuthorizationRequest->requester?->name}} {{$editAuthorizationRequest->requester?->surname}}</p>
                             <p><strong>Reason:</strong> {{$editAuthorizationRequest->reason}}</p>
                         @endif

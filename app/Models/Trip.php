@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\EditAuthorizable;
 use App\Models\DeliveryNote;
 use App\Models\TripDocument;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
-class Trip extends Model implements Auditable
+class Trip extends Model implements Auditable, EditAuthorizable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
@@ -59,7 +60,22 @@ class Trip extends Model implements Auditable
 
     public function edit_authorization_requests()
     {
-        return $this->hasMany(TripEditAuthorizationRequest::class);
+        return $this->morphMany(EditAuthorizationRequest::class, 'editable');
+    }
+
+    public function editAuthModule(): string
+    {
+        return 'trips';
+    }
+
+    public function editAuthOwnerId(): ?int
+    {
+        return $this->user_id;
+    }
+
+    public function editAuthLabel(): string
+    {
+        return 'Trip #'.($this->trip_number ?? $this->id);
     }
 
     public function transport_orders()

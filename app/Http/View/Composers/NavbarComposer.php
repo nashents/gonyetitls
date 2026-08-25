@@ -29,6 +29,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WasteCollection;
 use App\Models\WasteDisposal;
+use App\Services\EditAuthorizationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -266,6 +267,14 @@ class NavbarComposer
             + $expired_reminders->count()
             + $mileage_reminders->count();
 
+        // Pending "edit authorization" requests (locked trip/bill edits
+        // awaiting a decision) - scoped per-user via the service itself
+        // (authorizer-per-module, not department), independent of the
+        // Admin/Super Admin role gate the rest of this dropdown uses.
+        $editAuthService = app(EditAuthorizationService::class);
+        $isEditAuthorizer = $editAuthService->isAuthorizer($user);
+        $editAuthorizationsPendingCount = $editAuthService->pendingCountForUser($user);
+
         // Share everything to the navbar view
         $view->with([
             'user' => $user,
@@ -278,7 +287,8 @@ class NavbarComposer
             'expired_reminders' => $expired_reminders,
             'mileage_reminders' => $mileage_reminders,
             'reminders_count' => $reminders_count,
-           
+            'isEditAuthorizer' => $isEditAuthorizer,
+
             // Pending authorizations (Operations Control Tower)
             'pendingCounts' => [
                 'trips'             => $pendingCounts['trips'] ?? 0,
@@ -304,6 +314,7 @@ class NavbarComposer
                 'leaves'            => $pendingCounts['leaves'] ?? 0,
                 'attendances'       => $pendingCounts['attendances'] ?? 0,
                 'overdue_tickets'       => $pendingCounts['overdue_tickets'] ?? 0,
+                'edit_authorizations'   => $editAuthorizationsPendingCount,
             ],
         ]);
     }

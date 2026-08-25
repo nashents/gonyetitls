@@ -398,7 +398,11 @@
                                     </td>
                                     <td>
                                         @if ($bill->journal_entry)
-                                            <span class="badge bg-success" title="Journal {{ $bill->journal_entry->journal_number }}">Posted</span>
+                                            @if ($bill->is_ledger_out_of_sync)
+                                                <span class="badge bg-warning" title="This bill's line-item accounts no longer match what's posted in journal {{ $bill->journal_entry->journal_number }}">Out of Sync</span>
+                                            @else
+                                                <span class="badge bg-success" title="Journal {{ $bill->journal_entry->journal_number }}">Posted</span>
+                                            @endif
                                             <br>
                                             <a href="#" wire:click.prevent="resyncLedger({{ $bill->id }})" wire:loading.attr="disabled" onclick="return confirm('Reverse the existing journal entry and repost this bill using its current figures? Use this after correcting a mistake (e.g. exchange rate) on an already-posted bill.')" style="color:#337ab7" title="Reverse and repost using this bill's current figures"><i class="fa fa-refresh"></i> Resync to Ledger</a>
                                         @elseif ($bill->authorization == 'approved')

@@ -11,6 +11,22 @@
                             </div>
                         </div>
                         <div class="panel-body">
+                            @if ($isLocked && !$hasActiveEditGrant)
+                                <div class="alert alert-warning">
+                                    <strong><i class="fa fa-lock"></i> This bill is approved and locked for editing.</strong>
+                                    <p class="mb-10">Request authorization from a Bills Edit Authorizer to make changes to line items.</p>
+                                    @if ($hasPendingEditRequest)
+                                        <span class="badge badge-warning">Authorization request pending</span>
+                                    @else
+                                        <button type="button" class="btn btn-sm bg-warning" wire:click="requestEditAuthorization"><i class="fa fa-unlock-alt"></i> Request Authorization to Edit</button>
+                                    @endif
+                                </div>
+                            @elseif ($isLocked && $hasActiveEditGrant)
+                                <div class="alert alert-info">
+                                    <strong><i class="fa fa-unlock"></i> One-time edit access granted.</strong>
+                                    This bill will re-lock automatically as soon as you save.
+                                </div>
+                            @endif
                         <form wire:submit.prevent="update()" >
                         <div class="modal-body">
                             <div class="row">
@@ -533,6 +549,31 @@
                     <!-- /.btn-group -->
                 </div>
             </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="editAuthorizationRequestModal" tabindex="-1" role="dialog" aria-labelledby="editAuthorizationRequestModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="editAuthorizationRequestModalLabel"><i class="fa fa-unlock-alt"></i> Request Edit Authorization <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                </div>
+                <form wire:submit.prevent="submitEditAuthorizationRequest()">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editAuthorizationReason">Reason<span class="required" style="color: red">*</span></label>
+                            <textarea class="form-control" wire:model.defer="editAuthorizationReason" placeholder="Why do you need to edit this approved bill?"></textarea>
+                            @error('editAuthorizationReason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Submit Request</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

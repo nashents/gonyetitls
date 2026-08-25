@@ -13,6 +13,27 @@ class PayrollControlAccountSeeder extends Seeder
         // Resolve account types
         $dueForPayroll  = AccountType::where('name', 'Due for Payroll')->firstOrFail();
         $payrollExpense = AccountType::where('name', 'Payroll Expense')->firstOrFail();
+        $costOfGoodsSold = AccountType::where('name', 'Cost Of Goods Sold')->firstOrFail();
+
+        // One-time rename: these single wages/employer-expense accounts are being
+        // split into "- Admin" (stays Payroll Expense) and a new "- Drivers"
+        // (Cost Of Goods Sold) account below. Renaming in place preserves the
+        // existing id/history rather than orphaning these as unused locked
+        // accounts, and must run before the updateOrCreate loop so that loop's
+        // "- Admin" entry finds this renamed row instead of creating a second
+        // one. Guarded by a not-exists check since AccountSeeder (which runs
+        // earlier in DatabaseSeeder, but is normally only re-run on a fresh
+        // install) seeds the "- Admin"/"- Drivers" names directly.
+        foreach ([
+            'Salaries & Wages Expense'             => 'Salaries & Wages Expense - Admin',
+            'NSSA Employer Contribution Expense'    => 'NSSA Employer Contribution Expense - Admin',
+            'NEC Employer Contribution Expense'     => 'NEC Employer Contribution Expense - Admin',
+            'Pension Employer Contribution Expense' => 'Pension Employer Contribution Expense - Admin',
+        ] as $oldName => $newName) {
+            if (!Account::where('name', $newName)->exists()) {
+                Account::where('name', $oldName)->update(['name' => $newName]);
+            }
+        }
 
         $accounts = [
 
@@ -99,41 +120,84 @@ class PayrollControlAccountSeeder extends Seeder
             ],
 
             // ── Payroll Expenses ──────────────────────────────────────────
+            // Split Admin (Payroll Expense, i.e. Ops) vs Drivers (Cost Of Goods
+            // Sold) so driver payroll cost reports as a direct cost of hauling,
+            // matching the Fuel - COGS / Fuel - Ops split already used for fuel.
             [
-                'name'                  => 'Salaries & Wages Expense',
+                'name'                  => 'Salaries & Wages Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,
                 'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Gross salaries and wages expense for all employees.',
+                'description'           => 'Gross salaries and wages expense for admin/office employees.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
                 'hs_code'               => '',
             ],
             [
-                'name'                  => 'NSSA Employer Contribution Expense',
-                'account_type_id'       => $payrollExpense->id,
-                'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of NSSA contributions.',
+                'name'                  => 'Salaries & Wages Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSold->id,
+                'account_type_group_id' => $costOfGoodsSold->account_type_group_id,
+                'description'           => 'Gross salaries and wages expense for drivers - a direct cost of hauling.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
                 'hs_code'               => '',
             ],
             [
-                'name'                  => 'NEC Employer Contribution Expense',
+                'name'                  => 'NSSA Employer Contribution Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,
                 'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of NEC levy contributions.',
+                'description'           => 'Employer cost of NSSA contributions for admin/office employees.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
                 'hs_code'               => '',
             ],
             [
-                'name'                  => 'Pension Employer Contribution Expense',
+                'name'                  => 'NSSA Employer Contribution Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSold->id,
+                'account_type_group_id' => $costOfGoodsSold->account_type_group_id,
+                'description'           => 'Employer cost of NSSA contributions for drivers - a direct cost of hauling.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,
                 'account_type_group_id' => $payrollExpense->account_type_group_id,
-                'description'           => 'Employer cost of pension fund contributions.',
+                'description'           => 'Employer cost of NEC levy contributions for admin/office employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSold->id,
+                'account_type_group_id' => $costOfGoodsSold->account_type_group_id,
+                'description'           => 'Employer cost of NEC levy contributions for drivers - a direct cost of hauling.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense - Admin',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions for admin/office employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense - Drivers',
+                'account_type_id'       => $costOfGoodsSold->id,
+                'account_type_group_id' => $costOfGoodsSold->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions for drivers - a direct cost of hauling.',
                 'abbreviation'          => '',
                 'rate'                  => '',
                 'currency_id'           => null,
