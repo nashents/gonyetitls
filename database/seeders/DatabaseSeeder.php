@@ -22,6 +22,7 @@ use Database\Seeders\CriterionSeeder;
 use Database\Seeders\CurrencySeeder;
 use Database\Seeders\DeductionSeeder;
 use Database\Seeders\DepartmentSeeder;
+use Database\Seeders\FreightServiceTypeSeeder;
 use Database\Seeders\EmployeeSeeder;
 use Database\Seeders\ExpenseCategorySeeder;
 use Database\Seeders\ExpenseSeeder;
@@ -77,6 +78,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RoleSeeder::class);
         $this->call(RankSeeder::class);
         $this->call(DepartmentSeeder::class);
+        $this->call(FreightServiceTypeSeeder::class);
         $this->call(CurrencySeeder::class);
         $this->call(BranchSeeder::class);
         $this->call(VehicleGroupSeeder::class);

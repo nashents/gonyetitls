@@ -768,6 +768,24 @@ Route::resource('incomes','IncomeController');
 Route::resource('deals','DealController');
 Route::resource('corridors','CorridorController');
 Route::resource('clearing_agents','ClearingAgentController');
+Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'job'])->names([
+    'index' => 'freight.jobs.index',
+    'create' => 'freight.jobs.create',
+    'store' => 'freight.jobs.store',
+    'show' => 'freight.jobs.show',
+    'edit' => 'freight.jobs.edit',
+    'update' => 'freight.jobs.update',
+    'destroy' => 'freight.jobs.destroy',
+]);
+Route::resource('freight/consolidations','ConsolidationController')->parameters(['consolidations' => 'consolidation'])->names([
+    'index' => 'freight.consolidations.index',
+    'create' => 'freight.consolidations.create',
+    'store' => 'freight.consolidations.store',
+    'show' => 'freight.consolidations.show',
+    'edit' => 'freight.consolidations.edit',
+    'update' => 'freight.consolidations.update',
+    'destroy' => 'freight.consolidations.destroy',
+]);
 Route::resource('borders','BorderController');
 Route::resource('inspection_services','InspectionServiceController');
 Route::resource('checklist_categories','ChecklistCategoryController');

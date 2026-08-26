@@ -191,7 +191,7 @@ WithCustomStartCell
                     $name = $requisition->user ? $requisition->user->name : "";
                     $surname = $requisition->user ? $requisition->user->surname : "";
                     $user = $name." ".$surname;
-                    $department = $requisition->employee ? $requisition->employee->departments->first()->name : "";
+                    $department = $requisition->employee && $requisition->employee->departments->first() ? $requisition->employee->departments->first()->name : "";
                     $employee_name = $requisition->employee ? $requisition->employee->name : "";
                     $employee_surname = $requisition->employee ? $requisition->employee->surname : "";
                     $employee =  $employee_name." ".  $employee_surname;

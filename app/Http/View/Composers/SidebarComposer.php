@@ -130,6 +130,7 @@ class SidebarComposer
         $inTransport       = in_array('Transport & Logistics', $department_names);
         $inStores       = in_array('Stores', $department_names);
         $inWorkshop       = in_array('Workshop', $department_names);
+        $inFreight       = in_array('Freight Forwarding & Clearing', $department_names);
   
        
         $companyColor =
@@ -692,6 +693,7 @@ class SidebarComposer
             'inSecurity'    => (bool) $inSecurity,
             'inStores'      => (bool) $inStores,
             'inWorkshop'    => (bool) $inWorkshop,
+            'inFreight'     => (bool) $inFreight,
             'isNotDriver'    => (bool) $not_driver,
             'hasTrackingIntegration' => (bool) $hasTrackingIntegration,
             'hasEzyTrackIntegration' => (bool) $hasEzyTrackIntegration,
@@ -948,6 +950,7 @@ class SidebarComposer
             'in_transport_management' => $in_transport_management,
             'in_transport_admin' => $in_transport_admin,
             'inTransport'          => $inTransport,
+            'inFreight'          => $inFreight,
             'inHSEQ'          => $inHSEQ,
             'inSecurity'          => $inSecurity,
             'inFinance'          => $inFinance,

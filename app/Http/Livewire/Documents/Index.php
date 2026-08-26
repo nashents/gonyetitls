@@ -12,10 +12,12 @@ use App\Models\ClearingAgent;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\Customer;
+use App\Models\CustomsDeclaration;
 use App\Models\Department;
 use App\Models\Document;
 use App\Models\Employee;
 use App\Models\Folder;
+use App\Models\FreightJob;
 use App\Models\Horse;
 use App\Models\Incident;
 use App\Models\Inventory;
@@ -27,6 +29,8 @@ use App\Models\Recovery;
 use App\Models\Requisition;
 use App\Models\Retread;
 use App\Models\Route;
+use App\Models\Shipment;
+use App\Models\ShippingContainer;
 use App\Models\Ticket;
 use App\Models\Trailer;
 use App\Models\Training;
@@ -89,6 +93,10 @@ class Index extends Component
     public $broker;
     public $transporter;
     public $agent;
+    public $freight_job;
+    public $shipment;
+    public $shipping_container;
+    public $customs_declaration;
 
     public $customer_id;
     public $employee_id;
@@ -124,6 +132,10 @@ class Index extends Component
     public $broker_id;
     public $transporter_id;
     public $agent_id;
+    public $freight_job_id;
+    public $shipment_id;
+    public $shipping_container_id;
+    public $customs_declaration_id;
     public $user_id;
 
     public $document;
@@ -195,6 +207,10 @@ class Index extends Component
             'broker' => ['model' => Broker::class, 'property' => 'broker', 'column' => 'broker_id'],
             'transporter' => ['model' => Transporter::class, 'property' => 'transporter', 'column' => 'transporter_id'],
             'agent' => ['model' => Agent::class, 'property' => 'agent', 'column' => 'agent_id'],
+            'freight_job' => ['model' => FreightJob::class, 'property' => 'freight_job', 'column' => 'freight_job_id'],
+            'shipment' => ['model' => Shipment::class, 'property' => 'shipment', 'column' => 'shipment_id'],
+            'shipping_container' => ['model' => ShippingContainer::class, 'property' => 'shipping_container', 'column' => 'shipping_container_id'],
+            'customs_declaration' => ['model' => CustomsDeclaration::class, 'property' => 'customs_declaration', 'column' => 'customs_declaration_id'],
         ];
     }
 

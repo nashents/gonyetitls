@@ -61,6 +61,18 @@ class Document extends Model implements Auditable
     public function bill(){
         return $this->belongsTo('App\Models\Bill');
     }
+    public function freight_job(){
+        return $this->belongsTo('App\Models\FreightJob');
+    }
+    public function shipment(){
+        return $this->belongsTo('App\Models\Shipment');
+    }
+    public function shipping_container(){
+        return $this->belongsTo('App\Models\ShippingContainer');
+    }
+    public function customs_declaration(){
+        return $this->belongsTo('App\Models\CustomsDeclaration');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
