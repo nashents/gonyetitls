@@ -71,6 +71,7 @@ class Create extends Component
     public $weight = [];
     public $measurement = [];
     public array $is_custom_item = [];
+    public array $update_trip_freight = [];
     public $selectedProduct = [];
     public $description = [];
     public $qty = [];
@@ -85,6 +86,8 @@ class Create extends Component
     public $transporters;
     public $selectedTransporter;
     public $source = "Generic";
+    public $invoice_type = "earned";
+    public $advance_payment_type = null;
     public $from_trips = false;
     public $from_ttos = false;
     public $from_transport_orders = false;
@@ -217,14 +220,23 @@ class Create extends Component
         $i = $i + 1;
         $this->i = $i;
         $this->is_custom_item[$i] = false;
+        $this->update_trip_freight[$i] = false;
         array_push($this->inputs ,$i);
+    }
+
+    public function updatedInvoiceType($value)
+    {
+        if ($value !== 'advance') {
+            $this->advance_payment_type = null;
+        }
     }
 
     public function remove($i, $value)
     {
-      
+
         unset($this->inputs[$i]);
         unset($this->is_custom_item[$value]);
+        unset($this->update_trip_freight[$value]);
         unset($this->description[$value]);
         unset($this->qty[$value]);
         unset($this->amount[$value]);
@@ -1295,7 +1307,30 @@ class Create extends Component
  
   
 
-    private function selectedTripsAreAllCompleted(): bool
+    /**
+     * Earned/Final invoices may only be raised once a trip has actually been
+     * delivered (Offloaded); Advance invoices are specifically for billing
+     * before that point, so they only require the trip to be approved and
+     * not cancelled.
+     */
+    private function tripIsInvoiceable(?Trip $trip): bool
+    {
+        if (!$trip || strcasecmp((string) $trip->authorization, 'approved') !== 0) {
+            return false;
+        }
+
+        if (strcasecmp((string) $trip->trip_status, 'Cancelled') === 0) {
+            return false;
+        }
+
+        if ($this->invoice_type !== 'advance' && strcasecmp((string) $trip->trip_status, 'Offloaded') !== 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function selectedTripsAreInvoiceable(): bool
     {
         if ($this->source == "Trip") {
             $tripIds = $this->multi_select
@@ -1303,8 +1338,7 @@ class Create extends Component
                 : array_filter((array) $this->selectedTrip);
 
             foreach ($tripIds as $tripId) {
-                $trip = Trip::find($tripId);
-                if (!$trip || (int) $trip->status !== 1) {
+                if (!$this->tripIsInvoiceable(Trip::find($tripId))) {
                     return false;
                 }
             }
@@ -1317,7 +1351,7 @@ class Create extends Component
 
             foreach ($ttoIds as $ttoId) {
                 $tto = TripTransportOrder::find($ttoId);
-                if (!$tto || !$tto->trip || (int) $tto->trip->status !== 1) {
+                if (!$this->tripIsInvoiceable($tto?->trip)) {
                     return false;
                 }
             }
@@ -1326,10 +1360,88 @@ class Create extends Component
         return true;
     }
 
+    /**
+     * Advance invoices need at least one trip-linked line so there's a trip
+     * to watch for the Offload-triggered revenue reclass; custom lines (e.g.
+     * a clearing fee) may still ride alongside those trip lines.
+     */
+    private function advanceInvoiceHasTripLine(): bool
+    {
+        if ($this->invoice_type !== 'advance') {
+            return true;
+        }
+
+        if ($this->source == "Trip") {
+            $tripIds = $this->multi_select
+                ? array_filter((array) $this->selectedMultiTrip)
+                : array_filter((array) $this->selectedTrip, fn ($id, $key) => !($this->is_custom_item[$key] ?? false) && !empty($id), ARRAY_FILTER_USE_BOTH);
+
+            return count($tripIds) > 0;
+        }
+
+        if ($this->source == "TTO") {
+            $ttoIds = $this->multi_select
+                ? array_filter((array) $this->selectedMultiTTO)
+                : array_filter((array) $this->selectedTTO, fn ($id, $key) => !($this->is_custom_item[$key] ?? false) && !empty($id), ARRAY_FILTER_USE_BOTH);
+
+            return count($ttoIds) > 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Guards the "Update Trip Freight" checkbox: only rows whose trip is not
+     * already financially locked by another approved invoice may push their
+     * amount back onto trips.freight. Checked before the transaction opens
+     * so a violation aborts with no partial writes. Only applies to the
+     * single-select "Trip" mode, where each row has its own editable amount
+     * — multi-select rows already just copy trip->freight verbatim, so
+     * there's nothing to push back.
+     */
+    private function selectedTripsAreFreightUpdateSafe(): bool
+    {
+        if ($this->source != "Trip" || $this->multi_select || empty($this->update_trip_freight)) {
+            return true;
+        }
+
+        $safe = true;
+
+        foreach ($this->update_trip_freight as $key => $shouldUpdate) {
+            if (!$shouldUpdate) {
+                continue;
+            }
+
+            $tripId = $this->selectedTrip[$key] ?? null;
+            $trip = $tripId ? Trip::find($tripId) : null;
+
+            if ($trip && $trip->is_financially_locked) {
+                $this->addError('update_trip_freight.'.$key, "Trip #{$trip->trip_ref} is already part of an approved invoice — its freight cannot be overwritten from this invoice.");
+                $safe = false;
+            }
+        }
+
+        return $safe;
+    }
+
     public function store(){
 
-        if (!$this->selectedTripsAreAllCompleted()) {
-            $this->addError('selectedTrip', 'One or more selected trips are not marked Completed. Only completed trips can be invoiced.');
+        if (!$this->selectedTripsAreInvoiceable()) {
+            $this->addError('selectedTrip', 'One or more selected trips are not eligible — Earned invoices require an approved, Offloaded trip; Advance invoices require an approved, non-cancelled trip.');
+            return;
+        }
+
+        if (!$this->advanceInvoiceHasTripLine()) {
+            $this->addError('invoice_type', 'Advance invoices need at least one trip-linked line — add a trip, or use an Earned invoice for a purely custom charge.');
+            return;
+        }
+
+        if ($this->invoice_type === 'advance' && empty($this->advance_payment_type)) {
+            $this->addError('advance_payment_type', 'Select whether this is a Partial/Down Payment or Full Payment advance invoice.');
+            return;
+        }
+
+        if (!$this->selectedTripsAreFreightUpdateSafe()) {
             return;
         }
 
@@ -1358,6 +1470,8 @@ class Create extends Component
                 $invoice->from_inventory = $this->from_inventory;
                 $invoice->from_trips = $this->from_trips;
                 $invoice->from_ttos = $this->from_ttos;
+                $invoice->invoice_type = $this->invoice_type;
+                $invoice->advance_payment_type = $this->invoice_type === 'advance' ? $this->advance_payment_type : null;
                 $invoice->save();
                 
                 $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
@@ -1465,6 +1579,9 @@ class Create extends Component
                             if (isset($this->is_custom_item[$key])) {
                                 $invoice_item->is_custom_item = $this->is_custom_item[$key];
                             }
+                            if (isset($this->update_trip_freight[$key])) {
+                                $invoice_item->is_update_trip_freight = (bool) $this->update_trip_freight[$key];
+                            }
                             if (isset($this->qty[$key])) {
                                 $invoice_item->qty = $this->qty[$key];
                             }
@@ -1511,10 +1628,18 @@ class Create extends Component
                                 $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
                             }
                             $invoice_item->save();
-                    
+
+                            if (!empty($this->update_trip_freight[$key]) && $invoice_item->trip_id) {
+                                $trip = Trip::find($invoice_item->trip_id);
+                                if ($trip) {
+                                    $trip->freight = $invoice_item->amount;
+                                    $trip->save();
+                                }
+                            }
+
                     }
                 }
-                    
+
             }
             elseif ($this->source == "TTO") {
               

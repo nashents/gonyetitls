@@ -28,14 +28,15 @@ class InvoiceJournalService
         }
 
         // Resolve control accounts
-        $arAccount       = Account::where('name', 'Accounts Receivable')->firstOrFail();
-        $salesAccount    = Account::where('name', 'Sales')->firstOrFail();
-        $discountAccount = Account::where('name', 'Sales Discounts')->firstOrFail();
-        $vatAccount      = Account::where('name', 'Value Added Tax')->firstOrFail(); // adjust if multiple VAT rates
+        $arAccount               = Account::where('name', 'Accounts Receivable')->firstOrFail();
+        $salesAccount            = Account::where('name', 'Sales')->firstOrFail();
+        $discountAccount         = Account::where('name', 'Sales Discounts')->firstOrFail();
+        $vatAccount              = Account::where('name', 'Value Added Tax')->firstOrFail(); // adjust if multiple VAT rates
+        $customerAdvancesAccount = Account::where('name', 'Customer Advances')->firstOrFail();
 
         $rate = $invoice->exchange_rate ?? 1;
 
-        return DB::transaction(function () use ($invoice, $arAccount, $salesAccount, $discountAccount, $vatAccount, $rate) {
+        return DB::transaction(function () use ($invoice, $arAccount, $salesAccount, $discountAccount, $vatAccount, $customerAdvancesAccount, $rate) {
 
             $entry = JournalEntry::create([
                 'company_id'     => $invoice->company_id ? $invoice->company_id : Auth::user()->employee->company_id,
@@ -63,6 +64,25 @@ class InvoiceJournalService
                 'exchange_rate'   => $rate,
                 'description'     => "AR - Invoice {$invoice->invoice_number}",
             ]);
+
+            if ($invoice->invoice_type === 'advance') {
+                // ── CR Customer Advances (full total, VAT deferred with the
+                // revenue itself — recognized later by AdvanceInvoiceReclassService
+                // once the linked trip(s) are Offloaded) ─────────────────
+                $entry->journal_entry_lines()->create([
+                    'account_id'      => $customerAdvancesAccount->id,
+                    'customer_id'     => $invoice->customer_id,
+                    'debit'           => 0,
+                    'credit'          => $invoice->total,
+                    'exchange_debit'  => 0,
+                    'exchange_credit' => $invoice->total * $rate,
+                    'currency_id'     => $invoice->currency_id,
+                    'exchange_rate'   => $rate,
+                    'description'     => "Customer Advance - Invoice {$invoice->invoice_number}",
+                ]);
+
+                return $entry;
+            }
 
             // ── CR Sales (subtotal before tax and discounts) ─────────────
             $entry->journal_entry_lines()->create([
@@ -111,7 +131,7 @@ class InvoiceJournalService
         });
     }
 
-    protected function generateNumber(): string
+    public function generateNumber(): string
     {
         $last = JournalEntry::orderByDesc('id')->value('journal_number');
         $next = $last ? ((int) substr($last, 4)) + 1 : 1;

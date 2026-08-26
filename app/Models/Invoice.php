@@ -22,6 +22,9 @@ class Invoice extends Model implements Auditable
     public function journal_entry(){
         return $this->hasOne(JournalEntry::class)->where('status', '!=', 'reversed')->latestOfMany('id');
     }
+    public function journal_entries(){
+        return $this->hasMany(JournalEntry::class);
+    }
     public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');
     }
@@ -102,5 +105,27 @@ class Invoice extends Model implements Auditable
         'memo',
         'footer',
         'subheading',
+        'invoice_type',
+        'advance_payment_type',
     ];
+
+    public function getIsAdvanceInvoiceAttribute(): bool
+    {
+        return $this->invoice_type === 'advance';
+    }
+
+    public function getRevenueAccountLabelAttribute(): string
+    {
+        if ($this->invoice_type !== 'advance') {
+            return 'Sales';
+        }
+
+        $entries = $this->relationLoaded('journal_entries')
+            ? $this->journal_entries
+            : $this->journal_entries()->get();
+
+        $reclassed = $entries->contains(fn ($entry) => str_starts_with((string) $entry->reference, 'RECLASS-'));
+
+        return $reclassed ? 'Sales (Recognized)' : 'Customer Advances (Deferred)';
+    }
 }

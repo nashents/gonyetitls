@@ -39,6 +39,12 @@
                                     @endif
                                 </div>
                             @endif
+                            @if ($isFinanciallyLocked)
+                                <div class="alert alert-warning">
+                                    <strong><i class="fa fa-lock"></i> Financial figures are locked.</strong>
+                                    This trip is part of an approved invoice, so its rate/freight/currency figures cannot be changed here. Operational fields (status, dates, driver, cargo, etc.) can still be updated freely. Changing weight/quantity will not recalculate or save a new freight amount.
+                                </div>
+                            @endif
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                  <h6 class="underline mt-20 mb-20"><strong>Order Details</strong></h6>
                                 <div class="mb-10">
@@ -625,13 +631,13 @@
                                     <div class="row">
                                         <div class="col-md-8">
                                             <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="flat_rate"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="flat_rate"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                 <label for="one" class="radio-label">Flat Rate</label>
-                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                 <label for="one" class="radio-label">Rate * Weight/Litreage</label>
-                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight_distance"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight_distance"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                 <label for="one" class="radio-label">Rate * Distance * Weight/Litreage</label>
-                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_distance"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_distance"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                 <label for="one" class="radio-label">Rate * Distance</label>
                                                 @error('freight_calculation') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
@@ -640,13 +646,13 @@
                                                     <div class="mb-10">
                                                         <caption style="color: green">Select what to use to calculate freight<span class="required" style="color: red">*</span>.</caption> <br>
                                                         @if ($cargo_type == "Solid")
-                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="weight"  class="line-style" required />
+                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="weight"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                         <label for="one" class="radio-label">Weight</label>
                                                         @endif
                                                         @if ($cargo_type == "Liquid")
-                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_ambient"  class="line-style" required />
+                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_ambient"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                         <label for="one" class="radio-label">Litreage @ Ambient Temp</label>
-                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_20"  class="line-style" required />
+                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_20"  class="line-style" required {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                         <label for="one" class="radio-label">Litreage @ 20 Degrees</label>  
                                                         @endif
                                                         @error('calculation_measurement') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -661,7 +667,7 @@
                                                         <span class="required" style="color: red">*</span>
                                                     @endif </a>
                                                 </label>
-                                                <select class="form-control" wire:model.debounce.300ms="selectedCurrency" {{$rate ? "required" : ""}}  {{ !isset($company->currency_id) ? "disabled" : ""  }} >
+                                                <select class="form-control" wire:model.debounce.300ms="selectedCurrency" {{$rate ? "required" : ""}}  {{ (!isset($company->currency_id) || $isFinanciallyLocked) ? "disabled" : ""  }} >
                                                     <option value="">Select Currency</option>
                                                     @foreach ($currencies as $currency)
                                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -679,7 +685,7 @@
                                                     @if ($selectedCurrency != $company->currency_id)
                                                     <div class="form-group">
                                                         <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required {{ $isFinanciallyLocked ? 'disabled' : '' }}>
                                                         @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                         <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
                                                         <small>{{$exchange_customer_freight ? "The customer converted amount is: ".$exchange_customer_freight : ""}}</small> <br>
@@ -694,10 +700,10 @@
                                     <div class="form-group" >
                                         <label for="name">Trip Rates (Customers)</label>
                                         <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="rates" name="optradio_customer" >Predefined Rates
+                                            <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="rates" name="optradio_customer" {{ $isFinanciallyLocked ? 'disabled' : '' }} >Predefined Rates
                                         </label>
                                         <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
+                                        <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="custom" name="optradio_customer" {{ $isFinanciallyLocked ? 'disabled' : '' }}>Custom Rate
                                         </label>
                                     </div>
                                     <div class="row">
@@ -721,7 +727,7 @@
                                                 @elseif($with_customer_rates == "custom")
                                                     <div class="form-group">
                                                         <label for="weight">Rate</label>
-                                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="rate"  placeholder="Enter Rate" >
+                                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="rate"  placeholder="Enter Rate" {{ $isFinanciallyLocked ? 'disabled' : '' }}>
                                                         @error('rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 @endif
@@ -744,10 +750,10 @@
                                     <div class="form-group" >
                                           <label for="name">Trip Rates (Transporter)</label>
                                         <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
+                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" {{ $isFinanciallyLocked ? 'disabled' : '' }} >Predefined Rates
                                           </label>
                                           <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="custom" name="optradio_transporter">Custom Rate
+                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="custom" name="optradio_transporter" {{ $isFinanciallyLocked ? 'disabled' : '' }}>Custom Rate
                                           </label>
                                     </div>
                                     <div class="row">
@@ -769,7 +775,7 @@
                                                 @elseif($with_transporter_rates == "custom")
                                                 <div class="form-group">
                                                     <label for="weight">Rate</label>
-                                                    <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.300ms="transporter_rate" placeholder="Enter Transporter Rate" >
+                                                    <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.300ms="transporter_rate" placeholder="Enter Transporter Rate" {{ $isFinanciallyLocked ? 'disabled' : '' }}>
                                                     @error('transporter_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     @if ($transporter_rate > $rate)
                                                     <small style="color: red"> Transporter agreed rate cannot be greater than customer agreed rate.</small>
@@ -781,7 +787,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" />
+                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" {{ $isFinanciallyLocked ? 'disabled' : '' }} />
                                                 @error('transporter_freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 @if ($transporter_freight > $freight)
                                                     <small style="color: red"> Transporter agreed freight cannot be greater than customer agreed freight.</small>

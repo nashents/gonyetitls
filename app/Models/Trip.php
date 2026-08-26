@@ -188,6 +188,25 @@ class Trip extends Model implements Auditable, EditAuthorizable
     }
 
     /**
+     * Financially locked once the trip is part of an APPROVED invoice (either
+     * directly, or via a transport order it belongs to). Narrower than
+     * getIsInvoicedAttribute() — a draft/pending invoice does not lock the
+     * trip's financial figures, only an approved one does.
+     */
+    public function getIsFinanciallyLockedAttribute(): bool
+    {
+        $approved = fn ($q) => $q->where('authorization', 'approved');
+
+        if ($this->invoice_items()->whereHas('invoice', $approved)->exists()) {
+            return true;
+        }
+
+        return $this->transport_orders()
+            ->whereHas('invoice_items.invoice', $approved)
+            ->exists();
+    }
+
+    /**
      * All invoices covering this trip — its own lines PLUS the invoices raised
      * against any transport order it belongs to (the single-line invoice).
      */

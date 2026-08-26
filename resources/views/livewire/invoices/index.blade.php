@@ -155,6 +155,8 @@
                                     </th>
                                     <th class="th-sm">Ledger
                                     </th>
+                                    <th class="th-sm">Account
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -313,6 +315,10 @@
                                         @else
                                             <span class="badge bg-secondary">N/A</span>
                                         @endif
+                                    </td>
+                                    <td>
+                                        @php $revenueAccountLabel = $invoice->revenue_account_label; @endphp
+                                        <span class="label label-{{ $revenueAccountLabel === 'Sales' ? 'info' : ($revenueAccountLabel === 'Sales (Recognized)' ? 'success' : 'warning') }}">{{ $revenueAccountLabel }}</span>
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

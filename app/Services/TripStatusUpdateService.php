@@ -85,6 +85,10 @@ class TripStatusUpdateService
         $trip->starting_mileage = $this->starting_mileage;
         $trip->update();
 
+        if ($this->selectedStatus == "Offloaded") {
+            app(\App\Services\Accounting\AdvanceInvoiceReclassService::class)->handleTripOffloaded($trip);
+        }
+
         if (isset($trip->vehicle_id)) {
             $vehicle = Vehicle::find($trip->vehicle_id);
             $current_mileage = $vehicle->mileage;

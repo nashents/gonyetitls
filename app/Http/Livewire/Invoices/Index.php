@@ -626,6 +626,7 @@ class Index extends Component
             $invoice->expiry = $trip->start_date;
             $invoice->reason = 'Trip';
             $invoice->authorization = 'approved';
+            $invoice->invoice_type = 'earned';
             $invoice->save();                   
                     
             $invoice_item = new InvoiceItem;
@@ -1086,9 +1087,9 @@ class Index extends Component
         $this->tax_status;
 
         if (isset($this->from) && isset($this->to) && isset($this->trip_filter)) {
-            $this->uninvoiced_trips = Trip::where('trip_status','!=', 'Cancelled')->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )->doesntHave('invoice_items')->get();
+            $this->uninvoiced_trips = Trip::where('trip_status', 'Offloaded')->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )->doesntHave('invoice_items')->get();
         }else{
-            $this->uninvoiced_trips = Trip::where('trip_status','!=', 'Cancelled')->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('authorization','approved')->doesntHave('invoice_items')->get();
+            $this->uninvoiced_trips = Trip::where('trip_status', 'Offloaded')->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('authorization','approved')->doesntHave('invoice_items')->get();
         }
 
         if (filled($this->bulk_delete_to)) {
@@ -1119,7 +1120,7 @@ class Index extends Component
         $cur = Auth::user()->employee?->company?->currency_id;
 
                 $query = Invoice::query()
-                ->with(['customer:id,name','transporter:id,name', 'currency', 'sageMapping', 'journal_entry']);
+                ->with(['customer:id,name','transporter:id,name', 'currency', 'sageMapping', 'journal_entry', 'journal_entries']);
 
                 if ($this->status === 'unpaid') {
                     $query->where('currency_id',$cur)->where('status', '!=', 'Paid');

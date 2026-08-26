@@ -73,6 +73,14 @@ class Kernel extends ConsoleKernel
         ->daily()
         ->withoutOverlapping()
         ->onOneServer();
+
+        // Reminder only - does not touch any figures. Flags Advance invoices
+        // whose trip(s) still haven't reached Offloaded (so their revenue is
+        // still sitting in Customer Advances) past the configured aging window.
+        $schedule->command('trips:flag-stale-advance-invoices')
+        ->daily()
+        ->withoutOverlapping()
+        ->onOneServer();
     }
 
     /**

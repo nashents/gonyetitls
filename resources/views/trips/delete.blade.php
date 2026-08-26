@@ -2,7 +2,12 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
-               <center> <strong>Are you sure you want to delete this Trip?</strong> </center> 
+               <center>
+                   <strong>Are you sure you want to delete this Trip?</strong>
+                   @if($trip->is_invoiced || $trip->bills->count())
+                       <br><small>This trip has invoice(s)/bill(s) against it - deleting it will reverse their journal entries and payments too.</small>
+                   @endif
+               </center>
             </div>
             <form action="{{route('trips.destroy', $trip->id)}}" method="POST" >
                 {{ csrf_field() }}

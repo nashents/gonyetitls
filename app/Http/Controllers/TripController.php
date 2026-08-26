@@ -6,6 +6,7 @@ use App\Models\Trip;
 use App\Models\Currency;
 use App\Models\Destination;
 use App\Models\TripExpense;
+use App\Services\Accounting\TripDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -260,21 +261,23 @@ class TripController extends Controller
      */
     public function destroy(Trip $trip)
     {
-
         $horse = $trip->horse;
         $trailers = $trip->trailers;
         $driver = $trip->driver;
         $vehicle = $trip->vehicle;
-        $trip->gate_pass()->delete();
-        $trip->trip_transport_orders()->delete();
 
-       
-        
+        try {
+            $warnings = app(TripDeletionService::class)->delete($trip, Auth::id());
+        } catch (\Throwable $e) {
+            Session::flash('error', 'Could not delete trip: ' . $e->getMessage());
+            return redirect()->back();
+        }
+
         if (isset($vehicle)) {
             $vehicle->status = 1;
             $vehicle->update();
         }
-        
+
         if (isset($horse)) {
             $horse->status = 1;
             $horse->update();
@@ -291,29 +294,8 @@ class TripController extends Controller
                 $trailer->update();
             }
         }
-       
-        $trip->fuels()->delete();
-        $trip->delivery_note()->delete();
-        $trip->cash_flows()->delete();
-        $trip->trip_expenses()->delete();
-        $bills = $trip->bills;
-    
-        if (isset($bills)) {
-            if ($bills->count()>0) {
-               foreach ($bills as $bill) {
-                $bill_expenses = $bill->bill_expenses;
-                if (isset($bill_expenses)) {
-                  foreach ($bill_expenses as $expense) {
-                        $expense->delete();
-                  }
-                }
-               $bill->delete();
-               }
-            }
-        }
 
-        $trip->delete();
-        Session::flash('success','Trip Deleted Successfully');
+        Session::flash('success', 'Trip deleted successfully.' . ($warnings ? ' ' . implode(' ', $warnings) : ''));
         return redirect()->back();
     }
 }

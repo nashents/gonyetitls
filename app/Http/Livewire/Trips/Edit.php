@@ -68,6 +68,7 @@ class Edit extends Component
     public $trip_number;
 
     public $isLocked = false;
+    public $isFinanciallyLocked = false;
     public $hasActiveEditGrant = false;
     public $activeGrant;
     public $editAuthorizationReason;
@@ -1172,6 +1173,7 @@ class Edit extends Component
         $this->isAdmin = Auth::user()->is_admin();
         $this->isTemporarilyUnlocked = (bool) ($this->trip && $this->trip->isTemporarilyUnlocked());
         $this->isLocked = $this->trip && (int) $this->trip->status === 1 && ! $this->isTemporarilyUnlocked;
+        $this->isFinanciallyLocked = $this->trip && $this->trip->is_financially_locked;
         if ($this->isLocked) {
             $editAuthService = app(EditAuthorizationService::class);
             $this->activeGrant = $editAuthService->activeGrant($this->trip, Auth::user());
@@ -2513,6 +2515,12 @@ class Edit extends Component
             }
         }
 
+        // Narrower than the full lock above: once the trip is part of an
+        // approved invoice, its rate/freight/currency figures are frozen so
+        // finance figures already billed can't be quietly changed, while
+        // every other (operational) field on this form still saves normally.
+        $financiallyLocked = $trip && $trip->is_financially_locked;
+
         $hasTransportOrders = $trip && $trip->trip_transport_orders()->exists();
 
         if (!$this->attach_transport_order || !$hasTransportOrders) {
@@ -2563,57 +2571,70 @@ class Edit extends Component
         $trip->attach_transport_order = $this->attach_transport_order;
         $trip->start_date = $this->start_date;
         $trip->end_date = $this->end_date;
-        $trip->currency_id = $this->selectedCurrency ?: $this->company->currency_id;
-     
+        if (!$financiallyLocked) {
+            $trip->currency_id = $this->selectedCurrency ?: $this->company->currency_id;
+        }
+
 
         if($this->attach_transport_order == False){
-        
+
             $trip->agent_id = $this->agent_id ?: null;
             $trip->quotation_id = $this->selectedQuotation ?: null;
-            $trip->with_customer_rates = $this->with_customer_rates;
-            $trip->with_transporter_rates = $this->with_transporter_rates;
-           
+            if (!$financiallyLocked) {
+                $trip->with_customer_rates = $this->with_customer_rates;
+                $trip->with_transporter_rates = $this->with_transporter_rates;
+            }
+
             $trip->broker_id = $this->selectedBroker ?: null;
             $trip->customer_id = $this->customer_id ?: null;
             $trip->consignee_id = $this->consignee_id ?: null;
-            $trip->freight_calculation = $this->freight_calculation;
-            $trip->calculation_measurement = $this->calculation_measurement;
-            $trip->currency_id = $this->selectedCurrency ?: null;
+            if (!$financiallyLocked) {
+                $trip->freight_calculation = $this->freight_calculation;
+                $trip->calculation_measurement = $this->calculation_measurement;
+                $trip->currency_id = $this->selectedCurrency ?: null;
+            }
             $trip->cargo_id = $this->selectedCargo;
             $trip->trip_type_id = $this->selectedTripType;
             $trip->haulage_type = $this->haulage_type;
-            $trip->defined_customer_rate_id = $this->selectedDefinedCustomerRate;
-            $trip->defined_transporter_rate_id = $this->selectedDefinedTransporterRate;
+            if (!$financiallyLocked) {
+                $trip->defined_customer_rate_id = $this->selectedDefinedCustomerRate;
+                $trip->defined_transporter_rate_id = $this->selectedDefinedTransporterRate;
+            }
             $trip->from = $this->selectedFrom;
             $trip->to = $this->selectedTo;
             $trip->offloading_point_id = $this->offloading_point_id;
             $trip->loading_point_id = $this->loading_point_id;
-           
+
             $trip->cargo_details = $this->cargo_details;
             $trip->with_cargos = $this->with_cargos;
-            
-            $trip->rate = $this->rate;
+
+            if (!$financiallyLocked) {
+                $trip->rate = $this->rate;
+            }
             $trip->multiple_destinations = $this->multiple_destinations;
-            $trip->transporter_rate = $this->transporter_rate;
+            if (!$financiallyLocked) {
+                $trip->transporter_rate = $this->transporter_rate;
+            }
             $trip->quantity = $this->quantity;
             $trip->units_of_measure_id = $this->validUnitsOfMeasureId($this->units_of_measure_id);
             $trip->litreage = $this->litreage;
             $trip->litreage_at_20 = $this->litreage_at_20;
             $trip->weight = $this->weight;
-          
-            $trip->freight = $this->freight;
 
-            $trip->transporter_freight = $this->transporter_freight;
+            if (!$financiallyLocked) {
+                $trip->freight = $this->freight;
+                $trip->transporter_freight = $this->transporter_freight;
 
-            // Safety net: ensure the FX amounts reflect the final freight/rate values
-            // regardless of which field-update order the user triggered them in.
-            $this->calculateForeignExchange();
+                // Safety net: ensure the FX amounts reflect the final freight/rate values
+                // regardless of which field-update order the user triggered them in.
+                $this->calculateForeignExchange();
 
-            $trip->exchange_rate = $this->exchange_rate;
-            $trip->exchange_customer_freight = $this->exchange_customer_freight;
-            $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
-            $this->turnover = $this->company->currency_id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
-            $trip->turnover = $this->turnover;
+                $trip->exchange_rate = $this->exchange_rate;
+                $trip->exchange_customer_freight = $this->exchange_customer_freight;
+                $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
+                $this->turnover = $this->company->currency_id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
+                $trip->turnover = $this->turnover;
+            }
             $trip->distance = $this->distance;
 
         }
@@ -2761,9 +2782,11 @@ class Edit extends Component
 
                 $trip->litreage = $totalLitreage;
                 $trip->weight = $totalWeight;
-                $trip->freight = $totalFreight;
-                $this->turnover = $totalFreight;
-                $trip->turnover = $this->turnover;
+                if (!$financiallyLocked) {
+                    $trip->freight = $totalFreight;
+                    $this->turnover = $totalFreight;
+                    $trip->turnover = $this->turnover;
+                }
                 $trip->update();
         }
 
@@ -2871,9 +2894,11 @@ class Edit extends Component
 
                 $trip->litreage = $totalLitreage;
                 $trip->weight = $totalWeight;
-                $trip->freight = $totalFreight;
-                $this->turnover = $totalFreight;
-                $trip->turnover = $this->turnover;
+                if (!$financiallyLocked) {
+                    $trip->freight = $totalFreight;
+                    $this->turnover = $totalFreight;
+                    $trip->turnover = $this->turnover;
+                }
                 $trip->update();
 
         }

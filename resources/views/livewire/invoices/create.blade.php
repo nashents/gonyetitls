@@ -182,6 +182,34 @@
                                          @error('source') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
 
+                                    @if ($source == "Trip" || $source == "TTO")
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="invoice_type">Invoice Type</label>
+                                                    <select class="form-control" wire:model="invoice_type">
+                                                        <option value="earned">Earned / Final Invoice</option>
+                                                        <option value="advance">Advance Invoice</option>
+                                                    </select>
+                                                    @error('invoice_type') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
+                                            </div>
+                                            @if ($invoice_type === 'advance')
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="advance_payment_type">Advance Payment Type</label>
+                                                        <select class="form-control" wire:model="advance_payment_type" required>
+                                                            <option value="">Select...</option>
+                                                            <option value="partial">Partial / Down Payment</option>
+                                                            <option value="full">Full Payment</option>
+                                                        </select>
+                                                        @error('advance_payment_type') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+
                                     @if ($source == "Trip")
                                         <div class="row">
                                             <div class="col-md-3">
@@ -416,6 +444,11 @@
                                                         <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                         <label for="one" class="radio-label">Add custom item</label>
                                                         @error('is_custom_item.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @if(!($is_custom_item[$value] ?? false))
+                                                            <input type="checkbox" wire:model.debounce.300ms="update_trip_freight.{{ $value }}"   class="line-style" />
+                                                            <label for="one" class="radio-label">Update Trip Freight</label>
+                                                            @error('update_trip_freight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @endif
                                                     </div>
                                                     <div class="col-md-4">
                                                         <div class="form-group">
