@@ -47,6 +47,9 @@ class ShippingContainer extends Model implements Auditable
     public function documents(){
         return $this->hasMany('App\Models\Document');
     }
+    public function exposures(){
+        return $this->hasMany('App\Models\ContainerChargeExposure');
+    }
 
     public function nextLifecycleStage(): ?string
     {

@@ -199,12 +199,14 @@ class LedgerBackfillService
     {
         $result = $this->emptyResult();
         $service = app(InvoiceJournalService::class);
+        $freightSyncService = app(InvoiceTripFreightSyncService::class);
 
-        $this->missingInvoicesQuery()->chunkById(200, function ($invoices) use ($service, &$result) {
+        $this->missingInvoicesQuery()->chunkById(200, function ($invoices) use ($service, $freightSyncService, &$result) {
             foreach ($invoices as $invoice) {
                 $result['total']++;
                 try {
                     $entry = $service->post($invoice);
+                    $freightSyncService->syncApprovedFreightUpdates($invoice);
                     $result['posted'][] = ['id' => $invoice->id, 'number' => $invoice->invoice_number, 'journal_number' => $entry->journal_number];
                 } catch (\Throwable $e) {
                     $result['errors'][] = ['id' => $invoice->id, 'number' => $invoice->invoice_number, 'message' => $e->getMessage()];

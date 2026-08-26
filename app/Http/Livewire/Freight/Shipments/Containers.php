@@ -2,9 +2,11 @@
 
 namespace App\Http\Livewire\Freight\Shipments;
 
+use App\Models\ContainerChargeExposure;
 use App\Models\Shipment;
 use App\Models\ShippingContainer;
 use App\Models\Vendor;
+use App\Services\Freight\PortExposureService;
 use App\Services\Freight\ShippingContainerService;
 use Livewire\Component;
 
@@ -39,7 +41,7 @@ class Containers extends Component
 
     private function refreshShipment()
     {
-        $this->shipment = Shipment::with(['containers.shipping_line_vendor', 'containers.milestones', 'containers.cargo_items', 'cargo_items'])
+        $this->shipment = Shipment::with(['containers.shipping_line_vendor', 'containers.milestones', 'containers.cargo_items', 'containers.exposures.currency', 'cargo_items'])
             ->findOrFail($this->shipment->id);
     }
 
@@ -112,10 +114,20 @@ class Containers extends Component
         $this->expanded_container_id = $this->expanded_container_id == $containerId ? null : $containerId;
     }
 
-    public function render()
+    public function render(PortExposureService $exposureService)
     {
+        if ($this->expanded_container_id) {
+            $expandedContainer = $this->shipment->containers->firstWhere('id', $this->expanded_container_id);
+
+            if ($expandedContainer) {
+                $exposureService->refreshOpenExposures($expandedContainer);
+                $expandedContainer->load('exposures.currency');
+            }
+        }
+
         return view('livewire.freight.shipments.containers', [
             'lifecycleStages' => ShippingContainer::LIFECYCLE_STAGES,
+            'chargeTypes' => ContainerChargeExposure::CHARGE_TYPES,
         ]);
     }
 }

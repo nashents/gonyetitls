@@ -7,8 +7,10 @@ use Illuminate\Support\Facades\DB;
 
 class ShippingContainerService
 {
-    public function __construct(private ShipmentMilestoneService $milestones)
-    {
+    public function __construct(
+        private ShipmentMilestoneService $milestones,
+        private PortExposureService $exposures
+    ) {
     }
 
     /**
@@ -51,6 +53,8 @@ class ShippingContainerService
                 'milestone_code' => $milestoneCode,
                 'milestone_name' => ShippingContainer::LIFECYCLE_STAGES[$milestoneCode] ?? ucwords(str_replace('_', ' ', $milestoneCode)),
             ], $milestoneData));
+
+            $this->exposures->handleContainerTransition($container, $milestoneCode, $milestoneData['actual_at'] ?? now());
 
             return $container;
         });

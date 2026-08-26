@@ -1008,6 +1008,7 @@ class Index extends Component
 
         try {
             app(\App\Services\Accounting\InvoiceJournalService::class)->post($invoice);
+            app(\App\Services\Accounting\InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'success',
                 'message' => 'Invoice posted to the general ledger.',

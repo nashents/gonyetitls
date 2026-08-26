@@ -41,6 +41,43 @@
                                 &mdash; Temp: {{ $container->temperature }}
                             @endif
 
+                            <h6 class="underline mt-20 mb-10"><strong>Port &amp; Container Exposure</strong></h6>
+                            @if ($container->exposures->count())
+                                <table class="table table-condensed table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Charge Type</th><th>Start</th><th>Last Free Day</th><th>Stop</th><th>Chargeable Days</th><th>Est. Exposure</th><th>Actual Charge</th><th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($container->exposures as $exposure)
+                                            @php
+                                                $statusBadge = [
+                                                    'within_free_period' => 'success',
+                                                    'expiring_soon' => 'warning',
+                                                    'expiring_today' => 'warning',
+                                                    'accruing' => 'danger',
+                                                    'stopped' => 'default',
+                                                ][$exposure->status] ?? 'default';
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $chargeTypes[$exposure->charge_type] ?? $exposure->charge_type }}</td>
+                                                <td>{{ $exposure->start_date?->format('d M Y') }}</td>
+                                                <td>{{ $exposure->last_free_day?->format('d M Y') }}</td>
+                                                <td>{{ $exposure->stop_date?->format('d M Y') }}</td>
+                                                <td>{{ $exposure->chargeable_days }}</td>
+                                                <td>{{ $exposure->currency?->symbol }}{{ number_format($exposure->estimated_exposure ?? 0, 2) }}</td>
+                                                <td>{{ $exposure->actual_charge !== null ? number_format($exposure->actual_charge, 2) : '—' }}</td>
+                                                <td><span class="label label-{{ $statusBadge }} label-wide">{{ ucwords(str_replace('_', ' ', $exposure->status)) }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                <small class="color-gray">Demurrage and Detention are independent estimates for different possible carrier billing structures &mdash; do not sum them.</small>
+                            @else
+                                <p class="text-muted">No exposure tracked yet for this container (starts automatically once discharged; requires a free-day policy configured for its shipping line or the generic default).</p>
+                            @endif
+
                             <h6 class="underline mt-20 mb-10"><strong>Milestone History</strong></h6>
                             <table class="table table-condensed">
                                 <thead>

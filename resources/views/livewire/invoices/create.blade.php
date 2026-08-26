@@ -16,6 +16,44 @@
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="form-group">
+                                                <label for="invoice_type">Invoice Type<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model="invoice_type" required>
+                                                    <option value="earned">Earned / Final Invoice</option>
+                                                    <option value="advance">Advance Invoice</option>
+                                                </select>
+                                                @error('invoice_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        @if ($invoice_type === 'advance')
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="advance_payment_type">Advance Payment Type<span class="required" style="color: red">*</span></label>
+                                                    <select class="form-control" wire:model="advance_payment_type" required>
+                                                        <option value="">Select...</option>
+                                                        <option value="partial">Partial / Down Payment</option>
+                                                        <option value="full">Full Payment</option>
+                                                    </select>
+                                                    @error('advance_payment_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                        @endif
+                                        <div class="col-md-{{ $invoice_type === 'advance' ? 6 : 9 }}">
+                                            <div class="form-group" style="margin-top:24px">
+                                                @if ($invoice_type === 'advance')
+                                                    <small style="color: #806600">
+                                                        <strong>Advance Invoice:</strong> only trips that are <strong>authorized (approved)</strong> and not cancelled will be available to select — the trip does not need to be Offloaded yet. The invoiced amount posts to <strong>Customer Advances</strong> (deferred revenue) until the trip reaches Offloaded, at which point it is automatically reclassified to <strong>Sales</strong>.
+                                                    </small>
+                                                @else
+                                                    <small style="color: green">
+                                                        <strong>Earned / Final Invoice:</strong> only trips that are <strong>authorized (approved) and Offloaded</strong> will be available to select. The invoiced amount posts straight to <strong>Sales</strong> immediately.
+                                                    </small>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
                                                 <label for="name">Invoice Number<span class="required" style="color: red">*</span></label>
                                                 <input type="text" class="form-control" wire:model.debounce.300ms="invoice_number" placeholder="Enter Invoice Number" required >
                                                 @error('invoice_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -182,34 +220,6 @@
                                          @error('source') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
 
-                                    @if ($source == "Trip" || $source == "TTO")
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="invoice_type">Invoice Type</label>
-                                                    <select class="form-control" wire:model="invoice_type">
-                                                        <option value="earned">Earned / Final Invoice</option>
-                                                        <option value="advance">Advance Invoice</option>
-                                                    </select>
-                                                    @error('invoice_type') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                </div>
-                                            </div>
-                                            @if ($invoice_type === 'advance')
-                                                <div class="col-md-3">
-                                                    <div class="form-group">
-                                                        <label for="advance_payment_type">Advance Payment Type</label>
-                                                        <select class="form-control" wire:model="advance_payment_type" required>
-                                                            <option value="">Select...</option>
-                                                            <option value="partial">Partial / Down Payment</option>
-                                                            <option value="full">Full Payment</option>
-                                                        </select>
-                                                        @error('advance_payment_type') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endif
-
                                     @if ($source == "Trip")
                                         <div class="row">
                                             <div class="col-md-3">
@@ -344,7 +354,21 @@
                                                 </div>
                                             </div>
                                         @else
+                                            @php
+                                                $rowTrip = !empty($selectedTrip[0] ?? null) ? \App\Models\Trip::find($selectedTrip[0]) : null;
+                                                $rowAmount = $amount[0] ?? null;
+                                                $rowAmountDiffersFromFreight = $rowTrip
+                                                    && is_numeric($rowAmount)
+                                                    && abs((float) $rowAmount - (float) $rowTrip->freight) > 0.001;
+                                            @endphp
                                             <div class="row" wire:key="invoice-line-0">
+                                                @if ($rowAmountDiffersFromFreight)
+                                                    <div class="col-md-12">
+                                                        <input type="checkbox" wire:model.debounce.300ms="update_trip_freight.0"   class="line-style" />
+                                                        <label for="one" class="radio-label">Update Trip Freight ({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})</label>
+                                                        @error('update_trip_freight.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                @endif
                                                 <div class="col-md-5">
                                                     <div class="form-group">
                                                         <label for="subheading">Trips<span class="required" style="color: red">*</span></label>
@@ -438,15 +462,22 @@
                                                 </div>
                                             </div>
                                             @foreach ($inputs as $key => $value)
-                                            
-                                                <div class="row">
+
+                                                @php
+                                                    $rowTrip = !empty($selectedTrip[$value] ?? null) ? \App\Models\Trip::find($selectedTrip[$value]) : null;
+                                                    $rowAmount = $amount[$value] ?? null;
+                                                    $rowAmountDiffersFromFreight = $rowTrip
+                                                        && is_numeric($rowAmount)
+                                                        && abs((float) $rowAmount - (float) $rowTrip->freight) > 0.001;
+                                                @endphp
+                                                <div class="row" wire:key="trip-line-{{ $value }}">
                                                     <div class="col-md-12" >
                                                         <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                         <label for="one" class="radio-label">Add custom item</label>
                                                         @error('is_custom_item.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        @if(!($is_custom_item[$value] ?? false))
+                                                        @if(!($is_custom_item[$value] ?? false) && $rowAmountDiffersFromFreight)
                                                             <input type="checkbox" wire:model.debounce.300ms="update_trip_freight.{{ $value }}"   class="line-style" />
-                                                            <label for="one" class="radio-label">Update Trip Freight</label>
+                                                            <label for="one" class="radio-label">Update Trip Freight ({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})</label>
                                                             @error('update_trip_freight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         @endif
                                                     </div>
@@ -809,7 +840,7 @@
                                                 </div>
                                             </div>
                                             @foreach ($inputs as $key => $value)
-                                                <div class="row">
+                                                <div class="row" wire:key="tto-line-{{ $value }}">
                                                     <div class="col-md-12" >
                                                         <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                         <label for="one" class="radio-label">Add custom item</label>
@@ -1001,7 +1032,7 @@
                                         </div>
                                         {{-- Additional rows --}}
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row">
+                                            <div class="row" wire:key="transport-order-line-{{ $value }}">
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="">Transport Order<span class="required" style="color: red">*</span></label>
@@ -1198,7 +1229,7 @@
                                             </div>
                                         </div>
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row">
+                                            <div class="row" wire:key="rental-line-{{ $value }}">
                                                 <div class="col-md-12" >
                                                     <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                     <label for="one" class="radio-label">Add custom item</label>
@@ -1436,7 +1467,7 @@
                                             </div>
                                         </div>
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row" >
+                                            <div class="row" wire:key="booking-line-{{ $value }}">
                                                 <div class="col-md-12" >
                                                     <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                     <label for="one" class="radio-label">Add custom item</label>
@@ -1622,7 +1653,7 @@
                                             </div> 
                                         </div>
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row">  
+                                            <div class="row" wire:key="inventory-line-{{ $value }}">
                                                 <div class="col-md-8">
                                                     <div class="form-group">
                                                         <label for="horse">Items in Inventory<span class="required" style="color: red">*</span></label>
@@ -1775,7 +1806,7 @@
                                             </div>      
                                         </div>
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row">  
+                                            <div class="row" wire:key="generic-line-{{ $value }}">
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="country">Items<span class="required" style="color: red">*</span></label>

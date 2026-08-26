@@ -786,6 +786,7 @@ Route::resource('freight/consolidations','ConsolidationController')->parameters(
     'update' => 'freight.consolidations.update',
     'destroy' => 'freight.consolidations.destroy',
 ]);
+Route::get('freight/settings/charge-config','FreightChargeConfigController@index')->name('freight.settings.charge-config');
 Route::resource('borders','BorderController');
 Route::resource('inspection_services','InspectionServiceController');
 Route::resource('checklist_categories','ChecklistCategoryController');

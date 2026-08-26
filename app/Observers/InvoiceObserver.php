@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Invoice;
 use App\Services\Accounting\InvoiceJournalService;
+use App\Services\Accounting\InvoiceTripFreightSyncService;
 use App\Services\Sage\SageSyncService;
 use Illuminate\Support\Facades\Log;
 
@@ -19,6 +20,7 @@ class InvoiceObserver
     {
         if ($invoice->isDirty('authorization') && $invoice->authorization === 'approved') {
             app(InvoiceJournalService::class)->post($invoice);
+            app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
         }
     }
@@ -33,6 +35,7 @@ class InvoiceObserver
     {
         if ($invoice->isDirty('authorization') && $invoice->authorization === 'approved') {
             app(InvoiceJournalService::class)->post($invoice);
+            app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
         }
     }

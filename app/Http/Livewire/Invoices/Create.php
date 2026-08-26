@@ -1628,14 +1628,13 @@ class Create extends Component
                                 $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
                             }
                             $invoice_item->save();
-
-                            if (!empty($this->update_trip_freight[$key]) && $invoice_item->trip_id) {
-                                $trip = Trip::find($invoice_item->trip_id);
-                                if ($trip) {
-                                    $trip->freight = $invoice_item->amount;
-                                    $trip->save();
-                                }
-                            }
+                            // Note: trips.freight is NOT updated here even when
+                            // is_update_trip_freight is checked - that only happens
+                            // once this invoice is authorized (approved), via
+                            // InvoiceTripFreightSyncService, wired into
+                            // InvoiceObserver alongside the journal posting trigger.
+                            // Keeps trip figures untouched for an invoice that may
+                            // still be rejected.
 
                     }
                 }
@@ -2240,8 +2239,10 @@ class Create extends Component
             $query = Trip::query()
             ->with('transporter:id,name','customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
-            ->where('status', 1)
             ->where('trip_status','!=', 'Cancelled')
+            ->when($this->invoice_type !== 'advance', function ($q) {
+                $q->where('trip_status', 'Offloaded');
+            })
             ->has('trip_transport_orders', '<=', 1)
             ->when($this->invoice_to === 'Customer', function ($q) {
                 $q->where('currency_id', $this->selectedCurrency);
@@ -2306,8 +2307,11 @@ class Create extends Component
                 'transport_order.currency',
             ])
             ->whereHas('trip', function ($q) {
-                $q->where('trip_status', '!=', 'Cancelled')
-                  ->where('status', 1);
+                $q->where('authorization', 'approved')
+                  ->where('trip_status', '!=', 'Cancelled')
+                  ->when($this->invoice_type !== 'advance', function ($qq) {
+                      $qq->where('trip_status', 'Offloaded');
+                  });
             })
             ->when($this->invoice_to === 'Customer', function ($q) {
                 $q->where('currency_id', $this->selectedCurrency);
