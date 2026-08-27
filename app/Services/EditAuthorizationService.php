@@ -7,6 +7,7 @@ use App\Models\EditAuthorizationRequest;
 use App\Models\EditAuthorizer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Shared request/approve/one-time-consume workflow for editing a normally
@@ -58,7 +59,7 @@ class EditAuthorizationService
             ->first();
     }
 
-    public function requestEdit(EditAuthorizable $model, User $requester, string $reason): EditAuthorizationRequest
+    public function requestEdit(EditAuthorizable $model, User $requester, string $reason, ?string $batchUuid = null): EditAuthorizationRequest
     {
         if ($this->hasPendingRequest($model, $requester)) {
             throw new \RuntimeException('You already have a pending authorization request for this record.');
@@ -68,11 +69,38 @@ class EditAuthorizationService
             'editable_type' => get_class($model),
             'editable_id' => $model->getKey(),
             'module' => $model->editAuthModule(),
+            'batch_uuid' => $batchUuid,
             'owner_id' => $model->editAuthOwnerId(),
             'user_id' => $requester->id,
             'reason' => $reason,
             'status' => 'pending',
         ]);
+    }
+
+    /**
+     * Request edit authorization on many records at once (e.g. a batch of
+     * bills). Each record gets its own EditAuthorizationRequest row, tagged
+     * with a shared batch_uuid; a record that already has a pending request
+     * is skipped rather than failing the whole batch.
+     *
+     * @param  iterable<EditAuthorizable>  $models
+     * @return array{batch_uuid: string, created: \Illuminate\Support\Collection, skipped: \Illuminate\Support\Collection}
+     */
+    public function requestEditBatch(iterable $models, User $requester, string $reason): array
+    {
+        $batchUuid = (string) Str::uuid();
+        $created = collect();
+        $skipped = collect();
+
+        foreach ($models as $model) {
+            try {
+                $created->push($this->requestEdit($model, $requester, $reason, $batchUuid));
+            } catch (\RuntimeException $e) {
+                $skipped->push(['model' => $model, 'reason' => $e->getMessage()]);
+            }
+        }
+
+        return ['batch_uuid' => $batchUuid, 'created' => $created, 'skipped' => $skipped];
     }
 
     public function decide(EditAuthorizationRequest $request, User $decider, string $decision, ?string $comments = null): EditAuthorizationRequest
@@ -90,6 +118,34 @@ class EditAuthorizationService
 
             return $request;
         });
+    }
+
+    /**
+     * Decide many pending requests at once (e.g. approving a batch of bill
+     * edit requests in one click). A request the decider owns (self-
+     * authorization) is skipped rather than failing the whole batch.
+     *
+     * @return array{decided: \Illuminate\Support\Collection, skipped: \Illuminate\Support\Collection}
+     */
+    public function decideBatch(array $requestIds, User $decider, string $decision, ?string $comments = null): array
+    {
+        $decided = collect();
+        $skipped = collect();
+
+        $requests = EditAuthorizationRequest::with('editable')
+            ->whereIn('id', $requestIds)
+            ->pending()
+            ->get();
+
+        foreach ($requests as $request) {
+            try {
+                $decided->push($this->decide($request, $decider, $decision, $comments));
+            } catch (\Throwable $e) {
+                $skipped->push(['request' => $request, 'reason' => $e->getMessage()]);
+            }
+        }
+
+        return ['decided' => $decided, 'skipped' => $skipped];
     }
 
     public function consume(EditAuthorizationRequest $grant): void

@@ -19,7 +19,7 @@
                             <table id="companiesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Type
+                                    <th class="th-sm">Types
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
@@ -43,7 +43,7 @@
                                 <tbody>
                                     @foreach ($companies as $company)
                                   <tr>
-                                    <td>{{$company->type}}</td>
+                                    <td>{{ $company->company_types->pluck('name')->implode(', ') ?: $company->type }}</td>
                                     <td>{{$company->name}}</td>
                                     <td>{{$company->phonenumber}}</td>
                                     <td>{{$company->email}}</td>
@@ -102,19 +102,25 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="exampleInputEmail1">Types<span class="required" style="color: red">*</span></label>
-                            <select wire:model.debounce.300ms="selectedType" class="form-control" required>
-                                <option value="">Select Type</option>
-                                @if (Auth::user()->is_admin())
-                                    <option value="Admin">Admin</option> 
-                                @endif
-                                <option value="Rental">Car Rental</option>
-                                <option value="Broker">Broker</option>
-                                <option value="Transporter">Transporter</option>
-                            </select>
-                            @error('selectedType') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            <div>
+                                @foreach ($companyTypes as $companyType)
+                                    @if ($companyType->name != 'Admin' || Auth::user()->is_admin())
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" wire:model="selected_company_type_ids" value="{{ $companyType->id }}">
+                                                {{ $companyType->name == 'Rental' ? 'Car Rental' : $companyType->name }}
+                                            </label>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                            @error('selected_company_type_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
                 </div>
+                @php
+                    $isTransporterSelected = $companyTypes->firstWhere('name', 'Transporter') && in_array($companyTypes->firstWhere('name', 'Transporter')->id, $selected_company_type_ids);
+                @endphp
                 @if (Auth::user()->is_admin())
                 <div class="row">
                     <div class="col-md-4">
@@ -125,7 +131,7 @@
                                 @foreach ($currencies as $currency)
                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                 @endforeach
-                            
+
                             </select>
                             @error('license_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
@@ -133,7 +139,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="exampleInputEmail1">Plan<span class="required" style="color: red">*</span></label>
-                            @if (Auth::user()->is_admin() && $selectedType == "Transporter")
+                            @if (Auth::user()->is_admin() && $isTransporterSelected)
                             <select wire:model.debounce.300ms="selectedPlan" class="form-control" required>
                                 <option value="">Select Plan</option>
                                 <option value="10">0 - 10</option> 
@@ -311,19 +317,25 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="exampleInputEmail1">Types<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="selectedType" class="form-control" required>
-                                    <option value="">Select Type</option>
-                                    @if (Auth::user()->is_admin())
-                                    <option value="Admin">Admin</option> 
-                                    @endif
-                                     <option value="Broker">Broker</option>
-                                     <option value="Rental">Car Rental</option>
-                                    <option value="Transporter">Transporter</option>
-                                </select>
-                                @error('selectedType') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <div>
+                                    @foreach ($companyTypes as $companyType)
+                                        @if ($companyType->name != 'Admin' || Auth::user()->is_admin())
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" wire:model="selected_company_type_ids" value="{{ $companyType->id }}">
+                                                    {{ $companyType->name == 'Rental' ? 'Car Rental' : $companyType->name }}
+                                                </label>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                @error('selected_company_type_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
+                   @php
+                       $isTransporterSelectedEdit = $companyTypes->firstWhere('name', 'Transporter') && in_array($companyTypes->firstWhere('name', 'Transporter')->id, $selected_company_type_ids);
+                   @endphp
                    @if (Auth::user()->is_admin())
                     <div class="row">
                         <div class="col-md-4">
@@ -334,7 +346,7 @@
                                     @foreach ($currencies as $currency)
                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                     @endforeach
-                                
+
                                 </select>
                                 @error('license_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -342,7 +354,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="exampleInputEmail1">Plan<span class="required" style="color: red">*</span></label>
-                                @if (Auth::user()->is_admin() && $selectedType == "Transporter")
+                                @if (Auth::user()->is_admin() && $isTransporterSelectedEdit)
                                 <select wire:model.debounce.300ms="selectedPlan" class="form-control" required>
                                     <option value="">Select Plan</option>
                                     <option value="10">0 - 10</option> 

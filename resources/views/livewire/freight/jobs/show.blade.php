@@ -50,6 +50,7 @@
                 <li role="presentation"><a href="#containers" aria-controls="containers" role="tab" data-toggle="tab">Containers</a></li>
                 <li role="presentation"><a href="#transport-documents" aria-controls="transport-documents" role="tab" data-toggle="tab">Transport Documents</a></li>
                 <li role="presentation"><a href="#customs" aria-controls="customs" role="tab" data-toggle="tab">Customs</a></li>
+                <li role="presentation"><a href="#costing" aria-controls="costing" role="tab" data-toggle="tab">Costing</a></li>
                 <li role="presentation"><a href="#timeline" aria-controls="timeline" role="tab" data-toggle="tab">Timeline</a></li>
                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
             </ul>
@@ -274,6 +275,10 @@
                     @empty
                         <p class="text-center">No shipments recorded for this job yet.</p>
                     @endforelse
+                </div>
+
+                <div role="tabpanel" class="tab-pane" id="costing">
+                    @livewire('freight.jobs.costing', ['jobId' => $job->id], key('costing-'.$job->id))
                 </div>
 
                 <div role="tabpanel" class="tab-pane" id="timeline">

@@ -1922,6 +1922,16 @@
             })
         </script>
         <script type="text/javascript">
+            window.addEventListener('show-linkTripModal', event => {
+                $('#linkTripModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-linkTripModal', event => {
+                $('#linkTripModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
             window.addEventListener('show-addTransporterModal', event => {
                 $('#addTransporterModal').modal('show');
             })

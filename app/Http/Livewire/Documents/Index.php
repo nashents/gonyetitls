@@ -17,6 +17,8 @@ use App\Models\Department;
 use App\Models\Document;
 use App\Models\Employee;
 use App\Models\Folder;
+use App\Models\FreightCharge;
+use App\Models\FreightCost;
 use App\Models\FreightJob;
 use App\Models\Horse;
 use App\Models\Incident;
@@ -97,6 +99,8 @@ class Index extends Component
     public $shipment;
     public $shipping_container;
     public $customs_declaration;
+    public $freight_cost;
+    public $freight_charge;
 
     public $customer_id;
     public $employee_id;
@@ -136,6 +140,8 @@ class Index extends Component
     public $shipment_id;
     public $shipping_container_id;
     public $customs_declaration_id;
+    public $freight_cost_id;
+    public $freight_charge_id;
     public $user_id;
 
     public $document;
@@ -211,6 +217,8 @@ class Index extends Component
             'shipment' => ['model' => Shipment::class, 'property' => 'shipment', 'column' => 'shipment_id'],
             'shipping_container' => ['model' => ShippingContainer::class, 'property' => 'shipping_container', 'column' => 'shipping_container_id'],
             'customs_declaration' => ['model' => CustomsDeclaration::class, 'property' => 'customs_declaration', 'column' => 'customs_declaration_id'],
+            'freight_cost' => ['model' => FreightCost::class, 'property' => 'freight_cost', 'column' => 'freight_cost_id'],
+            'freight_charge' => ['model' => FreightCharge::class, 'property' => 'freight_charge', 'column' => 'freight_charge_id'],
         ];
     }
 

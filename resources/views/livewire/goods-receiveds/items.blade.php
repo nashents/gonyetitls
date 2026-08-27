@@ -22,8 +22,8 @@
             @if (isset($items))
               @forelse ($items as $item)
                 <tr>
-                  <td>{{$item->product->brand ? $item->product->brand->name : ""}} {{$item->product ? $item->product->name : ""}}</td>
-                  <td>{{$item->serial_number ? "SN#: ".$item->serial_number : ""}} {{$item->product->identification_number ? "ID#: ".$item->product->identification_number : ""}}</td>
+                  <td>{{$item->product && $item->product->brand ? $item->product->brand->name : ""}} {{$item->product ? $item->product->name : ""}}</td>
+                  <td>{{$item->serial_number ? "SN#: ".$item->serial_number : ""}} {{$item->product && $item->product->identification_number ? "ID#: ".$item->product->identification_number : ""}}</td>
                   <td class="text-right">{{number_format($item->qty ?? 1, 2)}}</td>
                   <td>{{$item->currency ? $item->currency->name : ""}}</td>
                   <td class="text-right">{{$item->currency ? $item->currency->symbol : ""}}{{number_format($item->amount ?? 0, 2)}}</td>

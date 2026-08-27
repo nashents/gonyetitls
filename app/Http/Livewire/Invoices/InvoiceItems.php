@@ -108,7 +108,92 @@ class InvoiceItems extends Component
         })->orderBy('name','asc')->get();
         $this->income_account_id = Account::where('name','Sales')->first()->id;
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
+        $this->loadTrips();
 
+    }
+
+    private function loadTrips(){
+        $this->trips = Trip::query()
+            ->with('customer:id,name')
+            ->where('authorization', 'approved')
+            ->where('trip_status', '!=', 'Cancelled')
+            ->when($this->invoice->invoice_type !== 'advance', function ($q) {
+                $q->where('trip_status', 'Offloaded');
+            })
+            ->when($this->invoice->customer_id, function ($q) {
+                $q->where('customer_id', $this->invoice->customer_id);
+            })
+            ->orderBy('trip_number', 'desc')
+            ->limit(200)
+            ->get();
+    }
+
+    /**
+     * Mirrors Invoices\Create::tripIsInvoiceable() — earned invoices require the
+     * trip to be Offloaded, advance invoices only require approved & not cancelled.
+     */
+    private function tripIsInvoiceable(?Trip $trip): bool
+    {
+        if (!$trip || strcasecmp((string) $trip->authorization, 'approved') !== 0) {
+            return false;
+        }
+
+        if (strcasecmp((string) $trip->trip_status, 'Cancelled') === 0) {
+            return false;
+        }
+
+        if ($this->invoice->invoice_type !== 'advance' && strcasecmp((string) $trip->trip_status, 'Offloaded') !== 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Links an existing trip to this already-created invoice (e.g. a generic
+     * prepayment invoice) as a zero-value line, purely so the trip's computed
+     * is_invoiced status flips true — it does not touch the invoice's totals.
+     */
+    public function storeTrip(){
+        $this->validate([
+            'selectedTrip' => 'required|exists:trips,id',
+        ]);
+
+        $trip = Trip::find($this->selectedTrip);
+
+        if (!$this->tripIsInvoiceable($trip)) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"This trip is not eligible to be linked (it must be approved and not cancelled)."
+            ]);
+            return;
+        }
+
+        if (InvoiceItem::where('invoice_id', $this->invoice->id)->where('trip_id', $trip->id)->exists()) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Trip #{$trip->trip_number} is already linked to this invoice."
+            ]);
+            return;
+        }
+
+        $invoice_item = new InvoiceItem;
+        $invoice_item->invoice_id = $this->invoice->id;
+        $invoice_item->trip_id = $trip->id;
+        $invoice_item->description = $this->description ?: "Trip #{$trip->trip_number} - prepayment applied";
+        $invoice_item->qty = 1;
+        $invoice_item->amount = 0;
+        $invoice_item->subtotal = 0;
+        $invoice_item->tax_amount = 0;
+        $invoice_item->subtotal_incl = 0;
+        $invoice_item->save();
+
+        $this->dispatchBrowserEvent('hide-linkTripModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip #{$trip->trip_number} linked to this invoice successfully!!"
+        ]);
     }
 
     public function updatedSelectedItem($id, $key){

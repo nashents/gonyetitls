@@ -69,6 +69,14 @@ class Company extends Model  implements Auditable
     public function trips(){
         return $this->hasMany('App\Models\Trip');
     }
+    public function company_types(){
+        return $this->belongsToMany('App\Models\CompanyType', 'company_company_type');
+    }
+
+    public function hasCompanyType(string $name): bool
+    {
+        return $this->company_types->contains('name', $name);
+    }
 
     /**
      * Falls back to the default company logo when none is set or the

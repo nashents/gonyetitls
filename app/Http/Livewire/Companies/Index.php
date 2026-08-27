@@ -6,10 +6,12 @@ use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Company;
+use App\Models\CompanyType;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Transporter;
 use App\Mail\AccountCreationMail;
+use App\Services\CompanyTypeService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +21,8 @@ class Index extends Component
 {
     public $name;
     public $email;
-    public $selectedType;
+    public $selected_company_type_ids = [];
+    public $companyTypes;
     public $selectedPlan;
     public $license_currency_id;
     public $fee;
@@ -50,6 +53,7 @@ class Index extends Component
         $this->user = User::find(Auth::user()->id);
         $this->roles = Role::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->companyTypes = CompanyType::orderBy('name','asc')->get();
         $this->noreply = 'noreply@gonyetitls.com';
 
     }
@@ -62,7 +66,7 @@ class Index extends Component
         'name' => 'required|unique:companies,name,NULL,id,deleted_at,NULL|string|min:2',
         'phonenumber' => 'required|unique:companies,phonenumber,NULL,id,deleted_at,NULL',
         'email' => 'required|unique:users,email,NULL,id,deleted_at,NULL',
-        'selectedType' => 'required',
+        'selected_company_type_ids' => 'required',
         'selectedPlan' => 'required',
         'fee' => 'required',
         'status' => 'required',
@@ -79,7 +83,7 @@ class Index extends Component
         $this->phonenumber = '';
         $this->country = '';
         $this->city = '';
-        $this->selectedType = '';
+        $this->selected_company_type_ids = [];
         $this->selectedPlan = '';
         $this->license_currency_id = '';
         $this->fee = '';
@@ -165,12 +169,16 @@ class Index extends Component
             }
         }
     }
-    public function updatedSelectedType($type){
-        if (!is_null($type)) {
-            if ($type == "Broker") {
-                $this->fee = 100;
-            }
+    public function updatedSelectedCompanyTypeIds(){
+        if ($this->selectedCompanyTypeNames()->contains('Broker')) {
+            $this->fee = 100;
         }
+    }
+
+    private function selectedCompanyTypeNames(){
+        return $this->companyTypes
+            ->whereIn('id', $this->selected_company_type_ids)
+            ->pluck('name');
     }
 
     public function store(){
@@ -193,7 +201,6 @@ class Index extends Component
         $company = new Company;
         $company->admin_id = Auth::user()->id;
         $company->user_id = $user->id;
-        $company->type = $this->selectedType;
         $company->name = $this->name;
         $company->email = $this->email;
         $company->plan = $this->selectedPlan;
@@ -211,6 +218,7 @@ class Index extends Component
         $company->suburb = $this->suburb;
         $company->street_address = $this->street_address;
         $company->save();
+        app(CompanyTypeService::class)->syncTypes($company, $this->selected_company_type_ids);
         $this->company = $company;
         $this->company_id = $company->id;
 
@@ -264,7 +272,7 @@ class Index extends Component
         $this->user_id = $company->user_id;
         $this->admin_id = $company->admin_id;
         $this->name = $company->name;
-        $this->selectedType = $company->type;
+        $this->selected_company_type_ids = $company->company_types->pluck('id')->toArray();
         $this->status = $company->status;
         $roles = $company->user->roles;
         
@@ -310,7 +318,6 @@ class Index extends Component
                     $company->user_id = $this->user_id;
                     $company->admin_id = Auth::user()->id;
                     $company->name = $this->name;
-                    $company->type = $this->selectedType;
                     $company->phonenumber = $this->phonenumber;
                     $company->email = $this->email;
                     $company->currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
@@ -327,6 +334,7 @@ class Index extends Component
                     $company->suburb = $this->suburb;
                     $company->street_address = $this->street_address;
                     $company->update();
+                    app(CompanyTypeService::class)->syncTypes($company, $this->selected_company_type_ids);
 
                     $this->dispatchBrowserEvent('hide-companyEditModal');
                     $this->resetInputFields();
@@ -344,9 +352,9 @@ class Index extends Component
     public function render()
     {
         if ($this->user->is_admin()) {
-            $this->companies = Company::orderBy('name','asc')->get();
+            $this->companies = Company::with('company_types')->orderBy('name','asc')->get();
         }else {
-            $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
+            $this->companies = Company::with('company_types')->where('type','!=','admin')->orderBy('name','asc')->get();
         }
         return view('livewire.companies.index',[
             'companies' => $this->companies

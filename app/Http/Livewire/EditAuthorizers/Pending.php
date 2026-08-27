@@ -19,11 +19,59 @@ class Pending extends Component
     public $decision_comments;
     public $editAuthorizationRequest;
 
+    public $selectedRows = [];
+    public $selectPageRows = false;
+
     public function mount()
     {
         $user = Auth::user();
 
         abort_unless(app(EditAuthorizationService::class)->isAuthorizer($user) || $user->isSuperAdmin(), 403);
+    }
+
+    public function updatedSelectPageRows($value)
+    {
+        if ($value) {
+            $this->selectedRows = $this->requests->pluck('id')->map(function ($id) {
+                return (string) $id;
+            });
+        } else {
+            $this->reset(['selectedRows', 'selectPageRows']);
+        }
+    }
+
+    public function showBulkDecide()
+    {
+        $this->decision = null;
+        $this->decision_comments = null;
+        $this->dispatchBrowserEvent('show-bulkEditAuthorizationDecisionModal');
+    }
+
+    public function bulkUpdate()
+    {
+        $this->validate([
+            'decision' => 'required',
+        ]);
+
+        $result = app(EditAuthorizationService::class)->decideBatch(
+            $this->selectedRows,
+            Auth::user(),
+            $this->decision,
+            $this->decision_comments
+        );
+
+        $message = count($result['decided']).' request(s) '.ucfirst($this->decision).'.';
+        if ($result['skipped']->isNotEmpty()) {
+            $message .= ' '.count($result['skipped']).' skipped (e.g. your own record).';
+        }
+
+        $this->dispatchBrowserEvent('hide-bulkEditAuthorizationDecisionModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => $message,
+        ]);
+
+        $this->reset(['selectedRows', 'selectPageRows', 'decision', 'decision_comments']);
     }
 
     public function getRequestsProperty()

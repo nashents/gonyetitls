@@ -73,6 +73,12 @@ class Document extends Model implements Auditable
     public function customs_declaration(){
         return $this->belongsTo('App\Models\CustomsDeclaration');
     }
+    public function freight_cost(){
+        return $this->belongsTo('App\Models\FreightCost');
+    }
+    public function freight_charge(){
+        return $this->belongsTo('App\Models\FreightCharge');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

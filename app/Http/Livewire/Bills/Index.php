@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Bills;
 
 use App\Exports\BillsExport;
 use App\Imports\BillsImport;
+use App\Services\EditAuthorizationService;
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\BankAccount;
@@ -124,6 +125,57 @@ class Index extends Component
 
     public $exchange_amount;
     public $exchange_rate;
+
+    public $selectedRows = [];
+    public $selectPageRows = false;
+    public $editAuthorizationReason;
+
+    public function updatedSelectPageRows($value)
+    {
+        if ($value) {
+            $this->selectedRows = $this->filteredBillsQuery()
+                ->orderByDesc($this->bill_filter)
+                ->forPage($this->page ?: 1, 10)
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (string) $id;
+                });
+        } else {
+            $this->reset(['selectedRows', 'selectPageRows']);
+        }
+    }
+
+    public function showBulkRequestEdit()
+    {
+        $this->editAuthorizationReason = null;
+        $this->dispatchBrowserEvent('show-bulkEditAuthorizationRequestModal');
+    }
+
+    public function submitBulkEditAuthorizationRequest()
+    {
+        $this->validate([
+            'editAuthorizationReason' => 'required|string|max:1000',
+        ], [
+            'editAuthorizationReason.required' => 'Please give a reason for requesting edit access.',
+        ]);
+
+        $bills = Bill::whereIn('id', $this->selectedRows)->where('authorization', 'approved')->get();
+
+        $result = app(EditAuthorizationService::class)->requestEditBatch($bills, Auth::user(), $this->editAuthorizationReason);
+
+        $message = count($result['created']).' bill(s) sent for edit authorization.';
+        if ($result['skipped']->isNotEmpty()) {
+            $message .= ' '.count($result['skipped']).' skipped (already have a pending request).';
+        }
+
+        $this->dispatchBrowserEvent('hide-bulkEditAuthorizationRequestModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => $message,
+        ]);
+
+        $this->reset(['selectedRows', 'selectPageRows', 'editAuthorizationReason']);
+    }
 
     public function add($i)
     {
@@ -754,6 +806,128 @@ class Index extends Component
         }
     }
 
+    protected function filteredBillsQuery()
+    {
+        $cur = Auth::user()->employee?->company?->currency_id;
+
+        $base = Bill::query()
+            ->with([
+                'invoice','transporter','container','top_up','trip',
+                'horse','driver','purchase','currency','payments',
+                // add these if the relationships exist and you use them in search:
+                'vehicle','trailer','ticket','vendor',
+                'journal_entry.journal_entry_lines','bill_expenses',
+            ])
+            ->where('to_be_paid', true);
+        if ($this->status === 'unpaid') {
+            $base->where('currency_id',$cur)->where('status', '!=', 'Paid');
+        }
+        else{
+            // Date filter: use provided range, else current month
+            $base->when(
+                filled($this->from) && filled($this->to),
+                fn ($q) => $q->whereBetween($this->bill_filter, [
+                    Carbon::parse($this->from)->startOfDay(),
+                    Carbon::parse($this->to)->endOfDay(),
+                ]),
+                fn ($q) => $q->whereMonth($this->bill_filter, now()->month)
+                            ->whereYear($this->bill_filter, now()->year)
+            );
+        }
+
+        // Search filter (grouped to keep AND/OR logic correct)
+        $base->when(filled($this->search), function ($q) {
+            $term = '%'.$this->search.'%';
+
+            $q->where(function ($qq) use ($term) {
+                $qq->where('bill_number', 'like', $term)
+                ->orWhere('status', 'like', $term)
+                ->orWhere('bill_date', 'like', $term)
+                ->orWhereHas('horse', function ($sub) use ($term) {
+                    $sub->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($sub) use ($term) {
+                    $sub->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('trailer', function ($sub) use ($term) {
+                    $sub->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('driver', function ($sub) use ($term) {
+                    $sub->whereHas('employee', function ($emp) use ($term) {
+                        $emp->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                    });
+                })
+                ->orWhereHas('ticket', function ($sub) use ($term) {
+                    $sub->where('ticket_number', 'like', $term);
+                })
+                ->orWhereHas('trip', function ($sub) use ($term) {
+                    $sub->where('trip_number', 'like', $term);
+                })
+                ->orWhereHas('currency', function ($sub) use ($term) {
+                    $sub->where('name', 'like', $term);
+                })
+                ->orWhereHas('invoice', function ($sub) use ($term) {
+                    $sub->where('invoice_number', 'like', $term);
+                })
+                ->orWhereHas('transporter', function ($sub) use ($term) {
+                    $sub->where('name', 'like', $term);
+                })
+                ->orWhereHas('container', function ($sub) use ($term) {
+                    $sub->where('name', 'like', $term);
+                })
+                ->orWhereHas('purchase', function ($sub) use ($term) {
+                    $sub->where('purchase_number', 'like', $term);
+                })
+                ->orWhereHas('vendor', function ($sub) use ($term) {
+                    $sub->where('name', 'like', $term);
+                });
+            });
+        });
+
+        if ($this->customer_id != "") {
+            $base->where('customer_id', $this->customer_id);
+        }
+        if ($this->transporter_id != "") {
+            $base->where('transporter_id', $this->transporter_id);
+        }
+        if ($this->trip_id != "") {
+            $base->where('trip_id', $this->trip_id);
+        }
+        if ($this->currency_id != "") {
+            $base->where('currency_id', $this->currency_id);
+        }
+        if ($this->tax_status === 'taxed') {
+            $base->whereNotNull('tax_amount')
+                ->where('tax_amount', '!=', 0)
+                ->where('tax_amount', '!=', '');
+        }
+        if ($this->tax_status === 'non-taxed') {
+            $base->where(function ($q) {
+                $q->whereNull('tax_amount')
+                ->orWhere('tax_amount', 0)
+                ->orWhere('tax_amount', '');
+            });
+        }
+
+        if ($this->horse_id != "") {
+            $base->where('horse_id', $this->horse_id);
+        }
+        if ($this->trailer_id != "") {
+            $base->where('trailer_id', $this->trailer_id);
+        }
+        if ($this->vehicle_id != "") {
+            $base->where('vehicle_id', $this->vehicle_id);
+        }
+        if ($this->asset_id != "") {
+            $base->where('asset_id', $this->asset_id);
+        }
+        if (filled($this->authorization)) {
+            $base->where('authorization', $this->authorization);
+        }
+
+        return $base;
+    }
+
     public function render()
     {
 
@@ -797,131 +971,11 @@ class Index extends Component
             $this->current_balance = $this->bill_balance - $this->amount;
         }
         
-          $cur = Auth::user()->employee?->company?->currency_id;
-
-            $base = Bill::query()
-                ->with([
-                    'invoice','transporter','container','top_up','trip',
-                    'horse','driver','purchase','currency','payments',
-                    // add these if the relationships exist and you use them in search:
-                    'vehicle','trailer','ticket','vendor',
-                    'journal_entry.journal_entry_lines','bill_expenses',
-                ])
-                ->where('to_be_paid', true);
-              if ($this->status === 'unpaid') {
-                    $base->where('currency_id',$cur)->where('status', '!=', 'Paid');
-              }
-              else{
-                    // Date filter: use provided range, else current month
-                    $base->when(
-                        filled($this->from) && filled($this->to),
-                        fn ($q) => $q->whereBetween($this->bill_filter, [
-                            Carbon::parse($this->from)->startOfDay(),
-                            Carbon::parse($this->to)->endOfDay(),
-                        ]),
-                        fn ($q) => $q->whereMonth($this->bill_filter, now()->month)
-                                    ->whereYear($this->bill_filter, now()->year)
-                    );
-              }
-
-          
-
-            // Search filter (grouped to keep AND/OR logic correct)
-            $base->when(filled($this->search), function ($q) {
-                $term = '%'.$this->search.'%';
-
-                $q->where(function ($qq) use ($term) {
-                    $qq->where('bill_number', 'like', $term)
-                    ->orWhere('status', 'like', $term)
-                    ->orWhere('bill_date', 'like', $term)
-                    ->orWhereHas('horse', function ($sub) use ($term) {
-                        $sub->where('registration_number', 'like', $term);
-                    })
-                    ->orWhereHas('vehicle', function ($sub) use ($term) {
-                        $sub->where('registration_number', 'like', $term);
-                    })
-                    ->orWhereHas('trailer', function ($sub) use ($term) {
-                        $sub->where('registration_number', 'like', $term);
-                    })
-                    ->orWhereHas('driver', function ($sub) use ($term) {
-                        $sub->whereHas('employee', function ($emp) use ($term) {
-                            $emp->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
-                        });
-                    })
-                    ->orWhereHas('ticket', function ($sub) use ($term) {
-                        $sub->where('ticket_number', 'like', $term);
-                    })
-                    ->orWhereHas('trip', function ($sub) use ($term) {
-                        $sub->where('trip_number', 'like', $term);
-                    })
-                    ->orWhereHas('currency', function ($sub) use ($term) {
-                        $sub->where('name', 'like', $term);
-                    })
-                    ->orWhereHas('invoice', function ($sub) use ($term) {
-                        $sub->where('invoice_number', 'like', $term);
-                    })
-                    ->orWhereHas('transporter', function ($sub) use ($term) {
-                        $sub->where('name', 'like', $term);
-                    })
-                    ->orWhereHas('container', function ($sub) use ($term) {
-                        $sub->where('name', 'like', $term);
-                    })
-                    ->orWhereHas('purchase', function ($sub) use ($term) {
-                        $sub->where('purchase_number', 'like', $term);
-                    })
-                    ->orWhereHas('vendor', function ($sub) use ($term) {
-                        $sub->where('name', 'like', $term);
-                    });
-                });
-            });
-
-
-            if ($this->customer_id != "") {
-                $base->where('customer_id', $this->customer_id);
-            }
-            if ($this->transporter_id != "") {
-                $base->where('transporter_id', $this->transporter_id);
-            }
-            if ($this->trip_id != "") {
-                $base->where('trip_id', $this->trip_id);
-            }
-            if ($this->currency_id != "") {
-                $base->where('currency_id', $this->currency_id);
-            }
-            if ($this->tax_status === 'taxed') {
-                $base->whereNotNull('tax_amount')
-                    ->where('tax_amount', '!=', 0)
-                    ->where('tax_amount', '!=', '');
-            }
-            if ($this->tax_status === 'non-taxed') {
-                $base->where(function ($q) {
-                    $q->whereNull('tax_amount')
-                    ->orWhere('tax_amount', 0)
-                    ->orWhere('tax_amount', '');
-                });
-            }
-            
-            if ($this->horse_id != "") {
-                $base->where('horse_id', $this->horse_id);
-            }
-            if ($this->trailer_id != "") {
-                $base->where('trailer_id', $this->trailer_id);
-            }
-            if ($this->vehicle_id != "") {
-                $base->where('vehicle_id', $this->vehicle_id);
-            }
-            if ($this->asset_id != "") {
-                $base->where('asset_id', $this->asset_id);
-            }
-           if (filled($this->authorization)) {
-                $base->where('authorization', $this->authorization);
-            }
-
-            $bills = $base
+          $bills = $this->filteredBillsQuery()
                 ->orderByDesc($this->bill_filter)
                 ->paginate(10);
 
             return view('livewire.bills.index', compact('bills'));
-        
+
     }
 }

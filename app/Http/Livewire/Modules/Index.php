@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Modules;
 use App\Models\Module;
 use App\Models\ModuleGroup;
 use App\Models\SubModule;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -37,9 +38,11 @@ public $inputs = [];
     }
 
     public function mount($id = null){
+        abort_unless(Auth::user()->is_admin(), 403);
+
         $this->company_id = $id;
         $this->refreshLists();
-        
+
     }
 
     public function toggleGroup($groupId)

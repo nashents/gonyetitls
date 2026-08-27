@@ -36,6 +36,12 @@ class Shipment extends Model implements Auditable
     public function customs_declarations(){
         return $this->hasMany('App\Models\CustomsDeclaration');
     }
+    public function costs(){
+        return $this->hasMany('App\Models\FreightCost');
+    }
+    public function charges(){
+        return $this->hasMany('App\Models\FreightCharge');
+    }
     public function milestones(){
         return $this->hasMany('App\Models\ShipmentMilestone');
     }

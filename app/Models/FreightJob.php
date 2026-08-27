@@ -51,11 +51,23 @@ class FreightJob extends Model implements Auditable
     public function documents(){
         return $this->hasMany('App\Models\Document');
     }
+    public function costs(){
+        return $this->hasMany('App\Models\FreightCost');
+    }
+    public function charges(){
+        return $this->hasMany('App\Models\FreightCharge');
+    }
 
     protected $casts = [
         'opened_at' => 'datetime',
         'completed_at' => 'datetime',
         'closed_at' => 'datetime',
+        'estimated_revenue' => 'float',
+        'estimated_cost' => 'float',
+        'estimated_margin' => 'float',
+        'actual_revenue' => 'float',
+        'actual_cost' => 'float',
+        'actual_margin' => 'float',
     ];
 
     protected $fillable = [

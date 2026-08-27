@@ -13,6 +13,7 @@ class EditAuthorizationRequest extends Model
         'editable_type',
         'editable_id',
         'module',
+        'batch_uuid',
         'owner_id',
         'user_id',
         'reason',
@@ -51,6 +52,11 @@ class EditAuthorizationRequest extends Model
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
+    }
+
+    public function scopeInBatch($query, string $batchUuid)
+    {
+        return $query->where('batch_uuid', $batchUuid);
     }
 
     public function scopeApprovedUnconsumed($query)

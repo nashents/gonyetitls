@@ -787,6 +787,8 @@ Route::resource('freight/consolidations','ConsolidationController')->parameters(
     'destroy' => 'freight.consolidations.destroy',
 ]);
 Route::get('freight/settings/charge-config','FreightChargeConfigController@index')->name('freight.settings.charge-config');
+Route::get('freight/settings/charge-types','FreightChargeTypesController@index')->name('freight.settings.charge-types');
+Route::get('freight/settings/rate-cards','FreightRateCardsController@index')->name('freight.settings.rate-cards');
 Route::resource('borders','BorderController');
 Route::resource('inspection_services','InspectionServiceController');
 Route::resource('checklist_categories','ChecklistCategoryController');

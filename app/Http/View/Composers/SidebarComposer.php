@@ -131,8 +131,10 @@ class SidebarComposer
         $inStores       = in_array('Stores', $department_names);
         $inWorkshop       = in_array('Workshop', $department_names);
         $inFreight       = in_array('Freight Forwarding & Clearing', $department_names);
-  
-       
+
+        $currentCompanyForType = $employee?->company ?? $user?->company ?? $user?->transporter?->company ?? $user?->customer?->company ?? $user?->agent?->company;
+        $companyIsFreightForwarder = $currentCompanyForType?->hasCompanyType('Freight Forwarding & Clearing') ?? false;
+
         $companyColor =
         $employee?->company->color ??
         $user?->company->color ??
@@ -694,6 +696,7 @@ class SidebarComposer
             'inStores'      => (bool) $inStores,
             'inWorkshop'    => (bool) $inWorkshop,
             'inFreight'     => (bool) $inFreight,
+            'companyIsFreightForwarder' => (bool) $companyIsFreightForwarder,
             'isNotDriver'    => (bool) $not_driver,
             'hasTrackingIntegration' => (bool) $hasTrackingIntegration,
             'hasEzyTrackIntegration' => (bool) $hasEzyTrackIntegration,
@@ -951,6 +954,7 @@ class SidebarComposer
             'in_transport_admin' => $in_transport_admin,
             'inTransport'          => $inTransport,
             'inFreight'          => $inFreight,
+            'companyIsFreightForwarder' => $companyIsFreightForwarder,
             'inHSEQ'          => $inHSEQ,
             'inSecurity'          => $inSecurity,
             'inFinance'          => $inFinance,

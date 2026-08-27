@@ -54,6 +54,25 @@
                            
                             </div>
                             <br>
+                            @if ($selectedRows)
+                            <div class="row">
+                                <div class="col-lg-2" >
+                                    <div class="dropdown">
+                                        <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menuBulkApproved" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                            <i class="fa fa-bars"></i> Bulk Actions
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu bg-gray" aria-labelledby="menuBulkApproved">
+                                            <li><a href="#" wire:click="showBulkRequestEdit()"><i class="fa fa-unlock-alt"></i> Request Edit Authorization</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3" style="margin-top: 5px; margin-left: -30px;">
+                                <span>selected {{ count($selectedRows) }} bill(s) to request edit on.</span>
+                                </div>
+                            </div>
+                            <br>
+                            @endif
                             <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search bills...">
@@ -63,6 +82,9 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">
+                                        <input type="checkbox" wire:model.debounce.300ms="selectPageRows">
+                                    </th>
                                     <th class="th-sm">Bill#
                                     </th>
                                     <th class="th-sm">Narration
@@ -95,6 +117,7 @@
                                 <tbody>
                                     @forelse ($bills as $bill)
                                   <tr>
+                                    <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="bill-{{ $bill->id }}" value="{{ $bill->id }}"></td>
                                     <td>{{$bill->bill_number}}</td>
                                     <td>
                                         @if ($bill->transporter)
@@ -218,7 +241,7 @@
                                   </tr>
                                    @empty
                                   <tr>
-                                    <td colspan="13">
+                                    <td colspan="14">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Approved Bills Found ....
                                         </div>
@@ -280,6 +303,32 @@
                     <!-- /.btn-group -->
                 </div>
             </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bulkEditAuthorizationRequestModal" tabindex="-1" role="dialog" aria-labelledby="bulkEditAuthorizationRequestModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="bulkEditAuthorizationRequestModalLabel"><i class="fa fa-unlock-alt"></i> Request Edit Authorization <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                </div>
+                <form wire:submit.prevent="submitBulkEditAuthorizationRequest()">
+                    <div class="modal-body">
+                        <p>Requesting edit authorization on <strong>{{ count($selectedRows) }}</strong> bill(s).</p>
+                        <div class="form-group">
+                            <label for="editAuthorizationReason">Reason<span class="required" style="color: red">*</span></label>
+                            <textarea class="form-control" wire:model.defer="editAuthorizationReason" placeholder="Why do you need to edit these approved bills?"></textarea>
+                            @error('editAuthorizationReason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Submit Request</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

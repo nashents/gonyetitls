@@ -3053,6 +3053,16 @@
             })
         </script>
         <script type="text/javascript">
+            window.addEventListener('show-linkTripModal', event => {
+                $('#linkTripModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-linkTripModal', event => {
+                $('#linkTripModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
             window.addEventListener('show-addTransporterModal', event => {
                 $('#addTransporterModal').modal('show');
             })
@@ -4429,6 +4439,30 @@
     <script type="text/javascript">
     window.addEventListener('hide-editAuthorizationDecisionModal', event => {
         $('#editAuthorizationDecisionModal').modal('hide');
+    })
+    </script>
+
+    <script type="text/javascript">
+        window.addEventListener('show-bulkEditAuthorizationRequestModal', event => {
+            $('#bulkEditAuthorizationRequestModal').modal('show');
+        })
+    </script>
+
+    <script type="text/javascript">
+    window.addEventListener('hide-bulkEditAuthorizationRequestModal', event => {
+        $('#bulkEditAuthorizationRequestModal').modal('hide');
+    })
+    </script>
+
+    <script type="text/javascript">
+        window.addEventListener('show-bulkEditAuthorizationDecisionModal', event => {
+            $('#bulkEditAuthorizationDecisionModal').modal('show');
+        })
+    </script>
+
+    <script type="text/javascript">
+    window.addEventListener('hide-bulkEditAuthorizationDecisionModal', event => {
+        $('#bulkEditAuthorizationDecisionModal').modal('hide');
     })
     </script>
 

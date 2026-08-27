@@ -2,12 +2,9 @@
     {{-- <blockquote class="blockquote-reverse mt-20"> --}}
         <x-loading/>
 
-        {{-- @if ($invoice->payments->count()>0)
-        @else    
-        <a href="" data-toggle="modal" data-target="#addInvoiceItemModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Item</a>
-        @endif
+        <a href="" data-toggle="modal" data-target="#linkTripModal" class="btn btn-default"><i class="fa fa-link"></i> Link Trip</a>
         <br>
-        <br> --}}
+        <br>
         <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead>
               <tr>
@@ -164,6 +161,53 @@
                             </div>      
                         </div>
                
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="linkTripModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+            <div class="modal-dialog" role="cargo">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modal4Label"><i class="fa fa-link"></i> Link Trip <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="storeTrip()" >
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="selectedTrip">Trip<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="selectedTrip" class="form-control" required>
+                                        <option value="">Select Trip</option>
+                                            @foreach ($trips ?? [] as $trip)
+                                                <option value="{{$trip->id}}">
+                                                    <strong>{{$trip->trip_number}}</strong> {{$trip->customer ? "| ".$trip->customer->name : ""}}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @error('selectedTrip') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="description" rows="2" placeholder="Optional - defaults to 'Trip #... - prepayment applied'"></textarea>
+                                    @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <small>Linking a trip adds a zero-value line to this invoice so the trip shows as invoiced. It does not change the invoice total.</small>
                     </div>
                     <div class="modal-footer">
                         <div class="btn-group" role="group">

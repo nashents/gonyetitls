@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Module;
 use App\Http\Requests\StoreModuleRequest;
 use App\Http\Requests\UpdateModuleRequest;
+use Illuminate\Support\Facades\Auth;
 
 class ModuleController extends Controller
 {
@@ -15,7 +16,9 @@ class ModuleController extends Controller
      */
     public function index()
     {
-        //
+        abort_unless(Auth::user()->is_admin(), 403);
+
+        return view('modules.index');
     }
 
     /**

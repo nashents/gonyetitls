@@ -9,6 +9,7 @@ use Livewire\WithPagination;
 use App\Models\TransportOrder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Services\EditAuthorizationService;
 
 class Approved extends Component
 {
@@ -27,12 +28,56 @@ class Approved extends Component
     public $comments;
     public $bill;
 
+    public $selectedRows = [];
+    public $selectPageRows = false;
+    public $editAuthorizationReason;
 
     public function mount(){
         $this->resetPage();
         $this->bill_filter = "created_at";
     }
-    
+
+    public function updatedSelectPageRows($value){
+        if ($value) {
+            $this->selectedRows = $this->bills->pluck('id')->map(function ($id){
+                return (string) $id;
+            });
+        }else {
+            $this->reset(['selectedRows','selectPageRows']);
+        }
+    }
+
+    public function showBulkRequestEdit(){
+        $this->editAuthorizationReason = null;
+        $this->dispatchBrowserEvent('show-bulkEditAuthorizationRequestModal');
+    }
+
+    public function submitBulkEditAuthorizationRequest(){
+        $this->validate([
+            'editAuthorizationReason' => 'required|string|max:1000',
+        ], [
+            'editAuthorizationReason.required' => 'Please give a reason for requesting edit access.',
+        ]);
+
+        $bills = Bill::whereIn('id', $this->selectedRows)->get();
+
+        $result = app(EditAuthorizationService::class)->requestEditBatch($bills, Auth::user(), $this->editAuthorizationReason);
+
+        $message = count($result['created']).' bill(s) sent for edit authorization.';
+        if ($result['skipped']->isNotEmpty()) {
+            $message .= ' '.count($result['skipped']).' skipped (already have a pending request).';
+        }
+
+        $this->dispatchBrowserEvent('hide-bulkEditAuthorizationRequestModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>$message,
+        ]);
+
+        $this->reset(['selectedRows', 'selectPageRows', 'editAuthorizationReason']);
+    }
+
+
     public function authorize($id){
         $bill = bill::find($id);
         $this->bill_id = $bill->id;

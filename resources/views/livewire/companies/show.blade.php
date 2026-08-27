@@ -18,8 +18,8 @@
                                 <td class="w-20 line-height-35">{{$company->name}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Type</th>
-                                <td class="w-20 line-height-35">{{$company->type}}</td>
+                                <th class="w-10 text-center line-height-35">Types</th>
+                                <td class="w-20 line-height-35">{{ $company->company_types->pluck('name')->implode(', ') ?: $company->type }}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Plan</th>
