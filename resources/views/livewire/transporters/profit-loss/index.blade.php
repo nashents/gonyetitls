@@ -54,6 +54,15 @@
                                                     </div>
                                                 </div>
                                             </form>
+
+                                            @if (!empty($selectedTransporter) && !empty($from) && !empty($to))
+                                                <div class="col-lg-2">
+                                                    <a href="{{ route('transporters.statement.preview', ['selectedTransporter' => $selectedTransporter, 'from' => $from, 'to' => $to]) }}"
+                                                       class="btn btn-default border-primary btn-rounded btn-wide">
+                                                        <i class="fa fa-eye"></i> Preview Report (PDF)
+                                                    </a>
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <br><br>

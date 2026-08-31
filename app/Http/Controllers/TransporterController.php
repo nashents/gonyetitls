@@ -46,6 +46,14 @@ class TransporterController extends Controller
         return view('transporters.profit_loss.index');
     }
 
+    public function profitLossPreview($selectedTransporter = null, $from = null, $to = null){
+        return view('transporters.profit_loss.preview')->with([
+            'selectedTransporter' => $selectedTransporter,
+            'from' => $from,
+            'to' => $to,
+            ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      *
