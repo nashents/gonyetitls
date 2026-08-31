@@ -34,7 +34,7 @@ class Pending extends Component
         if ($value) {
             $this->selectedRows = $this->requests->pluck('id')->map(function ($id) {
                 return (string) $id;
-            });
+            })->toArray();
         } else {
             $this->reset(['selectedRows', 'selectPageRows']);
         }
