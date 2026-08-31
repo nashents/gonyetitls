@@ -4,7 +4,10 @@ namespace App\Http\Livewire\Customers;
 
 use Livewire\Component;
 use App\Models\Currency;
+use App\Mail\CustomerPortalCredentialsMail;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class Show extends Component
 {
@@ -14,8 +17,14 @@ class Show extends Component
     public $trips;
     public $invoices;
 
-    public $portal_password;
-    public $portal_password_confirmation;
+    private function generatePin($digits = 4)
+    {
+        $pin = '';
+        for ($i = 0; $i < $digits; $i++) {
+            $pin .= mt_rand(0, 9);
+        }
+        return $pin;
+    }
 
     public function mount($customer){
         $this->customer = $customer;
@@ -24,16 +33,35 @@ class Show extends Component
         $this->invoices = $this->customer->invoices;
     }
 
-    public function setPortalPassword()
+    public function generateAndSendCredentials()
     {
-        $this->validate([
-            'portal_password' => 'required|string|min:8|confirmed',
+        $pin = $this->generatePin();
+
+        $this->customer->update([
+            'password' => Hash::make($pin),
+            'portal_enabled' => true,
         ]);
 
-        $this->customer->update(['password' => Hash::make($this->portal_password)]);
+        $company = Auth::user()->company ?? Auth::user()->employee->company ?? null;
 
-        $this->reset(['portal_password', 'portal_password_confirmation']);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight portal password set.']);
+        Mail::to($this->customer->email)->send(
+            new CustomerPortalCredentialsMail($this->customer, $company, $pin, route('customer.login'))
+        );
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Portal PIN generated and emailed to {$this->customer->email}. PIN: {$pin}",
+        ]);
+    }
+
+    public function toggleActivation()
+    {
+        $this->customer->update(['portal_enabled' => ! $this->customer->portal_enabled]);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Portal access ' . ($this->customer->portal_enabled ? 'activated.' : 'disabled.'),
+        ]);
     }
 
     public function render()

@@ -37,11 +37,9 @@ use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripDocument;
 use App\Models\TripTransportOrder;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
@@ -366,34 +364,8 @@ class Create extends Component
         }
     }
 
-    public function generatePIN($digits = 4){
-        $i = 0; //counter
-        $pin = ""; //our default pin is blank.
-        while($i < $digits){
-            //generate a random number between 0 and 9.
-            $pin .= mt_rand(0, 9);
-            $i++;
-        }
-        return $pin;
-    }
-
     public function storeCustomer()
     {
-
-            $pin = $this->generatePIN();
-
-            $user = new User;
-            $user->name = $this->customer_name;
-            $user->category = 'customer';
-            $user->email = $this->email;
-            $user->password = Hash::make($pin);
-            $user->save();
-
-            if (isset(Auth::user()->company)) {
-                $company = Auth::user()->company;
-            }elseif (isset(Auth::user()->employee->company)) {
-                $company = Auth::user()->employee->company;
-            }
 
             $customer = new Customer;
             $customer->customer_number = $this->customerNumber();

@@ -41,6 +41,8 @@ class Index extends Component
     public $last_payment;
     public $payment_filter;
     public $movement;
+    public $filter_customer_id;
+    public $filter_vendor_id;
     public $invoice_products;
     public $source_destination;
     public $invoice;
@@ -832,6 +834,14 @@ class Index extends Component
                 ->orWhereHas('customer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
                 ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
             });
+        }
+
+        if ($this->filter_customer_id != "") {
+            $query->where('customer_id', $this->filter_customer_id);
+        }
+
+        if ($this->filter_vendor_id != "") {
+            $query->where('vendor_id', $this->filter_vendor_id);
         }
 
         $payments = $query->orderBy($this->payment_filter, 'desc')->paginate(10);

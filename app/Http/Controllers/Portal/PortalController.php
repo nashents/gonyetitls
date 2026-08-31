@@ -13,6 +13,11 @@ class PortalController extends Controller
         return view('portal.dashboard');
     }
 
+    public function trips()
+    {
+        return view('portal.trips');
+    }
+
     public function jobShow(FreightJob $job)
     {
         abort_unless($job->customer_id === Auth::guard('customer')->id(), 404);

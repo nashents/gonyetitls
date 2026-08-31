@@ -11,6 +11,8 @@ use App\Models\Trip;
 use App\Models\TripStatus;
 use App\Models\TripTransportOrder;
 use App\Models\Vehicle;
+use App\Services\Cartrack\CartrackSyncService;
+use App\Services\FanTracker\FanTrackerSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -365,6 +367,8 @@ class TripStatusManager extends Component
                 ->findOrFail($this->trip_id);
 
             if ($this->isCustomUpdate) {
+                $truckMileage = $this->fetchTruckMileage($trip);
+
                 TripStatus::create([
                     'user_id'          => Auth::id(),
                     'trip_id'          => $trip->id,
@@ -372,6 +376,8 @@ class TripStatusManager extends Component
                     'date'             => $this->trip_status_date,
                     'description'      => $this->trip_status_description,
                     'is_custom_update' => true,
+                    'truck_mileage'    => $truckMileage['mileage'],
+                    'mileage_source'   => $truckMileage['source'],
                 ]);
 
                 return;
@@ -397,6 +403,8 @@ class TripStatusManager extends Component
 
             $this->updateAssetMileage($trip);
 
+            $truckMileage = $this->fetchTruckMileage($trip);
+
             TripStatus::create([
                 'user_id'          => Auth::id(),
                 'trip_id'          => $trip->id,
@@ -404,6 +412,8 @@ class TripStatusManager extends Component
                 'date'             => $this->trip_status_date,
                 'description'      => $this->trip_status_description,
                 'is_custom_update' => false,
+                'truck_mileage'    => $truckMileage['mileage'],
+                'mileage_source'   => $truckMileage['source'],
             ]);
 
             if (in_array($this->selectedStatus, ['Loaded', 'Offloaded'])) {
@@ -784,6 +794,34 @@ class TripStatusManager extends Component
             $asset->mileage = $this->ending_mileage;
             $asset->save();
         }
+    }
+
+    /**
+     * Live truck mileage at the moment of the status update, pulled from
+     * whichever tracking integration (Cartrack, then FanTracker) is mapped
+     * to the trip's truck; falls back to the asset's stored mileage.
+     */
+    private function fetchTruckMileage(Trip $trip): array
+    {
+        $asset = $trip->horse_id
+            ? Horse::find($trip->horse_id)
+            : ($trip->vehicle_id ? Vehicle::find($trip->vehicle_id) : null);
+
+        if (! $asset) {
+            return ['mileage' => null, 'source' => null];
+        }
+
+        $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($asset);
+        if (! empty($cartrackSnapshot['mileage'])) {
+            return ['mileage' => $cartrackSnapshot['mileage'], 'source' => 'cartrack'];
+        }
+
+        $fanTrackerSnapshot = app(FanTrackerSyncService::class)->currentSnapshot($asset);
+        if (! empty($fanTrackerSnapshot['mileage'])) {
+            return ['mileage' => $fanTrackerSnapshot['mileage'], 'source' => 'fantracker'];
+        }
+
+        return ['mileage' => $asset->mileage, 'source' => null];
     }
 
     private function releaseAssets(Trip $trip): void

@@ -22,9 +22,10 @@ class LoginController extends Controller
         ]);
 
         $credentials = $request->only('email', 'password');
+        $credentials['portal_enabled'] = true;
 
         if (! Auth::guard('customer')->attempt($credentials)) {
-            Session::flash('error', 'Failed to authenticate. Check your email and password.');
+            Session::flash('error', 'Failed to authenticate. Check your email and PIN, or contact us if your access has been disabled.');
             return back()->withInput($request->only('email'));
         }
 

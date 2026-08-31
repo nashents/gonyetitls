@@ -24,6 +24,8 @@ class TripStatus extends Model implements Auditable
         'date',
         'description',
         'is_custom_update',
+        'truck_mileage',
+        'mileage_source',
     ];
 
     protected $casts = [

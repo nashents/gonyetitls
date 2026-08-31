@@ -57,25 +57,53 @@
                                     </div>
                                 </div>
                                 <div class="panel-title" style="margin-left:-15px;" >
-                                    <div class="col-lg-3">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">Movement</span>
-                                            <select wire:model.debounce.300ms="movement" class="form-control" aria-label="..." >
-                                            <option value="all">All Payments</option>
-                                            <option value="Debit">Debit</option>
-                                            <option value="Credit">Credit</option>
-                                            </select>
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Movement</span>
+                                                <select wire:model.debounce.300ms="movement" class="form-control" aria-label="..." >
+                                                <option value="all">All Payments</option>
+                                                <option value="Debit">Debit</option>
+                                                <option value="Credit">Credit</option>
+                                                </select>
+                                            </div>
                                         </div>
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Customer</span>
+                                                <select wire:model.debounce.300ms="filter_customer_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Customer</option>
+                                                @foreach ($customers as $customer)
+                                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                                @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Vendor</span>
+                                                <select wire:model.debounce.300ms="filter_vendor_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Vendor</option>
+                                                @foreach ($vendors as $vendor)
+                                                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        {{-- <a href="#" wire:click="exportPaymentsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                        <a href="#" wire:click="exportPaymentsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                        <a href="#" wire:click="exportPaymentsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>  --}}
                                     </div>
-                                    {{-- <a href="#" wire:click="exportPaymentsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                    <a href="#" wire:click="exportPaymentsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                    <a href="#" wire:click="exportPaymentsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>  --}}
                                 </div>
                                 <div class="panel-title" style="margin-left:-15px;" >
-                                    <div class="col-lg-3">
-                                        <a href="" data-toggle="modal" data-target="#paymentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Record payment</a>
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                            <a href="" data-toggle="modal" data-target="#paymentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Record payment</a>
+                                        </div>
                                         @if ($this->unpostedPaymentsCount > 0)
-                                            <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedPaymentsCount }} payment(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every unposted payment to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedPaymentsCount }})</a>
+                                            <div class="col-lg-4">
+                                                <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedPaymentsCount }} payment(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every unposted payment to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedPaymentsCount }})</a>
+                                            </div>
                                         @endif
                                     </div>
                                 </div>

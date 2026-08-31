@@ -20,6 +20,10 @@
             <span class="brand"><i class="fa fa-ship"></i> Freight Portal</span>
             @auth('customer')
                 <span>
+                    <a href="{{ route('customer.dashboard') }}">My Jobs</a>
+                    &nbsp;|&nbsp;
+                    <a href="{{ route('customer.trips') }}">My Trips</a>
+                    &nbsp;|&nbsp;
                     {{ Auth::guard('customer')->user()->name }}
                     &nbsp;&mdash;&nbsp;
                     <a href="{{ route('customer.logout') }}">Logout</a>

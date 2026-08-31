@@ -25,55 +25,42 @@
             <div class="panel border-primary no-border border-3-top">
                 <div class="panel-heading">
                     <div class="panel-title">
-                        <h5>Freight Portal Access</h5>
+                        <h5>Portal Access</h5>
                     </div>
                 </div>
                 <div class="panel-body">
-                    <small class="color-gray">Separate from the "Account Credentials" passcode below - this is the login for the freight tracking portal.</small>
-                    <form wire:submit.prevent="setPortalPassword" class="mt-10">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="text" class="form-control" value="{{ $customer->email }}" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>New Password</label>
-                            <input type="password" class="form-control" wire:model.defer="portal_password">
-                            @error('portal_password') <span class="text-danger error">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="form-group">
-                            <label>Confirm Password</label>
-                            <input type="password" class="form-control" wire:model.defer="portal_password_confirmation">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i> Set Portal Password</button>
-                    </form>
-                </div>
-            </div>
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>Email</th>
+                                <td><small class="color-success"><i class="fa fa-arrow-right"></i> {{ $customer->email }}</small></td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td>
+                                    <span class="label {{ $customer->portal_enabled ? 'label-success' : 'label-default' }} label-wide">
+                                        {{ $customer->portal_enabled ? 'Active' : 'Disabled' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-            <div class="panel border-primary no-border border-3-top">
-                <div class="panel-heading">
-                    <div class="panel-title">
-                        <h5>Account Credentials</h5>
-                    </div>
-                </div>
-                <div class="panel-body">
-                    <div class="row">
-                        <table class="table table-striped">
-                            <tbody>
-                                <tr>
-                                    <th>Email</th>
-                                    <td>
-                                        <small class="color-success"><i class="fa fa-arrow-right"></i>{{$customer->email}}</small>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Passcode</th>
-                                    <td>
-                                        <small class="color-success"><i class="fa fa-arrow-right"></i> {{$customer->pin}}</small>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <a href="#" wire:click.prevent="toggleActivation" class="btn btn-sm {{ $customer->portal_enabled ? 'btn-warning' : 'btn-success' }} btn-block">
+                        <i class="fa fa-power-off"></i> {{ $customer->portal_enabled ? 'Disable Portal Access' : 'Activate Portal Access' }}
+                    </a>
+
+                    <a href="#" wire:click.prevent="generateAndSendCredentials" wire:confirm="Generate a new PIN and email it to {{ $customer->email }}?" class="btn btn-sm btn-primary btn-block mt-10">
+                        <i class="fa fa-envelope"></i> Generate &amp; Send via Email
+                    </a>
+
+                    <button type="button" class="btn btn-sm btn-default btn-block mt-10" disabled title="Not configured yet">
+                        <i class="fa fa-whatsapp"></i> Send via WhatsApp
+                    </button>
+
+                    @if ($customer->pin)
+                        <small class="color-gray">Legacy trip-tracking passcode ({{ $customer->pin }}) still works separately and is unaffected by the above.</small>
+                    @endif
                 </div>
             </div>
             <!-- /.panel -->

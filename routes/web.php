@@ -32,6 +32,7 @@ Route::get('/portal/logout', 'Portal\LoginController@logout')->name('customer.lo
 Route::group(['middleware' => 'auth:customer', 'prefix' => 'portal', 'as' => 'customer.'], function () {
     Route::get('/', 'Portal\PortalController@dashboard')->name('dashboard');
     Route::get('/jobs/{job}', 'Portal\PortalController@jobShow')->name('jobs.show');
+    Route::get('/trips', 'Portal\PortalController@trips')->name('trips');
 });
 
 

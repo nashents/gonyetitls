@@ -3,12 +3,10 @@
 namespace App\Http\Livewire\Customers;
 
 use App\Exports\CustomersExport;
-use App\Mail\AccountCreationMail;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Document;
-use App\Models\User;
 use App\Services\SageIntacctService;
 use App\Services\Sage\SageIntegration;
 use Carbon\Carbon;
@@ -16,9 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Ixudra\Curl\Facades\Curl;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -185,18 +181,6 @@ class Index extends Component
         'name' => 'required|unique:customers,name,NULL,id,deleted_at,NULL|string|min:2',
     ];
 
-    public function generatePIN($digits = 4){
-        $i = 0; //counter
-        $pin = ""; //our default pin is blank.
-        while($i < $digits){
-            //generate a random number between 0 and 9.
-            $pin .= mt_rand(0, 9);
-            $i++;
-        }
-        return $pin;
-    }
-
-
     public function store(){
 
        $this->state = "create";
@@ -204,34 +188,15 @@ class Index extends Component
 
        DB::transaction(function () use (&$customer) {
 
-        $pin = $this->generatePIN();
-
-        $user = new User;
-        $user->name = $this->name;
-        $user->category = 'customer';
-        $user->email = $this->email;
-        $user->password = Hash::make($pin);
-        $user->save();
-
-        if (isset(Auth::user()->company)) {
-            $company = Auth::user()->company;
-        }elseif (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }
-
-        // Mail::to($this->email)->send(new AccountCreationMail($user, $company,$pin));
-
         $customer = new Customer;
         $customer->creator_id = Auth::user()->id;
         $customer->company_id = Auth::user()->employee->company->id;
-        $customer->user_id = $user->id;
         $customer->currency_id = $this->currency_id ? $this->currency_id : NULL;
         $customer->name = $this->name;
         $customer->custom_ref = $this->custom_ref;
         $customer->initials = $this->initials;
         $customer->customer_number = $this->customerNumber();
         $customer->email = $this->email;
-        $customer->pin = $pin;
         $customer->phonenumber = $this->phonenumber;
         $customer->vat_number = $this->vat_number;
         $customer->tin_number = $this->tin_number;

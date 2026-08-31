@@ -119,6 +119,7 @@ class Customer extends Authenticatable implements Auditable
         'status',
         'street_address',
         'password',
+        'portal_enabled',
         // Sage Intacct sync state (see SyncsToSageIntacct trait)
         'sage_intacct_id',
         'sage_sync_status',
@@ -129,5 +130,9 @@ class Customer extends Authenticatable implements Auditable
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    protected $casts = [
+        'portal_enabled' => 'boolean',
     ];
 }
