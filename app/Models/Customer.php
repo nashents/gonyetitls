@@ -2,15 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Models\Concerns\SyncsToSageIntacct;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Customer extends Model implements Auditable
+/**
+ * Authenticatable so this can log into the freight customer portal
+ * (Phase 10) via the 'customer' guard. This is unrelated to the
+ * pre-existing User.category='customer' trip-portal login (which uses
+ * customers.pin, not customers.password) - that legacy system is left
+ * completely untouched; a Customer may now have both logins.
+ */
+class Customer extends Authenticatable implements Auditable
 {
-    use HasFactory, SoftDeletes, SyncsToSageIntacct;
+    use HasFactory, SoftDeletes, SyncsToSageIntacct, Notifiable;
 
     use \OwenIt\Auditing\Auditable;
 
@@ -92,6 +100,9 @@ class Customer extends Model implements Auditable
     public function trip_returns(){
         return $this->hasMany('App\Models\TripReturn');
     }
+    public function freight_jobs(){
+        return $this->hasMany('App\Models\FreightJob');
+    }
 
     protected $fillable = [
         'user_id',
@@ -107,10 +118,16 @@ class Customer extends Model implements Auditable
         'suburb',
         'status',
         'street_address',
+        'password',
         // Sage Intacct sync state (see SyncsToSageIntacct trait)
         'sage_intacct_id',
         'sage_sync_status',
         'sage_last_synced_at',
         'sage_sync_error',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 }

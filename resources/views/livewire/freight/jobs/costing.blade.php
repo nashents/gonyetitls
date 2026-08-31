@@ -61,10 +61,11 @@
 
     <h6 class="underline mt-20 mb-10"><strong>Freight Costs (Supplier)</strong></h6>
     <a href="#" wire:click.prevent="showAddCost" class="btn btn-xs btn-info mb-10" data-toggle="modal" data-target="#costModal{{ $job->id }}"><i class="fa fa-plus"></i> Add Cost</a>
+    <a href="#" wire:click.prevent="generateBills" wire:confirm="Generate Bills for all verified/approved, not-yet-billed cost lines?" class="btn btn-xs btn-success mb-10"><i class="fa fa-file-invoice-dollar"></i> Generate Bills from Approved Costs</a>
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
-                <th>Charge Type</th><th>Supplier</th><th>Amount</th><th>Verification</th><th></th>
+                <th>Charge Type</th><th>Supplier</th><th>Amount</th><th>Verification</th><th>Bill</th><th></th>
             </tr>
         </thead>
         <tbody>
@@ -74,6 +75,7 @@
                     <td>{{ $cost->vendor?->name }}</td>
                     <td>{{ $cost->currency?->symbol }}{{ number_format($cost->amount, 2) }}</td>
                     <td><span class="label label-info label-wide">{{ $verificationStatuses[$cost->verification_status] ?? $cost->verification_status }}</span></td>
+                    <td>{{ $cost->bill?->bill_number ?? '—' }}</td>
                     <td>
                         <a href="#" wire:click.prevent="toggleExpandCost({{ $cost->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>
                         <a href="#" wire:click.prevent="editCost({{ $cost->id }})" class="btn btn-xs btn-default" data-toggle="modal" data-target="#costModal{{ $job->id }}"><i class="fa fa-edit"></i></a>
@@ -82,7 +84,7 @@
                 </tr>
                 @if ($expanded_cost_id == $cost->id)
                     <tr>
-                        <td colspan="5" style="background-color:#f9f9f9;">
+                        <td colspan="6" style="background-color:#f9f9f9;">
                             <div class="btn-group mb-10">
                                 @foreach (['pending_verification','verified','disputed','approved','posted','rejected'] as $statusOption)
                                     <a href="#" wire:click.prevent="transitionCost({{ $cost->id }}, '{{ $statusOption }}')" class="btn btn-xs btn-default">{{ $verificationStatuses[$statusOption] }}</a>
@@ -102,17 +104,18 @@
                     </tr>
                 @endif
             @empty
-                <tr><td colspan="5" class="text-center">No cost lines recorded for this job yet.</td></tr>
+                <tr><td colspan="6" class="text-center">No cost lines recorded for this job yet.</td></tr>
             @endforelse
         </tbody>
     </table>
 
     <h6 class="underline mt-20 mb-10"><strong>Freight Charges (Customer)</strong></h6>
     <a href="#" wire:click.prevent="showAddCharge" class="btn btn-xs btn-info mb-10" data-toggle="modal" data-target="#chargeModal{{ $job->id }}"><i class="fa fa-plus"></i> Add Charge</a>
+    <a href="#" wire:click.prevent="generateInvoices" wire:confirm="Generate Invoices for all approved, not-yet-invoiced charge lines?" class="btn btn-xs btn-success mb-10"><i class="fa fa-file-invoice-dollar"></i> Generate Invoices from Approved Charges</a>
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
-                <th>Charge Type</th><th>Customer</th><th>Amount</th><th>Status</th><th></th>
+                <th>Charge Type</th><th>Customer</th><th>Amount</th><th>Status</th><th>Invoice</th><th></th>
             </tr>
         </thead>
         <tbody>
@@ -122,6 +125,7 @@
                     <td>{{ $charge->customer?->name }}</td>
                     <td>{{ $charge->currency?->symbol }}{{ number_format($charge->amount, 2) }}</td>
                     <td><span class="label label-info label-wide">{{ $chargeStatuses[$charge->status] ?? $charge->status }}</span></td>
+                    <td>{{ $charge->invoice?->invoice_number ?? '—' }}</td>
                     <td>
                         <a href="#" wire:click.prevent="toggleExpandCharge({{ $charge->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>
                         <a href="#" wire:click.prevent="editCharge({{ $charge->id }})" class="btn btn-xs btn-default" data-toggle="modal" data-target="#chargeModal{{ $job->id }}"><i class="fa fa-edit"></i></a>
@@ -130,7 +134,7 @@
                 </tr>
                 @if ($expanded_charge_id == $charge->id)
                     <tr>
-                        <td colspan="5" style="background-color:#f9f9f9;">
+                        <td colspan="6" style="background-color:#f9f9f9;">
                             <div class="btn-group mb-10">
                                 @foreach (['draft','approved','invoiced','cancelled'] as $statusOption)
                                     <a href="#" wire:click.prevent="transitionCharge({{ $charge->id }}, '{{ $statusOption }}')" class="btn btn-xs btn-default">{{ $chargeStatuses[$statusOption] }}</a>
@@ -142,7 +146,7 @@
                     </tr>
                 @endif
             @empty
-                <tr><td colspan="5" class="text-center">No charge lines recorded for this job yet.</td></tr>
+                <tr><td colspan="6" class="text-center">No charge lines recorded for this job yet.</td></tr>
             @endforelse
         </tbody>
     </table>

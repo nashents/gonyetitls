@@ -159,6 +159,12 @@ class Vehicle extends Model implements Auditable
                     ->where('entity_type', 'vehicle_tracker');
     }
 
+    /** Pinpoint tracker mapping for this vehicle (drives live mileage/position pulls). */
+    public function pinpointMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'vehicle_pinpoint');
+    }
+
     protected $fillable=[
     'user_id',
     'chasis_number',

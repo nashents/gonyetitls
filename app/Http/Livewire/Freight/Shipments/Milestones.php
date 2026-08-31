@@ -15,6 +15,7 @@ class Milestones extends Component
     public $milestone_code;
     public $milestone_name;
     public $planned_at;
+    public $is_customer_visible = true;
 
     public function mount($jobId)
     {
@@ -47,9 +48,11 @@ class Milestones extends Component
             'milestone_code' => $this->milestone_code,
             'milestone_name' => $this->milestone_name,
             'planned_at' => $this->planned_at ?: null,
+            'is_customer_visible' => $this->is_customer_visible,
         ]);
 
         $this->reset(['shipment_id', 'milestone_code', 'milestone_name', 'planned_at']);
+        $this->is_customer_visible = true;
         $this->refreshJob();
         $this->dispatchBrowserEvent('hide-addMilestoneModal-' . $this->job->id);
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Milestone recorded.']);
@@ -62,6 +65,14 @@ class Milestones extends Component
 
         $this->refreshJob();
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Milestone marked complete.']);
+    }
+
+    public function toggleVisibility($milestoneId)
+    {
+        $milestone = ShipmentMilestone::findOrFail($milestoneId);
+        $milestone->update(['is_customer_visible' => ! $milestone->is_customer_visible]);
+
+        $this->refreshJob();
     }
 
     public function render()

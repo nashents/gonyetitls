@@ -84,18 +84,51 @@ class InvoiceJournalService
                 return $entry;
             }
 
-            // ── CR Sales (subtotal before tax and discounts) ─────────────
-            $entry->journal_entry_lines()->create([
-                'account_id'      => $salesAccount->id,
-                'customer_id'     => $invoice->customer_id,
-                'debit'           => 0,
-                'credit'          => $invoice->subtotal,
-                'exchange_debit'  => 0,
-                'exchange_credit' => $invoice->subtotal * $rate,
-                'currency_id'     => $invoice->currency_id,
-                'exchange_rate'   => $rate,
-                'description'     => "Sales - Invoice {$invoice->invoice_number}",
-            ]);
+            // ── CR Revenue (subtotal before tax and discounts), grouped per
+            // invoice_items.account_id — falls back to the Sales control
+            // account for items with no account_id (every invoice today),
+            // so this is a no-behavior-change for existing invoices while
+            // letting a caller (e.g. freight charge lines) route revenue to
+            // a specific account per line. Mirrors BillJournalService's
+            // existing per-line account_id posting on the debit side. ────
+            $revenueGroups = $invoice->invoice_items()
+                ->selectRaw('account_id, SUM(subtotal) as total_subtotal')
+                ->groupBy('account_id')
+                ->get();
+
+            if ($revenueGroups->isEmpty()) {
+                // No line items at all (legacy/manual header-only invoices) -
+                // fall back to the original single-line behavior.
+                $entry->journal_entry_lines()->create([
+                    'account_id'      => $salesAccount->id,
+                    'customer_id'     => $invoice->customer_id,
+                    'debit'           => 0,
+                    'credit'          => $invoice->subtotal,
+                    'exchange_debit'  => 0,
+                    'exchange_credit' => $invoice->subtotal * $rate,
+                    'currency_id'     => $invoice->currency_id,
+                    'exchange_rate'   => $rate,
+                    'description'     => "Sales - Invoice {$invoice->invoice_number}",
+                ]);
+            } else {
+                foreach ($revenueGroups as $group) {
+                    $creditAccount = $group->account_id ? Account::find($group->account_id) : null;
+                    $creditAccount = $creditAccount ?? $salesAccount;
+                    $groupSubtotal = (float) $group->total_subtotal;
+
+                    $entry->journal_entry_lines()->create([
+                        'account_id'      => $creditAccount->id,
+                        'customer_id'     => $invoice->customer_id,
+                        'debit'           => 0,
+                        'credit'          => $groupSubtotal,
+                        'exchange_debit'  => 0,
+                        'exchange_credit' => $groupSubtotal * $rate,
+                        'currency_id'     => $invoice->currency_id,
+                        'exchange_rate'   => $rate,
+                        'description'     => "{$creditAccount->name} - Invoice {$invoice->invoice_number}",
+                    ]);
+                }
+            }
 
             // ── CR VAT Payable (tax_amount) ──────────────────────────────
             if ($invoice->tax_amount > 0) {

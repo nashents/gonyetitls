@@ -12,6 +12,17 @@ class ShipmentLeg extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    /**
+     * Ordered leg lifecycle stages, driving the "Advance" UI action and
+     * doubling as each stage's milestone_code. 'cancelled'/'on_hold' are
+     * deliberate side-branches, not part of the linear progression.
+     */
+    const LIFECYCLE_STAGES = [
+        'planned' => 'Planned',
+        'in_progress' => 'In Progress',
+        'completed' => 'Completed',
+    ];
+
     public function shipment(){
         return $this->belongsTo('App\Models\Shipment');
     }
@@ -23,6 +34,27 @@ class ShipmentLeg extends Model implements Auditable
     }
     public function destination_location(){
         return $this->belongsTo('App\Models\Location', 'destination_location_id');
+    }
+    public function trip(){
+        return $this->belongsTo('App\Models\Trip');
+    }
+    public function milestones(){
+        return $this->hasMany('App\Models\ShipmentMilestone');
+    }
+    public function documents(){
+        return $this->hasMany('App\Models\Document');
+    }
+
+    public function nextLifecycleStage(): ?string
+    {
+        $codes = array_keys(self::LIFECYCLE_STAGES);
+        $currentIndex = array_search($this->status, $codes, true);
+
+        if ($currentIndex === false || !isset($codes[$currentIndex + 1])) {
+            return null;
+        }
+
+        return $codes[$currentIndex + 1];
     }
 
     protected $casts = [
@@ -41,6 +73,7 @@ class ShipmentLeg extends Model implements Auditable
         'carrier_vendor_id',
         'carrier_name',
         'carrier_reference',
+        'trip_id',
         'origin_location_id',
         'destination_location_id',
         'planned_departure',

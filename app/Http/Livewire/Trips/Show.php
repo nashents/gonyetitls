@@ -243,6 +243,7 @@ class Show extends Component
         'transport_orders.trip_destinations.offloading_point',
         'trip_transport_orders.transport_order.customer',
         'trip_transport_orders.transport_order.cargo',
+        'shipment_leg.shipment.freight_job',
         ])->findOrFail($id);
     }
 

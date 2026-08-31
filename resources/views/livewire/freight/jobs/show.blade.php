@@ -48,6 +48,7 @@
                 <li role="presentation"><a href="#cargo" aria-controls="cargo" role="tab" data-toggle="tab">Cargo</a></li>
                 <li role="presentation"><a href="#parties" aria-controls="parties" role="tab" data-toggle="tab">Parties</a></li>
                 <li role="presentation"><a href="#containers" aria-controls="containers" role="tab" data-toggle="tab">Containers</a></li>
+                <li role="presentation"><a href="#transport" aria-controls="transport" role="tab" data-toggle="tab">Transport</a></li>
                 <li role="presentation"><a href="#transport-documents" aria-controls="transport-documents" role="tab" data-toggle="tab">Transport Documents</a></li>
                 <li role="presentation"><a href="#customs" aria-controls="customs" role="tab" data-toggle="tab">Customs</a></li>
                 <li role="presentation"><a href="#costing" aria-controls="costing" role="tab" data-toggle="tab">Costing</a></li>
@@ -156,33 +157,6 @@
                                     </tbody>
                                 </table>
 
-                                @if ($shipment->legs->count())
-                                    <h6 class="underline mt-20 mb-10"><strong>Legs</strong></h6>
-                                    <table class="table table-striped table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Mode</th>
-                                                <th>Carrier</th>
-                                                <th>Origin</th>
-                                                <th>Destination</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($shipment->legs as $leg)
-                                                <tr>
-                                                    <td>{{ $leg->sequence }}</td>
-                                                    <td>{{ ucfirst($leg->transport_mode ?? '') }}</td>
-                                                    <td>{{ $leg->carrier_vendor?->name ?? $leg->carrier_name }}</td>
-                                                    <td>{{ $leg->origin_location?->name }}</td>
-                                                    <td>{{ $leg->destination_location?->name }}</td>
-                                                    <td>{{ ucwords(str_replace('_', ' ', $leg->status)) }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                @endif
                             </div>
                         </div>
                     @empty
@@ -254,6 +228,15 @@
                     @forelse ($job->shipments as $shipment)
                         <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
                         @livewire('freight.shipments.containers', ['shipmentId' => $shipment->id], key('containers-'.$shipment->id))
+                    @empty
+                        <p class="text-center">No shipments recorded for this job yet.</p>
+                    @endforelse
+                </div>
+
+                <div role="tabpanel" class="tab-pane" id="transport">
+                    @forelse ($job->shipments as $shipment)
+                        <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
+                        @livewire('freight.shipments.legs', ['shipmentId' => $shipment->id], key('legs-'.$shipment->id))
                     @empty
                         <p class="text-center">No shipments recorded for this job yet.</p>
                     @endforelse

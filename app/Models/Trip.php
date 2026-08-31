@@ -331,6 +331,11 @@ class Trip extends Model implements Auditable, EditAuthorizable
         return $this->hasOne(DeliveryNote::class)
                     ->whereNull('trip_transport_order_id');
     }
+
+    public function shipment_leg()
+    {
+        return $this->hasOne(\App\Models\ShipmentLeg::class, 'trip_id');
+    }
     public function trip_expenses(){
         return $this->hasMany('App\Models\TripExpense');
     }

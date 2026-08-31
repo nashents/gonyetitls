@@ -69,6 +69,23 @@ class IntegrationProviderSeeder extends Seeder
                 'default_config'       => json_encode(['session_ttl_hours' => 12, 'timeout' => 30]),
                 'is_active'            => true,
             ],
+            [
+                'key'                  => 'pinpoint',
+                'name'                 => 'Pinpoint',
+                'type'                 => 'tracking',
+                'driver'               => 'App\\Integrations\\Pinpoint\\PinpointDriver',
+                // Pinpoint (trackingpinpoint.com) is a white-labelled GPS-tracking
+                // cloud platform. Auth is a single static API token issued per-account
+                // under Settings -> API Tokens on the tenant's own portal (docs:
+                // trackingpinpoint.com/docs/Developers/API) — sent as a "token" HTTP
+                // header on every call, no session/hash refresh needed. base_url is
+                // the tenant's own portal domain (e.g. https://track.trackingpinpoint.com),
+                // not a shared public API root. Per the docs, API access is opt-in and
+                // must be enabled by Pinpoint support before a token can be issued.
+                'required_credentials' => json_encode(['base_url', 'token']),
+                'default_config'       => json_encode(['timeout' => 30]),
+                'is_active'            => true,
+            ],
 
             // --- ACCOUNTING ---
             [

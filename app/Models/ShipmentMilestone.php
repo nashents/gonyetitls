@@ -31,10 +31,16 @@ class ShipmentMilestone extends Model implements Auditable
         return $this->belongsTo('App\Models\User', 'created_by');
     }
 
+    public function scopeCustomerVisible($query)
+    {
+        return $query->where('is_customer_visible', true);
+    }
+
     protected $casts = [
         'planned_at' => 'datetime',
         'estimated_at' => 'datetime',
         'actual_at' => 'datetime',
+        'is_customer_visible' => 'boolean',
     ];
 
     protected $fillable = [
@@ -54,6 +60,7 @@ class ShipmentMilestone extends Model implements Auditable
         'source_system',
         'external_reference',
         'notes',
+        'is_customer_visible',
         'created_by',
     ];
 }

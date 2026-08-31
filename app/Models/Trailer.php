@@ -153,6 +153,12 @@ class Trailer extends Model implements Auditable
                     ->where('entity_type', 'trailer_tracker');
     }
 
+    /** Pinpoint tracker mapping for this trailer (drives live mileage/position pulls). */
+    public function pinpointMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'trailer_pinpoint');
+    }
+
     protected $fillable = [
         'user_id',
         'trailer_type_id',

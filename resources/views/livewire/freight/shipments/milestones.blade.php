@@ -14,6 +14,7 @@
                 <th>Status</th>
                 <th>Planned</th>
                 <th>Actual</th>
+                <th>Customer Visible</th>
                 <th></th>
             </tr>
         </thead>
@@ -33,6 +34,11 @@
                     <td>{{ $milestone->planned_at?->format('d M Y H:i') }}</td>
                     <td>{{ $milestone->actual_at?->format('d M Y H:i') }}</td>
                     <td>
+                        <a href="#" wire:click.prevent="toggleVisibility({{ $milestone->id }})" title="{{ $milestone->is_customer_visible ? 'Visible to customer - click to hide' : 'Hidden from customer - click to show' }}">
+                            <i class="fa {{ $milestone->is_customer_visible ? 'fa-eye' : 'fa-eye-slash' }}"></i>
+                        </a>
+                    </td>
+                    <td>
                         @if ($milestone->status != 'completed')
                             <a href="#" wire:click.prevent="complete({{ $milestone->id }})" class="btn btn-xs btn-success"><i class="fa fa-check"></i> Complete</a>
                         @endif
@@ -40,7 +46,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="text-center">No milestones recorded for this job yet.</td>
+                    <td colspan="8" class="text-center">No milestones recorded for this job yet.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -79,6 +85,9 @@
                         <div class="form-group">
                             <label>Planned Date</label>
                             <input type="datetime-local" class="form-control" wire:model="planned_at">
+                        </div>
+                        <div class="checkbox">
+                            <label><input type="checkbox" wire:model="is_customer_visible"> Visible to customer in the freight portal</label>
                         </div>
                     </div>
                     <div class="modal-footer">

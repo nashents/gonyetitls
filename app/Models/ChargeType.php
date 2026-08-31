@@ -21,11 +21,19 @@ class ChargeType extends Model implements Auditable
     public function freight_rate_cards(){
         return $this->hasMany('App\Models\FreightRateCard');
     }
+    public function revenue_account(){
+        return $this->belongsTo('App\Models\Account', 'revenue_account_id');
+    }
+    public function expense_account(){
+        return $this->belongsTo('App\Models\Account', 'expense_account_id');
+    }
 
     protected $fillable = [
         'user_id',
         'name',
         'description',
         'is_locked',
+        'revenue_account_id',
+        'expense_account_id',
     ];
 }

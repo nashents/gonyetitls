@@ -32,6 +32,7 @@ use App\Models\Requisition;
 use App\Models\Retread;
 use App\Models\Route;
 use App\Models\Shipment;
+use App\Models\ShipmentLeg;
 use App\Models\ShippingContainer;
 use App\Models\Ticket;
 use App\Models\Trailer;
@@ -98,6 +99,7 @@ class Index extends Component
     public $freight_job;
     public $shipment;
     public $shipping_container;
+    public $shipment_leg;
     public $customs_declaration;
     public $freight_cost;
     public $freight_charge;
@@ -139,6 +141,7 @@ class Index extends Component
     public $freight_job_id;
     public $shipment_id;
     public $shipping_container_id;
+    public $shipment_leg_id;
     public $customs_declaration_id;
     public $freight_cost_id;
     public $freight_charge_id;
@@ -216,6 +219,7 @@ class Index extends Component
             'freight_job' => ['model' => FreightJob::class, 'property' => 'freight_job', 'column' => 'freight_job_id'],
             'shipment' => ['model' => Shipment::class, 'property' => 'shipment', 'column' => 'shipment_id'],
             'shipping_container' => ['model' => ShippingContainer::class, 'property' => 'shipping_container', 'column' => 'shipping_container_id'],
+            'shipment_leg' => ['model' => ShipmentLeg::class, 'property' => 'shipment_leg', 'column' => 'shipment_leg_id'],
             'customs_declaration' => ['model' => CustomsDeclaration::class, 'property' => 'customs_declaration', 'column' => 'customs_declaration_id'],
             'freight_cost' => ['model' => FreightCost::class, 'property' => 'freight_cost', 'column' => 'freight_cost_id'],
             'freight_charge' => ['model' => FreightCharge::class, 'property' => 'freight_charge', 'column' => 'freight_charge_id'],

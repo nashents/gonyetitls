@@ -25,6 +25,33 @@
             <div class="panel border-primary no-border border-3-top">
                 <div class="panel-heading">
                     <div class="panel-title">
+                        <h5>Freight Portal Access</h5>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <small class="color-gray">Separate from the "Account Credentials" passcode below - this is the login for the freight tracking portal.</small>
+                    <form wire:submit.prevent="setPortalPassword" class="mt-10">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="text" class="form-control" value="{{ $customer->email }}" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" class="form-control" wire:model.defer="portal_password">
+                            @error('portal_password') <span class="text-danger error">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" class="form-control" wire:model.defer="portal_password_confirmation">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i> Set Portal Password</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel border-primary no-border border-3-top">
+                <div class="panel-heading">
+                    <div class="panel-title">
                         <h5>Account Credentials</h5>
                     </div>
                 </div>

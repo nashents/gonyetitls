@@ -25,6 +25,15 @@ Route::get('/logout', 'LoginController@logout')->name('logout');
 Route::get('/forgot-password','LoginController@forgotPassword')->name('forgot-password');
 Route::get('/{token}/reset-password/{id}', 'LoginController@resetPassword')->name('reset-password');
 
+Route::get('/portal/login', 'Portal\LoginController@login')->name('customer.login');
+Route::post('/portal/login', 'Portal\LoginController@postLogin')->name('customer.postLogin');
+Route::get('/portal/logout', 'Portal\LoginController@logout')->name('customer.logout');
+
+Route::group(['middleware' => 'auth:customer', 'prefix' => 'portal', 'as' => 'customer.'], function () {
+    Route::get('/', 'Portal\PortalController@dashboard')->name('dashboard');
+    Route::get('/jobs/{job}', 'Portal\PortalController@jobShow')->name('jobs.show');
+});
+
 
 Route::group(['middleware' => 'auth'], function(){
 
@@ -789,6 +798,30 @@ Route::resource('freight/consolidations','ConsolidationController')->parameters(
 Route::get('freight/settings/charge-config','FreightChargeConfigController@index')->name('freight.settings.charge-config');
 Route::get('freight/settings/charge-types','FreightChargeTypesController@index')->name('freight.settings.charge-types');
 Route::get('freight/settings/rate-cards','FreightRateCardsController@index')->name('freight.settings.rate-cards');
+
+Route::get('freight/reports/job-profitability','FreightReportController@jobProfitability')->name('freight.reports.job_profitability');
+Route::get('freight/reports/job-profitability/pdf','FreightReportController@jobProfitabilityPdf')->name('freight.reports.job_profitability.pdf');
+Route::get('freight/reports/job-profitability/print','FreightReportController@jobProfitabilityPrint')->name('freight.reports.job_profitability.print');
+
+Route::get('freight/reports/port-exposure','FreightReportController@portExposure')->name('freight.reports.port_exposure');
+Route::get('freight/reports/port-exposure/pdf','FreightReportController@portExposurePdf')->name('freight.reports.port_exposure.pdf');
+Route::get('freight/reports/port-exposure/print','FreightReportController@portExposurePrint')->name('freight.reports.port_exposure.print');
+
+Route::get('freight/reports/customs-turnaround','FreightReportController@customsTurnaround')->name('freight.reports.customs_turnaround');
+Route::get('freight/reports/customs-turnaround/pdf','FreightReportController@customsTurnaroundPdf')->name('freight.reports.customs_turnaround.pdf');
+Route::get('freight/reports/customs-turnaround/print','FreightReportController@customsTurnaroundPrint')->name('freight.reports.customs_turnaround.print');
+
+Route::get('freight/reports/unbilled-costs','FreightReportController@unbilledCosts')->name('freight.reports.unbilled_costs');
+Route::get('freight/reports/unbilled-costs/pdf','FreightReportController@unbilledCostsPdf')->name('freight.reports.unbilled_costs.pdf');
+Route::get('freight/reports/unbilled-costs/print','FreightReportController@unbilledCostsPrint')->name('freight.reports.unbilled_costs.print');
+
+Route::get('freight/reports/uninvoiced-charges','FreightReportController@uninvoicedCharges')->name('freight.reports.uninvoiced_charges');
+Route::get('freight/reports/uninvoiced-charges/pdf','FreightReportController@uninvoicedChargesPdf')->name('freight.reports.uninvoiced_charges.pdf');
+Route::get('freight/reports/uninvoiced-charges/print','FreightReportController@uninvoicedChargesPrint')->name('freight.reports.uninvoiced_charges.print');
+
+Route::get('freight/imports/rate-cards','FreightImportController@rateCards')->name('freight.imports.rate_cards');
+Route::get('freight/imports/jobs','FreightImportController@jobs')->name('freight.imports.jobs');
+
 Route::resource('borders','BorderController');
 Route::resource('inspection_services','InspectionServiceController');
 Route::resource('checklist_categories','ChecklistCategoryController');

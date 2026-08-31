@@ -10,6 +10,7 @@ use App\Models\FreightCost;
 use App\Models\FreightJob;
 use App\Models\Tax;
 use App\Models\Vendor;
+use App\Services\Freight\FreightAccountingService;
 use App\Services\Freight\FreightChargeService;
 use App\Services\Freight\FreightCostingService;
 use App\Services\Freight\FreightCostService;
@@ -88,10 +89,40 @@ class Costing extends Component
     private function refreshJob()
     {
         $this->job = FreightJob::with([
-            'costs.charge_type', 'costs.vendor', 'costs.currency',
-            'charges.charge_type', 'charges.customer', 'charges.currency',
+            'costs.charge_type', 'costs.vendor', 'costs.currency', 'costs.bill',
+            'charges.charge_type', 'charges.customer', 'charges.currency', 'charges.invoice',
             'shipments.containers', 'shipments.customs_declarations',
         ])->findOrFail($this->job->id);
+    }
+
+    public function generateBills(FreightAccountingService $accounting)
+    {
+        $result = $accounting->generateBillsFromCosts($this->job);
+        $this->refreshJob();
+
+        $message = $result['bills']->count()
+            ? $result['bills']->count() . ' bill(s) generated.'
+            : 'No eligible cost lines to bill.';
+        if (!empty($result['warnings'])) {
+            $message .= ' ' . implode(' ', $result['warnings']);
+        }
+
+        $this->dispatchBrowserEvent('alert', ['type' => $result['bills']->count() ? 'success' : 'error', 'message' => $message]);
+    }
+
+    public function generateInvoices(FreightAccountingService $accounting)
+    {
+        $result = $accounting->generateInvoicesFromCharges($this->job);
+        $this->refreshJob();
+
+        $message = $result['invoices']->count()
+            ? $result['invoices']->count() . ' invoice(s) generated.'
+            : 'No eligible charge lines to invoice.';
+        if (!empty($result['warnings'])) {
+            $message .= ' ' . implode(' ', $result['warnings']);
+        }
+
+        $this->dispatchBrowserEvent('alert', ['type' => $result['invoices']->count() ? 'success' : 'error', 'message' => $message]);
     }
 
     public function saveEstimates(FreightCostingService $costing)

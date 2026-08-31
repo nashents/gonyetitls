@@ -16,7 +16,13 @@
                     <div class="panel">
                         <div class="panel-heading">
                             <div class="panel-title">
-                                <h5>Trip# {{$trip->trip_number}}</h5>
+                                <h5>Trip# {{$trip->trip_number}}
+                                    @if ($trip->shipment_leg)
+                                        <a href="{{ route('freight.jobs.show', $trip->shipment_leg->shipment->freight_job_id) }}" class="label label-info label-wide">
+                                            <i class="fa fa-ship"></i> Freight Job {{ $trip->shipment_leg->shipment->freight_job->job_number }}
+                                        </a>
+                                    @endif
+                                </h5>
                             </div>
                         </div>
                         <div class="panel-body">

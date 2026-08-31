@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Freight\Settings;
 
+use App\Models\Account;
 use App\Models\ChargeType;
 use Livewire\Component;
 
@@ -11,12 +12,30 @@ class ChargeTypes extends Component
     public $name;
     public $description;
     public $is_locked = false;
+    public $revenue_account_id;
+    public $expense_account_id;
+
+    public $revenueAccounts = [];
+    public $expenseAccounts = [];
 
     protected function rules()
     {
         return [
             'name' => 'required|string|max:255',
+            'revenue_account_id' => 'nullable|exists:accounts,id',
+            'expense_account_id' => 'nullable|exists:accounts,id',
         ];
+    }
+
+    public function mount()
+    {
+        $this->revenueAccounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name', 'Income');
+        })->orderBy('name', 'asc')->get();
+
+        $this->expenseAccounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name', 'Expenses');
+        })->orderBy('name', 'asc')->get();
     }
 
     public function edit($id)
@@ -26,6 +45,8 @@ class ChargeTypes extends Component
         $this->name = $chargeType->name;
         $this->description = $chargeType->description;
         $this->is_locked = $chargeType->is_locked;
+        $this->revenue_account_id = $chargeType->revenue_account_id;
+        $this->expense_account_id = $chargeType->expense_account_id;
     }
 
     public function save()
@@ -47,10 +68,12 @@ class ChargeTypes extends Component
                 'name' => $this->name,
                 'description' => $this->description,
                 'is_locked' => $this->is_locked,
+                'revenue_account_id' => $this->revenue_account_id ?: null,
+                'expense_account_id' => $this->expense_account_id ?: null,
             ]
         );
 
-        $this->reset(['charge_type_id', 'name', 'description', 'is_locked']);
+        $this->reset(['charge_type_id', 'name', 'description', 'is_locked', 'revenue_account_id', 'expense_account_id']);
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge type saved.']);
     }
 
@@ -70,7 +93,7 @@ class ChargeTypes extends Component
     public function render()
     {
         return view('livewire.freight.settings.charge-types', [
-            'chargeTypes' => ChargeType::orderBy('name', 'asc')->get(),
+            'chargeTypes' => ChargeType::with(['revenue_account', 'expense_account'])->orderBy('name', 'asc')->get(),
         ]);
     }
 }
