@@ -60,15 +60,25 @@
                             <i class="fa fa-trash color-danger"></i> Delete
                         </a>
                     </li>
-                @elseif ($user->is_admin())
-                    {{-- Completed trips can still be deleted by an admin - the
-                    destroy route now reverses any invoice/bill raised against
-                    it (see TripDeletionService) instead of just detaching it. --}}
+                @else
+                    {{-- Completed trips are locked, but the Edit page itself
+                    handles that via the edit-authorization-request workflow,
+                    so still link to it instead of hiding Edit entirely. --}}
                     <li>
-                        <a href="#" data-toggle="modal" data-target="#tripDeleteModal{{ $trip->id }}">
-                            <i class="fa fa-trash color-danger"></i> Delete
+                        <a href="{{ route('trips.edit', $trip->id) }}">
+                            <i class="fas fa-edit color-success"></i> Edit
                         </a>
                     </li>
+                    @if ($user->is_admin())
+                        {{-- Completed trips can still be deleted by an admin - the
+                        destroy route now reverses any invoice/bill raised against
+                        it (see TripDeletionService) instead of just detaching it. --}}
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#tripDeleteModal{{ $trip->id }}">
+                                <i class="fa fa-trash color-danger"></i> Delete
+                            </a>
+                        </li>
+                    @endif
                 @endif
 
             @endif
