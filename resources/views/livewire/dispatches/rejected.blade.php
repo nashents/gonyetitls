@@ -186,6 +186,9 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                <li><a href="{{route('dispatches.show',$dispatch->id)}}"  ><i class="fas fa-eye color-default"></i> View</a></li>
+                                               @if (!$dispatch->isReversed())
+                                               <li><a href="#" wire:click.prevent="revertToPending({{$dispatch->id}})"><i class="fas fa-undo color-warning"></i> Revert to Pending</a></li>
+                                               @endif
                                             </ul>
                                         </div>
                                         @include('dispatches.delete')
@@ -226,34 +229,26 @@
         <!-- /.container-fluid -->
     </section>
 
-     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="authorizationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="reverseModal" tabindex="-1" role="dialog" aria-labelledby="reverseModalLabel" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-gavel"></i> Authorize Dispatch <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="reverseModalLabel"><i class="fas fa-undo"></i> Revert Dispatch @if($dispatch) #{{$dispatch->dispatch_number}} @endif to Pending <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-                <form wire:submit.prevent="update()" >
+                <form wire:submit.prevent="confirmRevertToPending()" >
                 <div class="modal-body">
+                    <p>This will move the dispatch back to <strong>Pending</strong> so it can be authorized again.</p>
                     <div class="form-group">
-                        <label for="name">Authorize</label>
-                    <select class="form-control" wire:model.debounce.300ms="authorize">
-                        <option value="">Select Decision</option>
-                        <option value="approved">Approve</option>
-                        <option value="rejected">Reject</option>
-                    </select>
-                        @error('authorize') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="form-group">
-                        <label for="comment">Comment</label>
-                        <textarea class="form-control" wire:model.debounce.300ms="comments" cols="30" rows="3"></textarea>
-                        @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <label for="revert_comments">Reason<span class="required" style="color: red">*</span></label>
+                        <textarea class="form-control" wire:model.debounce.300ms="revert_comments" cols="30" rows="3" placeholder="Why is this rejected dispatch being sent back to pending?"></textarea>
+                        @error('revert_comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
 
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        <button type="submit" class="btn bg-warning btn-wide btn-rounded"><i class="fa fa-undo"></i>Revert to Pending</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>

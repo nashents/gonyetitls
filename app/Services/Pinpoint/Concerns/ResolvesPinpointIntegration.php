@@ -60,8 +60,19 @@ trait ResolvesPinpointIntegration
         return $companyId;
     }
 
-    /** Cached GET /api2/trackers result (5 min — labels/plates barely change), shared by matching + the live map. */
-    protected function cachedTrackerList(CompanyIntegration $integration): array
+    /**
+     * Cached GET /api2/trackers result (5 min — labels/plates barely change),
+     * shared by matching + the live map.
+     *
+     * Named distinctly from FanTracker's identical-purpose helper (rather
+     * than relying on `insteadof` where both traits are combined, e.g.
+     * LiveMap) — that trait's `cachedTrackerList` internally calls
+     * `fanTrackerDriverFor()`, so letting it "win" a name collision silently
+     * rebinds this driver-specific call chain to the wrong provider. Confirmed
+     * live 2026-09-01: exactly this caused a PinpointDriver to be built where
+     * a FanTrackerDriver was expected, throwing a TypeError.
+     */
+    protected function cachedPinpointTrackerList(CompanyIntegration $integration): array
     {
         return Cache::remember(
             "pinpoint:trackers:{$integration->id}",
@@ -71,7 +82,7 @@ trait ResolvesPinpointIntegration
     }
 
     /** Tracker rows from a cached tracker-list result, or an empty collection on failure. */
-    protected function trackerRows(array $trackerListResult): Collection
+    protected function pinpointTrackerRows(array $trackerListResult): Collection
     {
         if (! ($trackerListResult['success'] ?? false)) {
             return collect();
@@ -93,7 +104,7 @@ trait ResolvesPinpointIntegration
             "pinpoint:fleet-last:{$integration->id}",
             60,
             function () use ($integration) {
-                $owner = $this->trackerRows($this->cachedTrackerList($integration))
+                $owner = $this->pinpointTrackerRows($this->cachedPinpointTrackerList($integration))
                     ->pluck('belong')
                     ->filter()
                     ->first();

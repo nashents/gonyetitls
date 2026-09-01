@@ -39,8 +39,6 @@ class LiveMap extends Component
     }
     use ResolvesPinpointIntegration {
         ResolvesCartrackIntegration::companyIdForFleetModel insteadof ResolvesPinpointIntegration;
-        ResolvesFanTrackerIntegration::cachedTrackerList insteadof ResolvesPinpointIntegration;
-        ResolvesFanTrackerIntegration::trackerRows insteadof ResolvesPinpointIntegration;
     }
 
     /** Refresh cadence for the browser poll — the underlying fetch is itself cached (see ResolvesCartrackIntegration::cachedFleetSnapshot). */

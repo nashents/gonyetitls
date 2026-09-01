@@ -23,13 +23,54 @@ class Rejected extends Component
     public $dispatch_id;
     public $company;
     public $department;
+    public $revert_comments;
 
     public function mount($department){
         $this->department = $department;
         $this->company = Auth::user()->employee->company;
-     
+
     }
-    
+
+    public function revertToPending($id){
+        $dispatch = Dispatch::find($id);
+        $this->dispatch_id = $dispatch->id;
+        $this->dispatch = $dispatch;
+        $this->revert_comments = null;
+        $this->dispatchBrowserEvent('show-reverseModal');
+    }
+
+    public function confirmRevertToPending(){
+
+        $this->validate([
+            'revert_comments' => 'required|string|min:3',
+        ], [
+            'revert_comments.required' => 'Please explain why this dispatch is being sent back to pending.',
+        ]);
+
+        $dispatch = Dispatch::findOrFail($this->dispatch_id);
+
+        if ($dispatch->authorization !== 'rejected' || $dispatch->isReversed()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Only a plain rejected dispatch can be sent back to pending.',
+            ]);
+            return;
+        }
+
+        $dispatch->authorization = 'pending';
+        $dispatch->authorized_by_id = null;
+        $dispatch->authorization_date = null;
+        $dispatch->authorization_comments = $this->revert_comments;
+        $dispatch->save();
+
+        $this->revert_comments = null;
+        $this->dispatchBrowserEvent('hide-reverseModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Dispatch sent back to Pending.',
+        ]);
+    }
+
     public function render()
     {
          $base = Dispatch::query()->with(['ticket','horse','vehicle','trailer','employee','department','branch'])

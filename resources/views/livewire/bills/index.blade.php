@@ -242,7 +242,7 @@
                                 @if (isset($bills))
                                 <tbody>
                                     @forelse ($bills as $bill)
-                                  <tr>
+                                  <tr wire:key="bill-row-{{ $bill->id }}">
                                     <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="bill-{{ $bill->id }}" value="{{ $bill->id }}"></td>
                                     <td>
                                         {{$bill->bill_number}}

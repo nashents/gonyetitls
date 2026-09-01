@@ -167,10 +167,10 @@ class PinpointDeviceMappings extends Component
         $apiError = null;
 
         if ($integration) {
-            $result = $this->cachedTrackerList($integration);
+            $result = $this->cachedPinpointTrackerList($integration);
 
             if ($result['success'] ?? false) {
-                $trackers = $this->trackerRows($result);
+                $trackers = $this->pinpointTrackerRows($result);
 
                 if ($this->search !== '') {
                     $needle = strtolower($this->search);
