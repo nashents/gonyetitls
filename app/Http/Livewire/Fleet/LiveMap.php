@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use App\Services\Cartrack\Concerns\ResolvesCartrackIntegration;
 use App\Services\EzyTrack\Concerns\ResolvesEzyTrackIntegration;
 use App\Services\FanTracker\Concerns\ResolvesFanTrackerIntegration;
+use App\Services\Pinpoint\Concerns\ResolvesPinpointIntegration;
 use App\Services\Integrations\IntegrationGate;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -36,6 +37,11 @@ class LiveMap extends Component
     use ResolvesFanTrackerIntegration {
         ResolvesCartrackIntegration::companyIdForFleetModel insteadof ResolvesFanTrackerIntegration;
     }
+    use ResolvesPinpointIntegration {
+        ResolvesCartrackIntegration::companyIdForFleetModel insteadof ResolvesPinpointIntegration;
+        ResolvesFanTrackerIntegration::cachedTrackerList insteadof ResolvesPinpointIntegration;
+        ResolvesFanTrackerIntegration::trackerRows insteadof ResolvesPinpointIntegration;
+    }
 
     /** Refresh cadence for the browser poll — the underlying fetch is itself cached (see ResolvesCartrackIntegration::cachedFleetSnapshot). */
     public int $pollSeconds = 30;
@@ -60,6 +66,12 @@ class LiveMap extends Component
         'vehicle_tracker' => [Vehicle::class, 'Vehicle'],
     ];
 
+    protected const PINPOINT_ENTITY_MODELS = [
+        'horse_pinpoint'   => [Horse::class, 'Horse'],
+        'trailer_pinpoint' => [Trailer::class, 'Trailer'],
+        'vehicle_pinpoint' => [Vehicle::class, 'Vehicle'],
+    ];
+
     /** Follows the app-wide convention: every integration's UI states plainly when it isn't active, rather than silently showing nothing. */
     public function getCartrackEnabledProperty(): bool
     {
@@ -76,12 +88,18 @@ class LiveMap extends Component
         return IntegrationGate::enabledForUser('fantracker');
     }
 
+    public function getPinpointEnabledProperty(): bool
+    {
+        return IntegrationGate::enabledForUser('pinpoint');
+    }
+
     public function render()
     {
         $markers = array_merge(
             $this->cartrackEnabled ? $this->markers() : [],
             $this->ezyTrackEnabled ? $this->ezyTrackMarkers() : [],
-            $this->fanTrackerEnabled ? $this->fanTrackerMarkers() : []
+            $this->fanTrackerEnabled ? $this->fanTrackerMarkers() : [],
+            $this->pinpointEnabled ? $this->pinpointMarkers() : []
         );
 
         return view('livewire.fleet.live-map', [
@@ -259,6 +277,65 @@ class LiveMap extends Component
                 'latitude'    => (float) $latitude,
                 'longitude'   => (float) $longitude,
                 'last_update' => data_get($node, 'last_update'),
+            ];
+        }
+
+        return $markers;
+    }
+
+    /** Pinpoint markers: /api2/last for the whole fleet, resolved through the mapping built by `pinpoint:match-vehicles`. */
+    protected function pinpointMarkers(): array
+    {
+        $companyId = $this->currentCompanyId();
+        $integration = $this->activePinpointIntegration($companyId);
+
+        if (! $integration) {
+            return [];
+        }
+
+        $result = $this->cachedFleetLastPositions($integration);
+
+        if (! ($result['success'] ?? false)) {
+            $this->apiError = $result['error'] ?? 'Pinpoint request failed.';
+            return [];
+        }
+
+        $mappings = IntegrationMapping::where('company_integration_id', $integration->id)
+            ->whereIn('entity_type', array_keys(self::PINPOINT_ENTITY_MODELS))
+            ->get()
+            ->keyBy('external_id');
+
+        $markers = [];
+
+        foreach ((array) $result['data'] as $uin => $node) {
+            $latitude  = data_get($node, 'lat');
+            $longitude = data_get($node, 'lng');
+
+            if ($latitude === null || $longitude === null) {
+                continue;
+            }
+
+            $mapping = $mappings->get((string) $uin);
+
+            $label = 'Unknown vehicle';
+            $type  = null;
+
+            if ($mapping) {
+                [$modelClass, $typeLabel] = self::PINPOINT_ENTITY_MODELS[$mapping->entity_type];
+                $model = $modelClass::find($mapping->local_id);
+                if ($model) {
+                    $label = $model->registration_number ?: $model->fleet_number ?: $label;
+                    $type  = $typeLabel;
+                }
+            }
+
+            $markers[] = [
+                'label'       => $label,
+                'type'        => $type,
+                'source'      => 'Pinpoint',
+                'latitude'    => (float) $latitude,
+                'longitude'   => (float) $longitude,
+                'last_update' => data_get($node, 'date'),
             ];
         }
 

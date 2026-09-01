@@ -11,9 +11,14 @@ use Illuminate\Support\Collection;
 
 /**
  * Links Gonyeti's Horse/Trailer/Vehicle rows to Pinpoint trackers by matching
- * registration_number against Pinpoint's `plate` field, caching the tracker's
+ * registration_number against Pinpoint's registration, caching the tracker's
  * `uin` via the generic IntegrationMapping table (entity_type:
  * horse_pinpoint / trailer_pinpoint / vehicle_pinpoint).
+ *
+ * Confirmed against a live GET /api2/trackers response on 2026-09-01: `plate`
+ * comes back empty for every tracker on the account, but `name` holds the
+ * actual registration (e.g. "AHA 2872") — so match on plate when present,
+ * falling back to name.
  */
 class PinpointVehicleMatcher
 {
@@ -41,8 +46,12 @@ class PinpointVehicleMatcher
         }
 
         $pinpointTrackers = collect(is_array($result['data']) ? $result['data'] : [])
-            ->filter(fn ($t) => ! empty($t['plate']))
-            ->keyBy(fn ($t) => $this->normalize($t['plate']));
+            ->map(function ($t) {
+                $t['registration'] = $t['plate'] ?: ($t['name'] ?? '');
+                return $t;
+            })
+            ->filter(fn ($t) => ! empty($t['registration']))
+            ->keyBy(fn ($t) => $this->normalize($t['registration']));
 
         $matched   = [];
         $unmatched = [];
@@ -69,7 +78,7 @@ class PinpointVehicleMatcher
                             ],
                             [
                                 'external_id'        => (string) $tracker['uin'],
-                                'external_reference' => $tracker['plate'],
+                                'external_reference' => $tracker['registration'],
                                 'sync_status'         => IntegrationMapping::STATUS_SYNCED,
                                 'last_synced_at'      => now(),
                                 'last_attempted_at'   => now(),

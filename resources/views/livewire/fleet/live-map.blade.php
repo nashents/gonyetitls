@@ -12,9 +12,9 @@
                             </div>
                         </div>
         <div class="panel-body p-20">
-                            @if (! $this->cartrackEnabled && ! $this->ezyTrackEnabled && ! $this->fanTrackerEnabled)
+                            @if (! $this->cartrackEnabled && ! $this->ezyTrackEnabled && ! $this->fanTrackerEnabled && ! $this->pinpointEnabled)
                                 <p class="text-muted">
-                                    No tracking provider is active for your company yet. Set up Cartrack, EzyTrack and/or FanTracker under
+                                    No tracking provider is active for your company yet. Set up Cartrack, EzyTrack, FanTracker and/or Pinpoint under
                                     <a href="{{ route('company_integrations.index') }}">Integrations</a> first.
                                 </p>
                             @else
@@ -37,6 +37,12 @@
                                     <p class="text-muted">
                                         FanTracker trackers show up once linked under
                                         <a href="{{ route('fleet.fantracker-device-mappings') }}">FanTracker Device Mapping</a>.
+                                    </p>
+                                @endif
+                                @if ($this->pinpointEnabled && empty($markers))
+                                    <p class="text-muted">
+                                        No live positions yet. Run <code>php artisan pinpoint:match-vehicles</code>
+                                        to link your fleet, then check back shortly.
                                     </p>
                                 @endif
                             @endif
