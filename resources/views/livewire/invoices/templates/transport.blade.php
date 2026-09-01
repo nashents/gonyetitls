@@ -238,7 +238,7 @@
                         <td>{{ $item->hs_code }}</td>
                         <td>{{ \Carbon\Carbon::parse($item->trip?->start_date)->format('d/m/Y') }}</td>
                         <td>
-                            @foreach ($item->trip->trip_transport_orders as $tto)
+                            @foreach ($item->trip?->trip_transport_orders ?? [] as $tto)
                                 {{$tto->delivery_note?->document_number}}
                             @endforeach
                         </td>
