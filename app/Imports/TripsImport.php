@@ -658,8 +658,9 @@ WithBatchInserts
         }
         $bill->balance = $trip_expense->amount;
         $bill->authorized_by_id = Auth::user()->id;
-        $bill->authorization = "approved";
-        $bill->authorization_date = now();
+        // Stay "pending" until the expense line below exists, so the
+        // BillObserver doesn't post a journal entry with no debit line.
+        $bill->authorization = "pending";
         $bill->comments = "Imported historical trip expense";
         $bill->save();
 
@@ -682,6 +683,12 @@ WithBatchInserts
         $bill_expense->subtotal = $trip_expense->amount;
         $bill_expense->subtotal_incl = $trip_expense->amount;
         $bill_expense->save();
+
+        // Approve now that the expense line exists — this is what
+        // triggers BillObserver -> BillJournalService::post().
+        $bill->authorization = "approved";
+        $bill->authorization_date = now();
+        $bill->save();
 
         return $bill;
     }
