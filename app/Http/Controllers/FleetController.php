@@ -18,4 +18,9 @@ class FleetController extends Controller
     {
         return view('fleet.fantracker-device-mappings');
     }
+
+    public function pinpointDeviceMappings()
+    {
+        return view('fleet.pinpoint-device-mappings');
+    }
 }

@@ -1540,6 +1540,12 @@ class MenuRegistrySeeder extends Seeder
             $all(['isSuperAdmin', 'hasFanTrackerIntegration']),
         ]);
 
+        $vHasPinpoint = $any([
+            $all(['isNotDriver', 'inTransport', 'hasPinpointIntegration']),
+            $all(['isNotDriver', 'inWorkshop', 'hasPinpointIntegration']),
+            $all(['isSuperAdmin', 'hasPinpointIntegration']),
+        ]);
+
         $m = $upsertModule($g, [
             'name' => 'Live Fleet Map',
             'slug' => 'live-fleet-map',
@@ -1551,6 +1557,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Live Fleet Map','slug'=>'live-fleet-map-view','icon'=>'fas fa-map-marker-alt','route_name'=>'fleet.live-map','sort_order'=>10]);
         $upsertSub($m, ['name'=>'EzyTrack Device Mapping','slug'=>'ezytrack-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.ezytrack-device-mappings','sort_order'=>20,'visibility'=>$vHasEzyTrack]);
         $upsertSub($m, ['name'=>'FanTracker Device Mapping','slug'=>'fantracker-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.fantracker-device-mappings','sort_order'=>30,'visibility'=>$vHasFanTracker]);
+        $upsertSub($m, ['name'=>'Pinpoint Device Mapping','slug'=>'pinpoint-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.pinpoint-device-mappings','sort_order'=>40,'visibility'=>$vHasPinpoint]);
 
         // Assignments
         $m = $upsertModule($g, [

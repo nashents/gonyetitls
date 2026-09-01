@@ -672,6 +672,7 @@ class SidebarComposer
         $hasTrackingIntegration = IntegrationGate::enabledForUserType('tracking');
         $hasEzyTrackIntegration = IntegrationGate::enabledForUser('ezytrack');
         $hasFanTrackerIntegration = IntegrationGate::enabledForUser('fantracker');
+        $hasPinpointIntegration = IntegrationGate::enabledForUser('pinpoint');
 
            // Build your context keys ONCE (map your booleans + ids here)
         $ctx = [
@@ -701,6 +702,7 @@ class SidebarComposer
             'hasTrackingIntegration' => (bool) $hasTrackingIntegration,
             'hasEzyTrackIntegration' => (bool) $hasEzyTrackIntegration,
             'hasFanTrackerIntegration' => (bool) $hasFanTrackerIntegration,
+            'hasPinpointIntegration' => (bool) $hasPinpointIntegration,
             'hasStoresDeptHead'    => (bool) $stdepartment_head,
             'hasWorkshopDeptHead'    => (bool) $wsdepartment_head,
             'hasHRDeptHead'    => (bool) $hrdepartment_head,

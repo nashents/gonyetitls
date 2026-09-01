@@ -39,10 +39,10 @@
                                         <a href="{{ route('fleet.fantracker-device-mappings') }}">FanTracker Device Mapping</a>.
                                     </p>
                                 @endif
-                                @if ($this->pinpointEnabled && empty($markers))
+                                @if ($this->pinpointEnabled)
                                     <p class="text-muted">
-                                        No live positions yet. Run <code>php artisan pinpoint:match-vehicles</code>
-                                        to link your fleet, then check back shortly.
+                                        Pinpoint trackers show up once linked under
+                                        <a href="{{ route('fleet.pinpoint-device-mappings') }}">Pinpoint Device Mapping</a>.
                                     </p>
                                 @endif
                             @endif
