@@ -17,9 +17,11 @@ interface PinpointDriver extends IntegrationDriver
     public function listTrackers(array $filters = []): array;
 
     /**
-     * Latest position/telemetry for every tracker on the account in one call,
-     * via GET /api2/last?uin=__all_sys_. `data` is a map keyed by tracker uin
-     * (lat, lng, speed, date, io.7 = odometer km, offline, ...).
+     * Latest position/telemetry for every tracker belonging to $ownerUserId,
+     * via GET /api2/last?user=$ownerUserId (the docs' __all_sys_ "all
+     * trackers in system" shortcut is admin-only and 403s a normal token —
+     * confirmed live). `data` is a map keyed by tracker uin (lat, lng, speed,
+     * date, io.7 = odometer km, offline, ...).
      */
-    public function getFleetLastPositions(): array;
+    public function getFleetLastPositions(string $ownerUserId): array;
 }

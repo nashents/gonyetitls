@@ -52,9 +52,14 @@ class PinpointDriver implements PinpointDriverContract
         return $this->request('/api2/trackers', $filters);
     }
 
-    public function getFleetLastPositions(): array
+    public function getFleetLastPositions(string $ownerUserId): array
     {
-        return $this->request('/api2/last', ['uin' => '__all_sys_']);
+        // uin=__all_sys_ (the docs' "all trackers in system" shortcut) came
+        // back "Access Denied" for a normal (non-admin) API token when tested
+        // live 2026-09-01 — same for a comma-separated uin list. user=<owner>
+        // is what this token is actually scoped to see, and returns every
+        // tracker's position in one call, same as __all_sys_ would.
+        return $this->request('/api2/last', ['user' => $ownerUserId]);
     }
 
     protected function request(string $path, array $query = []): array
@@ -85,6 +90,16 @@ class PinpointDriver implements PinpointDriverContract
         }
 
         $body = $response->json();
+
+        // Confirmed live 2026-09-01: some failures (e.g. a restricted-shortcut
+        // param) come back as plain text ("Access Denied:...") instead of the
+        // documented JSON envelope. Treating a non-array body as success with
+        // null data was a real bug — it surfaced as a silent "0 vehicles
+        // reporting" on the Live Map instead of a visible error.
+        if (! is_array($body)) {
+            $text = trim((string) $response->body());
+            return $this->fail($response->status(), $text !== '' ? $text : $this->genericError($response));
+        }
 
         if ((int) ($body['error'] ?? 0) !== 0) {
             return $this->fail($response->status(), $body['msg'] ?? $this->genericError($response));

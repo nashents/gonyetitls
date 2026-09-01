@@ -80,13 +80,30 @@ trait ResolvesPinpointIntegration
         return collect(is_array($trackerListResult['data']) ? $trackerListResult['data'] : []);
     }
 
-    /** Cached GET /api2/last?uin=__all_sys_ result (60s, mirrors Cartrack's fleet-snapshot cadence), shared by every consumer. */
+    /**
+     * Cached GET /api2/last?user=<owner> result (60s, mirrors Cartrack's
+     * fleet-snapshot cadence), shared by every consumer. The owner userid is
+     * read off the (separately cached) tracker list's `belong` field — every
+     * tracker on a normal account shares the same owner, and user=<owner> is
+     * what a non-admin token is actually scoped to query (see PinpointDriver).
+     */
     protected function cachedFleetLastPositions(CompanyIntegration $integration): array
     {
         return Cache::remember(
             "pinpoint:fleet-last:{$integration->id}",
             60,
-            fn () => $this->pinpointDriverFor($integration)->getFleetLastPositions()
+            function () use ($integration) {
+                $owner = $this->trackerRows($this->cachedTrackerList($integration))
+                    ->pluck('belong')
+                    ->filter()
+                    ->first();
+
+                if (! $owner) {
+                    return ['success' => false, 'status' => null, 'data' => null, 'error' => 'Could not determine the Pinpoint account owner (no trackers with a `belong` value found).'];
+                }
+
+                return $this->pinpointDriverFor($integration)->getFleetLastPositions($owner);
+            }
         );
     }
 }
