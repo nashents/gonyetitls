@@ -184,7 +184,7 @@
                                                     <br>
                                                 @endif
                                             </small>
-                                            @if ($this->sageEnabled)
+                                            @if ($this->sageEnabled && config('sageintacct.invoice.push'))
                                                 @php $sm = $invoice->sageMapping; $ss = optional($sm)->sync_status; $approved = $invoice->authorization === 'approved'; @endphp
                                                 <br>
                                                 <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"

@@ -2403,6 +2403,16 @@ class MenuRegistrySeeder extends Seeder
             'visibility' => $any([$all(['isSuperAdmin'])]),
         ]);
 
+        // Sage integration reconciliation / exception queue (Finance workflow §10).
+        $upsertModule($g, [
+            'name' => 'Sage Reconciliation',
+            'slug' => 'sage-reconciliation',
+            'icon' => 'fas fa-exchange-alt',
+            'route_name' => 'sage.reconciliation',
+            'sort_order' => 40,
+            'visibility' => null, // inherit the Business Settings group visibility
+        ]);
+
         // ----------------------------
         // GROUP: Profile Settings (public)
         // ----------------------------

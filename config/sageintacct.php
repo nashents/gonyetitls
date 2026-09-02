@@ -27,6 +27,18 @@ return [
     // always preferred, so this default should never actually be reached.
     'base_currency' => env('SAGE_INTACCT_BASE_CURRENCY', 'ZAR'),
 
+    // ── Finance operating-model boundary (Gonyeti-Sage workflow, 2026-08-21) ──
+    // Sage is the FINANCIAL SYSTEM OF RECORD and the SOLE creator of Customers and
+    // Vendors. Gonyeti originates non-posting operational documents only; posting
+    // happens when Finance converts them in Sage. These flags enforce that boundary
+    // and stay reversible without a code change.
+    'master_data' => [
+        // When false, Gonyeti NEVER creates/updates Customers or Vendors in Sage —
+        // master data flows Sage → Gonyeti (pull) only; a document whose party is not
+        // yet synced is parked for attention rather than auto-creating the party.
+        'push' => env('SAGE_INTACCT_PUSH_MASTER_DATA', false),
+    ],
+
     // XML Web Services gateway endpoint (same URL for sandbox and production;
     // the target company is selected by the credentials in the request body).
     'xml' => [
@@ -88,6 +100,12 @@ return [
     // whose trip_status is one of these (offloaded/completed) are synced to Sage.
     'trip' => [
         'syncable_statuses' => ['Offloaded'],
+        // Keep the Sage Trip/Project OPEN after sync (Finance model): the integration
+        // must NOT financially close it — Finance completes it in Sage so late
+        // supplier/customer invoices can still post. When true, syncTrip creates the
+        // project in the purchasing-allowed status and does not finalise it to
+        // Completed. Set false to restore the legacy "auto-complete on offload".
+        'keep_open' => env('SAGE_INTACCT_TRIP_KEEP_OPEN', true),
     ],
 
     // Phase 3 — Trip expenses → Purchase Requisitions.
@@ -187,6 +205,11 @@ return [
     //   invoice to a Customer    → "OE sales invoice"
     //   invoice to a Transporter → "Job Card Invoice" (customer = the transporter)
     'invoice' => [
+        // Posting boundary: by default Gonyeti does NOT create OE / Job Card invoices
+        // in Sage. It pushes the non-posting Job Card; Finance CONVERTS it to the
+        // Job Card Invoice in Sage (the only AR/GL posting event). Set true only if
+        // the client wants Gonyeti to originate the sales invoice directly.
+        'push'                   => env('SAGE_INTACCT_PUSH_INVOICES', false),
         'oe_type'                => env('SAGE_INTACCT_OE_INVOICE_TYPE', 'OE sales invoice'),
         'jobcard_type'           => env('SAGE_INTACCT_INVOICE_JOBCARD_TYPE', 'Job Card Invoice'),
         'line_unit'              => env('SAGE_INTACCT_INVOICE_LINE_UNIT', 'Each'),

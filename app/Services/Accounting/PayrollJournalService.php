@@ -201,12 +201,12 @@ class PayrollJournalService
         return $totals;
     }
 
-    private function line(JournalEntry $entry, ?string $accountCode, string $fallbackName, float $debit, float $credit, ?int $currencyId, string $description): void
+    private function line(JournalEntry $entry, ?string $accountId, string $fallbackName, float $debit, float $credit, ?int $currencyId, string $description): void
     {
         if ($debit <= 0 && $credit <= 0) return;
 
-        $account = $accountCode !== null && $accountCode !== ''
-            ? Account::where('code', $accountCode)->firstOrFail()
+        $account = $accountId !== null && $accountId !== ''
+            ? Account::findOrFail($accountId)
             : Account::where('name', $fallbackName)->firstOrFail();
 
         $entry->journal_entry_lines()->create([

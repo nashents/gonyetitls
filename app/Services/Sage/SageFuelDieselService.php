@@ -144,7 +144,12 @@ class SageFuelDieselService
      */
     protected function postAllowingProject(?string $projectId, bool $isTripProject, callable $create): array
     {
-        if (! $projectId || ! $isTripProject) {
+        // Trips are kept OPEN under the Finance model, so the trip project is already
+        // in a purchasing-allowed status — post directly. (The reopen/restore below is
+        // only for the legacy "auto-complete trips" mode, where the project is Completed;
+        // if Finance has closed a trip in Sage, a late fuel then parks for attention,
+        // which is the correct controlled-reopen signal.)
+        if (! $projectId || ! $isTripProject || config('sageintacct.trip.keep_open', true)) {
             return $create();
         }
 
@@ -198,8 +203,11 @@ class SageFuelDieselService
             $vendorSageId = $this->findVendorIdByName($name);
         }
 
-        // 3) Create a station vendor in Sage.
-        if (! $vendorSageId && $name !== '') {
+        // 3) Create a station vendor in Sage — ONLY when master-data push is enabled.
+        //    Under the Finance model Sage is the sole vendor creator, so we do not
+        //    auto-create the station; an unresolved station parks the fuel order for
+        //    attention instead (caller returns requires_attention).
+        if (! $vendorSageId && $name !== '' && config('sageintacct.master_data.push', false)) {
             $id  = (string) config('sageintacct.fuel.station_vendor_prefix', 'FSTN-') . $container->id;
             $res = $this->driver->createVendor([
                 'id'       => $id,

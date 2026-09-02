@@ -149,6 +149,14 @@ class SageProjectService
             unset($payload['parentid']);
         }
 
+        // Trip Number controls (Finance workflow §4.2): the Trip Number (= PROJECTID)
+        // must be UNIQUE and IMMUTABLE once synced. Reject a duplicate (already synced
+        // for a different trip) or a number that changed after the first sync.
+        $tripProjectId = SageTripMapper::projectId($trip);
+        if ($guard = $this->guardTripNumber($trip, $tripProjectId)) {
+            return $guard;
+        }
+
         // A "Completed" project blocks Purchasing submittal in Sage, so create the
         // project in the purchasing-allowed status first, raise the requisitions /
         // dispatch sheet, THEN finalise the project status (e.g. Completed).
@@ -156,8 +164,8 @@ class SageProjectService
         $inProgress             = (string) config('sageintacct.project.status_in_progress', 'In Progress');
         $payload['projectstatus'] = $inProgress;
 
-        $result    = $this->syncProject('trip_project', $trip, SageTripMapper::projectId($trip), $payload);
-        $projectId = $result['external_id'] ?? SageTripMapper::projectId($trip);
+        $result    = $this->syncProject('trip_project', $trip, $tripProjectId, $payload);
+        $projectId = $result['external_id'] ?? $tripProjectId;
 
         // After the project is in Sage, sync the trip's expenses as Purchase
         // Requisitions / a Dispatch Sheet. Failures are attached but never fail
@@ -176,8 +184,12 @@ class SageProjectService
             }
             $result['fuel'] = $fuelResults;
 
-            // Finalise the project status now that the purchasing docs are raised.
-            if ($finalStatus && strcasecmp($finalStatus, $inProgress) !== 0) {
+            // Finalise the project status now that the purchasing docs are raised —
+            // UNLESS trips are kept OPEN (Finance model): the integration must NOT
+            // financially close the trip; Finance completes it in Sage so late
+            // supplier/customer invoices can still post against it.
+            if (! config('sageintacct.trip.keep_open', true)
+                && $finalStatus && strcasecmp($finalStatus, $inProgress) !== 0) {
                 $this->driver->updateProject($projectId, ['projectstatus' => $finalStatus]);
                 $result['project_finalised_status'] = $finalStatus;
             }
@@ -254,6 +266,37 @@ class SageProjectService
     }
 
     /** Missing-dependency (user must fix) → requires_attention, no project created. */
+    /**
+     * Enforce the Trip Number controls before creating/updating the Sage project:
+     *   • DUPLICATE — the same Trip Number (PROJECTID) is already synced for another
+     *     trip (unique-number rule);
+     *   • IMMUTABLE — this trip was already synced under a different PROJECTID, i.e.
+     *     the Trip Number changed after the first sync.
+     * Returns a requires_attention result to reject, or null to proceed.
+     */
+    protected function guardTripNumber(Trip $trip, string $projectId): ?array
+    {
+        $dup = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'trip_project',
+            'external_id'            => $projectId,
+        ])->where('local_id', '!=', $trip->id)->whereNotNull('external_id')->first();
+        if ($dup) {
+            return $this->validationError($trip, "Trip Number '{$projectId}' is already synced to Sage for a different trip (#{$dup->local_id}). Trip Numbers must be unique across both systems.");
+        }
+
+        $existing = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'trip_project',
+            'local_id'               => $trip->id,
+        ])->whereNotNull('external_id')->first();
+        if ($existing && strcasecmp((string) $existing->external_id, $projectId) !== 0) {
+            return $this->validationError($trip, "Trip Number changed after the first Sage sync ('{$existing->external_id}' → '{$projectId}'). The Trip Number is immutable once synced — use a controlled amendment/cancellation instead of renumbering.");
+        }
+
+        return null;
+    }
+
     protected function validationError(Trip $trip, string $message): array
     {
         return $this->tripProblem($trip, $message, IntegrationMapping::STATUS_REQUIRES_ATTENTION, 'validate');

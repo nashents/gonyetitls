@@ -38,6 +38,14 @@ class SageInvoiceService
     {
         $entity  = 'sales_invoice';
 
+        // Posting boundary (Finance model, 2026-08-21): Gonyeti does NOT create the
+        // sales invoice in Sage. It pushes the non-posting Job Card; Finance CONVERTS
+        // it to a Job Card Invoice in Sage (the only AR/GL posting event). Disabled by
+        // default; reversible via config.
+        if (! config('sageintacct.invoice.push', false)) {
+            return $this->result(true, 'skipped', null, null, $entity, $invoice);
+        }
+
         // Only push authorized (approved) invoices — never a draft/pending one.
         // Single gate honoured by both the InvoiceObserver and the manual button.
         if (strcasecmp((string) $invoice->authorization, 'approved') !== 0) {

@@ -77,7 +77,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('vendors.show',$vendor->id)}}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$vendor->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @if ($this->sageEnabled && $vendor->sage_sync_status === 'failed')
+                                                @if ($this->sageEnabled && config('sageintacct.master_data.push') && $vendor->sage_sync_status === 'failed')
                                                 <li><a href="#" wire:click="retrySync({{$vendor->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#vendorDeleteModal{{ $vendor->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>

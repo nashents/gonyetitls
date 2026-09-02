@@ -173,7 +173,7 @@
                                                     @foreach($typeGroups as $typeName => $accounts)
                                                     <option value="" disabled>— {{ $typeName }} —</option>
                                                     @foreach($accounts as $account)
-                                                    <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
+                                                    <option value="{{ $account['id'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
                                                     @endforeach
                                                     @endforeach
                                                 </optgroup>
@@ -204,7 +204,7 @@
                                                     @foreach($typeGroups as $typeName => $accounts)
                                                     <option value="" disabled>— {{ $typeName }} —</option>
                                                     @foreach($accounts as $account)
-                                                    <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
+                                                    <option value="{{ $account['id'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
                                                     @endforeach
                                                     @endforeach
                                                 </optgroup>
@@ -238,7 +238,7 @@
                                                     @foreach($typeGroups as $typeName => $accounts)
                                                     <option value="" disabled>— {{ $typeName }} —</option>
                                                     @foreach($accounts as $account)
-                                                    <option value="{{ $account['code'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
+                                                    <option value="{{ $account['id'] }}">{{ $account['code'] ? $account['code'].' — '.$account['name'] : $account['name'] }}</option>
                                                     @endforeach
                                                     @endforeach
                                                 </optgroup>

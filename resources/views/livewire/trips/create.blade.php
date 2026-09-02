@@ -1903,6 +1903,9 @@
                                             @if ($odometer_is_live_from_fantracker)
                                                 <span class="badge badge-success" title="Pulled live from FanTracker">Live from FanTracker</span>
                                             @endif
+                                            @if ($odometer_is_live_from_pinpoint)
+                                                <span class="badge badge-success" title="Pulled live from Pinpoint">Live from Pinpoint</span>
+                                            @endif
                                             <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="starting_mileage" placeholder="Mileage @ Rest" >
                                             @error('starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -2560,6 +2563,9 @@
                                         @endif
                                         @if ($odometer_is_live_from_fantracker)
                                             <span class="badge badge-success" title="Pulled live from FanTracker">Live from FanTracker</span>
+                                        @endif
+                                        @if ($odometer_is_live_from_pinpoint)
+                                            <span class="badge badge-success" title="Pulled live from Pinpoint">Live from Pinpoint</span>
                                         @endif
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="odometer"  placeholder="Enter Horse Mileage" required/>
                                         @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror

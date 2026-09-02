@@ -96,7 +96,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('customers.show', $customer->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$customer->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @if ($this->sageEnabled && $customer->sage_sync_status === 'failed')
+                                                @if ($this->sageEnabled && config('sageintacct.master_data.push') && $customer->sage_sync_status === 'failed')
                                                 <li><a href="#" wire:click="retrySync({{$customer->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#customerDeleteModal{{ $customer->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>

@@ -61,6 +61,14 @@ class SageIntacctService
 
     protected function sync(Model $model, string $entity): array
     {
+        // Sage is the SOLE creator/maintainer of Customers & Vendors (Finance model,
+        // 2026-08-21). Gonyeti no longer pushes them; master data flows Sage → Gonyeti
+        // (pull) only. Reversible via config — nothing is attempted, so the ERP record
+        // simply stands (no failure recorded).
+        if (! config('sageintacct.master_data.push', false)) {
+            return ['success' => true, 'skipped' => true, 'error' => null];
+        }
+
         $integration = $this->activeIntegrationFor($model);
 
         // No active Sage integration for this company → do nothing. The ERP

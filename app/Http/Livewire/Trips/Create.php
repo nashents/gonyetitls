@@ -56,6 +56,7 @@ use App\Models\VehicleAssignment;
 use App\Models\Vendor;
 use App\Services\Cartrack\CartrackSyncService;
 use App\Services\FanTracker\FanTrackerSyncService;
+use App\Services\Pinpoint\PinpointSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -467,6 +468,7 @@ class Create extends Component
     public $odometer;
     public $odometer_is_live_from_cartrack = false;
     public $odometer_is_live_from_fantracker = false;
+    public $odometer_is_live_from_pinpoint = false;
     public $fuel_comments;
     public $customer_updates = False;
     public $fuel_consumption_loaded_standard;
@@ -833,6 +835,7 @@ class Create extends Component
                 $this->odometer = $horse->mileage;
                 $this->odometer_is_live_from_cartrack = false;
                 $this->odometer_is_live_from_fantracker = false;
+                $this->odometer_is_live_from_pinpoint = false;
 
                 $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($horse);
                 if (! empty($cartrackSnapshot['mileage'])) {
@@ -843,6 +846,12 @@ class Create extends Component
                     if (! empty($fanTrackerSnapshot['mileage'])) {
                         $this->odometer = $fanTrackerSnapshot['mileage'];
                         $this->odometer_is_live_from_fantracker = true;
+                    } else {
+                        $pinpointSnapshot = app(PinpointSyncService::class)->currentSnapshot($horse);
+                        if (! empty($pinpointSnapshot['mileage'])) {
+                            $this->odometer = $pinpointSnapshot['mileage'];
+                            $this->odometer_is_live_from_pinpoint = true;
+                        }
                     }
                 }
 
@@ -888,6 +897,7 @@ class Create extends Component
                 $this->odometer = $vehicle->mileage;
                 $this->odometer_is_live_from_cartrack = false;
                 $this->odometer_is_live_from_fantracker = false;
+                $this->odometer_is_live_from_pinpoint = false;
 
                 $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($vehicle);
                 if (! empty($cartrackSnapshot['mileage'])) {
@@ -898,6 +908,12 @@ class Create extends Component
                     if (! empty($fanTrackerSnapshot['mileage'])) {
                         $this->odometer = $fanTrackerSnapshot['mileage'];
                         $this->odometer_is_live_from_fantracker = true;
+                    } else {
+                        $pinpointSnapshot = app(PinpointSyncService::class)->currentSnapshot($vehicle);
+                        if (! empty($pinpointSnapshot['mileage'])) {
+                            $this->odometer = $pinpointSnapshot['mileage'];
+                            $this->odometer_is_live_from_pinpoint = true;
+                        }
                     }
                 }
 

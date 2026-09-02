@@ -126,6 +126,7 @@ class Index extends Component
                 ->groupBy(fn ($account) => $account->account_type->name ?? 'Other')
                 ->sortKeys()
                 ->map(fn ($typeGroup) => $typeGroup->map(fn ($account) => [
+                    'id'   => $account->id,
                     'code' => $account->code,
                     'name' => $account->name,
                 ])->values())

@@ -545,6 +545,8 @@ Route::resource('maintenance_schedules','MaintenanceScheduleController');
 Route::resource('ticket_requests','TicketRequestController');
 Route::resource('payment_methods','PaymentMethodController');
 Route::resource('company_integrations','CompanyIntegrationController');
+// Sage integration reconciliation / exception queue (Finance workflow §10).
+Route::view('sage/reconciliation', 'sage.reconciliation')->name('sage.reconciliation');
 Route::resource('grades','GradeController');
 Route::resource('clusters','ClusterController');
 Route::resource('transport_orders','TransportOrderController');
