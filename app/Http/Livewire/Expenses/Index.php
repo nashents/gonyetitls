@@ -15,6 +15,7 @@ use App\Exports\ExpensesExport;
 use App\Imports\ExpensesImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Services\Sage\SageIntegration;
 
 class Index extends Component
 {
@@ -109,8 +110,60 @@ class Index extends Component
       
     }
 
+    /** Sage integration gate — when active, master data is pull-only (no create/edit/delete). */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Generate a product number (company initials + P + zero-padded next id). */
+    private function productNumber()
+    {
+        $company  = Auth::user()->employee?->company ?? Auth::user()->company;
+        $name     = $company?->name ?? 'GY';
+        $words    = explode(' ', trim($name));
+        $initials = strtoupper(($words[0][0] ?? 'G') . ($words[1][0] ?? ''));
+        $last     = \App\Models\Product::orderBy('id', 'desc')->first();
+        $number   = $last ? $last->id + 1 : 1;
+
+        return $initials . 'P' . str_pad((string) $number, 5, '0', STR_PAD_LEFT);
+    }
+
+    /** Bulk: create + link a non-inventory billable product for expenses missing one. */
+    public function syncMissingProducts()
+    {
+        $missing = Expense::whereNull('product_id')
+            ->orWhereDoesntHave('product')
+            ->get();
+
+        $count = 0;
+        foreach ($missing as $expense) {
+            if ($expense->product_id && $expense->product) {
+                continue; // already linked to a live product
+            }
+            $product = new \App\Models\Product;
+            $product->user_id        = Auth::user()->id;
+            $product->product_number = $this->productNumber();
+            $product->name           = $expense->name;
+            $product->type           = 'Non Inventory';
+            $product->buy            = 1;
+            $product->sell           = 0;
+            $product->status         = 1;
+            $product->save();
+
+            $expense->product_id = $product->id;
+            $expense->saveQuietly();
+            $count++;
+        }
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => $count > 0 ? "Created + linked products for {$count} expense(s)." : 'All expenses already have a linked product.',
+        ]);
+    }
+
     public function store(){
-        
+
          $this->validate();
 
         try{
@@ -132,6 +185,23 @@ class Index extends Component
         $expense->tax_id = $this->tax_id;
         $expense->item_type = 'Non Inventory';
         $expense->save();
+
+        // Every Gonyeti expense is also a non-inventory billable Product — auto-create
+        // it and link (expenses.product_id) so the two stay in step (mirrors Sage,
+        // where a non-inventory item is both an item and an expense line).
+        $product = new \App\Models\Product;
+        $product->user_id        = Auth::user()->id;
+        $product->product_number = $this->productNumber();
+        $product->name           = $this->name;
+        $product->type           = 'Non Inventory';
+        $product->buy            = 1; // billable
+        $product->sell           = 0;
+        $product->status         = 1;
+        $product->save();
+
+        $expense->product_id = $product->id;
+        $expense->save();
+
         $this->dispatchBrowserEvent('hide-expenseModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -218,7 +288,7 @@ class Index extends Component
     {
         if (filled($this->search)) {
             return view('livewire.expenses.index',[
-                'expenses' => Expense::query()->with('currency','account','tax')
+                'expenses' => Expense::query()->with('currency','account','tax','product')
                 ->where('name','like', '%'.$this->search.'%')
                 ->orWhere('type','like', '%'.$this->search.'%')
                 ->orWhere('amount','like', '%'.$this->search.'%')
@@ -235,7 +305,7 @@ class Index extends Component
 
         }else{
             return view('livewire.expenses.index',[
-                'expenses' => Expense::with('currency','account','tax')->orderBy('name','asc')->paginate(10)
+                'expenses' => Expense::with('currency','account','tax','product')->orderBy('name','asc')->paginate(10)
             ]);
         }
     }

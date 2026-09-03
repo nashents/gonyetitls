@@ -43,6 +43,14 @@ class Index extends Component
     public $notes;
     public $status = 1;
 
+    public $statusUpdateId;
+    public $statusUpdateTarget;
+    public $statusUpdateComment;
+    public $statusUpdateWeight;
+    public $statusUpdateLitreage;
+    public $statusUpdateQuantity;
+    public $statusUpdateCargoType;
+
     public $customers = [];
     public $cargos = [];
     public $currencies = [];
@@ -93,27 +101,105 @@ class Index extends Component
 
     }
 
-    public function close($id){
+    /** Opens the shared status-update modal for either the Completed or Cancelled action. */
+    public function openStatusUpdate($id, $target){
         if(is_null($id)){
             return;
         }
-        $this->deal_id = $id;
-        $this->deal = Deal::find($id);
-        $this->dispatchBrowserEvent('show-closeModal');
+
+        $deal = Deal::find($id);
+        if(!$deal){
+            return;
+        }
+
+        if($target === 'Cancelled' && $deal->trips()->where('trip_status', '!=', 'Cancelled')->exists()){
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'This deal has trips attached that are not Cancelled. Cancel those trips first.'
+            ]);
+            return;
+        }
+
+        $this->deal = $deal;
+        $this->statusUpdateId = $id;
+        $this->statusUpdateTarget = $target;
+        $this->statusUpdateComment = null;
+        $this->statusUpdateWeight = $deal->weight;
+        $this->statusUpdateLitreage = $deal->litreage;
+        $this->statusUpdateQuantity = $deal->quantity;
+        $this->statusUpdateCargoType = Cargo::find($deal->cargo_id)?->type;
+
+        $this->dispatchBrowserEvent('show-dealStatusModal');
     }
 
-    public function markClosed(){
-        $deal =  Deal::find($this->deal_id);
-        $deal->status = False;
-        $deal->update();
+    public function saveStatusUpdate(){
+        if(!$this->statusUpdateId){
+            return;
+        }
 
-        $this->dispatchBrowserEvent('hide-closeModal');
-        $this->resetInputFields();
+        $deal = Deal::find($this->statusUpdateId);
+        if(!$deal){
+            return;
+        }
+
+        if($this->statusUpdateTarget === 'Cancelled' && $deal->trips()->where('trip_status', '!=', 'Cancelled')->exists()){
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'This deal has trips attached that are not Cancelled. Cancel those trips first.'
+            ]);
+            return;
+        }
+
+        $this->validate([
+            'statusUpdateComment' => $this->statusUpdateTarget === 'Cancelled' ? 'required|string' : 'nullable|string',
+        ], [
+            'statusUpdateComment.required' => 'Please provide a reason for cancelling this deal.',
+        ]);
+
+        $deal->status = False;
+        $deal->is_closed = True;
+        $deal->closed_at = now();
+        $deal->status_comment = $this->statusUpdateComment ?: $deal->status_comment;
+
+        if($this->statusUpdateTarget === 'Completed'){
+            $deal->completed = True;
+            $deal->cancelled = False;
+            $deal->completed_by = Auth::id();
+            $deal->completed_at = now();
+            // Record what was ACTUALLY pushed/delivered without overwriting the
+            // deal's targets, so the summary keeps both (target 4000t vs 2000t done).
+            $deal->completed_weight = $this->statusUpdateWeight;
+            $deal->completed_litreage = $this->statusUpdateLitreage;
+            $deal->completed_quantity = $this->statusUpdateQuantity;
+        }else{
+            $deal->cancelled = True;
+            $deal->completed = False;
+            $deal->cancelled_by = Auth::id();
+            $deal->cancelled_at = now();
+        }
+
+        $deal->save();
+
+        $targetLabel = $this->statusUpdateTarget;
+
+        $this->dispatchBrowserEvent('hide-dealStatusModal');
+        $this->resetStatusUpdateFields();
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => 'Deal Closed Successfully!!'
+            'message' => "Deal marked as {$targetLabel}!!"
         ]);
+    }
+
+    private function resetStatusUpdateFields(){
+        $this->deal = null;
+        $this->statusUpdateId = null;
+        $this->statusUpdateTarget = null;
+        $this->statusUpdateComment = null;
+        $this->statusUpdateWeight = null;
+        $this->statusUpdateLitreage = null;
+        $this->statusUpdateQuantity = null;
+        $this->statusUpdateCargoType = null;
     }
 
     public function updated($value)

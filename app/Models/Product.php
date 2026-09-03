@@ -13,6 +13,24 @@ class Product extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    /** Keep the linked Expense's name in step when the product is renamed. */
+    protected static function booted()
+    {
+        static::updated(function ($product) {
+            if ($product->wasChanged('name')) {
+                $expense = \App\Models\Expense::where('product_id', $product->id)->first();
+                if ($expense && $expense->name !== $product->name) {
+                    $expense->name = $product->name;
+                    $expense->saveQuietly(); // no event → no sync loop
+                }
+            }
+        });
+    }
+
+    /** The expense linked to this product (non-inventory billable items). */
+    public function expense(){
+        return $this->hasOne('App\Models\Expense');
+    }
     public function sale_items(){
         return $this->hasMany('App\Models\SaleItem');
     }

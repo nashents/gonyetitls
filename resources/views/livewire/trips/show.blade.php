@@ -205,7 +205,9 @@
                                                             <tr>
                                                                 <th scope="row">Transporter</th>
                                                                 <td>
-                                                                    <a href="{{ route('transporters.show',$trip->transporter->id) }}" style="color:blue">   {{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</a>
+                                                                    @if ($trip->transporter)
+                                                                        <a href="{{ route('transporters.show',$trip->transporter->id) }}" style="color:blue">   {{ucfirst($trip->transporter->name)}}</a>
+                                                                    @endif
                                                                 </td>
                                                             </tr>
                                                             <tr>

@@ -13,8 +13,27 @@ class Expense extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    /** Keep the linked Product's name in step when an expense is renamed. */
+    protected static function booted()
+    {
+        static::updated(function ($expense) {
+            if ($expense->wasChanged('name') && $expense->product_id) {
+                $product = \App\Models\Product::find($expense->product_id);
+                if ($product && $product->name !== $expense->name) {
+                    $product->name = $expense->name;
+                    $product->saveQuietly(); // no event → no sync loop
+                }
+            }
+        });
+    }
+
     public function trip_expenses(){
         return $this->hasOne('App\Models\TripExpense');
+    }
+
+    /** The non-inventory billable Product this expense is linked to (1:1). */
+    public function product(){
+        return $this->belongsTo('App\Models\Product');
     }
 
      public function route_expenses(){

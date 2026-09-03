@@ -10,8 +10,11 @@
                                 @include('includes.messages')
                             </div>
                             <div class="panel-title">
+                                {{-- Sage is the sole creator/maintainer of vendors when the integration is active — hide create/import. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="" data-toggle="modal" data-target="#vendorModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Vendor</a>
                                 <a href="" data-toggle="modal" data-target="#vendorsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                @endunless
                                 <a href="#" wire:click="exportVendorsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportVendorsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportVendorsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -76,11 +79,16 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('vendors.show',$vendor->id)}}"  ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                {{-- Sage owns vendor master data when active — hide edit/delete. --}}
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$vendor->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @endunless
                                                 @if ($this->sageEnabled && config('sageintacct.master_data.push') && $vendor->sage_sync_status === 'failed')
                                                 <li><a href="#" wire:click="retrySync({{$vendor->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#" data-toggle="modal" data-target="#vendorDeleteModal{{ $vendor->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('vendors.delete')

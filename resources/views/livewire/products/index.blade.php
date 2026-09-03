@@ -10,6 +10,8 @@
                                 @include('includes.messages')
                             </div>
                             <div class="panel-title">
+                                {{-- Products are pull-only when Sage is active — hide create/import. --}}
+                                @unless ($this->sageEnabled)
                                 @if ($department == "tyre")
                                 <a href="{{route('tyre_products.create')}}" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Product</a>
                                 @elseif ($department == "inventory")
@@ -18,6 +20,7 @@
                                 <a href="{{route('products.create')}}" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Product</a>
                                 @endif
                                   <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import Products (Pastel)</a>
+                                @endunless
                                 @if ($this->sageEnabled)
                                 <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i>Pull from Sage</button>
                                 @endif
@@ -119,6 +122,7 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('products.show',$product->id )}}"  ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                @unless ($this->sageEnabled)
                                                 @if ($department == "tyre")
                                                 <li><a href="{{route('tyre_products.edit',$product->id )}}"  ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @elseif ($department == "inventory")
@@ -126,8 +130,9 @@
                                                 @elseif ($department == "asset")
                                                 <li><a href="{{route('products.edit',$product->id )}}"  ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @endif
-                                               
+
                                                 <li><a href="#" data-toggle="modal" data-target="#productDeleteModal{{ $product->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('products.delete')

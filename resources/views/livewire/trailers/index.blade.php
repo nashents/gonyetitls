@@ -15,8 +15,11 @@
                                     @include('includes.messages')
                                 </div>
                                 <div class="panel-title">
+                                    {{-- Master data is pull-only when Sage is active — hide create/import. --}}
+                                    @unless ($this->sageEnabled)
                                     <a href="#" data-toggle="modal" data-target="#trailerModal"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Trailer</a>
                                     <a href="" data-toggle="modal" data-target="#trailersImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                    @endunless
                                     <a href="#" wire:click="exportTrailersExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportTrailersCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportTrailersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -90,7 +93,9 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trailers.show', $trailer->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
+                                                    @unless ($this->sageEnabled)
                                                     <li><a href="#" wire:click="edit({{$trailer->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    @endunless
                                                     @if ($this->sageEnabled)
                                                     @php $ss = optional($trailer->sageMapping)->sync_status; @endphp
                                                     @if ($ss === 'synced')
@@ -101,7 +106,9 @@
                                                     <li><a href="#" wire:click.prevent="syncToSage({{$trailer->id}})" wire:loading.attr="disabled"><i class="fa fa-cloud-upload color-primary"></i> Sync to Sage</a></li>
                                                     @endif
                                                     @endif
+                                                    @unless ($this->sageEnabled)
                                                     <li><a href="#" data-toggle="modal" data-target="#trailerDeleteModal{{$trailer->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                    @endunless
                                                     @if ($trailer->status == 1)
                                                     <li><a href="{{route('trailers.deactivate',$trailer->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else

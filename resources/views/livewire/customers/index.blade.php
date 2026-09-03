@@ -10,8 +10,11 @@
                                 @include('includes.messages')
                             </div>
                             <div class="panel-title">
+                                {{-- Sage is the sole creator/maintainer of customers when the integration is active — hide create/import. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="" data-toggle="modal" data-target="#customerModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Customer</a>
                                 <a href="" data-toggle="modal" data-target="#customersImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                @endunless
                                 <a href="#" wire:click="exportCustomersExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportCustomersCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportCustomersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -95,11 +98,16 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('customers.show', $customer->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                {{-- Sage owns customer master data when active — hide edit/delete. --}}
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$customer->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @endunless
                                                 @if ($this->sageEnabled && config('sageintacct.master_data.push') && $customer->sage_sync_status === 'failed')
                                                 <li><a href="#" wire:click="retrySync({{$customer->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#" data-toggle="modal" data-target="#customerDeleteModal{{ $customer->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('customers.delete')

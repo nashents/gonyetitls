@@ -83,6 +83,15 @@ class Index extends Component
     public $filter_status;
     public $status;
 
+    public $statusUpdateTransportOrder;
+    public $statusUpdateId;
+    public $statusUpdateTarget;
+    public $statusUpdateComment;
+    public $statusUpdateWeight;
+    public $statusUpdateLitreage;
+    public $statusUpdateQuantity;
+    public $statusUpdateCargoType;
+
     public $customers;
     public $customer_id;
     public $consignees;
@@ -654,7 +663,7 @@ public function getAuthorizer($id){
                 $transport_order->litreage = $this->litreage;
                 $transport_order->units_of_measure_id = $this->units_of_measure_id;
                 $transport_order->weight = $this->weight;
-                $transport_order->status = $this->status;
+                $transport_order->status = $this->status ?: 'Active';
                 $transport_order->rate = $this->rate;
                 $transport_order->freight = $this->freight;
                 $transport_order->transporter_rate = $this->transporter_rate;
@@ -747,6 +756,7 @@ public function getAuthorizer($id){
         $this->status = $transport_order->status;
         $this->rate = $transport_order->rate;
         $this->freight = $transport_order->freight;
+        $this->transporter_agreement = ! is_null($transport_order->transporter_rate) || ! is_null($transport_order->transporter_freight);
         $this->transporter_rate = $transport_order->transporter_rate;
         $this->transporter_freight = $transport_order->transporter_freight;
         $this->exchange_rate = $transport_order->exchange_rate;
@@ -864,7 +874,10 @@ public function getAuthorizer($id){
       public function updatedRate(){
             $this->calculateFreight();
       }
-    
+      public function updatedTransporterRate(){
+            $this->calculateFreight();
+      }
+
       public function updatedWeight($value){
 
         $this->net_weight = $value;
@@ -1229,6 +1242,98 @@ public function getAuthorizer($id){
             'type'=>'success',
             'message'=>"Transport Order Deleted Successfully!!"
         ]);
+    }
+
+    /** Opens the shared status-update modal for either the Completed or Cancelled action. */
+    public function openStatusUpdate($id, $target){
+        $transport_order = TransportOrder::find($id);
+        if (! $transport_order) {
+            return;
+        }
+
+        if ($target === 'Cancelled' && $transport_order->trips()->where('trip_status', '!=', 'Cancelled')->exists()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'This transport order has trips attached that are not Cancelled. Cancel those trips first.'
+            ]);
+            return;
+        }
+
+        $this->statusUpdateTransportOrder = $transport_order;
+        $this->statusUpdateId = $id;
+        $this->statusUpdateTarget = $target;
+        $this->statusUpdateComment = null;
+        $this->statusUpdateWeight = $transport_order->weight;
+        $this->statusUpdateLitreage = $transport_order->litreage;
+        $this->statusUpdateQuantity = $transport_order->quantity;
+        $this->statusUpdateCargoType = $transport_order->cargo?->type;
+
+        $this->dispatchBrowserEvent('show-statusUpdateModal');
+    }
+
+    public function saveStatusUpdate(){
+        if (! $this->statusUpdateId) {
+            return;
+        }
+
+        $transport_order = TransportOrder::find($this->statusUpdateId);
+        if (! $transport_order) {
+            return;
+        }
+
+        if ($this->statusUpdateTarget === 'Cancelled' && $transport_order->trips()->where('trip_status', '!=', 'Cancelled')->exists()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'This transport order has trips attached that are not Cancelled. Cancel those trips first.'
+            ]);
+            return;
+        }
+
+        $this->validate([
+            'statusUpdateComment' => $this->statusUpdateTarget === 'Cancelled' ? 'required|string' : 'nullable|string',
+        ], [
+            'statusUpdateComment.required' => 'Please provide a reason for cancelling this transport order.',
+        ]);
+
+        $transport_order->status = $this->statusUpdateTarget;
+        $transport_order->completed = $this->statusUpdateTarget === 'Completed';
+        $transport_order->comments = $this->statusUpdateComment ?: $transport_order->comments;
+
+        if ($this->statusUpdateTarget === 'Completed') {
+            $transport_order->completed_by = Auth::id();
+            $transport_order->completed_at = now();
+            // Record what was ACTUALLY pushed/delivered without overwriting the
+            // target weight/litreage/quantity, so the summary keeps both.
+            $transport_order->completed_weight = $this->statusUpdateWeight;
+            $transport_order->completed_litreage = $this->statusUpdateLitreage;
+            $transport_order->completed_quantity = $this->statusUpdateQuantity;
+        } else {
+            $transport_order->cancelled_by = Auth::id();
+            $transport_order->cancelled_at = now();
+        }
+
+        $transport_order->save();
+
+        $targetLabel = $this->statusUpdateTarget;
+
+        $this->dispatchBrowserEvent('hide-statusUpdateModal');
+        $this->resetStatusUpdateFields();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Transport Order marked as {$targetLabel}!!"
+        ]);
+    }
+
+    private function resetStatusUpdateFields(){
+        $this->statusUpdateTransportOrder = null;
+        $this->statusUpdateId = null;
+        $this->statusUpdateTarget = null;
+        $this->statusUpdateComment = null;
+        $this->statusUpdateWeight = null;
+        $this->statusUpdateLitreage = null;
+        $this->statusUpdateQuantity = null;
+        $this->statusUpdateCargoType = null;
     }
 
     public function render()

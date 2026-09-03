@@ -406,8 +406,11 @@
                                                 @else
                                                     <div class="form-group">
                                                         <label for="manifest_number">Manifest Number</label>
-                                                        <input type="text" class="form-control" wire:model.debounce.300ms="manifest_number" placeholder="Enter Manifest Number">
+                                                        <input type="text" class="form-control" wire:model.debounce.300ms="manifest_number" placeholder="Enter Manifest Number" @if($sage_integration_active) disabled @endif>
                                                         @error('manifest_number') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                        @if($sage_integration_active)
+                                                            <small class="text-muted">Locked while the Sage integration is active — this number becomes the Sage Project ID and cannot be changed here.</small>
+                                                        @endif
                                                     </div>
                                                 @endif
                                             </div>

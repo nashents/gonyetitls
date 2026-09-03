@@ -97,10 +97,11 @@
                                     };
 
                                     $statusMap = [
-                                        'Completed'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
-                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
-                                        'Started'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'info'],
-                                        'Cancelled'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'danger'],
+                                        'Completed'        => ['row' => '#E8F5E9', 'border' => '#2E7D32', 'cell' => 'table-success', 'badge' => 'success'],
+                                        'Active'           => ['row' => '#E3F2FD', 'border' => '#1565C0', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                        'Scheduled'        => ['row' => '#FFF3E0', 'border' => '#E65100', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                        'Started'    => ['row' => '#F5F5F5', 'border' => '#616161', 'cell' => 'table-secondary', 'badge' => 'info'],
+                                        'Cancelled'           => ['row' => '#FFEBEE', 'border' => '#C62828', 'cell' => 'table-danger', 'badge' => 'danger'],
                                     ];
                                 @endphp
                               
@@ -133,10 +134,10 @@
                                         <tbody>
                                         @forelse($transport_orders as $transport_order)
                                             @php
-                                                $s = $statusMap[$transport_order->status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
+                                                $s = $statusMap[$transport_order->status] ?? ['row' => null, 'border' => null, 'cell' => '', 'badge' => 'secondary'];
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
+                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $transport_order->id }}" value="{{ $transport_order->id }}"></td>
                                                 <td>
                                                     <strong>{{ $transport_order->transport_order_number }}@if($transport_order->transport_order_ref)/{{ $transport_order->transport_order_ref }}@endif</strong>

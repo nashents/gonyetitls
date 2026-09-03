@@ -25,6 +25,14 @@
                                 </div>
                             </div>
 
+                            @php
+                                $dealStatusMap = [
+                                    'Completed' => ['row' => '#E8F5E9', 'border' => '#2E7D32'],
+                                    'Active'    => ['row' => '#E3F2FD', 'border' => '#1565C0'],
+                                    'Cancelled' => ['row' => '#FFEBEE', 'border' => '#C62828'],
+                                ];
+                            @endphp
+
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
@@ -46,7 +54,11 @@
                                 @if (isset($deals))
                                     <tbody>
                                         @forelse ($deals as $deal)
-                                            <tr>
+                                            @php
+                                                $dealState = $deal->cancelled ? 'Cancelled' : ($deal->completed ? 'Completed' : 'Active');
+                                                $ds = $dealStatusMap[$dealState];
+                                            @endphp
+                                            <tr style="background-color: {{ $ds['row'] }}; border-left: 6px solid {{ $ds['border'] }};">
                                                 <td>{{ $deal->deal_number }}</td>
                                                 <td>{{ $deal->reference ?? 'N/A' }}</td>
                                                 <td>{{ $deal->customer ? $deal->customer->name : 'N/A' }}</td>
@@ -67,6 +79,17 @@
 
                                                     @if (!$deal->weight && !$deal->litreage && !$deal->quantity)
                                                         N/A
+                                                    @endif
+
+                                                    {{-- Actual amount pushed/delivered at completion (kept alongside the target). --}}
+                                                    @if ($deal->completed && ($deal->completed_weight || $deal->completed_litreage || $deal->completed_quantity))
+                                                        <br>
+                                                        <span class="badge bg-success" style="margin-top:3px">Delivered</span>
+                                                        <small class="text-success">
+                                                            @if ($deal->completed_weight) {{ number_format($deal->completed_weight, 2) }}t @endif
+                                                            @if ($deal->completed_litreage) {{ number_format($deal->completed_litreage, 2) }}l @endif
+                                                            @if ($deal->completed_quantity) {{ number_format($deal->completed_quantity, 2) }} {{ $deal->units_of_measure ? $deal->units_of_measure->name : '' }} @endif
+                                                        </small>
                                                     @endif
                                                 </td>
                                                 <td>
@@ -137,14 +160,24 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($deal->is_closed)
-                                                        <span class="badge bg-danger">Closed</span>
-                                                        @if($deal->closed_at)
-                                                            <br>
-                                                            <small>
-                                                                {{ \Carbon\Carbon::parse($deal->closed_at)->format('d M Y H:i') }}
-                                                            </small>
-                                                        @endif
+                                                    @if ($dealState === 'Completed')
+                                                        <span class="badge bg-success">Completed</span>
+                                                        <br>
+                                                        <small>
+                                                            <strong>By:</strong> {{ $deal->completedBy?->name }} {{ $deal->completedBy?->surname }} <br>
+                                                            <strong>On:</strong> {{ $deal->completed_at?->format('d M Y H:i') }}
+                                                            @if ($deal->status_comment)
+                                                                <br><strong>Comment:</strong> {{ $deal->status_comment }}
+                                                            @endif
+                                                        </small>
+                                                    @elseif ($dealState === 'Cancelled')
+                                                        <span class="badge bg-danger">Cancelled</span>
+                                                        <br>
+                                                        <small>
+                                                            <strong>By:</strong> {{ $deal->cancelledBy?->name }} {{ $deal->cancelledBy?->surname }} <br>
+                                                            <strong>On:</strong> {{ $deal->cancelled_at?->format('d M Y H:i') }} <br>
+                                                            <strong>Comment:</strong> {{ $deal->status_comment }}
+                                                        </small>
                                                     @else
                                                         <span class="badge bg-success">Open</span>
                                                     @endif
@@ -166,16 +199,28 @@
                                                                     <i class="fa fa-edit color-success"></i> Edit
                                                                 </a>
                                                             </li>
+                                                            @if ($dealState === 'Active')
                                                             <li>
-                                                                <a href="#" wire:click.prevent="close({{ $deal->id }})">
-                                                                    <i class="fa fa-remove color-success"></i> Close
+                                                                <a href="#" wire:click.prevent="openStatusUpdate({{ $deal->id }}, 'Completed')">
+                                                                    <i class="fa fa-check-circle color-success"></i> Mark as Completed
                                                                 </a>
                                                             </li>
+                                                            @endif
+                                                            @if ($dealState === 'Active')
+                                                            <li>
+                                                                <a href="#" wire:click.prevent="openStatusUpdate({{ $deal->id }}, 'Cancelled')">
+                                                                    <i class="fa fa-ban color-danger"></i> Cancel
+                                                                </a>
+                                                            </li>
+                                                            @endif
+                                                            {{-- No delete once the deal is completed or cancelled. --}}
+                                                            @unless ($deal->completed || $deal->cancelled)
                                                             <li>
                                                                 <a href="#" wire:click.prevent="delete({{ $deal->id }})">
                                                                     <i class="fa fa-trash color-danger"></i> Delete
                                                                 </a>
                                                             </li>
+                                                            @endunless
                                                         </ul>
                                                     </div>
 
@@ -233,17 +278,60 @@
         </div>
     </div>
    
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="closeModal" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="dealStatusModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
-            <div class="modal-content bg-danger">
-                <div class="modal-body">
-                    <center><strong>Mark Deal {{$deal?->deal_number}}{{$deal?->reference ? "/".$deal?->reference : ""}} as closed.</strong></center> 
+            <div class="modal-content {{ $statusUpdateTarget === 'Cancelled' ? 'bg-danger' : '' }}">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        Mark Deal {{$deal?->deal_number}}{{$deal?->reference ? "/".$deal?->reference : ""}} as {{ $statusUpdateTarget }}
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
-                <form wire:submit.prevent="markClosed()">
+                <form wire:submit.prevent="saveStatusUpdate">
+                    <div class="modal-body">
+                        @if ($statusUpdateTarget === 'Completed')
+                            <p>Optionally correct the final quantities pushed for this deal before marking it Completed.</p>
+                            <div class="row">
+                                @if ($statusUpdateCargoType === 'Solid')
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Weight(t)</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="statusUpdateWeight">
+                                        </div>
+                                    </div>
+                                @elseif ($statusUpdateCargoType === 'Liquid')
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Litreage(l)</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="statusUpdateLitreage">
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Quantity</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="statusUpdateQuantity">
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                        <div class="form-group">
+                            <label>
+                                Comments
+                                @if ($statusUpdateTarget === 'Cancelled')
+                                    <span class="required" style="color:red">*</span>
+                                @else
+                                    <small class="text-muted">(optional)</small>
+                                @endif
+                            </label>
+                            <textarea class="form-control" rows="3" wire:model.debounce.300ms="statusUpdateComment" placeholder="{{ $statusUpdateTarget === 'Cancelled' ? 'Please provide a reason for cancelling (required)' : 'Add a comment (optional)' }}"></textarea>
+                            @error('statusUpdateComment') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
                     <div class="modal-footer no-border">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
+                            <button type="submit" class="btn {{ $statusUpdateTarget === 'Cancelled' ? 'bg-danger' : 'bg-success' }} btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>

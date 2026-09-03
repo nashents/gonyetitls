@@ -30,10 +30,11 @@
                                     };
 
                                     $statusMap = [
-                                        'Completed'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
-                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
-                                        'Started'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'info'],
-                                        'Cancelled'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'danger'],
+                                        'Completed'        => ['row' => '#E8F5E9', 'border' => '#2E7D32', 'cell' => 'table-success', 'badge' => 'success'],
+                                        'Active'           => ['row' => '#E3F2FD', 'border' => '#1565C0', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                        'Scheduled'        => ['row' => '#FFF3E0', 'border' => '#E65100', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                        'Started'    => ['row' => '#F5F5F5', 'border' => '#616161', 'cell' => 'table-secondary', 'badge' => 'info'],
+                                        'Cancelled'           => ['row' => '#FFEBEE', 'border' => '#C62828', 'cell' => 'table-danger', 'badge' => 'danger'],
                                     ];
                                 @endphp
                     <div class="panel">
@@ -280,10 +281,10 @@
                                         <tbody>
                                         @forelse($transport_orders as $transport_order)
                                             @php
-                                                $s = $statusMap[$transport_order->status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
+                                                $s = $statusMap[$transport_order->status] ?? ['row' => null, 'border' => null, 'cell' => '', 'badge' => 'secondary'];
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
+                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td>
                                                     <strong>{{ $transport_order->transport_order_number }}@if($transport_order->custom_ref)/{{ $transport_order->custom_ref }}@endif</strong>
                                                     <br>
@@ -311,6 +312,15 @@
                                                     <small class="text-muted">
                                                         <strong>Weight: </strong>{{$transport_order->weight}} <br>
                                                         <strong>Qty: </strong>{{$transport_order->quantity}} {{$transport_order->units_of_measure?->name}} <br>
+                                                        {{-- Actual amount delivered at completion (kept alongside the target). --}}
+                                                        @if ($transport_order->completed && ($transport_order->completed_weight || $transport_order->completed_litreage || $transport_order->completed_quantity))
+                                                            <span class="badge bg-success">Delivered</span>
+                                                            <span class="text-success">
+                                                                @if ($transport_order->completed_weight) {{ number_format($transport_order->completed_weight, 2) }}t @endif
+                                                                @if ($transport_order->completed_litreage) {{ number_format($transport_order->completed_litreage, 2) }}l @endif
+                                                                @if ($transport_order->completed_quantity) {{ number_format($transport_order->completed_quantity, 2) }} {{$transport_order->units_of_measure?->name}} @endif
+                                                            </span> <br>
+                                                        @endif
                                                         <strong>AddInfo:</strong> {{$transport_order->cargo_details}} <br>
                                                     </small>
                                                 </td>
@@ -427,6 +437,23 @@
                                                     <span class="label label-{{ $s['badge'] }} label-wide">
                                                         {{ $transport_order->status }}
                                                     </span>
+                                                    @if ($transport_order->status === 'Completed')
+                                                        <br>
+                                                        <small>
+                                                            <strong>By:</strong> {{ $transport_order->completedBy?->name }} {{ $transport_order->completedBy?->surname }} <br>
+                                                            <strong>On:</strong> {{ $transport_order->completed_at?->format('d M Y H:i') }}
+                                                            @if ($transport_order->comments)
+                                                                <br><strong>Comment:</strong> {{ $transport_order->comments }}
+                                                            @endif
+                                                        </small>
+                                                    @elseif ($transport_order->status === 'Cancelled')
+                                                        <br>
+                                                        <small>
+                                                            <strong>By:</strong> {{ $transport_order->cancelledBy?->name }} {{ $transport_order->cancelledBy?->surname }} <br>
+                                                            <strong>On:</strong> {{ $transport_order->cancelled_at?->format('d M Y H:i') }} <br>
+                                                            <strong>Comment:</strong> {{ $transport_order->comments }}
+                                                        </small>
+                                                    @endif
                                                 </td>
 
                                                 @if($showFreight)
@@ -491,11 +518,28 @@
                                                                         <i class="fas fa-edit color-success"></i> Edit
                                                                     </a>
                                                                 </li>
+                                                                @if (!in_array($transport_order->status, ['Completed', 'Cancelled']))
+                                                                <li>
+                                                                    <a href="#" wire:click.prevent="openStatusUpdate({{$transport_order->id}}, 'Completed')">
+                                                                        <i class="fa fa-check-circle color-success"></i> Mark as Completed
+                                                                    </a>
+                                                                </li>
+                                                                @endif
+                                                                @if (!in_array($transport_order->status, ['Cancelled', 'Completed']))
+                                                                <li>
+                                                                    <a href="#" wire:click.prevent="openStatusUpdate({{$transport_order->id}}, 'Cancelled')">
+                                                                        <i class="fa fa-ban color-danger"></i> Cancel
+                                                                    </a>
+                                                                </li>
+                                                                @endif
+                                                                {{-- No delete once the transport order is completed or cancelled. --}}
+                                                                @unless ($transport_order->completed || $transport_order->cancelled_at)
                                                                 <li>
                                                                     <a href="#"  wire:click.prevent="delete({{$transport_order->id}})">
                                                                         <i class="fa fa-trash color-danger"></i> Delete
                                                                     </a>
                                                                 </li>
+                                                                @endunless
                                                             @endif
                                                             @endif
                                                         </ul>
@@ -552,6 +596,67 @@
         </div>
     </div>
 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="statusUpdateModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content {{ $statusUpdateTarget === 'Cancelled' ? 'bg-danger' : '' }}">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        Mark Transport Order {{ $statusUpdateTransportOrder?->transport_order_number }} as {{ $statusUpdateTarget }}
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form wire:submit.prevent="saveStatusUpdate">
+                    <div class="modal-body">
+                        @if ($statusUpdateTarget === 'Completed')
+                            <p>Optionally correct the final quantities pushed for this order before marking it Completed.</p>
+                            <div class="row">
+                                @if ($statusUpdateCargoType === 'Solid')
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Weight(t)</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="statusUpdateWeight">
+                                        </div>
+                                    </div>
+                                @elseif ($statusUpdateCargoType === 'Liquid')
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Litreage(l)</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="statusUpdateLitreage">
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Quantity</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="statusUpdateQuantity">
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                        <div class="form-group">
+                            <label>
+                                Comments
+                                @if ($statusUpdateTarget === 'Cancelled')
+                                    <span class="required" style="color:red">*</span>
+                                @else
+                                    <small class="text-muted">(optional)</small>
+                                @endif
+                            </label>
+                            <textarea class="form-control" rows="3" wire:model.debounce.300ms="statusUpdateComment" placeholder="{{ $statusUpdateTarget === 'Cancelled' ? 'Please provide a reason for cancelling (required)' : 'Add a comment (optional)' }}"></textarea>
+                            @error('statusUpdateComment') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer no-border">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn {{ $statusUpdateTarget === 'Cancelled' ? 'bg-danger' : 'bg-success' }} btn-wide btn-rounded"><i class="fa fa-check"></i>Update</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="storeModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
@@ -604,7 +709,7 @@
                             </div>
                         @endif
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="transport_order_ref">Custom Reference</label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Custom Order Reference#"  />
@@ -612,7 +717,7 @@
                                 </div>
                             </div>
                             <!-- Trip Type -->
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="trip_type">
                                         <a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Types</a>
@@ -626,26 +731,8 @@
                                     </select>
                                     @error('selectedTripType') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
-                            </div>   
-                           
-                            <!-- Trip Group -->
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="customer">Status<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="status" required>
-                                        <option value="">Select Status</option>
-                                            <option value="Scheduled">Scheduled</option>
-                                            <option value="Started">Started</option>
-                                            <option value="Completed">Completed</option>
-                                            <option value="Cancelled">Cancelled</option>
-                                    </select>
-                                    @error('status') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
                             </div>
-                        </div>
-                      
-                        <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="customer_id" required>
@@ -658,7 +745,7 @@
                                     <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name"><a href="{{route('consignees.index')}}" style="color: blue" target="_blank">Consignees</a></label>
                                     <select class="form-control" wire:model.debounce.300ms="consignee_id">
@@ -671,7 +758,6 @@
                                     @error('consignee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            
                         </div>
                         <h5 class="underline mt-30">Cargo Details</h5>
                         <div class="row">
@@ -884,7 +970,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" />
+                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" disabled placeholder=" Transporter Freight" />
                                                 @error('transporter_freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 @if ($transporter_freight > $freight)
                                                     <small style="color: red"> Transporter agreed freight cannot be greater than customer agreed freight.</small>
@@ -1446,7 +1532,7 @@
                             </div>
                         @endif
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="transport_order_ref">Custom Reference</label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Custom Order Reference#"  />
@@ -1454,7 +1540,7 @@
                                 </div>
                             </div>
                             <!-- Trip Type -->
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="trip_type">
                                         <a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Types</a>
@@ -1468,26 +1554,8 @@
                                     </select>
                                     @error('selectedTripType') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
-                            </div>   
-                           
-                            <!-- Trip Group -->
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="customer">Status<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="status" required>
-                                        <option value="">Select Status</option>
-                                            <option value="Scheduled">Scheduled</option>
-                                            <option value="Started">Started</option>
-                                            <option value="Completed">Completed</option>
-                                            <option value="Cancelled">Cancelled</option>
-                                    </select>
-                                    @error('status') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
                             </div>
-                        </div>
-                      
-                        <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="customer_id" required>
@@ -1500,7 +1568,7 @@
                                     <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name"><a href="{{route('consignees.index')}}" style="color: blue" target="_blank">Consignees</a></label>
                                     <select class="form-control" wire:model.debounce.300ms="consignee_id">
@@ -1725,7 +1793,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" />
+                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" disabled placeholder=" Transporter Freight" />
                                                 @error('transporter_freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 @if ($transporter_freight > $freight)
                                                     <small style="color: red"> Transporter agreed freight cannot be greater than customer agreed freight.</small>

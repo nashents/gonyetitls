@@ -289,6 +289,9 @@ return [
         'trailer_class_prefixes'   => ['T', 'FHT'],
         // Sage PROJECTTYPE that represents a transporter.
         'transporter_project_type' => env('SAGE_INTACCT_TYPE_TRANSPORTER', 'SUBCONTRACTOR'),
+        // Sage PROJECTTYPE of a horse project (its PARENTID = the transporter project),
+        // used on the horse pull to attach each horse to its transporter.
+        'horse_project_type'       => env('SAGE_INTACCT_TYPE_HORSE_PROJECT', 'SUB - TRUCKS'),
         // Page size for readByQuery (max 1000). readMore() pages beyond this.
         'page_size'                => 1000,
     ],

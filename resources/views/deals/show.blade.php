@@ -53,7 +53,9 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#tripsTable').DataTable();
+        $('#tripsTable').DataTable({
+            "language": { "emptyTable": "No Trips Found ...." }
+        });
     } );
     </script>
 @endsection

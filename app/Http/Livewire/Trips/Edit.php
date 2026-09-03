@@ -34,6 +34,8 @@ use App\Models\Quotation;
 use App\Models\Rate;
 use App\Models\Route;
 use App\Services\Accounting\TripExpenseRepairService;
+use App\Services\Sage\Concerns\ResolvesSageIntegration;
+use App\Services\TripCompletionCascadeService;
 use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Trailer;
@@ -62,6 +64,7 @@ use Livewire\WithFileUploads;
 class Edit extends Component
 {
     use WithFileUploads;
+    use ResolvesSageIntegration;
 
     public $trip;
     public $trip_id;
@@ -106,6 +109,7 @@ class Edit extends Component
     public $bill_of_entry;
     public $container_number;
     public $manifest_number;
+    public $sage_integration_active = false;
     public $trip_types;
     public $trip_type_name;
     public $horse_selected;
@@ -1188,6 +1192,7 @@ class Edit extends Component
                                     ->get();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
         $this->company = Company::with('currency')->find( $this->employee->company_id);
+        $this->sage_integration_active = (bool) $this->activeSageIntegration($this->company?->id);
         $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->defined_transporter_rates = Rate::where('category','Transporter')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->containers = Container::orderBy('name','asc')->latest()->get();
@@ -2903,7 +2908,9 @@ class Edit extends Component
 
         }
 
-           
+        if (!empty($this->current_selectedTransportOrder) || !empty($this->selectedTransportOrder)) {
+            app(TripCompletionCascadeService::class)->syncForTrip($trip);
+        }
 
 
           $this->calculateFuelConsumption($trip->id);

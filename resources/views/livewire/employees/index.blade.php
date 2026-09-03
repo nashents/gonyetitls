@@ -137,7 +137,7 @@
                                                     <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
                                                     <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
                                                     <strong>Role(s):</strong> 
-                                                        @if ($employee->user->roles)
+                                                        @if ($employee->user && $employee->user->roles)
                                                             @foreach ($employee->user->roles as $role)
                                                                 {{$role->name}} @if (!$loop->last),@endif
                                                             @endforeach

@@ -210,7 +210,7 @@
 
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Role(s)</th>
-                                    <td class="w-20 line-height-35">@foreach ($employee->user->roles as $role)
+                                    <td class="w-20 line-height-35">@foreach ($employee->user?->roles ?? [] as $role)
                                         {{$role->name}}
                                     @endforeach
                                 </td>

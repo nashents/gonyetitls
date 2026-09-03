@@ -34,8 +34,11 @@
                                         </div>
                                     </div>
                                     </div>
+                                    {{-- Master data is pull-only when Sage is active — hide create/import. --}}
+                                    @unless ($this->sageEnabled)
                                     <a href="{{route('horses.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Horse</a>
                                     <a href="" data-toggle="modal" data-target="#horsesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                    @endunless
                                     <a href="#" wire:click="exportHorsesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportHorsesCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportHorsesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -218,7 +221,9 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('horses.show', $horse->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
+                                                    @unless ($this->sageEnabled)
                                                     <li><a href="{{route('horses.edit', $horse->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    @endunless
                                                     @if ($this->sageEnabled)
                                                     @php $ss = optional($horse->sageMapping)->sync_status; @endphp
                                                     @if ($ss === 'synced')
@@ -229,7 +234,9 @@
                                                     <li><a href="#" wire:click.prevent="syncToSage({{$horse->id}})" wire:loading.attr="disabled"><i class="fa fa-cloud-upload color-primary"></i> Sync to Sage</a></li>
                                                     @endif
                                                     @endif
+                                                    @unless ($this->sageEnabled)
                                                     <li><a href="#" data-toggle="modal" data-target="#horseDeleteModal{{$horse->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                    @endunless
                                                     @if ($horse->status == 1)
                                                         <li><a href="{{route('horses.deactivate', $horse->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else

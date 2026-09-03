@@ -11,11 +11,16 @@
                             </div>
 
                             <div class="panel-title">
+                                {{-- Expenses are pull-only when Sage is active — hide create/import. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="" data-toggle="modal" data-target="#expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
                                 <a href="" data-toggle="modal" data-target="#expenseImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                @endunless
                                 <a href="#" wire:click="exportExpensesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportExpensesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportExpensesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                {{-- Backfill: create + link a non-inventory billable product for any expense missing one. --}}
+                                <button wire:click="syncMissingProducts" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-link"></i> Sync expenses with missing products</button>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -67,7 +72,14 @@
                                     </td>
                                     <td>{{ucfirst($expense->account ? $expense->account->name : "")}}</td>
                                     <td>{{ucfirst($expense->type)}}</td>
-                                    <td>{{ucfirst($expense->name)}}</td>
+                                    <td>{{ucfirst($expense->name)}}
+                                        <br>
+                                        @if ($expense->product_id && $expense->product)
+                                            <small class="badge bg-success" title="Linked to product {{ $expense->product->product_number }}">Product synced</small>
+                                        @else
+                                            <small class="badge bg-secondary">Not synced to product</small>
+                                        @endif
+                                    </td>
                                     <td>{{$expense->payment_method ? $expense->payment_method->name : ""}}</td>
                                     <td>{{$expense->currency ? $expense->currency->name : ""}}</td>
                                     <td>
@@ -89,10 +101,14 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('expenses.show', $expense->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 @if ($expense->user_id != Null)
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$expense->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @endunless
                                                 @endif
                                                 @unless ($expense->is_locked)
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#" data-toggle="modal" data-target="#expenseDeleteModal{{ $expense->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                                 @endunless
                                                
                                             </ul>

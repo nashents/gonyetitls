@@ -16,6 +16,12 @@ class Transporter extends Model implements Auditable
     public function bookings(){
         return $this->hasMany('App\Models\Booking');
     }
+
+    /** Sage Intacct link (entity_type transporter_project) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'transporter_project');
+    }
      public function rates(){
         return $this->hasMany('App\Models\Rate');
     }

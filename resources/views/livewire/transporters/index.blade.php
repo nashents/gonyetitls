@@ -11,8 +11,11 @@
                             </div>
                             
                             <div class="panel-title">
+                                {{-- Master data is pull-only when Sage is active — hide create/import. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="" data-toggle="modal" data-target="#transporterModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Transporter</a>
                                 <a href="" data-toggle="modal" data-target="#transportersImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                @endunless
                                 <a href="#" wire:click="exportTransportersExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportTransportersCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportTransportersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -66,6 +69,12 @@
                                         @if ($transporter->default)
                                         <span class="badge bg-primary">Default</span>
                                         @endif
+                                        @if ($this->sageEnabled)
+                                            @php $sm = $transporter->sageMapping; $ss = optional($sm)->sync_status; @endphp
+                                            <br>
+                                            <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ optional($sm)->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
+                                        @endif
                                     </td>
                                     <td>{{$transporter->email}}</td>
                                     <td>{{$transporter->phonenumber}}</td>
@@ -100,8 +109,10 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('transporters.show', $transporter->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#" wire:click="edit({{$transporter->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#transporterDeleteModal{{ $transporter->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('transporters.delete')

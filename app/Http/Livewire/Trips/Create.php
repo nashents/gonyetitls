@@ -57,6 +57,8 @@ use App\Models\Vendor;
 use App\Services\Cartrack\CartrackSyncService;
 use App\Services\FanTracker\FanTrackerSyncService;
 use App\Services\Pinpoint\PinpointSyncService;
+use App\Services\Sage\Concerns\ResolvesSageIntegration;
+use App\Services\TripCompletionCascadeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +72,7 @@ use Livewire\WithFileUploads;
 class Create extends Component
 {
     use WithFileUploads;
+    use ResolvesSageIntegration;
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     public $trip_id;
     public $with_quotation = False;
@@ -157,6 +160,7 @@ class Create extends Component
     public $clearing_agent_id;
     public $cd3_number;
     public $manifest_number;
+    public $sage_integration_active = false;
     public $cd1_number;
     public $container_number;
     public $bill_of_entry;
@@ -949,7 +953,12 @@ class Create extends Component
        
         if(!is_null($value)){
             if($value == True){
-                $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
+                $this->transport_orders = TransportOrder::where('authorization','approved')
+                    ->where(function ($q) {
+                        $q->whereNotIn('status', ['Completed', 'Cancelled'])
+                          ->orWhereNull('status');
+                    })
+                    ->latest()->get();
                 $this->cargo_type = [];
                 $this->trip_type = [];
             }
@@ -1307,6 +1316,8 @@ class Create extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->manifest_number =  $this->manifestNumber();
+        $this->company = Company::with('currency')->find($this->employee->company_id);
+        $this->sage_integration_active = (bool) $this->activeSageIntegration($this->company?->id);
         $this->quotations = Quotation::with('customer')
                                     ->whereYear('date', date('Y'))
                                     ->whereMonth('date', date('m'))
@@ -1315,8 +1326,7 @@ class Create extends Component
                                     ->latest()
                                     ->get();
         $this->deals = collect();
-        $this->company = Company::with('currency')->find($this->employee->company_id);
-        $this->exchange_rates = ExchangeRate::all(); 
+        $this->exchange_rates = ExchangeRate::all();
         $this->emptyrun_destination = False;
         $this->emptyrun_origin = False;
         $this->transporters = Transporter::where('authorization','approved')->orderBy('name','asc')->get();
@@ -2333,12 +2343,15 @@ class Create extends Component
                     $trip->turnover = $this->turnover;
                     $trip->update();
 
-                    
 
-                   
+
+
                 }
 
-                
+                if (!empty($this->selectedTransportOrder)) {
+                    app(TripCompletionCascadeService::class)->syncForTrip($trip);
+                }
+
                 $this->calculateFuelConsumption($trip->id);
                 $this->syncRelations($trip);
 
@@ -3308,7 +3321,12 @@ class Create extends Component
                 ]);
             }
         elseif($category == "transport_orders"){
-            $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
+            $this->transport_orders = TransportOrder::where('authorization','approved')
+                    ->where(function ($q) {
+                        $q->whereNotIn('status', ['Completed', 'Cancelled'])
+                          ->orWhereNull('status');
+                    })
+                    ->latest()->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Transport Orders Refreshed Successfully!!."

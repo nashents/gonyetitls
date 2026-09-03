@@ -11,7 +11,10 @@
                             </div>
 
                             <div class="panel-title">
+                                {{-- Items are pull-only when Sage is active — hide create. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="" data-toggle="modal" data-target="#product_serviceModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Item</a>
+                                @endunless
                                 @if ($this->sageEnabled)
                                 <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary"><i class="fa fa-cloud-download"></i> Pull from Sage</button>
                                 @endif
@@ -68,8 +71,10 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 {{-- <li><a href="{{route('product_services.show',$product->id)}}"  ><i class="fa fa-eye color-default"></i> View</a></li> --}}
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$product->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#productDeleteModal{{ $product->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('products.delete')

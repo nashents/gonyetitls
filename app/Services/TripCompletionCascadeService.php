@@ -38,7 +38,22 @@ class TripCompletionCascadeService
                     continue;
                 }
 
+                $wasCompleted = $transportOrder->completed;
                 $transportOrder->completed = $this->isTransportOrderFulfilled($transportOrder);
+
+                if ($transportOrder->completed) {
+                    $transportOrder->status = 'Completed';
+                    if (! $wasCompleted) {
+                        $transportOrder->completed_at = now();
+                    }
+                } elseif ($transportOrder->status === 'Completed') {
+                    // No longer fulfilled (e.g. a completed trip was reopened) — fall back
+                    // to Active rather than leaving a stale "Completed" status behind.
+                    $transportOrder->status = 'Active';
+                    $transportOrder->completed_by = null;
+                    $transportOrder->completed_at = null;
+                }
+
                 $transportOrder->save();
 
                 if ($transportOrder->deal_id) {
@@ -52,7 +67,16 @@ class TripCompletionCascadeService
                     continue;
                 }
 
+                $wasCompleted = $deal->completed;
                 $deal->completed = $this->isDealFulfilled($deal);
+
+                if ($deal->completed && ! $wasCompleted) {
+                    $deal->completed_at = now();
+                } elseif (! $deal->completed && $wasCompleted) {
+                    $deal->completed_by = null;
+                    $deal->completed_at = null;
+                }
+
                 $deal->save();
             }
         });

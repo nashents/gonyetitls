@@ -443,7 +443,7 @@ class Index extends Component
     {
 
             $query = Transporter::query()
-            ->with('cargos','corridors')
+            ->with('cargos','corridors','sageMapping')
             ->withCount([
                 'drivers as drivers_count',
                 'horses as horses_count',

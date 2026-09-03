@@ -17,6 +17,9 @@ class Deal extends Model implements Auditable
 
     protected $casts = [
         'completed' => 'boolean',
+        'cancelled' => 'boolean',
+        'cancelled_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function currency()
@@ -52,5 +55,15 @@ class Deal extends Model implements Auditable
     public function units_of_measure()
     {
         return $this->belongsTo(UnitsOfMeasure::class, 'units_of_measure_id');
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
     }
 }

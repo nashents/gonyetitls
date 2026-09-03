@@ -79,7 +79,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($trips as $trip)
+                            @foreach ($trips as $trip)
                                 <tr>
                                     <td><a href="{{route('trips.show',$trip->id)}}" target="_blank" style="color:blue">{{$trip->trip_number}}</a></td>
                                     <td>{{$trip->weight}}</td>
@@ -87,15 +87,7 @@
                                     <td>{{$trip->quantity}}</td>
                                     <td>{{$trip->units_of_measure ? $trip->units_of_measure->name : ""}} {{$trip->units_of_measure && $trip->units_of_measure->abbreviation ? "(".$trip->units_of_measure->abbreviation.")" : ""}}</td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5">
-                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                            No Trips Found ....
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

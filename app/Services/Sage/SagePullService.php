@@ -9,6 +9,7 @@ use App\Models\CompanyIntegration;
 use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\Employee;
+use App\Models\Expense;
 use App\Models\Horse;
 use App\Models\IntegrationLog;
 use App\Models\IntegrationMapping;
@@ -16,6 +17,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\Tax;
 use App\Models\Trailer;
+use App\Models\TrailerAssignment;
 use App\Models\Transporter;
 use App\Models\Vendor;
 use App\Services\Sage\Concerns\ManagesMappings;
@@ -162,20 +164,110 @@ class SagePullService
     {
         $rows = $this->readAll('CLASS', ['CLASSID', 'NAME'], $this->classQuery(config('sageintacct.pull.horse_class_prefixes', ['H', 'FHH'])));
 
-        return $this->upsertFleetClass(Horse::class, 'horse_class', 'H', $rows);
+        // A horse's parent transporter lives on its PROJECT (SUB - TRUCKS, PARENTID =
+        // the transporter project). Build registration → parent-project map so each
+        // pulled horse can be attached to its transporter (created if it doesn't exist).
+        $projType   = (string) config('sageintacct.pull.horse_project_type', 'SUB - TRUCKS');
+        $projects   = $this->readAll('PROJECT', ['PROJECTID', 'NAME', 'PARENTID'], "PROJECTTYPE = '{$projType}'");
+        $parentByReg = [];
+        foreach ($projects as $p) {
+            $reg = strtoupper(trim((string) ($p['NAME'] ?? '')));
+            if ($reg !== '' && ! empty($p['PARENTID'])) {
+                $parentByReg[$reg] = $p['PARENTID'];
+            }
+        }
+
+        return $this->upsertFleetClass(Horse::class, 'horse_class', 'H', $rows, function (Horse $horse, array $row) use ($parentByReg) {
+            $reg = strtoupper(trim((string) ($row['NAME'] ?? '')));
+            $parentProjectId = $parentByReg[$reg] ?? null;
+            if (! $parentProjectId) {
+                return;
+            }
+            $transporter = $this->ensureTransporterFromProject($parentProjectId);
+            if ($transporter && (int) $horse->transporter_id !== (int) $transporter->id) {
+                $horse->transporter_id = $transporter->id;
+                $horse->saveQuietly();
+            }
+        });
     }
 
     protected function pullTrailers(): array
     {
         // Exclude transporter classes (TRANS-*) which also start with "T".
         $query = $this->classQuery(config('sageintacct.pull.trailer_class_prefixes', ['T', 'FHT'])) . " AND CLASSID NOT LIKE 'TRANS%'";
-        $rows  = $this->readAll('CLASS', ['CLASSID', 'NAME'], $query);
+        // PARENTID carries the trailer's parent CLASS — which may be a HORSE class.
+        $rows  = $this->readAll('CLASS', ['CLASSID', 'NAME', 'PARENTID'], $query);
 
-        return $this->upsertFleetClass(Trailer::class, 'trailer_class', 'T', $rows);
+        return $this->upsertFleetClass(Trailer::class, 'trailer_class', 'T', $rows, function (Trailer $trailer, array $row) {
+            $parentClassId = $row['PARENTID'] ?? null;
+            if (! $parentClassId) {
+                return;
+            }
+            // If the parent class is a HORSE that already exists in Gonyeti, record a
+            // trailer → horse assignment (we never create the horse from here).
+            $horse = $this->horseForClassId($parentClassId);
+            if ($horse) {
+                $this->ensureTrailerHorseAssignment($trailer, $horse);
+            }
+        });
     }
 
-    /** Shared horse/trailer upsert (match by registration = class NAME). */
-    protected function upsertFleetClass(string $modelClass, string $entityType, string $letter, array $rows): array
+    /** Resolve a Sage CLASS id to an existing Gonyeti Horse (by mapping, then registration). */
+    protected function horseForClassId(string $classId): ?Horse
+    {
+        $mapping = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'horse_class',
+            'external_id'            => $classId,
+        ])->first();
+
+        if ($mapping && ($horse = Horse::find($mapping->local_id))) {
+            return $horse;
+        }
+
+        // Fallback: the parent CLASS's NAME is the horse registration.
+        $res = $this->driver->readByQuery('CLASS', ['CLASSID', 'NAME'], "CLASSID = '" . str_replace("'", '', $classId) . "'", 1);
+        $reg = $res['data'][0]['NAME'] ?? null;
+
+        return $reg ? Horse::where('registration_number', $reg)->first() : null;
+    }
+
+    /** Create a trailer → horse assignment if an active one doesn't already exist. */
+    protected function ensureTrailerHorseAssignment(Trailer $trailer, Horse $horse): void
+    {
+        $exists = TrailerAssignment::where('trailer_id', $trailer->id)
+            ->where('horse_id', $horse->id)
+            ->whereNull('end_date')
+            ->exists();
+        if ($exists) {
+            return;
+        }
+
+        $transporterId = $horse->transporter_id ?: $trailer->transporter_id;
+
+        TrailerAssignment::create([
+            'user_id'        => $this->creatorId,
+            'horse_id'       => $horse->id,
+            'trailer_id'     => $trailer->id,
+            'transporter_id' => $transporterId,
+            'start_date'     => now()->toDateString(),
+            'status'         => 1,
+            'comments'       => 'Auto-assigned from Sage pull (trailer parent class = horse).',
+        ]);
+
+        // Keep the trailer's transporter aligned with the horse it now runs under.
+        if ($transporterId && (int) $trailer->transporter_id !== (int) $transporterId) {
+            $trailer->transporter_id = $transporterId;
+            $trailer->saveQuietly();
+        }
+    }
+
+    /**
+     * Shared horse/trailer upsert (match by registration = class NAME). An optional
+     * $afterUpsert($record, $row) runs once the record is saved + mapped — used to
+     * attach a horse to its parent transporter, or a trailer to its parent horse.
+     */
+    protected function upsertFleetClass(string $modelClass, string $entityType, string $letter, array $rows, ?callable $afterUpsert = null): array
     {
         $s        = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
         $numField = $modelClass === Horse::class ? 'horse_number' : 'trailer_number';
@@ -207,6 +299,10 @@ class SagePullService
 
                 $this->linkMapping($entityType, $record, $classId, $reg);
 
+                if ($afterUpsert) {
+                    $afterUpsert($record, $row);
+                }
+
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -233,28 +329,7 @@ class SagePullService
             }
 
             try {
-                $record = Transporter::where('custom_ref', $projectId)
-                    ->orWhere('name', $name)
-                    ->first();
-
-                $isNew = false;
-                if (! $record) {
-                    $record                     = new Transporter();
-                    $record->name               = $name;
-                    $record->company_id         = $this->companyId;
-                    $record->creator_id         = $this->creatorId;
-                    $record->user_id            = $this->creatorId;
-                    $record->transporter_number = $this->nextNumber(Transporter::class, 'T');
-                    $record->status             = 1;
-                    $record->authorization      = 'approved';
-                    $isNew                      = true;
-                }
-
-                $record->custom_ref = $record->custom_ref ?: $projectId;
-                $record->saveQuietly();
-
-                $this->linkMapping('transporter_project', $record, $projectId, $name);
-
+                [$record, $isNew] = $this->upsertTransporterRecord($projectId, $name);
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -262,6 +337,65 @@ class SagePullService
         }
 
         return $s;
+    }
+
+    /** Upsert a Transporter from a Sage SUBCONTRACTOR project. @return array{0:Transporter,1:bool} */
+    protected function upsertTransporterRecord(string $projectId, string $name): array
+    {
+        $record = Transporter::where('custom_ref', $projectId)
+            ->orWhere('name', $name)
+            ->first();
+
+        $isNew = false;
+        if (! $record) {
+            $record                     = new Transporter();
+            $record->name               = $name;
+            $record->company_id         = $this->companyId;
+            $record->creator_id         = $this->creatorId;
+            $record->user_id            = $this->creatorId;
+            $record->transporter_number = $this->nextNumber(Transporter::class, 'T');
+            $record->status             = 1;
+            $record->authorization      = 'approved';
+            $isNew                      = true;
+        }
+
+        $record->custom_ref = $record->custom_ref ?: $projectId;
+        $record->saveQuietly();
+
+        $this->linkMapping('transporter_project', $record, $projectId, $name);
+
+        return [$record, $isNew];
+    }
+
+    /**
+     * Resolve (creating if missing) the Transporter behind a parent transporter
+     * PROJECTID — used when pulling a horse to attach it to its transporter.
+     */
+    protected function ensureTransporterFromProject(string $projectId): ?Transporter
+    {
+        $mapping = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'transporter_project',
+            'external_id'            => $projectId,
+        ])->first();
+        if ($mapping && ($t = Transporter::find($mapping->local_id))) {
+            return $t;
+        }
+
+        if ($t = Transporter::where('custom_ref', $projectId)->first()) {
+            return $t;
+        }
+
+        // Read the transporter project's NAME and upsert it.
+        $res  = $this->driver->readByQuery('PROJECT', ['PROJECTID', 'NAME'], "PROJECTID = '" . str_replace("'", '', $projectId) . "'", 1);
+        $name = $res['data'][0]['NAME'] ?? null;
+        if (! $name) {
+            return null;
+        }
+
+        [$record] = $this->upsertTransporterRecord($projectId, $name);
+
+        return $record;
     }
 
     // ── Drivers (Sage Employees in the sub-contracting department) ──
@@ -548,6 +682,12 @@ class SagePullService
 
                 $this->linkMapping('product_item', $product, $itemId, $name);
 
+                // Non-inventory items are also expenses in Gonyeti — ensure the linked
+                // expense exists (expenses.product_id).
+                if (strcasecmp((string) $product->type, 'Non Inventory') === 0) {
+                    $this->ensureExpenseForProduct($product);
+                }
+
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -606,6 +746,24 @@ class SagePullService
         }
 
         return $s;
+    }
+
+    /** Ensure a non-inventory Product has a linked expense (expenses.product_id). */
+    protected function ensureExpenseForProduct(Product $product): void
+    {
+        if (Expense::where('product_id', $product->id)->exists()) {
+            return;
+        }
+
+        // Adopt an existing unlinked expense of the same name, else create one.
+        $expense = Expense::whereNull('product_id')->where('name', $product->name)->first() ?: new Expense();
+        if (! $expense->exists) {
+            $expense->name      = $product->name;
+            $expense->user_id   = $this->creatorId;
+            $expense->item_type = 'Non Inventory';
+        }
+        $expense->product_id = $product->id;
+        $expense->saveQuietly();
     }
 
     // ── Helpers ──────────────────────────────────────────────────

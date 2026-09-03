@@ -18,8 +18,11 @@
                                    
                                 </div>
                                 <div class="panel-title">
+                                    {{-- Master data is pull-only when Sage is active — hide create/import. --}}
+                                    @unless ($this->sageEnabled)
                                     <a href="{{route('drivers.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Driver</a>
                                     <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                    @endunless
                                     <a href="#" wire:click="exportDriversExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportDriversCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportDriversPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -169,7 +172,7 @@
                                             @endif
                                              <br>
                                             <strong>Role(s):</strong> 
-                                                @if ($employee->user->roles)
+                                                @if ($employee->user && $employee->user->roles)
                                                     @foreach ($employee->user->roles as $role)
                                                         {{$role->name}} @if (!$loop->last),@endif
                                                     @endforeach
@@ -228,9 +231,13 @@
                                                     <li><a href="#" wire:click.prevent="syncToSage({{$driver->id}})" wire:loading.attr="disabled"><i class="fa fa-cloud-upload color-primary"></i> Sync to Sage</a></li>
                                                     @endif
                                                     @endif
+                                                    @unless ($this->sageEnabled)
                                                     <li><a href="{{route('drivers.edit', $driver->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    @endunless
                                                     <li><a href="#" wire:click.prevent="changePosition({{$employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
+                                                    @unless ($this->sageEnabled)
                                                     <li><a href="#" data-toggle="modal" data-target="#driverDeleteModal{{$driver->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                    @endunless
                                                     @if ($driver->status == 1)
                                                     <li><a href="{{route('drivers.deactivate',$driver->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else

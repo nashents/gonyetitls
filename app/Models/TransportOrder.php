@@ -79,11 +79,19 @@ class TransportOrder extends Model implements Auditable
      public function deal(){
         return $this->belongsTo('App\Models\Deal');
     }
+    public function cancelledBy(){
+        return $this->belongsTo('App\Models\User', 'cancelled_by');
+    }
+    public function completedBy(){
+        return $this->belongsTo('App\Models\User', 'completed_by');
+    }
 
     protected $casts = [
         'multiple_destinations'      => 'boolean',
         'deal_id' => 'integer',
         'completed' => 'boolean',
+        'cancelled_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     protected $fillable = [
@@ -119,6 +127,10 @@ class TransportOrder extends Model implements Auditable
     'weight',
     'status',
     'completed',
+    'cancelled_by',
+    'cancelled_at',
+    'completed_by',
+    'completed_at',
     'rate',
     'freight',
     'transporter_rate',
