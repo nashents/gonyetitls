@@ -28,13 +28,59 @@ class SageTripMapper
     /** Origin location name (from-Destination, else loading point). */
     public static function origin(Trip $trip): ?string
     {
-        return optional($trip->fromDestination)->name ?: optional($trip->loading_point)->name;
+        // Prefer the trip's origin legs (transport-order routing), like the UI:
+        // "<Country City> - <Loading point>" per leg. Fall back to the trip's own
+        // from-destination / loading point.
+        if ($trip->trip_origins && $trip->trip_origins->count()) {
+            $labels = $trip->trip_origins->map(function ($o) {
+                return self::legLabel(self::placeLabel($o->destination), optional($o->loading_point)->name);
+            })->filter()->unique()->values();
+            if ($labels->isNotEmpty()) {
+                return $labels->implode(' / ');
+            }
+        }
+
+        return self::legLabel(self::placeLabel($trip->fromDestination), optional($trip->loading_point)->name);
     }
 
-    /** Destination location name (to-Destination, else offloading point). */
+    /** Destination location name (to-Destination legs, else offloading point). */
     public static function destination(Trip $trip): ?string
     {
-        return optional($trip->toDestination)->name ?: optional($trip->offloading_point)->name;
+        if ($trip->trip_destinations && $trip->trip_destinations->count()) {
+            $labels = $trip->trip_destinations->map(function ($d) {
+                return self::legLabel(self::placeLabel($d->destination), optional($d->offloading_point)->name);
+            })->filter()->unique()->values();
+            if ($labels->isNotEmpty()) {
+                return $labels->implode(' / ');
+            }
+        }
+
+        return self::legLabel(self::placeLabel($trip->toDestination), optional($trip->offloading_point)->name);
+    }
+
+    /** A place label for a Destination: its own name, else "Country City", or null. */
+    protected static function placeLabel($destination): ?string
+    {
+        if (! $destination) {
+            return null;
+        }
+
+        $name = trim((string) ($destination->name ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        $label = trim((optional($destination->country)->name ?? '') . ' ' . ($destination->city ?? ''));
+
+        return $label !== '' ? $label : null;
+    }
+
+    /** Combine a place + a loading/offloading point into one leg label. */
+    protected static function legLabel(?string $place, ?string $point): ?string
+    {
+        $label = trim(($place ?? '') . ' - ' . ($point ?? ''), ' -');
+
+        return $label !== '' ? $label : null;
     }
 
     /** Project NAME as uppercase "ORIGIN TO DESTINATION" (falls back to trip id). */

@@ -52,6 +52,9 @@
     <script>
     $(document).ready( function () {
         $('#goods_receivedsTable').DataTable();
+        if (window.location.hash) {
+            $('.nav-tabs a[href="' + window.location.hash + '"]').tab('show');
+        }
     } );
     </script>
 

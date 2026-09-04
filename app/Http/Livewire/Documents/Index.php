@@ -20,6 +20,7 @@ use App\Models\Folder;
 use App\Models\FreightCharge;
 use App\Models\FreightCost;
 use App\Models\FreightJob;
+use App\Models\GoodsReceived;
 use App\Models\Horse;
 use App\Models\Incident;
 use App\Models\Inventory;
@@ -76,6 +77,7 @@ class Index extends Component
     public $offloading_point;
     public $waste_disposal;
     public $waste_collection;
+    public $goods_received;
     public $route;
     public $horse;
     public $ticket;
@@ -118,6 +120,7 @@ class Index extends Component
     public $offloading_point_id;
     public $waste_disposal_id;
     public $waste_collection_id;
+    public $goods_received_id;
     public $route_id;
     public $horse_id;
     public $ticket_id;
@@ -196,6 +199,7 @@ class Index extends Component
             'offloading_point' => ['model' => OffloadingPoint::class, 'property' => 'offloading_point', 'column' => 'offloading_point_id'],
             'waste_disposal' => ['model' => WasteDisposal::class, 'property' => 'waste_disposal', 'column' => 'waste_disposal_id'],
             'waste_collection' => ['model' => WasteCollection::class, 'property' => 'waste_collection', 'column' => 'waste_collection_id'],
+            'goods_received' => ['model' => GoodsReceived::class, 'property' => 'goods_received', 'column' => 'goods_received_id'],
             'route' => ['model' => Route::class, 'property' => 'route', 'column' => 'route_id'],
             'horse' => ['model' => Horse::class, 'property' => 'horse', 'column' => 'horse_id'],
             'ticket' => ['model' => Ticket::class, 'property' => 'ticket', 'column' => 'ticket_id'],

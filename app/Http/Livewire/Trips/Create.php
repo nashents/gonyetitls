@@ -2201,6 +2201,47 @@ class Create extends Component
                     $trip->turnover = $this->turnover;
                     $trip->distance = $this->distance;
 
+                } elseif (count($this->selectedTransportOrder) === 1) {
+
+                    // Attaching to a single existing transport order: the trip has no form data
+                    // of its own for these fields, so pull them from that transport order. When
+                    // multiple transport orders are attached, leave these fields alone since a
+                    // single value can't represent them all.
+                    // (weight/litreage/freight/turnover are set later from the per-order totals.)
+                    $primaryTransportOrder = TransportOrder::find(reset($this->selectedTransportOrder));
+
+                    if ($primaryTransportOrder) {
+                        $trip->deal_id = $primaryTransportOrder->deal_id;
+                        $trip->quotation_id = $primaryTransportOrder->quotation_id;
+                        $trip->with_customer_rates = $primaryTransportOrder->with_customer_rates;
+                        $trip->with_transporter_rates = $primaryTransportOrder->with_transporter_rates;
+                        $trip->customer_id = $primaryTransportOrder->customer_id;
+                        $trip->consignee_id = $primaryTransportOrder->consignee_id;
+                        $trip->freight_calculation = $primaryTransportOrder->freight_calculation;
+                        $trip->calculation_measurement = $primaryTransportOrder->calculation_measurement;
+                        $trip->measurement = $primaryTransportOrder->measurement;
+                        $trip->currency_id = $primaryTransportOrder->currency_id;
+                        $trip->cargo_id = $primaryTransportOrder->cargo_id;
+                        $trip->cargo_details = $primaryTransportOrder->cargo_details;
+                        $trip->trip_type_id = $primaryTransportOrder->trip_type_id;
+                        $trip->defined_customer_rate_id = $primaryTransportOrder->defined_customer_rate_id;
+                        $trip->defined_transporter_rate_id = $primaryTransportOrder->defined_transporter_rate_id;
+                        $trip->from = $primaryTransportOrder->from;
+                        $trip->to = $primaryTransportOrder->to;
+                        $trip->offloading_point_id = $primaryTransportOrder->offloading_point_id;
+                        $trip->loading_point_id = $primaryTransportOrder->loading_point_id;
+                        $trip->multiple_destinations = $primaryTransportOrder->multiple_destinations;
+                        $trip->rate = $primaryTransportOrder->rate;
+                        $trip->transporter_rate = $primaryTransportOrder->transporter_rate;
+                        $trip->quantity = $primaryTransportOrder->quantity;
+                        $trip->litreage_at_20 = $primaryTransportOrder->litreage_at_20;
+                        $trip->units_of_measure_id = $this->validUnitsOfMeasureId($primaryTransportOrder->units_of_measure_id);
+                        $trip->exchange_rate = $primaryTransportOrder->exchange_rate;
+                        $trip->exchange_customer_freight = $primaryTransportOrder->exchange_customer_freight;
+                        $trip->exchange_transporter_freight = $primaryTransportOrder->exchange_transporter_freight;
+                        $trip->distance = $primaryTransportOrder->distance;
+                    }
+
                 }
 
                 $trip->save();

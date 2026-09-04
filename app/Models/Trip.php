@@ -161,18 +161,9 @@ class Trip extends Model implements Auditable, EditAuthorizable
      */
     public function getIsSageSyncableAttribute(): bool
     {
-        if (strcasecmp((string) $this->authorization, 'approved') !== 0) {
-            return false;
-        }
-
-        // Marked as completed (status = 1) — no more edits after this.
-        if ((int) $this->status !== 1) {
-            return false;
-        }
-
-        $allowed = array_map('strtolower', (array) config('sageintacct.trip.syncable_statuses', ['Offloaded']));
-
-        return in_array(strtolower((string) $this->trip_status), $allowed, true);
+        // Syncs at authorisation now (Finance workflow) — an approved trip is
+        // syncable; the manual sync button stays available to retry failed pushes.
+        return strcasecmp((string) $this->authorization, 'approved') === 0;
     }
     /**
      * Invoiced when the trip has its own invoice line OR belongs to a transport

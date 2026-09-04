@@ -104,7 +104,8 @@ class SageProjectService
      */
     public function syncTrip(Trip $trip): array
     {
-        // Only offloaded (completed) trips that have been authorized are synced.
+        // Trips sync at AUTHORISATION (Finance workflow) — a trip must only be
+        // authorized (approved) to push its OPEN project reference.
         if (! $this->isSyncable($trip)) {
             return [
                 'success' => false,
@@ -112,7 +113,7 @@ class SageProjectService
                 'status'  => 'skipped',
                 'entity'  => 'trip',
                 'model'   => $trip,
-                'error'   => 'Trip must be authorized, offloaded and marked as Completed before it can sync to Sage.',
+                'error'   => 'Trip must be authorized (approved) before it can sync to Sage.',
             ];
         }
 
@@ -125,9 +126,11 @@ class SageProjectService
             return $this->dependencyFailure($trip, 'Horse could not be synced: ' . ($horse['error'] ?? 'unknown error'));
         }
 
-        // Customer is optional (CUSTOMERID is set only if already synced).
-        $customer       = $trip->customer;
-        $customerSageId = $customer ? ($customer->sage_intacct_id ?: $customer->custom_ref) : null;
+        // Customer (optional, set only if already synced from Sage): the trip's own,
+        // else the customer on its transport order / deal (trips are often billed via
+        // a transport order and carry no direct customer).
+        $customer       = $trip->customer ?: $this->tripCustomer($trip);
+        $customerSageId = $this->customerSageId($customer);
 
         // Project manager = the driver's Sage EMPLOYEE (created if it doesn't exist).
         $managerId = null;
@@ -154,6 +157,12 @@ class SageProjectService
         // for a different trip) or a number that changed after the first sync.
         $tripProjectId = SageTripMapper::projectId($trip);
         if ($guard = $this->guardTripNumber($trip, $tripProjectId)) {
+            return $guard;
+        }
+
+        // A re-sync must NOT overwrite/reopen a project Finance has COMPLETED in Sage:
+        // surface the error FIRST (before any update) so it's reopened there first.
+        if ($guard = $this->guardCompletedProject($trip)) {
             return $guard;
         }
 
@@ -201,24 +210,14 @@ class SageProjectService
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Only authorized, offloaded, AND marked-completed (status == 1) trips sync
-     * to Sage — completion is the final lock, so nothing changes after the push.
-     * The offloaded statuses are configurable (sageintacct.trip.syncable_statuses).
+     * A trip syncs to Sage as an OPEN project once it is AUTHORISED (approved) —
+     * per the Finance workflow, the trip is pushed at authorisation with no cost,
+     * and stays OPEN so costs attach later. (The old offloaded + marked-completed
+     * lock was removed 2026-09-03.)
      */
     protected function isSyncable(Trip $trip): bool
     {
-        if (strcasecmp((string) $trip->authorization, 'approved') !== 0) {
-            return false;
-        }
-
-        // Marked as completed (status = 1) — no more edits after this.
-        if ((int) $trip->status !== 1) {
-            return false;
-        }
-
-        $allowed = array_map('strtolower', (array) config('sageintacct.trip.syncable_statuses', ['Offloaded']));
-
-        return in_array(strtolower((string) $trip->trip_status), $allowed, true);
+        return strcasecmp((string) $trip->authorization, 'approved') === 0;
     }
 
     /** Update if already linked, else create (fallback to update on duplicate). */
@@ -297,9 +296,77 @@ class SageProjectService
         return null;
     }
 
+    /**
+     * Block a re-sync that would overwrite/reopen a Sage project Finance has
+     * COMPLETED. Only applies once the trip is already synced (update path); a
+     * not-yet-synced trip has nothing to protect. Returns a requires_attention
+     * result (so nothing is written) when the Sage project is Completed.
+     */
+    protected function guardCompletedProject(Trip $trip): ?array
+    {
+        $mapping = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'trip_project',
+            'local_id'               => $trip->id,
+        ])->whereNotNull('external_id')->first();
+        if (! $mapping) {
+            return null; // not yet in Sage → create path, nothing to protect
+        }
+
+        $completed = (string) config('sageintacct.project.status_completed', 'Completed');
+        $res       = $this->driver->readByQuery('PROJECT', ['PROJECTID', 'PROJECTSTATUS'], "PROJECTID = '" . str_replace("'", '', $mapping->external_id) . "'", 1);
+        $status    = $res['data'][0]['PROJECTSTATUS'] ?? null;
+
+        if ($status !== null && strcasecmp((string) $status, $completed) === 0) {
+            return $this->validationError($trip, "The Sage project '{$mapping->external_id}' is Completed — reopen it in Sage before re-syncing this trip.");
+        }
+
+        return null;
+    }
+
     protected function validationError(Trip $trip, string $message): array
     {
         return $this->tripProblem($trip, $message, IntegrationMapping::STATUS_REQUIRES_ATTENTION, 'validate');
+    }
+
+    /** A trip's customer via its transport order / deal, when it has no direct customer. */
+    protected function tripCustomer(Trip $trip): ?\App\Models\Customer
+    {
+        foreach ($trip->trip_origins as $origin) {
+            $to = $origin->transport_order;
+            if (! $to) {
+                continue;
+            }
+            if ($to->customer) {
+                return $to->customer;
+            }
+            if (optional($to->deal)->customer) {
+                return $to->deal->customer;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The clean Sage CUSTOMERID for a customer — prefers custom_ref (the id stored by
+     * the Sage→Gonyeti pull) and strips any accidental trailing text (a corrupted
+     * sage_intacct_id like "C-00081 ZAR" would otherwise be rejected by Sage).
+     */
+    protected function customerSageId($customer): ?string
+    {
+        if (! $customer) {
+            return null;
+        }
+
+        $id = $customer->custom_ref ?: $customer->sage_intacct_id;
+        if (! $id) {
+            return null;
+        }
+
+        $id = trim(explode(' ', trim((string) $id))[0]);
+
+        return $id !== '' ? $id : null;
     }
 
     /** A dependency sync failed (retryable) → failed. */

@@ -172,6 +172,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('goods_receiveds.show', $goods_received->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="{{ route('goods_receiveds.preview', $goods_received->id) }}" ><i class="fa fa-file color-warning"></i> Preview</a></li>
+                                                <li><a href="{{ route('goods_receiveds.show', $goods_received->id) }}#documents" ><i class="fa fa-paperclip color-info"></i> Documents</a></li>
                                                 <li><a href="#"  wire:click="edit({{$goods_received->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" wire:click="showClose({{$goods_received->id}})"  ><i class="fas fa-check color-success"></i> Mark as closed</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#goods_receivedDeleteModal{{ $goods_received->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>

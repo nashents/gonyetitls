@@ -11,6 +11,11 @@ class PurchaseProduct extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+
+    protected $casts = [
+        'qty' => 'float',
+    ];
+
     public function purchase(){
         return $this->belongsTo('App\Models\Purchase');
     }

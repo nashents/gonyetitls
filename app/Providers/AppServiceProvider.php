@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Purchase;
 use App\Models\Ticket;
+use App\Models\Trip;
 use App\Observers\BillObserver;
 use App\Observers\BookingObserver;
 use App\Observers\CreditNoteObserver;
@@ -24,6 +25,7 @@ use App\Observers\InvoiceObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\PurchaseObserver;
 use App\Observers\TicketObserver;
+use App\Observers\TripObserver;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -79,5 +81,6 @@ class AppServiceProvider extends ServiceProvider
         Booking::observe(BookingObserver::class);
         Ticket::observe(TicketObserver::class);
         DispatchItem::observe(DispatchItemObserver::class);
+        Trip::observe(TripObserver::class);
     }
 }

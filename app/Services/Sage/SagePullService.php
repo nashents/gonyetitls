@@ -455,7 +455,7 @@ class SagePullService
                 if (! $driver) {
                     $driver                = new Driver();
                     $driver->employee_id   = $employee->id;
-                    $driver->user_id       = $this->creatorId;
+                    $driver->creator_id    = $this->creatorId;
                     $driver->driver_number = $this->nextNumber(Driver::class, 'D');
                     $driver->status        = 1;
                 }
