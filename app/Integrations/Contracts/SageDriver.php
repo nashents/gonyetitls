@@ -70,6 +70,17 @@ interface SageDriver extends IntegrationDriver
     /** create_potransaction (Purchase Requisition): header array + line rows. */
     public function createRequisition(array $header, array $lines): array;
 
+    /**
+     * update_potransaction (Purchase Requisition): update the dimensions on an
+     * already-created requisition's line(s) — e.g. correcting the PROJECTID
+     * after the fact. $key = the document id returned by createRequisition's
+     * `data.id` (stored as the mapping's external_id). Sage rejects this outright
+     * once the document has been converted (Quote → PO) — that failure is
+     * expected and safe; it surfaces as a normal error result, nothing is
+     * silently corrupted.
+     */
+    public function updateRequisition(string $key, array $lines): array;
+
     /** create_sotransaction (sales/Order-Entry, e.g. Job Card): header + lines. */
     public function createSalesTransaction(array $header, array $lines): array;
 

@@ -136,6 +136,11 @@ class SageIntacctDriver implements SageDriver
         return $this->driver->createRequisition($header, $lines);
     }
 
+    public function updateRequisition(string $key, array $lines): array
+    {
+        return $this->driver->updateRequisition($key, $lines);
+    }
+
     public function createSalesTransaction(array $header, array $lines): array
     {
         return $this->driver->createSalesTransaction($header, $lines);

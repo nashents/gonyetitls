@@ -130,6 +130,11 @@ class SageRestDriver implements SageDriver
         return $this->notImplemented();
     }
 
+    public function updateRequisition(string $key, array $lines): array
+    {
+        return $this->notImplemented();
+    }
+
     public function createSalesTransaction(array $header, array $lines): array
     {
         return $this->notImplemented();

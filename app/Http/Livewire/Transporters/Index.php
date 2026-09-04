@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cargo;
 use App\Models\Contact;
+use App\Models\Customer;
 use Livewire\Component;
 use App\Models\Corridor;
 use App\Models\Document;
@@ -37,6 +38,8 @@ class Index extends Component
     public $cargo_id;
     public $corridors;
     public $corridor_id;
+    public $customers;
+    public $customer_id;
     protected $transporters;
     public $contact_name;
     public $contact_surname;
@@ -156,7 +159,49 @@ class Index extends Component
 
         $this->corridors = Corridor::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->customers = Customer::orderBy('name','asc')->get();
 
+    }
+
+    /** Refresh the customer picker list (e.g. after pulling/creating customers elsewhere). */
+    public function refreshCustomers()
+    {
+        $this->customers = Customer::orderBy('name','asc')->get();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Customer list refreshed!"
+        ]);
+    }
+
+    /**
+     * Manually link a pre-existing transporter (created before this feature)
+     * to a Sage customer of the same name, if one can be found unambiguously.
+     */
+    public function syncToCustomer($id)
+    {
+        $transporter = Transporter::find($id);
+
+        if (! $transporter || $transporter->customer_id || ! $transporter->name) {
+            return;
+        }
+
+        $customer = Customer::where('name', $transporter->name)->first();
+
+        if (! $customer) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"No customer named '{$transporter->name}' was found. Please link one manually."
+            ]);
+            return;
+        }
+
+        $transporter->customer_id = $customer->id;
+        $transporter->save();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Transporter Linked to Customer Successfully!!"
+        ]);
     }
 
     public function transporterNumber(){
@@ -210,6 +255,7 @@ class Index extends Component
         $this->street_address = "";
         $this->cargo_id = [];
         $this->corridor_id = [];
+        $this->customer_id = "";
         $this->title = [];
         $this->file = [];
         $this->expires_at = [];
@@ -267,6 +313,7 @@ class Index extends Component
         $transporter->transporter_number = $this->transporterNumber();
         $transporter->email = $this->email;
         $transporter->custom_ref = $this->custom_ref;
+        $transporter->customer_id = $this->customer_id ?: null;
         $transporter->pin = $pin;
         $transporter->phonenumber = $this->phonenumber;
         $transporter->worknumber = $this->worknumber;
@@ -389,6 +436,7 @@ class Index extends Component
         $this->name = $transporter->name;
         $this->email = $transporter->email;
         $this->custom_ref = $transporter->custom_ref;
+        $this->customer_id = $transporter->customer_id;
         $this->phonenumber = $transporter->phonenumber;
         $this->worknumber = $transporter->worknumber;
         $this->country = $transporter->country;
@@ -415,6 +463,7 @@ class Index extends Component
             $transporter->phonenumber = $this->phonenumber;
             $transporter->worknumber = $this->worknumber;
             $transporter->custom_ref = $this->custom_ref;
+            $transporter->customer_id = $this->customer_id ?: null;
             $transporter->email = $this->email;
             $transporter->country = $this->country;
             $transporter->city = $this->city;
@@ -443,7 +492,7 @@ class Index extends Component
     {
 
             $query = Transporter::query()
-            ->with('cargos','corridors','sageMapping')
+            ->with('cargos','corridors','sageMapping','customer')
             ->withCount([
                 'drivers as drivers_count',
                 'horses as horses_count',

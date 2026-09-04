@@ -171,6 +171,51 @@ class SageFuelDieselService
     }
 
     /**
+     * Repair the PROJECTID on an ALREADY-CREATED PR - Diesel that landed on the
+     * wrong project (e.g. synced before its trip's Sage project existed). Unlike
+     * syncFuel(), this deliberately bypasses the "already synced → skip"
+     * idempotency guard — it is an explicit, opt-in action (Reconciliation
+     * queue), never called automatically, since Sage may reject it outright
+     * once the document has been converted (Quote → PO) — that rejection is
+     * expected and safe, surfaced as a normal error for a manual Sage-side fix.
+     */
+    public function repairTripProject(Fuel $fuel): array
+    {
+        $entity  = 'fuel_pr_diesel';
+        $mapping = $this->mappingFor($this->integration, $entity, $fuel);
+
+        if (! $mapping->exists || ! $mapping->external_id) {
+            return $this->result(false, 'failed', null, 'This fuel order has not been synced to Sage yet — use the normal sync instead.', $entity, $fuel);
+        }
+
+        if (! $fuel->trip_id) {
+            return $this->result(false, 'failed', $mapping->external_id, 'This fuel order is not linked to a trip — nothing to repair.', $entity, $fuel);
+        }
+
+        [$projectId, , $isTripProject] = $this->resolveProjectAndClass($fuel);
+        if (! $isTripProject || ! $projectId) {
+            return $this->result(false, 'failed', $mapping->external_id, "Could not resolve the trip's Sage project — sync the trip first.", $entity, $fuel);
+        }
+
+        $safeDocId = str_replace("'", '', $mapping->external_id);
+        $lineRes   = $this->driver->readByQuery('PODOCUMENTENTRY', ['RECORDNO'], "DOCID = '{$safeDocId}'", 1);
+        $recordNo  = $lineRes['data'][0]['RECORDNO'] ?? null;
+
+        if (empty($lineRes['success']) || ! $recordNo) {
+            return $this->fail($mapping, $entity, $fuel, 'Could not find the requisition line in Sage: ' . ($lineRes['error'] ?? 'no line returned.'), IntegrationMapping::STATUS_REQUIRES_ATTENTION);
+        }
+
+        $mapping->last_attempted_at = now();
+
+        $res = $this->driver->updateRequisition($mapping->external_id, [[
+            'recordno'  => $recordNo,
+            'projectid' => $projectId,
+        ]]);
+
+        return $this->finishSync($mapping, $res, $mapping->external_id, 'update', $entity, $fuel);
+    }
+
+    /**
      * Resolve the fuelling station as a Sage VENDORID. Order: cached mapping →
      * the container's Gonyeti vendor (synced) → an existing Sage vendor of the
      * same NAME → create one. Cached per container in integration_mappings.
@@ -248,7 +293,14 @@ class SageFuelDieselService
      *   • fuel on a trip  → the TRIP project (requires a brief reopen at post time,
      *                       since trip projects are Completed — see postAllowingProject)
      *   • otherwise       → the HORSE's own project (long-lived, purchasing-allowed)
-     * CLASS is always the horse class. Uses existing mappings only.
+     * CLASS is always the horse class.
+     *
+     * A fuel order can be approved/synced independently of its trip (e.g. before
+     * the trip has ever been pushed to Sage), so this does not just read the
+     * trip_project mapping — if it's missing, it syncs the trip's project
+     * on demand (project only, no requisitions/fuel side effects — see
+     * SageProjectService::ensureTripProject) so the PR still lands on the
+     * correct trip instead of silently falling back to the horse project.
      *
      * @return array{0:?string,1:?string,2:bool}  [projectId, classId, isTripProject]
      */
@@ -256,12 +308,20 @@ class SageFuelDieselService
     {
         $classId = $fuel->horse_id ? $this->mappingExternalId('horse_class', $fuel->horse_id) : null;
 
-        // Trip attached → trip project.
-        if ($fuel->trip_id && ($tripProjectId = $this->mappingExternalId('trip_project', $fuel->trip_id))) {
-            return [$tripProjectId, $classId, true];
+        if ($fuel->trip_id) {
+            $tripProjectId = $this->mappingExternalId('trip_project', $fuel->trip_id);
+
+            if (! $tripProjectId && $fuel->trip) {
+                $projectService = new SageProjectService($this->driver, $this->integration, new SageClassService($this->driver, $this->integration));
+                $tripProjectId  = $projectService->ensureTripProject($fuel->trip)['external_id'] ?? null;
+            }
+
+            if ($tripProjectId) {
+                return [$tripProjectId, $classId, true];
+            }
         }
 
-        // No trip (or trip not synced) → the horse's own project.
+        // No trip (or the trip project still couldn't be resolved) → the horse's own project.
         $horseProjectId = $fuel->horse_id ? $this->mappingExternalId('horse_project', $fuel->horse_id) : null;
 
         return [$horseProjectId, $classId, false];

@@ -75,6 +75,13 @@
                                             <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
                                                    title="{{ optional($sm)->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $ss)) : 'Not synced' }}</small>
                                         @endif
+                                        <br>
+                                        @if ($transporter->customer_id)
+                                            <a href="{{route('customers.show',$transporter->customer_id)}}"><small>{{ $transporter->customer ? $transporter->customer->name : 'Customer #'.$transporter->customer_id }}</small></a>
+                                            <span class="badge bg-success"><i class="fa fa-check"></i> Linked</span>
+                                        @else
+                                            <a href="#" wire:click.prevent="syncToCustomer({{$transporter->id}})" class="badge bg-warning" title="Click to link this transporter to a customer of the same name"><i class="fa fa-refresh"></i> Not Linked</a>
+                                        @endif
                                     </td>
                                     <td>{{$transporter->email}}</td>
                                     <td>{{$transporter->phonenumber}}</td>
@@ -113,6 +120,9 @@
                                                 <li><a href="#" wire:click="edit({{$transporter->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#transporterDeleteModal{{ $transporter->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endunless
+                                                @if (! $transporter->customer_id)
+                                                <li><a href="#" wire:click="syncToCustomer({{$transporter->id}})" ><i class="fa fa-refresh color-warning"></i> Link to Customer</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                         @include('transporters.delete')
@@ -202,7 +212,25 @@
                             </div>
                         </div>
                     </div>
-                   
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="customer_id">Link Transporter to a Customer
+                                    <a href="#" wire:click.prevent="refreshCustomers" title="Refresh customer list"><i class="fa fa-refresh"></i></a>
+                                </label>
+                                <select wire:model.debounce.300ms="customer_id" class="form-control">
+                                    <option value="">Select Customer</option>
+                                    @foreach ($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">The Sage customer this transporter's job cards/invoices post to.</small>
+                                @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -532,7 +560,25 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="customer_id">Link Transporter to a Customer
+                                    <a href="#" wire:click.prevent="refreshCustomers" title="Refresh customer list"><i class="fa fa-refresh"></i></a>
+                                </label>
+                                <select wire:model.debounce.300ms="customer_id" class="form-control">
+                                    <option value="">Select Customer</option>
+                                    @foreach ($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">The Sage customer this transporter's job cards/invoices post to.</small>
+                                @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">

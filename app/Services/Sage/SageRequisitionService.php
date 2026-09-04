@@ -50,7 +50,12 @@ class SageRequisitionService
     public function syncTripRequisitions(Trip $trip, ?string $projectId, ?string $classId): array
     {
         // Expense- OR allowance-type trip expenses (each references a master).
+        // Fuel-linked lines are EXCLUDED — those sync separately as their own
+        // "PR - Diesel" via SageFuelDieselService (see SageProjectService::syncTrip);
+        // including them here would double-post the same fuel spend to Sage as
+        // two separate purchasing documents.
         $expenses = $trip->trip_expenses()
+            ->whereNull('fuel_id')
             ->where(fn ($q) => $q->whereNotNull('expense_id')->orWhereNotNull('allowance_id'))
             ->with(['vendor', 'currency', 'expense', 'allowance'])
             ->get();
@@ -147,9 +152,11 @@ class SageRequisitionService
     /**
      * Is this the drivers' paycard vendor (→ Dispatch Sheet)? Matches by the
      * configured Sage VENDORID, then the configured name, then a loose
-     * "paycard … dispatch" check.
+     * "paycard … dispatch" check. Static (pure function of config + $vendor)
+     * so callers that just need the routing decision — e.g. a sync-status
+     * badge — don't need a driver/integration instance to ask it.
      */
-    protected function isDispatchVendor($vendor): bool
+    public static function isDispatchVendor($vendor): bool
     {
         if (! $vendor) {
             return false;
@@ -161,8 +168,8 @@ class SageRequisitionService
             return true;
         }
 
-        $name       = $this->normalizeName($vendor->name);
-        $targetName = $this->normalizeName((string) config('sageintacct.purchasing.dispatch_vendor_name', ''));
+        $name       = self::normalizeName($vendor->name);
+        $targetName = self::normalizeName((string) config('sageintacct.purchasing.dispatch_vendor_name', ''));
         if ($targetName !== '' && $name === $targetName) {
             return true;
         }
@@ -201,7 +208,7 @@ class SageRequisitionService
     }
 
     /** Lower-case, punctuation-stripped name for loose vendor matching. */
-    protected function normalizeName(?string $s): string
+    protected static function normalizeName(?string $s): string
     {
         $s = mb_strtolower(preg_replace('/[^a-z0-9\s]/i', ' ', (string) $s));
 

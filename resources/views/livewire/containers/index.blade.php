@@ -42,6 +42,8 @@
                                     </th>
                                     <th class="th-sm">Qty Bal(l)
                                     </th>
+                                    <th class="th-sm">Vendor
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -55,12 +57,20 @@
                                     <td>{{$container->fuel_type}}</td>
                                     <td>{{$container->currency ? $container->currency->name : ""}}</td>
                                     <td>
-                                       {{$container->currency ? $container->currency->symbol : ""}}{{number_format($container->account_balance ? $container->account_balance : 0,2)}}        
+                                       {{$container->currency ? $container->currency->symbol : ""}}{{number_format($container->account_balance ? $container->account_balance : 0,2)}}
                                     </td>
                                     <td>
-                                        {{$container->capacity}}         
+                                        {{$container->capacity}}
                                     </td>
                                     <td>{{$container->balance}}</td>
+                                    <td>
+                                        @if ($container->vendor_id)
+                                            <a href="{{route('vendors.show',$container->vendor_id)}}">{{$container->vendor ? $container->vendor->name : 'Vendor #'.$container->vendor_id}}</a>
+                                            <br><span class="badge bg-success"><i class="fa fa-check"></i> Synced</span>
+                                        @else
+                                            <a href="#" wire:click.prevent="syncToVendor({{$container->id}})" class="badge bg-warning" title="Click to create a vendor for this station"><i class="fa fa-refresh"></i> Not Synced</a>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -73,7 +83,9 @@
                                                 @if ($container->purchase_type == "Bulk Buy")
                                                     <li><a href="#"  wire:click="showTopUpModal({{$container->id}})" ><i class="fa fa-gas-pump color-success"></i> Fuel Top Up</a></li>
                                                 @endif
-                                                
+                                                @if (! $container->vendor_id)
+                                                <li><a href="#" wire:click="syncToVendor({{$container->id}})" ><i class="fa fa-refresh color-warning"></i> Sync to Vendor</a></li>
+                                                @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#containerDeleteModal{{ $container->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
@@ -82,7 +94,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="7">
+                                    <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                            No Fueling Stations Found ....
                                         </div>
@@ -434,6 +446,21 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="station_vendor_id">Link Station to a Vendor<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="station_vendor_id" class="form-control" required>
+                                   <option value="">Select Vendor</option>
+                                   @foreach ($vendors as $vendor)
+                                   <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                   @endforeach
+                               </select>
+                               <small class="text-muted">The vendor this station's fuel purchases post to.</small>
+                                @error('station_vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
                     <h5 class="underline mt-30">Sitting Account ($) Balance / Fuel Quantity(l) Balance Details</h5>
                     <div class="row">
                         <div class="col-md-6">
@@ -559,6 +586,21 @@
                                    @endforeach
                                </select>
                                 @error('container_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="station_vendor_id">Link Station to a Vendor<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="station_vendor_id" class="form-control" required>
+                                   <option value="">Select Vendor</option>
+                                   @foreach ($vendors as $vendor)
+                                   <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                   @endforeach
+                               </select>
+                               <small class="text-muted">The vendor this station's fuel purchases post to.</small>
+                                @error('station_vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

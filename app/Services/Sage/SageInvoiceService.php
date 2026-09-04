@@ -167,14 +167,33 @@ class SageInvoiceService
     }
 
     /**
-     * The transporter as a Sage CUSTOMER: existing customer of the same name,
-     * else created. Cached per transporter in integration_mappings.
+     * The transporter as a Sage CUSTOMER: its linked customer (see
+     * Transporter::customer) if set, else an existing customer of the same
+     * name, else created. Cached per transporter in integration_mappings.
      */
     protected function resolveTransporterCustomer(Invoice $invoice): ?string
     {
         $transporter = $invoice->transporter;
         if (! $transporter) {
             return null;
+        }
+
+        if ($transporter->customer_id && $transporter->customer) {
+            $customer = $transporter->customer;
+            $sageId   = $customer->sage_intacct_id ?: $customer->custom_ref;
+
+            if (! $sageId) {
+                if (! $customer->company_id) {
+                    $customer->company_id = $invoice->company_id ?: $this->integration->company_id;
+                }
+                app(SageIntacctService::class)->syncCustomer($customer);
+                $customer->refresh();
+                $sageId = $customer->sage_intacct_id ?: $customer->custom_ref;
+            }
+
+            if ($sageId) {
+                return $sageId;
+            }
         }
 
         $mapping = $this->mappingFor($this->integration, 'transporter_customer', $transporter);

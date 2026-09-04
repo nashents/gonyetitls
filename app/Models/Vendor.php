@@ -95,6 +95,35 @@ class Vendor extends Model implements Auditable
         return $this->hasMany('App\Models\Tyre');
     }
 
+    /**
+     * Next sequential vendor number, formatted as <company initials>V<00001>.
+     * Shared by manual vendor creation and auto-synced vendors (e.g. from fueling
+     * stations) so numbering stays consistent regardless of where the vendor originates.
+     */
+    public static function nextVendorNumber(): string
+    {
+        $initials = '';
+
+        if (isset(\Illuminate\Support\Facades\Auth::user()->company)) {
+            $str = \Illuminate\Support\Facades\Auth::user()->company->name;
+        } elseif (isset(\Illuminate\Support\Facades\Auth::user()->employee->company)) {
+            $str = \Illuminate\Support\Facades\Auth::user()->employee->company->name;
+        } else {
+            $str = '';
+        }
+
+        $words = explode(' ', $str);
+        if (isset($words[0][0])) {
+            $initials = isset($words[1][0]) ? $words[0][0] . $words[1][0] : $words[0][0];
+        }
+
+        $last_vendor_id = static::latest()->pluck('id')->first();
+
+        $next = $last_vendor_id ? $last_vendor_id + 1 : 1;
+
+        return $initials . 'V' . str_pad($next, 5, '0', STR_PAD_LEFT);
+    }
+
     protected $fillable = [
         'user_id',
         'vendor_type_id',
@@ -109,6 +138,8 @@ class Vendor extends Model implements Auditable
         'city',
         'suburb',
         'street_address',
+        'vendor_number',
+        'company_id',
         // Sage Intacct sync state (see SyncsToSageIntacct trait)
         'sage_intacct_id',
         'sage_sync_status',

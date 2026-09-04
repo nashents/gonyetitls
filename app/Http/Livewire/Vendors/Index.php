@@ -110,37 +110,7 @@ class Index extends Component
 
 
     public function vendorNumber(){
-
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $last_vendor_id = Vendor::latest()->pluck('id')->first();
-
-        if (!$last_vendor_id) {
-            $vendor_number =  $initials .'V'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $vendor_number = $last_vendor_id + 1;
-            $vendor_number =  $initials .'V'. str_pad($vendor_number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $vendor_number;
-
-
+        return Vendor::nextVendorNumber();
     }
 
     public function mount(){

@@ -30,6 +30,10 @@
                 </th>
                 <th class="th-sm">Trip Sheet
                 </th>
+                @if ($this->sageEnabled)
+                <th class="th-sm">Sage Sync
+                </th>
+                @endif
                 @if (Auth::user()->category == "employee" || Auth::user()->category == "admin")
                 <th class="th-sm">Actions
                 </th>
@@ -85,6 +89,34 @@
                         <span class="badge badge-secondary"><i class="fa fa-eye-slash"></i> Hidden</span>
                     @endif
                 </td>
+                @if ($this->sageEnabled)
+                <td>
+                    @php $badge = $sync_badges[$trip_expense->id] ?? null; @endphp
+                    @if (! $badge)
+                        <span class="text-muted">—</span>
+                    @else
+                        @php
+                            $badgeClass = match($badge['status']) {
+                                'synced' => 'success',
+                                'requires_attention' => 'warning',
+                                'failed' => 'danger',
+                                default => 'secondary',
+                            };
+                            $badgeLabel = match($badge['status']) {
+                                'synced' => 'Synced',
+                                'requires_attention' => 'Attention',
+                                'failed' => 'Failed',
+                                default => 'Not synced',
+                            };
+                        @endphp
+                        <span class="badge bg-{{ $badgeClass }}" title="{{ $badge['error'] ?: ($badge['external_id'] ? 'Sage ref: '.$badge['external_id'] : '') }}">
+                            <i class="fa fa-{{ $badge['status'] === 'synced' ? 'check' : 'exclamation-triangle' }}"></i> {{ $badge['doc_type'] }}: {{ $badgeLabel }}
+                        </span>
+                        <br>
+                        <a href="#" wire:click.prevent="{{ $badge['resync'] }}({{ $trip_expense->id }})" wire:loading.attr="disabled" title="Re-attempt sync"><small><i class="fa fa-refresh"></i> Resync</small></a>
+                    @endif
+                </td>
+                @endif
                 @if (Auth::user()->category == "employee" || Auth::user()->category == "admin")
                 <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -118,7 +150,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="11">
+                <td colspan="{{ $this->sageEnabled ? 12 : 11 }}">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Trip Expenses Captured....
                     </div>

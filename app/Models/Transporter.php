@@ -113,6 +113,11 @@ class Transporter extends Model implements Auditable
         return $this->belongsTo('App\Models\Company');
     }
 
+    /** The Sage customer this transporter's job cards/invoices bill to. */
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
+
     public function quotations(){
         return $this->hasMany('App\Models\Quotation');
     }
@@ -139,6 +144,8 @@ class Transporter extends Model implements Auditable
         'status',
         'street_address',
         'default',
+        'custom_ref',
+        'customer_id',
     ];
 
     protected $casts = [

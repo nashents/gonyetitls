@@ -5,6 +5,8 @@ namespace App\Http\Livewire\Sage;
 use App\Models\CompanyIntegration;
 use App\Models\IntegrationMapping;
 use App\Models\IntegrationProvider;
+use App\Services\Sage\Concerns\ResolvesSageIntegration;
+use App\Services\Sage\SageFuelDieselService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +22,7 @@ use Livewire\WithPagination;
 class Reconciliation extends Component
 {
     use WithPagination;
+    use ResolvesSageIntegration;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -115,6 +118,52 @@ class Reconciliation extends Component
         } catch (\Throwable $e) {
             Log::warning('Sage reconciliation retry failed: ' . $e->getMessage());
             $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Retry failed for this record.']);
+        }
+    }
+
+    /**
+     * Correct the PROJECTID on an already-synced "PR - Diesel" that landed on
+     * the wrong project (e.g. it synced before its trip's Sage project
+     * existed). Opt-in and explicit — Sage may reject this outright once the
+     * document has been converted (Quote → PO); that failure is expected and
+     * safe, and just means a manual fix in Sage for that one record.
+     */
+    public function repairTripProject($mappingId)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $mapping = IntegrationMapping::find($mappingId);
+        if (! $mapping || $mapping->entity_type !== 'fuel_pr_diesel' || ! $mapping->local_id) {
+            return;
+        }
+
+        $fuel = \App\Models\Fuel::find($mapping->local_id);
+        if (! $fuel) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'The source fuel order no longer exists.']);
+            return;
+        }
+
+        try {
+            $integration = $mapping->company_integration;
+            if (! $integration) {
+                $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'Sage Intacct integration is not active for this company.']);
+                return;
+            }
+
+            $driver = $this->sageDriverFor($integration);
+            $result = (new SageFuelDieselService($driver, $integration))->repairTripProject($fuel);
+
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => ! empty($result['success']) ? 'success' : 'warning',
+                'message' => ! empty($result['success'])
+                    ? 'Trip project corrected on the Sage PR - Diesel.'
+                    : ('Repair failed: ' . ($result['error'] ?? 'see status.')),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Sage reconciliation repairTripProject failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Repair failed for this record.']);
         }
     }
 

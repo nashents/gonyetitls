@@ -15,6 +15,7 @@ use App\Models\Purchase;
 use App\Models\TopUp;
 use App\Models\Transfer;
 use App\Models\Vendor;
+use App\Models\VendorType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,11 @@ class Index extends Component
     public $selectedCurrency;
     public $currencies;
     public $vendor_id;
+    // The fuelling station's OWN Sage vendor (container.vendor_id) - kept
+    // separate from $vendor_id (which belongs to the top-up/purchase form) so
+    // the two modals don't overwrite each other. This is what the Sage PR -
+    // Diesel sync resolves the station to.
+    public $station_vendor_id;
     public $name;
     public $expense_id;
     public $date;
@@ -284,6 +290,11 @@ class Index extends Component
         'address' => 'nullable',
         'fuel_type' => 'required',
         'purchase_type' => 'required',
+        'station_vendor_id' => 'required',
+    ];
+
+    protected $messages = [
+        'station_vendor_id.required' => 'Please link this station to a vendor.',
     ];
 
        public function refresh($category){
@@ -314,6 +325,7 @@ class Index extends Component
         $this->balance = Null;
         $this->account_balance = Null;
         $this->vendor_id = Null;
+        $this->station_vendor_id = Null;
         $this->name = Null;
         $this->email = Null;
         $this->container_currency_id = Null;
@@ -416,12 +428,63 @@ class Index extends Component
         }
     
         return  $bill_number;
-    
-    
+
+
+    }
+
+    /**
+     * Create the vendor record backing a fueling station so it can be used
+     * anywhere vendors are (bills, purchases, payments, PR - Diesel sync, etc.).
+     */
+    private function createStationVendor($name, $email, $phonenumber, $address, $currency_id): Vendor
+    {
+        $company = Auth::user()->company ?? Auth::user()->employee->company ?? null;
+
+        $vendor = new Vendor;
+        $vendor->creator_id = Auth::user()->id;
+        $vendor->company_id = $company->id ?? null;
+        $vendor->vendor_type_id = optional(VendorType::where('name', 'Fuel')->first())->id;
+        $vendor->vendor_number = Vendor::nextVendorNumber();
+        $vendor->name = $name;
+        $vendor->email = $email;
+        $vendor->phonenumber = $phonenumber;
+        $vendor->street_address = $address;
+        $vendor->currency_id = $currency_id ?: null;
+        $vendor->status = 1;
+        $vendor->save();
+
+        return $vendor;
+    }
+
+    /**
+     * Manually sync a pre-existing fueling station (created before this feature,
+     * or with no manually selected vendor) to a new vendor record.
+     */
+    public function syncToVendor($id)
+    {
+        $container = Container::find($id);
+
+        if (! $container || $container->vendor_id) {
+            return;
+        }
+
+        DB::transaction(function () use ($container) {
+            $container->vendor_id = $this->createStationVendor(
+                $container->name, $container->email, $container->phonenumber, $container->address, $container->currency_id
+            )->id;
+            $container->save();
+        });
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Fueling Station Synced to Vendor Successfully!!"
+        ]);
     }
 
 
     public function store(){
+
+     $this->validate(['station_vendor_id' => 'required']);
 
      DB::transaction(function () {
     
@@ -441,6 +504,12 @@ class Index extends Component
         $container->capacity = $this->capacity;
         $container->balance = $this->quantity;
         $container->account_balance = $this->account_balance;
+        // The Sage vendor this station's PR - Diesel purchases post to. Use the
+        // manually selected vendor if one was chosen, otherwise auto-create a
+        // vendor for the station so every fueling station is synced to a vendor.
+        $container->vendor_id = $this->station_vendor_id
+            ? $this->station_vendor_id
+            : $this->createStationVendor($container->name, $container->email, $container->phonenumber, $container->address, $container->currency_id)->id;
         $container->save();
 
         $this->container_id = $container->id;
@@ -479,6 +548,7 @@ class Index extends Component
     $this->capacity = $container->capacity;
     $this->quantity = $container->balance;
     $this->account_balance = $container->account_balance;
+    $this->station_vendor_id = $container->vendor_id;
     $this->container_id = $container->id;
     $this->dispatchBrowserEvent('show-containerEditModal');
 
@@ -487,6 +557,8 @@ class Index extends Component
 
     public function update()
     {
+         $this->validate(['station_vendor_id' => 'required']);
+
          DB::transaction(function () {
         if ($this->container_id) {
        
@@ -501,6 +573,7 @@ class Index extends Component
             $container->capacity = $this->capacity;
             $container->balance = $this->quantity;
             $container->account_balance = $this->account_balance;
+            $container->vendor_id = $this->station_vendor_id ? $this->station_vendor_id : NULL;
             $container->update();
 
             $this->dispatchBrowserEvent('hide-containerEditModal');

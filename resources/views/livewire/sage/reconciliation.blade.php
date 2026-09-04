@@ -81,6 +81,8 @@
                                             <td>
                                                 @if ($ss !== 'synced')
                                                     <a href="#" wire:click.prevent="retry({{ $m->id }})" wire:loading.attr="disabled" title="Re-attempt sync"><i class="fa fa-refresh"></i> Retry</a>
+                                                @elseif ($m->entity_type === 'fuel_pr_diesel')
+                                                    <a href="#" wire:click.prevent="repairTripProject({{ $m->id }})" wire:loading.attr="disabled" title="Push the fuel order's current trip project onto this already-created Sage PR"><i class="fa fa-wrench"></i> Repair Trip Project</a>
                                                 @endif
                                             </td>
                                         </tr>

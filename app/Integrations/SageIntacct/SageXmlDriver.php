@@ -170,6 +170,45 @@ class SageXmlDriver implements SageDriver
         return $this->send($this->buildRequisition($header, $lines), 'create', 'REQUISITION', $header['entityid'] ?? null);
     }
 
+    /**
+     * Update dimensions (project/class/employee) on an existing requisition's
+     * line(s) — e.g. correcting the PROJECTID after the fact, without touching
+     * the item/qty/price. $key = the document id (createRequisition's returned
+     * `data.id`). Each line must carry `recordno` (the line's own RECORDNO,
+     * read via readByQuery('PODOCUMENTENTRY', ..., "DOCID = '...'")) so Sage
+     * updates that specific existing line instead of appending a new one.
+     *
+     * NOT verified against a live Sage sandbox — mirrors this driver's proven
+     * update_sotransaction key="..." convention (appendSalesTransactionLines).
+     * Sage will reject cleanly (surfaced as a normal error, nothing silently
+     * corrupted) if the document has already been converted or the schema
+     * assumption is off; that failure is expected and safe.
+     */
+    public function updateRequisition(string $key, array $lines): array
+    {
+        $items = '';
+        foreach ($lines as $l) {
+            if (empty($l['recordno'])) {
+                continue; // can't safely target a line without its RECORDNO.
+            }
+            $line  = $this->el('RECORDNO', $l['recordno']);
+            $line .= $this->elIf('projectid', $l['projectid'] ?? null);
+            $line .= $this->elIf('employeeid', $l['employeeid'] ?? null);
+            $line .= $this->elIf('classid', $l['classid'] ?? null);
+            $items .= '<potransitem>' . $line . '</potransitem>';
+        }
+
+        if ($items === '') {
+            return $this->fail(null, 'No line had a RECORDNO to update — nothing sent to Sage.');
+        }
+
+        $fn = '<update_potransaction key="' . htmlspecialchars($key, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '">'
+            . '<potransitems>' . $items . '</potransitems>'
+            . '</update_potransaction>';
+
+        return $this->send($fn, 'update', 'REQUISITION');
+    }
+
     // ── SALES TRANSACTION (create_sotransaction) ─────────────────
 
     /**

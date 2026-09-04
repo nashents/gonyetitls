@@ -7,6 +7,7 @@ use App\Models\CompanyIntegration;
 use App\Models\IntegrationMapping;
 use App\Models\Ticket;
 use App\Services\Sage\Concerns\ManagesMappings;
+use App\Services\SageIntacctService;
 
 /**
  * Syncs a Gonyeti workshop Ticket (job card) to a Sage Order-Entry job card.
@@ -425,14 +426,33 @@ class SageJobCardService
     }
 
     /**
-     * Sage CUSTOMERID: the serviced unit's transporter matched to a Sage customer
-     * by name, else the configured default for the type.
+     * Sage CUSTOMERID: the serviced unit's transporter's linked customer
+     * (see Transporter::customer), else matched to a Sage customer by name,
+     * else the configured default for the type.
      */
     protected function resolveCustomer(Ticket $ticket, bool $isIncome): ?string
     {
         $transporter = optional($ticket->horse)->transporter
             ?? optional($ticket->trailer)->transporter
             ?? optional($ticket->vehicle)->transporter;
+
+        if ($transporter && $transporter->customer_id && $transporter->customer) {
+            $customer = $transporter->customer;
+            $sageId   = $customer->sage_intacct_id ?: $customer->custom_ref;
+
+            if (! $sageId) {
+                if (! $customer->company_id) {
+                    $customer->company_id = $this->integration->company_id;
+                }
+                app(SageIntacctService::class)->syncCustomer($customer);
+                $customer->refresh();
+                $sageId = $customer->sage_intacct_id ?: $customer->custom_ref;
+            }
+
+            if ($sageId) {
+                return $sageId;
+            }
+        }
 
         if ($transporter && $transporter->name && ($cid = $this->findCustomerIdByName($transporter->name))) {
             return $cid;

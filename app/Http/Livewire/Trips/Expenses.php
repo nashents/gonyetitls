@@ -12,12 +12,19 @@ use App\Models\TripExpense;
 use App\Models\PaymentMethod;
 use App\Models\AllowanceDriver;
 use App\Models\ExpenseCategory;
+use App\Models\IntegrationMapping;
 use App\Models\Vendor;
 use App\Services\Accounting\TripExpenseJournalService;
+use App\Services\Sage\Concerns\ResolvesSageIntegration;
+use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SageRequisitionService;
+use App\Services\Sage\SageSyncService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Expenses extends Component
 {
+    use ResolvesSageIntegration;
 
     public $trip;
     public $trip_id;
@@ -233,6 +240,8 @@ class Expenses extends Component
 
             if ($this->trip_expense_type) {
 
+                $created = false;
+
                 foreach ($this->trip_expense_type as $key => $value) {
                     // Skip if type is missing or not recognized
                     if (!isset($this->trip_expense_type[$key])) {
@@ -297,6 +306,7 @@ class Expenses extends Component
                     app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
 
                     $this->recalculateExpenses($this->trip->id);
+                    $created = true;
                 }
 
 
@@ -307,12 +317,48 @@ class Expenses extends Component
                     'message'=>"Expense(s) Added Successfully!!"
                 ]);
 
+                if ($created) {
+                    $this->syncNewExpensesToSage();
+                }
+
                 redirect(request()->header('Referer'));
     
                 
             }
       
       
+    }
+
+    /**
+     * Push newly-added (non-fuel) expense/allowance lines to Sage right away
+     * instead of waiting for a manual trip resync — reuses the full trip sync
+     * (ensures the project, then every vendor × currency group), which is
+     * idempotent per group: a brand-new (vendor, currency) group gets its
+     * Purchase Requisition / Dispatch Sheet created now; a group that already
+     * has a document just reports "skipped" (there's no append-to-existing-
+     * document capability yet, so a line added to an already-synced group
+     * still needs a manual follow-up in Sage). Never blocks the expense save —
+     * failures surface as a warning toast only, fuel-topup lines sync on their
+     * own via FuelObserver so they're not touched here.
+     */
+    protected function syncNewExpensesToSage(): void
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        try {
+            $result = app(SageSyncService::class)->syncTrip($this->trip);
+
+            if (empty($result['success']) && empty($result['skipped'])) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type'    => 'warning',
+                    'message' => 'Expense saved, but Sage sync failed: ' . ($result['error'] ?? 'unknown error'),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Sage trip-expense auto-sync failed: ' . $e->getMessage());
+        }
     }
 
     private function recalculateExpenses($trip_id){
@@ -479,13 +525,160 @@ class Expenses extends Component
 
 
 
+    /** Sage sync column only shows when THIS trip's own company has Sage active. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::activeForCompany($this->trip->company_id);
+    }
+
     public function render()
     {
-    
+
         $this->expenses = Expense::get();
 
-        $this->trip_expenses = TripExpense::where('trip_id',$this->trip->id)->get();
+        $this->trip_expenses = TripExpense::where('trip_id',$this->trip->id)->with(['vendor', 'currency'])->get();
 
-        return view('livewire.trips.expenses');
+        return view('livewire.trips.expenses', [
+            'sync_badges' => $this->sageEnabled ? $this->syncBadges() : [],
+        ]);
+    }
+
+    /**
+     * Sage sync status per trip_expense row, keyed by trip_expense id.
+     *
+     * A fuel-topup line (fuel_id set) is its OWN "PR - Diesel" document,
+     * mapped by entity_type="fuel_pr_diesel", local_id=fuel_id — it never
+     * joins a requisition/dispatch group (SageRequisitionService excludes
+     * fuel-linked lines to avoid double-posting the same spend twice).
+     *
+     * Every other expense/allowance line with a vendor: each (vendor,
+     * currency) group on the trip shares ONE Purchase Requisition or
+     * Dispatch Sheet (see SageRequisitionService::syncTripRequisitions), so
+     * every line in a group shares the same badge/status.
+     *
+     * @return array<int, array{doc_type:string, status:?string, external_id:?string, error:?string, resync:string}>
+     */
+    protected function syncBadges(): array
+    {
+        $integration = $this->activeSageIntegration($this->trip->company_id);
+        if (! $integration) {
+            return [];
+        }
+
+        $badges = [];
+
+        $fuelLines = $this->trip_expenses->filter(fn ($e) => $e->fuel_id);
+        if ($fuelLines->isNotEmpty()) {
+            $fuelMappings = IntegrationMapping::where('company_integration_id', $integration->id)
+                ->where('entity_type', 'fuel_pr_diesel')
+                ->whereIn('local_id', $fuelLines->pluck('fuel_id'))
+                ->get()
+                ->keyBy('local_id');
+
+            foreach ($fuelLines as $e) {
+                $mapping = $fuelMappings->get($e->fuel_id);
+
+                $badges[$e->id] = [
+                    'doc_type'    => 'PR - Diesel',
+                    'status'      => $mapping->sync_status ?? null,
+                    'external_id' => $mapping->external_id ?? null,
+                    'error'       => $mapping->last_error ?? null,
+                    'resync'      => 'resyncFuel',
+                ];
+            }
+        }
+
+        $groupLines = $this->trip_expenses->filter(fn ($e) => ! $e->fuel_id && ($e->expense_id || $e->allowance_id));
+        if ($groupLines->isNotEmpty()) {
+            $entityTypes = $groupLines
+                ->map(fn ($e) => $this->requisitionEntityType($e))
+                ->unique()
+                ->values();
+
+            $mappings = IntegrationMapping::where('company_integration_id', $integration->id)
+                ->where('local_id', $this->trip->id)
+                ->whereIn('entity_type', $entityTypes)
+                ->get()
+                ->keyBy('entity_type');
+
+            foreach ($groupLines as $e) {
+                $entity  = $this->requisitionEntityType($e);
+                $mapping = $mappings->get($entity);
+
+                $badges[$e->id] = [
+                    'doc_type'    => SageRequisitionService::isDispatchVendor($e->vendor) ? 'Dispatch Sheet' : 'Purchase Requisition',
+                    'status'      => $mapping->sync_status ?? null,
+                    'external_id' => $mapping->external_id ?? null,
+                    'error'       => $mapping->last_error ?? null,
+                    'resync'      => 'resyncRequisition',
+                ];
+            }
+        }
+
+        return $badges;
+    }
+
+    /**
+     * Push a single fuel-topup line's PR - Diesel to Sage (idempotent — an
+     * already-synced-with-the-right-project fuel just reports "skipped").
+     */
+    public function resyncFuel($tripExpenseId)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $fuel = optional(TripExpense::find($tripExpenseId))->fuel;
+        if (! $fuel) {
+            return;
+        }
+
+        if (strcasecmp((string) $fuel->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'Only authorized (approved) fuel orders can be synced to Sage.',
+            ]);
+            return;
+        }
+
+        $result = app(SageSyncService::class)->syncFuel($fuel);
+        $ok     = ! empty($result['success']) && ! empty($result['external_id']);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $ok ? 'success' : 'warning',
+            'message' => $ok
+                ? 'Fuel order synced to Sage PR - Diesel (' . $result['external_id'] . ').'
+                : ('Sage sync: ' . ($result['error'] ?? 'see status.')),
+        ]);
+    }
+
+    /**
+     * Re-sync this trip's Purchase Requisitions / Dispatch Sheets to Sage —
+     * reuses the full trip sync (ensures the project, then every vendor ×
+     * currency group), idempotent per group so already-synced groups just
+     * report "skipped".
+     */
+    public function resyncRequisition($tripExpenseId)
+    {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $result = app(SageSyncService::class)->syncTrip($this->trip);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => ! empty($result['success']) ? 'success' : 'warning',
+            'message' => ! empty($result['success'])
+                ? 'Trip requisitions / dispatch sheets synced to Sage.'
+                : ('Sage sync: ' . ($result['error'] ?? 'see status.')),
+        ]);
+    }
+
+    /** Same (vendor × currency) mapping key SageRequisitionService::syncGroup() writes under. */
+    protected function requisitionEntityType(TripExpense $e): string
+    {
+        $prefix = SageRequisitionService::isDispatchVendor($e->vendor) ? 'trip_dispatch_v' : 'trip_requisition_v';
+
+        return $prefix . ($e->vendor_id ?: 0) . '_c' . ($e->currency_id ?: 0);
     }
 }

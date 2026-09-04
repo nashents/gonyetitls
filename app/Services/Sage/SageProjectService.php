@@ -99,10 +99,17 @@ class SageProjectService
     }
 
     /**
-     * Trip → PROJECT (TRIPS), child of the Horse project, class = Horse class.
-     * Dependencies (transporter/horse projects + horse class) are auto-ensured.
+     * Ensure a Trip's Sage PROJECT (TRIPS) exists and is up to date, syncing its
+     * transporter/horse dependencies as needed. This is the project-only half of
+     * syncTrip() — it does NOT raise requisitions/fuel PRs or finalise the project
+     * status, so it is safe to call on demand from elsewhere (e.g. a fuel order
+     * syncing independently of its trip) without side-effecting the trip's other
+     * documents or recursing back into them.
+     *
+     * @return array success/external_id/... (as syncProject) plus 'class_id' (the
+     *         horse's Sage CLASS id) and 'final_status', both used by syncTrip().
      */
-    public function syncTrip(Trip $trip): array
+    public function ensureTripProject(Trip $trip): array
     {
         // Trips sync at AUTHORISATION (Finance workflow) — a trip must only be
         // authorized (approved) to push its OPEN project reference.
@@ -167,41 +174,60 @@ class SageProjectService
         }
 
         // A "Completed" project blocks Purchasing submittal in Sage, so create the
-        // project in the purchasing-allowed status first, raise the requisitions /
-        // dispatch sheet, THEN finalise the project status (e.g. Completed).
-        $finalStatus            = $payload['projectstatus'] ?? null;
-        $inProgress             = (string) config('sageintacct.project.status_in_progress', 'In Progress');
+        // project in the purchasing-allowed status first; the caller raises the
+        // requisitions / dispatch sheet / fuel PRs, THEN finalises the project status.
+        $finalStatus              = $payload['projectstatus'] ?? null;
+        $inProgress               = (string) config('sageintacct.project.status_in_progress', 'In Progress');
         $payload['projectstatus'] = $inProgress;
 
-        $result    = $this->syncProject('trip_project', $trip, $tripProjectId, $payload);
-        $projectId = $result['external_id'] ?? $tripProjectId;
+        $result               = $this->syncProject('trip_project', $trip, $tripProjectId, $payload);
+        $result['class_id']   = $horse['class_id'] ?? null;
+        $result['final_status'] = $finalStatus;
+
+        return $result;
+    }
+
+    /**
+     * Trip → PROJECT (TRIPS), child of the Horse project, class = Horse class.
+     * Dependencies (transporter/horse projects + horse class) are auto-ensured.
+     * Also raises the trip's Purchase Requisitions / Dispatch Sheet and any
+     * approved fuel "PR - Diesel" documents, then finalises the project status.
+     */
+    public function syncTrip(Trip $trip): array
+    {
+        $result = $this->ensureTripProject($trip);
+        if (empty($result['success'])) {
+            return $result;
+        }
+
+        $projectId   = $result['external_id'] ?? null;
+        $finalStatus = $result['final_status'] ?? null;
+        $inProgress  = (string) config('sageintacct.project.status_in_progress', 'In Progress');
 
         // After the project is in Sage, sync the trip's expenses as Purchase
         // Requisitions / a Dispatch Sheet. Failures are attached but never fail
         // the project sync.
-        if (! empty($result['success'])) {
-            $requisitions = (new SageRequisitionService($this->driver, $this->integration))
-                ->syncTripRequisitions($trip, $projectId, $horse['class_id'] ?? null);
-            $result['requisitions'] = $requisitions['requisitions'] ?? [];
+        $requisitions = (new SageRequisitionService($this->driver, $this->integration))
+            ->syncTripRequisitions($trip, $projectId, $result['class_id'] ?? null);
+        $result['requisitions'] = $requisitions['requisitions'] ?? [];
 
-            // Raise a "PR - Diesel" for each approved fuel order attached to the
-            // trip (supplier = the fuelling station/container), while the project
-            // is still purchasing-allowed.
-            $fuelResults = [];
-            foreach ($trip->fuels()->where('authorization', 'approved')->get() as $fuel) {
-                $fuelResults[] = (new SageFuelDieselService($this->driver, $this->integration))->syncFuel($fuel);
-            }
-            $result['fuel'] = $fuelResults;
+        // Raise a "PR - Diesel" for each approved fuel order attached to the
+        // trip (supplier = the fuelling station/container), while the project
+        // is still purchasing-allowed.
+        $fuelResults = [];
+        foreach ($trip->fuels()->where('authorization', 'approved')->get() as $fuel) {
+            $fuelResults[] = (new SageFuelDieselService($this->driver, $this->integration))->syncFuel($fuel);
+        }
+        $result['fuel'] = $fuelResults;
 
-            // Finalise the project status now that the purchasing docs are raised —
-            // UNLESS trips are kept OPEN (Finance model): the integration must NOT
-            // financially close the trip; Finance completes it in Sage so late
-            // supplier/customer invoices can still post against it.
-            if (! config('sageintacct.trip.keep_open', true)
-                && $finalStatus && strcasecmp($finalStatus, $inProgress) !== 0) {
-                $this->driver->updateProject($projectId, ['projectstatus' => $finalStatus]);
-                $result['project_finalised_status'] = $finalStatus;
-            }
+        // Finalise the project status now that the purchasing docs are raised —
+        // UNLESS trips are kept OPEN (Finance model): the integration must NOT
+        // financially close the trip; Finance completes it in Sage so late
+        // supplier/customer invoices can still post against it.
+        if (! config('sageintacct.trip.keep_open', true)
+            && $finalStatus && strcasecmp($finalStatus, $inProgress) !== 0) {
+            $this->driver->updateProject($projectId, ['projectstatus' => $finalStatus]);
+            $result['project_finalised_status'] = $finalStatus;
         }
 
         return $result;
