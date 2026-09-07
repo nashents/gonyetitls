@@ -46,12 +46,11 @@ class TripExpense extends Model implements Auditable
             return true;
         }
 
-        if (!$this->bill) {
+        if ($this->user_id != auth()->id()) {
             return false;
         }
 
-        return !$this->bill->payments()->exists()
-            && $this->user_id == auth()->id();
+        return !$this->bill || !$this->bill->payments()->exists();
     }
 
     public function getCanEditAttribute()
@@ -61,6 +60,15 @@ class TripExpense extends Model implements Auditable
         }
 
         return $this->can_delete && !$this->fuel;
+    }
+
+    public function getBillPaidStatusAttribute()
+    {
+        if (!$this->bill) {
+            return null;
+        }
+
+        return $this->bill->status;
     }
 
     protected $fillable = [

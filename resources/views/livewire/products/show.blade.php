@@ -33,6 +33,10 @@
                                 <td class="w-20 line-height-35">{{ucfirst($product->department)}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Store / Warehouse</th>
+                                <td class="w-20 line-height-35">{{ $product->store ? $product->store->name : "—" }}</td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Brand</th>
                                 <td class="w-20 line-height-35">{{$product->brand ? $product->brand->name : ""}}</td>
                             </tr>

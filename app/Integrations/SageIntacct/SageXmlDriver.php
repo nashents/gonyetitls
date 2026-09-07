@@ -415,7 +415,7 @@ class SageXmlDriver implements SageDriver
      * strict sequence: transactiontype, datecreated, vendorid, referenceno,
      * datedue, returnto, payto, currency, potransitems. Line sequence:
      * itemid, itemdesc, quantity, unit, price, locationid, departmentid,
-     * projectid, employeeid, classid.
+     * projectid, employeeid, classid (no warehouse element — not in the schema).
      */
     protected function buildRequisition(array $h, array $lines): string
     {
@@ -430,6 +430,10 @@ class SageXmlDriver implements SageDriver
             $line .= $this->elIf('sourcelinekey', $l['sourcelinekey'] ?? null);
             $line .= $this->elIf('locationid', $l['locationid'] ?? null);
             $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
+            // NOTE: create_potransaction has NO line-level warehouse element
+            // (warehouseid/warehouse are rejected by the schema at every position;
+            // the warehouse comes from the item / transaction definition), so it
+            // is deliberately not emitted here.
             $line .= $this->elIf('projectid', $l['projectid'] ?? null);
             $line .= $this->elIf('employeeid', $l['employeeid'] ?? null);
             $line .= $this->elIf('classid', $l['classid'] ?? null);

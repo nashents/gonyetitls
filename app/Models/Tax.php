@@ -31,6 +31,12 @@ class Tax extends Model implements Auditable
         return $this->belongsTo('App\Models\Account');
     }
 
+    /** Sage Intacct link (entity_type tax_group) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'tax_group');
+    }
+
     protected $fillable =[
         'name',
         'abbreviation',

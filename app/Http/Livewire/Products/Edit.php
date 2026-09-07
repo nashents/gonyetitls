@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\CategoryValue;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\Store;
 use App\Models\Tax;
 use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,8 @@ class Edit extends Component
 
     public $brands;
     public $categories;
+    public $stores;
+    public $store_id;
     public $attributes;
     public $attribute_values;
     public $selectedCategory = NULL;
@@ -92,6 +95,8 @@ class Edit extends Component
         $product_attribute = $product->product_attributes->first();
         $this->brands = Brand::orderBy('name','asc')->get();
         $this->categories = Category::orderBy('name','asc')->get();
+        $this->stores = Store::orderBy('name','asc')->get();
+        $this->store_id = $product->store_id;
         $this->units_of_measure = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->category_values = CategoryValue::orderBy('name','asc')->get();
         $this->selectedCategory = $product->category_id;
@@ -199,6 +204,8 @@ class Edit extends Component
         $product->tax_id = $this->selectedTax;
         $product->identification_number = $this->identification_number;
         $product->department = $this->department;
+        // Store/warehouse — default to the first store when none is chosen.
+        $product->store_id = $this->store_id ?: optional(Store::defaultStore())->id;
         $product->manufacturer = $this->manufacturer;
         $product->description = $this->description;
         if (isset($fileNameToStore)) {

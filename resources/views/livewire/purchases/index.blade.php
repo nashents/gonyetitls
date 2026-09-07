@@ -512,7 +512,7 @@
                       
                     <h5 class="underline mt-n">Select products</h5>
                     <div class="row">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Products<span class="required" style="color: red">*</span></label>
                                 <div class="mb-10">
@@ -537,6 +537,18 @@
                             </div>
                         </div>
                         <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="store">Store</label>
+                                <select wire:model.debounce.300ms="selectedStore.0" class="form-control">
+                                    <option value="">Default</option>
+                                    @foreach ($stores as $store)
+                                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('selectedStore.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-2">
                                 <div class="form-group">
                                 <label for="country">Payment Methods</label>
                                 <select wire:model.debounce.300ms="payment_method_id.0"  class="form-control"  >
@@ -555,7 +567,7 @@
                                 @error('qty.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="Product">Rate<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" min="0.01" class="form-control" wire:model.debounce.300ms="amount.0"   required>
@@ -599,6 +611,18 @@
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group">
+                                    <label for="store">Store</label>
+                                    <select wire:model.debounce.300ms="selectedStore.{{$value}}" class="form-control">
+                                        <option value="">Default</option>
+                                        @foreach ($stores as $store)
+                                        <option value="{{ $store->id }}">{{ $store->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedStore.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
                                 <label for="country">Payment Methods</label>
                                 <select wire:model.debounce.300ms="payment_method_id.0"  class="form-control"  >
                                     <option value="">Select Payment Method</option>
@@ -616,7 +640,7 @@
                                     @error('qty.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="Product">Rate<span class="required" style="color: red">*</span></label>
                                     <input type="number" step="any" min="0.01" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required>
@@ -941,8 +965,20 @@
                                         <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}})</option>
                                         @endforeach
                                     </select>
-                                    <small>  <a href="{{ route('products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                    <small>  <a href="{{ route('products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small>
                                     @error('selectedCurrentProduct.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="store">Store</label>
+                                    <select wire:model.debounce.300ms="selectedCurrentStore.{{$key}}" class="form-control">
+                                        <option value="">Default</option>
+                                        @foreach ($stores as $store)
+                                        <option value="{{ $store->id }}">{{ $store->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedCurrentStore.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -1011,6 +1047,18 @@
                                             @endforeach
                                         </select>
                                         @error('selectedProduct.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="store">Store</label>
+                                        <select wire:model.debounce.300ms="selectedStore.{{$value}}" class="form-control">
+                                            <option value="">Default</option>
+                                            @foreach ($stores as $store)
+                                            <option value="{{ $store->id }}">{{ $store->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedStore.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                  <div class="col-md-2">

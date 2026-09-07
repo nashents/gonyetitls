@@ -228,6 +228,12 @@ return [
     // E100). Set this only to override that with a specific LOCATION dimension.
     'warehouse' => [
         'location_id' => env('SAGE_INTACCT_WAREHOUSE_LOCATION_ID', null),
+        // Default WAREHOUSEID for purchase-order / receipt lines — Sage requires a
+        // warehouse on every inventory line. Gonyeti purchases carry no warehouse,
+        // so this is used for all PO lines. Null ⇒ fall back to the first synced
+        // Sage warehouse (a store↔warehouse mapping). Set this to the client's
+        // main receiving warehouse to pin it.
+        'default_id'  => env('SAGE_INTACCT_WAREHOUSE_DEFAULT_ID', null),
     ],
 
     // Sage ITEM defaults (Gonyeti Expense → Item).

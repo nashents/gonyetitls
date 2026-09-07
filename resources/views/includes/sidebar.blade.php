@@ -31,6 +31,18 @@
         $decoded = $json($val);
         return is_array($decoded) ? $decoded : [];
     };
+
+    // Master data is pull-only when Sage is active — hide its "Create ..." menu
+    // links (mirrors the create/edit buttons hidden on the index screens).
+    $sageActive = \App\Services\Sage\SageIntegration::enabledForUser();
+    $sageLockedRoutes = [
+        'horses.create',
+        'drivers.create',
+        'products.create',
+        'assets.create',
+        'inventory_products.create',
+        'tyre_products.create',
+    ];
 @endphp
 
     <style>
@@ -109,8 +121,9 @@
                         // ✅ only keep modules that are active AND visible (with inherited visibility)
                         $visibleModules = $group->modules
                             ->sortBy('sort_order')
-                            ->filter(function ($m) use ($groupVis, $inheritVis, $menuCtx) {
+                            ->filter(function ($m) use ($groupVis, $inheritVis, $menuCtx, $sageActive, $sageLockedRoutes) {
                                 if (!($m->is_active ?? true)) return false;
+                                if ($sageActive && in_array($m->route_name, $sageLockedRoutes, true)) return false;
 
                                 $mVis = $inheritVis($m->visibility, $groupVis);
                                 return Menu::isVisible($mVis, $menuCtx);
@@ -157,8 +170,9 @@
                                     // ✅ visible + active submodules (inherit from module if null)
                                     $visibleSubs = $module->sub_modules
                                         ->sortBy('sort_order')
-                                        ->filter(function ($s) use ($moduleVis, $inheritVis, $menuCtx) {
+                                        ->filter(function ($s) use ($moduleVis, $inheritVis, $menuCtx, $sageActive, $sageLockedRoutes) {
                                             if (!($s->is_active ?? true)) return false;
+                                            if ($sageActive && in_array($s->route_name, $sageLockedRoutes, true)) return false;
 
                                             $sVis = $inheritVis($s->visibility, $moduleVis);
                                             return Menu::isVisible($sVis, $menuCtx);

@@ -61,10 +61,11 @@
                                             <option value="{{$brand->id}}">{{$brand->name}}</option>
                                          @endforeach
                                        </select>
-                                       <small><a href="#" data-toggle="modal" data-target="#brandModal" ><i class="fa fa-plus-square-o"></i> New Brand</a></small><a href="#" wire:click.prevent="refresh('brands')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>   
+                                       <small><a href="#" data-toggle="modal" data-target="#brandModal" ><i class="fa fa-plus-square-o"></i> New Brand</a></small><a href="#" wire:click.prevent="refresh('brands')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('brand_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
+
                             </div>
                              <div class="row">
                                 <div class="col-md-4">
@@ -239,7 +240,20 @@
                             </div>
                            
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="store_id"><a href="{{route('stores.index')}}" style="color:blue" target="_blank">Store</a></label>
+                               <select wire:model.debounce.300ms="store_id" class="form-control">
+                                   <option value="">Default store</option>
+                                 @foreach ($stores as $store)
+                                    <option value="{{$store->id}}">{{$store->name}}</option>
+                                 @endforeach
+                               </select>
+                               <small class="text-muted">Leave blank to use the default store.</small>
+                                @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="subheading">Tax Categories</label>
                                 <select wire:model.debounce.300ms="selectedTax" class="form-control">
@@ -252,7 +266,7 @@
                                 @error('selectedTax') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="manufacturer">Manufacturer</label>
                               <input type="text" class="form-control" placeholder="Enter Product Manufacturer" wire:model.debounce.300ms="manufacturer">

@@ -184,10 +184,18 @@ class Index extends Component
         return \App\Services\Sage\SageIntegration::enabledForUser();
     }
 
-    /** Queue an import of Sage items into the products listing (bought stock). */
+    /**
+     * Queue an import of Sage items into this listing (bought stock). These
+     * physical-stock screens (inventory / tyre / asset) pull only Sage INVENTORY
+     * items and tag them with this screen's department so they list here.
+     */
     public function pullFromSage()
     {
-        $this->dispatchSagePull('product', 'products', ['buy' => true]);
+        $this->dispatchSagePull('product', 'products', [
+            'buy'        => true,
+            'item_type'  => 'inventory',
+            'department' => $this->department,
+        ]);
     }
 
     public function render()

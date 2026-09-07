@@ -16,6 +16,16 @@ class Store extends Model implements Auditable
         return $this->belongsTo('App\Models\User');
     }
 
+    /**
+     * The default store used when none is chosen (product create/edit, Sage
+     * item pull). The first store by id — deterministic; adjust here if a
+     * dedicated "default" flag is introduced later.
+     */
+    public static function defaultStore(): ?Store
+    {
+        return static::orderBy('id')->first();
+    }
+
     /** Sage Intacct link (entity_type store_warehouse) for the sync badge/status. */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')

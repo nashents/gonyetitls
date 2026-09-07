@@ -138,7 +138,7 @@ class Index extends Component
     public function render()
     {
 
-        $query = Tax::orderBy('name','asc')->paginate(10);
+        $query = Tax::with('sageMapping')->orderBy('name','asc')->paginate(10);
         return view('livewire.taxes.index',[
             'taxes'=>  $query
         ]);

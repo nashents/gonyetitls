@@ -192,14 +192,28 @@ class Expenses extends Component
         }
     }
 
+    private function companyCurrencyId()
+    {
+        return $this->trip->company->currency_id ?? null;
+    }
+
     public function updatedSelectedCurrency($id, $key = Null){
         if(!is_null($id)){
-            if ($key) {
+            if ($key !== null) {
                 $this->selected_currency[$key] = Currency::find($id);
             }else{
                 $this->selected_currency = Currency::find($id);
             }
-          
+
+            if ($id == $this->companyCurrencyId()) {
+                if ($key !== null) {
+                    $this->exchange_rate[$key] = null;
+                    $this->exchange_amount[$key] = null;
+                } else {
+                    $this->exchange_rate = null;
+                    $this->exchange_amount = null;
+                }
+            }
         }
     }
 
@@ -241,6 +255,7 @@ class Expenses extends Component
             if ($this->trip_expense_type) {
 
                 $created = false;
+                $companyCurrencyId = $this->companyCurrencyId();
 
                 foreach ($this->trip_expense_type as $key => $value) {
                     // Skip if type is missing or not recognized
@@ -288,19 +303,24 @@ class Expenses extends Component
                     $trip_expense->category = $this->category[$key] ?? null;
                     $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet[$key] ?? true;
                     $trip_expense->amount = $this->amount[$key] ?? 0;
-                    $trip_expense->exchange_rate = $this->exchange_rate[$key] ?? null;
 
-                   if (isset($this->exchange_amount[$key]) && $this->exchange_amount[$key] !== null) {
-                        $trip_expense->exchange_amount = $this->exchange_amount[$key];
-                    } elseif (
-                        isset($this->exchange_rate[$key], $this->amount[$key]) &&
-                        $this->exchange_rate[$key] > 0 &&
-                        $this->amount[$key] > 0
-                    ) {
-                        $trip_expense->exchange_amount = $this->exchange_rate[$key] * $this->amount[$key];
+                    if ($trip_expense->currency_id && $trip_expense->currency_id != $companyCurrencyId) {
+                        $trip_expense->exchange_rate = $this->exchange_rate[$key] ?? null;
+
+                        if (isset($this->exchange_amount[$key]) && $this->exchange_amount[$key] !== null) {
+                            $trip_expense->exchange_amount = $this->exchange_amount[$key];
+                        } elseif (
+                            isset($this->exchange_rate[$key], $this->amount[$key]) &&
+                            $this->exchange_rate[$key] > 0 &&
+                            $this->amount[$key] > 0
+                        ) {
+                            $trip_expense->exchange_amount = $this->exchange_rate[$key] * $this->amount[$key];
+                        }
+                    } else {
+                        $trip_expense->exchange_rate = null;
+                        $trip_expense->exchange_amount = null;
                     }
-                                    
-                   
+
                     $trip_expense->save();
 
                     app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
@@ -420,6 +440,7 @@ class Expenses extends Component
     public function edit($id){
 
         $expense = TripExpense::find($id);
+        abort_unless($expense->can_edit, 403);
         $this->user_id = $expense->user_id;
         $this->trip_id = $expense->trip_id;
         $this->edit = True;
@@ -449,6 +470,7 @@ class Expenses extends Component
             if ($this->trip_expense_id) {
 
                 $trip_expense = TripExpense::find($this->trip_expense_id);
+                abort_unless($trip_expense->can_edit, 403);
                 $trip_expense->amount = $this->amount;
                 $trip_expense->trip_id = $this->trip_id;
                 $trip_expense->user_id = Auth::user()->id;
@@ -460,19 +482,24 @@ class Expenses extends Component
                     $trip_expense->expense_id = Null;
                 }
 
-                if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
-
-                    $this->exchange_amount = $this->exchange_rate * $this->amount;
-        
-                }
-
                 $trip_expense->category = $this->category;
                 $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet;
-                $trip_expense->exchange_rate = $this->exchange_rate;
-                $trip_expense->exchange_amount = $this->exchange_amount;
                 $trip_expense->currency_id = $this->selectedCurrency;
                 $trip_expense->vendor_id = $this->selectedVendor;
                 $trip_expense->payment_method_id = $this->payment_method_id;
+
+                if ($trip_expense->currency_id && $trip_expense->currency_id != $this->companyCurrencyId()) {
+                    if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
+                        $this->exchange_amount = $this->exchange_rate * $this->amount;
+                    }
+
+                    $trip_expense->exchange_rate = $this->exchange_rate;
+                    $trip_expense->exchange_amount = $this->exchange_amount;
+                } else {
+                    $trip_expense->exchange_rate = null;
+                    $trip_expense->exchange_amount = null;
+                }
+
                 $trip_expense->update();
 
                 app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
@@ -499,6 +526,7 @@ class Expenses extends Component
         }
 
         public function deleteExpense(){
+            abort_unless($this->trip_expense->can_delete, 403);
             $bill = $this->trip_expense->bill;
             if (isset($bill)) {
                 $bill_expenses = $bill->bill_expenses;

@@ -51,15 +51,22 @@
                                 Create new <span class="caret"></span>
                             </a>
 
+                            @php $sageActive = \App\Services\Sage\SageIntegration::enabledForUser(); @endphp
                             <ul class="dropdown-menu" style="overflow-x:auto; width:50px; height:400px;">
                                 @if (in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names))
+                                    {{-- Driver is pull-only master data when Sage is active. --}}
+                                    @unless ($sageActive)
                                     <li><a href="{{ route('drivers.create') }}"><i class="fa fa-plus-square-o"></i>Driver</a></li>
+                                    @endunless
                                     <li><a href="{{ route('employees.create') }}"><i class="fa fa-plus-square-o"></i>Employee</a></li>
                                 @endif
 
                                 @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
                                     <li role="separator" class="divider"></li>
+                                    {{-- Asset is pull-only master data when Sage is active. --}}
+                                    @unless ($sageActive)
                                     <li><a href="{{ route('assets.create') }}"><i class="fa fa-plus-square-o"></i>Asset</a></li>
+                                    @endunless
                                     <li><a href="{{ route('bills.create') }}"><i class="fa fa-plus-square-o"></i>Bill</a></li>
                                     <li><a href="{{ route('invoices.create') }}"><i class="fa fa-plus-square-o"></i>Invoice</a></li>
                                     <li><a href="{{ route('quotations.create') }}"><i class="fa fa-plus-square-o"></i>Quotation</a></li>
@@ -68,7 +75,10 @@
                                 @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
                                     <li role="separator" class="divider"></li>
                                     <li><a href="{{ route('fuels.index') }}"><i class="fa fa-plus-square-o"></i>Fuel</a></li>
+                                    {{-- Horse is pull-only master data when Sage is active. --}}
+                                    @unless ($sageActive)
                                     <li><a href="{{ route('horses.create') }}"><i class="fa fa-plus-square-o"></i>Horse</a></li>
+                                    @endunless
                                     <li><a href="{{ route('trailers.index') }}"><i class="fa fa-plus-square-o"></i>Trailer</a></li>
                                     <li><a href="{{ route('shifts.index') }}"><i class="fa fa-plus-square-o"></i>Shift</a></li>
                                     <li><a href="{{ route('trips.create') }}"><i class="fa fa-plus-square-o"></i>Trip</a></li>

@@ -11,7 +11,10 @@
                             </div>
 
                             <div class="panel-title">
+                                {{-- Taxes are pull-only when Sage is active — hide create. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="#" data-toggle="modal" data-target="#taxModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Tax</a>
+                                @endunless
                                 @if ($this->sageEnabled)
                                 <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary"><i class="fa fa-cloud-download"></i> Pull from Sage</button>
                                 @endif
@@ -46,7 +49,17 @@
                                   <tr>
                                     <td>{{$tax->category}}</td>
                                     <td>{{$tax->account?->name}}</td>
-                                    <td>{{$tax->name}}</td>
+                                    <td>{{$tax->name}}
+                                        @if ($this->sageEnabled)
+                                            @php $sm = $tax->sageMapping; @endphp
+                                            <br>
+                                            @if ($sm)
+                                                <small class="badge bg-success" title="Synced from Sage Intacct"><i class="fa fa-check"></i> Sage synced</small>
+                                            @else
+                                                <small class="badge bg-secondary" title="Not yet pulled from Sage">Not synced</small>
+                                            @endif
+                                        @endif
+                                    </td>
                                     <td>{{$tax->abbreviation}}</td>
                                     <td>{{$tax->description}}</td>
                                     <td>{{$tax->rate}}</td>
@@ -59,8 +72,11 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('taxes.show', $tax->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                {{-- Edit/Delete hidden while Sage is active (taxes are pull-only). --}}
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$tax->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#taxDeleteModal{{ $tax->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('taxes.delete')

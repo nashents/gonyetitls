@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\CategoryValue;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\Store;
 use App\Models\Tax;
 use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,8 @@ class Create extends Component
     public $brands;
     public $categories;
     public $department;
+    public $stores;
+    public $store_id;
     public $selectedCategory = NULL;
     public $selectedCategoryValue = NULL;
     public $category_values;
@@ -127,6 +130,7 @@ class Create extends Component
 
     public function mount($category){
         $this->brands = Brand::orderBy('name','asc')->get();
+        $this->stores = Store::orderBy('name','asc')->get();
         $this->units_of_measure = UnitsOfMeasure::orderBy('name','asc')->get();
        
         $this->categories = Category::orderBy('name','asc')->get();
@@ -335,6 +339,8 @@ class Create extends Component
         $product->expense_account_id = $this->expense_account_id;
         $product->tax_id = $this->selectedTax;
         $product->department = $this->department;
+        // Store/warehouse — default to the first store when none is chosen.
+        $product->store_id = $this->store_id ?: optional(Store::defaultStore())->id;
         $product->manufacturer = $this->manufacturer;
         $product->description = $this->description;
         if (isset($fileNameToStore)) {

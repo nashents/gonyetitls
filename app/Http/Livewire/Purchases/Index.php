@@ -21,6 +21,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseDocument;
 use App\Models\PurchaseProduct;
+use App\Models\Store;
 use App\Models\Requisition;
 use App\Models\Tax;
 use App\Models\Vendor;
@@ -110,6 +111,9 @@ class Index extends Component
 
     public $products;
     public $selectedProduct = [];
+    public $stores;
+    public $selectedStore = [];        // per-line store (new lines, create + edit)
+    public $selectedCurrentStore = []; // per-line store for existing lines (edit)
     public $payment_method_id = [];
     public $selectedCurrentProduct = [];
     public $tax_accounts;
@@ -299,6 +303,7 @@ class Index extends Component
             ->orderBy('name', 'asc')
             ->get();
             $this->vendor_types = VendorType::latest()->get();
+            $this->stores = Store::orderBy('name','asc')->get();
             $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
             $this->account_types = AccountType::orderBy('name','asc')->get();
             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -485,6 +490,8 @@ class Index extends Component
             if (isset($this->selectedProduct[$key])) {
                 $purchase_product->product_id = $this->selectedProduct[$key];
             }
+            // Optional per-line store/warehouse.
+            $purchase_product->store_id = $this->selectedStore[$key] ?? null;
             if (isset($this->qty[$key])) {
                 $purchase_product->qty = $this->qty[$key];
             }
@@ -640,8 +647,9 @@ class Index extends Component
         if(isset($this->purchase_order_products)){
 
             foreach($this->purchase_order_products as $purchase_product){
-                $this->selectedCurrentProduct[] = $purchase_product->product_id; 
-                $this->current_qty[] = $purchase_product->qty; 
+                $this->selectedCurrentProduct[] = $purchase_product->product_id;
+                $this->selectedCurrentStore[] = $purchase_product->store_id;
+                $this->current_qty[] = $purchase_product->qty;
                 $this->current_payment_method_id[] = $purchase_product->payment_method_id; 
                 $this->current_amount[] = $purchase_product->amount; 
                 $this->selectedCurrentTax[] = $purchase_product->tax_id; 
@@ -699,6 +707,8 @@ class Index extends Component
             if (isset($this->selectedCurrentProduct[$key])) {
                 $purchase_product->product_id = $this->selectedCurrentProduct[$key];
             }
+            // Optional per-line store on an existing line.
+            $purchase_product->store_id = ($this->selectedCurrentStore[$key] ?? null) ?: null;
             if (isset($this->current_qty[$key])) {
                 $purchase_product->qty = $this->current_qty[$key];
             }
@@ -767,6 +777,8 @@ class Index extends Component
                 if (isset($this->selectedProduct[$key])) {
                     $purchase_product->product_id = $this->selectedProduct[$key];
                 }
+                // Optional per-line store on a newly added line.
+                $purchase_product->store_id = $this->selectedStore[$key] ?? null;
                 if (isset($this->qty[$key])) {
                     $purchase_product->qty = $this->qty[$key];
                 }

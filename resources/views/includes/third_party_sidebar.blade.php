@@ -61,7 +61,10 @@
                                 <li class="has-children">
                                     <a href="#"><i class="fas fa-truck"></i> <span>Horses</span> <i class="fas fa-angle-right arrow"></i></a>
                                     <ul class="child-nav">
+                                        {{-- Horse is pull-only master data when Sage is active. --}}
+                                        @unless (\App\Services\Sage\SageIntegration::enabledForUser())
                                         <li><a href="{{route('horses.create')}}" ><i class="fas fa-plus "></i> <span>Add Horse</span></a></li>
+                                        @endunless
                                         <li><a href="{{route('horses.index')}}"><i class="fas fa-list "></i> <span>Manage Horses</span></a></li>
                                     </ul>
                                 </li>

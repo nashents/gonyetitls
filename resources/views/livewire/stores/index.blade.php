@@ -11,7 +11,10 @@
                             </div>
 
                             <div class="panel-title">
+                                {{-- Stores are pull-only when Sage is active — hide create. --}}
+                                @unless ($this->sageEnabled)
                                 <a href="" data-toggle="modal" data-target="#storeModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Store</a>
+                                @endunless
                                 @if ($this->sageEnabled)
                                 <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded"><i class="fa fa-cloud-download"></i>Pull from Sage</button>
                                 @endif
@@ -74,8 +77,11 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('stores.show',$store->id)}}"  ><i class="fas fa-eye color-default"></i>View</a></li>
+                                                {{-- Edit/Delete hidden while Sage is active (stores are pull-only). --}}
+                                                @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$store->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#storeDeleteModal{{ $store->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endunless
                                             </ul>
                                         </div>
                                         @include('stores.delete')

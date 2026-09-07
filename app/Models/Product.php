@@ -128,6 +128,7 @@ class Product extends Model implements Auditable
         'sell_price',
         'sell',
         'department',
+        'store_id',
         'identification_number',
         'status',
     ];

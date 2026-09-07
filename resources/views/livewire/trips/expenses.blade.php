@@ -30,6 +30,8 @@
                 </th>
                 <th class="th-sm">Trip Sheet
                 </th>
+                <th class="th-sm">Bill Status
+                </th>
                 @if ($this->sageEnabled)
                 <th class="th-sm">Sage Sync
                 </th>
@@ -78,7 +80,7 @@
                     @endif
                 </td>
                 <td>
-                    @if (isset($trip_expense->exchange_rate))
+                    @if (isset($trip_expense->exchange_rate) && $trip_expense->currency_id != $trip->company->currency_id)
                         Currency conversion: {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($trip_expense->exchange_amount,2)}} at {{ $trip_expense->exchange_rate}}
                     @endif
                 </td>
@@ -87,6 +89,17 @@
                         <span class="badge badge-success"><i class="fa fa-eye"></i> Visible</span>
                     @else
                         <span class="badge badge-secondary"><i class="fa fa-eye-slash"></i> Hidden</span>
+                    @endif
+                </td>
+                <td>
+                    @if (!$trip_expense->bill)
+                        <span class="badge bg-secondary"><i class="fa fa-minus"></i> No Bill</span>
+                    @elseif ($trip_expense->bill_paid_status == 'Paid')
+                        <span class="badge bg-success"><i class="fa fa-check"></i> Paid</span>
+                    @elseif ($trip_expense->bill_paid_status == 'Partial')
+                        <span class="badge bg-warning"><i class="fa fa-clock-o"></i> Partial</span>
+                    @else
+                        <span class="badge bg-danger"><i class="fa fa-exclamation-circle"></i> Unpaid</span>
                     @endif
                 </td>
                 @if ($this->sageEnabled)
@@ -150,7 +163,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="{{ $this->sageEnabled ? 12 : 11 }}">
+                <td colspan="{{ $this->sageEnabled ? 13 : 12 }}">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Trip Expenses Captured....
                     </div>

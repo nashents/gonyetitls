@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\PurchaseProduct;
+use App\Models\Store;
 use Illuminate\Support\Facades\Auth;
 
 class Create extends Component
@@ -29,6 +30,8 @@ class Create extends Component
     public $product_id;
     public $qty;
     public $rate;
+    public $stores;
+    public $store_id = [];   // per-line store (optional)
 
     public $title;
     public $file;
@@ -90,6 +93,7 @@ class Create extends Component
         $this->purchases = Purchase::latest()->get();
         $this->currencies = Currency::all();
         $this->categories = Category::latest()->get();
+        $this->stores = Store::orderBy('name','asc')->get();
         $this->purchase_number = $this->purchaseNumber();
     }
 
@@ -133,6 +137,8 @@ class Create extends Component
               $product = new PurchaseProduct;
               $product->purchase_id = $purchase->id;
               $product->product_id = $this->product_id[$key];
+              // Optional per-line store; falls back to the product's own store.
+              $product->store_id = $this->store_id[$key] ?? null;
               $product->rate = $this->rate[$key];
               $product->qty = $this->qty[$key];
               $product->save();

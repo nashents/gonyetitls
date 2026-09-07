@@ -302,6 +302,39 @@ class SagePurchaseService
         return $q > 0 ? $q : 1;
     }
 
+    /**
+     * The Sage WAREHOUSEID for a PO / receipt line — Sage requires a warehouse on
+     * inventory lines. Order: the given store's mapped warehouse (receipt lines) →
+     * the configured default (sageintacct.warehouse.default_id) → the first synced
+     * Sage warehouse (store↔warehouse mapping). Null only if none exist.
+     */
+    protected function warehouseId(?int $storeId = null): ?string
+    {
+        if ($storeId) {
+            $m = IntegrationMapping::where([
+                'company_integration_id' => $this->integration->id,
+                'entity_type'            => 'store_warehouse',
+                'local_id'               => $storeId,
+            ])->whereNotNull('external_id')->first();
+
+            if ($m && $m->external_id) {
+                return $m->external_id;
+            }
+        }
+
+        $configured = trim((string) config('sageintacct.warehouse.default_id', ''));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        $m = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'store_warehouse',
+        ])->whereNotNull('external_id')->orderBy('id')->first();
+
+        return $m && $m->external_id ? $m->external_id : null;
+    }
+
     /** Unit (ex-tax) price = line total / qty, to 2 dp. */
     protected function unitPrice($total, $qty): string
     {

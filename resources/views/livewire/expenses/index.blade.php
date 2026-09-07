@@ -25,6 +25,8 @@
                                 <a href="#" wire:click="exportExpensesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                 {{-- Backfill: create + link a non-inventory billable product for any expense missing one. --}}
                                 <button wire:click="syncMissingProducts" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-link"></i> Sync expenses with missing products</button>
+                                {{-- Repair "core" expenses (Fuel Topup, Transporter Payment) that fuel/trip billing looks up by name - re-points a drifted account back to its correct default and restores it if deleted. --}}
+                                <button wire:click="resolveDefaultExpenses" wire:loading.attr="disabled" class="btn btn-default border-warning btn-rounded btn-wide"><i class="fa fa-wrench"></i> Resolve Default Expenses</button>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -104,7 +106,7 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('expenses.show', $expense->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                @if ($expense->user_id != Null)
+                                                @if ($expense->user_id != Null && !$expense->is_locked)
                                                 @unless ($this->sageEnabled)
                                                 <li><a href="#"  wire:click="edit({{$expense->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @endunless

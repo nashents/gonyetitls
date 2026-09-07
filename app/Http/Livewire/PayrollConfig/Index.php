@@ -7,6 +7,7 @@ use App\Models\Currency;
 use App\Models\PayrollCompanyConfig;
 use App\Models\PayrollFrequency;
 use App\Models\PayrollRun;
+use App\Services\Accounting\PayrollJournalService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 
@@ -62,6 +63,9 @@ class Index extends Component
     public $activeTab = 'general';
     public $accountsByGroup = [];
     public $auditHistory = [];
+    public $isAdmin = false;
+    public $reclassCandidates = [];
+    public $reclassResults = [];
 
     // Tracks the last-saved value so saveConfig() can detect a real change
     // to the split toggle (vs. re-saving other fields with it left alone).
@@ -76,10 +80,15 @@ class Index extends Component
 
         $this->company    = Auth::user()->employee->company;
         $this->currencies = Currency::orderBy('name')->get();
+        $this->isAdmin    = Auth::user()->is_admin();
         $this->loadConfig();
         $this->loadFrequencies();
         $this->loadAccounts();
         $this->loadAuditHistory();
+
+        if ($this->isAdmin) {
+            $this->loadReclassCandidates();
+        }
     }
 
     /**
@@ -107,6 +116,80 @@ class Index extends Component
                 ])
                 ->toArray()
             : [];
+    }
+
+    /**
+     * Admin-only maintenance tool: payroll runs already posted to the ledger
+     * whose company now has split-by-employee-type accounting on, but whose
+     * original entry predates that (so it still posted everyone through the
+     * single Admin/Ops accounts). UI wrapper around
+     * PayrollJournalService::candidatesForReclassification() — see
+     * app/Console/Commands/ReclassifyPayrollSplit.php for the CLI equivalent.
+     */
+    private function loadReclassCandidates(): void
+    {
+        $this->reclassCandidates = app(PayrollJournalService::class)
+            ->candidatesForReclassification()
+            ->map(fn (PayrollRun $run) => [
+                'id'           => $run->id,
+                'company_name' => $run->company->name ?? $run->company_id,
+                'name'         => $run->name,
+                'payroll_date' => optional($run->payroll_date)->format('Y-m-d'),
+            ])
+            ->all();
+    }
+
+    public function runReclassifySplit($runId)
+    {
+        abort_unless(Auth::user()->is_admin(), 403);
+
+        $run = PayrollRun::find($runId);
+
+        if (!$run) {
+            return;
+        }
+
+        try {
+            $entry = app(PayrollJournalService::class)->reclassifySplit($run);
+            array_unshift($this->reclassResults, ['run_id' => $run->id, 'ok' => true, 'message' => "Posted {$entry->journal_number}."]);
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => "Run #{$run->id} reclassified — posted {$entry->journal_number}."]);
+        } catch (\Throwable $e) {
+            array_unshift($this->reclassResults, ['run_id' => $run->id, 'ok' => false, 'message' => $e->getMessage()]);
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "Run #{$run->id}: {$e->getMessage()}"]);
+        }
+
+        $this->loadReclassCandidates();
+    }
+
+    public function runReclassifySplitAll()
+    {
+        abort_unless(Auth::user()->is_admin(), 403);
+
+        $fixed = 0;
+        $attempted = count($this->reclassCandidates);
+
+        foreach ($this->reclassCandidates as $candidate) {
+            $run = PayrollRun::find($candidate['id']);
+
+            if (!$run) {
+                continue;
+            }
+
+            try {
+                $entry = app(PayrollJournalService::class)->reclassifySplit($run);
+                array_unshift($this->reclassResults, ['run_id' => $run->id, 'ok' => true, 'message' => "Posted {$entry->journal_number}."]);
+                $fixed++;
+            } catch (\Throwable $e) {
+                array_unshift($this->reclassResults, ['run_id' => $run->id, 'ok' => false, 'message' => $e->getMessage()]);
+            }
+        }
+
+        $this->loadReclassCandidates();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $fixed > 0 ? 'success' : 'warning',
+            'message' => "Reclassified {$fixed} / {$attempted} payroll run(s).",
+        ]);
     }
 
     private function loadAccounts(): void
@@ -243,6 +326,13 @@ class Index extends Component
         if ($splitChanged && $this->hasPostedPayrollThisCalendarYear()) {
             $this->pendingConfigData = $data;
             $this->dispatchBrowserEvent('show-confirm-modal');
+            // Not saved yet — this alert is the only feedback until the user
+            // confirms in the popup, so make sure they see *something* even
+            // if the modal itself fails to pop up for any reason.
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'warning',
+                'message' => 'This company already has posted payroll for '.now()->year.'. Confirm in the popup to save the split-accounting change.',
+            ]);
             return;
         }
 

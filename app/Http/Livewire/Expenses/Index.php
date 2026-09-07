@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Services\Sage\SageIntegration;
 use App\Http\Livewire\Concerns\PullsFromSage;
+use App\Services\Accounting\DefaultExpenseResolver;
 
 class Index extends Component
 {
@@ -249,15 +250,32 @@ class Index extends Component
 
     }
 
+    /**
+     * Repair the small set of "core" expense categories (Fuel Topup,
+     * Transporter Payment) that fuel/trip billing flows look up by hardcoded
+     * name - re-points a drifted account_id/type back to the intended
+     * default and restores the row if it was ever deleted. Same definitions
+     * ExpenseSeeder uses, so this is safe to run any time.
+     */
+    public function resolveDefaultExpenses()
+    {
+        $summary = app(DefaultExpenseResolver::class)->resolve();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => implode(' ', $summary),
+        ]);
+    }
+
     public function update()
     {
         if ($this->expense_id) {
             try{
             $expense = Expense::find($this->expense_id);
-            if ($expense->is_locked && $this->name !== $expense->name) {
+            if ($expense->is_locked) {
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'error',
-                    'message'=>"This expense is a core system expense - its name cannot be changed."
+                    'message'=>"This expense is a core system expense required by the application - use \"Resolve Default Expenses\" to fix it instead of editing directly."
                 ]);
                 return;
             }

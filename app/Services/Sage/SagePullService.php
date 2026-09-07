@@ -45,6 +45,9 @@ class SagePullService
     protected int $companyId;
     protected int $creatorId;
 
+    /** Cache: Sage ITEMID → Gonyeti store_id (built once from ITEMWAREHOUSEINFO). */
+    protected ?array $itemWarehouseMap = null;
+
     public function __construct(SageDriver $driver, CompanyIntegration $integration, int $companyId, int $creatorId)
     {
         $this->driver      = $driver;
@@ -527,6 +530,10 @@ class SagePullService
                 $tax->description = $tax->description ?: 'Imported from Sage Intacct item tax group.';
                 $tax->save();
 
+                // Record the Sage link (ITEMTAXGROUP has no id — its NAME is the key)
+                // so the listing can show a "Sage synced" badge.
+                $this->linkMapping('tax_group', $tax, $name, $name);
+
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -627,6 +634,13 @@ class SagePullService
             $buy = $sell = true;
         }
 
+        // Optional scoping from the calling screen: restrict to an item type
+        // ('inventory' | 'non-inventory') and tag created products with a
+        // department (so the inventory/tyre/asset screens only pull their kind
+        // and the products list there).
+        $itemType   = strtolower(trim((string) ($options['item_type'] ?? '')));
+        $department  = trim((string) ($options['department'] ?? '')) ?: null;
+
         $rows = $this->readAll('ITEM', $this->itemPullFields(), 'RECORDNO > 0');
 
         // Tax lookup by lower-cased name (mirrors the Sage item tax group names).
@@ -641,8 +655,14 @@ class SagePullService
                 continue;
             }
 
+            // Item-type scope: skip items that don't match the requested type.
+            if ($itemType !== '' && ! $this->itemTypeMatches($row['ITEMTYPE'] ?? null, $itemType)) {
+                $s['skipped']++;
+                continue;
+            }
+
             try {
-                [$product, $isNew] = $this->upsertProductFromItem($row, $buy, $sell, $taxByName);
+                [$product, $isNew] = $this->upsertProductFromItem($row, $buy, $sell, $taxByName, $department);
 
                 // Purchasable non-inventory items are also expenses in Gonyeti —
                 // ensure the linked expense exists (expenses.product_id). A
@@ -723,6 +743,71 @@ class SagePullService
         return strpos($t, 'sale') === false || strpos($t, 'purchase') !== false;
     }
 
+    /**
+     * Does a Sage ITEMTYPE match a requested scope? 'inventory' matches Inventory
+     * items; anything else ('non-inventory', 'non_inventory', …) matches
+     * non-inventory items. Uses the same Inventory/Non-Inventory split the product
+     * type mapping uses.
+     */
+    protected function itemTypeMatches(?string $sageType, string $wanted): bool
+    {
+        $isInventory = strcasecmp(
+            \App\Services\Sage\Mappers\SageProductItemMapper::gonyetiType($sageType),
+            'Inventory'
+        ) === 0;
+
+        return $wanted === 'inventory' ? $isInventory : ! $isInventory;
+    }
+
+    /**
+     * The Gonyeti store_id for a Sage item's warehouse. Sage tracks item↔warehouse
+     * links in ITEMWAREHOUSEINFO (an item can stock in several warehouses); this
+     * maps ITEMID → the first of its warehouses that resolves to a Gonyeti store
+     * (via the store↔warehouse mapping). Built once and cached for the pull.
+     */
+    protected function itemWarehouseStore(string $itemId): ?int
+    {
+        if ($this->itemWarehouseMap === null) {
+            $this->itemWarehouseMap = $this->buildItemWarehouseMap();
+        }
+
+        return $this->itemWarehouseMap[$itemId] ?? null;
+    }
+
+    /** Build ITEMID → store_id from ITEMWAREHOUSEINFO + the store↔warehouse mappings. */
+    protected function buildItemWarehouseMap(): array
+    {
+        // Sage WAREHOUSEID → Gonyeti store_id (from the store↔warehouse mappings).
+        $storeByWarehouse = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'store_warehouse',
+        ])->whereNotNull('external_id')->pluck('local_id', 'external_id')->all();
+
+        if (empty($storeByWarehouse)) {
+            return [];
+        }
+
+        $map = [];
+        try {
+            $rows = $this->readAll('ITEMWAREHOUSEINFO', ['ITEMID', 'WAREHOUSEID'], 'RECORDNO > 0');
+        } catch (Throwable $e) {
+            return [];
+        }
+
+        foreach ($rows as $row) {
+            $itemId      = trim((string) ($row['ITEMID'] ?? ''));
+            $warehouseId = trim((string) ($row['WAREHOUSEID'] ?? ''));
+            if ($itemId === '' || $warehouseId === '' || isset($map[$itemId])) {
+                continue; // first mapped warehouse per item wins
+            }
+            if (isset($storeByWarehouse[$warehouseId])) {
+                $map[$itemId] = (int) $storeByWarehouse[$warehouseId];
+            }
+        }
+
+        return $map;
+    }
+
     /** Fields read from the Sage ITEM object for the product/expense pulls. */
     protected function itemPullFields(): array
     {
@@ -739,12 +824,13 @@ class SagePullService
     /**
      * Upsert a Gonyeti Product from a Sage ITEM row (shared by the products and
      * expenses pulls). De-dup: product_item mapping → product name. Turns the
-     * given buy/sell flags ON (never off), fills empty columns only, and records
-     * the Sage mapping.
+     * given buy/sell flags ON (never off), fills empty columns only (incl. an
+     * optional department, so the item lists on its inventory/tyre/asset screen),
+     * and records the Sage mapping.
      *
      * @return array{0:Product,1:bool} [product, isNew]
      */
-    protected function upsertProductFromItem(array $row, bool $buy, bool $sell, $taxByName): array
+    protected function upsertProductFromItem(array $row, bool $buy, bool $sell, $taxByName, ?string $department = null): array
     {
         $itemId = $row['ITEMID'];
         $name   = trim($row['NAME'] ?? '');
@@ -781,6 +867,22 @@ class SagePullService
         $product->type        = $product->type ?: \App\Services\Sage\Mappers\SageProductItemMapper::gonyetiType($row['ITEMTYPE'] ?? null);
         $product->gl_group    = $product->gl_group ?: (trim($row['GLGROUP'] ?? '') ?: null);
         $product->description = $product->description ?: (trim($row['EXTENDED_DESCRIPTION'] ?? '') ?: null);
+
+        // Tag the department (inventory/tyre/asset) so the item lists on that
+        // screen — fill-only so a product already filed elsewhere is left alone.
+        if ($department && empty($product->department)) {
+            $product->department = $department;
+        }
+
+        // Store/warehouse: prefer the item's ACTUAL Sage warehouse (from
+        // ITEMWAREHOUSEINFO → the store↔warehouse mapping), so a resync fills the
+        // real warehouse. Fall back to any existing store, then the default store.
+        $warehouseStore = $this->itemWarehouseStore($itemId);
+        if ($warehouseStore) {
+            $product->store_id = $warehouseStore;
+        } elseif (empty($product->store_id)) {
+            $product->store_id = optional(Store::defaultStore())->id;
+        }
 
         // Sage BASEPRICE → Gonyeti selling price (the only item price Sage
         // exposes). No item-level cost is available, so buying price is left

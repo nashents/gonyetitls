@@ -37,6 +37,13 @@
                                         <i class="fa fa-history"></i> History
                                     </a>
                                 </li>
+                                @if($isAdmin)
+                                <li class="{{ $activeTab === 'reclass' ? 'active' : '' }}">
+                                    <a href="#" wire:click.prevent="$set('activeTab','reclass')">
+                                        <i class="fa fa-random"></i> Split Reclassification
+                                    </a>
+                                </li>
+                                @endif
                             </ul>
 
                             <div class="tab-content p-20">
@@ -334,10 +341,79 @@
                                 </div>
                                 @endif
 
+                                {{-- SPLIT RECLASSIFICATION TAB (admin only) --}}
+                                @if($isAdmin && $activeTab === 'reclass')
+                                <p class="text-muted mb-2"><i class="fa fa-info-circle"></i> One-time correction for payroll runs that were posted to the ledger <strong>before</strong> split-by-employee-type accounting was turned on. Posts a single balanced adjusting entry per run, moving driver-attributable wages and employer statutory contributions out of the Admin/Ops GL accounts into the Drivers/COGS accounts. It never touches the original entry, PAYE/NSSA/NEC/Pension payables, or net pay — only reclassifies the expense side.</p>
+
+                                @if(!$split_payroll_expenses_by_employee_type)
+                                <div class="alert alert-warning"><i class="fa fa-warning"></i> Split accounting is currently OFF for this company. Turn it on (Controls tab) and save before reclassifying — otherwise there is nothing to correct.</div>
+                                @endif
+
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Run #</th>
+                                                <th>Company</th>
+                                                <th>Payroll Date</th>
+                                                <th>Name</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($reclassCandidates as $candidate)
+                                            <tr wire:key="reclass-candidate-{{ $candidate['id'] }}">
+                                                <td>{{ $candidate['id'] }}</td>
+                                                <td>{{ $candidate['company_name'] }}</td>
+                                                <td class="text-nowrap">{{ $candidate['payroll_date'] ?? '—' }}</td>
+                                                <td>{{ $candidate['name'] }}</td>
+                                                <td>
+                                                    <button
+                                                        wire:click="runReclassifySplit({{ $candidate['id'] }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="runReclassifySplit,runReclassifySplitAll"
+                                                        onclick="return confirm('Post a reclassification entry for run #{{ $candidate['id'] }}?')"
+                                                        class="btn btn-xs btn-warning">
+                                                        <i class="fa fa-random"></i> Reclassify
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            @empty
+                                            <tr><td colspan="5" class="text-center text-muted">No payroll runs currently need reclassification.</td></tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                @if(count($reclassCandidates) > 1)
+                                <button
+                                    wire:click="runReclassifySplitAll"
+                                    wire:loading.attr="disabled"
+                                    wire:target="runReclassifySplitAll"
+                                    onclick="return confirm('Post a reclassification entry for all {{ count($reclassCandidates) }} payroll run(s) listed above?')"
+                                    class="btn btn-warning mb-3">
+                                    <span wire:loading wire:target="runReclassifySplitAll"><i class="fa fa-spinner fa-spin"></i></span>
+                                    <i class="fa fa-random"></i> Reclassify All ({{ count($reclassCandidates) }})
+                                </button>
+                                @endif
+
+                                @if(!empty($reclassResults))
+                                <h6 class="text-muted mt-3">Recent results (this session)</h6>
+                                <ul class="list-unstyled">
+                                    @foreach($reclassResults as $result)
+                                    <li>
+                                        <span class="badge bg-{{ $result['ok'] ? 'success' : 'danger' }} text-white">{{ $result['ok'] ? 'OK' : 'Failed' }}</span>
+                                        Run #{{ $result['run_id'] }}: {{ $result['message'] }}
+                                    </li>
+                                    @endforeach
+                                </ul>
+                                @endif
+                                @endif
+
                             </div>{{-- /tab-content --}}
 
-                            {{-- Save button (not for frequencies/history tabs) --}}
-                            @if(!in_array($activeTab, ['frequencies', 'history']))
+                            {{-- Save button (not for frequencies/history/reclass tabs) --}}
+                            @if(!in_array($activeTab, ['frequencies', 'history', 'reclass']))
                             <div class="panel-footer px-20 py-3">
                                 <button wire:click="saveConfig" wire:loading.attr="disabled" class="btn btn-primary">
                                     <span wire:loading wire:target="saveConfig"><i class="fa fa-spinner fa-spin"></i></span>

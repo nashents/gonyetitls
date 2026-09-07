@@ -227,4 +227,122 @@ class PayrollJournalService
         $next = $last ? ((int) substr($last, 4)) + 1 : 1;
         return 'JNL-' . str_pad($next, 5, '0', STR_PAD_LEFT);
     }
+
+    // ── Split-accounting reclassification ───────────────────────────────────
+    //
+    // Covers a run that was posted BEFORE split_payroll_expenses_by_employee_type
+    // was turned on for its company, so every wage/employer-contribution line
+    // landed in the *_admin (Ops) accounts regardless of employee type. The
+    // split only ever changes which expense account the DR lines hit — the
+    // CR/payable side (PAYE, NSSA, NEC, Pension, net pay) is identical either
+    // way — so correcting this is a pure reclassification: move the
+    // driver-attributable share of each DR line from *_admin into *_drivers
+    // (COGS) via one balanced adjusting entry. It never touches the original
+    // entry or the run's status.
+
+    /**
+     * PayrollRuns already posted to the ledger whose company now has split
+     * accounting on, but whose original entry hasn't been reclassified yet.
+     */
+    public function candidatesForReclassification(?array $runIds = null): \Illuminate\Support\Collection
+    {
+        $query = PayrollRun::where('status', 'posted')->with('company');
+
+        if ($runIds) {
+            $query->whereIn('id', $runIds);
+        }
+
+        return $query->get()->filter(fn (PayrollRun $run) => $this->needsReclassification($run))->values();
+    }
+
+    public function needsReclassification(PayrollRun $run): bool
+    {
+        $config = PayrollCompanyConfig::where('company_id', $run->company_id)->where('active', true)->latest()->first();
+
+        if (!$config?->split_payroll_expenses_by_employee_type) {
+            return false;
+        }
+
+        $hasOriginalEntry = JournalEntry::where('payroll_run_id', $run->id)->where('is_manual', false)->exists();
+
+        if (!$hasOriginalEntry) {
+            return false;
+        }
+
+        return !JournalEntry::where('reference', $this->reclassificationReference($run))->exists();
+    }
+
+    /**
+     * Posts the one-time correcting entry for $run. Idempotent — throws if
+     * it's already been reclassified rather than posting a duplicate.
+     */
+    public function reclassifySplit(PayrollRun $run): JournalEntry
+    {
+        $reference = $this->reclassificationReference($run);
+
+        if (JournalEntry::where('reference', $reference)->exists()) {
+            throw new \RuntimeException("PayrollRun {$run->id} has already been reclassified.");
+        }
+
+        if (!JournalEntry::where('payroll_run_id', $run->id)->where('is_manual', false)->exists()) {
+            throw new \RuntimeException("PayrollRun {$run->id} has no posted journal entry to reclassify.");
+        }
+
+        $config = PayrollCompanyConfig::where('company_id', $run->company_id)->where('active', true)->latest()->first();
+
+        if (!$config?->split_payroll_expenses_by_employee_type) {
+            throw new \RuntimeException("Split accounting is not enabled for company {$run->company_id} - nothing to reclassify.");
+        }
+
+        $payroll = $run->payrolls()
+            ->with(['payroll_salaries.payroll_salary_items.deduction', 'payroll_salaries.salary', 'payroll_salaries.employee.driver'])
+            ->first();
+
+        if (!$payroll) {
+            throw new \RuntimeException("PayrollRun {$run->id} has no payroll batch.");
+        }
+
+        $totals = $this->aggregate($payroll);
+
+        return DB::transaction(function () use ($run, $totals, $config, $reference) {
+            $entry = JournalEntry::create([
+                'company_id'    => $run->company_id,
+                'journal_number'=> $this->generateNumber(),
+                'date'          => now(),
+                'reference'     => $reference,
+                'description'   => "Payroll split reclassification - {$run->name} (driver wages/statutory cost moved Admin/Ops to Drivers/COGS)",
+                'is_manual'     => true,
+                'status'        => 'posted',
+                'created_by_id' => Auth::id(),
+                'posted_by_id'  => Auth::id(),
+                'posted_at'     => now(),
+            ]);
+
+            $currencyId = $run->currency_id;
+
+            // [label, amount attributable to drivers, admin account it's currently sitting in, drivers account it belongs in]
+            $moves = [
+                ['Salaries & Wages Expense', $totals['gross_drivers'], $config->gl_wages_expense_account_admin, $config->gl_wages_expense_account_drivers],
+                ['NSSA Employer Contribution Expense', $totals['nssa_employer_drivers'], $config->gl_nssa_employer_expense_account_admin, $config->gl_nssa_employer_expense_account_drivers],
+                ['NEC Employer Contribution Expense', $totals['nec_employer_drivers'], $config->gl_nec_employer_expense_account_admin, $config->gl_nec_employer_expense_account_drivers],
+                ['Pension Employer Contribution Expense', $totals['pension_employer_drivers'], $config->gl_pension_employer_expense_account_admin, $config->gl_pension_employer_expense_account_drivers],
+            ];
+
+            foreach ($moves as [$label, $amount, $fromAdminAccountId, $toDriversAccountId]) {
+                if ($amount <= 0) {
+                    continue;
+                }
+
+                $this->line($entry, $toDriversAccountId, "{$label} - Drivers", $amount, 0, $currencyId, "Reclassify {$label} to Drivers/COGS - {$run->name}");
+                $this->line($entry, $fromAdminAccountId, "{$label} - Admin", 0, $amount, $currencyId, "Reclassify {$label} out of Admin/Ops - {$run->name}");
+            }
+
+            return $entry;
+        });
+    }
+
+    private function reclassificationReference(PayrollRun $run): string
+    {
+        return "PAYROLL-SPLIT-RECLASS-{$run->id}";
+    }
 }
