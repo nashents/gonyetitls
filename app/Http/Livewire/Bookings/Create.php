@@ -7,6 +7,7 @@ use App\Models\Asset;
 use App\Models\Assignment;
 use App\Models\Booking;
 use App\Models\Breakdown;
+use App\Models\Customer;
 use App\Models\Department;
 use App\Models\Driver;
 use App\Models\Employee;
@@ -54,6 +55,8 @@ class Create extends Component
     public $mechanic_id;
     public $employees;
     public $employee_id;
+    public $customers;
+    public $customer_id;
     public $existing_bookings;
     
     public $problem_categories;
@@ -73,8 +76,9 @@ class Create extends Component
     public $searchMechanic;
     public $searchVendor;
     public $searchProblem;
-    
-    protected $queryString = ['searchVehicle','searchAsset','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic','searchProblem'];
+    public $searchCustomer;
+
+    protected $queryString = ['searchVehicle','searchAsset','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic','searchProblem','searchCustomer'];
 
 
     public $in_date;
@@ -136,6 +140,12 @@ class Create extends Component
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Service Types Refreshed Successfully!!."
+                ]);
+        }elseif($category == "customers"){
+                $this->customers = Customer::orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Customers Refreshed Successfully!!."
                 ]);
         }
     }
@@ -241,6 +251,7 @@ class Create extends Component
     protected $messages =[
       'employee_id.required' => 'Select Employee',
       'service_type_id.required' => 'Select Service Type',
+      'customer_id.required_if' => 'Select Customer',
   ];
     protected $rules = [
         'booking_number' => 'required',
@@ -250,6 +261,7 @@ class Create extends Component
         'mileage' => 'required',
         'description' => 'required',
         'service_type_id' => 'required',
+        'customer_id' => 'required_if:transaction_type,income',
 
     ];
 
@@ -298,6 +310,7 @@ class Create extends Component
         $booking->breakdown_id = $this->breakdown_id;
         $booking->problem_category_id = $this->problem_category_id;
         $booking->transaction_type = $this->transaction_type;
+        $booking->customer_id = $this->transaction_type === "income" ? ($this->customer_id ?: null) : null;
 
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
 
@@ -401,6 +414,12 @@ class Create extends Component
             $this->vendors = Vendor::where('status',1)->where('name', 'LIKE', "%".$this->searchVendor."%")->get();
         }else{
             $this->vendors = Vendor::where('status',1)->orderBy('name','asc')->get();
+        }
+
+        if (filled($this->searchCustomer)) {
+            $this->customers = Customer::where('name', 'LIKE', "%".$this->searchCustomer."%")->get();
+        }else{
+            $this->customers = Customer::orderBy('name','asc')->get();
         }
 
         if (filled($this->searchVehicle)) {

@@ -69,6 +69,7 @@ class SagePullService
                 'driver'      => $this->pullDrivers(),
                 'tax'         => $this->pullTaxes(),
                 'product'     => $this->pullProducts($options),
+                'expense'     => $this->pullExpenses($options),
                 'store'       => $this->pullStores(),
                 default       => ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0],
             };
@@ -626,7 +627,7 @@ class SagePullService
             $buy = $sell = true;
         }
 
-        $rows = $this->readAll('ITEM', ['ITEMID', 'NAME', 'ITEMTYPE', 'TAXGROUP.NAME', 'GLGROUP', 'STATUS'], 'RECORDNO > 0');
+        $rows = $this->readAll('ITEM', $this->itemPullFields(), 'RECORDNO > 0');
 
         // Tax lookup by lower-cased name (mirrors the Sage item tax group names).
         $taxByName = Tax::all()->keyBy(fn ($t) => mb_strtolower((string) $t->name));
@@ -641,51 +642,14 @@ class SagePullService
             }
 
             try {
-                $mapping = IntegrationMapping::where([
-                    'company_integration_id' => $this->integration->id,
-                    'entity_type'            => 'product_item',
-                    'external_id'            => $itemId,
-                ])->first();
+                [$product, $isNew] = $this->upsertProductFromItem($row, $buy, $sell, $taxByName);
 
-                $product = ($mapping ? Product::find($mapping->local_id) : null)
-                    ?? Product::where('name', $name)->first();
-
-                $isNew = false;
-                if (! $product) {
-                    $product                 = new Product();
-                    $product->name           = $name;
-                    $product->user_id        = $this->creatorId;
-                    $product->product_number = $this->nextNumber(Product::class, 'P');
-                    $product->status         = 1;
-                    $isNew = true;
-                }
-
-                // Buy/sell: turn ON the flags for this context; never turn a flag
-                // off (a product listed for both must keep both).
-                if ($buy) {
-                    $product->buy = 1;
-                }
-                if ($sell) {
-                    $product->sell = 1;
-                }
-
-                // Fill type + tax + GL group only when empty — never clobber edits.
-                $product->type = $product->type ?: \App\Services\Sage\Mappers\SageProductItemMapper::gonyetiType($row['ITEMTYPE'] ?? null);
-                $product->gl_group = $product->gl_group ?: (trim($row['GLGROUP'] ?? '') ?: null);
-                if (empty($product->tax_id)) {
-                    $grp = mb_strtolower(trim($row['TAXGROUP.NAME'] ?? ''));
-                    if ($grp !== '' && isset($taxByName[$grp])) {
-                        $product->tax_id = $taxByName[$grp]->id;
-                    }
-                }
-                $product->saveQuietly();
-
-                $this->linkMapping('product_item', $product, $itemId, $name);
-
-                // Non-inventory items are also expenses in Gonyeti — ensure the linked
-                // expense exists (expenses.product_id).
-                if (strcasecmp((string) $product->type, 'Non Inventory') === 0) {
-                    $this->ensureExpenseForProduct($product);
+                // Purchasable non-inventory items are also expenses in Gonyeti —
+                // ensure the linked expense exists (expenses.product_id). A
+                // sales-only non-inventory item is sold, not bought, so it is not
+                // an expense.
+                if ($this->isPurchasableNonInventory($row['ITEMTYPE'] ?? null)) {
+                    $this->ensureExpenseForProduct($product, $row);
                 }
 
                 $isNew ? $s['created']++ : $s['linked']++;
@@ -695,6 +659,147 @@ class SagePullService
         }
 
         return $s;
+    }
+
+    /**
+     * Pull Sage NON-INVENTORY ITEMs into the Gonyeti expenses module. Each item
+     * becomes (a) a non-inventory billable Product and (b) an Expense linked to
+     * it (expenses.product_id) — the same 1:1 pairing the Expenses screen keeps
+     * for locally created expenses. Populates as many columns as the Sage item
+     * carries (description, prices, tax, GL group), filling empty fields only so
+     * user edits are never clobbered. Inventory/other item types are skipped —
+     * those belong to the products pull.
+     */
+    protected function pullExpenses(array $options = []): array
+    {
+        $rows = $this->readAll('ITEM', $this->itemPullFields(), 'RECORDNO > 0');
+
+        $taxByName = Tax::all()->keyBy(fn ($t) => mb_strtolower((string) $t->name));
+
+        $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
+        foreach ($rows as $row) {
+            $itemId = $row['ITEMID'] ?? null;
+            $name   = trim($row['NAME'] ?? '');
+            // Only PURCHASABLE non-inventory items are expenses: "Non-Inventory"
+            // and "Non-Inventory (Purchase only)" (and "Sale and Purchase"). Skip
+            // inventory, kits, and sales-only items (sold, not bought).
+            if (! $itemId || $name === '' || ! $this->isPurchasableNonInventory($row['ITEMTYPE'] ?? null)) {
+                $s['skipped']++;
+                continue;
+            }
+
+            try {
+                // A non-inventory item is billable (buy), not for sale.
+                [$product] = $this->upsertProductFromItem($row, true, false, $taxByName);
+
+                $existed = Expense::where('product_id', $product->id)->exists();
+                $this->ensureExpenseForProduct($product, $row);
+
+                $existed ? $s['linked']++ : $s['created']++;
+            } catch (Throwable $e) {
+                $s['failed']++;
+            }
+        }
+
+        return $s;
+    }
+
+    /**
+     * A Sage non-inventory ITEMTYPE that can be purchased → it is an expense in
+     * Gonyeti. Sage's ITEMTYPE is a display string: "Non-Inventory",
+     * "Non-Inventory (Purchase only)", "Non-Inventory (Sale and Purchase)" are
+     * purchasable; "Non-Inventory (Sales only)" is not (sold, not bought); and
+     * "Inventory"/kits are not non-inventory at all.
+     */
+    protected function isPurchasableNonInventory(?string $itemType): bool
+    {
+        $t = strtolower(trim((string) $itemType));
+
+        if (strpos($t, 'non') === false) {
+            return false; // inventory / kit / other — not a non-inventory item
+        }
+
+        // Purchasable unless it is restricted to sales only.
+        return strpos($t, 'sale') === false || strpos($t, 'purchase') !== false;
+    }
+
+    /** Fields read from the Sage ITEM object for the product/expense pulls. */
+    protected function itemPullFields(): array
+    {
+        // NOTE: no cost field — STANDARDCOST (and STDCOST/COST/…) are not
+        // queryable on this ITEM object and make the whole read fail. Sage
+        // non-inventory items carry no item-level cost; price lives on the
+        // purchase document. BASEPRICE is the only monetary field available.
+        return [
+            'ITEMID', 'NAME', 'ITEMTYPE', 'EXTENDED_DESCRIPTION',
+            'BASEPRICE', 'TAXGROUP.NAME', 'GLGROUP', 'STATUS',
+        ];
+    }
+
+    /**
+     * Upsert a Gonyeti Product from a Sage ITEM row (shared by the products and
+     * expenses pulls). De-dup: product_item mapping → product name. Turns the
+     * given buy/sell flags ON (never off), fills empty columns only, and records
+     * the Sage mapping.
+     *
+     * @return array{0:Product,1:bool} [product, isNew]
+     */
+    protected function upsertProductFromItem(array $row, bool $buy, bool $sell, $taxByName): array
+    {
+        $itemId = $row['ITEMID'];
+        $name   = trim($row['NAME'] ?? '');
+
+        $mapping = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'product_item',
+            'external_id'            => $itemId,
+        ])->first();
+
+        $product = ($mapping ? Product::find($mapping->local_id) : null)
+            ?? Product::where('name', $name)->first();
+
+        $isNew = false;
+        if (! $product) {
+            $product                 = new Product();
+            $product->name           = $name;
+            $product->user_id        = $this->creatorId;
+            $product->product_number = $this->nextNumber(Product::class, 'P');
+            $product->status         = 1;
+            $isNew = true;
+        }
+
+        // Buy/sell: turn ON the flags for this context; never turn a flag off
+        // (a product listed for both must keep both).
+        if ($buy) {
+            $product->buy = 1;
+        }
+        if ($sell) {
+            $product->sell = 1;
+        }
+
+        // Fill descriptive + accounting columns only when empty — never clobber edits.
+        $product->type        = $product->type ?: \App\Services\Sage\Mappers\SageProductItemMapper::gonyetiType($row['ITEMTYPE'] ?? null);
+        $product->gl_group    = $product->gl_group ?: (trim($row['GLGROUP'] ?? '') ?: null);
+        $product->description = $product->description ?: (trim($row['EXTENDED_DESCRIPTION'] ?? '') ?: null);
+
+        // Sage BASEPRICE → Gonyeti selling price (the only item price Sage
+        // exposes). No item-level cost is available, so buying price is left
+        // for the user / the purchase document.
+        if (empty($product->sell_price) && is_numeric($row['BASEPRICE'] ?? null)) {
+            $product->sell_price = $row['BASEPRICE'];
+        }
+
+        if (empty($product->tax_id)) {
+            $grp = mb_strtolower(trim($row['TAXGROUP.NAME'] ?? ''));
+            if ($grp !== '' && isset($taxByName[$grp])) {
+                $product->tax_id = $taxByName[$grp]->id;
+            }
+        }
+
+        $product->saveQuietly();
+        $this->linkMapping('product_item', $product, $itemId, $name);
+
+        return [$product, $isNew];
     }
 
     // ── Stores (Sage Warehouses) ─────────────────────────────────
@@ -748,22 +853,46 @@ class SagePullService
         return $s;
     }
 
-    /** Ensure a non-inventory Product has a linked expense (expenses.product_id). */
-    protected function ensureExpenseForProduct(Product $product): void
+    /**
+     * Ensure a non-inventory Product has a linked expense (expenses.product_id),
+     * populating as many columns as the Sage ITEM row carries (description, price,
+     * tax, account). Fills empty fields only, so a re-pull enriches an existing
+     * expense without clobbering user edits.
+     */
+    protected function ensureExpenseForProduct(Product $product, array $row = []): void
     {
-        if (Expense::where('product_id', $product->id)->exists()) {
-            return;
-        }
+        // Existing linked expense → adopt an unlinked same-name expense → new.
+        $expense = Expense::where('product_id', $product->id)->first()
+            ?: (Expense::whereNull('product_id')->where('name', $product->name)->first() ?: new Expense());
 
-        // Adopt an existing unlinked expense of the same name, else create one.
-        $expense = Expense::whereNull('product_id')->where('name', $product->name)->first() ?: new Expense();
         if (! $expense->exists) {
-            $expense->name      = $product->name;
-            $expense->user_id   = $this->creatorId;
-            $expense->item_type = 'Non Inventory';
+            $expense->name    = $product->name;
+            $expense->user_id = $this->creatorId;
         }
         $expense->product_id = $product->id;
+        $expense->item_type  = $expense->item_type ?: 'Non Inventory';
+        $expense->type       = $expense->type ?: 'Direct';
+        $expense->account_id = $expense->account_id ?: $this->defaultExpenseAccountId();
+        $expense->tax_id     = $expense->tax_id ?: $product->tax_id;
+
+        // Enrich from the Sage item (fill-only): description + amount (BASEPRICE,
+        // the only item price Sage exposes for non-inventory items).
+        $expense->description = $expense->description ?: (trim($row['EXTENDED_DESCRIPTION'] ?? '') ?: null);
+        if (empty($expense->amount) && is_numeric($row['BASEPRICE'] ?? null)) {
+            $expense->amount = $row['BASEPRICE'];
+        }
+
         $expense->saveQuietly();
+    }
+
+    /** Default expense account (first Cost Of Goods Sold account — the Expenses screen's own list). */
+    protected function defaultExpenseAccountId(): ?int
+    {
+        return optional(
+            Account::whereHas('account_type', fn ($q) => $q->where('name', 'Cost Of Goods Sold'))
+                ->orderBy('name')
+                ->first()
+        )->id;
     }
 
     // ── Helpers ──────────────────────────────────────────────────

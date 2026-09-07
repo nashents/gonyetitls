@@ -82,7 +82,7 @@
                                         @forelse ($bookings as $booking)
                                       <tr>
                                         <td>{{ucfirst($booking->booking_number)}}
-                                            @if (\App\Services\Sage\SageIntegration::enabledForUser())
+                                            @if (\App\Services\Sage\SageIntegration::enabledForUser() && $booking->authorization === 'approved')
                                                 @php $sm = optional($booking->ticket)->sageMapping; $ss = optional($sm)->sync_status; @endphp
                                                 <br>
                                                 <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"

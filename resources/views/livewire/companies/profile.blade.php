@@ -25,7 +25,9 @@
         <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
         <li role="presentation"><a href="#bank_accounts" aria-controls="bank_accounts" role="tab" data-toggle="tab">Bank Accounts</a></li>
         <li role="presentation"><a href="#notifications" aria-controls="notifications" role="tab" data-toggle="tab">Notifications</a></li>
-        <li role="presentation"><a href="#modules" aria-controls="modules" role="tab" data-toggle="tab">Modules</a></li>
+        @if (Auth::user()->is_admin())
+            <li role="presentation"><a href="#modules" aria-controls="modules" role="tab" data-toggle="tab">Modules</a></li>
+        @endif
         <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
         <li role="presentation"><a href="#budgets" aria-controls="budgtes" role="tab" data-toggle="tab">Budgets</a></li>
         @if (Auth::user()->is_admin())
@@ -153,9 +155,11 @@
         <div role="tabpanel" class="tab-pane" id="notifications">
             @livewire('notifications.index')
         </div>
-        <div role="tabpanel" class="tab-pane" id="modules">
-            @livewire('modules.index', ['id' => $company->id])
-        </div>
+        @if (Auth::user()->is_admin())
+            <div role="tabpanel" class="tab-pane" id="modules">
+                @livewire('modules.index', ['id' => $company->id])
+            </div>
+        @endif
         <div role="tabpanel" class="tab-pane" id="settings">
             @livewire('companies.settings', ['id' => $company->id])
         </div>

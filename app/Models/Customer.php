@@ -103,6 +103,12 @@ class Customer extends Authenticatable implements Auditable
     public function freight_jobs(){
         return $this->hasMany('App\Models\FreightJob');
     }
+    public function bookings(){
+        return $this->hasMany('App\Models\Booking');
+    }
+    public function tickets(){
+        return $this->hasMany('App\Models\Ticket');
+    }
 
     protected $fillable = [
         'user_id',

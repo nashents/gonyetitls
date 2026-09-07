@@ -47,10 +47,11 @@ class SageJobCardService
     {
         $entity = 'job_card';
 
-        // Only sync once the ticket is CLOSED (and its booking authorized) — so we
-        // never push a job card while items are still being dispatched to it.
-        if (! $ticket->closed_by_id
-            || strcasecmp((string) optional($ticket->booking)->authorization, 'approved') !== 0) {
+        // Sync is LOCKED to authorized bookings: nothing is pushed unless the
+        // booking is approved. Authorization is the trigger (see BookingObserver);
+        // dispatched items are then placed/appended idempotently, so a booking
+        // authorized before or after its items are dispatched both resolve.
+        if (strcasecmp((string) optional($ticket->booking)->authorization, 'approved') !== 0) {
             return $this->result(true, 'skipped', null, null, $entity, $ticket);
         }
 
@@ -426,32 +427,35 @@ class SageJobCardService
     }
 
     /**
-     * Sage CUSTOMERID: the serviced unit's transporter's linked customer
-     * (see Transporter::customer), else matched to a Sage customer by name,
-     * else the configured default for the type.
+     * Sage CUSTOMERID for the job card, in priority order:
+     *   1. The customer set MANUALLY on the booking/ticket (booking.customer_id).
+     *   2. Else the customer on the TRANSPORT (transport order) attached to the
+     *      serviced horse/trailer/vehicle (its latest trip's transport order).
+     *   3. Else the serviced unit's transporter's linked customer, then a Sage
+     *      customer matched by the transporter name.
+     *   4. Else the configured default for the type.
      */
     protected function resolveCustomer(Ticket $ticket, bool $isIncome): ?string
     {
+        // 1) Manually-selected customer on the booking/ticket wins.
+        $customer = $ticket->customer ?: optional($ticket->booking)->customer;
+
+        // 2) Else the customer on the transport attached to the serviced unit.
+        if (! $customer) {
+            $customer = $this->transportCustomer($ticket);
+        }
+
+        if ($customer && ($sageId = $this->customerSageId($customer))) {
+            return $sageId;
+        }
+
+        // 3) Fallback: the serviced unit's transporter's own customer, then name.
         $transporter = optional($ticket->horse)->transporter
             ?? optional($ticket->trailer)->transporter
             ?? optional($ticket->vehicle)->transporter;
 
-        if ($transporter && $transporter->customer_id && $transporter->customer) {
-            $customer = $transporter->customer;
-            $sageId   = $customer->sage_intacct_id ?: $customer->custom_ref;
-
-            if (! $sageId) {
-                if (! $customer->company_id) {
-                    $customer->company_id = $this->integration->company_id;
-                }
-                app(SageIntacctService::class)->syncCustomer($customer);
-                $customer->refresh();
-                $sageId = $customer->sage_intacct_id ?: $customer->custom_ref;
-            }
-
-            if ($sageId) {
-                return $sageId;
-            }
+        if ($transporter && $transporter->customer_id && ($sageId = $this->customerSageId($transporter->customer))) {
+            return $sageId;
         }
 
         if ($transporter && $transporter->name && ($cid = $this->findCustomerIdByName($transporter->name))) {
@@ -461,6 +465,81 @@ class SageJobCardService
         return $isIncome
             ? ((string) config('sageintacct.jobcard.standard_customer', '') ?: null)
             : ((string) config('sageintacct.jobcard.internal_customer', '') ?: null);
+    }
+
+    /**
+     * The customer on the transport (transport order) attached to the serviced
+     * horse / trailer / vehicle — resolved via the unit's most recent trip and
+     * that trip's transport order. Used when no customer is set on the booking.
+     */
+    protected function transportCustomer(Ticket $ticket): ?\App\Models\Customer
+    {
+        $booking = $ticket->booking;
+        $horse   = $ticket->horse   ?: optional($booking)->horse;
+        $vehicle = $ticket->vehicle ?: optional($booking)->vehicle;
+        $trailer = $ticket->trailer ?: optional($booking)->trailer;
+
+        $trip = null;
+        if ($horse) {
+            $trip = \App\Models\Trip::where('horse_id', $horse->id)->orderByDesc('id')->first();
+        }
+        if (! $trip && $vehicle) {
+            $trip = \App\Models\Trip::where('vehicle_id', $vehicle->id)->orderByDesc('id')->first();
+        }
+        if (! $trip && $trailer) {
+            $trip = $trailer->trips()->orderByDesc('trips.id')->first();
+        }
+
+        return $trip ? $this->tripCustomer($trip) : null;
+    }
+
+    /** A trip's billed customer via its transport order / deal, else its direct customer. */
+    protected function tripCustomer(\App\Models\Trip $trip): ?\App\Models\Customer
+    {
+        foreach ($trip->trip_origins as $origin) {
+            $to = $origin->transport_order;
+            if ($to && $to->customer) {
+                return $to->customer;
+            }
+            if ($to && optional($to->deal)->customer) {
+                return $to->deal->customer;
+            }
+        }
+
+        return $trip->customer;
+    }
+
+    /**
+     * The clean Sage CUSTOMERID for a customer — prefers custom_ref (the id the
+     * Sage→Gonyeti pull stores) and strips any accidental trailing token (a
+     * corrupted sage_intacct_id like "C-00081 ZAR" would otherwise be rejected).
+     * Pushes the customer to Sage first only if it has no id yet (syncCustomer
+     * itself honours the master-data push gate).
+     */
+    protected function customerSageId(?\App\Models\Customer $customer): ?string
+    {
+        if (! $customer) {
+            return null;
+        }
+
+        $id = $customer->custom_ref ?: $customer->sage_intacct_id;
+
+        if (! $id) {
+            if (! $customer->company_id) {
+                $customer->company_id = $this->integration->company_id;
+            }
+            app(SageIntacctService::class)->syncCustomer($customer);
+            $customer->refresh();
+            $id = $customer->custom_ref ?: $customer->sage_intacct_id;
+        }
+
+        if (! $id) {
+            return null;
+        }
+
+        $id = trim(explode(' ', trim((string) $id))[0]);
+
+        return $id !== '' ? $id : null;
     }
 
     protected function findCustomerIdByName(string $name): ?string

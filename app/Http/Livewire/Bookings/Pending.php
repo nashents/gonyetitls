@@ -183,6 +183,7 @@ class Pending extends Component
                         $ticket = new Ticket;
                         $ticket->user_id = $booking->user_id;
                         $ticket->booking_id = $booking->id;
+                        $ticket->customer_id = $booking->customer_id;
                         $ticket->inspection_id = $inspection->id;
                         $ticket->service_type_id = $booking->service_type_id;
                         $ticket->vehicle_id = $booking->vehicle_id;
@@ -349,6 +350,7 @@ class Pending extends Component
         $ticket = new Ticket;
         $ticket->user_id = $booking->user_id;
         $ticket->booking_id = $booking->id;
+        $ticket->customer_id = $booking->customer_id;
         $ticket->inspection_id = $inspection->id;
         $ticket->service_type_id = $booking->service_type_id;
         $ticket->vehicle_id = $booking->vehicle_id;

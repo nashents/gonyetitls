@@ -51,6 +51,9 @@ class Booking extends Model implements Auditable
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
     }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
     public function ticket(){
         return $this->hasOne('App\Models\Ticket');
     }

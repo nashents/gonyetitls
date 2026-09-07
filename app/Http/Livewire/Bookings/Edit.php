@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Assignment;
 use App\Models\Booking;
 use App\Models\Breakdown;
+use App\Models\Customer;
 use App\Models\Department;
 use App\Models\Driver;
 use App\Models\Employee;
@@ -47,6 +48,8 @@ class Edit extends Component
     public $vendor_id;
     public $transaction_type;
     public $selected_equipment;
+    public $customers;
+    public $customer_id;
 
     public $searchHorse;
     public $searchVehicle;
@@ -56,13 +59,14 @@ class Edit extends Component
     public $searchVendor;
     public $searchAsset;
     public $searchProblem;
+    public $searchCustomer;
 
     public $problem_categories;
     public $problem_category_id;
     public $breakdowns;
     public $breakdown_id;
     
-    protected $queryString = ['searchProblem','searchVendor','searchAsset','searchVehicle','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
+    protected $queryString = ['searchProblem','searchVendor','searchAsset','searchVehicle','searchHorse','searchTrailer','searchEmployee','searchMechanic','searchCustomer'];
 
     public $existing_bookings;
     public $company;
@@ -117,6 +121,12 @@ class Edit extends Component
                     'type'=>'success',
                     'message'=>"Service Types Refreshed Successfully!!."
                 ]);
+        }elseif($category == "customers"){
+                $this->customers = Customer::orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Customers Refreshed Successfully!!."
+                ]);
         }
     }
 
@@ -133,6 +143,7 @@ class Edit extends Component
         $this->selectedAsset = $booking->asset_id;
         $this->employee_id = $booking->employee_id;
         $this->transaction_type = $booking->transaction_type;
+        $this->customer_id = $booking->customer_id;
         $this->service_type_id = $booking->service_type_id;
         $this->station_id = $booking->station_id;
         $this->is_safety_incident = $booking->is_safety_incident;
@@ -214,6 +225,7 @@ class Edit extends Component
        protected $messages =[
       'employee_id.required' => 'Select Employee',
       'service_type_id.required' => 'Select Service Type',
+      'customer_id.required_if' => 'Select Customer',
   ];
     protected $rules = [
         'booking_number' => 'required',
@@ -223,6 +235,7 @@ class Edit extends Component
         'mileage' => 'required',
         'description' => 'required',
         'service_type_id' => 'required',
+        'customer_id' => 'required_if:transaction_type,income',
 
     ];
 
@@ -263,6 +276,7 @@ class Edit extends Component
         $booking->breakdown_id = $this->breakdown_id;
         $booking->problem_category_id = $this->problem_category_id;
         $booking->transaction_type = $this->transaction_type;
+        $booking->customer_id = $this->transaction_type === "income" ? ($this->customer_id ?: null) : null;
     // Reset all IDs
         $booking->horse_id = null;
         $booking->vehicle_id = null;
@@ -378,6 +392,12 @@ class Edit extends Component
             $this->vendors = Vendor::where('status',1)->where('name', 'LIKE', "%".$this->searchVendor."%")->get();
         }else{
             $this->vendors = Vendor::where('status',1)->orderBy('name','asc')->get();
+        }
+
+        if (filled($this->searchCustomer)) {
+            $this->customers = Customer::where('name', 'LIKE', "%".$this->searchCustomer."%")->get();
+        }else{
+            $this->customers = Customer::orderBy('name','asc')->get();
         }
 
         if (filled($this->searchVehicle)) {

@@ -16,6 +16,10 @@
                                 <a href="" data-toggle="modal" data-target="#expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
                                 <a href="" data-toggle="modal" data-target="#expenseImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                 @endunless
+                                {{-- Sage is active: pull non-inventory items in as expenses (each also linked to a product). --}}
+                                @if ($this->sageEnabled)
+                                <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i> Pull from Sage</button>
+                                @endif
                                 <a href="#" wire:click="exportExpensesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportExpensesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportExpensesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>

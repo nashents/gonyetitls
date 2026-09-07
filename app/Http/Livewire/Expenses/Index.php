@@ -16,12 +16,14 @@ use App\Imports\ExpensesImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Services\Sage\SageIntegration;
+use App\Http\Livewire\Concerns\PullsFromSage;
 
 class Index extends Component
 {
 
   use WithFileUploads;
     use WithPagination;
+    use PullsFromSage;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -114,6 +116,16 @@ class Index extends Component
     public function getSageEnabledProperty()
     {
         return SageIntegration::enabledForUser();
+    }
+
+    /**
+     * Pull Sage non-inventory items into the expenses listing. Each item becomes
+     * a non-inventory billable Product linked to an Expense (expenses.product_id),
+     * populating name, description, cost and tax from the Sage item row.
+     */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('expense', 'expenses');
     }
 
     /** Generate a product number (company initials + P + zero-padded next id). */

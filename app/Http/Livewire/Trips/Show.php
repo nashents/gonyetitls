@@ -231,7 +231,7 @@ class Show extends Component
 
     private function initializeTrip($id){
         $this->trip_id = $id;
-        $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','fuels','transporter:id,name','trip_type:id,name','border:id,name',
+        $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','delivery_note','fuel:id,order_number','fuels','transporter:id,name','trip_type:id,name','border:id,name',
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount',

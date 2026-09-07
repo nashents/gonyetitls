@@ -8,9 +8,10 @@ use App\Services\Sage\SageSyncService;
 
 /**
  * Shared "sync this booking's job card to Sage" action + gate for the Bookings
- * index / approved list components. The job card is built from the ticket's
- * dispatch items and only syncs once the ticket is CLOSED (and the booking
- * authorized); otherwise this reports why nothing happened.
+ * index / approved list components. Syncing is locked to AUTHORIZED bookings
+ * (it auto-syncs at authorization; this button is a manual re-sync/retry) and
+ * the job card is built from the ticket's dispatch items; otherwise this reports
+ * why nothing happened.
  */
 trait SyncsBookingJobCard
 {
@@ -26,7 +27,15 @@ trait SyncsBookingJobCard
             return;
         }
 
-        $ticket = optional(Booking::with('ticket')->find($bookingId))->ticket;
+        $booking = Booking::with('ticket')->find($bookingId);
+
+        // Syncing is locked to authorized bookings — no push while pending/rejected.
+        if (! $booking || strcasecmp((string) $booking->authorization, 'approved') !== 0) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'The booking must be authorized before its job card can sync to Sage.']);
+            return;
+        }
+
+        $ticket = $booking->ticket;
         if (! $ticket) {
             $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'This booking has no job card ticket to sync.']);
             return;
@@ -42,7 +51,7 @@ trait SyncsBookingJobCard
             'message' => $synced
                 ? 'Job card synced to Sage (' . $result['external_id'] . ').'
                 : ($skipped
-                    ? 'Nothing to sync yet — the ticket must be closed (and its booking authorized) with dispatched items. The job card syncs on close.'
+                    ? 'Nothing to sync yet — the job card needs dispatched items on its ticket. Dispatch items, then re-sync.'
                     : 'Sage sync: ' . ($result['error'] ?? 'unknown error')),
         ]);
     }

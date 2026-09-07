@@ -11,16 +11,32 @@
                                 
                              <h5 class="underline mt-30 mb-30">Edit Workshop Booking</h5>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-{{ $transaction_type == 'income' ? '4' : '6' }}">
                                         <label for="exampleInputEmail13">Transaction Type<span class="required" style="color: red">*</span></label>
                                         <div class="mb-10">
                                             <input type="radio" wire:model.debounce.300ms="transaction_type" value="expense"  class="line-style"  required/>
                                             <label for="one" class="radio-label">Expense</label>
                                             <input type="radio" wire:model.debounce.300ms="transaction_type" value="income"  class="line-style"  required/>
                                             <label for="one" class="radio-label">Income</label>
-                                        </div>     
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    @if ($transaction_type == "income")
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Customer<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchCustomer" placeholder="Search customer..." class="form-control" >
+                                            <select wire:model.debounce.300ms="customer_id" class="form-control" required size="4">
+                                                <option value="">Select Customer</option>
+                                                @foreach ($customers as $customer)
+                                                    <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('customer_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    @endif
+                                    <div class="col-md-{{ $transaction_type == 'income' ? '4' : '6' }}">
                                         <label for="exampleInputEmail13">Booking For<span class="required" style="color: red">*</span></label>
                                         <div class="mb-10">
                                             <input type="radio" wire:model.debounce.300ms="type" value="Asset"  class="line-style"  required/>
@@ -31,10 +47,10 @@
                                             <label for="one" class="radio-label">Trailer</label>
                                             <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style" required/>
                                             <label for="one" class="radio-label">Vehicle</label>
-                                        </div>     
+                                        </div>
                                     </div>
                                 </div>
-                             
+
                                 <div class="row">
                                     <div class="col-md-4">
                                         @if ($type == "Horse")

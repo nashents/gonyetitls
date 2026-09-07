@@ -40,6 +40,9 @@ class Ticket extends Model implements Auditable
     public function booking(){
         return $this->belongsTo('App\Models\Booking');
     }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
     public function ticket_images(){
         return $this->hasMany('App\Models\TicketImage');
     }

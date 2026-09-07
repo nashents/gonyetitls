@@ -17,9 +17,9 @@
                         <div class="panel-heading">
                             <div class="panel-title">
                                 <h5>Trip# {{$trip->trip_number}}
-                                    @if ($trip->shipment_leg)
+                                    @if ($trip->shipment_leg && $trip->shipment_leg->shipment)
                                         <a href="{{ route('freight.jobs.show', $trip->shipment_leg->shipment->freight_job_id) }}" class="label label-info label-wide">
-                                            <i class="fa fa-ship"></i> Freight Job {{ $trip->shipment_leg->shipment->freight_job->job_number }}
+                                            <i class="fa fa-ship"></i> Freight Job {{ $trip->shipment_leg->shipment->freight_job?->job_number }}
                                         </a>
                                     @endif
                                 </h5>
@@ -370,8 +370,8 @@
                                                             <tr>
                                                                 <th scope="row"> Driver</th>
                                                                 <td>
-                                                                    @if ($trip->driver)
-                                                                        <a href="{{ route('employees.show',$trip->driver->employee->id) }}" style="color:blue">  {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{ $trip->driver->employee ? $trip->driver->employee->surname : ""}}</a>
+                                                                    @if ($trip->driver && $trip->driver->employee)
+                                                                        <a href="{{ route('employees.show',$trip->driver->employee->id) }}" style="color:blue">  {{$trip->driver->employee->name}} {{$trip->driver->employee->surname}}</a>
                                                                     @endif
                                                                     @if ($trip->notes)
                                                                         <br>

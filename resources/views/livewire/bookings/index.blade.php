@@ -263,7 +263,7 @@
                                                 @endif
                                             @endif
 
-                                            @if ($this->sageEnabled)
+                                            @if ($this->sageEnabled && $booking->authorization === 'approved')
                                                 @php $sm = optional($booking->ticket)->sageMapping; $ss = optional($sm)->sync_status; @endphp
                                                 <br>
                                                 <small class="badge bg-{{ $sm ? ($ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
