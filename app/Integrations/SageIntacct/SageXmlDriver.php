@@ -468,6 +468,11 @@ class SageXmlDriver implements SageDriver
             $hdr .= '<customfields>' . $cf . '</customfields>';
         }
 
+        // Header-level PROJECT (schema order: after customfields, before the
+        // line items). Attaches the project to the document itself, not just
+        // each line.
+        $hdr .= $this->elIf('projectid', $h['projectid'] ?? null);
+
         return '<create_potransaction>' . $hdr . '<potransitems>' . $items . '</potransitems></create_potransaction>';
     }
 

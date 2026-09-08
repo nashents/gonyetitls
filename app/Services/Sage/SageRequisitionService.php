@@ -137,7 +137,11 @@ class SageRequisitionService
             return $this->result(true, 'skipped', null, null, $entity);
         }
 
-        $header = SageRequisitionMapper::header($trip, $vendorId, $vendorSageId, $vendorContact, optional($first->currency)->code, $docType);
+        // Currency ISO code is stored in currencies.name (there is no `code`
+        // column), so the document currency matches the Gonyeti source currency
+        // instead of silently defaulting to the base currency. Project is attached
+        // to the header too (as well as each line).
+        $header = SageRequisitionMapper::header($trip, $vendorId, $vendorSageId, $vendorContact, optional($first->currency)->name, $docType, $projectId);
 
         // The Dispatch Sheet definition now uses the CLASS + EMPLOYEE dimensions
         // (carried on each line, like trip-project requisitions). Sage made the old

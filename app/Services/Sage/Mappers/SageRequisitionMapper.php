@@ -29,8 +29,10 @@ class SageRequisitionMapper
      * @param  string|null  $transactionType  Sage PO definition name; defaults to
      *                                         the Purchase Requisition type. Pass
      *                                         the Dispatch Sheet type for paycard.
+     * @param  string|null  $projectId         trip/horse project — attached to the
+     *                                         document header (as well as each line).
      */
-    public static function header(Trip $trip, int $vendorId, string $vendorSageId, string $vendorContact, ?string $currencyCode, ?string $transactionType = null): array
+    public static function header(Trip $trip, int $vendorId, string $vendorSageId, string $vendorContact, ?string $currencyCode, ?string $transactionType = null, ?string $projectId = null): array
     {
         return [
             'transactiontype' => $transactionType ?: (string) config('sageintacct.purchasing.requisition_type', 'Purchase requisition'),
@@ -47,6 +49,8 @@ class SageRequisitionMapper
             // so it lands in the same entity as native requisitions and the UI
             // offers the Convert action. Not emitted in the transaction body.
             'entityid'        => config('sageintacct.purchasing.entity_id') ?: null,
+            // Attach the PROJECT to the document header too (not only the lines).
+            'projectid'       => $projectId ?: null,
         ];
     }
 

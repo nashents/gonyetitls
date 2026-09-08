@@ -224,7 +224,7 @@ class Index extends Component
         if ($cfg) {
             $this->config_id                     = $cfg->id;
             $this->country                       = $cfg->country;
-            $this->selectedCurrency              = $cfg->currency_id;
+            $this->selectedCurrency              = $cfg->currency_id ?: $this->company->currency_id;
             $this->tax_authority_name            = $cfg->tax_authority_name;
             $this->social_security_authority_name= $cfg->social_security_authority_name;
             $this->proration_method              = $cfg->proration_method;
@@ -280,8 +280,14 @@ class Index extends Component
         } catch (\Illuminate\Validation\ValidationException $e) {
             // These three fields only live on the General tab — if the user is
             // on another tab when validation fails, jump them there so the
-            // (now-visible) field errors aren't silently off-screen.
+            // (now-visible) field errors aren't silently off-screen. Also toast
+            // it explicitly: switching tabs out from under the user with no
+            // other feedback reads as "save did nothing."
             $this->activeTab = 'general';
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => 'Could not save — missing required General settings: ' . implode(' ', $e->validator->errors()->all()),
+            ]);
             throw $e;
         }
 

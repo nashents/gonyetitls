@@ -44,9 +44,9 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Code
-                                    </th>
                                     <th class="th-sm">Name
+                                    </th>
+                                    <th class="th-sm">Code
                                     </th>
                                     <th class="th-sm">ID/Part#
                                     </th>
@@ -68,7 +68,6 @@
                                 <tbody>
                                     @forelse ($products as $product)
                                   <tr>
-                                    <td>{{$product->product_number}}</td>
                                     <td>
                                         {{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}
                                         @if ($this->sageEnabled)
@@ -84,6 +83,7 @@
                                             <strong>Max Stock Level</strong> {{number_format($product->max ? $product->max : 0)}}
                                         </small>
                                     </td>
+                                    <td>{{$product->product_number}}</td>
                                     <td>{{$product->identification_number}}</td>
                                     <td>
                                         @if ($department == "tyre")

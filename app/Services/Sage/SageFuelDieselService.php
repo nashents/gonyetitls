@@ -126,6 +126,8 @@ class SageFuelDieselService
             'currency'        => optional($fuel->currency)->name ?: null,
             'exchratetype'    => config('sageintacct.purchasing.exchange_rate_type') ?: null,
             'entityid'        => config('sageintacct.purchasing.entity_id') ?: null,
+            // Attach the PROJECT to the document header too (not only the line).
+            'projectid'       => $projectId ?: null,
         ];
 
         // A "Completed" trip project blocks purchasing submittal, and trip projects
@@ -323,6 +325,16 @@ class SageFuelDieselService
 
         // No trip (or the trip project still couldn't be resolved) → the horse's own project.
         $horseProjectId = $fuel->horse_id ? $this->mappingExternalId('horse_project', $fuel->horse_id) : null;
+
+        // Ensure the horse's Sage project (and class) exist when the mapping is
+        // missing, so a non-trip fuel always lands on the truck/horse project
+        // instead of a blank one.
+        if (! $horseProjectId && $fuel->horse) {
+            $projectService = new SageProjectService($this->driver, $this->integration, new SageClassService($this->driver, $this->integration));
+            $ensured        = $projectService->ensureHorse($fuel->horse);
+            $horseProjectId = $ensured['project_id'] ?? $ensured['external_id'] ?? null;
+            $classId        = $classId ?: ($ensured['class_id'] ?? null);
+        }
 
         return [$horseProjectId, $classId, false];
     }

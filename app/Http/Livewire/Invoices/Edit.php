@@ -256,6 +256,66 @@ class Edit extends Component
         $this->buy = False;
     }
 
+    public function customerNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+            $customer = Customer::orderBy('id', 'desc')->first();
+
+        if (!$customer) {
+            $customer_number =  $initials .'C'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $customer->id + 1;
+            $customer_number =  $initials .'C'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $customer_number;
+
+    }
+
+    public function storeCustomer()
+    {
+
+            $customer = new Customer;
+            $customer->customer_number = $this->customerNumber();
+            $customer->name = $this->customer_name;
+            $customer->phonenumber = $this->phonenumber;
+            $customer->vat_number = $this->vat_number;
+            $customer->tin_number = $this->tin_number;
+            $customer->email = $this->email;
+            $customer->currency_id = $this->currency_id;
+            $customer->country = $this->country;
+            $customer->city = $this->city;
+            $customer->suburb = $this->suburb;
+            $customer->street_address = $this->street_address;
+            $customer->save();
+            $this->selectedCustomer = $customer->id;
+
+            $this->dispatchBrowserEvent('hide-customerModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Customer Created Successfully!!"
+            ]);
+
+    }
+
     public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
          
