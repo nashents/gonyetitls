@@ -591,6 +591,18 @@ class SidebarComposer
         $goods_receivedsPendingCount = GoodsReceived::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $goods_receivedsInventoryPendingCount = GoodsReceived::where('authorization','pending')
+        ->where('department','inventory')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $goods_receivedsInventoryApprovedCount = GoodsReceived::where('authorization','approved')
+        ->where('department','inventory')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $goods_receivedsInventoryRejectedCount = GoodsReceived::where('authorization','rejected')
+        ->where('department','inventory')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $goods_receivedsApprovedCount = GoodsReceived::where('authorization','approved')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
@@ -897,6 +909,9 @@ class SidebarComposer
         'goods_receiveds_pending_count'  => (int) ($goods_receivedsPendingCount ?? 0),
         'goods_receiveds_approved_count' => (int) ($goods_receivedsApprovedCount ?? 0),
         'goods_receiveds_rejected_count' => (int) ($goods_receivedsRejectedCount ?? 0),
+        'goods_receiveds_inventory_pending_count'  => (int) ($goods_receivedsInventoryPendingCount ?? 0),
+        'goods_receiveds_inventory_approved_count' => (int) ($goods_receivedsInventoryApprovedCount ?? 0),
+        'goods_receiveds_inventory_rejected_count' => (int) ($goods_receivedsInventoryRejectedCount ?? 0),
 
         // Tyre Transfers
         'tyre_transfers_pending_count'  => (int) ($tyre_transfersPendingCount ?? 0),
