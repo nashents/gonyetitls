@@ -91,6 +91,14 @@ class LiveMap extends Component
         return IntegrationGate::enabledForUser('pinpoint');
     }
 
+    /** Gates the "set up Integrations" guidance below — that section is admin-only, so non-admins just see the blank map instead. */
+    public function getIsAdminProperty(): bool
+    {
+        $user = Auth::user();
+
+        return $user && ($user->is_admin() || $user->isSuperAdmin());
+    }
+
     public function render()
     {
         $markers = array_merge(

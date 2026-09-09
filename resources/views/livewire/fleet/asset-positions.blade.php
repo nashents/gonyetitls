@@ -55,11 +55,12 @@
                             <div class="panel-title">
                                 <h5 class="mb-0">Asset Positions</h5>
 
-                                @unless ($this->trackingEnabled)
+                                @if (! $this->trackingEnabled && $this->isAdmin)
                                     <div class="alert alert-warning mt-10 mb-0">
-                                        No live tracking integration is active for this company — the map and Position/In area/24h/48h columns will be blank until one is configured.
+                                        No tracking provider is active for your company yet. Set up Cartrack, EzyTrack, FanTracker and/or Pinpoint under
+                                        <a href="{{ route('company_integrations.index') }}">Integrations</a> first — until then the map and Position/In area/24h/48h columns stay blank.
                                     </div>
-                                @endunless
+                                @endif
                             </div>
 
                             <div wire:ignore id="asset-positions-map" style="width:100%; height:400px;" class="mb-15"></div>

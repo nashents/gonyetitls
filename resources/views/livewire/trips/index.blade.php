@@ -116,11 +116,12 @@
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                                @unless ($this->trackingEnabled)
+                                @if (! $this->trackingEnabled && $this->isAdmin)
                                     <div class="alert alert-warning">
-                                        No live tracking integration is active for this company — the active-trackers map will stay blank until one is configured.
+                                        No tracking provider is active for your company yet. Set up Cartrack, EzyTrack, FanTracker and/or Pinpoint under
+                                        <a href="{{ route('company_integrations.index') }}">Integrations</a> first — until then the active-trackers map stays blank.
                                     </div>
-                                @endunless
+                                @endif
                                 <div wire:ignore id="trips-index-map" style="width:100%; height:400px;" class="mb-15"></div>
 
                                 <div class="panel-title">

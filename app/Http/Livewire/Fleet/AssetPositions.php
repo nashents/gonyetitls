@@ -85,6 +85,13 @@ class AssetPositions extends Component
         return IntegrationGate::enabledForUserType('tracking');
     }
 
+    public function getIsAdminProperty(): bool
+    {
+        $user = Auth::user();
+
+        return $user && ($user->is_admin() || $user->isSuperAdmin());
+    }
+
     protected function currentCompanyId(): ?int
     {
         $user = Auth::user();

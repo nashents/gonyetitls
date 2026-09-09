@@ -76,6 +76,13 @@ class Index extends Component
         return IntegrationGate::enabledForUserType('tracking');
     }
 
+    public function getIsAdminProperty(): bool
+    {
+        $user = Auth::user();
+
+        return $user && ($user->is_admin() || $user->isSuperAdmin());
+    }
+
     /**
      * Live map markers for trucks/vehicles currently pulling a trip in
      * Trip::CURRENTLY_MOVING_STATUSES (Started..Offloading Point) — the

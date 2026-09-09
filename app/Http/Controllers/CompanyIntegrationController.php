@@ -5,9 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\CompanyIntegration;
 use App\Http\Requests\StoreCompanyIntegrationRequest;
 use App\Http\Requests\UpdateCompanyIntegrationRequest;
+use Illuminate\Support\Facades\Auth;
 
 class CompanyIntegrationController extends Controller
 {
+    public function __construct()
+    {
+        // Integrations (Cartrack/EzyTrack/FanTracker/Pinpoint credentials
+        // etc.) is admin-only — not just hidden from the sidebar/links.
+        $this->middleware(function ($request, $next) {
+            $user = Auth::user();
+
+            abort_unless($user && ($user->is_admin() || $user->isSuperAdmin()), 403);
+
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the resource.
      *

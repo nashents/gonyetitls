@@ -13,10 +13,12 @@
                         </div>
         <div class="panel-body p-20">
                             @if (! $this->cartrackEnabled && ! $this->ezyTrackEnabled && ! $this->fanTrackerEnabled && ! $this->pinpointEnabled)
-                                <p class="text-muted">
-                                    No tracking provider is active for your company yet. Set up Cartrack, EzyTrack, FanTracker and/or Pinpoint under
-                                    <a href="{{ route('company_integrations.index') }}">Integrations</a> first.
-                                </p>
+                                @if ($this->isAdmin)
+                                    <p class="text-muted">
+                                        No tracking provider is active for your company yet. Set up Cartrack, EzyTrack, FanTracker and/or Pinpoint under
+                                        <a href="{{ route('company_integrations.index') }}">Integrations</a> first.
+                                    </p>
+                                @endif
                             @else
                                 @if ($apiError)
                                     <p class="text-danger">Tracking request failed: {{ $apiError }}</p>
