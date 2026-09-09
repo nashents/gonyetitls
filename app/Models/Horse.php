@@ -112,6 +112,20 @@ class Horse extends Model implements Auditable
     public function trips(){
         return $this->hasMany('App\Models\Trip')->withTrashed();
     }
+
+    /** Most recent trip for this truck (any status) — backs the Asset Positions table. */
+    public function latestTrip(){
+        return $this->hasOne('App\Models\Trip')->latestOfMany();
+    }
+
+    public function asset_position_logs(){
+        return $this->hasMany('App\Models\AssetPositionLog');
+    }
+
+    /** Currently active Driver-Horse assignment (see assignments.index), for a driver fallback when a truck has no active trip. */
+    public function currentAssignment(){
+        return $this->hasOne('App\Models\Assignment')->whereNull('end_date')->latestOfMany();
+    }
     public function fuels(){
         return $this->hasMany('App\Models\Fuel');
     }

@@ -613,6 +613,7 @@ Route::resource('logs','LogController');
 Route::resource('drivers','DriverController');
 Route::resource('vehicles','VehicleController');
 Route::get('fleet/live-map', 'FleetController@liveMap')->name('fleet.live-map');
+Route::get('fleet/asset-positions', 'FleetController@assetPositions')->name('fleet.asset-positions');
 Route::get('fleet/ezytrack-device-mapping', 'FleetController@ezyTrackDeviceMappings')->name('fleet.ezytrack-device-mappings');
 Route::get('fleet/fantracker-device-mapping', 'FleetController@fanTrackerDeviceMappings')->name('fleet.fantracker-device-mappings');
 Route::get('fleet/pinpoint-device-mapping', 'FleetController@pinpointDeviceMappings')->name('fleet.pinpoint-device-mappings');
@@ -985,9 +986,12 @@ Route::get('transporters/authorization/pending','TransporterController@pending')
 Route::get('transporters/authorization/approved','TransporterController@approved')->name('transporters.approved');
 Route::get('transporters/authorization/rejected','TransporterController@rejected')->name('transporters.rejected');
 
+Route::get('bills/deleted','BillController@deleted')->name('bills.deleted');
 Route::get('bills/authorization/pending','BillController@pending')->name('bills.pending');
 Route::get('bills/authorization/approved','BillController@approved')->name('bills.approved');
 Route::get('bills/authorization/rejected','BillController@rejected')->name('bills.rejected');
+
+Route::get('payments/deleted','PaymentController@deleted')->name('payments.deleted');
 
 Route::get('invoices/authorization/pending','InvoiceController@pending')->name('invoices.pending');
 Route::get('invoices/authorization/approved','InvoiceController@approved')->name('invoices.approved');

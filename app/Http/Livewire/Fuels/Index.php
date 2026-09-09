@@ -507,8 +507,10 @@ class Index extends Component
             $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
             $this->fuel_consumption = $this->horse->fuel_consumption;
         }
-    
+
         // $this->quantity = $this->fuel_consumption * $this->distance;
+        }else{
+            $this->fuel_category = "Self";
         }
     }
 
@@ -695,6 +697,10 @@ class Index extends Component
             $rules['selectedFuelRequest'] = 'required';
         }
 
+        if ($this->selectedTrip) {
+            $rules['fuel_category'] = 'required|in:Self,Transporter,Customer';
+        }
+
         if ($this->selectedCurrency && $this->company && $this->selectedCurrency != $this->company->currency_id) {
             $rules['exchange_rate'] = 'required|numeric|min:0.0001';
         }
@@ -823,6 +829,7 @@ class Index extends Component
         $this->selectedVehicle = Null;
         $this->selectedHorse = Null;
         $this->selectedTrip = Null;
+        $this->fuel_category = "Self";
         $this->deduct_from = "quantity";
         $this->selectedContainer = Null;
         $this->fuel_source = "station";
@@ -912,6 +919,7 @@ class Index extends Component
             $trip = Trip::find($this->selectedTrip);
             $fuel->trip_id = $trip?->id;
             $fuel->driver_id = $trip->driver_id ?? Null;
+            $fuel->category = $this->fuel_category;
         }
 
         if ($this->type == "Horse") {
@@ -1089,6 +1097,7 @@ class Index extends Component
     $this->vehicle_id = $fuel->vehicle_id;
     $this->is_full_tank = $fuel->is_full_tank;
     $this->selectedTrip = $fuel->trip_id;
+    $this->fuel_category = $fuel->trip_id ? ($fuel->category ?: "Self") : "Self";
     $this->fuel_type = $fuel->fuel_type ? ucfirst(strtolower($fuel->fuel_type)) : null;
     $this->trips = Trip::where('trip_status','!=','Cancelled')->orderBy('created_at','desc')->orderBy('created_at','desc')->get();
     $this->selectedCurrency = $fuel->currency_id;
@@ -1147,6 +1156,7 @@ class Index extends Component
             $trip = Trip::find($this->selectedTrip);
             $fuel->trip_id = $trip->id;
             $fuel->driver_id = $trip->driver_id ?? Null;
+            $fuel->category = $this->fuel_category;
         }
 
         if ($this->type == "Horse") {

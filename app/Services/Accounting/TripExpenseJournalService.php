@@ -49,6 +49,7 @@ class TripExpenseJournalService
             $trip = $tripExpense->trip;
 
             $bill = Bill::where('trip_expense_id', $tripExpense->id)->first() ?: new Bill;
+            $previousBillDate = $bill->bill_date;
             $bill->user_id = $bill->user_id ?? Auth::id();
             $bill->bill_number = $bill->bill_number ?? $this->billNumber();
             $bill->trip_id = $tripExpense->trip_id;
@@ -59,7 +60,8 @@ class TripExpenseJournalService
             $bill->account_id = $account->id;
             $bill->account_type_id = $account->account_type_id;
             $bill->category = 'Trip Expense';
-            $bill->bill_date = $bill->bill_date ?? now()->toDateString();
+            $bill->bill_date = $tripExpense->date ?: ($bill->bill_date ?? now()->toDateString());
+            $dateChanged = $previousBillDate !== null && $previousBillDate !== $bill->bill_date;
             $bill->currency_id = $tripExpense->currency_id;
             $bill->vendor_id = $tripExpense->vendor_id;
             $bill->exchange_rate = $tripExpense->exchange_rate;
@@ -103,9 +105,14 @@ class TripExpenseJournalService
             // currency against what's already posted and only reverses +
             // reposts when they genuinely differ - a no-op for a plain add
             // (nothing posted yet) or an edit that didn't touch the amount.
+            // $dateChanged forces that reverse+repost even when the amount/
+            // rate/currency didn't move, since isUnchanged() only looks at
+            // the control-account line and wouldn't otherwise notice a
+            // date-only edit, leaving the journal entry's date stale.
             return $this->ledgerResync->resyncBill(
                 $bill,
-                "Trip expense #{$tripExpense->id} added/updated"
+                "Trip expense #{$tripExpense->id} added/updated",
+                $dateChanged
             );
         });
     }

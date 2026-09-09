@@ -22,6 +22,9 @@
                                     </a>
                                 </div>
                                 <div class="col company-details">
+                                    <div class="text-right" style="float:right; margin-left: 15px;">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode('Trip: '.$trip->trip_number.($trip->trip_ref ? '/'.$trip->trip_ref : '')) }}" alt="QR Code" width="100" height="100">
+                                    </div>
                                     <h4 class="name" >
                                         <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
                                             {{$company->name}}

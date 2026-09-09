@@ -260,6 +260,7 @@
     <script src="{{asset('js/jquery/jquery-2.2.4.min.js')}}"></script>
     <script src="{{asset('js/jquery-ui/jquery-ui.min.js')}}"></script>
     <script src="{{asset('js/bootstrap/bootstrap.min.js')}}"></script>
+    <script src="{{asset('js/tab-memory.js')}}"></script>
     @livewireScripts
 </body>
 </html>

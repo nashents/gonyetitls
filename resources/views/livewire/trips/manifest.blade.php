@@ -81,6 +81,9 @@
         </div>
 
         <aside class="meta">
+          <div style="float:right; margin-left:8px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode('Manifest: '.$trip->manifest_number.' | Trip: '.$trip->trip_number.($trip->trip_ref ? '/'.$trip->trip_ref : '')) }}" alt="QR Code" width="90" height="90" />
+          </div>
           <h1>Transport Manifest</h1>
           <dl class="meta-grid">
             <dt>Manifest #</dt>

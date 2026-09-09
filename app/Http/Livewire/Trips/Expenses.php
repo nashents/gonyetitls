@@ -57,6 +57,7 @@ class Expenses extends Component
     public $vendors;
     public $selectedVendor;
     public $visible_on_trip_sheet;
+    public $date;
 
     public $total_customer_expenses;
     public $total_transporter_expenses;
@@ -73,6 +74,7 @@ class Expenses extends Component
         $this->i = $i;
         $this->trip_expense_type[$i] = "expense";
         $this->visible_on_trip_sheet[$i] = true;
+        $this->date[$i] = $this->tripStartDate();
         array_push($this->inputs ,$i);
     }
 
@@ -81,6 +83,7 @@ class Expenses extends Component
         unset($this->inputs[$i]);
         unset($this->trip_expense_type[$i]);
         unset($this->visible_on_trip_sheet[$i]);
+        unset($this->date[$i]);
     }
 
     public function addExpense()
@@ -89,6 +92,15 @@ class Expenses extends Component
         $this->inputs[] = $index; // Add new input field index
         $this->trip_expense_type[$index] = "expense"; // Default each new entry to 'expense'
         $this->visible_on_trip_sheet[$index] = true;
+        $this->date[$index] = $this->tripStartDate();
+    }
+
+    /** Date portion (Y-m-d) of the trip's start_date, for defaulting a new expense's date. */
+    private function tripStartDate(): ?string
+    {
+        return $this->trip && $this->trip->start_date
+            ? substr($this->trip->start_date, 0, 10)
+            : null;
     }
 
     private function resetInputFields(){
@@ -103,6 +115,7 @@ class Expenses extends Component
         $this->selectedCurrency = Null;
         $this->selectedVendor = Null;
         $this->visible_on_trip_sheet = Null;
+        $this->date = Null;
         $this->total_customer_expenses = 0;
         $this->total_transporter_expenses = 0;
         $this->total_expenses = 0;
@@ -111,14 +124,17 @@ class Expenses extends Component
 
     public function mount($trip){
 
+    $this->trip = $trip;
+
     $this->trip_expense_type[0] = "expense";
     $this->visible_on_trip_sheet[0] = true;
+    $this->date[0] = $this->tripStartDate();
     foreach ($this->inputs as $index) {
         $this->trip_expense_type[$index] = $this->trip_expense_type[$index] ?? 'expense';
         $this->visible_on_trip_sheet[$index] = $this->visible_on_trip_sheet[$index] ?? true;
+        $this->date[$index] = $this->date[$index] ?? $this->tripStartDate();
     }
 
-    $this->trip = $trip;
     $this->trip_id = $trip->addid;
     $this->currencies = Currency::orderBy('name')->get();
     $this->vendors = Vendor::orderBy('name')->get();
@@ -303,6 +319,7 @@ class Expenses extends Component
                     $trip_expense->category = $this->category[$key] ?? null;
                     $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet[$key] ?? true;
                     $trip_expense->amount = $this->amount[$key] ?? 0;
+                    $trip_expense->date = $this->date[$key] ?? $this->tripStartDate();
 
                     if ($trip_expense->currency_id && $trip_expense->currency_id != $companyCurrencyId) {
                         $trip_expense->exchange_rate = $this->exchange_rate[$key] ?? null;
@@ -458,6 +475,7 @@ class Expenses extends Component
         $this->category = $expense->category;
         $this->visible_on_trip_sheet = $expense->visible_on_trip_sheet;
         $this->amount = $expense->amount;
+        $this->date = $expense->date ?? $this->tripStartDate();
         $this->exchange_rate = $expense->exchange_rate;
         $this->exchange_amount = $expense->exchange_amount;
         $this->trip_expense_id = $expense->id;
@@ -484,6 +502,7 @@ class Expenses extends Component
 
                 $trip_expense->category = $this->category;
                 $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet;
+                $trip_expense->date = $this->date;
                 $trip_expense->currency_id = $this->selectedCurrency;
                 $trip_expense->vendor_id = $this->selectedVendor;
                 $trip_expense->payment_method_id = $this->payment_method_id;

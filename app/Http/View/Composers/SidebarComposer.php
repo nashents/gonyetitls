@@ -4,7 +4,7 @@ namespace App\Http\View\Composers;
 
 use App\Models\{
     Allocation, Attendance, Agent, Bill, Booking, Company, CreditNote, Customer, DebitNote, Department, DepartmentHead, Dispatch, Fuel, FuelRequest,
-    GatePass, GoodsReceived, Incident, Invoice, Leave, Loan, ModuleGroup, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
+    GatePass, GoodsReceived, Incident, Invoice, Leave, Loan, ModuleGroup, Payment, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
     Transporter, TransportOrder, Trip, User, WasteCollection, WasteDisposal,
 };
 
@@ -234,7 +234,10 @@ class SidebarComposer
         $billsDeletedCount = Bill::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
 
-    
+        $paymentsDeletedCount = Payment::onlyTrashed()
+        ->whereDate('created_at', Carbon::today())->get()->count();
+
+
 
         $attendancesPendingCount = Attendance::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -798,7 +801,11 @@ class SidebarComposer
         'bills_pending_count'  => (int) ($billsPendingCount ?? 0),
         'bills_approved_count' => (int) ($billsApprovedCount ?? 0),
         'bills_rejected_count' => (int) ($billsRejectedCount ?? 0),
-       
+        'bills_deleted_count'  => (int) ($billsDeletedCount ?? 0),
+
+        // Payments
+        'payments_deleted_count' => (int) ($paymentsDeletedCount ?? 0),
+
         // TransportOrders
         'transport_orders_pending_count'  => (int) ($transportOrdersPendingCount ?? 0),
         'transport_orders_approved_count' => (int) ($transportOrdersApprovedCount ?? 0),

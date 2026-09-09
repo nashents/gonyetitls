@@ -79,6 +79,7 @@
         <script src="{{asset('js/jquery/jquery-2.2.4.min.js')}}"></script>
         <script src="{{asset('js/jquery-ui/jquery-ui.min.js')}}"></script>
         <script src="{{asset('js/bootstrap/bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/tab-memory.js')}}"></script>
         <script src="{{asset('js/pace/pace.min.js')}}"></script>
         <script src="{{asset('js/lobipanel/lobipanel.min.js')}}"></script>
         <script src="{{asset('js/iscroll/iscroll.js')}}"></script>
@@ -751,6 +752,26 @@
         <script type="text/javascript">
             window.addEventListener('hide-invoiceRestoreModal', event => {
                 $('#invoiceRestoreModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('show-billRestoreModal', event => {
+                $('#billRestoreModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-billRestoreModal', event => {
+                $('#billRestoreModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('show-paymentRestoreModal', event => {
+                $('#paymentRestoreModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-paymentRestoreModal', event => {
+                $('#paymentRestoreModal').modal('hide');
             })
         </script>
         <script type="text/javascript">

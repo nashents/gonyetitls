@@ -766,6 +766,13 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Manage Payments','slug'=>'manage-payments','icon'=>'fas fa-list','route_name'=>'payments.index','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Receipts','slug'=>'manage-receipts','icon'=>'fas fa-list','route_name'=>'receipts.index','sort_order'=>20]);
 
+        $paymentManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Deleted Payments','slug'=>'deleted-payments','icon'=>'fas fa-trash','route_name'=>'payments.deleted','sort_order'=>30,'badge_key'=>'payments_deleted_count','visibility'=>$paymentManageVis]);
+
         // Products & Services (Invoices)
         $m = $upsertModule($g, [
             'name' => 'Products & Services',
@@ -832,6 +839,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Pending Bills','slug'=>'pending-bills','icon'=>'fas fa-clock','route_name'=>'bills.pending','sort_order'=>30,'badge_key'=>'bills_pending_count','visibility'=>$billManageVis]);
         $upsertSub($m, ['name'=>'Approved Bills','slug'=>'approved-bills','icon'=>'fas fa-check','route_name'=>'bills.approved','sort_order'=>40,'badge_key'=>'bills_approved_count','visibility'=>$billManageVis]);
         $upsertSub($m, ['name'=>'Rejected Bills','slug'=>'rejected-bills','icon'=>'fas fa-ban','route_name'=>'bills.rejected','sort_order'=>50,'badge_key'=>'bills_rejected_count','visibility'=>$billManageVis]);
+        $upsertSub($m, ['name'=>'Deleted Bills','slug'=>'deleted-bills','icon'=>'fas fa-trash','route_name'=>'bills.deleted','sort_order'=>60,'badge_key'=>'bills_deleted_count','visibility'=>$billManageVis]);
 
         // Debit Notes
         $m = $upsertModule($g, [
@@ -1558,6 +1566,20 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'EzyTrack Device Mapping','slug'=>'ezytrack-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.ezytrack-device-mappings','sort_order'=>20,'visibility'=>$vHasEzyTrack]);
         $upsertSub($m, ['name'=>'FanTracker Device Mapping','slug'=>'fantracker-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.fantracker-device-mappings','sort_order'=>30,'visibility'=>$vHasFanTracker]);
         $upsertSub($m, ['name'=>'Pinpoint Device Mapping','slug'=>'pinpoint-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.pinpoint-device-mappings','sort_order'=>40,'visibility'=>$vHasPinpoint]);
+
+        // Asset Positions: one wide table per truck combining trip identity
+        // (Trip/driver/origin/destination/customer/cargo) with live position
+        // and dwell-time/distance analytics. Same tracking-integration gate
+        // as Live Fleet Map, since its live columns depend on it too.
+        $m = $upsertModule($g, [
+            'name' => 'Asset Positions',
+            'slug' => 'asset-positions',
+            'icon' => 'fas fa-truck-loading',
+            'route_name' => 'fleet.asset-positions',
+            'sort_order' => 46,
+            'visibility' => $vHasTracking,
+        ]);
+        $upsertSub($m, ['name'=>'Asset Positions','slug'=>'asset-positions-view','icon'=>'fas fa-truck-loading','route_name'=>'fleet.asset-positions','sort_order'=>10]);
 
         // Assignments
         $m = $upsertModule($g, [

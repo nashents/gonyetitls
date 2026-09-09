@@ -116,6 +116,11 @@ class Vehicle extends Model implements Auditable
     public function trips(){
         return $this->hasMany('App\Models\Trip');
     }
+
+    /** Most recent trip for this vehicle (any status) — backs the Asset Positions table. */
+    public function latestTrip(){
+        return $this->hasOne('App\Models\Trip')->latestOfMany();
+    }
     public function fuels(){
         return $this->hasMany('App\Models\Fuel');
     }

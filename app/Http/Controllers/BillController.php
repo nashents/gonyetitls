@@ -27,6 +27,11 @@ class BillController extends Controller
         return view('bills.index');
     }
 
+    public function deleted()
+    {
+        return view('bills.deleted');
+    }
+
             public function vendorStatements()
     {
         return view('vendor_statements.index');

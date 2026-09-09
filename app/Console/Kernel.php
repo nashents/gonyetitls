@@ -81,6 +81,14 @@ class Kernel extends ConsoleKernel
         ->daily()
         ->withoutOverlapping()
         ->onOneServer();
+
+        // Feeds the Asset Positions page's "in area since/for" and 24h/48h
+        // distance columns, which need a history of points rather than the
+        // single latest reading the tracking providers otherwise expose.
+        $schedule->command('fleet:log-asset-positions')
+        ->everyTenMinutes()
+        ->withoutOverlapping()
+        ->onOneServer();
     }
 
     /**

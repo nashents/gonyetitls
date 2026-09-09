@@ -384,4 +384,10 @@ class Trip extends Model implements Auditable, EditAuthorizable
     {
         return $this->hasOne(TripDocument::class, 'trip_id')->where('title', 'POD');
     }
+
+    /** Most recent trip_statuses entry — backs the Asset Positions "Notes"/"FMS Status" columns. */
+    public function latestStatus()
+    {
+        return $this->hasOne(TripStatus::class)->latestOfMany();
+    }
 }

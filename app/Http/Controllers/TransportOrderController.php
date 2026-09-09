@@ -53,6 +53,7 @@ class TransportOrderController extends Controller
         'consignee:id,name,street_address,suburb,city,country,phonenumber,email',
         'consignee.contacts',
         'driver.employee',
+        'driver.user:id,profile',
         'horse' => function ($q) {
             $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
             ->with([
@@ -91,6 +92,7 @@ class TransportOrderController extends Controller
         'consignee:id,name,street_address,suburb,city,country,phonenumber,email',
         'consignee.contacts',
         'driver.employee',
+        'driver.user:id,profile',
         'horse' => function ($q) {
             $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
             ->with([

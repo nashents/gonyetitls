@@ -8,22 +8,30 @@
 <body>
 
 @php
-    $user      = Auth::user();
-    $deptNames = $user->employee?->departments?->pluck('name')->toArray() ?? [];
-    $roleNames = $user->roles->pluck('name')->toArray();
-
-    // This document is the one handed to the driver, so financials are hidden
-    // by default; the company must explicitly opt in via show_financials_to_drivers,
-    // and internal Finance-only restrictions still apply on top of that.
-    $showFinancials = optional($company)->show_financials_to_drivers && (
-                          !optional($company)->rates_managed_by_finance
-                          || in_array('Finance', $deptNames)
-                          || in_array('Super Admin', $roleNames)
-                      );
-
+    // This document is handed to the driver and to border/clearing officials,
+    // so no financial (rate/freight) information is shown on it.
     $cmrDetail        = $trip->cmr_detail ?? null;
     $consignorContact = $trip->customer?->contacts?->first();
     $consigneeContact = $trip->consignee?->contacts?->first();
+    $driverPhotoUrl   = $trip->driver?->user?->profile_url;
+
+    $referenceNumbers = collect([
+        'Manifest No'   => $trip->manifest_number_custom ?: $trip->manifest_number,
+        'CD1 No'        => $trip->cd1_number,
+        'CD3 No'        => $trip->cd3_number,
+        'Bill of Entry' => $trip->bill_of_entry,
+    ])->filter();
+
+    $remarks = $trip->notes ?: $trip->comments;
+
+    $qrData = collect([
+        'Trip'    => $trip->trip_number.($trip->trip_ref ? '/'.$trip->trip_ref : ''),
+        'Truck'   => $trip->horse?->registration_number,
+        'Trailer' => $trip->trailers->first()?->registration_number,
+        'Driver'  => trim(($trip->driver?->employee?->name ?? '').' '.($trip->driver?->employee?->surname ?? '')) ?: null,
+        'From'    => $origin?->city,
+        'To'      => $destination?->city,
+    ])->filter()->map(fn ($value, $label) => $label.': '.$value)->implode("\n");
 @endphp
 
 <div class="container">
@@ -40,6 +48,9 @@
                                 </a>
                             </div>
                              <div class="col company-details" style="margin-top:-100px;">
+                                <div class="text-right" style="float:right; margin-left: 15px;">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($qrData) }}" alt="QR Code" width="100" height="100">
+                                </div>
                                 <h4 class="name" >
                                     <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
                                         {{$company->name}}
@@ -130,6 +141,9 @@
                                     <th class="text-center"> <strong>Driver</strong></th>
                                     <td class="text-center">
                                         @if ($trip->driver)
+                                            @if ($driverPhotoUrl)
+                                                <img src="{{$driverPhotoUrl}}" alt="Driver Photo" width="70" height="70" style="float:right; border-radius:4px; object-fit:cover; margin-left:10px;">
+                                            @endif
                                             {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}} {{$trip->driver->employee ? $trip->driver->employee->idnumber : ""}}
                                             @if ($trip->driver->license_number)
                                                 <br>License: {{$trip->driver->license_number}}
@@ -162,25 +176,13 @@
                                         </tr>
                                         @endif
 
-                                        @if ($showFinancials && $trip->driver_allowances->count()>0)
-                                            @foreach ($trip->driver_allowances as $allowance)
-                                            <tr>
-                                                <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
-                                                <td class="text-center">
-                                                    {{ $allowance->currency ? $allowance->currency->name : ""}} {{ $allowance->currency ? $allowance->currency->symbol : ""}}{{ number_format($allowance->amount)}}
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        @endif
-
-                                        @if ($showFinancials && ($trip->rate || $trip->freight))
+                                        @if ($referenceNumbers->isNotEmpty())
                                         <tr>
-                                            <th class="text-center"><strong>Freight</strong></th>
+                                            <th class="text-center"><strong>Reference Numbers</strong></th>
                                             <td class="text-center">
-                                                {{$trip->currency ? $trip->currency->symbol : ""}}{{ $trip->freight ? number_format($trip->freight, 2) : "" }}
-                                                @if ($trip->rate)
-                                                    (Rate: {{$trip->currency ? $trip->currency->symbol : ""}}{{ number_format($trip->rate, 2) }})
-                                                @endif
+                                                @foreach ($referenceNumbers as $label => $value)
+                                                    {{$label}}: {{$value}}@if(!$loop->last)<br>@endif
+                                                @endforeach
                                             </td>
                                         </tr>
                                         @endif
@@ -281,7 +283,26 @@
                                     <th class="text-center"><strong>Cargo</strong></th>
                                     <td class="text-center"> {{$trip->cargo ? $trip->cargo->name : ""}}</td>
                                 </tr>
-                            
+
+                                @if ($trip->cargo_details)
+                                <tr>
+                                    <th class="text-center"><strong>Cargo Details</strong></th>
+                                    <td class="text-center">{{$trip->cargo_details}}</td>
+                                </tr>
+                                @endif
+                                @if ($trip->container_number)
+                                <tr>
+                                    <th class="text-center"><strong>Container No</strong></th>
+                                    <td class="text-center">{{$trip->container_number}}</td>
+                                </tr>
+                                @endif
+                                @if ($trip->seal_number)
+                                <tr>
+                                    <th class="text-center"><strong>Seal No</strong></th>
+                                    <td class="text-center">{{$trip->seal_number}}</td>
+                                </tr>
+                                @endif
+
                                 @if ($trip->weight)
                                 <tr>
                                     <th class="text-center"><strong>Weight</strong></th>
@@ -344,12 +365,6 @@
                                     <td class="text-center">{{$cmrDetail->marks_and_numbers}}</td>
                                 </tr>
                                 @endif
-                                @if ($showFinancials && $cmrDetail?->freight_payment_terms)
-                                <tr>
-                                    <th class="text-center"><strong>Freight Terms</strong></th>
-                                    <td class="text-center">{{ucfirst($cmrDetail->freight_payment_terms)}}</td>
-                                </tr>
-                                @endif
                                 @if ($cmrDetail?->insurer_name || $cmrDetail?->insurance_policy_number)
                                 <tr>
                                     <th class="text-center"><strong>Insurance</strong></th>
@@ -363,6 +378,12 @@
                                 <tr>
                                     <th class="text-center"><strong>Special Agreements</strong></th>
                                     <td class="text-center">{{$cmrDetail->special_agreements}}</td>
+                                </tr>
+                                @endif
+                                @if ($remarks)
+                                <tr>
+                                    <th class="text-center"><strong>Remarks</strong></th>
+                                    <td class="text-center">{{$remarks}}</td>
                                 </tr>
                                 @endif
 

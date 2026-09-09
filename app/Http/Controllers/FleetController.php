@@ -9,6 +9,11 @@ class FleetController extends Controller
         return view('fleet.live-map');
     }
 
+    public function assetPositions()
+    {
+        return view('fleet.asset-positions');
+    }
+
     public function ezyTrackDeviceMappings()
     {
         return view('fleet.ezytrack-device-mappings');

@@ -25,6 +25,11 @@ class PaymentController extends Controller
         return view('payments.index');
     }
 
+    public function deleted()
+    {
+        return view('payments.deleted');
+    }
+
     /**
      * Show the form for creating a new resource.
      *

@@ -550,6 +550,22 @@
                                 </div>
                             </div>
                         </div>
+                        @if ($selectedTrip)
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="fuel_category">Category<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="fuel_category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Self">Self</option>
+                                        <option value="Transporter">Transporter</option>
+                                        <option value="Customer">Customer</option>
+                                    </select>
+                                    @error('fuel_category') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     @elseif($type == "Asset")
                         <div class="row">
                             <div class="col-md-4">
@@ -1018,6 +1034,22 @@
                                 </div>
                             </div>
                         </div>
+                        @if ($selectedTrip)
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="fuel_category">Category<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="fuel_category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Self">Self</option>
+                                        <option value="Transporter">Transporter</option>
+                                        <option value="Customer">Customer</option>
+                                    </select>
+                                    @error('fuel_category') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     @elseif($type == "Asset")
                         <div class="row">
                             <div class="col-md-4">

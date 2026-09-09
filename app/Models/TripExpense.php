@@ -81,6 +81,7 @@ class TripExpense extends Model implements Auditable
         'payment_method_id',
         'category',
         'visible_on_trip_sheet',
+        'date',
     ];
 
     protected $casts = [

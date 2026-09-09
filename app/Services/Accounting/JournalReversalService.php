@@ -79,6 +79,28 @@ class JournalReversalService
         });
     }
 
+    /**
+     * Undo a previous reverse() call: find the reversing entry this entry's
+     * reversal created (matched by its "REV-{journal_number}" reference) and
+     * reverse that reversal, restoring the original's net ledger effect
+     * without mutating either historical entry beyond their status flags.
+     * Returns null if $entry isn't reversed or its reversal can't be found.
+     */
+    public function unreverse(JournalEntry $entry, ?string $reason = null): ?JournalEntry
+    {
+        if ($entry->status !== 'reversed') {
+            return null;
+        }
+
+        $reversalEntry = JournalEntry::where('reference', "REV-{$entry->journal_number}")->first();
+
+        if (! $reversalEntry || $reversalEntry->status === 'reversed') {
+            return null;
+        }
+
+        return $this->reverse($reversalEntry, $reason);
+    }
+
     protected function generateNumber(): string
     {
         $last = JournalEntry::orderByDesc('id')->value('journal_number');

@@ -26,8 +26,6 @@
                 </th>
                 <th class="th-sm">Amount
                 </th>
-                <th class="th-sm">Conversion
-                </th>
                 <th class="th-sm">Trip Sheet
                 </th>
                 <th class="th-sm">Bill Status
@@ -60,7 +58,7 @@
                 </td>
                 <td>
                     @if ($trip_expense->expense)
-                        {{$trip_expense->expense ? $trip_expense->expense->name : ""}} 
+                        {{$trip_expense->expense ? $trip_expense->expense->name : ""}}
                         @if ($trip_expense->fuel)
                             <br>
                             <small><strong>Fuel Order: </strong><a href="{{route('fuels.show',$trip_expense->fuel?->id)}}" style="color: blue" target="_blank">{{$trip_expense->fuel ? $trip_expense->fuel->order_number : ""}}</a></small>
@@ -68,7 +66,10 @@
                     @elseif($trip_expense->allowance)
                     {{$trip_expense->allowance ? $trip_expense->allowance->name : ""}}
                     @endif
-
+                    @if ($trip_expense->date)
+                        <br>
+                        <small><strong>Date: </strong>{{ date('d M, Y', strtotime($trip_expense->date)) }}</small>
+                    @endif
                 </td>
                 <td>{{$trip_expense->payment_method ? $trip_expense->payment_method->name : ""}}</td>
                 <td>{{$trip_expense->category}}</td>
@@ -78,10 +79,9 @@
                     @if ($trip_expense->amount)
                     {{ $trip_expense->currency ? $trip_expense->currency->symbol : "" }}{{number_format($trip_expense->amount,2)}}
                     @endif
-                </td>
-                <td>
                     @if (isset($trip_expense->exchange_rate) && $trip_expense->currency_id != $trip->company->currency_id)
-                        Currency conversion: {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($trip_expense->exchange_amount,2)}} at {{ $trip_expense->exchange_rate}}
+                        <br>
+                        <small>Converted: {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($trip_expense->exchange_amount,2)}} at {{ $trip_expense->exchange_rate}}</small>
                     @endif
                 </td>
                 <td>
@@ -163,7 +163,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="{{ $this->sageEnabled ? 13 : 12 }}">
+                <td colspan="{{ $this->sageEnabled ? 12 : 11 }}">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Trip Expenses Captured....
                     </div>
@@ -220,7 +220,7 @@
                     <div class="row">
                         
                         @if (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'expense')
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Expense(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedExpense.0" class="form-control" required>
@@ -230,14 +230,14 @@
                                    @endforeach
                                </select>
                                 @error('selectedExpense.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small> 
+                                <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small>
                                   <a href="#" wire:click.prevent="refresh('expenses')" class="float-end">
                                         <i class="fa fa-refresh" aria-hidden="true"></i>
                                     </a>
                             </div>
                         </div>
                         @elseif (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'allowance')
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Allowance(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedAllowance.0" class="form-control" required>
@@ -250,13 +250,13 @@
                                 <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small>
                                 <a href="#" wire:click.prevent="refresh('allowances')" class="float-end">
                                         <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </a> 
+                                    </a>
                             </div>
                         </div>
                         @endif
-                        <div class="col-md-6">
-                            <div class="form-group">    
-                                <label for="title">Categories<span class="required" style="color: red">*</span></label>                              
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Categories<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="category.0"  required>
                                 <option value="">Select Category</option>
                                 <option value="Customer">Customer</option>
@@ -264,6 +264,13 @@
                                 <option value="Transporter">Transporter</option>
                                 </select>
                                 @error('category.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="date">Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="date.0" required/>
+                                @error('date.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
@@ -354,7 +361,7 @@
                     </div>
                     <div class="row">
                         @if (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'expense')
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="title">Expense(s)<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedExpense.{{$value}}" class="form-control" required>
@@ -368,7 +375,7 @@
                                 </div>
                             </div>
                         @elseif (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'allowance')
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="title">Allowance(s)<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedAllowance.{{$value}}" class="form-control" required>
@@ -382,9 +389,9 @@
                                 </div>
                             </div>
                         @endif
-                        <div class="col-md-6">
-                            <div class="form-group">    
-                                <label for="title">Categories<span class="required" style="color: red">*</span></label>                              
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Categories<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="category.{{$value}}"  required>
                                     <option value="">Select Category</option>
                                     <option value="Customer">Customer</option>
@@ -392,6 +399,13 @@
                                     <option value="Transporter">Transporter</option>
                                 </select>
                                 @error('category.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="date">Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="date.{{$value}}" required/>
+                                @error('date.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
@@ -513,7 +527,7 @@
                     <div class="row">
                         
                         @if (isset($trip_expense_type) && $trip_expense_type == "expense")
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Expense(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedExpense" class="form-control" required>
@@ -523,14 +537,14 @@
                                    @endforeach
                                </select>
                                 @error('selectedExpense') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small> 
+                                <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small>
                                 <a href="#" wire:click.prevent="refresh('expenses')" class="float-end">
                                         <i class="fa fa-refresh" aria-hidden="true"></i>
                                     </a>
                             </div>
                         </div>
-                        @elseif (isset($trip_expense_type) && $trip_expense_type == "allowance")   
-                        <div class="col-md-6">
+                        @elseif (isset($trip_expense_type) && $trip_expense_type == "allowance")
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Allowance(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedAllowance" class="form-control" required>
@@ -540,17 +554,17 @@
                                    @endforeach
                                </select>
                                 @error('selectedAllowance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> 
+                                <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small>
                                 <a href="#" wire:click.prevent="refresh('allowances')" class="float-end">
                                         <i class="fa fa-refresh" aria-hidden="true"></i>
                                     </a>
                             </div>
                         </div>
                         @endif
-                   
-                    <div class="col-md-6">
-                        <div class="form-group">    
-                            <label for="title">Categories<span class="required" style="color: red">*</span></label>                              
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="title">Categories<span class="required" style="color: red">*</span></label>
                             <select class="form-control" wire:model.debounce.300ms="category"  required>
                                 <option value="">Select Category</option>
                                <option value="Customer">Customer</option>
@@ -558,6 +572,13 @@
                                <option value="Transporter">Transporter</option>
                             </select>
                             @error('category') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="date">Date<span class="required" style="color: red">*</span></label>
+                            <input type="date" class="form-control" wire:model.debounce.300ms="date" required/>
+                            @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
                     </div>
