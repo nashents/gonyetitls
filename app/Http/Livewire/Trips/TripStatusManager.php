@@ -29,7 +29,6 @@ class TripStatusManager extends Component
     public ?string $trip_status_date        = null;
     public ?string $trip_status_description = null;
     public bool    $customer_updates        = false;
-    public bool    $isCustomUpdate          = false;
 
     // ── Mileage / hours ───────────────────────────────────────────────────────
     public $starting_mileage = null;
@@ -140,7 +139,6 @@ class TripStatusManager extends Component
         $this->trip_number                = $trip->trip_number;
         $this->trip_status                = $trip->trip_status;
         $this->selectedStatus             = $trip->trip_status;
-        $this->isCustomUpdate             = false;
         $this->currency_id                = $this->toInt($trip->currency_id);
         $this->freight_calculation = $trip->freight_calculation 
         ?: $trip->trip_transport_orders()
@@ -366,23 +364,6 @@ class TripStatusManager extends Component
                 ->with(['trip_transport_orders', 'trailers', 'breakdown_assignments.trailers', 'delivery_note'])
                 ->findOrFail($this->trip_id);
 
-            if ($this->isCustomUpdate) {
-                $truckMileage = $this->fetchTruckMileage($trip);
-
-                TripStatus::create([
-                    'user_id'          => Auth::id(),
-                    'trip_id'          => $trip->id,
-                    'status'           => $trip->trip_status,
-                    'date'             => $this->trip_status_date,
-                    'description'      => $this->trip_status_description,
-                    'is_custom_update' => true,
-                    'truck_mileage'    => $truckMileage['mileage'],
-                    'mileage_source'   => $truckMileage['source'],
-                ]);
-
-                return;
-            }
-
             $trip->trip_status             = $this->selectedStatus;
             $trip->trip_status_date        = $this->trip_status_date;
             $trip->trip_status_description = $this->trip_status_description;
@@ -429,11 +410,9 @@ class TripStatusManager extends Component
             $this->sendCustomerNotification($trip);
         });
 
-        $successMessage = $this->isCustomUpdate ? 'Trip Update Logged Successfully!!' : 'Trip Status Updated Successfully!!';
-
         $this->resetInputFields();
         $this->dispatchBrowserEvent('hide-statusModal');
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => $successMessage]);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Trip Status Updated Successfully!!']);
         $this->emit('tripStatusUpdated', $this->trip_id);
     }
 
@@ -534,13 +513,6 @@ class TripStatusManager extends Component
 
     private function validationRules(): array
     {
-        if ($this->isCustomUpdate) {
-            return [
-                'trip_status_date'        => 'required|date',
-                'trip_status_description' => 'required|string',
-            ];
-        }
-
         $base = [
             'selectedStatus'          => 'required',
             'trip_status_date'        => 'required|date',
@@ -895,7 +867,6 @@ class TripStatusManager extends Component
         $this->trip_status_date              = null;
         $this->trip_status_description       = null;
         $this->customer_updates              = false;
-        $this->isCustomUpdate                = false;
         $this->starting_mileage              = null;
         $this->ending_mileage                = null;
         $this->starting_hours                = null;

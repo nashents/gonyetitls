@@ -50,8 +50,23 @@ class Deleted extends Component
 
     public function render()
     {
+        $query = Bill::onlyTrashed()->with(['vendor', 'transporter', 'currency', 'user', 'deleted_by']);
+
+        $search = trim((string) ($this->search ?? ''));
+        if ($search !== '') {
+            $term = "%{$search}%";
+            $query->where(function ($q) use ($term) {
+                $q->where('bill_number', 'like', $term)
+                    ->orWhere('status', 'like', $term)
+                    ->orWhere('bill_date', 'like', $term)
+                    ->orWhereHas('vendor', fn ($qq) => $qq->where('name', 'like', $term))
+                    ->orWhereHas('transporter', fn ($qq) => $qq->where('name', 'like', $term))
+                    ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', $term));
+            });
+        }
+
         return view('livewire.bills.deleted', [
-            'bills' => Bill::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(10),
+            'bills' => $query->orderBy('deleted_at', 'desc')->paginate(10),
         ]);
     }
 }

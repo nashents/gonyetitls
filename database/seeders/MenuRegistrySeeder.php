@@ -1567,20 +1567,6 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'FanTracker Device Mapping','slug'=>'fantracker-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.fantracker-device-mappings','sort_order'=>30,'visibility'=>$vHasFanTracker]);
         $upsertSub($m, ['name'=>'Pinpoint Device Mapping','slug'=>'pinpoint-device-mapping','icon'=>'fa fa-link','route_name'=>'fleet.pinpoint-device-mappings','sort_order'=>40,'visibility'=>$vHasPinpoint]);
 
-        // Asset Positions: one wide table per truck combining trip identity
-        // (Trip/driver/origin/destination/customer/cargo) with live position
-        // and dwell-time/distance analytics. Same tracking-integration gate
-        // as Live Fleet Map, since its live columns depend on it too.
-        $m = $upsertModule($g, [
-            'name' => 'Asset Positions',
-            'slug' => 'asset-positions',
-            'icon' => 'fas fa-truck-loading',
-            'route_name' => 'fleet.asset-positions',
-            'sort_order' => 46,
-            'visibility' => $vHasTracking,
-        ]);
-        $upsertSub($m, ['name'=>'Asset Positions','slug'=>'asset-positions-view','icon'=>'fas fa-truck-loading','route_name'=>'fleet.asset-positions','sort_order'=>10]);
-
         // Assignments
         $m = $upsertModule($g, [
             'name' => 'Assignments',
@@ -1936,6 +1922,22 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Tracking Groups','slug'=>'tracking-groups','icon'=>'fas fa-list','route_name'=>'trip_groups.index','sort_order'=>70,  'visibility' => $any([
                 $all(['isNotDriver']),
             ]),]);
+
+        // Asset Positions: one wide table per truck combining trip identity
+        // (Trip/driver/origin/destination/customer/cargo) with live position
+        // and dwell-time/distance analytics. Lives under Trip Management
+        // (not Fleet Management) since it's really trip tracking — same
+        // tracking-integration gate as Live Fleet Map, since its live
+        // columns depend on it too.
+        $m = $upsertModule($g, [
+            'name' => 'Asset Positions',
+            'slug' => 'asset-positions',
+            'icon' => 'fas fa-truck-loading',
+            'route_name' => 'fleet.asset-positions',
+            'sort_order' => 55,
+            'visibility' => $vHasTracking,
+        ]);
+        $upsertSub($m, ['name'=>'Asset Positions','slug'=>'asset-positions-view','icon'=>'fas fa-truck-loading','route_name'=>'fleet.asset-positions','sort_order'=>10]);
 
         // Gatepass (Logistics) - not driver
         $m = $upsertModule($g, [

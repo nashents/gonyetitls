@@ -3,7 +3,13 @@
         .asset-positions-table { table-layout: fixed; }
         .asset-positions-table th { white-space: nowrap; }
         .asset-positions-table td { vertical-align: top !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .asset-positions-table td.wrap { white-space: normal; overflow: visible; text-overflow: clip; }
+        .asset-positions-table td.wrap {
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: clip;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
 
         /* Freeze #, Truck and Fleet so you can scroll everything from Trip
            rightward while still knowing which truck/fleet a row belongs to. */
@@ -83,7 +89,7 @@
                                         <col style="width:160px">
                                         <col style="width:220px">
                                         <col style="width:130px">
-                                        <col style="width:180px">
+                                        <col style="width:240px">
                                         <col style="width:120px">
                                         <col style="width:100px">
                                         <col style="width:70px">
@@ -92,7 +98,6 @@
                                         <col style="width:110px">
                                         <col style="width:110px">
                                         <col style="width:120px">
-                                        <col style="width:110px">
                                         <col style="width:100px">
                                         <col style="width:100px">
                                         <col style="width:100px">
@@ -133,10 +138,9 @@
                                             <th>24h</th>
                                             <th>48h</th>
                                             <th>Notes</th>
-                                            <th>FMS Status</th>
+                                            <th>Trip Status</th>
                                             <th>POD</th>
                                             <th>Route</th>
-                                            <th>Trip Status</th>
                                             <th>Trip Date</th>
                                             <th>Since Load</th>
                                             <th>To Dest (km)</th>
@@ -154,7 +158,6 @@
                                                 $trailer2 = $trip?->trailers->get(1);
                                                 $driver = $trip?->driver ?? ($horse->asset_type === 'horse' ? $horse->currentAssignment?->driver : null);
                                                 $transportOrder = $trip?->transport_orders->first();
-                                                $latestStatus = $trip?->latestStatus;
 
                                                 $sinceLoad = null;
                                                 if ($trip?->loading_time) {
@@ -179,13 +182,13 @@
                                             <tr>
                                                 <td>{{ $loop->iteration + ($horses->currentPage() - 1) * $horses->perPage() }}</td>
                                                 <td>
-                                                    <a href="{{ route($horse->asset_type === 'horse' ? 'horses.show' : 'vehicles.show', $horse->id) }}">{{ $horse->registration_number }}</a>
+                                                    <a href="{{ route($horse->asset_type === 'horse' ? 'horses.show' : 'vehicles.show', $horse->id) }}" target="_blank" rel="noopener">{{ $horse->registration_number }}</a>
                                                     <div class="asset-positions-meta"><small>{{ ucfirst($horse->asset_type) }}</small></div>
                                                 </td>
                                                 <td>{{ $horse->fleet_number }}</td>
                                                 <td>
                                                     @if ($trip)
-                                                        <a href="{{ route('trips.show', $trip->id) }}">{{ $trip->trip_number }}</a>
+                                                        <a href="{{ route('trips.show', $trip->id) }}" target="_blank" rel="noopener">{{ $trip->trip_number }}</a>
                                                         @if ($trip->trip_ref)
                                                             <div class="asset-positions-meta"><small>{{ $trip->trip_ref }}</small></div>
                                                         @endif
@@ -193,17 +196,67 @@
                                                         &mdash;
                                                     @endif
                                                 </td>
-                                                <td>{{ $trailer1->registration_number ?? '—' }}</td>
-                                                <td>{{ $trailer2->registration_number ?? '—' }}</td>
+                                                <td>
+                                                    @if ($trailer1)
+                                                        <a href="{{ route('trailers.show', $trailer1->id) }}" target="_blank" rel="noopener">{{ $trailer1->registration_number }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($trailer2)
+                                                        <a href="{{ route('trailers.show', $trailer2->id) }}" target="_blank" rel="noopener">{{ $trailer2->registration_number }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
                                                 <td>{{ collect([$trailer1?->trailer_type?->name, $trailer2?->trailer_type?->name])->filter()->unique()->implode(' / ') ?: '—' }}</td>
-                                                <td>{{ $horse->transporter->name ?? '—' }}</td>
-                                                <td>{{ $driver?->employee ? trim($driver->employee->name . ' ' . $driver->employee->surname) : '—' }}</td>
-                                                <td class="wrap">{{ $trip?->loading_point?->name ?? '—' }}</td>
-                                                <td class="wrap">{{ $trip?->offloading_point?->name ?? '—' }}</td>
-                                                <td class="wrap">{{ $trip?->customer?->name ?? $trip?->consignee?->name ?? '—' }}</td>
+                                                <td>
+                                                    @if ($horse->transporter)
+                                                        <a href="{{ route('transporters.show', $horse->transporter->id) }}" target="_blank" rel="noopener">{{ $horse->transporter->name }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($driver?->employee)
+                                                        <a href="{{ route('drivers.show', $driver->id) }}" target="_blank" rel="noopener">{{ trim($driver->employee->name . ' ' . $driver->employee->surname) }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
+                                                <td class="wrap">
+                                                    @if ($trip?->loading_point)
+                                                        <a href="{{ route('loading_points.show', $trip->loading_point->id) }}" target="_blank" rel="noopener">{{ $trip->loading_point->name }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
+                                                <td class="wrap">
+                                                    @if ($trip?->offloading_point)
+                                                        <a href="{{ route('offloading_points.show', $trip->offloading_point->id) }}" target="_blank" rel="noopener">{{ $trip->offloading_point->name }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
+                                                <td class="wrap">
+                                                    @if ($trip?->customer)
+                                                        <a href="{{ route('customers.show', $trip->customer->id) }}" target="_blank" rel="noopener">{{ $trip->customer->name }}</a>
+                                                    @elseif ($trip?->consignee)
+                                                        <a href="{{ route('consignees.show', $trip->consignee->id) }}" target="_blank" rel="noopener">{{ $trip->consignee->name }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
                                                 <td class="wrap">
                                                     @if ($trip?->cargo || $trip?->weight || $trip?->quantity)
-                                                        <strong>{{ $trip?->cargo?->name ?? '—' }}</strong>
+                                                        <strong>
+                                                            @if ($trip?->cargo)
+                                                                <a href="{{ route('cargos.show', $trip->cargo->id) }}" target="_blank" rel="noopener">{{ $trip->cargo->name }}</a>
+                                                            @else
+                                                                &mdash;
+                                                            @endif
+                                                        </strong>
                                                         @if ($trip?->cargo?->type)
                                                             <span class="badge badge-secondary">{{ $trip->cargo->type }}</span>
                                                         @endif
@@ -222,11 +275,22 @@
                                                         &mdash;
                                                     @endif
                                                 </td>
-                                                <td class="wrap">{{ $trip?->transport_orders->pluck('transport_order_number')->filter()->implode(' / ') ?: '—' }}</td>
-                                                <td>
+                                                <td class="wrap">
+                                                    @forelse (($trip?->transport_orders ?? collect()) as $to)
+                                                        <a href="{{ route('transport_orders.show', $to->id) }}" target="_blank" rel="noopener">{{ $to->transport_order_number }}</a>{{ !$loop->last ? ' / ' : '' }}
+                                                    @empty
+                                                        &mdash;
+                                                    @endforelse
+                                                </td>
+                                                <td class="wrap">
                                                     @if ($position)
+                                                        <i class="fas fa-satellite-dish text-muted" title="{{ $position['source'] }}"></i>
                                                         <a href="https://www.google.com/maps?q={{ $position['lat'] }},{{ $position['lng'] }}" target="_blank" rel="noopener">
-                                                            {{ number_format($position['lat'], 4) }}, {{ number_format($position['lng'], 4) }}
+                                                            @if (!empty($position['address']))
+                                                                {{ $position['address'] }}
+                                                            @else
+                                                                {{ number_format($position['lat'], 4) }}, {{ number_format($position['lng'], 4) }}
+                                                            @endif
                                                         </a>
                                                         <div class="asset-positions-meta">
                                                             <small>
@@ -245,18 +309,30 @@
                                                 <td>{{ $stat ? $stat['distance_24h'] . ' km' : '—' }}</td>
                                                 <td>{{ $stat ? $stat['distance_48h'] . ' km' : '—' }}</td>
                                                 <td class="wrap">
-                                                    @if ($latestStatus?->description)
-                                                        {{ $latestStatus->description }}
-                                                        <div class="asset-positions-meta">
-                                                            <small>{{ optional($latestStatus->user)->name }} {{ optional($latestStatus->user)->surname }} &middot; {{ \Carbon\Carbon::parse($latestStatus->date ?? $latestStatus->created_at)->format('d M H:i') }}</small>
-                                                        </div>
+                                                    @if ($trip)
+                                                        <a href="#" wire:click.prevent="$emit('openTripNotes', {{ $trip->id }})" title="View/add trip notes" class="asset-positions-notes-link">
+                                                            <i class="far fa-comment-dots"></i>
+                                                            @if ($trip->latestNote)
+                                                                {{ $trip->latestNote->created_at->format('M jS y H:i') }} - <strong>{{ trim(optional($trip->latestNote->user)->name . ' ' . optional($trip->latestNote->user)->surname) }}</strong>
+                                                            @else
+                                                                Add note
+                                                            @endif
+                                                            @if ($trip->trip_notes_count)
+                                                                <span class="badge badge-success badge-pill">{{ $trip->trip_notes_count }}</span>
+                                                            @endif
+                                                        </a>
+                                                        @if ($trip->latestNote)
+                                                            <div class="asset-positions-meta">
+                                                                <small>{{ \Illuminate\Support\Str::limit($trip->latestNote->body, 80) }}</small>
+                                                            </div>
+                                                        @endif
                                                     @else
                                                         &mdash;
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if ($latestStatus?->status)
-                                                        <span class="badge badge-info">{{ $latestStatus->status }}</span>
+                                                    @if ($trip?->trip_status)
+                                                        <span class="badge badge-info">{{ $trip->trip_status }}</span>
                                                     @else
                                                         &mdash;
                                                     @endif
@@ -270,15 +346,20 @@
                                                         &mdash;
                                                     @endif
                                                 </td>
-                                                <td>{{ $trip?->route?->name ?? '—' }}</td>
-                                                <td>{{ $trip?->trip_status ?? '—' }}</td>
+                                                <td>
+                                                    @if ($trip?->route)
+                                                        <a href="{{ route('routes.show', $trip->route->id) }}" target="_blank" rel="noopener">{{ $trip->route->name }}</a>
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
                                                 <td>{{ $trip?->start_date ? \Carbon\Carbon::parse($trip->start_date)->format('d M Y') : ($trip?->created_at?->format('d M Y') ?? '—') }}</td>
                                                 <td>{{ $sinceLoad ?? '—' }}</td>
                                                 <td>{{ $toDest !== null ? $toDest . ' km' : '—' }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="27" class="text-center">
+                                                <td colspan="26" class="text-center">
                                                     <img src="{{ asset('images/nodata.png') }}" alt="No data" style="max-width: 300px; padding: 2rem 0;">
                                                 </td>
                                             </tr>
@@ -448,4 +529,6 @@
         document.addEventListener('livewire:load', initAssetPositionsMapWhenReady);
         document.addEventListener('livewire:update', refreshAssetPositionsMap);
     </script>
+
+    @livewire('trips.trip-notes-modal')
 </div>

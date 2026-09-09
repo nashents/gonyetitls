@@ -94,16 +94,33 @@ class LiveMap extends Component
     public function render()
     {
         $markers = array_merge(
-            $this->cartrackEnabled ? $this->markers() : [],
-            $this->ezyTrackEnabled ? $this->ezyTrackMarkers() : [],
-            $this->fanTrackerEnabled ? $this->fanTrackerMarkers() : [],
-            $this->pinpointEnabled ? $this->pinpointMarkers() : []
+            $this->safely('cartrack', fn () => $this->cartrackEnabled ? $this->markers() : []),
+            $this->safely('ezytrack', fn () => $this->ezyTrackEnabled ? $this->ezyTrackMarkers() : []),
+            $this->safely('fantracker', fn () => $this->fanTrackerEnabled ? $this->fanTrackerMarkers() : []),
+            $this->safely('pinpoint', fn () => $this->pinpointEnabled ? $this->pinpointMarkers() : [])
         );
 
         return view('livewire.fleet.live-map', [
             'markers'  => $markers,
             'apiError' => $this->apiError,
         ]);
+    }
+
+    /**
+     * One provider's markers never being resolvable — e.g. Cartrack
+     * credentials undecryptable after an APP_KEY rotation — must not take
+     * the whole Live Fleet Map (or the dashboard widget that extends this)
+     * down with it; same class of guard as FleetPositionResolver::safely().
+     */
+    protected function safely(string $provider, \Closure $resolver): array
+    {
+        try {
+            return $resolver();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("LiveMap: {$provider} marker lookup failed: " . $e->getMessage());
+
+            return [];
+        }
     }
 
     protected function markers(): array

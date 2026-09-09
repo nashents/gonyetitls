@@ -455,6 +455,18 @@ class Index extends Component
         }
     }
 
+    /**
+     * Guards against stale/removed store selections (e.g. a store deleted
+     * after the page loaded) causing an FK violation on purchase_products.store_id.
+     */
+    private function validStoreId($id)
+    {
+        if (empty($id)) {
+            return null;
+        }
+        return Store::whereKey($id)->exists() ? $id : null;
+    }
+
     public function store(){
 
         DB::transaction(function () {
@@ -491,7 +503,7 @@ class Index extends Component
                 $purchase_product->product_id = $this->selectedProduct[$key];
             }
             // Optional per-line store/warehouse.
-            $purchase_product->store_id = $this->selectedStore[$key] ?? null;
+            $purchase_product->store_id = $this->validStoreId($this->selectedStore[$key] ?? null);
             if (isset($this->qty[$key])) {
                 $purchase_product->qty = $this->qty[$key];
             }
@@ -708,7 +720,7 @@ class Index extends Component
                 $purchase_product->product_id = $this->selectedCurrentProduct[$key];
             }
             // Optional per-line store on an existing line.
-            $purchase_product->store_id = ($this->selectedCurrentStore[$key] ?? null) ?: null;
+            $purchase_product->store_id = $this->validStoreId($this->selectedCurrentStore[$key] ?? null);
             if (isset($this->current_qty[$key])) {
                 $purchase_product->qty = $this->current_qty[$key];
             }
@@ -778,7 +790,7 @@ class Index extends Component
                     $purchase_product->product_id = $this->selectedProduct[$key];
                 }
                 // Optional per-line store on a newly added line.
-                $purchase_product->store_id = $this->selectedStore[$key] ?? null;
+                $purchase_product->store_id = $this->validStoreId($this->selectedStore[$key] ?? null);
                 if (isset($this->qty[$key])) {
                     $purchase_product->qty = $this->qty[$key];
                 }

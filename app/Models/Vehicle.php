@@ -121,6 +121,10 @@ class Vehicle extends Model implements Auditable
     public function latestTrip(){
         return $this->hasOne('App\Models\Trip')->latestOfMany();
     }
+
+    public function asset_position_logs(){
+        return $this->hasMany('App\Models\AssetPositionLog');
+    }
     public function fuels(){
         return $this->hasMany('App\Models\Fuel');
     }

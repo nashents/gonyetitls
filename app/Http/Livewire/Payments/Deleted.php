@@ -50,8 +50,24 @@ class Deleted extends Component
 
     public function render()
     {
+        $query = Payment::onlyTrashed()->with(['customer', 'vendor', 'currency', 'user', 'deleted_by']);
+
+        $search = trim((string) ($this->search ?? ''));
+        if ($search !== '') {
+            $term = "%{$search}%";
+            $query->where(function ($q) use ($term) {
+                $q->where('payment_number', 'like', $term)
+                    ->orWhere('transaction_category', 'like', $term)
+                    ->orWhere('mode_of_payment', 'like', $term)
+                    ->orWhere('date', 'like', $term)
+                    ->orWhereHas('customer', fn ($qq) => $qq->where('name', 'like', $term))
+                    ->orWhereHas('vendor', fn ($qq) => $qq->where('name', 'like', $term))
+                    ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', $term));
+            });
+        }
+
         return view('livewire.payments.deleted', [
-            'payments' => Payment::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(10),
+            'payments' => $query->orderBy('deleted_at', 'desc')->paginate(10),
         ]);
     }
 }

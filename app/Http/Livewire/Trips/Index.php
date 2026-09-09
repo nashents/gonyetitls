@@ -26,6 +26,8 @@ use App\Models\TripStatus;
 use App\Models\TripType;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\Fleet\FleetPositionResolver;
+use App\Services\Integrations\IntegrationGate;
 use App\Services\Sage\SageSyncService;
 use App\Services\Sage\SageIntegration;
 use App\Services\TripCompletionCascadeService;
@@ -67,6 +69,71 @@ class Index extends Component
     public function getSageEnabledProperty()
     {
         return SageIntegration::enabledForUser();
+    }
+
+    public function getTrackingEnabledProperty(): bool
+    {
+        return IntegrationGate::enabledForUserType('tracking');
+    }
+
+    /**
+     * Live map markers for trucks/vehicles currently pulling a trip in
+     * Trip::CURRENTLY_MOVING_STATUSES (Started..Offloading Point) — the
+     * "currently active trackers" map on top of the Trips index. Live
+     * position, not the logged history (see App\Services\Fleet\FleetPositionResolver,
+     * same source Asset Positions/Live Fleet Map use).
+     */
+    protected function activeTrackerMarkers()
+    {
+        if (! $this->trackingEnabled) {
+            return collect();
+        }
+
+        $companyId = optional($this->company)->id;
+
+        $movingTrips = Trip::whereIn('trip_status', Trip::CURRENTLY_MOVING_STATUSES)
+            ->where(function ($q) {
+                $q->whereNotNull('horse_id')->orWhereNotNull('vehicle_id');
+            })
+            ->get(['id', 'horse_id', 'vehicle_id']);
+
+        if ($movingTrips->isEmpty()) {
+            return collect();
+        }
+
+        $activeAssetKeys = $movingTrips
+            ->map(fn ($t) => $t->horse_id ? 'horse:' . $t->horse_id : 'vehicle:' . $t->vehicle_id)
+            ->unique();
+
+        $positions = app(FleetPositionResolver::class)->resolve($companyId)
+            ->filter(fn ($p) => $activeAssetKeys->contains($p['asset_key']));
+
+        if ($positions->isEmpty()) {
+            return collect();
+        }
+
+        $horseLabels = Horse::whereIn('id', $positions->where('asset_type', 'horse')->pluck('local_id'))
+            ->with('transporter:id,name')
+            ->get(['id', 'registration_number', 'fleet_number', 'transporter_id'])
+            ->keyBy('id');
+        $vehicleLabels = Vehicle::whereIn('id', $positions->where('asset_type', 'vehicle')->pluck('local_id'))
+            ->with('transporter:id,name')
+            ->get(['id', 'registration_number', 'fleet_number', 'transporter_id'])
+            ->keyBy('id');
+
+        return $positions->map(function ($position) use ($horseLabels, $vehicleLabels) {
+            $labels = $position['asset_type'] === 'horse' ? $horseLabels : $vehicleLabels;
+            $asset = $labels->get($position['local_id']);
+
+            return [
+                'label'       => $asset?->fleet_number ?: $asset?->registration_number ?: ('#' . $position['local_id']),
+                'group'       => $asset?->transporter?->name ?: 'Other',
+                'source'      => $position['source'],
+                'latitude'    => $position['lat'],
+                'longitude'   => $position['lng'],
+                'last_update' => $position['observed_at'],
+            ];
+        })->values();
     }
 
     /** Sync one trip to Sage Intacct (Project) inline; also used for retry. */
@@ -341,7 +408,7 @@ class Index extends Component
     public $importFile;
     public $mark_completed;
 
-    protected $listeners = ['tripStatusUpdated' => '$refresh'];
+    protected $listeners = ['tripStatusUpdated' => '$refresh', 'tripNoteAdded' => '$refresh'];
 
     public function clearFilters(): void
     {
@@ -1550,6 +1617,8 @@ class Index extends Component
      
        
         $withRelations = [
+            'latestNote.user:id,name,surname',
+            'latestPosition',
             'podDocument',
             'breakdowns',
             'breakdown_assignments',
@@ -1599,7 +1668,7 @@ class Index extends Component
             $withRelations[] = 'sageMapping';
         }
 
-        $trips = Trip::query()->with($withRelations)->when($this->driver?->id, function ($q) {
+        $trips = Trip::query()->withCount('trip_notes')->with($withRelations)->when($this->driver?->id, function ($q) {
         $q->where('driver_id', $this->driver->id);
         });
 
@@ -1767,7 +1836,8 @@ class Index extends Component
                 'totalsByCurrency' => $this->totalsByCurrency,
                 'trips_currencies' => $this->trips_currencies,
                 'expenseTotalsByCurrency' => $this->expenseTotalsByCurrency,
-                'expense_currencies' => $this->expense_currencies
+                'expense_currencies' => $this->expense_currencies,
+                'mapMarkers' => $this->activeTrackerMarkers(),
             ]);
         
     }

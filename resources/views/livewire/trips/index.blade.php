@@ -3,6 +3,36 @@
         .modal-lg {
         max-width: 80%;
     }
+
+        /* Freeze the first 3 data columns (Trip#/Type, Transporter/Driver,
+           Horse-Vehicle/Trailer) so they stay visible while scrolling right
+           through the rest of the table. */
+        .trips-index-table th:nth-child(-n+3),
+        .trips-index-table td:nth-child(-n+3) {
+            position: sticky;
+            background: #fff;
+            z-index: 2;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .trips-index-table thead th:nth-child(-n+3) { background: #f8f9fa; z-index: 3; }
+        .trips-index-table tbody tr:nth-child(even) td:nth-child(-n+3) { background: #f8f9fa; }
+        .trips-index-table tbody tr:hover td:nth-child(-n+3) { background: #f5f5f5; }
+        .trips-index-table th:nth-child(1), .trips-index-table td:nth-child(1) { left: 0; min-width: 230px; max-width: 230px; }
+        .trips-index-table th:nth-child(2), .trips-index-table td:nth-child(2) { left: 230px; min-width: 150px; max-width: 150px; }
+        .trips-index-table th:nth-child(3), .trips-index-table td:nth-child(3) {
+            left: 380px;
+            min-width: 170px;
+            max-width: 170px;
+            box-shadow: 2px 0 4px rgba(0,0,0,.08);
+        }
+
+        .trips-index-legend { background: #fff; padding: 10px 14px; margin: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.3); font-size: 13px; max-height: 320px; overflow-y: auto; }
+        .trips-index-legend strong { display: block; margin-bottom: 6px; font-size: 13px; }
+        .trips-index-legend .legend-row { display: flex; align-items: center; margin-bottom: 4px; white-space: nowrap; }
+        .trips-index-legend .legend-swatch { width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; flex: 0 0 auto; }
+        .trips-index-legend .legend-toggle { display: block; margin-top: 6px; cursor: pointer; color: #337ab7; }
     </style>
         <section class="section">
             <x-loading/>
@@ -85,6 +115,14 @@
                                 </div>
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+
+                                @unless ($this->trackingEnabled)
+                                    <div class="alert alert-warning">
+                                        No live tracking integration is active for this company — the active-trackers map will stay blank until one is configured.
+                                    </div>
+                                @endunless
+                                <div wire:ignore id="trips-index-map" style="width:100%; height:400px;" class="mb-15"></div>
+
                                 <div class="panel-title">
                                     <div class="row">
                                         <div class="col-lg-3">
@@ -395,17 +433,19 @@
                                
                               
                                 {{-- <div class="table-responsive"> --}}
-                                    <table class="table  table-striped table-bordered table-sm table-responsive sortable" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
+                                    <table class="table  table-striped table-bordered table-sm table-responsive sortable trips-index-table" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
                                         <thead>
                                             <tr>
                                                 <th>Trip#<hr style="margin-top:2px; margin-bottom:2px">Type</th>
-                                                <th>Departure <hr style="margin-top:2px; margin-bottom:2px">Est/Offloaded</th>
-                                                <th>Customer (Cargo)</th>
                                                 <th>Transporter<hr style="margin-top:2px; margin-bottom:2px">Driver</th>
                                                 <th>Horse/Vehicle<hr style="margin-top:2px; margin-bottom:2px">Trailer</th>
+                                                <th>Customer (Cargo)</th>
+                                                <th>Departure <hr style="margin-top:2px; margin-bottom:2px">Est/Offloaded</th>
                                                 <th>From</th>
                                                 <th>To</th>
                                                 <th>Status</th>
+                                                <th>Position</th>
+                                                <th>Notes</th>
                                                 @if($showFreight)
                                                     <th>Freight</th>
                                                 @endif
@@ -531,10 +571,28 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    {{ $formatDate($trip->start_date) }}
-                                                    <hr class="my-1">
-                                                    {{ $offloadedDate }}
+                                                    {{ ucfirst($trip->transporter?->name ?? '') }}
+                                                    @if($trip->driver)
+                                                        <hr class="my-1">
+                                                        {{ $trip->driver?->employee?->name }} {{ $trip->driver?->employee?->surname }}
+                                                    @endif
                                                 </td>
+
+                                                <td>
+                                                    @if($trip->horse)
+                                                        Horse | <a href="{{ route('trips.positions', $trip->id) }}" target="_blank" rel="noopener" title="View truck positions">{{ $trip->horse->registration_number }} {{ $trip->horse->fleet_number ? "({$trip->horse->fleet_number})" : "" }}</a>
+                                                    @elseif($trip->vehicle)
+                                                        Vehicle | <a href="{{ route('trips.positions', $trip->id) }}" target="_blank" rel="noopener" title="View truck positions">{{ $trip->vehicle->registration_number }} {{ $trip->vehicle->fleet_number ? "({$trip->vehicle->fleet_number})" : "" }}</a>
+                                                    @endif
+
+                                                    @if($trip->trailers?->count())
+                                                        <hr class="my-1">
+                                                        @foreach($trip->trailers as $trailer)
+                                                            {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "({$trailer->fleet_number})" : "" }}@if(!$loop->last), @endif
+                                                        @endforeach
+                                                    @endif
+                                                </td>
+
                                                 <td>
                                                     @php
                                                         $items = collect();
@@ -588,26 +646,9 @@
                                                 </td>
 
                                                 <td>
-                                                    {{ ucfirst($trip->transporter?->name ?? '') }}
-                                                    @if($trip->driver)
-                                                        <hr class="my-1">
-                                                        {{ $trip->driver?->employee?->name }} {{ $trip->driver?->employee?->surname }}
-                                                    @endif
-                                                </td>
-
-                                                <td>
-                                                    @if($trip->horse)
-                                                        Horse | {{ $trip->horse->registration_number }} {{ $trip->horse->fleet_number ? "({$trip->horse->fleet_number})" : "" }}
-                                                    @elseif($trip->vehicle)
-                                                        Vehicle | {{ $trip->vehicle->registration_number }} {{ $trip->vehicle->fleet_number ? "({$trip->vehicle->fleet_number})" : "" }}
-                                                    @endif
-
-                                                    @if($trip->trailers?->count())
-                                                        <hr class="my-1">
-                                                        @foreach($trip->trailers as $trailer)
-                                                            {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "({$trailer->fleet_number})" : "" }}@if(!$loop->last), @endif
-                                                        @endforeach
-                                                    @endif
+                                                    {{ $formatDate($trip->start_date) }}
+                                                    <hr class="my-1">
+                                                    {{ $offloadedDate }}
                                                 </td>
 
                                                <td>
@@ -724,6 +765,36 @@
                                                         @endif
                                                     </span>
                                                 </td>
+                                                <td style="white-space: normal; min-width: 160px;">
+                                                    @if ($trip->latestPosition)
+                                                        <i class="fas fa-satellite-dish text-muted" title="{{ $trip->latestPosition->source }}"></i>
+                                                        <a href="https://www.google.com/maps?q={{ $trip->latestPosition->latitude }},{{ $trip->latestPosition->longitude }}" target="_blank" rel="noopener">
+                                                            {{ number_format($trip->latestPosition->latitude, 4) }}, {{ number_format($trip->latestPosition->longitude, 4) }}
+                                                        </a>
+                                                        <br><small class="text-muted">
+                                                            @if ($trip->latestPosition->speed !== null){{ round($trip->latestPosition->speed) }} km/h &middot; @endif
+                                                            {{ $trip->latestPosition->recorded_at->diffForHumans() }}
+                                                        </small>
+                                                    @else
+                                                        <span class="text-muted">&mdash;</span>
+                                                    @endif
+                                                </td>
+                                                <td style="white-space: normal; min-width: 180px;">
+                                                    <a href="#" wire:click.prevent="$emit('openTripNotes', {{ $trip->id }})" title="View/add trip notes">
+                                                        <i class="far fa-comment-dots"></i>
+                                                        @if ($trip->latestNote)
+                                                            {{ $trip->latestNote->created_at->format('M jS y H:i') }} - <strong>{{ trim(optional($trip->latestNote->user)->name . ' ' . optional($trip->latestNote->user)->surname) }}</strong>
+                                                        @else
+                                                            Add note
+                                                        @endif
+                                                        @if ($trip->trip_notes_count)
+                                                            <span class="badge badge-success badge-pill">{{ $trip->trip_notes_count }}</span>
+                                                        @endif
+                                                    </a>
+                                                    @if ($trip->latestNote)
+                                                        <br><small class="text-muted">{{ \Illuminate\Support\Str::limit($trip->latestNote->body, 80) }}</small>
+                                                    @endif
+                                                </td>
 
                                                 @if($showFreight)
                                                     <td>
@@ -828,7 +899,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="15" class="text-center text-muted" style="padding: 12px; font-size: 17px;">
+                                                <td colspan="17" class="text-center text-muted" style="padding: 12px; font-size: 17px;">
                                                     No Trips Found ....
                                                 </td>
                                             </tr>
@@ -1195,5 +1266,157 @@
 </div><!-- Modal -->
 
         @livewire('trips.trip-status-manager')
+        @livewire('trips.trip-notes-modal')
+
+    <script>
+        window.tripsIndexMarkers = @json($mapMarkers);
+
+        window.assetPositionsColourFor = window.assetPositionsColourFor || function (group) {
+            const palette = ['#d9534f', '#5b2c6f', '#f0ad4e', '#337ab7', '#5bc0de', '#5cb85c', '#8e44ad', '#e67e22', '#2c3e50', '#c0392b'];
+            let hash = 0;
+            for (let i = 0; i < group.length; i++) { hash = (hash * 31 + group.charCodeAt(i)) >>> 0; }
+            return palette[hash % palette.length];
+        };
+
+        function initTripsIndexMap() {
+            const el = document.getElementById('trips-index-map');
+            if (!el || el.dataset.initialized) { return; }
+
+            const defaultCenter = { lat: -17.8216, lng: 31.0492 }; // Harare
+            const markers = window.tripsIndexMarkers || [];
+
+            const map = new google.maps.Map(el, {
+                center: markers.length ? { lat: markers[0].latitude, lng: markers[0].longitude } : defaultCenter,
+                zoom: 6,
+                mapTypeControl: true,
+                mapTypeControlOptions: { style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR },
+            });
+
+            el.dataset.initialized = '1';
+            el._tiMap = map;
+            renderTripsIndexMarkers(map, markers);
+        }
+
+        function renderTripsIndexMarkers(map, markers) {
+            const el = document.getElementById('trips-index-map');
+
+            if (el._tiClusterer) {
+                el._tiClusterer.clearMarkers();
+            }
+
+            const bounds = new google.maps.LatLngBounds();
+            const groups = [];
+
+            const gMarkers = markers.map(function (marker) {
+                const position = { lat: marker.latitude, lng: marker.longitude };
+                const colour = window.assetPositionsColourFor(marker.group || 'Other');
+
+                if (groups.indexOf(marker.group) === -1) { groups.push(marker.group); }
+
+                const gMarker = new google.maps.Marker({
+                    position: position,
+                    label: marker.label ? String(marker.label).slice(0, 2) : undefined,
+                    title: marker.label + (marker.group ? ' (' + marker.group + ')' : ''),
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: colour,
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 1,
+                        scale: 9,
+                    },
+                });
+
+                const info = new google.maps.InfoWindow({
+                    content: '<strong>' + marker.label + '</strong>'
+                        + (marker.group ? '<br>' + marker.group : '')
+                        + (marker.source ? '<br><small>' + marker.source + '</small>' : '')
+                        + (marker.last_update ? '<br><small>' + marker.last_update + '</small>' : ''),
+                });
+
+                gMarker.addListener('click', function () { info.open(map, gMarker); });
+                bounds.extend(position);
+
+                return gMarker;
+            });
+
+            if (window.markerClusterer && gMarkers.length) {
+                el._tiClusterer = new markerClusterer.MarkerClusterer({ map: map, markers: gMarkers });
+            } else {
+                gMarkers.forEach(function (m) { m.setMap(map); });
+            }
+
+            if (gMarkers.length > 1) {
+                map.fitBounds(bounds);
+            }
+
+            if (groups.length) {
+                renderTripsIndexLegend(map, groups);
+            }
+        }
+
+        function renderTripsIndexLegend(map, groups) {
+            if (map._tiLegendControl) { return; }
+
+            const legend = document.createElement('div');
+            legend.className = 'trips-index-legend';
+
+            const title = document.createElement('strong');
+            title.textContent = 'Active Trackers';
+            legend.appendChild(title);
+
+            const list = document.createElement('div');
+            groups.sort().forEach(function (group) {
+                const row = document.createElement('div');
+                row.className = 'legend-row';
+
+                const swatch = document.createElement('span');
+                swatch.className = 'legend-swatch';
+                swatch.style.background = window.assetPositionsColourFor(group);
+                row.appendChild(swatch);
+
+                const label = document.createElement('span');
+                label.textContent = group;
+                row.appendChild(label);
+
+                list.appendChild(row);
+            });
+            legend.appendChild(list);
+
+            const toggle = document.createElement('a');
+            toggle.className = 'legend-toggle';
+            toggle.textContent = 'Hide legend';
+            toggle.href = '#';
+            toggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                const hidden = list.style.display === 'none';
+                list.style.display = hidden ? '' : 'none';
+                toggle.textContent = hidden ? 'Hide legend' : 'Show legend';
+            });
+            legend.appendChild(toggle);
+
+            map._tiLegendControl = legend;
+            map.controls[google.maps.ControlPosition.LEFT_TOP].push(legend);
+        }
+
+        function initTripsIndexMapWhenReady() {
+            if (typeof google === 'undefined' || !google.maps) {
+                return setTimeout(initTripsIndexMapWhenReady, 200);
+            }
+            initTripsIndexMap();
+        }
+
+        function refreshTripsIndexMap() {
+            const el = document.getElementById('trips-index-map');
+            if (el && el._tiMap) {
+                renderTripsIndexMarkers(el._tiMap, window.tripsIndexMarkers || []);
+            } else {
+                initTripsIndexMapWhenReady();
+            }
+        }
+
+        document.addEventListener('livewire:load', initTripsIndexMapWhenReady);
+        document.addEventListener('livewire:update', refreshTripsIndexMap);
+    </script>
 
 </div>

@@ -8,11 +8,14 @@ class AssetPositionLog extends Model
 {
     protected $fillable = [
         'horse_id',
+        'vehicle_id',
+        'trip_id',
         'company_id',
         'source',
         'latitude',
         'longitude',
         'speed',
+        'odometer',
         'recorded_at',
     ];
 
@@ -20,12 +23,23 @@ class AssetPositionLog extends Model
         'latitude'    => 'float',
         'longitude'   => 'float',
         'speed'       => 'float',
+        'odometer'    => 'float',
         'recorded_at' => 'datetime',
     ];
 
     public function horse()
     {
         return $this->belongsTo(Horse::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
     }
 
     /**

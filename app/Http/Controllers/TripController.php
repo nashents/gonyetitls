@@ -226,7 +226,15 @@ class TripController extends Controller
     {
         return view('trips.show')->with([
             'trip' => $trip,
-           
+
+        ]);
+    }
+
+    /** Truck position history for one trip — route drawn on a map + the logged points, latest first. */
+    public function positions(Trip $trip)
+    {
+        return view('trips.positions')->with([
+            'trip' => $trip,
         ]);
     }
 

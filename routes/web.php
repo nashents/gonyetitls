@@ -662,6 +662,7 @@ Route::resource('horses','HorseController');
 Route::resource('trailers','TrailerController');
 Route::resource('transporters','TransporterController');
 Route::resource('trips','TripController');
+Route::get('trips/{trip}/positions', 'TripController@positions')->name('trips.positions');
 Route::resource('reminder_items','ReminderItemController');
 Route::resource('requisitions','RequisitionController');
 Route::resource('currencies','CurrencyController');
@@ -986,12 +987,12 @@ Route::get('transporters/authorization/pending','TransporterController@pending')
 Route::get('transporters/authorization/approved','TransporterController@approved')->name('transporters.approved');
 Route::get('transporters/authorization/rejected','TransporterController@rejected')->name('transporters.rejected');
 
-Route::get('bills/deleted','BillController@deleted')->name('bills.deleted');
+Route::get('deleted/bills','BillController@deleted')->name('bills.deleted');
 Route::get('bills/authorization/pending','BillController@pending')->name('bills.pending');
 Route::get('bills/authorization/approved','BillController@approved')->name('bills.approved');
 Route::get('bills/authorization/rejected','BillController@rejected')->name('bills.rejected');
 
-Route::get('payments/deleted','PaymentController@deleted')->name('payments.deleted');
+Route::get('deleted/payments','PaymentController@deleted')->name('payments.deleted');
 
 Route::get('invoices/authorization/pending','InvoiceController@pending')->name('invoices.pending');
 Route::get('invoices/authorization/approved','InvoiceController@approved')->name('invoices.approved');

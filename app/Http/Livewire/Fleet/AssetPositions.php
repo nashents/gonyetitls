@@ -6,6 +6,7 @@ use App\Models\AssetPositionLog;
 use App\Models\Horse;
 use App\Models\Vehicle;
 use App\Services\Fleet\FleetPositionResolver;
+use App\Services\Fleet\ReverseGeocoder;
 use App\Services\Integrations\IntegrationGate;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,8 @@ use Livewire\WithPagination;
 class AssetPositions extends Component
 {
     use WithPagination;
+
+    protected $listeners = ['tripNoteAdded' => '$refresh'];
 
     protected $paginationTheme = 'bootstrap';
 
@@ -93,7 +96,8 @@ class AssetPositions extends Component
     protected function tripEagerLoads(): \Closure
     {
         return function ($q) {
-            $q->with([
+            $q->withCount('trip_notes')->with([
+                'latestNote.user:id,name,surname',
                 'trailers.trailer_type:id,name',
                 'driver.employee:id,name,surname',
                 'loading_point:id,name',
@@ -108,7 +112,6 @@ class AssetPositions extends Component
                 // restricted trip_id column ambiguous in the outer select
                 // (SQLSTATE 23000 "trip_id ... ambiguous").
                 'pod',
-                'latestStatus.user:id,name,surname',
             ]);
         };
     }
@@ -178,6 +181,21 @@ class AssetPositions extends Component
             ? app(FleetPositionResolver::class)->resolve($companyId)
             : collect();
 
+        // Reverse-geocode only the positions actually visible on this page
+        // (cached per-coordinate — see ReverseGeocoder), not the whole
+        // company-wide set, to keep this to a handful of API calls per load.
+        $pageAssetKeys = $pageItems->map(fn ($asset) => $asset->asset_type . ':' . $asset->id);
+        $geocoder = app(ReverseGeocoder::class);
+        $positions = $positions->map(function ($position) use ($pageAssetKeys, $geocoder) {
+            if (! $pageAssetKeys->contains($position['asset_key'])) {
+                return $position;
+            }
+
+            $position['address'] = $geocoder->resolve($position['lat'], $position['lng']);
+
+            return $position;
+        });
+
         // Map markers for every tracked asset company-wide (not just the
         // current page), grouped by Owner (transporter) for the legend/marker
         // colour — the real Gonyeti equivalent of the inspiration tool's
@@ -205,9 +223,8 @@ class AssetPositions extends Component
             ];
         })->values();
 
-        // One batched query for every visible horse row's dwell/distance
-        // history, instead of a query per row (vehicles have no history yet
-        // — asset_position_logs has no vehicle_id column).
+        // One batched query per asset type for every visible row's
+        // dwell/distance history, instead of a query per row.
         $pageHorseIds = $pageItems->where('asset_type', 'horse')->pluck('id');
         $logsByHorse = AssetPositionLog::whereIn('horse_id', $pageHorseIds)
             ->where('recorded_at', '>=', now()->subDays(2))
@@ -215,14 +232,18 @@ class AssetPositions extends Component
             ->get()
             ->groupBy('horse_id');
 
-        $analytics = $pageItems->mapWithKeys(function ($asset) use ($logsByHorse) {
+        $pageVehicleIds = $pageItems->where('asset_type', 'vehicle')->pluck('id');
+        $logsByVehicle = AssetPositionLog::whereIn('vehicle_id', $pageVehicleIds)
+            ->where('recorded_at', '>=', now()->subDays(2))
+            ->orderByDesc('recorded_at')
+            ->get()
+            ->groupBy('vehicle_id');
+
+        $analytics = $pageItems->mapWithKeys(function ($asset) use ($logsByHorse, $logsByVehicle) {
             $key = $asset->asset_type . ':' . $asset->id;
+            $logsById = $asset->asset_type === 'horse' ? $logsByHorse : $logsByVehicle;
 
-            if ($asset->asset_type !== 'horse') {
-                return [$key => null];
-            }
-
-            $logs = $logsByHorse->get($asset->id, collect());
+            $logs = $logsById->get($asset->id, collect());
 
             return [$key => $logs->isEmpty() ? null : AssetPositionLog::summarize($logs)];
         });

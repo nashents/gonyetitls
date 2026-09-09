@@ -128,6 +128,7 @@ class FleetPositionResolver
                 'lat'         => (float) $latitude,
                 'lng'         => (float) $longitude,
                 'speed'       => data_get($node, 'Location.Speed'),
+                'odometer'    => data_get($node, 'Distance.Odometer'),
                 'source'      => 'cartrack',
                 'observed_at' => data_get($node, 'Location.DateTime'),
             ]);

@@ -15,6 +15,24 @@ class Trip extends Model implements Auditable, EditAuthorizable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    /**
+     * trip_status values treated as "actively moving" for GPS logging
+     * purposes (fleet:log-asset-positions stamps trip_id on a position log
+     * only while a horse's current trip is in this window). trip_status is
+     * free text elsewhere in the app, so anything outside this exact set —
+     * including unrecognised custom statuses — simply isn't logged against
+     * a trip (the underlying asset-level position log is unaffected).
+     */
+    public const ACTIVE_TRACKING_STATUSES = ['Started', 'Loading Point', 'Loaded', 'InTransit', 'Offloading Point', 'Offloaded'];
+
+    /**
+     * Narrower than ACTIVE_TRACKING_STATUSES (which also keeps logging
+     * through Offloaded): a truck still literally in transit, Started
+     * through Offloading Point but not yet Offloaded. Backs the "currently
+     * active trackers" map on top of the Trips index.
+     */
+    public const CURRENTLY_MOVING_STATUSES = ['Started', 'Loading Point', 'Loaded', 'InTransit', 'Offloading Point'];
+
     protected $casts = [
     'ending_mileage'   => 'float',
     'starting_mileage' => 'float',
@@ -389,5 +407,29 @@ class Trip extends Model implements Auditable, EditAuthorizable
     public function latestStatus()
     {
         return $this->hasOne(TripStatus::class)->latestOfMany();
+    }
+
+    /** Free-text ops comments/updates — see App\Models\TripNote. Kept separate from trip_statuses. */
+    public function trip_notes()
+    {
+        return $this->hasMany(TripNote::class);
+    }
+
+    /** Most recent trip note — backs the Notes column preview in Asset Positions/Trips tables. */
+    public function latestNote()
+    {
+        return $this->hasOne(TripNote::class)->latestOfMany();
+    }
+
+    /** GPS log stamped with this trip's id while it was in an active tracking status — see ACTIVE_TRACKING_STATUSES. */
+    public function positions()
+    {
+        return $this->hasMany(AssetPositionLog::class);
+    }
+
+    /** Most recent logged position for this trip — backs the Trips index "Position" column. */
+    public function latestPosition()
+    {
+        return $this->hasOne(AssetPositionLog::class)->latestOfMany();
     }
 }

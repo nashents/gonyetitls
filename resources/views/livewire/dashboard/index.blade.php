@@ -342,6 +342,12 @@
                 @endif
 
                 @if ($canSee(['Transport & Logistics']))
+                    <div class="gd-panel wide">
+                        @livewire('dashboard.fleet-map')
+                    </div>
+                @endif
+
+                @if ($canSee(['Transport & Logistics']))
                     <div class="gd-panel third">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-tint"></i> Fuel</h5><span class="gd-panel-note">Issue, cost and stock</span></div>
                         <div class="gd-kpi-grid">
@@ -503,6 +509,10 @@
     </section>
 </div>
 
+
+@push('scripts')
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_key') }}"></script>
+@endpush
 
 @section('extra-js')
 <script src="https://code.highcharts.com/highcharts.js"></script>
