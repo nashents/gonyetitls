@@ -119,7 +119,7 @@
                                     </td>
                                     <td>
                                         @if (isset($horse))
-                                            {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}
+                                            {{$horse->identifier_label}}
                                         @endif
                                     </td>
                                     <td>{{$selected_horse->total_trips ? $selected_horse->total_trips : ""}}</td>

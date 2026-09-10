@@ -113,13 +113,13 @@
           @if ($dispatch->horse)
             <div class="k">Type</div><div class="v">Horse</div>
             <div class="k">Reg (Fleet) #</div>
-            <div class="v">{{$dispatch->horse->registration_number}} {{$dispatch->horse->fleet_number ? "(".$dispatch->horse->fleet_number.")" : ""}}</div>
+            <div class="v">{{$dispatch->horse->identifier_label}}</div>
             <div class="k">Make / Model</div>
             <div class="v">{{optional($dispatch->horse->horse_make)->name}} {{optional($dispatch->horse->horse_model)->name}}</div>
           @elseif ($dispatch->vehicle)
             <div class="k">Type</div><div class="v">Vehicle</div>
             <div class="k">Reg (Fleet) #</div>
-            <div class="v">{{$dispatch->vehicle->registration_number}} {{$dispatch->vehicle->fleet_number ? "(".$dispatch->vehicle->fleet_number.")" : ""}}</div>
+            <div class="v">{{$dispatch->vehicle->identifier_label}}</div>
             <div class="k">Make / Model</div>
             <div class="v">{{optional($dispatch->vehicle->vehicle_make)->name}} {{optional($dispatch->vehicle->vehicle_model)->name}}</div>
           @else

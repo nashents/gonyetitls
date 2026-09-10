@@ -191,11 +191,9 @@
                                                             <small>
                                                                 <strong>Requested For:</strong>
                                                                 @if($fuelRequest->horse) <br>
-                                                                    {{ $fuelRequest->horse->registration_number }}
-                                                                    {{ $fuelRequest->horse->fleet_number ? '(' . $fuelRequest->horse->fleet_number . ')' : '' }}
+                                                                    {{ $fuelRequest->horse->identifier_label }}
                                                                 @elseif($fuelRequest->vehicle) <br>
-                                                                    {{ $fuelRequest->vehicle->registration_number }}
-                                                                    {{ $fuelRequest->vehicle->fleet_number ? '(' . $fuelRequest->vehicle->fleet_number . ')' : '' }}
+                                                                    {{ $fuelRequest->vehicle->identifier_label }}
                                                                 @elseif($fuelRequest->asset) <br>
                                                                     {{ optional($fuelRequest->asset->product->brand)->name }}
                                                                     {{ optional($fuelRequest->asset->product)->name }}
@@ -218,12 +216,10 @@
                                                 <td>
                                                     @if($fuel->type === 'Horse' && isset($fuel->horse))
                                                         <span class="badge badge-info">Horse</span>
-                                                        {{ $fuel->horse->registration_number }}
-                                                        {{ $fuel->horse->fleet_number ? '(' . $fuel->horse->fleet_number . ')' : '' }}
+                                                        {{ $fuel->horse->identifier_label }}
                                                     @elseif($fuel->type === 'Vehicle' && isset($fuel->vehicle))
                                                         <span class="badge badge-info">Vehicle</span>
-                                                        {{ $fuel->vehicle->registration_number }}
-                                                        {{ $fuel->vehicle->fleet_number ? '(' . $fuel->vehicle->fleet_number . ')' : '' }}
+                                                        {{ $fuel->vehicle->identifier_label }}
                                                     @elseif($fuel->type === 'Asset' && isset($fuel->asset))
                                                         <span class="badge badge-info">Asset</span>
                                                         {{ optional($fuel->asset->product->brand)->name }}
@@ -255,7 +251,7 @@
                                                     @if ($fuel->container)
                                                         {{ ucfirst($fuel->container->name) }}
                                                     @elseif ($fuel->source_horse)
-                                                        Truck: {{ $fuel->source_horse->registration_number }} {{ $fuel->source_horse->fleet_number ? "(".$fuel->source_horse->fleet_number.")" : "" }}
+                                                        Truck: {{ $fuel->source_horse->identifier_label }}
                                                     @endif
                                                     <div class="fuel-meta text-muted">
                                                         <small><strong>Fuel Type:</strong> {{ $fuel->container->fuel_type ?? $fuel->fuel_type ?? '' }}</small>
@@ -449,9 +445,9 @@
                                 @foreach ($fuel_requests as $fuel_request)
                                     <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
                                         @if ($fuel_request->horse)
-                                            {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                            {{$fuel_request->horse?->identifier_label}}
                                         @elseif ($fuel_request->vehicle)
-                                            {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                            {{$fuel_request->vehicle?->identifier_label}}
                                         @elseif ($fuel_request->asset)
                                             {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
                                         @else
@@ -492,7 +488,7 @@
                                         <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
                                             <option value="">Select Horse</option>
                                             @foreach ($horses as $horse)
-                                                <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                             @endforeach
                                         </select>
                                         @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -504,7 +500,7 @@
                                         <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
                                             <option value="">Select Vehicle</option>
                                             @foreach ($vehicles as $vehicle)
-                                                <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
+                                                <option value="{{$vehicle->id}}"> {{$vehicle->identifier_label}} </option>
                                             @endforeach
                                         </select>
                                         @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -533,10 +529,10 @@
                                             @foreach ($trips as $trip)
                                             <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}} |
                                                 @if ($trip->horse)
-                                                    {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }}   
+                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                 @endif
                                                 @if ($trip->vehicle)
-                                                    {{ $trip->vehicle ? $trip->vehicle->registration_number : "" }} {{ $trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : "" }}   
+                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                 @endif
                                                 |
                                                 @php
@@ -672,7 +668,7 @@
                                         <option value="">Select Source Truck</option>
                                         @foreach ($horses as $horse)
                                             @continue($horse->id == $selectedHorse)
-                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                            <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                         @endforeach
                                     </select>
                                     @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -933,9 +929,9 @@
                                 @foreach ($fuel_requests as $fuel_request)
                                     <option value="{{$fuel_request->id}}">CreatedBy: {{$fuel_request->user?->name}} {{$fuel_request->user?->surname}} RequestedBy: {{$fuel_request->employee?->name}} {{$fuel_request->employee?->surname}} RequestFor:
                                         @if ($fuel_request->horse)
-                                            {{$fuel_request->horse?->registration_number}} {{$fuel_request->horse?->fleet_number ? "(".$fuel_request->horse?->fleet_number.")" : ""}}
+                                            {{$fuel_request->horse?->identifier_label}}
                                         @elseif ($fuel_request->vehicle)
-                                            {{$fuel_request->vehicle?->registration_number}} {{$fuel_request->vehicle?->fleet_number ? "(".$fuel_request->vehicle?->fleet_number.")" : ""}}
+                                            {{$fuel_request->vehicle?->identifier_label}}
                                         @elseif ($fuel_request->asset)
                                             {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
                                         @else
@@ -976,7 +972,7 @@
                                         <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
                                             <option value="">Select Horse</option>
                                             @foreach ($horses as $horse)
-                                                <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                             @endforeach
                                         </select>
                                         @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -988,7 +984,7 @@
                                         <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
                                             <option value="">Select Vehicle</option>
                                             @foreach ($vehicles as $vehicle)
-                                                <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
+                                                <option value="{{$vehicle->id}}"> {{$vehicle->identifier_label}} </option>
                                             @endforeach
                                         </select>
                                         @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1017,10 +1013,10 @@
                                             @foreach ($trips as $trip)
                                             <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}} |
                                                 @if ($trip->horse)
-                                                    {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }}   
+                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                 @endif
                                                 @if ($trip->vehicle)
-                                                    {{ $trip->vehicle ? $trip->vehicle->registration_number : "" }} {{ $trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : "" }}   
+                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                 @endif
                                                 |
                                                 @php
@@ -1156,7 +1152,7 @@
                                         <option value="">Select Source Truck</option>
                                         @foreach ($horses as $horse)
                                             @continue($horse->id == $selectedHorse)
-                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                            <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                         @endforeach
                                     </select>
                                     @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1418,7 +1414,7 @@
                                    <select wire:model.debounce.300ms="selectedHorse" class="form-control" required>
                                        <option value="">Select Horse</option>
                                       @foreach ($horses as $horse)
-                                          <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                          <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                       @endforeach
                                    </select>
                                     @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1607,7 +1603,7 @@
                                    <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required>
                                        <option value="">Select Vehicle</option>
                                       @foreach ($vehicles as $vehicle)
-                                          <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
+                                          <option value="{{$vehicle->id}}"> {{$vehicle->identifier_label}} </option>
                                       @endforeach
                                    </select>
                                     @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror

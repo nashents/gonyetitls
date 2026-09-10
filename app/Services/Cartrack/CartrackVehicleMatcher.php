@@ -68,7 +68,7 @@ class CartrackVehicleMatcher
 
                         $externalId = (string) ($cartrackVehicle['vehicle_id'] ?? $cartrackVehicle['registration']);
 
-                        IntegrationMapping::updateOrCreate(
+                        IntegrationMapping::updateOrCreateMapping(
                             [
                                 'company_integration_id' => $integration->id,
                                 'entity_type'             => $entityType,

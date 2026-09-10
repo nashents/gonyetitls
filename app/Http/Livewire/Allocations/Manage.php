@@ -77,7 +77,7 @@ class Manage extends Component
         ->whereDate('created_at', \Carbon\Carbon::today())->latest()->take(5)->get();
         }
         $this->employees = Employee::all()->sortBy('name');
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
         $this->containers = Container::orderBy('name','asc')->get();
     }
 

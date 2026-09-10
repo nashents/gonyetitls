@@ -50,7 +50,7 @@
                                                         <option value="{{ $trip->id }}">
                                                                 {{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{ $trip->start_date }}
                                                             @if ($trip->horse)
-                                                                | {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }} 
+                                                                | {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                             @endif
                                                             @if ($trip->driver)
                                                                 | {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}

@@ -196,7 +196,7 @@
                                                         <select wire:model.debounce.300ms="filter_horse_id" class="form-control" aria-label="..." >
                                                                 <option value="">Select Horse</option>
                                                                 @foreach ($horses as $horse)
-                                                                    <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} </option>
+                                                                    <option value="{{ $horse->id }}"  > {{ $horse->identifier_label }} </option>
                                                                 @endforeach
                                                         </select>
                                                     </div>
@@ -581,15 +581,15 @@
 
                                                 <td>
                                                     @if($trip->horse)
-                                                        Horse | <a href="{{ route('trips.positions', $trip->id) }}" target="_blank" rel="noopener" title="View truck positions">{{ $trip->horse->registration_number }} {{ $trip->horse->fleet_number ? "({$trip->horse->fleet_number})" : "" }}</a>
+                                                        Horse | <a href="{{ route('trips.positions', $trip->id) }}" target="_blank" rel="noopener" title="View truck positions">{{ $trip->horse->identifier_label }}</a>
                                                     @elseif($trip->vehicle)
-                                                        Vehicle | <a href="{{ route('trips.positions', $trip->id) }}" target="_blank" rel="noopener" title="View truck positions">{{ $trip->vehicle->registration_number }} {{ $trip->vehicle->fleet_number ? "({$trip->vehicle->fleet_number})" : "" }}</a>
+                                                        Vehicle | <a href="{{ route('trips.positions', $trip->id) }}" target="_blank" rel="noopener" title="View truck positions">{{ $trip->vehicle->identifier_label }}</a>
                                                     @endif
 
                                                     @if($trip->trailers?->count())
                                                         <hr class="my-1">
                                                         @foreach($trip->trailers as $trailer)
-                                                            {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "({$trailer->fleet_number})" : "" }}@if(!$loop->last), @endif
+                                                            {{ $trailer->identifier_label }}@if(!$loop->last), @endif
                                                         @endforeach
                                                     @endif
                                                 </td>
@@ -768,7 +768,7 @@
                                                 </td>
                                                 <td style="white-space: normal; min-width: 160px;">
                                                     @if ($trip->latestPosition)
-                                                        <i class="fas fa-satellite-dish text-muted" title="{{ $trip->latestPosition->source }}"></i>
+                                                        <i class="fas fa-satellite-dish text-success" title="{{ $trip->latestPosition->source }}"></i>
                                                         <a href="https://www.google.com/maps?q={{ $trip->latestPosition->latitude }},{{ $trip->latestPosition->longitude }}" target="_blank" rel="noopener">
                                                             {{ number_format($trip->latestPosition->latitude, 4) }}, {{ number_format($trip->latestPosition->longitude, 4) }}
                                                         </a>

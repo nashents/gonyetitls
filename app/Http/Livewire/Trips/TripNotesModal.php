@@ -171,7 +171,8 @@ class TripNotesModal extends Component
             return collect();
         }
 
-        return TripNote::where('trip_id', $this->tripId)->with('user')->latest()->get();
+        // Oldest first (chat-style) — most recent sits at the bottom of the timeline.
+        return TripNote::where('trip_id', $this->tripId)->with('user')->oldest()->get();
     }
 
     public function render()

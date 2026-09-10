@@ -62,7 +62,7 @@ class Performance extends Component
             ->get();
 
         $this->chartData = $horses->map(function ($d) {
-            $reg = trim(($d->registration_number ?? '') . ' ('. ($d->fleet_number ?? '')).')';
+            $reg = $d->identifier_label;
             return [$reg, (float) ($d->total_weight ?? 0)];
         })->values()->all();
     }

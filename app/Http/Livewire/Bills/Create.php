@@ -173,9 +173,9 @@ class Create extends Component
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->assets = Asset::with('product')->get()->sortBy('product.name');
         $this->drivers = Driver::all();
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
     }
 
     public function billDate(){
@@ -513,9 +513,9 @@ class Create extends Component
             $this->vendors = Vendor::orderBy('name','asc')->get();
             $this->transporters = Transporter::orderBy('name','asc')->get();
             $this->assets = Asset::with('product')->get()->sortBy('product.name');
-            $this->horses = Horse::orderBy('registration_number','asc')->get();
-            $this->trailers = Trailer::orderBy('registration_number','asc')->get();
-            $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+            $this->horses = Horse::orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::orderByIdentifier('asc')->get();
+            $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
             $this->drivers = Driver::all();
             $this->income_accounts = Account::whereHas('account_type', function($q){
                 $q->where('name', 'Income');

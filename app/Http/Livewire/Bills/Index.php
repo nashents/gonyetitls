@@ -284,9 +284,9 @@ class Index extends Component
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->trips = Trip::with('customer','horse','trailers','vehicle','loading_point','offloading_point')->whereYear('start_date',date('Y'))->orderBy('start_date','desc')->get();
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::orderByIdentifier('asc')->get();
         $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first()->id;
         $this->bank_accounts = BankAccount::orderBy('name','asc')->get()->sortBy('account_name');
         $this->accounts = Account::where('account_type_id',1)->orderBy('name','asc')->get();

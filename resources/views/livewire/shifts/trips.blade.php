@@ -77,7 +77,7 @@
                 </td>
                 <td>
                     @if ($trip->horse)
-                        {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                        {{$trip->horse ? $trip->horse->identifier_label : ""}}
                     @endif
                 </td>
                 <td>

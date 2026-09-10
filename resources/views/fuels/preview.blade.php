@@ -51,7 +51,7 @@
                                         <div class="address">{{$container->address}}</div>
                                         <div class="email"><a href="mailto:{{$container->email}}">{{$container->email}}</a></div>
                                     @elseif ($source_horse)
-                                        <h5 class="to">Truck: {{$source_horse->registration_number}} {{$source_horse->fleet_number ? "(".$source_horse->fleet_number.")" : ""}}</h5>
+                                        <h5 class="to">Truck: {{$source_horse->identifier_label}}</h5>
                                     @endif
                                 </div>
                                 <div class="col invoice-details">
@@ -107,7 +107,7 @@
                                     <tr>
                                         <th class="text-center"> <strong>Horse</strong></th>
                                         <td class="text-center">
-                                            {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse->horse_make ? $fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}} {{$fuel->horse ? "| ".$fuel->horse->fleet_number : ""}}   
+                                            {{$fuel->horse ? $fuel->horse->identifier_label : ""}} {{$fuel->horse->horse_make ? $fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}}
                                         </td>
                                     </tr>
                                     @elseif($fuel->asset)
@@ -121,7 +121,7 @@
                                     <tr>
                                         <th class="text-center"> <strong>Vehicle</strong></th>
                                         <td class="text-center">
-                                            {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : ""}} {{$fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : ""}} {{$fuel->vehicle ? "| ".$fuel->vehicle->fleet_number : ""}} 
+                                            {{  $fuel->vehicle ? $fuel->vehicle->identifier_label : "" }} {{$fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : ""}} {{$fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : ""}}
                                         </td>
                                     </tr>
                                     @endif

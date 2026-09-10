@@ -39,13 +39,13 @@
                                 <th class="w-10 text-center line-height-35">Ticket For</th>
                                 <td class="w-20 line-height-35">
                                     @if (isset($ticket->booking->horse))
-                                        Horse |  {{$ticket->booking->horse->registration_number}} {{$ticket->booking->horse->fleet_number ? "(".$ticket->booking->horse->fleet_number.")" : ""}}
+                                        Horse |  {{$ticket->booking->horse->identifier_label}}
                                         @elseif(isset($ticket->booking->vehicle))
-                                        Vehicle |  {{$ticket->booking->vehicle->registration_number}} {{$ticket->booking->vehicle->fleet_number ? "(".$ticket->booking->vehicle->fleet_number.")" : ""}}
+                                        Vehicle |  {{$ticket->booking->vehicle->identifier_label}}
                                         @elseif(isset($ticket->booking->asset))
                                         Asset | {{$ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : ""}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
                                         @elseif(isset($ticket->booking->trailer))
-                                        Trailer | {{$ticket->booking->trailer->registration_number}} {{$ticket->booking->trailer->registration_number ? "(".$ticket->booking->trailer->registration_number.")" : ""}} 
+                                        Trailer | {{$ticket->booking->trailer->identifier_label}}
                                     @endif
                                 </td>
                             </tr>

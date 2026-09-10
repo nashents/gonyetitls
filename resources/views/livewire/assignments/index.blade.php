@@ -51,7 +51,7 @@
                                     <td>{{$assignment->transporter ? $assignment->transporter->name : ""}}</td>
                                     <td>
                                         @if ($assignment->horse)
-                                             {{$assignment->horse->registration_number}}  {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
+                                             {{$assignment->horse->identifier_label}}
                                         @endif
                                     </td>
                                     <td>

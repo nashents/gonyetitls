@@ -81,7 +81,7 @@
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>
                                         <td width="150">
-                                            {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} {{ucfirst($vehicle->registration_number)}}
+                                            {{$vehicle->identifier_label}}
                                         </td>
                                         <td> 
                                             @foreach ($currencies as $currency)

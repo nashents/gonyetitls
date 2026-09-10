@@ -76,7 +76,7 @@ class Index extends Component
         $this->default_currency    = $this->company->currency;
         $this->default_currency_id = $this->company->currency_id;
 
-        $this->horses = Horse::orderBy('registration_number', 'asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
 
         $cogsType = AccountType::where('name', 'Cost Of Goods Sold')->first();
         $opexType = AccountType::where('name', 'Operating Expense')->first();

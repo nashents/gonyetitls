@@ -55,13 +55,13 @@
                             </div>
                             <div class="date"><strong>Equipment: </strong> 
                                  @if (isset($ticket->horse))
-                                    {{ucfirst($ticket->horse->horse_make ? $ticket->horse->horse_make->name : "")}} {{ucfirst($ticket->horse->horse_model ? $ticket->horse->horse_model->name : "" )}} {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")"  : ""}}
+                                    {{ucfirst($ticket->horse->horse_make ? $ticket->horse->horse_make->name : "")}} {{ucfirst($ticket->horse->horse_model ? $ticket->horse->horse_model->name : "" )}} {{$ticket->horse->identifier_label}}
                                 @elseif(isset($ticket->vehicle))
-                                    {{ucfirst($ticket->vehicle->vehicle_make->name)}} {{ucfirst($ticket->vehicle->vehicle_model->name)}} {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")"  : ""}}
+                                    {{ucfirst($ticket->vehicle->vehicle_make->name)}} {{ucfirst($ticket->vehicle->vehicle_model->name)}} {{$ticket->vehicle->identifier_label}}
                                 @elseif(isset($ticket->asset))
                                     {{ucfirst($ticket->asset->product->brand ? $ticket->asset->product->brand->name : "")}} {{ucfirst($ticket->asset->product ? $ticket->asset->product->name : "")}}  {{$ticket->asset->serial_number}}
                                 @elseif(isset($ticket->trailer))
-                                    {{ucfirst($ticket->trailer->make)}} {{ucfirst($ticket->trailer->model)}} {{$ticket->trailer->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")"  : ""}}
+                                    {{ucfirst($ticket->trailer->make)}} {{ucfirst($ticket->trailer->model)}} {{$ticket->trailer->identifier_label}}
                                 @endif
                             </div>
                         </div>

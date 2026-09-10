@@ -41,7 +41,7 @@ class Archived extends Component
     {
         return view('livewire.horses.archived',[
             'horses' => Horse::where('archive','1')
-            ->orderBy('registration_number', 'desc')->paginate(10)
+            ->orderByIdentifier('desc')->paginate(10)
         ]);
     }
 }

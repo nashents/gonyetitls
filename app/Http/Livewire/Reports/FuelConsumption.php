@@ -26,11 +26,11 @@ class FuelConsumption extends Component
         $this->to = now()->format('Y-m-d');
 
         $this->horses = Horse::query()
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
 
         $this->vehicles = Vehicle::query()
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
     }
 

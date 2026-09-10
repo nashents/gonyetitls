@@ -269,9 +269,9 @@
                                                                                 @endif >
                                                                                 {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$trip->customer ? $trip->customer->name : ""}}
                                                                             </option> 
@@ -282,9 +282,9 @@
                                                                                 @endif >
                                                                                  {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$trip->customer ? $trip->customer->name : ""}}
                                                                             </option>
@@ -296,9 +296,9 @@
                                                                             @endif >
                                                                             {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
                                                                             @if ($trip->horse)
-                                                                                {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                             @elseif($trip->vehicle)
-                                                                                {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                             @endif
                                                                             {{$trip->customer ? $trip->customer->name : ""}}
                                                                         </option>
@@ -390,9 +390,9 @@
                                                                             >
                                                                          {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$trip->customer ? $trip->customer->name : ""}}
                                                                         </option> 
@@ -404,9 +404,9 @@
                                                                                 >
                                                                              {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$trip->customer ? $trip->customer->name : ""}}
                                                                             </option>
@@ -419,9 +419,9 @@
                                                                             >
                                                                              {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$trip->customer ? $trip->customer->name : ""}}
                                                                         </option>
@@ -853,9 +853,9 @@
                                                                                 >
                                                                                 {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$transport_order->customer ? $transport_order->customer->name : ""}}
                                                                             </option> 
@@ -867,9 +867,9 @@
                                                                                 >
                                                                                 {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                             {{$transport_order->customer ? $transport_order->customer->name : ""}}
                                                                             </option>
@@ -882,9 +882,9 @@
                                                                             >
                                                                             {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
                                                                             @if ($trip->horse)
-                                                                                {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                             @elseif($trip->vehicle)
-                                                                                {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                             @endif
                                                                         {{$transport_order->customer ? $transport_order->customer->name : ""}}
                                                                         </option>
@@ -980,9 +980,9 @@
                                                                                 >
                                                                                 {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                                 {{$transport_order->customer ? $transport_order->customer->name : ""}}
                                                                             </option> 
@@ -994,9 +994,9 @@
                                                                                 >
                                                                                 {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
                                                                                 @if ($trip->horse)
-                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                    {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                                 @elseif($trip->vehicle)
-                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                    {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                                 @endif
                                                                             {{$transport_order->customer ? $transport_order->customer->name : ""}}
                                                                             </option>
@@ -1009,9 +1009,9 @@
                                                                             >
                                                                             {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
                                                                             @if ($trip->horse)
-                                                                                {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                                                             @elseif($trip->vehicle)
-                                                                                {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                {{ $trip->vehicle ? $trip->vehicle->identifier_label : "" }}
                                                                             @endif
                                                                         {{$transport_order->customer ? $transport_order->customer->name : ""}}
                                                                         </option>

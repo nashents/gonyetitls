@@ -124,11 +124,11 @@ class Index extends Component
         }
 
         if ($value == "horse") {
-            $this->horses =  Horse::where('archive',0)->orderBy('registration_number','asc')->get();
+            $this->horses =  Horse::where('archive',0)->orderByIdentifier('asc')->get();
         }elseif($value == "vehicle"){
-            $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
+            $this->vehicles = Vehicle::where('archive',0)->orderByIdentifier('asc')->get();
         }elseif($value == "trailer"){
-            $this->trailers = Trailer::where('archive',0)->orderBy('registration_number','asc')->get();
+            $this->trailers = Trailer::where('archive',0)->orderByIdentifier('asc')->get();
         }
 
     }
@@ -332,9 +332,9 @@ class Index extends Component
     
         $this->fitness_id = $fitness->id;
 
-        $this->horses =  Horse::where('archive',0)->orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::where('archive',0)->orderBy('registration_number','asc')->get();
+        $this->horses =  Horse::where('archive',0)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::where('archive',0)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::where('archive',0)->orderByIdentifier('asc')->get();
 
         $this->dispatchBrowserEvent('show-fitnessEditModal');
 

@@ -50,11 +50,11 @@
                                 <th class="w-10 text-center line-height-35">Inspection For</th>
                                 <td class="w-20 line-height-35">
                                         @if ($checklist->horse)
-                                            Horse | {{$checklist->horse->registration_number}} {{$checklist->horse->fleet_number ?  "(".$checklist->horse->fleet_number.")" : ""}}
+                                            Horse | {{ $checklist->horse->identifier_label }}
                                         @elseif($checklist->vehicle)
-                                            Vehicle | {{$checklist->vehicle->registration_number}} {{$checklist->vehicle->fleet_number ?  "(".$checklist->vehicle->fleet_number.")" : ""}}
+                                            Vehicle | {{ $checklist->vehicle->identifier_label }}
                                         @elseif($checklist->trailer)
-                                            Trailer | {{$checklist->trailer ? $checklist->trailer->registration_number : ""}} {{$checklist->trailer->fleet_number ?  "(".$checklist->trailer->fleet_number.")" : ""}}
+                                            Trailer | {{ $checklist->trailer ? $checklist->trailer->identifier_label : "" }}
                                         @endif
                                         
                                 </td>

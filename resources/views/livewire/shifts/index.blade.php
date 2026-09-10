@@ -79,7 +79,7 @@
                                             <select wire:model.debounce.300ms="filter_horse_id" class="form-control" aria-label="..." >
                                                 <option value="">Select Horse</option>
                                                 @foreach ($horses as $horse)
-                                                    <option value="{{ $horse->id }}"  >{{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} {{ $horse->registration_number }}  </option>
+                                                    <option value="{{ $horse->id }}"  >{{ $horse->identifier_label }}  </option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -93,7 +93,7 @@
                                             <select wire:model.debounce.300ms="filter_vehicle_id" class="form-control" aria-label="..." >
                                                 <option value="">Select Vehicle</option>
                                                 @foreach ($vehicles as $vehicle)
-                                                    <option value="{{ $vehicle->id }}"  >{{ $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "" }} {{ $vehicle->registration_number }}  </option>
+                                                    <option value="{{ $vehicle->id }}"  >{{ $vehicle->identifier_label }}  </option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -368,9 +368,9 @@
                                                         <strong>Driver:</strong>  {{$shift->driver->employee ? $shift->driver->employee->name : ""}} {{$shift->driver->employee ? $shift->driver->employee->surname : ""}} <br>        
                                                     @endif
                                                     @if ($shift->horse)
-                                                        <strong>Horse:</strong>  {{$shift->horse->registration_number}} {{$shift->horse->fleet_number ? "(".$shift->horse->fleet_number.")" : ""}} <br>
+                                                        <strong>Horse:</strong>  {{$shift->horse->identifier_label}} <br>
                                                     @elseif($shift->vehicle)
-                                                        <strong>Vehicle:</strong> {{$shift->vehicle->registration_number}} {{$shift->vehicle->fleet_number ? "(".$shift->vehicle->fleet_number.")" : ""}}
+                                                        <strong>Vehicle:</strong> {{$shift->vehicle->identifier_label}}
                                                     @endif
                                                     @if ($shift->loading_points->isNotEmpty() && $shift->loading_points->count()>0)
                                                         <br>
@@ -659,7 +659,7 @@
                                             <option value="">Select Horse </option>
                                             @if (!is_null($selectedTransporter))
                                             @foreach ($horses as $horse)
-                                            <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} </option>
+                                            <option value="{{$horse->id}}"> {{$horse->identifier_label}} </option>
                                             @endforeach
                                             @endif
 
@@ -675,7 +675,7 @@
                                             <option value="">Select Vehicle </option>
                                             @if (!is_null($selectedTransporter))
                                                 @foreach ($vehicles as $vehicle)
-                                                    <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
+                                                    <option value="{{$vehicle->id}}"> {{$vehicle->identifier_label}} </option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -1172,7 +1172,7 @@
                                             <option value="">Select Source Truck</option>
                                             @foreach ($horses as $horse)
                                                 @continue($horse->id == $selectedHorse)
-                                                <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                             @endforeach
                                         </select>
                                         @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1461,7 +1461,7 @@
                                             <option value="">Select Horse </option>
                                             @if (!is_null($selectedTransporter))
                                             @foreach ($horses as $horse)
-                                            <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} </option>
+                                            <option value="{{$horse->id}}"> {{$horse->identifier_label}} </option>
                                             @endforeach
                                             @endif
 
@@ -1477,7 +1477,7 @@
                                             <option value="">Select Vehicle </option>
                                             @if (!is_null($selectedTransporter))
                                             @foreach ($vehicles as $vehicle)
-                                            <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
+                                            <option value="{{$vehicle->id}}"> {{$vehicle->identifier_label}} </option>
                                             @endforeach
                                             @endif
 
@@ -2323,7 +2323,7 @@
                                             <option value="">Select Source Truck</option>
                                             @foreach ($horses as $horse)
                                                 @continue($horse->id == $selectedHorse)
-                                                <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
                                             @endforeach
                                         </select>
                                         @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror

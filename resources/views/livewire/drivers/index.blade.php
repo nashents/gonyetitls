@@ -140,7 +140,7 @@
                                             @if ($assignments && $assignments->count() > 0)
                                                 <br>
                                                 @foreach ($assignments as $assignment)
-                                                    <small> <strong>Assigned To:</strong> {{$assignment->horse ? $assignment->horse->registration_number : ""}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}</small>
+                                                    <small> <strong>Assigned To:</strong> {{$assignment->horse ? $assignment->horse->identifier_label : ""}}</small>
                                                 @endforeach
                                             @endif
                                         </td>

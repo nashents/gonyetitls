@@ -202,9 +202,9 @@ class DeliveryNotes extends Component
         $this->employee =  $this->user->employee;
         $this->company = $this->employee->company;
 
-        $this->currency = Currency::with('trips')->find($this->trip->currency_id); 
-        $this->currency_id = $this->trip->currency_id; 
-        $this->currencies = Currency::with('trips')->orderBy('name','asc')->get(); 
+        $this->currency = Currency::find($this->trip->currency_id);
+        $this->currency_id = $this->trip->currency_id;
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get(); 
         $this->units_of_measure = $this->trip->units_of_measure; 
 

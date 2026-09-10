@@ -62,7 +62,7 @@
                             <div class="row contacts">
                                 <div class="col invoice-to" >
                                     <div class="text-gray-light">Statement For:</div>
-                                    <h6 class="to">Horse: {{$selected_horse->registration_number}} {{$selected_horse->fleet_number ? $selected_horse->fleet_number: ""}} {{$selected_horse->horse_make ? $selected_horse->horse_make->name: ""}} {{$selected_horse->horse_model ? $selected_horse->horse_model->name: ""}}</h6>
+                                    <h6 class="to">Horse: {{$selected_horse->identifier_label}} {{$selected_horse->horse_make ? $selected_horse->horse_make->name: ""}} {{$selected_horse->horse_model ? $selected_horse->horse_model->name: ""}}</h6>
                                     <h6 class="to">Trailer(s): {{$selected_horse->name}}</h6>
                                     <h6 class="to">Driver: {{$selected_horse->name}}</h6>
                                 </div>

@@ -54,7 +54,7 @@ class Reports extends Component
         if (isset($this->from) && isset($this->to)) {
             $this->horses = Horse::query()->whereBetween('created_at',[$this->from, $this->to] )->get();
         }else{
-            $this->horses = Horse::query()->orderBy('registration_number','asc')->get();
+            $this->horses = Horse::query()->orderByIdentifier('asc')->get();
         }
         return view('livewire.horses.reports',[
             'horses' => $this->horses

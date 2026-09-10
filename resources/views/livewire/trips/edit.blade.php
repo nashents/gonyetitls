@@ -315,7 +315,7 @@
                                                         {{ $initial_trip->customer->name ? " | ".$initial_trip->customer->name : "" }} 
                                                     @endif 
                                                     @if ($initial_trip->horse)
-                                                        {{ $initial_trip->horse->registration_number ? " | ".$initial_trip->horse->registration_number : ""}} {{ $initial_trip->horse->fleet_number ? " | ".$initial_trip->horse->fleet_number : ""}}
+                                                        {{ $initial_trip->horse->identifier_label }}
                                                     @endif
                                                     @if ($from = $this->getDestination($initial_trip->from))
                                                         @if ($from)
@@ -2059,7 +2059,7 @@
                                                    <option value="">Select Source Truck</option>
                                                    @foreach ($horses as $horse)
                                                        @continue($horse->id == $selectedHorse)
-                                                       <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                       <option value="{{$horse->id}}">{{ $horse->identifier_label }}</option>
                                                    @endforeach
                                                </select>
                                                @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror

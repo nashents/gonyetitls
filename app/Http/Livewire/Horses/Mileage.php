@@ -20,7 +20,7 @@ class Mileage extends Component
     
 
     public function mount(){
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
     }
 
  
@@ -85,7 +85,7 @@ class Mileage extends Component
 
     public function render()
     {
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
         return view('livewire.horses.mileage',[
             'horses' => $this->horses
         ]);

@@ -69,7 +69,7 @@ class FanTrackerVehicleMatcher
                             continue;
                         }
 
-                        IntegrationMapping::updateOrCreate(
+                        IntegrationMapping::updateOrCreateMapping(
                             [
                                 'company_integration_id' => $integration->id,
                                 'entity_type'             => $entityType,

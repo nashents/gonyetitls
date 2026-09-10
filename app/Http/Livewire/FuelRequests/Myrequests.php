@@ -88,8 +88,8 @@ class Myrequests extends Component
         $this->fuel_balance = Auth::user()->employee->allocations->where('status',1)->sum('balance');
         $this->allocations = Allocation::where('employee_id',Auth::user()->employee->id)->get();
        
-        $this->horses = Horse::where('archive',0)->orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
+        $this->horses = Horse::where('archive',0)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::where('archive',0)->orderByIdentifier('asc')->get();
         $this->employees = Employee::where('archive',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->assets = Asset::where('disposed',0)->latest()->get();
     }

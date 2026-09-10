@@ -12,7 +12,7 @@ class Age extends Component
     public $trailers;
 
     public function mount(){
-        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::orderByIdentifier('asc')->get();
     }
 
     public function exportTrailersAgeCSV(Excel $excel){

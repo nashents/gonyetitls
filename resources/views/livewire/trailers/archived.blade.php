@@ -45,7 +45,7 @@
                                         <td>{{$trailer->trailer_number}}</td>
                                         <td>{{$trailer->transporter ? $trailer->transporter->name : ""}}</td>
                                         <td>{{$trailer->make}} {{$trailer->model}}</td>
-                                        <td>{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</td>
+                                        <td>{{$trailer->identifier_label}}</td>
                                         <td>{{$trailer->year}}</td>
                                         <td><span class="badge bg-{{$trailer->status == 1 ? "success" : "danger"}}">{{$trailer->status == 1 ? "Available" : "Unavailable"}}</span></td>
                                         <td><span class="badge bg-{{$trailer->service == 0 ? "success" : "danger"}}">{{$trailer->service == 0 ? "Fit for use" : "In Service"}}</span></td>

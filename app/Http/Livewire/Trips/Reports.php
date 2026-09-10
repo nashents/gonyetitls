@@ -96,7 +96,7 @@ class Reports extends Component
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
         $this->currencies = Currency::latest()->get();
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->brokers = Broker::orderBy('name','asc')->get();
         $this->trip_types = TripType::orderBy('name','asc')->get();

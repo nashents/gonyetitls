@@ -13,7 +13,7 @@ class Age extends Component
     public $horses;
 
     public function mount(){
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
     }
 
     public function exportHorsesAgeCSV(Excel $excel){

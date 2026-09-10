@@ -40,7 +40,7 @@ class Archived extends Component
     public function render()
     {
         return view('livewire.trailers.archived',[
-            'trailers' => Trailer::where('archive','1')->orderBy('registration_number', 'desc')->paginate(10)
+            'trailers' => Trailer::where('archive','1')->orderByIdentifier('desc')->paginate(10)
         ]);
     }
 }

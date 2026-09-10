@@ -85,7 +85,7 @@
                                     @if ($fuel->container)
                                         {{ucfirst($fuel->container->name)}}
                                     @elseif ($fuel->source_horse)
-                                        {{$fuel->source_horse->registration_number}} {{$fuel->source_horse->fleet_number ? "(".$fuel->source_horse->fleet_number.")" : ""}}
+                                        {{$fuel->source_horse->identifier_label}}
                                     @endif
                                 </td>
                             </tr>

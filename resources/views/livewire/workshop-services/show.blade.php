@@ -35,11 +35,11 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Horse</th>
-                                <td class="w-20 line-height-35">{{$workshop_service->horse->registration_number}} {{$workshop_service->horse->fleet_number ? "(".$workshop_service->horse->fleet_number.")" : ""}} {{$workshop_service->horse->make ? $workshop_service->horse->make->name :""}} {{$workshop_service->horse->model ? $workshop_service->horse->model->name :""}}</td>
+                                <td class="w-20 line-height-35">{{$workshop_service->horse->identifier_label}} {{$workshop_service->horse->make ? $workshop_service->horse->make->name :""}} {{$workshop_service->horse->model ? $workshop_service->horse->model->name :""}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Trailer</th>
-                                <td class="w-20 line-height-35">{{$workshop_service->trailer->registration_number}} {{$workshop_service->trailer->fleet_number ? "(".$workshop_service->trailer->fleet_number.")" : ""}}</td>
+                                <td class="w-20 line-height-35">{{$workshop_service->trailer->identifier_label}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Day(s)</th>

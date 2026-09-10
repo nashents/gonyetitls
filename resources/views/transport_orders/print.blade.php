@@ -167,7 +167,7 @@
                                         <th class="text-center"><strong>Horse</strong></th>
                                         <td class="text-center">
                                             @if ($trip->horse)
-                                                {{$trip->horse->horse_make ? $trip->horse->horse_make->name : "" }}  {{$trip->horse->horse_model ? $trip->horse->horse_model->name : "" }} {{$trip->horse ? $trip->horse->registration_number : "" }}  {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }}
+                                                {{$trip->horse->horse_make ? $trip->horse->horse_make->name : "" }}  {{$trip->horse->horse_model ? $trip->horse->horse_model->name : "" }} {{ $trip->horse ? $trip->horse->identifier_label : "" }}
                                             @endif
                                         </td>
                                     </tr>
@@ -176,7 +176,7 @@
                                                 <th class="text-center"> <strong>Trailer(s)</strong></th>
                                                 <td class="text-center">
                                                     @foreach ($trip->trailers as $trailer)
-                                                        {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} <br>
+                                                        {{$trailer->make}} {{$trailer->model}} {{ $trailer->identifier_label }} <br>
                                                     @endforeach
                                                 </td>
                                             </tr>

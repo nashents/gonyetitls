@@ -184,8 +184,8 @@ class Index extends Component
         $this->company = Auth::user()->employee->company;
         $this->fuel_filter = "created_at";
 
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
         $this->assets = Asset::query()
             ->join('products', 'assets.product_id', '=', 'products.id')
             ->select('assets.*')
@@ -224,7 +224,7 @@ class Index extends Component
             ->where('archive', 0);
             // Order by registration number
             $this->horses = $query
-                ->orderBy('registration_number', 'asc')
+                ->orderByIdentifier('asc')
                 ->get();
     }
 
@@ -238,7 +238,7 @@ class Index extends Component
             ->where('archive', 0);
             // Order by registration number (ascending)
             $this->vehicles = $query
-                ->orderBy('registration_number', 'asc')
+                ->orderByIdentifier('asc')
                 ->get();
     }
     public function updatedSearchEmployee()

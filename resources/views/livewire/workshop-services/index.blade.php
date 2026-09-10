@@ -64,8 +64,8 @@
                                     <td>{{$workshop_service->workshop_service_number}}</td>
                                     {{-- <td>{{$workshop_service->user ? $workshop_service->user->name : ""}} {{$workshop_service->user ? $workshop_service->user->surname : ""}}</td> --}}
                                     <td>{{$workshop_service->transporter ? $workshop_service->transporter->name : ""}}</td>
-                                    <td>{{$workshop_service->horse ? $workshop_service->horse->registration_number : ""}} {{$workshop_service->horse->fleet_number ? "(".$workshop_service->horse->fleet_number.")" : ""}}</td>
-                                    <td>{{$workshop_service->trailer ? $workshop_service->trailer->registration_number : ""}} {{$workshop_service->trailer->fleet_number ? "(".$workshop_service->trailer->fleet_number.")" : ""}}</td>
+                                    <td>{{$workshop_service->horse ? $workshop_service->horse->identifier_label : ""}}</td>
+                                    <td>{{$workshop_service->trailer ? $workshop_service->trailer->identifier_label : ""}}</td>
                                     <td>{{$workshop_service->load_status}}</td>
                                     <td>{{$workshop_service->start_date}}</td>
                                     <td>{{$workshop_service->end_date}}</td>
@@ -179,7 +179,7 @@
                                 <select wire:model.debounce.300ms="horse_id" class="form-control" >
                                     <option value="">Select Horse</option>
                                     @foreach ($horses as $horse)
-                                    <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->make ? $horse->make->name :""}} {{$horse->model ? $horse->model->name :""}}</option>
+                                    <option value="{{$horse->id}}">{{$horse->identifier_label}} {{$horse->make ? $horse->make->name :""}} {{$horse->model ? $horse->model->name :""}}</option>
                                     @endforeach
                                     
                                 </select>
@@ -193,7 +193,7 @@
                                     <option value="">Select Trailer</option>
                                   
                                     @foreach ($trailers as $trailer)
-                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                    <option value="{{$trailer->id}}">{{$trailer->identifier_label}}</option>
                                     @endforeach
                                    
                                 </select>
@@ -337,7 +337,7 @@
                                 <select wire:model.debounce.300ms="horse_id" class="form-control" >
                                     <option value="">Select Horse</option>
                                     @foreach ($horses as $horse)
-                                    <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->make ? $horse->make->name :""}} {{$horse->model ? $horse->model->name :""}}</option>
+                                    <option value="{{$horse->id}}">{{$horse->identifier_label}} {{$horse->make ? $horse->make->name :""}} {{$horse->model ? $horse->model->name :""}}</option>
                                     @endforeach
                                     
                                 </select>
@@ -351,7 +351,7 @@
                                     <option value="">Select Trailer</option>
                                   
                                     @foreach ($trailers as $trailer)
-                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                    <option value="{{$trailer->id}}">{{$trailer->identifier_label}}</option>
                                     @endforeach
                                    
                                 </select>

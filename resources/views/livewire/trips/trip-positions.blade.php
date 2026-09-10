@@ -77,7 +77,7 @@
                                                     @forelse ($trip->trailers as $trailer)
                                                         <div class="detail-row">
                                                             <span class="label">Trailer{{ !$loop->first ? ' #' . ($loop->index + 1) : '' }}</span>
-                                                            <span class="value">{{ $trailer->fleet_number }} - {{ $trailer->registration_number }} {{ $trailer->trailer_type?->name }}</span>
+                                                            <span class="value">{{ $trailer->identifier_label }} {{ $trailer->trailer_type?->name }}</span>
                                                         </div>
                                                     @empty
                                                         <div class="empty-state">No trailers on this trip.</div>

@@ -77,7 +77,7 @@ class Index extends Component
             ->where('transporter_id', $id)
             ->where('status', 1)
             ->where('service', 0)
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
 
         
@@ -131,7 +131,7 @@ class Index extends Component
             ->where('transporter_id', $this->selectedTransporter)
             ->where('status', 1)
             ->where('service', 0)
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
 
         $this->starting_odometer = $assignment->starting_odometer;

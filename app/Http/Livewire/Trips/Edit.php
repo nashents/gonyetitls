@@ -619,13 +619,13 @@ class Edit extends Component
                 $this->trip_ref = $initial_trip->trip_ref;
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->trailers = Trailer::where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$initial_trip->transporter_id)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
@@ -1032,13 +1032,13 @@ class Edit extends Component
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->trailers = Trailer::where('transporter_id',$id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
@@ -1048,17 +1048,17 @@ class Edit extends Component
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->trailers = Trailer::where('transporter_id',$id)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
                 ->withAggregate('employee','name')
                 ->where('status', 1)
@@ -1325,13 +1325,13 @@ class Edit extends Component
         ->where('service',0)
         ->where('archive',0)
         ->orWhere('id',$this->trip->horse_id)
-        ->orderBy('registration_number','asc')->get();
+        ->orderByIdentifier('asc')->get();
 
         $this->vehicles = Vehicle::where('status', 1)
         ->where('service',0)
         ->where('archive',0)
         ->orWhere('id',$this->trip->vehicle_id)
-        ->orderBy('registration_number','asc')->get();
+        ->orderByIdentifier('asc')->get();
 
         foreach ($this->trip->truck_stops as $truck_stop) {
             $this->truck_stop_id[] = $truck_stop->id;
@@ -1350,10 +1350,10 @@ class Edit extends Component
             ->where('status', 1)
             ->where('archive',0)
             ->orWhereIn('id',$this->trailer_id)
-            ->orderBy('registration_number','asc')->get();
+            ->orderByIdentifier('asc')->get();
         }else{
             $this->trailers = Trailer::where('service',0)
-            ->orderBy('registration_number','asc')->get();
+            ->orderByIdentifier('asc')->get();
         }
        
 
@@ -1563,12 +1563,12 @@ class Edit extends Component
             if($status == True){
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
               
             }else{
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                
             }
 
@@ -1774,13 +1774,13 @@ class Edit extends Component
              
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                
             }else{
                 
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                
             }
 
@@ -1792,13 +1792,13 @@ class Edit extends Component
             if($status == True){
                
                 $this->trailers = Trailer::where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                
             }else{
               
                 $this->trailers = Trailer::where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
               
             }
 
@@ -1833,13 +1833,13 @@ class Edit extends Component
                
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$shift->transporter_id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$shift->transporter_id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->trailers = Trailer::where('transporter_id',$shift->transporter_id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$shift->transporter_id)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
@@ -2204,7 +2204,7 @@ class Edit extends Component
 
         // Order by registration number
         $this->horses = $query
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
         
         $query = Vehicle::query()
@@ -2225,7 +2225,7 @@ class Edit extends Component
 
         // Order by registration number
         $this->vehicles = $query
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
 
     }
@@ -3848,7 +3848,7 @@ class Edit extends Component
 
         // Order by registration number
         $this->horses = $query
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
     }
     
@@ -3875,7 +3875,7 @@ class Edit extends Component
 
         // Order by registration number (ascending)
         $this->vehicles = $query
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
     }
         public function updatedSearchDriver()
@@ -3938,7 +3938,7 @@ class Edit extends Component
 
             // Sort by registration number
             $this->trailers = $query
-                ->orderBy('registration_number', 'asc')
+                ->orderByIdentifier('asc')
                 ->get();
         }
     
@@ -4087,13 +4087,13 @@ class Edit extends Component
                 if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                     $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                     ->where('archive',0)
-                    ->orderBy('registration_number','asc')->get();
+                    ->orderByIdentifier('asc')->get();
                 }else{
                     $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                     ->where('status', 1)
                     ->where('service',0)
                     ->where('archive',0)
-                    ->orderBy('registration_number','asc')->get();
+                    ->orderByIdentifier('asc')->get();
                 }
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
@@ -4105,7 +4105,7 @@ class Edit extends Component
                   
                     $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                     ->where('archive',0)
-                    ->orderBy('registration_number','asc')->get();
+                    ->orderByIdentifier('asc')->get();
            
                 }else{
                   
@@ -4113,7 +4113,7 @@ class Edit extends Component
                     ->where('status', 1)
                     ->where('service',0)
                     ->where('archive',0)
-                    ->orderBy('registration_number','asc')->get();
+                    ->orderByIdentifier('asc')->get();
                  
                 }
                 $this->dispatchBrowserEvent('alert',[
@@ -4126,7 +4126,7 @@ class Edit extends Component
                    
                     $this->trailers = Trailer::where('transporter_id',$this->selectedTransporter)
                     ->where('archive',0)
-                    ->orderBy('registration_number','asc')->get();
+                    ->orderByIdentifier('asc')->get();
                    
                 }else{
                    
@@ -4134,7 +4134,7 @@ class Edit extends Component
                     ->where('status', 1)
                     ->where('service',0)
                     ->where('archive',0)
-                    ->orderBy('registration_number','asc')->get();
+                    ->orderByIdentifier('asc')->get();
                     
                 }
                 $this->dispatchBrowserEvent('alert',[

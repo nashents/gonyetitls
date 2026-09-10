@@ -49,9 +49,9 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->vehicles = Vehicle::where('archive', 0)->where('status',1)->orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::where('archive', 0)->where('status', 1)->orderBy('registration_number','asc')->get();
-        $this->horses = Horse::where('archive', 0)->where('status',1)->orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::where('archive', 0)->where('status',1)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::where('archive', 0)->where('status', 1)->orderByIdentifier('asc')->get();
+        $this->horses = Horse::where('archive', 0)->where('status',1)->orderByIdentifier('asc')->get();
     }
 
     private function resetInputFields(){

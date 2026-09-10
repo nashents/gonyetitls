@@ -49,7 +49,7 @@
                                         <option value="">All Horses</option>
                                         @foreach($horses as $horse)
                                             <option value="{{ $horse->id }}">
-                                                {{ $horse->registration_number }} ({{ $horse->fleet_number }})
+                                                {{ $horse->identifier_label }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -65,7 +65,7 @@
                                         <option value="">All Vehicles</option>
                                         @foreach($vehicles as $vehicle)
                                             <option value="{{ $vehicle->id }}">
-                                                {{ $vehicle->registration_number }} ({{ $vehicle->fleet_number }})
+                                                {{ $vehicle->identifier_label }}
                                             </option>
                                         @endforeach
                                     </select>

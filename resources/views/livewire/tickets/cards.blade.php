@@ -112,7 +112,7 @@
                                                         <select wire:model.debounce.300ms="selectedHorse" class="form-control" aria-label="..." >
                                                             <option value="">Select Horse</option>
                                                             @foreach ($horses as $horse)
-                                                                <option value="{{ $horse->id }}">{{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }}</option>
+                                                                <option value="{{ $horse->id }}">{{ $horse->identifier_label }}</option>
                                                             @endforeach
                                                         </select>
                                                     @elseif($filter == "vehicle")
@@ -122,7 +122,7 @@
                                                         <select wire:model.debounce.300ms="selectedVehicle" class="form-control" aria-label="..." >
                                                             <option value="">Select Vehicle</option>
                                                             @foreach ($vehicles as $vehicle)
-                                                                <option value="{{ $vehicle->id }}">{{ $vehicle->registration_number }} {{ $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "" }}</option>
+                                                                <option value="{{ $vehicle->id }}">{{ $vehicle->identifier_label }}</option>
                                                             @endforeach
                                                         </select>
                                                     @elseif($filter == "asset")
@@ -144,7 +144,7 @@
                                                         <select wire:model.debounce.300ms="selectedTrailer" class="form-control" aria-label="..." >
                                                             <option value="">Select Trailer</option>
                                                             @foreach ($trailers as $trailer)
-                                                                <option value="{{ $trailer->id }}">{{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }}</option>
+                                                                <option value="{{ $trailer->id }}">{{ $trailer->identifier_label }}</option>
                                                             @endforeach
                                                         </select>
                                                     @endif
@@ -205,13 +205,13 @@
                                         </td>
                                         <td>
                                             @if (isset($ticket->booking->horse))
-                                                Horse |  {{$ticket->booking->horse->registration_number}} {{$ticket->booking->horse->fleet_number ? "(".$ticket->booking->horse->fleet_number.")" : ""}}
+                                                Horse |  {{$ticket->booking->horse->identifier_label}}
                                                 @elseif(isset($ticket->booking->vehicle))
-                                                Vehicle |  {{$ticket->booking->vehicle->registration_number}} {{$ticket->booking->vehicle->fleet_number ? "(".$ticket->booking->vehicle->fleet_number.")" : ""}}
+                                                Vehicle |  {{$ticket->booking->vehicle->identifier_label}}
                                                 @elseif(isset($ticket->booking->asset))
                                                 Asset | {{$ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : ""}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
                                                 @elseif(isset($ticket->booking->trailer))
-                                                Trailer | {{$ticket->booking->trailer->registration_number}} {{$ticket->booking->trailer->registration_number ? "(".$ticket->booking->trailer->registration_number.")" : ""}} 
+                                                Trailer | {{$ticket->booking->trailer->identifier_label}}
                                             @endif
                                            </td>
                                            <td>

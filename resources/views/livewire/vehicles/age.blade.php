@@ -47,7 +47,7 @@
                                     @foreach ($vehicles as $vehicle)
                                   <tr>
                                     <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
-                                    <td>{{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</td>
+                                    <td>{{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->identifier_label}}</td>
                                     <td>{{$vehicle->year}}</td>
                                     @php
                                     if (isset($vehicle->year)) {

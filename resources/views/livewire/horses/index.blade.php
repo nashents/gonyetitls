@@ -172,8 +172,7 @@
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                         <td>{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}}</td>
                                         <td width="150">
-                                            {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{ucfirst($horse->registration_number)}}
-                                            
+                                            {{$horse->identifier_label}}
                                         </td>
                                         <td> 
                                             @foreach ($currencies as $currency)

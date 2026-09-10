@@ -361,16 +361,13 @@ class Show extends Component
 
         if ($this->ticket->horse) {
             $equipment = $this->ticket->horse;
-            $this->equipment = $this->ticket->horse->registration_number . 
-                ($this->ticket->horse->fleet_number ? " (" . $this->ticket->horse->fleet_number . ")" : "");
+            $this->equipment = $this->ticket->horse->identifier_label;
         } elseif ($this->ticket->trailer) {
             $equipment = $this->ticket->trailer;
-            $this->equipment = $this->ticket->trailer->registration_number . 
-                ($this->ticket->trailer->fleet_number ? " (" . $this->ticket->trailer->fleet_number . ")" : "");
+            $this->equipment = $this->ticket->trailer->identifier_label;
         } elseif ($this->ticket->vehicle) {
             $equipment = $this->ticket->vehicle;
-            $this->equipment = $this->ticket->vehicle->registration_number . 
-                ($this->ticket->vehicle->fleet_number ? " (" . $this->ticket->vehicle->fleet_number . ")" : "");
+            $this->equipment = $this->ticket->vehicle->identifier_label;
         } elseif ($this->ticket->asset) {
             $equipment = $this->ticket->asset;
             $product_name = $this->ticket->asset->product?->name ?? "";

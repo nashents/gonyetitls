@@ -65,8 +65,8 @@ class Reports extends Component
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
         $this->drivers = Driver::with('employee')->get()->sortBy('driver.employee.name');
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
 

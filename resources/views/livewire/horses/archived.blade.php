@@ -52,7 +52,7 @@
                                         <td>{{$horse->horse_number}}</td>
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                         <td>{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}}</td>
-                                        <td>{{ucfirst($horse->registration_number)}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</td>
+                                        <td>{{$horse->identifier_label}}</td>
                               
                                         <td>
                                             {{$horse->mileage ? $horse->mileage."Kms" : ""}}

@@ -95,13 +95,13 @@
                                         </td>
                                         <td>
                                            @if (isset($booking->horse))
-                                                Horse |  {{$booking->horse->registration_number}} {{$booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : ""}}
+                                                Horse |  {{ $booking->horse->identifier_label }}
                                                 @elseif(isset($booking->vehicle))
-                                                Vehicle |  {{$booking->vehicle->registration_number}} {{$booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : ""}}
+                                                Vehicle |  {{ $booking->vehicle->identifier_label }}
                                                 @elseif(isset($booking->asset))
                                                 Asset | {{$booking->asset->product->brand ? $booking->asset->product->brand->name : ""}} {{ucfirst($booking->asset->product ? $booking->asset->product->name : "")}}  {{$booking->asset->serial_number}}
                                                 @elseif(isset($booking->trailer))
-                                                Trailer | {{$booking->trailer->registration_number}} {{$booking->trailer->registration_number ? "(".$booking->trailer->registration_number.")" : ""}} 
+                                                Trailer | {{$booking->trailer->identifier_label}}
                                             @endif
                                         </td>
                                            <td>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}}</td>

@@ -49,7 +49,7 @@
                                         <td>{{$vehicle->vehicle_number}}</td>
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>
-                                        <td>{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</td>
+                                        <td>{{$vehicle->identifier_label}}</td>
                                         <td>{{$vehicle->mileage ? $vehicle->mileage."Kms" : ""}}</td>
                                         <td>{{$vehicle->next_service ? $vehicle->next_service."Kms" : ""}}</td>
                                         <td><span class="badge bg-{{$vehicle->service == 0 ? "success" : "danger"}}">{{$vehicle->service == 0 ? "Fit for use" : "In Service"}}</span></td>

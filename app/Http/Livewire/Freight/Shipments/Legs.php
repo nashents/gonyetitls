@@ -221,10 +221,10 @@ class Legs extends Component
 
         $this->dispatch_horses = Horse::where('transporter_id', $id)
             ->where('status', 1)->where('service', 0)->where('archive', 0)
-            ->orderBy('registration_number', 'asc')->get();
+            ->orderByIdentifier('asc')->get();
         $this->dispatch_vehicles = Vehicle::where('transporter_id', $id)
             ->where('status', 1)->where('service', 0)->where('archive', 0)
-            ->orderBy('registration_number', 'asc')->get();
+            ->orderByIdentifier('asc')->get();
         $this->dispatch_drivers = Driver::with('employee:id,name,surname')
             ->where('transporter_id', $id)->where('archive', 0)->get();
     }

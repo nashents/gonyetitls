@@ -95,9 +95,9 @@
                                                 <td>{{ucfirst($fuel_request->employee->name)}} {{ucfirst($fuel_request->employee->surname)}}</td>
                                                 <td>
                                                     @if ($fuel_request->horse)
-                                                         Horse | {{$fuel_request->horse ? $fuel_request->horse->registration_number : ""}} {{$fuel_request->horse->fleet_number ? "(".$fuel_request->horse->fleet_number.")" : ""}}  
+                                                         Horse | {{$fuel_request->horse ? $fuel_request->horse->identifier_label : ""}}
                                                     @elseif($fuel_request->vehicle)
-                                                         Vehicle | {{  $fuel_request->vehicle ? $fuel_request->vehicle->registration_number : "" }} {{$fuel_request->vehicle->fleet_number ? "(".$fuel_request->vehicle->fleet_number.")" : ""}}  
+                                                         Vehicle | {{ $fuel_request->vehicle ? $fuel_request->vehicle->identifier_label : "" }}
                                                     @elseif($fuel_request->asset)
                                                          Asset | {{$fuel_request->asset->product->brand ? $fuel_request->asset->product->brand->name : ""}} {{$fuel_request->asset->product ? $fuel_request->asset->product->name : ""}}
                                                     @else

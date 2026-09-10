@@ -105,7 +105,7 @@ class Index extends Component
         $this->visitors = Visitor::orderBy('created_at','desc')->get();
         $this->trips = Trip::latest()->whereYear('start_date',date('Y'))->get();
         $this->groups = Group::orderBy('created_at','desc')->get();
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
         $this->drivers = Driver::with('employee:id,name,surname')->latest()->get();
         $this->trailers = Trailer::latest()->get();
     }

@@ -19,7 +19,7 @@ class Index extends Component
     public $total_revenue;
 
     public function mount(){
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
         $this->default_currency = Auth::user()->employee->company->currency;
     }
 

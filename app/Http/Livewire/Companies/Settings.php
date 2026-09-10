@@ -11,6 +11,7 @@ class Settings extends Component
     public $company;
     public $company_id;
     public $enable_requisition_two_step_authorization;
+    public $fleet_identifier_preference;
 
 
 
@@ -20,15 +21,17 @@ class Settings extends Component
         $this->company = $company;
         $this->company_id = $company->id;
         $this->enable_requisition_two_step_authorization = $company->enable_requisition_two_step_authorization;
-     
+        $this->fleet_identifier_preference = $company->fleet_identifier_preference;
+
     }
 
     public function update(){
-     
+
         $company = Company::find($this->company_id);
         $company->enable_requisition_two_step_authorization = $this->enable_requisition_two_step_authorization;
+        $company->fleet_identifier_preference = $this->fleet_identifier_preference;
         $company->update();
-    
+
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Operational Settings Updated Successfully!!"

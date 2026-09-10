@@ -283,8 +283,7 @@
           <div class="k">Trailer(s)</div>
           <div class="v">
             @foreach($trip->trailers as $trailer)
-              {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}}
-              @if($trailer->fleet_number) | {{$trailer->fleet_number}} @endif<br>
+              {{$trailer->make}} {{$trailer->model}} {{$trailer->identifier_label}}<br>
             @endforeach
           </div>
           @endif

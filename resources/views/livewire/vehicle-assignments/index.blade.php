@@ -51,7 +51,7 @@
                                        <td>{{$assignment->transporter ? $assignment->transporter->name : ""}}</td>
                                     <td>
                                         @if ($assignment->vehicle)
-                                             {{$assignment->vehicle->registration_number}} {{$assignment->vehicle->fleet_number ? "(".$assignment->vehicle->fleet_number.")" : ""}}
+                                             {{$assignment->vehicle->identifier_label}}
                                         @endif
                                     </td>
                                     <td>
@@ -146,10 +146,10 @@
                                     @foreach ($vehicles as $vehicle)
                                         @if (isset($assignment_vehicle_ids))
                                             @if (!in_array($vehicle->id, $assignment_vehicle_ids ))
-                                                <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                                <option value="{{$vehicle->id}}">{{$vehicle->identifier_label}}</option>
                                             @endif
                                         @else
-                                            <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                            <option value="{{$vehicle->id}}">{{$vehicle->identifier_label}}</option>
                                         @endif
                                     @endforeach    
                                 </select>
@@ -235,7 +235,7 @@
                                 <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required>
                                     <option value="" selected>Select Vehicle</option>
                                     @foreach ($vehicles as $vehicle)
-                                    <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                    <option value="{{$vehicle->id}}">{{$vehicle->identifier_label}}</option>
                                     @endforeach
                                 </select>
                                 @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror

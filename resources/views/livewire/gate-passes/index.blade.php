@@ -225,7 +225,7 @@
                                             <strong>Trip Number:</strong>{{$gate_pass->trip ? $gate_pass->trip->trip_number : ""}}
                                             @if ($gate_pass->horse)
                                             <br>
-                                            <strong>Horse:</strong>   {{$gate_pass->horse->horse_make ? $gate_pass->horse->horse_make->name : ""}} {{$gate_pass->horse->horse_model ? $gate_pass->horse->horse_model->name : ""}} {{$gate_pass->horse ? $gate_pass->horse->registration_number : ""}} {{$gate_pass->horse->fleet_number ? "(".$gate_pass->horse->fleet_number.")" : ""}}
+                                            <strong>Horse:</strong>   {{$gate_pass->horse->horse_make ? $gate_pass->horse->horse_make->name : ""}} {{$gate_pass->horse->horse_model ? $gate_pass->horse->horse_model->name : ""}} {{$gate_pass->horse ? $gate_pass->horse->identifier_label : ""}}
                                             @endif
                                             @if ($gate_pass->trailers)
                                             <br>

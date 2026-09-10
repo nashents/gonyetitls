@@ -285,7 +285,7 @@
                                                 </td>
                                                 <td class="wrap">
                                                     @if ($position)
-                                                        <i class="fas fa-satellite-dish text-muted" title="{{ $position['source'] }}"></i>
+                                                        <i class="fas fa-satellite-dish text-success" title="{{ $position['source'] }}"></i>
                                                         <a href="https://www.google.com/maps?q={{ $position['lat'] }},{{ $position['lng'] }}" target="_blank" rel="noopener">
                                                             @if (!empty($position['address']))
                                                                 {{ $position['address'] }}

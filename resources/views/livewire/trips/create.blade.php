@@ -382,7 +382,7 @@
                                                         {{ $initial_trip->customer->name ? " | ".$initial_trip->customer->name : "" }} 
                                                     @endif 
                                                     @if ($initial_trip->horse)
-                                                        {{ $initial_trip->horse->registration_number ? " | ".$initial_trip->horse->registration_number : ""}} {{ $initial_trip->horse->fleet_number ? " | ".$initial_trip->horse->fleet_number : ""}}
+                                                        {{ $initial_trip->horse->identifier_label }}
                                                     @endif
                                                     @if ($from = $this->getDestination($initial_trip->from))
                                                         @if ($from)
@@ -1544,7 +1544,7 @@
                                                 <option value="">Select Horse </option>
                                               @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                               @foreach ($horses as $horse)
-                                              <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                              <option value="{{$horse->id}}"> {{ $horse->identifier_label }} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
                                                 @endforeach
                                               @endif
 
@@ -2340,7 +2340,7 @@
                                             <option value="">Select Source Truck</option>
                                             @foreach ($horses as $horse)
                                                 @continue($horse->id == $selectedHorse)
-                                                <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                <option value="{{$horse->id}}">{{ $horse->identifier_label }}</option>
                                             @endforeach
                                         </select>
                                         @error('selectedSourceHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror

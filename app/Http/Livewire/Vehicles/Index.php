@@ -132,12 +132,12 @@ class Index extends Component
                 ->orWhereHas('transporter', function ($query) {
                     return $query->where('name', 'like', '%'.$this->search.'%');
                 })
-                ->orderBy('registration_number','asc')->paginate(10)
+                ->orderByIdentifier('asc')->paginate(10)
             ]);
         }else{
             return view('livewire.vehicles.index',[
                 'vehicles' => Vehicle::with('transporter:id,name','vehicle_make:id,name','vehicle_model:id,name')
-                ->where('archive',0)->orderBy('registration_number','asc')->paginate(10)
+                ->where('archive',0)->orderByIdentifier('asc')->paginate(10)
             ]);
         }
     }

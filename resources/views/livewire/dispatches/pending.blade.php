@@ -99,17 +99,17 @@
                                            <strong>Ticket#: </strong><a href="">{{$dispatch->ticket ? $dispatch->ticket->ticket_number : ""}}</a>
                                         @endif
                                         @if ($dispatch->horse)
-                                           <strong>Horse: </strong><a href="">{{$dispatch->horse ? $dispatch->horse->registration_number : ""}} {{$dispatch->horse->fleet_number ? "(".$dispatch->horse->fleet_number.")" : ""}} 
+                                           <strong>Horse: </strong><a href="">{{$dispatch->horse ? $dispatch->horse->identifier_label : ""}}
                                             @if ($dispatch->horse->horse_make)
-                                                {{$dispatch->horse->horse_make ? $dispatch->horse->horse_make->name : ""}} {{$dispatch->horse->horse_model ? $dispatch->horse->horse_model->name : ""}}       
+                                                {{$dispatch->horse->horse_make ? $dispatch->horse->horse_make->name : ""}} {{$dispatch->horse->horse_model ? $dispatch->horse->horse_model->name : ""}}
                                            @endif
                                         </a>
                                         @endif
                                         @if ($dispatch->vehicle)
-                                            <strong>Vehicle: </strong><a href="">{{$dispatch->vehicle ? $dispatch->vehicle->registration_number : ""}} {{$dispatch->vehicle->fleet_number ? "(".$dispatch->vehicle->fleet_number.")" : ""}}</a>
+                                            <strong>Vehicle: </strong><a href="">{{$dispatch->vehicle ? $dispatch->vehicle->identifier_label : ""}}</a>
                                         @endif
                                         @if ($dispatch->trailer)
-                                           <strong></strong>  Trailer:<a href="">{{$dispatch->trailer ? $dispatch->trailer->registration_number : ""}} {{$dispatch->trailer->fleet_number ? "(".$dispatch->trailer->fleet_number.")" : ""}}</a>
+                                           <strong></strong>  Trailer:<a href="">{{$dispatch->trailer ? $dispatch->trailer->identifier_label : ""}}</a>
                                         @endif
                                                 @if ($dispatch->employee)
                                                     <strong>Employee:</strong> {{$dispatch->employee ? $dispatch->employee->name : ""}} {{$dispatch->employee ? $dispatch->employee->surname : ""}} <br>

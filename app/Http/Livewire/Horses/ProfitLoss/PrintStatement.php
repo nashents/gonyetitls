@@ -79,7 +79,7 @@ class PrintStatement extends Component
         $this->company = Auth::user()->employee->company;
 
      
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
         $this->accounts = Account::orderBy('name','asc')->get();
         $this->account_types = AccountType::orderBy('name','asc')->get();
         $this->income_account_type = AccountType::where('name','Income')->first();

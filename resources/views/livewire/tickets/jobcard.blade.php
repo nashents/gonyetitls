@@ -61,13 +61,13 @@
         <div class="kv">
           @if ($ticket->horse)
             <div class="k">Equipment</div><div class="v" data-field="asset.type">Horse</div>
-            <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}}</div>
+            <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->horse->identifier_label}}</div>
             <div class="k">Make / Model</div><div class="v" data-field="asset.make_model">{{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}</div>
             <div class="k">VIN / Chasis</div><div class="v" data-field="asset.make_model">{{$ticket->horse->chasis_number}} </div>
             <div class="k">Engine#</div><div class="v" data-field="asset.make_model">{{$ticket->horse->engine_number}}</div>
           @elseif($ticket->vehicle)
             <div class="k">Equipment</div><div class="v" data-field="asset.type">Vehicle</div>
-          <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}}</div>
+          <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->vehicle->identifier_label}}</div>
             <div class="k">Make / Model</div><div class="v" data-field="asset.make_model">{{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}</div>
             <div class="k">VIN / Chasis</div><div class="v" data-field="asset.make_model">{{$ticket->vehicle->chasis_number}} </div>
             <div class="k">Engine#</div><div class="v" data-field="asset.make_model">{{$ticket->vehicle->engine_number}}</div>
@@ -76,7 +76,7 @@
             <div class="k">Asset</div><div class="v" data-field="asset.registration">{{$ticket->asset->product ? $ticket->asset->product->name : ""}} {{$ticket->asset->product->brand ? $ticket->asset->product->brand->name : ""}}</div>
           @elseif($ticket->trailer)
             <div class="k">Equipment</div><div class="v" data-field="asset.type">Trailer</div>
-             <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}}</div>
+             <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->trailer->identifier_label}}</div>
             <div class="k">Make / Model</div><div class="v" data-field="asset.make_model">{{$ticket->trailer->make}} {{$ticket->trailer->model}}</div>
           @endif
           

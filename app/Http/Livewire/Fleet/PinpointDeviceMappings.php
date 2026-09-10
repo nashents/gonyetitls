@@ -64,7 +64,7 @@ class PinpointDeviceMappings extends Component
 
         [$modelClass] = self::ENTITY_MODELS[$this->entityType];
 
-        return $modelClass::orderBy('fleet_number')->get();
+        return $modelClass::orderByIdentifier('asc')->get();
     }
 
     /** Runs the same match PinpointVehicleMatcher::matchForCompany does from the console command, from a button click. */
@@ -126,7 +126,7 @@ class PinpointDeviceMappings extends Component
         [$modelClass, $label] = self::ENTITY_MODELS[$this->entityType];
         $model = $modelClass::findOrFail($this->localId);
 
-        IntegrationMapping::updateOrCreate(
+        IntegrationMapping::updateOrCreateMapping(
             [
                 'company_integration_id' => $this->companyIntegrationId,
                 'entity_type'            => $this->entityType . '_pinpoint',

@@ -57,13 +57,13 @@
                                             Ticket#: <a href="">{{$dispatch->ticket ? $dispatch->ticket->ticket_number : ""}}</a>
                                         @endif
                                         @if ($dispatch->horse)
-                                            Horse: <a href="">{{$dispatch->horse ? $dispatch->horse->registration_number : ""}} {{$dispatch->horse->fleet_number ? "(".$dispatch->horse->fleet_number.")" : ""}}</a>
+                                            Horse: <a href="">{{$dispatch->horse ? $dispatch->horse->identifier_label : ""}}</a>
                                         @endif
                                         @if ($dispatch->vehicle)
-                                            Vehicle: <a href="">{{$dispatch->vehicle ? $dispatch->vehicle->registration_number : ""}} {{$dispatch->vehicle->fleet_number ? "(".$dispatch->vehicle->fleet_number.")" : ""}}</a>
+                                            Vehicle: <a href="">{{$dispatch->vehicle ? $dispatch->vehicle->identifier_label : ""}}</a>
                                         @endif
                                         @if ($dispatch->trailer)
-                                            Trailer: <a href="">{{$dispatch->trailer ? $dispatch->trailer->registration_number : ""}} {{$dispatch->trailer->fleet_number ? "(".$dispatch->trailer->fleet_number.")" : ""}}</a>
+                                            Trailer: <a href="">{{$dispatch->trailer ? $dispatch->trailer->identifier_label : ""}}</a>
                                         @endif
                                         @if ($dispatch->employee)
                                             Employee: {{$dispatch->employee ? $dispatch->employee->name : ""}} {{$dispatch->employee ? $dispatch->employee->surname : ""}}

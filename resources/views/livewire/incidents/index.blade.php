@@ -99,16 +99,13 @@
                                          <td>
                                             @if($incident->horse)
                                                 <i class="fa fa-truck"></i>
-                                                Horse | {{ $incident->horse->registration_number }}
-                                                {{ $incident->horse->fleet_number ? '(' . $incident->horse->fleet_number . ')' : '' }}
+                                                Horse | {{ $incident->horse->identifier_label }}
                                             @elseif($incident->vehicle)
                                                 <i class="fa fa-car"></i>
-                                                Vehicle | {{ $incident->vehicle->registration_number }}
-                                                {{ $incident->vehicle->fleet_number ? '(' . $incident->vehicle->fleet_number . ')' : '' }}
+                                                Vehicle | {{ $incident->vehicle->identifier_label }}
                                             @elseif($incident->trailer)
                                                 <i class="fa fa-truck"></i>
-                                                Trailer | {{ $incident->trailer->registration_number }}
-                                                {{ $incident->trailer->fleet_number ? '(' . $incident->trailer->fleet_number . ')' : '' }}
+                                                Trailer | {{ $incident->trailer->identifier_label }}
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif

@@ -124,8 +124,8 @@ class Index extends Component
 
     public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->horses = Horse::where('transporter_id',$id)->orderBy('registration_number','asc')->get();
-            $this->trailers = Trailer::where('transporter_id',$id)->orderBy('registration_number','asc')->get();
+            $this->horses = Horse::where('transporter_id',$id)->orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::where('transporter_id',$id)->orderByIdentifier('asc')->get();
            
         }
     }
@@ -285,8 +285,8 @@ class Index extends Component
     $this->status = $workshop_service->status;
     $this->description = $workshop_service->description;
     $this->workshop_service_id = $workshop_service->id;
-    $this->horses = Horse::where('transporter_id', $this->selectedTransporter)->orderBy('registration_number','asc')->get();
-    $this->trailers = Trailer::where('transporter_id', $this->selectedTransporter)->orderBy('registration_number','asc')->get();
+    $this->horses = Horse::where('transporter_id', $this->selectedTransporter)->orderByIdentifier('asc')->get();
+    $this->trailers = Trailer::where('transporter_id', $this->selectedTransporter)->orderByIdentifier('asc')->get();
     $this->dispatchBrowserEvent('show-workshop_serviceEditModal');
 
     }

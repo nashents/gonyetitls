@@ -214,15 +214,15 @@
 
                                                 <td>
                                                     @if($trip->horse)
-                                                        Horse | {{ $trip->horse->registration_number }} {{ $trip->horse->fleet_number ? "({$trip->horse->fleet_number})" : "" }}
+                                                        Horse | {{ $trip->horse->identifier_label }}
                                                     @elseif($trip->vehicle)
-                                                        Vehicle | {{ $trip->vehicle->registration_number }} {{ $trip->vehicle->fleet_number ? "({$trip->vehicle->fleet_number})" : "" }}
+                                                        Vehicle | {{ $trip->vehicle->identifier_label }}
                                                     @endif
 
                                                     @if($trip->trailers?->count())
                                                         <hr class="my-1">
                                                         @foreach($trip->trailers as $trailer)
-                                                            {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "({$trailer->fleet_number})" : "" }}@if(!$loop->last), @endif
+                                                            {{ $trailer->identifier_label }}@if(!$loop->last), @endif
                                                         @endforeach
                                                     @endif
                                                 </td>

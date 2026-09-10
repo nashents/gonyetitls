@@ -42,12 +42,12 @@
                                     <td>{{$cluster->name}}</td>
                                     <td>
                                         @if ($cluster->horse)
-                                            {{$cluster->horse->registration_number}} {{$cluster->horse->fleet_number ? "(".$cluster->horse->fleet_number.")" : ""}} 
+                                            {{$cluster->horse->identifier_label}}
                                         @endif
                                     </td>
                                     <td>
                                         @foreach ($cluster->trailers as $trailer)
-                                            {{$trailer->trailer_type ? $trailer->trailer_type->name : ""}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} <br>
+                                            {{$trailer->trailer_type ? $trailer->trailer_type->name : ""}} {{$trailer->identifier_label}} <br>
                                         @endforeach
                                     </td>
                                     <td><span class="badge bg-{{$cluster->status == 1 ? "success" : "danger"}}">{{$cluster->status == 1 ? "Active" : "Inactive"}}</span></td>
@@ -119,7 +119,7 @@
                                 <select wire:model.debounce.300ms="horse_id" class="form-control">
                                     <option value="">Select Horse</option>
                                     @foreach ($horses as $horse)
-                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        <option value="{{$horse->id}}"> {{$horse->identifier_label}}</option>
                                     @endforeach
                                 </select>
                                 @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -131,7 +131,7 @@
                                 <select wire:model.debounce.300ms="trailer_id" class="form-control" required multiple>
                                     <option value="">Select Cluster Trailer(s)</option>
                                     @foreach ($trailers as $trailer)
-                                        <option value="{{$trailer->id}}">{{$trailer->trailer_type ? $trailer->trailer_type->name : ""}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                        <option value="{{$trailer->id}}">{{$trailer->trailer_type ? $trailer->trailer_type->name : ""}} {{$trailer->identifier_label}}</option>
                                     @endforeach
                                 </select>
                                 @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -171,7 +171,7 @@
                                 <select wire:model.debounce.300ms="horse_id" class="form-control">
                                     <option value="">Select Horse</option>
                                     @foreach ($horses as $horse)
-                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        <option value="{{$horse->id}}"> {{$horse->identifier_label}}</option>
                                     @endforeach
                                 </select>
                                 @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -183,7 +183,7 @@
                                 <select wire:model.debounce.300ms="trailer_id" class="form-control" required multiple>
                                     <option value="">Select Cluster Trailer(s)</option>
                                     @foreach ($trailers as $trailer)
-                                        <option value="{{$trailer->id}}">{{$trailer->trailer_type ? $trailer->trailer_type->name : ""}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                        <option value="{{$trailer->id}}">{{$trailer->trailer_type ? $trailer->trailer_type->name : ""}} {{$trailer->identifier_label}}</option>
                                     @endforeach
                                 </select>
                                 @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

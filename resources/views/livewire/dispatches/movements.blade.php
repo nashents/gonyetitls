@@ -23,11 +23,11 @@
               <tr>
                 <td>
                     @if ($movement->ticket?->horse_id)
-                        {{$movement->ticket?->horse->registration_number}} {{$movement->ticket?->horse?->fleet_number ? "(".$movement->ticket?->horse?->fleet_number.")" : ""}} {{$movement->ticket?->horse?->horse_make?->name}} {{$movement->ticket?->horse?->horse_model?->name}}
+                        {{$movement->ticket?->horse?->identifier_label}} {{$movement->ticket?->horse?->horse_make?->name}} {{$movement->ticket?->horse?->horse_model?->name}}
                     @elseif ($movement->ticket?->vehicle_id)
-                        {{$movement->ticket?->vehicle->registration_number}} {{$movement->ticket?->vehicle?->fleet_number ? "(".$movement->ticket?->vehicle?->fleet_number.")" : ""}} {{$movement->ticket?->vehicle?->vehicle_make?->name}} {{$movement->ticket?->vehicle?->vehicle_model?->name}}
+                        {{$movement->ticket?->vehicle?->identifier_label}} {{$movement->ticket?->vehicle?->vehicle_make?->name}} {{$movement->ticket?->vehicle?->vehicle_model?->name}}
                     @elseif ($movement->ticket?->trailer_id)
-                        {{$movement->ticket?->trailer->registration_number}} {{$movement->ticket?->trailer?->fleet_number ? "(".$movement->ticket?->trailer?->fleet_number.")" : ""}} {{$movement->ticket?->trailer?->trailer_make?->name}} {{$movement->ticket?->trailer?->trailer_model?->name}}
+                        {{$movement->ticket?->trailer?->identifier_label}} {{$movement->ticket?->trailer?->trailer_make?->name}} {{$movement->ticket?->trailer?->trailer_model?->name}}
                     @endif
                 </td>
                 <td>

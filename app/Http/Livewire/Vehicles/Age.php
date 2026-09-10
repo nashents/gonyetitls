@@ -12,7 +12,7 @@ class Age extends Component
     public $vehicles;
 
     public function mount(){
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
     }
 
     public function exportVehiclesAgeCSV(Excel $excel){

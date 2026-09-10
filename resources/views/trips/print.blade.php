@@ -177,7 +177,7 @@
                                         <th class="text-center"> <strong>Trailer(s)</strong></th>
                                         <td class="text-center">
                                             @foreach ($trip->trailers as $trailer)
-                                                {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}} {{"| ".$trailer->fleet_number}} <br>
+                                                {{$trailer->make}} {{$trailer->model}} {{ $trailer->identifier_label }} <br>
                                             @endforeach
                                         </td>
                                     </tr>

@@ -51,12 +51,12 @@
                                     <td>{{$assignment->transporter ? $assignment->transporter->name : ""}}</td>
                                     <td>
                                         @if ($assignment->horse)
-                                             {{$assignment->horse->registration_number}}  {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
+                                             {{$assignment->horse->identifier_label}}
                                         @endif
                                     </td>
                                     <td>
                                         @if ($assignment->trailer)
-                                            {{$assignment->trailer->registration_number}} {{$assignment->trailer->fleet_number ? "(".$assignment->trailer->fleet_number.")" : ""}}
+                                            {{$assignment->trailer->identifier_label}}
                                         @endif
                                     </td>
                                     <td>{{$assignment->starting_odometer ? $assignment->starting_odometer."Kms" : ""}}</td>
@@ -145,7 +145,7 @@
                                    @endphp
                                    @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
-                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        <option value="{{$horse->id}}"> {{$horse->identifier_label}}</option>
                                         @endforeach
                                    @endif
                                   
@@ -162,10 +162,10 @@
                                         @foreach ($trailers as $trailer)
                                             @if (isset($assignment_trailer_ids))
                                                 @if (!in_array($trailer->id, $assignment_trailer_ids ))
-                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} </option>
+                                                    <option value="{{$trailer->id}}">{{$trailer->identifier_label}} </option>
                                                 @endif
                                             @else
-                                                <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                                <option value="{{$trailer->id}}">{{$trailer->identifier_label}}</option>
                                             @endif
                                         @endforeach
                                    @endif

@@ -335,7 +335,7 @@
                                     @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
                                             @if ($trip->horse_id != $horse->id )
-                                                <option value="{{ $horse->id }}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_make ? $horse->horse_model->name : ""}}</option>
+                                                <option value="{{ $horse->id }}"> {{ $horse->identifier_label }} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_make ? $horse->horse_model->name : ""}}</option>
                                             @endif
                                         @endforeach
                                     @endif
@@ -379,7 +379,7 @@
                                             @foreach ($trailers as $trailer)
                                                 @if (!empty($trip_trailer_ids) && in_array($trailer->id, $trip_trailer_ids))
                                                 @else  
-                                                <option value="{{ $trailer->id }}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} {{$trailer->make}} {{$trailer->model}}</option>
+                                                <option value="{{ $trailer->id }}">{{ $trailer->identifier_label }} {{$trailer->make}} {{$trailer->model}}</option>
                                                 @endif
                                             @endforeach
                                         @endif
@@ -441,7 +441,7 @@
                                             @foreach ($horses as $horse)
                                                 @if ($trip->horse_id == $horse->id )
                                                 @else 
-                                                <option value="{{ $horse->id }}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                <option value="{{ $horse->id }}"> {{ $horse->identifier_label }} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
                                                 @endif
                                             
                                             @endforeach

@@ -101,13 +101,13 @@ class Show extends Component
         }
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
-        $this->horses = Horse::orderBy('registration_number','asc')->where('archive',0)->latest()->get();
+        $this->horses = Horse::orderByIdentifier('asc')->where('archive',0)->latest()->get();
 
         $this->employees = Employee::orderBy('name','asc')->where('archive',0)->get();
 
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('archive',0)->latest()->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->where('archive',0)->latest()->get();
 
-        $this->trailers = Trailer::orderBy('registration_number','asc')->where('archive',0)->latest()->get();
+        $this->trailers = Trailer::orderByIdentifier('asc')->where('archive',0)->latest()->get();
 
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
     }

@@ -31,8 +31,7 @@ Reminder | {{$company->name}}
                                         	<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 												    for <strong> {{$fitness->horse->horse_make->name ?? ''}} {{$fitness->horse->horse_model->name ?? ''}} </strong> with registration number 
 														<strong>
-															{{$fitness->horse->registration_number}} 
-															{{ $fitness->horse->fleet_number ? '(' . $fitness->horse->fleet_number . ')' : '' }}
+															{{$fitness->horse->identifier_label}}
 														</strong>
 													is about to expire.
 											</p>
@@ -44,8 +43,7 @@ Reminder | {{$company->name}}
 											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 												 	for <strong> {{$fitness->vehicle->vehicle_make->name ?? ''}} {{$fitness->vehicle->vehicle_model->name ?? ''}} </strong> with registration number 
 												  		<strong>
-															{{$fitness->vehicle->registration_number}} 
-															{{ $fitness->vehicle->fleet_number ? '(' . $fitness->vehicle->fleet_number . ')' : '' }}
+															{{$fitness->vehicle->identifier_label}}
 														</strong>
 													is about to expire.
 											</p>
@@ -57,8 +55,7 @@ Reminder | {{$company->name}}
 											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 												 	for <strong> {{$fitness->trailer->trailer_make->name ?? ''}} {{$fitness->trailer->trailer_model->name ?? ''}} </strong> with registration number 
 												  		<strong>
-															{{$fitness->trailer->registration_number}} 
-															{{ $fitness->trailer->fleet_number ? '(' . $fitness->trailer->fleet_number . ')' : '' }}
+															{{$fitness->trailer->identifier_label}}
 														</strong>
 													is about to expire.
 											</p>

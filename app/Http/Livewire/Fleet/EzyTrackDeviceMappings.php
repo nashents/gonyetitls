@@ -104,7 +104,7 @@ class EzyTrackDeviceMappings extends Component
 
         [$modelClass] = self::ENTITY_MODELS[$this->entityType];
 
-        return $modelClass::orderBy('fleet_number')->get();
+        return $modelClass::orderByIdentifier('asc')->get();
     }
 
     public function openMapModal($deviceId)
@@ -139,7 +139,7 @@ class EzyTrackDeviceMappings extends Component
         [$modelClass, $label] = self::ENTITY_MODELS[$this->entityType];
         $model = $modelClass::findOrFail($this->localId);
 
-        IntegrationMapping::updateOrCreate(
+        IntegrationMapping::updateOrCreateMapping(
             [
                 'company_integration_id' => $this->companyIntegrationId,
                 'entity_type'            => $this->entityType . '_ezytrack_device',

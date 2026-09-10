@@ -40,7 +40,7 @@ class Index extends Component
 
     public function mount(){
         $this->logs = Log::where('employee_id',Auth::user()->employee->id)->latest()->get();
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('status', 1)
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->where('status', 1)
         ->where('service',0)->get();
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->selectedEmployee = Auth::user()->employee->id;

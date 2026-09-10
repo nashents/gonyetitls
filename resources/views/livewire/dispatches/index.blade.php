@@ -130,22 +130,22 @@
                                         @endif
                                         @if ($dispatch->horse) 
                                             <br>
-                                           <strong>Horse: </strong><a href="{{route('horses.show',$dispatch->horse_id)}}" target="_blank" style="color: blue">{{$dispatch->horse ? $dispatch->horse->registration_number : ""}} {{$dispatch->horse->fleet_number ? "(".$dispatch->horse->fleet_number.")" : ""}} 
+                                           <strong>Horse: </strong><a href="{{route('horses.show',$dispatch->horse_id)}}" target="_blank" style="color: blue">{{$dispatch->horse ? $dispatch->horse->identifier_label : ""}}
                                             @if ($dispatch->horse->horse_make)
-                                                {{$dispatch->horse->horse_make ? $dispatch->horse->horse_make->name : ""}} {{$dispatch->horse->horse_model ? $dispatch->horse->horse_model->name : ""}}       
+                                                {{$dispatch->horse->horse_make ? $dispatch->horse->horse_make->name : ""}} {{$dispatch->horse->horse_model ? $dispatch->horse->horse_model->name : ""}}
                                             @endif
                                         </a>
                                         @endif
                                         @if ($dispatch->vehicle)
                                           <br>
-                                            <strong>Vehicle: </strong><a href="{{route('vehicles.show',$dispatch->vehicle_id)}}" target="_blank" style="color: blue">{{$dispatch->vehicle ? $dispatch->vehicle->registration_number : ""}} {{$dispatch->vehicle->fleet_number ? "(".$dispatch->vehicle->fleet_number.")" : ""}}</a>
+                                            <strong>Vehicle: </strong><a href="{{route('vehicles.show',$dispatch->vehicle_id)}}" target="_blank" style="color: blue">{{$dispatch->vehicle ? $dispatch->vehicle->identifier_label : ""}}</a>
                                             @if ($dispatch->vehicle->vehicle_make)
-                                                {{$dispatch->vehicle->vehicle_make ? $dispatch->vehicle->vehicle_make->name : ""}} {{$dispatch->vehicle->vehicle_model ? $dispatch->vehicle->vehicle_model->name : ""}}       
+                                                {{$dispatch->vehicle->vehicle_make ? $dispatch->vehicle->vehicle_make->name : ""}} {{$dispatch->vehicle->vehicle_model ? $dispatch->vehicle->vehicle_model->name : ""}}
                                             @endif
                                         @endif
                                         @if ($dispatch->trailer)
                                           <br>
-                                           <strong></strong>  Trailer:<a href="{{route('trailers.show',$dispatch->trailer_id)}}" target="_blank" style="color: blue">{{$dispatch->trailer ? $dispatch->trailer->registration_number : ""}} {{$dispatch->trailer->fleet_number ? "(".$dispatch->trailer->fleet_number.")" : ""}}</a>
+                                           <strong></strong>  Trailer:<a href="{{route('trailers.show',$dispatch->trailer_id)}}" target="_blank" style="color: blue">{{$dispatch->trailer ? $dispatch->trailer->identifier_label : ""}}</a>
                                             @if ($dispatch->trailer->make)
                                                 {{$dispatch->trailer->make}} {{$dispatch->trailer->model}}       
                                             @endif
@@ -373,13 +373,13 @@
                                                     , Service Type:  {{$ticket->booking->service_type ? $ticket->booking->service_type->name : ""}}
                                                 @endif
                                                 @if ($ticket->horse)
-                                                    , Horse: {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
+                                                    , Horse: {{$ticket->horse->identifier_label}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
                                                 @endif
                                                 @if ($ticket->trailer)
-                                                    , Trailer: {{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
+                                                    , Trailer: {{$ticket->trailer->identifier_label}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
                                                 @endif
                                                 @if ($ticket->vehicle)
-                                                    , Vehicle: {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
+                                                    , Vehicle: {{$ticket->vehicle->identifier_label}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
                                                 @endif
                                             </option>
                                     @endforeach
@@ -1408,13 +1408,13 @@
                                                     , Service Type:  {{$ticket->booking->service_type ? $ticket->booking->service_type->name : ""}}
                                                 @endif
                                                 @if ($ticket->horse)
-                                                    , Horse: {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
+                                                    , Horse: {{$ticket->horse->identifier_label}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
                                                 @endif
                                                 @if ($ticket->trailer)
-                                                    , Trailer: {{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
+                                                    , Trailer: {{$ticket->trailer->identifier_label}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
                                                 @endif
                                                 @if ($ticket->vehicle)
-                                                    , Vehicle: {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
+                                                    , Vehicle: {{$ticket->vehicle->identifier_label}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
                                                 @endif
                                             </option>
                                     @endforeach

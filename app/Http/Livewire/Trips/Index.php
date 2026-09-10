@@ -133,7 +133,7 @@ class Index extends Component
             $asset = $labels->get($position['local_id']);
 
             return [
-                'label'       => $asset?->fleet_number ?: $asset?->registration_number ?: ('#' . $position['local_id']),
+                'label'       => $asset?->identifier_label ?: ('#' . $position['local_id']),
                 'group'       => $asset?->transporter?->name ?: 'Other',
                 'source'      => $position['source'],
                 'latitude'    => $position['lat'],
@@ -740,7 +740,7 @@ class Index extends Component
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
         $this->currencies = Currency::latest()->get();
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->horses = Horse::orderByIdentifier('asc')->get();
         $this->consignees = Consignee::orderBy('name','asc')->get();
         $this->trip_types = TripType::orderBy('name','asc')->get();
         $this->routes = Route::orderBy('name','asc')->get();
@@ -1809,30 +1809,31 @@ class Index extends Component
             $trips->orderBy($this->trip_filter, 'desc');
         }
 
-        $all_trips = $trips->get();
-
-        $this->totalsByCurrency = $all_trips
-        ->whereNotNull('freight')
-        ->filter(fn ($trip) => $trip->freight !== '')
-        ->groupBy('currency_id')
-        ->map(fn ($group) => $group->sum('freight'));
+        // Aggregate totals via lean DB queries against the same filtered/searched
+        // trip set — NOT $trips->get(), which would hydrate every matching trip
+        // together with its ~30 nested eager-loaded relations twice over, just to
+        // sum two columns. That's what was exhausting PHP's memory limit once a
+        // search removed the current-month date bound on a company with 10k+ trips.
+        $this->totalsByCurrency = (clone $trips)->getQuery()
+            ->select(['currency_id', DB::raw('SUM(freight) as total')])
+            ->whereNotNull('freight')
+            ->where('freight', '!=', '')
+            ->groupBy('currency_id')
+            ->pluck('total', 'currency_id');
 
         // Pull only currencies that actually exist in your trips:
         $this->trips_currencies = \App\Models\Currency::whereIn('id', $this->totalsByCurrency->keys())->get();
 
-       
+        $tripIdsQuery = (clone $trips)->getQuery()->select('trips.id');
 
-        $trip_with_expenses = $trips->get();
-   
-        // Make sure expenses are loaded (avoid N+1)
-        $trip_with_expenses->load('trip_expenses');
-
-        $all_expenses = $trip_with_expenses->flatMap(fn ($trip) => $trip->trip_expenses);
-
-        $this->expenseTotalsByCurrency = $all_expenses
-            ->filter(fn ($e) => !is_null($e->amount) && $e->amount !== '')
+        $this->expenseTotalsByCurrency = DB::table('trip_expenses')
+            ->whereIn('trip_id', $tripIdsQuery)
+            ->whereNull('deleted_at')
+            ->whereNotNull('amount')
+            ->where('amount', '!=', '')
+            ->select(['currency_id', DB::raw('SUM(CAST(amount AS DECIMAL(18,2))) as total')])
             ->groupBy('currency_id')
-            ->map(fn ($group) => $group->sum(fn ($e) => (float) $e->amount));
+            ->pluck('total', 'currency_id');
 
         // Pull only currencies that actually exist in those expenses:
         $this->expense_currencies = \App\Models\Currency::whereIn('id', $this->expenseTotalsByCurrency->keys())->get();

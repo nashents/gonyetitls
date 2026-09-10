@@ -525,10 +525,10 @@ class Index extends Component
                         ->orderBy('employees.surname', 'asc')
                         ->select('drivers.*') // important!
                         ->get();
-        $this->horses = Horse::where('archive', 0)->orderBy('fleet_number','asc')->get();
+        $this->horses = Horse::where('archive', 0)->orderByIdentifier('asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
-        $this->vehicles = Vehicle::where('archive', 0)->orderBy('fleet_number','asc')->get();
+        $this->vehicles = Vehicle::where('archive', 0)->orderByIdentifier('asc')->get();
         $this->containers = Container::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
@@ -553,13 +553,13 @@ class Index extends Component
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
             }else{
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -571,15 +571,15 @@ class Index extends Component
               
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-       
+                ->orderByIdentifier('asc')->get();
+
             }else{
-              
+
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
              
             }
             $this->dispatchBrowserEvent('alert',[
@@ -768,7 +768,7 @@ class Index extends Component
 
         // Order by registration number
         $this->horses = $query
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
     }
 
@@ -796,7 +796,7 @@ class Index extends Component
 
         // Order by registration number (ascending)
         $this->vehicles = $query
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
     }
 
@@ -922,31 +922,31 @@ class Index extends Component
             if($status == True){
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-              
+                ->orderByIdentifier('asc')->get();
+
             }else{
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-               
+                ->orderByIdentifier('asc')->get();
+
             }
 
         }
-       
+
     }
     public function updatedAllVehicles($status){
         if(!is_null($status)){
             if($status == True){
-             
+
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-               
+                ->orderByIdentifier('asc')->get();
+
             }else{
-                
+
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                
             }
 
@@ -964,10 +964,10 @@ class Index extends Component
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                  $this->drivers = Driver::query()
                         ->with('employee')
                         ->join('employees', 'employees.id', '=', 'drivers.employee_id')
@@ -982,12 +982,12 @@ class Index extends Component
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
+                ->orderByIdentifier('asc')->get();
                 $this->drivers = Driver::query()
                         ->with('employee')
                         ->join('employees', 'employees.id', '=', 'drivers.employee_id')

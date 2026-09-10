@@ -81,7 +81,7 @@ class Index extends Component
            ->whereDoesntHave('assignments', function ($query) {
                 $query->where('status', True); // or ->whereNull('end_date')
             })
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
 
             $this->drivers = Driver::query()
@@ -157,7 +157,7 @@ class Index extends Component
            ->whereDoesntHave('assignments', function ($query) {
                 $query->where('status', True); // or ->whereNull('end_date')
             })
-            ->orderBy('registration_number', 'asc')
+            ->orderByIdentifier('asc')
             ->get();
 
             $this->drivers = Driver::query()

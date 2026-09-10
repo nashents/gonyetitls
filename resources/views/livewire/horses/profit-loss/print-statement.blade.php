@@ -47,14 +47,14 @@
                     <div class="row contacts">
                         <div class="col invoice-to" >
                             <div class="text-gray-light">Statement For:</div>
-                            <h6 class="to">Horse: {{$selected_horse->registration_number}} {{$selected_horse->fleet_number ? $selected_horse->fleet_number: ""}} {{$selected_horse->horse_make ? $selected_horse->horse_make->name: ""}} {{$selected_horse->horse_model ? $selected_horse->horse_model->name: ""}}</h6>
+                            <h6 class="to">Horse: {{$selected_horse->identifier_label}} {{$selected_horse->horse_make ? $selected_horse->horse_make->name: ""}} {{$selected_horse->horse_model ? $selected_horse->horse_model->name: ""}}</h6>
                             @php
                                 $assignment = App\Models\Assignment::where('horse_id',$selected_horse->id)->where('status',1)->first();
                                 $trailer_assignment = App\Models\TrailerAssignment::where('horse_id',$selected_horse->id)->where('status',1)->first();
                             @endphp
                             <h6 class="to">Trailer(s): 
                                 @if (isset($trailer_assignment))
-                                {{$trailer_assignment->trailer ? $trailer_assignment->trailer->registration_number : ""}}  {{$trailer_assignment->trailer->fleet_number ? "(".$trailer_assignment->trailer->fleet_number.")" : ""}}
+                                {{$trailer_assignment->trailer ? $trailer_assignment->trailer->identifier_label : ""}}
                                 @endif
                             </h6>
                             <h6 class="to">Driver: 

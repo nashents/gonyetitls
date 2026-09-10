@@ -161,9 +161,18 @@
     </div>
 
     <script>
+        function scrollTripNotesToBottom() {
+            const el = document.querySelector('.trip-notes-timeline');
+            if (el) { el.scrollTop = el.scrollHeight; }
+        }
+
         window.addEventListener('show-tripNotesModal', () => {
             $('#tripNotesModal').modal({ backdrop: 'static', keyboard: false });
             $('#tripNotesModal').modal('show');
+            setTimeout(scrollTripNotesToBottom, 50);
         });
+
+        // Keeps the newest comment (now at the bottom) in view after posting one.
+        document.addEventListener('livewire:update', () => setTimeout(scrollTripNotesToBottom, 50));
     </script>
 </div>

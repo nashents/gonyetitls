@@ -28,9 +28,9 @@ class Manage extends Component
             $rank_names[] = $rank->name;
         }
         if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->orderBy('registration_number','asc')->get();
+            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
         } else {
-            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->where('user_id',Auth::user()->id)->orderBy('registration_number','asc')->get();
+            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->where('user_id',Auth::user()->id)->orderByIdentifier('asc')->get();
         }
       }
 
@@ -66,9 +66,9 @@ class Manage extends Component
             $rank_names[] = $rank->name;
         }
         if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->orderBy('registration_number','asc')->get();
+            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
         } else {
-            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->where('user_id',Auth::user()->id)->orderBy('registration_number','asc')->get();
+            $this->horses = Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')->where('user_id',Auth::user()->id)->orderByIdentifier('asc')->get();
         }
 
         return view('livewire.horses.manage',[

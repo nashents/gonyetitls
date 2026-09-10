@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\HasFleetIdentifier;
 
 class Trailer extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+    use HasFleetIdentifier;
 
     public function trailer_documents(){
         return $this->hasMany('App\Models\TrailerDocument');

@@ -177,9 +177,9 @@ class Create extends Component
         $this->stores = Store::latest()->get();
         $this->tyre_assignments = TyreAssignment::latest()->get();
         $this->tyres = Tyre::where('status',1)->orderBy('tyre_number','asc')->get();
-        $this->vehicles = Vehicle::where('status',1)->orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::where('status', 1)->orderBy('registration_number','asc')->get();
-        $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::where('status',1)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::where('status', 1)->orderByIdentifier('asc')->get();
+        $this->horses = Horse::where('status',1)->orderByIdentifier('asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->products = Product::query()
             ->where('status', true)

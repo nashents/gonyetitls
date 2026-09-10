@@ -93,7 +93,7 @@ class Preview extends Component
 
         $trailerAssignment = TrailerAssignment::where('horse_id', $this->selectedHorse)->where('status', 1)->first();
         $this->trailer_numbers = $trailerAssignment && $trailerAssignment->trailer
-            ? trim(($trailerAssignment->trailer->registration_number ?? '').($trailerAssignment->trailer->fleet_number ? ' ('.$trailerAssignment->trailer->fleet_number.')' : ''))
+            ? $trailerAssignment->trailer->identifier_label
             : null;
 
         $this->recalculate();

@@ -44,7 +44,7 @@ class Index extends Component
 
     public function updatedSelectedTransporter($transporter){
         if (!is_null($transporter)) {
-            $this->trailers = Trailer::where('transporter_id',$transporter)->orderBy('registration_number','asc')->get();
+            $this->trailers = Trailer::where('transporter_id',$transporter)->orderByIdentifier('asc')->get();
         }
     }
 

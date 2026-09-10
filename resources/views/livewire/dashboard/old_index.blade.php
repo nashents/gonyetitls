@@ -590,8 +590,7 @@
                                     <td>
                                     {{ $horse->horse_make?->name ?? '' }}
                                     {{ $horse->horse_model?->name ?? '' }}
-                                    {{ $horse->registration_number ?? '' }}
-                                    {{ $horse->fleet_number ? '(' . $horse->fleet_number . ')' : '' }}
+                                    {{ $horse->identifier_label }}
                                     </td>
 
                                     <td>{{ $horse->trips_count ? $horse->trips_count . ' Trip(s)' : '' }}</td>
@@ -931,7 +930,7 @@
                                            </td>
                                         <td>
                                             @if ($fuel->horse)
-                                            Horse | {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse ? "| ".$fuel->horse->fleet_number : ""}} | {{$fuel->horse->horse_make ? $fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}} 
+                                            Horse | {{$fuel->horse ? $fuel->horse->identifier_label : ""}} | {{$fuel->horse->horse_make ? $fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}}
                                             @if (isset($fuel->trip))
                                             <br>
                                                 @php
@@ -1098,11 +1097,11 @@
                                         <td>{{ucfirst($booking->booking_number)}}</td>
                                         <td>
                                             @if (isset($booking->horse))
-                                            Horse | {{ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "")}} {{ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" )}} {{ucfirst($booking->horse ? $booking->horse->registration_number : "")}} {{ucfirst($booking->horse ? "| ".$booking->horse->fleet_number : "")}}
+                                            Horse | {{ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "")}} {{ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" )}} {{$booking->horse ? $booking->horse->identifier_label : ""}}
                                             @elseif(isset($booking->vehicle))
-                                            Vehicle | {{ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "")}} {{ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "")}} {{ucfirst($booking->vehicle ? $booking->vehicle->registration_number : "")}} {{ucfirst($booking->vehicle ? "| ".$booking->vehicle->fleet_number : "")}}
+                                            Vehicle | {{ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "")}} {{ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "")}} {{$booking->vehicle ? $booking->vehicle->identifier_label : ""}}
                                             @elseif(isset($booking->trailer))
-                                            Trailer | {{ucfirst($booking->trailer ? $booking->trailer->make : "")}} {{ucfirst($booking->trailer ? $booking->trailer->model : "")}} {{ucfirst($booking->trailer ? $booking->trailer->registration_number : "")}} {{ucfirst($booking->trailer ? "| ".$booking->trailer->fleet_number : "")}}
+                                            Trailer | {{ucfirst($booking->trailer ? $booking->trailer->make : "")}} {{ucfirst($booking->trailer ? $booking->trailer->model : "")}} {{$booking->trailer ? $booking->trailer->identifier_label : ""}}
                                             @endif
                                         </td>
                                         <td>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}}</td>

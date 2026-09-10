@@ -55,7 +55,7 @@
                                     @foreach ($vehicles as $vehicle)
                                   <tr>
                                     <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
-                                    <td>{{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</td>
+                                    <td>{{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->identifier_label}}</td>
                                  <td>{{$vehicle->prev_service_date}}</td> 
                                     <td>
                                             {{$vehicle->prev_service ? $vehicle->prev_service."Kms" : ""}}

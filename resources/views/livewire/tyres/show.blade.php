@@ -34,15 +34,15 @@
                                         @if ($assignment)
                                             <a href="{{route('tyre_assignments.show',$assignment->id)}}" style="color: blue">
                                             @if ($assignment->horse)
-                                                Horse: {{$assignment->horse->registration_number}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
+                                                Horse: {{$assignment->horse->identifier_label}}
                                                 <br>
                                                 {{$assignment->axle}} {{$assignment->position}}
                                             @elseif($assignment->trailer)
-                                                Trailer: {{$assignment->trailer->registration_number}} {{$assignment->trailer->fleet_number ? "(".$assignment->trailer->fleet_number.")" : ""}}
+                                                Trailer: {{$assignment->trailer->identifier_label}}
                                                 <br>
                                                 {{$assignment->axle}} {{$assignment->position}}
                                             @elseif($assignment->vehicle)
-                                                Vehicle: {{$assignment->horse->registration_number}} {{$assignment->vehicle->fleet_number ? "(".$assignment->vehicle->fleet_number.")" : ""}}
+                                                Vehicle: {{$assignment->vehicle->identifier_label}}
                                                 <br>
                                                 {{$assignment->axle}} {{$assignment->position}}
                                             @endif

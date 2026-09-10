@@ -32,8 +32,7 @@
                                                             <option value="">Select Horse</option>
                                                             @foreach ($horses as $horse)
                                                                 <option value="{{ $horse->id }}">
-                                                                    {{ $horse->registration_number }}
-                                                                    {{ $horse->fleet_number ? '(' . $horse->fleet_number . ')' : '' }}
+                                                                    {{ $horse->identifier_label }}
                                                                     {{ $horse->horse_make ? $horse->horse_make->name : '' }}
                                                                     {{ $horse->horse_model ? $horse->horse_model->name : '' }}
                                                                 </option>
@@ -158,8 +157,7 @@
                                             <div class="col-xs-5 p-n">
                                                 @if (!empty($selected_horse))
                                                     <strong>
-                                                        {{ $selected_horse->registration_number }}
-                                                        {{ $selected_horse->fleet_number ? $selected_horse->fleet_number : '' }}
+                                                        {{ $selected_horse->identifier_label }}
                                                     </strong>
                                                 @endif
                                             </div>

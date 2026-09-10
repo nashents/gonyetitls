@@ -404,12 +404,12 @@ class Index extends Component
         }
 
         if ($bill->horse_id && $bill->horse) {
-            $name = trim($bill->horse->registration_number . ($bill->horse->fleet_number ? ' (' . $bill->horse->fleet_number . ')' : ''));
+            $name = $bill->horse->identifier_label;
             return ['Truck', $name ?: ('Truck #' . $bill->horse_id)];
         }
 
         if ($bill->trailer_id && $bill->trailer) {
-            $name = trim($bill->trailer->registration_number . ($bill->trailer->fleet_number ? ' (' . $bill->trailer->fleet_number . ')' : ''));
+            $name = $bill->trailer->identifier_label;
             return ['Trailer', $name ?: ('Trailer #' . $bill->trailer_id)];
         }
 

@@ -92,7 +92,7 @@
                                     <select wire:model.debounce.300ms="selectedHorse" class="form-control" aria-label="..." >
                                         <option value="">Select Horse</option>
                                         @foreach ($horses as $horse)
-                                            <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} </option>
+                                            <option value="{{ $horse->id }}"  > {{ $horse->identifier_label }} </option>
                                         @endforeach
                                     </select>
                                         
@@ -275,7 +275,7 @@
                                             <strong>Driver:</strong>  {{$shift->driver->employee ? $shift->driver->employee->name : ""}} {{$shift->driver->employee ? $shift->driver->employee->surname : ""}} <br>        
                                         @endif
                                         @if ($shift->horse)
-                                            <strong>Horse:</strong>  {{$shift->horse->registration_number}} {{$shift->horse->fleet_number ? "(".$shift->horse->fleet_number.")" : ""}} <br>
+                                            <strong>Horse:</strong>  {{$shift->horse->identifier_label}} <br>
                                         @elseif($shift->vehicle)
                                             <strong>Vehicle:</strong> {{$shift->vehicle->registration_number}} <br>
                                         @endif

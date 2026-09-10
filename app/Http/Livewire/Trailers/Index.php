@@ -545,7 +545,7 @@ public function activate($id){
                 ->orWhereHas('transporter', function ($query) {
                     return $query->where('name', 'like', '%'.$this->search.'%');
                 })
-                ->orderBy('registration_number','asc')->paginate(10),
+                ->orderByIdentifier('asc')->paginate(10),
                 'cargos' => $this->cargos,
                 'measurements' => $this->measurements,
             ]);
@@ -553,7 +553,7 @@ public function activate($id){
             return view('livewire.trailers.index',[
                 'trailers' => Trailer::with('transporter:id,name')
                 ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
-                ->where('archive',0)->orderBy('registration_number','asc')->paginate(10),
+                ->where('archive',0)->orderByIdentifier('asc')->paginate(10),
                 'cargos' => $this->cargos,
                 'measurements' => $this->measurements,
                 'transporters' => $this->transporters,

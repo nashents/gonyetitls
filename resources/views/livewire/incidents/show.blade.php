@@ -32,11 +32,11 @@
                             <th class="w-10 text-center line-height-35">MOT</th>
                             <td class="w-20 line-height-35">
                                 @if (isset($incident->horse))
-                                    Horse | {{ucfirst($incident->horse->horse_make ? $incident->horse->horse_make->name : "")}} {{ucfirst($incident->horse->horse_model ? $incident->horse->horse_model->name : "" )}} {{ucfirst($incident->horse ? $incident->horse->registration_number : "")}} {{ucfirst($incident->horse ? "| ".$incident->horse->fleet_number : "")}}
+                                    Horse | {{ucfirst($incident->horse->horse_make ? $incident->horse->horse_make->name : "")}} {{ucfirst($incident->horse->horse_model ? $incident->horse->horse_model->name : "" )}} {{ucfirst($incident->horse ? $incident->horse->identifier_label : "")}}
                                     @elseif(isset($incident->vehicle))
-                                    Vehicle | {{ucfirst($incident->vehicle->vehicle_make ? $incident->vehicle->vehicle_make->name : "")}} {{ucfirst($incident->vehicle->vehicle_model ? $incident->vehicle->vehicle_model->name : "")}} {{ucfirst($incident->vehicle ? $incident->vehicle->registration_number : "")}} {{ucfirst($incident->vehicle ? "| ".$incident->vehicle->fleet_number : "")}}
+                                    Vehicle | {{ucfirst($incident->vehicle->vehicle_make ? $incident->vehicle->vehicle_make->name : "")}} {{ucfirst($incident->vehicle->vehicle_model ? $incident->vehicle->vehicle_model->name : "")}} {{ucfirst($incident->vehicle ? $incident->vehicle->identifier_label : "")}}
                                     @elseif(isset($incident->trailer))
-                                    Trailer | {{ucfirst($incident->trailer ? $incident->trailer->make : "")}} {{ucfirst($incident->trailer ? $incident->trailer->model : "")}} {{ucfirst($incident->trailer ? $incident->trailer->registration_number : "")}} {{ucfirst($incident->trailer ? "| ".$incident->trailer->fleet_number : "")}}
+                                    Trailer | {{ucfirst($incident->trailer ? $incident->trailer->make : "")}} {{ucfirst($incident->trailer ? $incident->trailer->model : "")}} {{ucfirst($incident->trailer ? $incident->trailer->identifier_label : "")}}
                                 @endif
                             </td>
                         </tr>

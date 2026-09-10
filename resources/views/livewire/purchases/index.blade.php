@@ -130,11 +130,11 @@
                                                 <small>
                                                     <strong>Booking#:</strong>{{$purchase->booking->booking_number}} Date: {{$purchase->booking->in_date}} JobType: {{$purchase->booking->service_type ? $purchase->booking->service_type->name : ""}}
                                                     @if ($purchase->booking->horse)
-                                                        {{ $purchase->booking->horse ? $purchase->booking->horse->registration_number : "" }} {{ $purchase->booking->horse->fleet_number ? "(".$purchase->booking->horse->fleet_number.")" : "" }}
+                                                        {{ $purchase->booking->horse ? $purchase->booking->horse->identifier_label : "" }}
                                                     @elseif ($purchase->booking->vehicle)
-                                                        {{ $purchase->booking->vehicle ? $purchase->booking->vehicle->registration_number : "" }} {{ $purchase->booking->vehicle->fleet_number ? "(".$purchase->booking->vehicle->fleet_number.")" : "" }}
+                                                        {{ $purchase->booking->vehicle ? $purchase->booking->vehicle->identifier_label : "" }}
                                                     @elseif ($purchase->booking->trailer)
-                                                        {{ $purchase->booking->trailer ? $purchase->booking->trailer->registration_number : "" }} {{ $purchase->booking->trailer->fleet_number ? "(".$purchase->booking->trailer->fleet_number.")" : "" }}
+                                                        {{ $purchase->booking->trailer ? $purchase->booking->trailer->identifier_label : "" }}
                                                     @endif
                                                 </small>
                                                 <br>
@@ -393,11 +393,11 @@
                                                     {{ $booking->booking_number }} 
                                                     {{ $booking->service_type ? $booking->service_type->name : "" }}
                                                     @if ($booking->horse)
-                                                        {{ $booking->horse ? $booking->horse->registration_number : "" }} {{ $booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : "" }}
+                                                        {{ $booking->horse ? $booking->horse->identifier_label : "" }}
                                                     @elseif ($booking->vehicle)
-                                                        {{ $booking->vehicle ? $booking->vehicle->registration_number : "" }} {{ $booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : "" }}
+                                                        {{ $booking->vehicle ? $booking->vehicle->identifier_label : "" }}
                                                     @elseif ($booking->trailer)
-                                                        {{ $booking->trailer ? $booking->trailer->registration_number : "" }} {{ $booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : "" }}
+                                                        {{ $booking->trailer ? $booking->trailer->identifier_label : "" }}
                                                     @endif
                                                 </option>                                      
                                                 @endforeach
@@ -843,11 +843,11 @@
                                                     {{ $booking->booking_number }} 
                                                     {{ $booking->service_type ? $booking->service_type->name : "" }}
                                                     @if ($booking->horse)
-                                                    {{ $booking->horse ? $booking->horse->registration_number : "" }} {{ $booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : "" }}
+                                                    {{ $booking->horse ? $booking->horse->identifier_label : "" }}
                                                 @elseif ($booking->vehicle)
-                                                    {{ $booking->vehicle ? $booking->vehicle->registration_number : "" }} {{ $booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : "" }}
+                                                    {{ $booking->vehicle ? $booking->vehicle->identifier_label : "" }}
                                                 @elseif ($booking->trailer)
-                                                {{ $booking->trailer ? $booking->trailer->registration_number : "" }} {{ $booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : "" }}
+                                                {{ $booking->trailer ? $booking->trailer->identifier_label : "" }}
                                                 @endif
                                                 </option>                                      
                                                 @endforeach

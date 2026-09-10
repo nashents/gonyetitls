@@ -46,6 +46,25 @@ class IntegrationMapping extends Model
         return ! empty($this->external_id);
     }
 
+    /**
+     * Like updateOrCreate(), but also catches a previously soft-deleted row.
+     * The unique index (company_integration_id, entity_type, local_id) has no
+     * deleted_at column, so a trashed row still blocks a plain updateOrCreate()
+     * insert with a duplicate-entry error — un-map (soft delete) then re-map
+     * the same entity and it reproduces every time.
+     */
+    public static function updateOrCreateMapping(array $attributes, array $values = []): self
+    {
+        $mapping = static::withTrashed()->firstOrNew($attributes);
+        $mapping->fill($values);
+        if ($mapping->trashed()) {
+            $mapping->deleted_at = null;
+        }
+        $mapping->save();
+
+        return $mapping;
+    }
+
     // ─────────────────────────────────────────────────────────────
     // STATE HELPERS  (payloads are redacted upstream — never credentials)
     // ─────────────────────────────────────────────────────────────

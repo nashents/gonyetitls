@@ -85,11 +85,11 @@ class Breakdowns extends Component
             $this->horses = Horse::where('transporter_id',$transporter)
             ->where('status', 1)
             ->where('service',0)
-            ->orderBy('registration_number','asc')->latest()->get();
+            ->orderByIdentifier('asc')->latest()->get();
             $this->trailers = Trailer::where('transporter_id',$transporter)
             ->where('status', 1)
             ->where('service',0)
-            ->orderBy('registration_number','asc')->latest()->get();
+            ->orderByIdentifier('asc')->latest()->get();
             $this->drivers = Driver::where('transporter_id',$transporter)
             ->withAggregate('employee','name')
             ->where('status', 1)

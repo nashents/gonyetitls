@@ -18,7 +18,7 @@ class Mileage extends Component
     public $prev_service_date;
 
     public function mount(){
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
     }
 
     public function exportVehiclesMileageCSV(Excel $excel){
@@ -81,7 +81,7 @@ class Mileage extends Component
 
     public function render()
     {
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
         return view('livewire.vehicles.mileage',[
             'vehicles' => $this->vehicles
         ]);

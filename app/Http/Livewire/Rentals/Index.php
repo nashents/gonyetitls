@@ -91,7 +91,7 @@ class Index extends Component
                         ->where('status', 1)
                         ->where('service',0)
                         ->where('archive',0)
-                        ->orderBy('registration_number','asc')->get();
+                        ->orderByIdentifier('asc')->get();
                         }
 
     public function updatedSelectedCustomer($customerId)
@@ -165,7 +165,7 @@ class Index extends Component
                             ->where('status', 1)
                             ->where('service',0)
                             ->where('archive',0)
-                            ->orderBy('registration_number','asc')->get();
+                            ->orderByIdentifier('asc')->get();
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -293,7 +293,7 @@ class Index extends Component
                         ->where('status', 1)
                         ->where('service',0)
                         ->where('archive',0)
-                        ->orderBy('registration_number','asc')->get();
+                        ->orderByIdentifier('asc')->get();
         }
        
         if (isset($this->selectedCustomer) && !is_null($this->selectedCustomer)) {

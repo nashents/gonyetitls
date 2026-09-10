@@ -148,7 +148,7 @@ class EzyTrackDeviceMappingsImport implements ToCollection, SkipsEmptyRows, With
                 $device = EzyTrackDevice::create(['serial_number' => $serial]);
             }
 
-            IntegrationMapping::updateOrCreate(
+            IntegrationMapping::updateOrCreateMapping(
                 [
                     'company_integration_id' => $this->companyIntegrationId,
                     'entity_type'            => $entityType . '_ezytrack_device',

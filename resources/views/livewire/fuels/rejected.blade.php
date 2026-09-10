@@ -151,11 +151,9 @@
                                                             <small>
                                                                 <strong>Requested For:</strong>
                                                                 @if($fuelRequest->horse) <br>
-                                                                    {{ $fuelRequest->horse->registration_number }}
-                                                                    {{ $fuelRequest->horse->fleet_number ? '(' . $fuelRequest->horse->fleet_number . ')' : '' }}
+                                                                    {{ $fuelRequest->horse->identifier_label }}
                                                                 @elseif($fuelRequest->vehicle) <br>
-                                                                    {{ $fuelRequest->vehicle->registration_number }}
-                                                                    {{ $fuelRequest->vehicle->fleet_number ? '(' . $fuelRequest->vehicle->fleet_number . ')' : '' }}
+                                                                    {{ $fuelRequest->vehicle->identifier_label }}
                                                                 @elseif($fuelRequest->asset) <br>
                                                                     {{ optional($fuelRequest->asset->product->brand)->name }}
                                                                     {{ optional($fuelRequest->asset->product)->name }}
@@ -178,12 +176,10 @@
                                                 <td>
                                                     @if($fuel->type === 'Horse' && isset($fuel->horse))
                                                         <span class="badge badge-info">Horse</span>
-                                                        {{ $fuel->horse->registration_number }}
-                                                        {{ $fuel->horse->fleet_number ? '(' . $fuel->horse->fleet_number . ')' : '' }}
+                                                        {{ $fuel->horse->identifier_label }}
                                                     @elseif($fuel->type === 'Vehicle' && isset($fuel->vehicle))
                                                         <span class="badge badge-info">Vehicle</span>
-                                                        {{ $fuel->vehicle->registration_number }}
-                                                        {{ $fuel->vehicle->fleet_number ? '(' . $fuel->vehicle->fleet_number . ')' : '' }}
+                                                        {{ $fuel->vehicle->identifier_label }}
                                                     @elseif($fuel->type === 'Asset' && isset($fuel->asset))
                                                         <span class="badge badge-info">Asset</span>
                                                         {{ optional($fuel->asset->product->brand)->name }}

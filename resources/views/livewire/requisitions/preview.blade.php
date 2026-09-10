@@ -120,11 +120,11 @@
                                                     {{ $booking->service_type?->name }} |
 
                                                     @if ($horse = $booking->horse)
-                                                        {{ $horse->registration_number }} {{ $horse->fleet_number ? "($horse->fleet_number)" : '' }}
+                                                        {{ $horse->identifier_label }}
                                                     @elseif ($vehicle = $booking->vehicle)
-                                                        {{ $vehicle->registration_number }} {{ $vehicle->fleet_number ? "($vehicle->fleet_number)" : '' }}
+                                                        {{ $vehicle->identifier_label }}
                                                     @elseif ($trailer = $booking->trailer)
-                                                        {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "($trailer->fleet_number)" : '' }}
+                                                        {{ $trailer->identifier_label }}
                                                     @endif
                                                 </a>
 

@@ -18,7 +18,7 @@ class Mileage extends Component
     public $prev_service_date;
 
     public function mount(){
-        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::orderByIdentifier('asc')->get();
     }
 
     public function exportTrailersMileageCSV(Excel $excel){
@@ -82,7 +82,7 @@ class Mileage extends Component
 
     public function render()
     {
-        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::orderByIdentifier('asc')->get();
         return view('livewire.trailers.mileage',[
             'trailers' => $this->trailers
         ]);

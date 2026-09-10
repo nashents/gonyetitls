@@ -102,8 +102,8 @@ class Edit extends Component
 
         }
 
-        $this->horses = Horse::where('service',0)->orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::where('service',0)->orderBy('registration_number','asc')->get();
+        $this->horses = Horse::where('service',0)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::where('service',0)->orderByIdentifier('asc')->get();
         $this->assets = Asset::latest()->get();
         $this->categories = Category::latest()->get();
         $this->category_values = collect();

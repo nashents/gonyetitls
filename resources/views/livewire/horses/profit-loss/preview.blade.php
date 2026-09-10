@@ -82,8 +82,7 @@
 
                                 <h6 class="to">
                                     Horse:
-                                    {{ $selected_horse?->registration_number ?? '—' }}
-                                    {{ $selected_horse?->fleet_number ? '('.$selected_horse->fleet_number.')' : '' }}
+                                    {{ $selected_horse?->identifier_label ?? '—' }}
                                     {{ $selected_horse?->horse_make?->name ? ' - '.$selected_horse->horse_make->name : '' }}
                                     {{ $selected_horse?->horse_model?->name ? ' '.$selected_horse->horse_model->name : '' }}
                                 </h6>
