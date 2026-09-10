@@ -100,7 +100,11 @@
                                         @if ($bill->transporter)
                                             Transporter | <a href="{{ route('transporters.show',$bill->transporter->id) }}" style="color: blue" target="_blank">{{ $bill->transporter ? $bill->transporter->name  : ""}}</a> 
                                         @elseif($bill->vendor)
-                                            Vendor | <a href="{{ route('vendors.show',$bill->vendor->id) }}" style="color: blue" target="_blank">{{ $bill->vendor ? $bill->vendor->name : "" }}</a> 
+                                            Vendor | <a href="{{ route('vendors.show',$bill->vendor->id) }}" style="color: blue" target="_blank">{{ $bill->vendor ? $bill->vendor->name : "" }}</a>
+                                            @if ($bill->trip)
+                                                <br>
+                                                Trip | <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}</a>
+                                            @endif
                                             @if ($bill->horse)
                                                 <br>
                                                 Horse | <a href="{{route('horses.show', $bill->horse->id)}}" style="color: blue" target="_blank">{{ $bill->horse ? $bill->horse->identifier_label : "" }} {{$bill->horse->horse_make ? $bill->horse->horse_make->name : ""}} {{$bill->horse->horse_model ? $bill->horse->horse_model->name : ""}}</a> 

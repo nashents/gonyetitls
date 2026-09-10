@@ -2583,6 +2583,7 @@ class Create extends Component
                             $trip_expense->currency_id = $this->selectedAllowanceCurrency[$key] ?? null;
                             $trip_expense->category = $this->allowance_category[$key] ?? null;
                             $trip_expense->amount = $this->allowance_amount[$key] ?? null;
+                            $trip_expense->date = $this->start_date;
                             $trip_expense->exchange_rate = $this->allowance_exchange_rate[$key] ?? null;
                             $trip_expense->exchange_amount = $this->allowance_exchange_amount[$key] ?? null;
                             

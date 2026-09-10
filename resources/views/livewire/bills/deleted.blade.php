@@ -61,6 +61,10 @@
                                         @elseif($bill->vendor)
                                             Vendor | {{ $bill->vendor ? $bill->vendor->name : "" }}
                                         @endif
+                                        @if ($bill->trip)
+                                            <br>
+                                            Trip | {{ $bill->trip->trip_number }}
+                                        @endif
                                         @if ($bill->description)
                                             <br>
                                             {{$bill->description}}
