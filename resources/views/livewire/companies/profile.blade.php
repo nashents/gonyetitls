@@ -33,6 +33,7 @@
         @if (Auth::user()->is_admin())
                 <li role="presentation"><a href="#integrations" aria-controls="integrations" role="tab" data-toggle="tab">Integrations</a></li>
                 <li role="presentation"><a href="#reset-data" aria-controls="reset-data" role="tab" data-toggle="tab">Data Reset</a></li>
+                <li role="presentation"><a href="#fix-trip-expense-dates" aria-controls="fix-trip-expense-dates" role="tab" data-toggle="tab">Fix Trip Expense Dates</a></li>
         @endif
     </ul>
     <div class="tab-content bg-white p-15">
@@ -172,6 +173,9 @@
             </div>
             <div role="tabpanel" class="tab-pane" id="reset-data">
                 @livewire('companies.reset-data')
+            </div>
+            <div role="tabpanel" class="tab-pane" id="fix-trip-expense-dates">
+                @livewire('companies.fix-trip-expense-dates')
             </div>
         @endif
     
