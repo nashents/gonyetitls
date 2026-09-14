@@ -156,9 +156,6 @@ class PrintStatement extends Component
             ->whereHas('bill', function($q){
                 $q->where('authorization', 'approved');
             })
-            ->whereHas('bill', function ($query) {
-                $query->whereNotNull('trip_id');
-            })
             ->whereHas('bill', function($q){
                 $q->where('currency_id', $this->default_currency_id);
             })
@@ -179,9 +176,6 @@ class PrintStatement extends Component
             })
             ->whereHas('bill', function($q){
                 $q->whereDate('bill_date','<=',$this->to);
-            })
-            ->whereHas('bill', function ($query) {
-                $query->whereNotNull('trip_id');
             })
             ->whereHas('bill', function($q){
                 $q->where('authorization', 'approved');

@@ -368,8 +368,21 @@ class Index extends Component
                 });
             })
             ->when($tripOnly, function ($x) {
-                $x->whereNotNull('bills.trip_id')
-                  ->whereBetween('trips.start_date', [$this->fromDt, $this->toDt]);
+                // COGS bills tied to a trip (fuel, tolls, etc.) date-match against
+                // that trip's start_date to align with the revenue it earned. But a
+                // COGS-categorized bill entered directly against the transporter —
+                // e.g. driver salaries — never gets a trip_id at all (Bills\Create
+                // doesn't set one), so it needs its own bill_date to fall back on
+                // instead of being silently excluded from COGS altogether.
+                $x->where(function ($y) {
+                    $y->where(function ($z) {
+                        $z->whereNotNull('bills.trip_id')
+                          ->whereBetween('trips.start_date', [$this->fromDt, $this->toDt]);
+                    })->orWhere(function ($z) {
+                        $z->whereNull('bills.trip_id')
+                          ->whereBetween('bills.bill_date', [$this->fromDt, $this->toDt]);
+                    });
+                });
             }, function ($x) {
                 $x->whereBetween('bills.bill_date', [$this->fromDt, $this->toDt]);
             })

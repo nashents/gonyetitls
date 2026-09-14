@@ -113,6 +113,10 @@ class Approved extends Component
                 $bill->exchange_rate = $fuel->exchange_rate;
                 $bill->total = $fuel->amount;
                 $bill->balance = $fuel->amount;
+                // Without this, bills.authorization stays 'pending' (the column
+                // default) and this bill never matches the P&L reports' approved-
+                // bills filter, no matter how the account is categorized.
+                $bill->authorization = 'approved';
                 $bill->save();
 
                 $fuel_expense = Expense::where('name','Fuel Topup')->get()->first();
@@ -128,6 +132,11 @@ class Approved extends Component
                 $bill_expense->qty = $fuel->quantity;
                 $bill_expense->amount = $fuel->unit_price;
                 $bill_expense->subtotal = $fuel->amount;
+                // The P&L reports read subtotal_incl (same-currency) / exchange_amount
+                // (cross-currency) to value each line — leaving these unset meant the
+                // amount always computed to 0 and got silently dropped as a zero line.
+                $bill_expense->subtotal_incl = $fuel->amount;
+                $bill_expense->exchange_amount = $fuel->exchange_amount;
                 $bill_expense->save();
             }
            
