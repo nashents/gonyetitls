@@ -176,6 +176,27 @@ class Vehicle extends Model implements Auditable
                     ->where('entity_type', 'vehicle_pinpoint');
     }
 
+    /** EzyTrack device mapping for this vehicle (drives live mileage/position pulls). */
+    public function ezyTrackMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'vehicle_ezytrack_device');
+    }
+
+    /**
+     * Whichever tracking-provider mapping this vehicle has (Cartrack, FanTracker,
+     * Pinpoint, or EzyTrack), for the fleet list's "synced to tracker" badge.
+     * Null if unmapped.
+     */
+    public function getTrackerMappingAttribute()
+    {
+        foreach (['Cartrack' => 'cartrackMapping', 'FanTracker' => 'fanTrackerMapping', 'Pinpoint' => 'pinpointMapping', 'EzyTrack' => 'ezyTrackMapping'] as $provider => $relation) {
+            if ($mapping = $this->$relation) {
+                return (object) ['provider' => $provider, 'mapping' => $mapping];
+            }
+        }
+        return null;
+    }
+
     protected $fillable=[
     'user_id',
     'chasis_number',

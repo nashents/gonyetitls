@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Vehicles;
 use App\Models\Bill;
 use App\Models\Mileage;
 use App\Models\Vehicle;
+use App\Services\Integrations\IntegrationGate;
 use Livewire\Component;
 use App\Models\Currency;
 use Livewire\WithPagination;
@@ -114,11 +115,18 @@ class Index extends Component
 
     }
 
+    /** Whether the acting user's company has any active tracking integration (Cartrack/FanTracker/Pinpoint/EzyTrack). */
+    public function getTrackingEnabledProperty()
+    {
+        return IntegrationGate::enabledForUserType('tracking');
+    }
+
     public function render()
     {
         if (isset($this->search)) {
             return view('livewire.vehicles.index',[
                 'vehicles' => Vehicle::with('transporter:id,name','vehicle_make:id,name','vehicle_model:id,name')
+                ->when($this->trackingEnabled, fn ($q) => $q->with('cartrackMapping', 'fanTrackerMapping', 'pinpointMapping', 'ezyTrackMapping'))
                 ->where('archive',0)
                 ->where('vehicle_number','like', '%'.$this->search.'%')
                 ->orWhere('registration_number','like', '%'.$this->search.'%')
@@ -137,6 +145,7 @@ class Index extends Component
         }else{
             return view('livewire.vehicles.index',[
                 'vehicles' => Vehicle::with('transporter:id,name','vehicle_make:id,name','vehicle_model:id,name')
+                ->when($this->trackingEnabled, fn ($q) => $q->with('cartrackMapping', 'fanTrackerMapping', 'pinpointMapping', 'ezyTrackMapping'))
                 ->where('archive',0)->orderByIdentifier('asc')->paginate(10)
             ]);
         }

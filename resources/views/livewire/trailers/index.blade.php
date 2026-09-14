@@ -76,6 +76,12 @@
                                             <small class="badge bg-{{ $sm ? ($sm->sync_status === 'synced' ? 'success' : ($sm->sync_status === 'failed' ? 'danger' : ($sm->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
                                                    title="{{ $sm->last_error ?? '' }}">Sage: {{ $sm ? ucwords(str_replace('_',' ', $sm->sync_status)) : 'Not synced' }}</small>
                                             @endif
+                                            @if ($this->trackingEnabled)
+                                            <br>
+                                            @php $tm = $trailer->tracker_mapping; @endphp
+                                            <small class="badge bg-{{ $tm ? ($tm->mapping->sync_status === 'synced' ? 'success' : ($tm->mapping->sync_status === 'failed' ? 'danger' : ($tm->mapping->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ $tm->mapping->last_error ?? '' }}">Tracker: {{ $tm ? $tm->provider . ' — ' . ucwords(str_replace('_',' ', $tm->mapping->sync_status)) : 'Not synced' }}</small>
+                                            @endif
                                         </td>
                                         <td>{{$trailer->transporter ? $trailer->transporter->name : ""}}</td>
                                         <td>{{$trailer->make}} {{$trailer->model}}</td>

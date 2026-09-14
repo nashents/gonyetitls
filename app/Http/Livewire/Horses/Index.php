@@ -15,6 +15,7 @@ use App\Models\Mileage;
 use App\Models\Trip;
 use App\Services\Sage\SageSyncService;
 use App\Services\Sage\SageIntegration;
+use App\Services\Integrations\IntegrationGate;
 use App\Jobs\Sage\SyncHorseToSageJob;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -189,6 +190,12 @@ class Index extends Component
         return SageIntegration::enabledForUser();
     }
 
+    /** Whether the acting user's company has any active tracking integration (Cartrack/FanTracker/Pinpoint/EzyTrack). */
+    public function getTrackingEnabledProperty()
+    {
+        return IntegrationGate::enabledForUserType('tracking');
+    }
+
     /**
      * Sync one horse to Sage Intacct (as a Class) inline. Used for both the
      * initial sync and retry — the service is idempotent.
@@ -251,6 +258,7 @@ class Index extends Component
             return view('livewire.horses.index',[
                 'horses' => Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')
                 ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
+                ->when($this->trackingEnabled, fn ($q) => $q->with('cartrackMapping', 'fanTrackerMapping', 'pinpointMapping', 'ezyTrackMapping'))
                 ->where('archive',0)
                 ->where('horse_number','like', '%'.$this->search.'%')
                 ->orWhere('registration_number','like', '%'.$this->search.'%')
@@ -271,6 +279,7 @@ class Index extends Component
             return view('livewire.horses.index',[
                 'horses' => Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')
                 ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
+                ->when($this->trackingEnabled, fn ($q) => $q->with('cartrackMapping', 'fanTrackerMapping', 'pinpointMapping', 'ezyTrackMapping'))
                 ->where('archive',0)->orderByIdentifier('asc')->paginate(10),
                 'kpis' => $this->kpis,
             ]);

@@ -76,7 +76,13 @@
                                             @if ($vehicle->custom_ref)
                                             <br>
                                                 <small>Custom Ref:{{$vehicle->custom_ref}}</small>
-                                            @endif 
+                                            @endif
+                                            @if ($this->trackingEnabled)
+                                            <br>
+                                            @php $tm = $vehicle->tracker_mapping; @endphp
+                                            <small class="badge bg-{{ $tm ? ($tm->mapping->sync_status === 'synced' ? 'success' : ($tm->mapping->sync_status === 'failed' ? 'danger' : ($tm->mapping->sync_status === 'requires_attention' ? 'warning' : 'secondary'))) : 'secondary' }}"
+                                                   title="{{ $tm->mapping->last_error ?? '' }}">Tracker: {{ $tm ? $tm->provider . ' — ' . ucwords(str_replace('_',' ', $tm->mapping->sync_status)) : 'Not synced' }}</small>
+                                            @endif
                                         </td>
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>

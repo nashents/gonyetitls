@@ -161,6 +161,27 @@ class Trailer extends Model implements Auditable
                     ->where('entity_type', 'trailer_pinpoint');
     }
 
+    /** EzyTrack device mapping for this trailer (drives live mileage/position pulls). */
+    public function ezyTrackMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+                    ->where('entity_type', 'trailer_ezytrack_device');
+    }
+
+    /**
+     * Whichever tracking-provider mapping this trailer has (Cartrack, FanTracker,
+     * Pinpoint, or EzyTrack), for the fleet list's "synced to tracker" badge.
+     * Null if unmapped.
+     */
+    public function getTrackerMappingAttribute()
+    {
+        foreach (['Cartrack' => 'cartrackMapping', 'FanTracker' => 'fanTrackerMapping', 'Pinpoint' => 'pinpointMapping', 'EzyTrack' => 'ezyTrackMapping'] as $provider => $relation) {
+            if ($mapping = $this->$relation) {
+                return (object) ['provider' => $provider, 'mapping' => $mapping];
+            }
+        }
+        return null;
+    }
+
     protected $fillable = [
         'user_id',
         'trailer_type_id',

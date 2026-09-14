@@ -86,7 +86,7 @@
                                                 @endif
                                             </td>
                                             <td class="w-10 line-height-35">
-                                                <a href="#" class="btn btn-default btn-sm" wire:click.prevent="openMapModal({{ $device->id }})">
+                                                <a href="#" class="btn btn-default btn-sm" wire:click.prevent="openMapModal({{ $device->id }})" data-toggle="modal" data-target="#mapDeviceModal">
                                                     <i class="fa fa-link"></i> {{ $mapping ? 'Re-map' : 'Map' }}
                                                 </a>
                                                 @if ($mapping)

@@ -22,6 +22,7 @@ use App\Models\TrailerDocument;
 use App\Models\VehicleDocument;
 use App\Services\Sage\SageSyncService;
 use App\Services\Sage\SageIntegration;
+use App\Services\Integrations\IntegrationGate;
 use App\Jobs\Sage\SyncTrailerToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -473,6 +474,12 @@ public function activate($id){
         return SageIntegration::enabledForUser();
     }
 
+    /** Whether the acting user's company has any active tracking integration (Cartrack/FanTracker/Pinpoint/EzyTrack). */
+    public function getTrackingEnabledProperty()
+    {
+        return IntegrationGate::enabledForUserType('tracking');
+    }
+
     /** Sync one trailer to Sage Intacct (Class) inline; also used for retry. */
     public function syncToSage($id)
     {
@@ -536,6 +543,7 @@ public function activate($id){
             return view('livewire.trailers.index',[
                 'trailers' => Trailer::with('transporter:id,name')
                 ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
+                ->when($this->trackingEnabled, fn ($q) => $q->with('cartrackMapping', 'fanTrackerMapping', 'pinpointMapping', 'ezyTrackMapping'))
                 ->where('archive',0)
                 ->where('trailer_number','like', '%'.$this->search.'%')
                 ->orWhere('registration_number','like', '%'.$this->search.'%')
@@ -553,6 +561,7 @@ public function activate($id){
             return view('livewire.trailers.index',[
                 'trailers' => Trailer::with('transporter:id,name')
                 ->when($this->sageEnabled, fn ($q) => $q->with('sageMapping'))
+                ->when($this->trackingEnabled, fn ($q) => $q->with('cartrackMapping', 'fanTrackerMapping', 'pinpointMapping', 'ezyTrackMapping'))
                 ->where('archive',0)->orderByIdentifier('asc')->paginate(10),
                 'cargos' => $this->cargos,
                 'measurements' => $this->measurements,
