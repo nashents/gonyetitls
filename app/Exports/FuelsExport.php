@@ -99,7 +99,7 @@ WithCustomStartCell
             $created_by_name =  $fuel->user ? $fuel->user->name : "" ;
             $created_by_surname = $fuel->user ? $fuel->user->name : "" ;
             $symbol = $fuel->currency ? $fuel->currency->symbol : "";
-            $source_truck = $fuel->source_horse ? $fuel->source_horse->registration_number.($fuel->source_horse->fleet_number ? ' ('.$fuel->source_horse->fleet_number.')' : '') : "";
+            $source_truck = $fuel->source_horse ? $fuel->source_horse->identifier_label : "";
 
             if ( $fuel->type == "Horse" || $fuel->type == "Trip") {
                 return   [

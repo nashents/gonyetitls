@@ -36,7 +36,6 @@ WithCustomStartCell
         
         $make = $horse->horse_make? $horse->horse_make->name : "";
         $model = $horse->horse_model? $horse->horse_model->name : "";
-        $fleet_number = $horse->fleet_number ? "(".$horse->fleet_number.")" : "";
 
         $mileageDue = isset($horse->mileage, $horse->next_service) && $horse->mileage > 0 && $horse->next_service > 0 && $horse->mileage >= $horse->next_service;
         $hoursDue = isset($horse->hours, $horse->next_service_hours) && $horse->hours > 0 && $horse->next_service_hours > 0 && $horse->hours >= $horse->next_service_hours;
@@ -63,7 +62,7 @@ WithCustomStartCell
 
         return   [
             $horse->transporter ? $horse->transporter->name : "",
-            $make." ".$model." ".$horse->registration_number ." ". $fleet_number ,
+            $make." ".$model." ".$horse->identifier_label,
             $horse->prev_service_date ,
             $horse->prev_service ? $horse->prev_service."Kms" : "" ,
             $horse->prev_service_hours ? $horse->prev_service_hours."Hours" : "" ,

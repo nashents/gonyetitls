@@ -54,19 +54,16 @@ WithCustomStartCell
     }
 
     public function map($trip): array{
-        if ($trip->route) {
-            $fleet_number =  $trip->route->fleet_number ? '('.$trip->route->fleet_number.')' : "";
-            $route_make =  $trip->route->route_make ? $trip->route->route_make->name : "";
-            $route_model = $trip->route->route_model ? $trip->route->route_model->name : "";
-            $route_registration_number = $trip->route->registration_number;
-            $route_full_details = $route_registration_number.' '.$fleet_number.' '.$route_make.' '.$route_model;
+        if ($trip->horse) {
+            $horse_make =  $trip->horse->horse_make ? $trip->horse->horse_make->name : "";
+            $horse_model = $trip->horse->horse_model ? $trip->horse->horse_model->name : "";
+            $route_full_details = $trip->horse->identifier_label.' '.$horse_make.' '.$horse_model;
             }else {
                 $route_full_details = "";
             }
 
             foreach ($trip->trailers as $trailer) {
-                $fleet_number = $trailer->fleet_number ? '('.$trailer->fleet_number.')' : "";
-                $trailers[] = $trailer->registration_number.' '.$fleet_number; 
+                $trailers[] = $trailer->identifier_label;
             }
             if (isset($trailers)) {
                 $trailer_list = implode(', ',$trailers);

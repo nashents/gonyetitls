@@ -408,7 +408,9 @@
                                             <br>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            {{-- OPEX line items --}}
+                                            {{-- OPEX line items, one table per account type (Operating Expense, Payment
+                                                 Processing Fee, Payroll Expense, Uncategorized Expense, Loss On Foreign
+                                                 Exchange, etc.) --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
                                                 <div class="col-xs-12 p-n">
                                                     <strong><span style="margin-left:5px">Operating Expenses (Line Items)</span></strong>
@@ -416,45 +418,59 @@
                                             </div>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th style="width:110px;">Date</th>
-                                                            <th style="width:130px;">Bill #</th>
-                                                            <th style="width:130px;">Trip</th>
-                                                            <th style="width:160px;">Account</th>
-                                                            <th>Item</th>
-                                                            <th style="width:150px;">Resource</th>
-                                                            <th style="width:160px;">Expense Currency</th>
-                                                            <th style="width:200px;" class="text-right">Amount ({{ $default_currency->name }} {{ $default_currency->symbol }})</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @forelse(($opex_items ?? []) as $it)
+                                            @forelse(($opex_groups ?? []) as $group)
+                                                <div class="col-xs-12 p-n">
+                                                    <strong><span style="margin-left:5px">{{ $group['type_name'] ?? 'Uncategorized' }}</span></strong>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped">
+                                                        <thead>
                                                             <tr>
-                                                                <td>{{ $it['date'] ?? '' }}</td>
-                                                                <td>{{ $it['bill_number'] ?? '' }}</td>
-                                                                <td>{{ $it['trip_ref'] ?? '' }}</td>
-                                                                <td>{{ $it['account_name'] ?? '—' }}</td>
-                                                                <td>{{ $it['item_name'] ?? '—' }}</td>
-                                                                <td>{{ $it['resource_type'] ?? 'Other' }}{{ !empty($it['resource_name']) ? ' - '.$it['resource_name'] : '' }}</td>
-                                                                <td>{{ $it['expense_currency'] ?? '' }}</td>
-                                                                <td class="text-right">{{ number_format((float)($it['amount'] ?? 0), 2) }}</td>
+                                                                <th style="width:110px;">Date</th>
+                                                                <th style="width:130px;">Bill #</th>
+                                                                <th style="width:130px;">Trip</th>
+                                                                <th style="width:160px;">Account</th>
+                                                                <th>Item</th>
+                                                                <th style="width:150px;">Resource</th>
+                                                                <th style="width:160px;">Expense Currency</th>
+                                                                <th style="width:200px;" class="text-right">Amount ({{ $default_currency->name }} {{ $default_currency->symbol }})</th>
                                                             </tr>
-                                                        @empty
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (($group['items'] ?? []) as $it)
+                                                                <tr>
+                                                                    <td>{{ $it['date'] ?? '' }}</td>
+                                                                    <td>{{ $it['bill_number'] ?? '' }}</td>
+                                                                    <td>{{ $it['trip_ref'] ?? '' }}</td>
+                                                                    <td>{{ $it['account_name'] ?? '—' }}</td>
+                                                                    <td>{{ $it['item_name'] ?? '—' }}</td>
+                                                                    <td>{{ $it['resource_type'] ?? 'Other' }}{{ !empty($it['resource_name']) ? ' - '.$it['resource_name'] : '' }}</td>
+                                                                    <td>{{ $it['expense_currency'] ?? '' }}</td>
+                                                                    <td class="text-right">{{ number_format((float)($it['amount'] ?? 0), 2) }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                        <tfoot>
                                                             <tr>
-                                                                <td colspan="8" class="text-center">No Operating Expense line items for this period.</td>
+                                                                <th colspan="7" class="text-right">Total {{ $group['type_name'] ?? 'Uncategorized' }}</th>
+                                                                <th class="text-right">{{ number_format((float)($group['total'] ?? 0), 2) }}</th>
                                                             </tr>
-                                                        @endforelse
-                                                    </tbody>
-                                                    <tfoot>
-                                                        <tr>
-                                                            <th colspan="7" class="text-right">Total Operating Expenses</th>
-                                                            <th class="text-right">{{ number_format((float)($total_operating_expenses ?? 0), 2) }}</th>
-                                                        </tr>
-                                                    </tfoot>
-                                                </table>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            @empty
+                                                <div class="col-xs-12 p-n">
+                                                    <span style="margin-left:5px">No Operating Expense line items for this period.</span>
+                                                </div>
+                                            @endforelse
+
+                                            <div class="col-xs-12 p-n" style="background-color:#f5f5f5">
+                                                <div class="col-xs-5 p-n"><strong><span style="margin-left:5px">Total Operating Expenses (all types)</span></strong></div>
+                                                <div class="col-xs-6 p-n">
+                                                    <strong>
+                                                        <span style="float:right">{{ number_format((float)($total_operating_expenses ?? 0), 2) }}</span>
+                                                    </strong>
+                                                </div>
                                             </div>
 
                                             {{-- Net Profit --}}

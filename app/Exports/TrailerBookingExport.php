@@ -67,7 +67,7 @@ WithCustomStartCell
             }
 
             if (isset($booking->trailer)){
-            $booking_for = "trailer | ". ucfirst($booking->trailer->trailer_make ? $booking->trailer->trailer_make->name : "") ." ". ucfirst($booking->trailer->trailer_model ? $booking->trailer->trailer_model->name : "" ) ." ".  ucfirst($booking->trailer ? $booking->trailer->registration_number : "") ." ". ucfirst($booking->trailer ? "| ".$booking->trailer->fleet_number : "");
+            $booking_for = "trailer | ". ucfirst($booking->trailer->trailer_make ? $booking->trailer->trailer_make->name : "") ." ". ucfirst($booking->trailer->trailer_model ? $booking->trailer->trailer_model->name : "" ) ." ". $booking->trailer->identifier_label;
             }else{
             $booking_for = "";
             }   

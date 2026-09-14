@@ -37,9 +37,8 @@ WithCustomStartCell
         
         $make = $horse->horse_make? $horse->horse_make->name : "";
         $model = $horse->horse_model? $horse->horse_model->name : "";
-        $fleet_number = $horse->fleet_number ? "(".$horse->fleet_number.")" : "";
 
-        
+
         if (isset($horse->year) && is_numeric($horse->year)) {
 
             $current_year = (int) date('Y');
@@ -72,7 +71,7 @@ WithCustomStartCell
 
         return   [
             $horse->transporter ? $horse->transporter->name : "",
-            $make." ".$model." ".$horse->registration_number ." ". $fleet_number ,
+            $make." ".$model." ".$horse->identifier_label,
             $horse->year,
             $age ? $age." Year(s)" : "",
             $horse->start_date,

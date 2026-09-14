@@ -449,16 +449,13 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         $clearing_agents = [];
 
         if ($trip->horse) {
-            $fleet_number = $trip->horse->fleet_number ? '(' . $trip->horse->fleet_number . ')' : "";
-            $horse_registration_number = $trip->horse->registration_number ?? "";
-            $horse_full_details = trim($horse_registration_number . ' ' . $fleet_number);
+            $horse_full_details = $trip->horse->identifier_label;
         } else {
             $horse_full_details = "";
         }
 
         foreach (($trip->trailers ?? []) as $trailer) {
-            $fleet_number = $trailer->fleet_number ? '(' . $trailer->fleet_number . ')' : "";
-            $trailers[] = trim(($trailer->registration_number ?? '') . ' ' . $fleet_number);
+            $trailers[] = $trailer->identifier_label;
         }
         $trailer_list = !empty($trailers) ? implode(', ', $trailers) : "";
 
@@ -1075,7 +1072,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
                 if (!empty($this->horse)) {
                     $filters[] = 'Horse: ' . (is_object($this->horse) && isset($this->horse->registration_number)
-                        ? $this->horse->registration_number ." (".$this->horse->fleet_number.")"
+                        ? $this->horse->identifier_label
                         : $this->horse);
                 }
 

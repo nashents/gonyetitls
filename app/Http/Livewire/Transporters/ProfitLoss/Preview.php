@@ -13,6 +13,7 @@ use App\Models\Driver;
 use App\Models\Trailer;
 use App\Models\Transporter;
 use App\Models\AccountType;
+use App\Models\AccountTypeGroup;
 use App\Models\BillExpense;
 
 class Preview extends Component
@@ -67,6 +68,11 @@ class Preview extends Component
     public $cogs_lines = [];
     public $opex_lines = [];
 
+    // opex_items grouped by the bill expense's account type — Operating Expense,
+    // Payment Processing Fee, Payroll Expense, Uncategorized Expense, Loss On
+    // Foreign Exchange, and any other account type under the Expenses group.
+    public $opex_groups = [];
+
     public function mount($selectedTransporter, $from, $to)
     {
         $this->company = Auth::user()->employee->company;
@@ -83,11 +89,19 @@ class Preview extends Component
         $this->default_currency    = $this->company->currency;
         $this->default_currency_id = $this->company->currency_id;
 
-        $cogsType = AccountType::where('name', 'Cost Of Goods Sold')->first();
-        $opexType = AccountType::where('name', 'Operating Expense')->first();
+        $cogsType     = AccountType::where('name', 'Cost Of Goods Sold')->first();
+        $expensesGroup = AccountTypeGroup::where('name', 'Expenses')->first();
 
         $this->cost_of_goods_sold_accounts = $cogsType?->accounts ?? collect();
-        $this->operating_expenses_accounts = $opexType?->accounts ?? collect();
+
+        // Everything else under the Expenses group — Operating Expense, Payment
+        // Processing Fee, Payroll Expense, Uncategorized Expense, Loss On Foreign
+        // Exchange — not just accounts typed exactly "Operating Expense".
+        $this->operating_expenses_accounts = $expensesGroup
+            ? $expensesGroup->accounts()
+                ->when($cogsType, fn ($q) => $q->where('account_type_id', '!=', $cogsType->id))
+                ->get()
+            : collect();
 
         $this->recalculate();
     }
@@ -171,6 +185,7 @@ class Preview extends Component
 
         $this->cogs_lines = $this->groupItemsByAccount($this->cogs_items);
         $this->opex_lines = $this->groupItemsByAccount($this->opex_items);
+        $this->opex_groups = $this->groupByAccountType($this->opex_items);
 
         $allItems = array_merge($this->cogs_items, $this->opex_items);
         $this->total_truck_expenses   = $this->sumByResource($allItems, 'Truck');
@@ -213,6 +228,27 @@ class Preview extends Component
 
         usort($lines, fn($a, $b) => strcmp($a['name'], $b['name']));
         return $lines;
+    }
+
+    /**
+     * Groups flat expense line items by account type (Operating Expense, Payment
+     * Processing Fee, Payroll Expense, Uncategorized Expense, Loss On Foreign
+     * Exchange, etc.) — whatever account types the bills were actually coded to.
+     */
+    protected function groupByAccountType(array $items): array
+    {
+        $groups = [];
+
+        foreach ($items as $item) {
+            $type = $item['account_type_name'] ?? 'Uncategorized';
+            $groups[$type]['type_name'] ??= $type;
+            $groups[$type]['items'][] = $item;
+            $groups[$type]['total'] = ($groups[$type]['total'] ?? 0) + (float) ($item['amount'] ?? 0);
+        }
+
+        ksort($groups);
+
+        return array_values($groups);
     }
 
     /**
@@ -261,7 +297,8 @@ class Preview extends Component
                 $x->whereBetween('bills.bill_date', [$this->fromDt, $this->toDt]);
             })
             ->with([
-                'account:id,name',
+                'account:id,name,account_type_id',
+                'account.account_type:id,name',
 
                 'expense:id,name',
                 'product:id,name,brand_id',
@@ -307,6 +344,7 @@ class Preview extends Component
                 'bill_number'     => $bill?->bill_number ?? '',
                 'trip_ref'        => $bill?->trip?->trip_number ?? ($bill?->trip_id ? ('Trip #'.$bill->trip_id) : ''),
                 'account_name'    => $be->account?->name ?? '—',
+                'account_type_name' => $be->account?->account_type?->name ?? 'Uncategorized',
                 'item_name'       => $this->resolveBillExpenseName($be),
                 'resource_type'   => $resourceType,
                 'resource_name'   => $resourceName,

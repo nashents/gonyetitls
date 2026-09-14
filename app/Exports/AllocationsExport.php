@@ -35,8 +35,7 @@ WithCustomStartCell
         $status = $allocation->status == 1 ? "active" : "expired";
         $make =   $allocation->vehicle ? $allocation->vehicle->make : "";
         $model = $allocation->vehicle ? $allocation->vehicle->model : "" ;
-        $regnumber = $allocation->vehicle ? $allocation->vehicle->registration_number : "";
-        $vehicle = $make ." ".$model ." ".$regnumber;
+        $vehicle = $make ." ".$model ." ".($allocation->vehicle ? $allocation->vehicle->identifier_label : "");
         $name = $allocation->employee ? $allocation->employee->name : "";
         $surname = $allocation->employee ? $allocation->employee->surname : "";
         $employee = $name ." ".$surname;

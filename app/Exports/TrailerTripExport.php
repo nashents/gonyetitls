@@ -62,19 +62,17 @@ WithCustomStartCell
        
        
         if ( $trip->horse) {
-            $fleet_number =  $trip->horse->fleet_number ? '('.$trip->horse->fleet_number.')' : "";
             $horse_make =  $trip->horse->horse_make ? $trip->horse->horse_make->name : "";
             $horse_model = $trip->horse->horse_model ? $trip->horse->horse_model->name : "";
-            $horse_registration_number = $trip->horse->registration_number;
-            $horse_full_details = $horse_registration_number.' '.$fleet_number.' '.$horse_make.' '.$horse_model;
+            $horse_full_details = $trip->horse->identifier_label.' '.$horse_make.' '.$horse_model;
             }else {
                 $horse_full_details = "";
             }
 
-            $trailer = Trailer::find($this->trailer_id); 
+            $trailer = Trailer::find($this->trailer_id);
             // foreach ($trip->trailers as $trailer) {
             //     $fleet_number = $trailer->fleet_number ? '('.$trailer->fleet_number.')' : "";
-            //     $trailers[] = $trailer->registration_number.' '.$fleet_number; 
+            //     $trailers[] = $trailer->registration_number.' '.$fleet_number;
             // }
             // if (isset($trailers)) {
             //     $trailer_list = implode(', ',$trailers);
@@ -413,7 +411,7 @@ WithCustomStartCell
                     $clearing_agent_list,
                     $trip->transporter ? $trip->transporter->name : "",
                     $horse_full_details,
-                    $trailer->registration_number,
+                    $trailer->identifier_label,
                     $driver_name .' '. $driver_surname,
                     $trip->customer ? $trip->customer->name : "",
                     $trip->consignee ? $trip->consignee->name : "",

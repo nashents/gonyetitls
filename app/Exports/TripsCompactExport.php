@@ -143,16 +143,13 @@ WithCustomStartCell
     public function map($trip): array{
 
         if ( $trip->horse) {
-            $fleet_number =  $trip->horse->fleet_number ? '('.$trip->horse->fleet_number.')' : "";
-            $horse_registration_number = $trip->horse->registration_number;
-           $horse_full_details = $horse_registration_number.' '."(".$fleet_number.")";
+            $horse_full_details = $trip->horse->identifier_label;
             }else {
                 $horse_full_details = "";
             }
 
             foreach ($trip->trailers as $trailer) {
-                $fleet_number = $trailer->fleet_number ? '('.$trailer->fleet_number.')' : "";
-                $trailers[] = $trailer->registration_number.' '.$fleet_number; 
+                $trailers[] = $trailer->identifier_label;
             }
             if (isset($trailers)) {
                 $trailer_list = implode(', ',$trailers);

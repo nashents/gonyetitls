@@ -34,7 +34,6 @@ WithCustomStartCell
     }
     public function map($trailer): array{
         
-        $fleet_number = $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "";
 
         if ((isset($trailer->mileage) && $trailer->mileage > 0) && (isset($trailer->next_service) && $trailer->next_service > 0)) {
             if ($trailer->mileage >= $trailer->next_service) {
@@ -52,7 +51,7 @@ WithCustomStartCell
 
         return   [
             $trailer->transporter ? $trailer->transporter->name : "",
-            $trailer->make ." ". $trailer->model ." ". $trailer->registration_number ." ".  $fleet_number,
+            $trailer->make ." ". $trailer->model ." ". $trailer->identifier_label,
             $trailer->prev_service ? $trailer->prev_service."Kms" : "" ,
             $trailer->prev_service_date ,
             $trailer->mileage ? $trailer->mileage."Kms" : "" ,

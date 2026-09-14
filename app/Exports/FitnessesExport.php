@@ -60,24 +60,18 @@ WithCustomStartCell
         
 
         if ($fitness->horse) {
-            $horse_reg_number = $fitness->horse->registration_number;
-            $horse_fleet_number = $fitness->horse->fleet_number ? "(".$fitness->horse->fleet_number.")" : "";
             $horse_make = $fitness->horse->horse_make ? $fitness->horse->horse_make->name : "";
             $horse_model = $fitness->horse->horse_model ? $fitness->horse->horse_model->name : "";
-            $reminder_for =  "Horse | ".$horse_reg_number." ". $horse_fleet_number." ".$horse_make." ".  $horse_model;
+            $reminder_for =  "Horse | ".$fitness->horse->identifier_label." ".$horse_make." ".  $horse_model;
         }elseif ($fitness->vehicle) {
-            $vehicle_reg_number = $fitness->vehicle->registration_number;
-            $vehicle_fleet_number = $fitness->vehicle->fleet_number ? "(".$fitness->vehicle->fleet_number.")" : "";
             $vehicle_make = $fitness->vehicle->vehicle_make ? $fitness->vehicle->vehicle_make->name : "";
             $vehicle_model = $fitness->vehicle->vehicle_model ? $fitness->vehicle->vehicle_model->name : "";
-            $reminder_for =  "Vehicle | ".$vehicle_reg_number." ". $vehicle_fleet_number." ".$vehicle_make." ".  $vehicle_model;
-          
+            $reminder_for =  "Vehicle | ".$fitness->vehicle->identifier_label." ".$vehicle_make." ".  $vehicle_model;
+
         }elseif ($fitness->employee) {
             $reminder_for = "Employee | ".$fitness->employee->name ." ". $fitness->employee->surname;
         }elseif ($fitness->trailer) {
-            $trailer_reg_number = $fitness->trailer->registration_number;
-            $trailer_fleet_number = $fitness->trailer->fleet_number ? "(".$fitness->trailer->fleet_number.")" : "";
-            $reminder_for =  "Trailer | ".$trailer_reg_number." ". $trailer_fleet_number;
+            $reminder_for =  "Trailer | ".$fitness->trailer->identifier_label;
         }else {
             $reminder_for = "";
         }

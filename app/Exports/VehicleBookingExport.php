@@ -67,7 +67,7 @@ WithCustomStartCell
             }
 
             if (isset($booking->vehicle)){
-            $booking_for = "vehicle | ". ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "") ." ". ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "" ) ." ".  ucfirst($booking->vehicle ? $booking->vehicle->registration_number : "") ." ". ucfirst($booking->vehicle ? "| ".$booking->vehicle->fleet_number : "");
+            $booking_for = "vehicle | ". ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "") ." ". ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "" ) ." ". $booking->vehicle->identifier_label;
             }else{
             $booking_for = "";
             }   

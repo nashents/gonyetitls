@@ -243,7 +243,9 @@
 
                                         <hr style="width:100%;" size="3" color="black">
 
-                                        {{-- ===================== OPEX (SUMMARY BY ACCOUNT) ===================== --}}
+                                        {{-- ===================== OPEX, GROUPED BY ACCOUNT TYPE =====================
+                                             Operating Expense, Payment Processing Fee, Payroll Expense, Uncategorized
+                                             Expense, Loss On Foreign Exchange, and any other type under Expenses. --}}
                                         <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
                                             <div class="col-xs-12 p-n">
                                                 <strong><span style="margin-left:5px">Operating Expenses</span></strong>
@@ -252,17 +254,40 @@
 
                                         <hr style="width:100%;" size="3" color="black">
 
-                                        @if(!empty($opex_lines))
-                                            @foreach($opex_lines as $line)
+                                        @if(!empty($opex_groups))
+                                            @foreach($opex_groups as $group)
                                                 <div class="col-xs-12 p-n">
                                                     <div class="col-xs-12 p-n">
-                                                        <span style="margin-left:5px">{{ $line['name'] ?? '—' }}</span>
-                                                        <span style="float:right; padding-right:5px;">
-                                                            {{ $default_currency?->name }} {{ $default_currency?->symbol }}
-                                                            {{ number_format((float)($line['amount'] ?? 0), 2) }}
-                                                        </span>
+                                                        <strong><span style="margin-left:5px">{{ $group['type_name'] ?? 'Uncategorized' }}</span></strong>
+                                                        <strong>
+                                                            <span style="float:right; padding-right:5px;">
+                                                                {{ $default_currency?->name }} {{ $default_currency?->symbol }}
+                                                                {{ number_format((float)($group['total'] ?? 0), 2) }}
+                                                            </span>
+                                                        </strong>
                                                     </div>
                                                 </div>
+                                                <hr style="width:100%;" size="1" color="#eee">
+
+                                                @php
+                                                    $groupAccountLines = [];
+                                                    foreach (($group['items'] ?? []) as $gi) {
+                                                        $gName = $gi['account_name'] ?? '—';
+                                                        $groupAccountLines[$gName] = ($groupAccountLines[$gName] ?? 0) + (float) ($gi['amount'] ?? 0);
+                                                    }
+                                                    ksort($groupAccountLines);
+                                                @endphp
+                                                @foreach($groupAccountLines as $accountName => $accountAmount)
+                                                    <div class="col-xs-12 p-n">
+                                                        <div class="col-xs-12 p-n">
+                                                            <span style="margin-left:15px">{{ $accountName }}</span>
+                                                            <span style="float:right; padding-right:5px;">
+                                                                {{ $default_currency?->name }} {{ $default_currency?->symbol }}
+                                                                {{ number_format($accountAmount, 2) }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
                                                 <hr style="width:100%;" size="3" color="black">
                                             @endforeach
                                         @else

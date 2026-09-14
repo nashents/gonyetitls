@@ -233,11 +233,11 @@ class BookingsExport implements
         }
 
         if (isset($booking->horse)){
-            $booking_for = "Horse | ". ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "") ." ". ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" ) ." ".  ucfirst($booking->horse ? $booking->horse->registration_number : "") ." ". ucfirst($booking->horse ? "| ".$booking->horse->fleet_number : "");
+            $booking_for = "Horse | ". ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "") ." ". ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" ) ." ". $booking->horse->identifier_label;
         } elseif(isset($booking->vehicle)){
-            $booking_for = "Vehicle | ". ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "") ." ".  ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "") ." ". ucfirst($booking->vehicle ? $booking->vehicle->registration_number : "") . " " . ucfirst($booking->vehicle ? "| ".$booking->vehicle->fleet_number : "");
+            $booking_for = "Vehicle | ". ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "") ." ".  ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "") ." ". $booking->vehicle->identifier_label;
         } elseif(isset($booking->trailer)){
-            $booking_for = "Trailer | ". ucfirst($booking->trailer ? $booking->trailer->make : "") ." ". ucfirst($booking->trailer ? $booking->trailer->model : "") ." ". ucfirst($booking->trailer ? $booking->trailer->registration_number : "") ." ". ucfirst($booking->trailer ? "| ".$booking->trailer->fleet_number : "");
+            $booking_for = "Trailer | ". ucfirst($booking->trailer ? $booking->trailer->make : "") ." ". ucfirst($booking->trailer ? $booking->trailer->model : "") ." ". $booking->trailer->identifier_label;
         } else {
             $booking_for = "";
         }

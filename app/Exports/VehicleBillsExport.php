@@ -54,23 +54,17 @@ WithCustomStartCell
             if ($bill->horse) {
                 $make = $bill->horse->horse_make ? $bill->horse->horse_make->name : "";
                 $model = $bill->horse->horse_model ? $bill->horse->horse_model->name : "";
-                $fleet_number = $bill->horse->fleet_number ? "(".$bill->horse->fleet_number.")" : "";
-                $reg_number = $bill->horse->registration_number ? $bill->horse->registration_number : "";
-                $horse = $reg_number." ".$fleet_number." ".$make." ".$model;
+                $horse = $bill->horse->identifier_label." ".$make." ".$model;
                 $bill_category = $vendor.", Horse | ".$horse ;
             }elseif ($bill->vehicle) {
                 $make = $bill->vehicle->vehicle_make ? $bill->vehicle->vehicle_make->name : "";
                 $model = $bill->vehicle->vehicle_model ? $bill->vehicle->vehicle_model->name : "";
-                $fleet_number = $bill->vehicle->fleet_number ? "(".$bill->vehicle->fleet_number.")" : "";
-                $reg_number = $bill->vehicle->registration_number ? $bill->vehicle->registration_number : "";
-                $vehicle = $reg_number." ".$fleet_number." ".$make." ".$model;
+                $vehicle = $bill->vehicle->identifier_label." ".$make." ".$model;
                 $bill_category = $vendor.", Vehicle | ".$vehicle ;
             }elseif ($bill->trailer) {
                 $make = $bill->trailer->make;
                 $model = $bill->trailer->model;
-                $fleet_number = $bill->trailer->fleet_number ? "(".$bill->trailer->fleet_number.")" : "";
-                $reg_number = $bill->trailer->registration_number ? $bill->trailer->registration_number : "";
-                $trailer = $reg_number." ".$fleet_number." ".$make." ".$model;
+                $trailer = $bill->trailer->identifier_label." ".$make." ".$model;
                 $bill_category = $vendor.", Trailer | ".$trailer ;
             }elseif ($bill->driver) {
                 $name = $bill->driver->employee ? $bill->driver->employee->name : "";
@@ -110,23 +104,17 @@ WithCustomStartCell
         } elseif ($bill->horse && !$bill->vendor) {
             $make = $bill->horse->horse_make ? $bill->horse->horse_make->name : "";
             $model = $bill->horse->horse_model ? $bill->horse->horse_model->name : "";
-            $fleet_number = $bill->horse->fleet_number ? "(".$bill->horse->fleet_number.")" : "";
-            $reg_number = $bill->horse->registration_number ? $bill->horse->registration_number : "";
-            $horse = $reg_number." ".$fleet_number." ".$make." ".$model;
+            $horse = $bill->horse->identifier_label." ".$make." ".$model;
             $bill_category = "Horse | ".$horse ;
         }elseif ($bill->vehicle && !$bill->vendor) {
             $make = $bill->vehicle->vehicle_make ? $bill->vehicle->vehicle_make->name : "";
             $model = $bill->vehicle->vehicle_model ? $bill->vehicle->vehicle_model->name : "";
-            $fleet_number = $bill->vehicle->fleet_number ? "(".$bill->vehicle->fleet_number.")" : "";
-            $reg_number = $bill->vehicle->registration_number ? $bill->vehicle->registration_number : "";
-            $vehicle = $reg_number." ".$fleet_number." ".$make." ".$model;
+            $vehicle = $bill->vehicle->identifier_label." ".$make." ".$model;
             $bill_category = "Vehicle | ".$vehicle ;
         }elseif ($bill->trailer && !$bill->vendor) {
             $make = $bill->trailer->make;
             $model = $bill->trailer->model;
-            $fleet_number = $bill->trailer->fleet_number ? "(".$bill->trailer->fleet_number.")" : "";
-            $reg_number = $bill->trailer->registration_number ? $bill->trailer->registration_number : "";
-            $trailer = $reg_number." ".$fleet_number." ".$make." ".$model;
+            $trailer = $bill->trailer->identifier_label." ".$make." ".$model;
             $bill_category = "Trailer | ".$trailer ;
         }elseif ($bill->driver && !$bill->vendor) {
             $name = $bill->driver->employee ? $bill->driver->employee->name : "";

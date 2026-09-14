@@ -174,14 +174,12 @@ class HorsesExport implements
             });
         });
 
-        return $query->orderBy('registration_number', 'asc');
+        return $query->orderByIdentifier('asc');
     }
 
     public function map($horse): array
     {
         $status = (int) $horse->status === 1 ? 'Available' : 'Unavailable';
-
-        $fleetNumber = $horse->fleet_number ? '(' . $horse->fleet_number . ')' : '';
 
         $make = $horse->horse_make ? $horse->horse_make->name : '';
         $model = $horse->horse_model ? $horse->horse_model->name : '';
@@ -194,7 +192,7 @@ class HorsesExport implements
 
         return [
             $horse->horse_number,
-            trim(($horse->registration_number ?? '') . ' ' . $fleetNumber),
+            $horse->identifier_label,
             $makeModel,
             optional($horse->transporter)->name ?? '',
             optional($horse->horse_type)->name ?? '',

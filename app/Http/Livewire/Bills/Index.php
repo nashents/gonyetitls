@@ -880,6 +880,15 @@ class Index extends Component
                 })
                 ->orWhereHas('vendor', function ($sub) use ($term) {
                     $sub->where('name', 'like', $term);
+                })
+                ->orWhereHas('bill_expenses.account', function ($sub) use ($term) {
+                    $sub->where('name', 'like', $term)
+                        ->orWhereHas('account_type', function ($t) use ($term) {
+                            $t->where('name', 'like', $term);
+                        })
+                        ->orWhereHas('account_type_group', function ($g) use ($term) {
+                            $g->where('name', 'like', $term);
+                        });
                 });
             });
         });

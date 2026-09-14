@@ -36,18 +36,14 @@ WithCustomStartCell
 
             $name =  $workshop_service->user ? $workshop_service->user->name : ""  ;
             $surname =  $workshop_service->user ? $workshop_service->user->surname : ""  ;
-            $horse_reg = $workshop_service->horse->registration_number;
-            $horse_fleet = $workshop_service->horse->fleet_number ? "(".$workshop_service->horse->fleet_number.")" : "";
-            $trailer_reg = $workshop_service->trailer ? $workshop_service->trailer->registration_number : "";
-            $trailer_fleet = $workshop_service->trailer->fleet_number ? "(".$workshop_service->trailer->fleet_number.")" : "";
 
             return   [
                 $name." ".$surname,
                 $workshop_service->account ? $workshop_service->account->name : '',
                 $workshop_service->vendor ? $workshop_service->vendor->name : "",
                 $workshop_service->transporter ? $workshop_service->transporter->name : "",
-                $horse_reg." ".$horse_fleet,
-                $trailer_reg." ".$trailer_fleet,
+                optional($workshop_service->horse)->identifier_label,
+                optional($workshop_service->trailer)->identifier_label,
                 $workshop_service->load_status,
                 $workshop_service->days,
                 $workshop_service->start_date,

@@ -58,7 +58,7 @@ class MonthlyShiftActivitiesExport implements WithMultipleSheets
             ->pluck('horse_id')
             ->unique();
 
-        $horses = Horse::whereIn('id', $horseIds)->orderBy('fleet_number')->get()->keyBy('id');
+        $horses = Horse::whereIn('id', $horseIds)->orderByIdentifier('asc')->get()->keyBy('id');
 
         $sheets = [];
         $daysInMonth = $start->daysInMonth;

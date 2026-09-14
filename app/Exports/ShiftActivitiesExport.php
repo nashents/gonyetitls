@@ -45,7 +45,7 @@ class ShiftActivitiesExport implements WithMultipleSheets
             $query->whereIn('id', $this->horseIds);
         }
 
-        $horses = $query->orderBy('fleet_number')->get();
+        $horses = $query->orderByIdentifier('asc')->get();
 
         // Group horses in pairs — two horses side by side per sheet page
         $pairs  = $horses->chunk(2);

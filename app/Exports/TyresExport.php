@@ -132,15 +132,11 @@ class TyresExport implements
             $assetLine = null;
 
             if ($assignment->horse) {
-                $assetLine = 'Horse: ' . $assignment->horse->registration_number .
-                    ($assignment->horse->fleet_number ? " ({$assignment->horse->fleet_number})" : '');
+                $assetLine = 'Horse: ' . $assignment->horse->identifier_label;
             } elseif ($assignment->trailer) {
-                $assetLine = 'Trailer: ' . $assignment->trailer->registration_number .
-                    ($assignment->trailer->fleet_number ? " ({$assignment->trailer->fleet_number})" : '');
+                $assetLine = 'Trailer: ' . $assignment->trailer->identifier_label;
             } elseif ($assignment->vehicle) {
-                // NOTE: your blade had a small bug: it used $assignment->horse->registration_number for vehicle.
-                $assetLine = 'Vehicle: ' . $assignment->vehicle->registration_number .
-                    ($assignment->vehicle->fleet_number ? " ({$assignment->vehicle->fleet_number})" : '');
+                $assetLine = 'Vehicle: ' . $assignment->vehicle->identifier_label;
             }
 
             $locationText = implode("\n", array_filter([

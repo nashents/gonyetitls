@@ -138,25 +138,17 @@ WithCustomStartCell
             $assigned_to = "";
             }
 
-            $reg_number = "";
-            $fleet_number = "";
             $ticket_for = "";
 
             if ($ticket->horse){
-                $reg_number = $ticket->horse ? $ticket->horse->registration_number : "";
-                $fleet_number = $ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : "";
-                $ticket_for = "Horse | ". $reg_number ." ".$fleet_number;
+                $ticket_for = "Horse | ". $ticket->horse->identifier_label;
             }
             elseif($ticket->vehicle){
-                $reg_number = $ticket->vehicle ? $ticket->vehicle->registration_number : "";
-                $fleet_number = $ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : "";
-                $ticket_for = "Vehicle | ". $reg_number ." ".$fleet_number;
+                $ticket_for = "Vehicle | ". $ticket->vehicle->identifier_label;
             }
             elseif($ticket->trailer){
-                $reg_number = $ticket->trailer ? $ticket->trailer->registration_number : "";
-                $fleet_number = $ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : "";
-                $ticket_for = "Trailer | ". $reg_number ." ".$fleet_number;
-            }  
+                $ticket_for = "Trailer | ". $ticket->trailer->identifier_label;
+            }
 
 
             $user = User::find($ticket->booking->authorized_by_id);

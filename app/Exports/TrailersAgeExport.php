@@ -35,8 +35,6 @@ WithCustomStartCell
     }
     public function map($trailer): array{
         
-        $fleet_number = $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "";
-           
         if (isset($trailer->year) && is_numeric($trailer->year)) {
 
             $current_year = (int) date('Y');
@@ -69,7 +67,7 @@ WithCustomStartCell
 
         return   [
             $trailer->transporter ? $trailer->transporter->name : "",
-            $trailer->make ." ". $trailer->model ." ". $trailer->registration_number ." ".  $fleet_number,
+            $trailer->make ." ". $trailer->model ." ". $trailer->identifier_label,
             $trailer->year,
             $age ? $age." Year(s)" : "",
             $trailer->start_date,

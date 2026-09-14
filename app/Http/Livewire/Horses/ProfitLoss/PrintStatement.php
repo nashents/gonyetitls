@@ -8,6 +8,7 @@ use App\Models\Horse;
 use App\Models\Account;
 use Livewire\Component;
 use App\Models\AccountType;
+use App\Models\AccountTypeGroup;
 use App\Models\BillExpense;
 use Illuminate\Support\Facades\Auth;
 
@@ -86,8 +87,16 @@ class PrintStatement extends Component
         $this->income_accounts = $this->income_account_type->accounts;
         $this->cost_of_goods_sold_account_type = AccountType::where('name','Cost Of Goods Sold')->first();
         $this->cost_of_goods_sold_accounts = $this->cost_of_goods_sold_account_type->accounts;
+        // Everything under the Expenses group except Cost Of Goods Sold — Operating
+        // Expense, Payment Processing Fee, Payroll Expense, Uncategorized Expense,
+        // Loss On Foreign Exchange — not just accounts typed exactly "Operating Expense".
         $this->operating_expenses_account_type = AccountType::where('name','Operating Expense')->first();
-        $this->operating_expenses_accounts = $this->operating_expenses_account_type->accounts;
+        $expensesGroup = AccountTypeGroup::where('name', 'Expenses')->first();
+        $this->operating_expenses_accounts = $expensesGroup
+            ? $expensesGroup->accounts()
+                ->when($this->cost_of_goods_sold_account_type, fn ($q) => $q->where('account_type_id', '!=', $this->cost_of_goods_sold_account_type->id))
+                ->get()
+            : collect();
 
         if (isset($this->operating_expenses_accounts)) {
             foreach ($this->operating_expenses_accounts as $account) {

@@ -301,9 +301,7 @@ WithCustomStartCell
     public function map($selected_horse): array{
 
             $horse = Horse::find($selected_horse->horse_id);
-            $regnumber = $horse->registration_number;
-            $fleetnumber = $horse->fleet_number  ? "(".$horse->fleet_number.")" : "";
-            $horse_details = $regnumber." ".$fleetnumber;
+            $horse_details = $horse->identifier_label;
             $transporter = $horse->transporter ? $horse->transporter->name : "";
 
             $total_kilometers = "";

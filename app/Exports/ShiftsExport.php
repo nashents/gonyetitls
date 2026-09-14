@@ -254,13 +254,9 @@ WithCustomStartCell
 
                 $equipment = "";
                 if ($shift->equipment == "Horse") {
-                    $reg_number = $shift->horse->registration_number ?? Null;
-                    $fleet_number = optional($shift->horse)->fleet_number ? "(" . optional($shift->horse)->fleet_number . ")" : null;
-                    $equipment = $reg_number." ".$fleet_number;
+                    $equipment = optional($shift->horse)->identifier_label;
                 }elseif ($shift->equipment == "Vehicle") {
-                    $reg_number = $shift->vehicle->registration_number ?? Null;
-                    $fleet_number = optional($shift->vehicle)->fleet_number ? "(" . optional($shift->vehicle)->fleet_number . ")" : null;
-                    $equipment = $reg_number." ".$fleet_number;
+                    $equipment = optional($shift->vehicle)->identifier_label;
                 }
 
               
