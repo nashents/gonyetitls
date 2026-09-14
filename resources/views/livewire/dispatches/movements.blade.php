@@ -31,7 +31,7 @@
                     @endif
                 </td>
                 <td>
-                    {{$movement->product ? $movement->product->product_number : ""}} {{$movement->product ? $movement->product->name : ""}} {{$movement->product->brand ? $movement->product->brand->name : ""}}
+                    {{$movement->product?->product_number}} {{$movement->product?->name}} {{$movement->product?->brand?->name}}
                 </td>
                 <td>{{$movement->mileage_moved}}</td>
                 <td>{{$movement->qty}}</td>

@@ -71,7 +71,7 @@
                                                 @endif
                                             </td>
                                             <td class="w-10 line-height-35">
-                                                <a href="#" class="btn btn-default btn-sm" wire:click.prevent="openMapModal('{{ $tracker['uin'] }}', '{{ addslashes($label) }}')" data-toggle="modal" data-target="#mapTrackerModal">
+                                                <a href="#" class="btn btn-default btn-sm" wire:click.prevent="openMapModal('{{ $tracker['uin'] }}', '{{ addslashes($label) }}')">
                                                     <i class="fa fa-link"></i> {{ $mapping ? 'Re-map' : 'Map' }}
                                                 </a>
                                                 @if ($mapping)

@@ -225,6 +225,16 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-mapTrackerModal', event => {
+                $('#mapTrackerModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-mapTrackerModal', event => {
+                $('#mapTrackerModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-importDevicesModal', event => {
                 $('#importDevicesModal').modal('show');
             })
