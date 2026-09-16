@@ -69,8 +69,6 @@
                                     </th>
                                     <th class="th-sm">Condition
                                     </th>
-                                    <th class="th-sm">Date
-                                    </th>
                                     <th class="th-sm">Delivery
                                     </th>
                                     <th class="th-sm">Item(s)
@@ -131,7 +129,6 @@
                                         </small>
                                     </td>
                                     <td>{{$goods_received->condition}}</td>
-                                    <td>{{$goods_received->date}}</td>
                                     <td>
                                         <small class="text-muted">
                                             @php
@@ -188,7 +185,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="9">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Goods Received Found ....
                                         </div>

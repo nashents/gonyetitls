@@ -56,7 +56,6 @@
                                     <th class="th-sm">GRV#</th>
                                     <th class="th-sm">Department</th>
                                     <th class="th-sm">Vendor</th>
-                                    <th class="th-sm">Date</th>
                                     <th class="th-sm">Item(s)</th>
                                     <th class="th-sm">Auth</th>
                                     <th class="th-sm">Action</th>
@@ -83,7 +82,6 @@
                                             <strong>Received On:</strong> {{$goods_received->date}}
                                         </small>
                                     </td>
-                                    <td>{{$goods_received->date}}</td>
                                     <td>
                                         @include('livewire.goods-receiveds.partials.items-summary', ['goods_received' => $goods_received])
                                     </td>
@@ -105,7 +103,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="7">
+                                    <td colspan="6">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Pending GRVs Found ....
                                         </div>

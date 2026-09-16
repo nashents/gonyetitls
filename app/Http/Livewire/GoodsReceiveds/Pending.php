@@ -94,8 +94,12 @@ class Pending extends Component
             $q->whereDate($this->goods_received_filter, '>=', $this->from)
                 ->whereDate($this->goods_received_filter, '<=', $this->to);
         }, function ($q) {
-            $q->whereMonth($this->goods_received_filter, Carbon::now()->month)
-                ->whereYear($this->goods_received_filter, Carbon::now()->year);
+            // Skip the default "this month" restriction while searching so matches
+            // outside the current period (e.g. by inventory/tyre/asset #) aren't hidden.
+            if (! filled($this->search)) {
+                $q->whereMonth($this->goods_received_filter, Carbon::now()->month)
+                    ->whereYear($this->goods_received_filter, Carbon::now()->year);
+            }
         });
 
         $base->when(filled($this->search), function ($q) {

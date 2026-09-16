@@ -293,11 +293,12 @@ class Index extends Component
             ->with(['vendor', 'employee', 'user', 'sageMapping', 'inventories.product', 'tyres.product', 'assets.product'])
             ->where('department', $this->department);
 
-        // Date filter
+        // Date filter — skip the default "this month" restriction while searching so
+        // matches outside the current period (e.g. by inventory/tyre/asset #) aren't hidden.
         if ($this->from && $this->to) {
             $query->whereDate($this->goods_received_filter, '>=', $this->from)
                 ->whereDate($this->goods_received_filter, '<=', $this->to);
-        } else {
+        } elseif (! filled($this->search)) {
             $query->whereMonth($this->goods_received_filter, now()->month)
                 ->whereYear($this->goods_received_filter, now()->year);
         }
