@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use Carbon\Carbon;
 use App\Models\Fitness;
+use App\Support\FleetIdentifier;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -60,24 +61,30 @@ WithCustomStartCell
         
 
         if ($fitness->horse) {
+            $equipment_type = "Horse";
             $horse_make = $fitness->horse->horse_make ? $fitness->horse->horse_make->name : "";
             $horse_model = $fitness->horse->horse_model ? $fitness->horse->horse_model->name : "";
-            $reminder_for =  "Horse | ".$fitness->horse->identifier_label." ".$horse_make." ".  $horse_model;
+            $reminder_for = FleetIdentifier::workshopLabel($fitness->horse, $horse_make, $horse_model);
         }elseif ($fitness->vehicle) {
+            $equipment_type = "Vehicle";
             $vehicle_make = $fitness->vehicle->vehicle_make ? $fitness->vehicle->vehicle_make->name : "";
             $vehicle_model = $fitness->vehicle->vehicle_model ? $fitness->vehicle->vehicle_model->name : "";
-            $reminder_for =  "Vehicle | ".$fitness->vehicle->identifier_label." ".$vehicle_make." ".  $vehicle_model;
+            $reminder_for = FleetIdentifier::workshopLabel($fitness->vehicle, $vehicle_make, $vehicle_model);
 
         }elseif ($fitness->employee) {
-            $reminder_for = "Employee | ".$fitness->employee->name ." ". $fitness->employee->surname;
+            $equipment_type = "Employee";
+            $reminder_for = $fitness->employee->name ." ". $fitness->employee->surname;
         }elseif ($fitness->trailer) {
-            $reminder_for =  "Trailer | ".$fitness->trailer->identifier_label;
+            $equipment_type = "Trailer";
+            $reminder_for = FleetIdentifier::workshopLabel($fitness->trailer, $fitness->trailer->make, $fitness->trailer->model);
         }else {
+            $equipment_type = "";
             $reminder_for = "";
         }
 
             return   [
                 $fitness->reminder_item ? $fitness->reminder_item->name : "",
+                $equipment_type,
                 $reminder_for,
                 Carbon::parse($fitness->issued_at)->format('d M Y h:i a'),
                 Carbon::parse($fitness->expires_at)->format('d M Y h:i a'),
@@ -91,7 +98,8 @@ WithCustomStartCell
     public function headings(): array{
             return[
                 'Reminder',
-                'Reminder For',
+                'Equipment Type',
+                'Equipment',
                 'Issued @ ',
                 'Expires @ ',
                 '1st Reminder @',
@@ -104,7 +112,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:G7')->applyFromArray([
+                $event->sheet->getStyle('A7:H7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

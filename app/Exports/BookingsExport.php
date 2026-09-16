@@ -5,6 +5,7 @@ namespace App\Exports;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Booking;
+use App\Support\FleetIdentifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -233,12 +234,16 @@ class BookingsExport implements
         }
 
         if (isset($booking->horse)){
-            $booking_for = "Horse | ". ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "") ." ". ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" ) ." ". $booking->horse->identifier_label;
+            $equipment_type = "Horse";
+            $booking_for = FleetIdentifier::workshopLabel($booking->horse, $booking->horse->horse_make ? $booking->horse->horse_make->name : "", $booking->horse->horse_model ? $booking->horse->horse_model->name : "");
         } elseif(isset($booking->vehicle)){
-            $booking_for = "Vehicle | ". ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "") ." ".  ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "") ." ". $booking->vehicle->identifier_label;
+            $equipment_type = "Vehicle";
+            $booking_for = FleetIdentifier::workshopLabel($booking->vehicle, $booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "", $booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "");
         } elseif(isset($booking->trailer)){
-            $booking_for = "Trailer | ". ucfirst($booking->trailer ? $booking->trailer->make : "") ." ". ucfirst($booking->trailer ? $booking->trailer->model : "") ." ". $booking->trailer->identifier_label;
+            $equipment_type = "Trailer";
+            $booking_for = FleetIdentifier::workshopLabel($booking->trailer, $booking->trailer->make, $booking->trailer->model);
         } else {
+            $equipment_type = "";
             $booking_for = "";
         }
 
@@ -255,6 +260,7 @@ class BookingsExport implements
             $booking->user->name ." ". $booking->user->surname,
             $booking->employee ? $booking->employee->name : "",
             $assigned_to,
+            $equipment_type,
             $booking_for,
             $booking->service_type ? $booking->service_type->name : "",
             $booking->description,
@@ -276,7 +282,8 @@ class BookingsExport implements
             'CreatedBy',
             'RequestedBy',
             'AssignedTo',
-            'BookingFor',
+            'Equipment Type',
+            'Equipment',
             'Job Type',
             'Narration',
             'In Date',
@@ -318,7 +325,7 @@ class BookingsExport implements
             $sheet = $event->sheet->getDelegate();
 
             // 1) Style table headings at row 15 (A..K = 11 cols)
-            $sheet->getStyle('A17:N17')->applyFromArray([
+            $sheet->getStyle('A17:O17')->applyFromArray([
                 'font' => ['bold' => true],
                 'borders' => [
                     'outline' => [

@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 
 class ShiftsExport implements  FromQuery,
 ShouldAutoSize,
@@ -25,7 +26,8 @@ WithMapping,
 WithHeadings,
 WithEvents,
 WithDrawings,
-WithCustomStartCell
+WithCustomStartCell,
+WithColumnWidths
 {
     use Exportable;
     public $commission;
@@ -163,7 +165,10 @@ WithCustomStartCell
     { 
           $baseQuery = Shift::query()
         ->with([
-            'trips:id,shift_id,loading_point_id,offloading_point_id',
+            'trips:id,shift_id,trip_number,loading_point_id,offloading_point_id,cargo_id,weight',
+            'trips.loading_point:id,name',
+            'trips.offloading_point:id,name',
+            'trips.cargo:id,name',
             'rehandlings:id,shift_id,rehandling_number,work_id,location_id,open_hours,close_hours',
             'rehandlings.work:id,description',
             'rehandlings.location:id,name',
@@ -301,14 +306,37 @@ WithCustomStartCell
                  $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
 
                 $rehandlings = $shift->rehandlings ?? collect();
+                $trips = $shift->trips ?? collect();
 
-                $workDone = $rehandlings->map(function ($rehandling) {
+                $tripLines = $trips->map(function ($trip) {
+                    $label = trim('Trip ' . ($trip->trip_number ?? $trip->id));
+                    $from = optional($trip->loading_point)->name;
+                    $to = optional($trip->offloading_point)->name;
+                    if ($from && $to) {
+                        $label .= ' - ' . $from . ' to ' . $to;
+                    } elseif ($from) {
+                        $label .= ' - From ' . $from;
+                    } elseif ($to) {
+                        $label .= ' - To ' . $to;
+                    }
+                    if ($trip->cargo) {
+                        $label .= ' | Cargo: ' . $trip->cargo->name;
+                    }
+                    if ($trip->weight) {
+                        $label .= ' | Weight: ' . $trip->weight;
+                    }
+                    return $label;
+                });
+
+                $rehandlingLines = $rehandlings->map(function ($rehandling) {
                     $label = trim($rehandling->rehandling_number . ' - ' . optional($rehandling->work)->description);
                     if ($rehandling->location) {
                         $label .= ' @ ' . $rehandling->location->name;
                     }
                     return $label;
-                })->implode('; ');
+                });
+
+                $workDone = $tripLines->concat($rehandlingLines)->implode("\n");
 
                 $openHours = optional($rehandlings->first())->open_hours;
                 $closeHours = optional($rehandlings->last())->close_hours;
@@ -322,7 +350,6 @@ WithCustomStartCell
                     $shift->shift_end_time ,
                     $durationFormatted,
                     $shift->customer ? $shift->customer->name : "",
-                    $shift->cargo ? $shift->cargo->name : "",
                     $equipment,
                     $driver,
                     $shift?->trips->count(),
@@ -349,7 +376,6 @@ WithCustomStartCell
                 'Close Time',
                 'Duration',
                 'Customer',
-                'Cargo',
                 'Equipment',
                 'Driver',
                 'Total Loads',
@@ -365,12 +391,20 @@ WithCustomStartCell
             ];
     }
     
+    public function columnWidths(): array
+    {
+        // Work Done (column N) wraps its lines instead of stretching the sheet
+        return [
+            'N' => 45,
+        ];
+    }
+
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Styling for headings (now on A17:U17)
-                $event->sheet->getStyle('A17:U17')->applyFromArray([
+                // Styling for headings (now on A17:T17)
+                $event->sheet->getStyle('A17:T17')->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
@@ -379,6 +413,15 @@ WithCustomStartCell
                         ],
                     ],
                 ]);
+
+                // Work Done column: wrap each line and let the row grow downward
+                $highestRow = $event->sheet->getHighestRow();
+                if ($highestRow >= 18) {
+                    $event->sheet->getStyle("N18:N{$highestRow}")
+                        ->getAlignment()
+                        ->setWrapText(true)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+                }
 
                 // Inject totals below the logo (starting row 6 or 7)
                 $row = 7;

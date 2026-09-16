@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\User;
 use App\Models\Ticket;
+use App\Support\FleetIdentifier;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -138,16 +139,20 @@ WithCustomStartCell
             $assigned_to = "";
             }
 
+            $equipment_type = "";
             $ticket_for = "";
 
             if ($ticket->horse){
-                $ticket_for = "Horse | ". $ticket->horse->identifier_label;
+                $equipment_type = "Horse";
+                $ticket_for = FleetIdentifier::workshopLabel($ticket->horse, $ticket->horse->horse_make ? $ticket->horse->horse_make->name : "", $ticket->horse->horse_model ? $ticket->horse->horse_model->name : "");
             }
             elseif($ticket->vehicle){
-                $ticket_for = "Vehicle | ". $ticket->vehicle->identifier_label;
+                $equipment_type = "Vehicle";
+                $ticket_for = FleetIdentifier::workshopLabel($ticket->vehicle, $ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : "", $ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : "");
             }
             elseif($ticket->trailer){
-                $ticket_for = "Trailer | ". $ticket->trailer->identifier_label;
+                $equipment_type = "Trailer";
+                $ticket_for = FleetIdentifier::workshopLabel($ticket->trailer, $ticket->trailer->make, $ticket->trailer->model);
             }
 
 
@@ -168,6 +173,7 @@ WithCustomStartCell
                 $ticket->user->name ." ". $ticket->user->surname,
                 $employee,
                 $assigned_to,
+                $equipment_type,
                 $ticket_for,
                 $ticket->service_type ? $ticket->service_type->name : "",
                 $ticket->description,
@@ -185,7 +191,8 @@ WithCustomStartCell
                 'CreatedBy ',
                 'RequestedBy',
                 'AssignedTo',
-                'TicketFor',
+                'Equipment Type',
+                'Equipment',
                 'Job Type',
                 'Narration',
                 'date',
@@ -199,7 +206,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:K7')->applyFromArray([
+                $event->sheet->getStyle('A7:L7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

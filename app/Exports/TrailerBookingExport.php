@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\User;
 use App\Models\Booking;
+use App\Support\FleetIdentifier;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -67,7 +68,7 @@ WithCustomStartCell
             }
 
             if (isset($booking->trailer)){
-            $booking_for = "trailer | ". ucfirst($booking->trailer->trailer_make ? $booking->trailer->trailer_make->name : "") ." ". ucfirst($booking->trailer->trailer_model ? $booking->trailer->trailer_model->name : "" ) ." ". $booking->trailer->identifier_label;
+            $booking_for = FleetIdentifier::workshopLabel($booking->trailer, $booking->trailer->make, $booking->trailer->model);
             }else{
             $booking_for = "";
             }   
@@ -105,7 +106,7 @@ WithCustomStartCell
                 'CreatedBy ',
                 'RequestedBy',
                 'AssignedTo',
-                'BookingFor',
+                'Equipment',
                 'Service Type',
                 'date',
                 'Authorization',

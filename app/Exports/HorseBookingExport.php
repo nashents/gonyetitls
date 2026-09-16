@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\User;
 use App\Models\Booking;
+use App\Support\FleetIdentifier;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -67,7 +68,7 @@ WithCustomStartCell
             }
 
             if (isset($booking->horse)){
-            $booking_for = "Horse | ". ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "") ." ". ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" ) ." ". $booking->horse->identifier_label;
+            $booking_for = FleetIdentifier::workshopLabel($booking->horse, $booking->horse->horse_make ? $booking->horse->horse_make->name : "", $booking->horse->horse_model ? $booking->horse->horse_model->name : "");
             }else{
             $booking_for = "";
             }   
@@ -106,7 +107,7 @@ WithCustomStartCell
                 'CreatedBy ',
                 'RequestedBy',
                 'AssignedTo',
-                'BookingFor',
+                'Equipment',
                 'Service Type',
                 'Narration',
                 'date',
