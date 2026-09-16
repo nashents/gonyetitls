@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Freight\Reports\PortExposure;
 
-use App\Models\Vendor;
+use App\Models\ShippingLine;
 use App\Services\Freight\PortExposureCalculator;
 use App\Services\ReportFormatter;
 use Illuminate\Support\Facades\Auth;
@@ -10,7 +10,7 @@ use Livewire\Component;
 
 class Index extends Component
 {
-    public $shipping_line_vendor_id;
+    public $shipping_line_id;
     public $details;
     public $summary = 'summary';
 
@@ -23,7 +23,7 @@ class Index extends Component
 
     public function getShippingLinesProperty()
     {
-        return Vendor::orderBy('name', 'asc')->get(['id', 'name']);
+        return ShippingLine::orderBy('name', 'asc')->get(['id', 'name']);
     }
 
     public function set_report($value)
@@ -60,7 +60,7 @@ class Index extends Component
         $this->default_currency = $company?->currency;
         $this->default_currency_id = $company?->currency_id;
 
-        $calculator = new PortExposureCalculator($this->shipping_line_vendor_id ?: null);
+        $calculator = new PortExposureCalculator($this->shipping_line_id ?: null);
         [$this->vendor_rows, $this->grand_totals] = $calculator->byShippingLine();
         $this->status_breakdown = $calculator->statusBreakdown();
 

@@ -7,33 +7,33 @@ use App\Models\ContainerChargeExposure;
 /**
  * Fleet-wide Port & Demurrage/Detention Exposure Report: aggregates every
  * currently-open (stop_date IS NULL) ContainerChargeExposure row, grouped
- * by shipping line vendor with charge_type as the bucket dimension.
+ * by shipping line with charge_type as the bucket dimension.
  * Point-in-time only - no date filter, since "open exposure right now" is
  * the whole point. Complements (does not duplicate) the per-container
  * expand-row shown on the Containers tab (PortExposureService).
  */
 class PortExposureCalculator
 {
-    public function __construct(private ?int $shippingLineVendorId = null)
+    public function __construct(private ?int $shippingLineId = null)
     {
     }
 
     private function openExposures()
     {
         return ContainerChargeExposure::whereNull('stop_date')
-            ->when($this->shippingLineVendorId, function ($query) {
+            ->when($this->shippingLineId, function ($query) {
                 $query->whereHas('shipping_container', function ($q) {
-                    $q->where('shipping_line_vendor_id', $this->shippingLineVendorId);
+                    $q->where('shipping_line_id', $this->shippingLineId);
                 });
             })
-            ->with('shipping_container.shipping_line_vendor');
+            ->with('shipping_container.shipping_line');
     }
 
     /**
      * @return array{
      *     0: array<int, array{label: string, buckets: array<string, float>, total: float, actual_total: float}>,
      *     1: array{buckets: array<string, float>, total: float, actual_total: float}
-     * } [rows keyed by shipping_line_vendor_id, grand totals]
+     * } [rows keyed by shipping_line_id, grand totals]
      */
     public function byShippingLine(): array
     {
@@ -48,19 +48,19 @@ class PortExposureCalculator
             $estimated = (float) ($exposure->estimated_exposure ?? 0);
             $actual = (float) ($exposure->actual_charge ?? 0);
             $bucketLabel = ContainerChargeExposure::CHARGE_TYPES[$exposure->charge_type] ?? $exposure->charge_type;
-            $vendor = $exposure->shipping_container?->shipping_line_vendor;
-            $vendorId = $vendor?->id ?? 0;
+            $shippingLine = $exposure->shipping_container?->shipping_line;
+            $shippingLineId = $shippingLine?->id ?? 0;
 
-            $rows[$vendorId] ??= [
-                'label' => $vendor?->name ?? $exposure->shipping_container?->shipping_line_name ?? 'Unassigned Shipping Line',
+            $rows[$shippingLineId] ??= [
+                'label' => $shippingLine?->name ?? 'Unassigned Shipping Line',
                 'buckets' => array_fill_keys($bucketLabels, 0.0),
                 'total' => 0.0,
                 'actual_total' => 0.0,
             ];
 
-            $rows[$vendorId]['buckets'][$bucketLabel] += $estimated;
-            $rows[$vendorId]['total'] += $estimated;
-            $rows[$vendorId]['actual_total'] += $actual;
+            $rows[$shippingLineId]['buckets'][$bucketLabel] += $estimated;
+            $rows[$shippingLineId]['total'] += $estimated;
+            $rows[$shippingLineId]['actual_total'] += $actual;
 
             $grandTotals[$bucketLabel] += $estimated;
             $grandTotal += $estimated;
@@ -92,7 +92,7 @@ class PortExposureCalculator
             ->get()
             ->map(fn (ContainerChargeExposure $exposure) => [
                 'container_number' => $exposure->shipping_container?->container_number,
-                'vendor' => $exposure->shipping_container?->shipping_line_vendor?->name ?? $exposure->shipping_container?->shipping_line_name,
+                'vendor' => $exposure->shipping_container?->shipping_line?->name,
                 'charge_type' => ContainerChargeExposure::CHARGE_TYPES[$exposure->charge_type] ?? $exposure->charge_type,
                 'status' => $exposure->status,
                 'chargeable_days' => $exposure->chargeable_days,

@@ -29,10 +29,10 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Shipping Line</label>
-                                            <select class="form-control" wire:model="policy_vendor_id">
+                                            <select class="form-control" wire:model="policy_shipping_line_id">
                                                 <option value="">Generic Default</option>
-                                                @foreach ($vendors as $vendor)
-                                                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                @foreach ($shippingLines as $line)
+                                                    <option value="{{ $line->id }}">{{ $line->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -59,7 +59,7 @@
                                     @forelse ($policies as $policy)
                                         <tr>
                                             <td>{{ $chargeTypes[$policy->charge_type] ?? $policy->charge_type }}</td>
-                                            <td>{{ $policy->shipping_line_vendor?->name ?? 'Generic Default' }}</td>
+                                            <td>{{ $policy->shipping_line?->name ?? 'Generic Default' }}</td>
                                             <td>{{ $policy->free_days }}</td>
                                             <td>
                                                 <a href="#" wire:click.prevent="editPolicy({{ $policy->id }})" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>
@@ -101,10 +101,10 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Shipping Line</label>
-                                            <select class="form-control" wire:model="tier_vendor_id">
+                                            <select class="form-control" wire:model="tier_shipping_line_id">
                                                 <option value="">Generic Default</option>
-                                                @foreach ($vendors as $vendor)
-                                                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                @foreach ($shippingLines as $line)
+                                                    <option value="{{ $line->id }}">{{ $line->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -155,7 +155,7 @@
                                     @forelse ($tiers as $tier)
                                         <tr>
                                             <td>{{ $chargeTypes[$tier->charge_type] ?? $tier->charge_type }}</td>
-                                            <td>{{ $tier->shipping_line_vendor?->name ?? 'Generic Default' }}</td>
+                                            <td>{{ $tier->shipping_line?->name ?? 'Generic Default' }}</td>
                                             <td>{{ $tier->day_from }}{{ $tier->day_to ? ' - '.$tier->day_to : '+' }}</td>
                                             <td>{{ $tier->currency?->symbol }}{{ number_format($tier->rate, 2) }}</td>
                                             <td>

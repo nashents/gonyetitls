@@ -290,7 +290,7 @@ class Index extends Component
             ->get();
 
         $query = GoodsReceived::query()
-            ->with(['vendor', 'employee', 'sageMapping'])
+            ->with(['vendor', 'employee', 'user', 'sageMapping', 'inventories.product', 'tyres.product', 'assets.product'])
             ->where('department', $this->department);
 
         // Date filter
@@ -322,6 +322,33 @@ class Index extends Component
                             'like',
                             $search
                         );
+                    })
+                    ->orWhereHas('inventories', function ($sub) use ($search) {
+                        $sub->where('inventory_number', 'like', $search)
+                            ->orWhere('serial_number', 'like', $search)
+                            ->orWhereHas('product', function ($p) use ($search) {
+                                $p->where('name', 'like', $search)
+                                    ->orWhere('product_number', 'like', $search)
+                                    ->orWhere('identification_number', 'like', $search);
+                            });
+                    })
+                    ->orWhereHas('tyres', function ($sub) use ($search) {
+                        $sub->where('tyre_number', 'like', $search)
+                            ->orWhere('serial_number', 'like', $search)
+                            ->orWhereHas('product', function ($p) use ($search) {
+                                $p->where('name', 'like', $search)
+                                    ->orWhere('product_number', 'like', $search)
+                                    ->orWhere('identification_number', 'like', $search);
+                            });
+                    })
+                    ->orWhereHas('assets', function ($sub) use ($search) {
+                        $sub->where('asset_number', 'like', $search)
+                            ->orWhere('serial_number', 'like', $search)
+                            ->orWhereHas('product', function ($p) use ($search) {
+                                $p->where('name', 'like', $search)
+                                    ->orWhere('product_number', 'like', $search)
+                                    ->orWhere('identification_number', 'like', $search);
+                            });
                     });
             });
         });

@@ -805,6 +805,7 @@ Route::resource('freight/consolidations','ConsolidationController')->parameters(
 Route::get('freight/settings/charge-config','FreightChargeConfigController@index')->name('freight.settings.charge-config');
 Route::get('freight/settings/charge-types','FreightChargeTypesController@index')->name('freight.settings.charge-types');
 Route::get('freight/settings/rate-cards','FreightRateCardsController@index')->name('freight.settings.rate-cards');
+Route::get('freight/settings/shipping-lines','FreightShippingLinesController@index')->name('freight.settings.shipping-lines');
 
 Route::get('freight/reports/job-profitability','FreightReportController@jobProfitability')->name('freight.reports.job_profitability');
 Route::get('freight/reports/job-profitability/pdf','FreightReportController@jobProfitabilityPdf')->name('freight.reports.job_profitability.pdf');

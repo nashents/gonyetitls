@@ -65,15 +65,13 @@
                                   <tr>
                                     <th class="th-sm">GRV#
                                     </th>
-                                    <th class="th-sm">ReceivedBy
-                                    </th>
                                     <th class="th-sm">Vendor
                                     </th>
                                     <th class="th-sm">Condition
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
-                                    <th class="th-sm">Delivery Details
+                                    <th class="th-sm">Delivery
                                     </th>
                                     <th class="th-sm">Item(s)
                                     </th>
@@ -93,6 +91,11 @@
                                   <tr>
                                     <td>
                                         {{ucfirst($goods_received->goods_received_number)}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>CreatedBy:</strong> {{$goods_received->user ? $goods_received->user->name : ""}} {{$goods_received->user ? $goods_received->user->surname : ""}}<br>
+                                            <strong>CreatedOn:</strong> {{$goods_received->created_at ? \Carbon\Carbon::parse($goods_received->created_at)->format('Y-m-d') : ""}}
+                                        </small>
                                         @php
                                             $po = $goods_received->purchase;
                                         @endphp
@@ -119,31 +122,33 @@
                                         @endif
                                     </td>
                                     
-                                    <td>{{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}}</td>
-                                    <td>{{$goods_received->vendor ? $goods_received->vendor->name : ""}}</td>
+                                    <td>
+                                        {{$goods_received->vendor ? $goods_received->vendor->name : ""}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>Received By:</strong> {{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}}<br>
+                                            <strong>Received On:</strong> {{$goods_received->date}}
+                                        </small>
+                                    </td>
                                     <td>{{$goods_received->condition}}</td>
                                     <td>{{$goods_received->date}}</td>
                                     <td>
                                         <small class="text-muted">
-                                            @if ($goods_received->delivery_number)
-                                                <strong>Delivery#:</strong> {{$goods_received->delivery_number}}
-                                            @endif
-                                            @if ($goods_received->delivery_date) <br>
-                                                <strong>Date:</strong> {{$goods_received->delivery_date}}
-                                            @endif
-                                            @if ($goods_received->driver_name) <br>
-                                                <strong>Driver:</strong> {{$goods_received->driver_name}}
-                                            @endif
+                                            @php
+                                                $deliveryParts = collect([
+                                                    $goods_received->delivery_number ? ['label' => 'Delivery#', 'value' => $goods_received->delivery_number] : null,
+                                                    $goods_received->delivery_date ? ['label' => 'Date', 'value' => $goods_received->delivery_date] : null,
+                                                    $goods_received->driver_name ? ['label' => 'Driver', 'value' => $goods_received->driver_name] : null,
+                                                ])->filter()->values();
+                                            @endphp
+                                            @foreach ($deliveryParts as $index => $part)
+                                                @if ($index > 0)<br>@endif
+                                                <strong>{{$part['label']}}:</strong> {{$part['value']}}
+                                            @endforeach
                                         </small>
                                     </td>
                                     <td>
-                                        @if ($department == "inventory")
-                                            {{$goods_received->inventories->count()}}
-                                        @elseif($department == "asset")
-                                           {{$goods_received->assets->count()}}     
-                                        @elseif($department == "tyre")
-                                            {{$goods_received->tyres->count()}} 
-                                        @endif 
+                                        @include('livewire.goods-receiveds.partials.items-summary', ['goods_received' => $goods_received])
                                     </td>
                                     <td></td>
                                    <td>
@@ -183,7 +188,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="11">
+                                    <td colspan="10">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Goods Received Found ....
                                         </div>

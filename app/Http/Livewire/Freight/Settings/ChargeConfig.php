@@ -6,24 +6,24 @@ use App\Models\ChargeFreeDayPolicy;
 use App\Models\ChargeRateTier;
 use App\Models\ContainerChargeExposure;
 use App\Models\Currency;
-use App\Models\Vendor;
+use App\Models\ShippingLine;
 use Livewire\Component;
 
 class ChargeConfig extends Component
 {
-    public $vendors;
+    public $shippingLines;
     public $currencies;
 
     // Free Day Policy form
     public $policy_id;
     public $policy_charge_type;
-    public $policy_vendor_id;
+    public $policy_shipping_line_id;
     public $policy_free_days;
 
     // Rate Tier form
     public $tier_id;
     public $tier_charge_type;
-    public $tier_vendor_id;
+    public $tier_shipping_line_id;
     public $tier_day_from;
     public $tier_day_to;
     public $tier_rate;
@@ -31,7 +31,7 @@ class ChargeConfig extends Component
 
     public function mount()
     {
-        $this->vendors = Vendor::orderBy('name', 'asc')->get();
+        $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
     }
 
@@ -47,7 +47,7 @@ class ChargeConfig extends Component
         $policy = ChargeFreeDayPolicy::findOrFail($id);
         $this->policy_id = $policy->id;
         $this->policy_charge_type = $policy->charge_type;
-        $this->policy_vendor_id = $policy->shipping_line_vendor_id;
+        $this->policy_shipping_line_id = $policy->shipping_line_id;
         $this->policy_free_days = $policy->free_days;
     }
 
@@ -59,7 +59,7 @@ class ChargeConfig extends Component
         ]);
 
         $duplicate = ChargeFreeDayPolicy::where('charge_type', $this->policy_charge_type)
-            ->where('shipping_line_vendor_id', $this->policy_vendor_id ?: null)
+            ->where('shipping_line_id', $this->policy_shipping_line_id ?: null)
             ->when($this->policy_id, fn ($q) => $q->where('id', '!=', $this->policy_id))
             ->exists();
 
@@ -72,7 +72,7 @@ class ChargeConfig extends Component
             ['id' => $this->policy_id],
             [
                 'charge_type' => $this->policy_charge_type,
-                'shipping_line_vendor_id' => $this->policy_vendor_id ?: null,
+                'shipping_line_id' => $this->policy_shipping_line_id ?: null,
                 'free_days' => $this->policy_free_days,
             ]
         );
@@ -89,7 +89,7 @@ class ChargeConfig extends Component
 
     private function resetPolicyForm()
     {
-        $this->reset(['policy_id', 'policy_charge_type', 'policy_vendor_id', 'policy_free_days']);
+        $this->reset(['policy_id', 'policy_charge_type', 'policy_shipping_line_id', 'policy_free_days']);
     }
 
     public function editTier($id)
@@ -97,7 +97,7 @@ class ChargeConfig extends Component
         $tier = ChargeRateTier::findOrFail($id);
         $this->tier_id = $tier->id;
         $this->tier_charge_type = $tier->charge_type;
-        $this->tier_vendor_id = $tier->shipping_line_vendor_id;
+        $this->tier_shipping_line_id = $tier->shipping_line_id;
         $this->tier_day_from = $tier->day_from;
         $this->tier_day_to = $tier->day_to;
         $this->tier_rate = $tier->rate;
@@ -117,7 +117,7 @@ class ChargeConfig extends Component
             ['id' => $this->tier_id],
             [
                 'charge_type' => $this->tier_charge_type,
-                'shipping_line_vendor_id' => $this->tier_vendor_id ?: null,
+                'shipping_line_id' => $this->tier_shipping_line_id ?: null,
                 'day_from' => $this->tier_day_from,
                 'day_to' => $this->tier_day_to ?: null,
                 'rate' => $this->tier_rate,
@@ -137,15 +137,15 @@ class ChargeConfig extends Component
 
     private function resetTierForm()
     {
-        $this->reset(['tier_id', 'tier_charge_type', 'tier_vendor_id', 'tier_day_from', 'tier_day_to', 'tier_rate', 'tier_currency_id']);
+        $this->reset(['tier_id', 'tier_charge_type', 'tier_shipping_line_id', 'tier_day_from', 'tier_day_to', 'tier_rate', 'tier_currency_id']);
     }
 
     public function render()
     {
         return view('livewire.freight.settings.charge-config', [
             'chargeTypes' => ContainerChargeExposure::CHARGE_TYPES,
-            'policies' => ChargeFreeDayPolicy::with('shipping_line_vendor')->orderBy('charge_type')->get(),
-            'tiers' => ChargeRateTier::with(['shipping_line_vendor', 'currency'])->orderBy('charge_type')->orderBy('day_from')->get(),
+            'policies' => ChargeFreeDayPolicy::with('shipping_line')->orderBy('charge_type')->get(),
+            'tiers' => ChargeRateTier::with(['shipping_line', 'currency'])->orderBy('charge_type')->orderBy('day_from')->get(),
         ]);
     }
 }

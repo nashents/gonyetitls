@@ -22,7 +22,7 @@
                     <td>{{ $container->container_number }}</td>
                     <td>{{ $container->container_type }}</td>
                     <td>{{ $container->seal_number }}</td>
-                    <td>{{ $container->shipping_line_vendor?->name ?? $container->shipping_line_name }}</td>
+                    <td>{{ $container->shipping_line?->name ?? $container->shipping_line_vendor?->name ?? $container->shipping_line_name }}</td>
                     <td><span class="label label-info label-wide">{{ $lifecycleStages[$container->status] ?? $container->status }}</span></td>
                     <td>
                         <a href="#" wire:click.prevent="toggleExpand({{ $container->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Details</a>
@@ -165,13 +165,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Shipping Line</label>
-                                    <select class="form-control" wire:model="shipping_line_vendor_id">
-                                        <option value="">Select Vendor</option>
-                                        @foreach ($vendors as $vendor)
-                                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                    <select class="form-control" wire:model="shipping_line_id">
+                                        <option value="">Select Shipping Line</option>
+                                        @foreach ($shippingLines as $line)
+                                            <option value="{{ $line->id }}">{{ $line->name }}</option>
                                         @endforeach
                                     </select>
-                                    <input type="text" class="form-control mt-10" wire:model="shipping_line_name" placeholder="or type free text">
                                 </div>
                             </div>
                         </div>

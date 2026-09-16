@@ -36,6 +36,9 @@ class ShippingContainer extends Model implements Auditable
     public function shipping_line_vendor(){
         return $this->belongsTo('App\Models\Vendor', 'shipping_line_vendor_id');
     }
+    public function shipping_line(){
+        return $this->belongsTo('App\Models\ShippingLine');
+    }
     public function milestones(){
         return $this->hasMany('App\Models\ShipmentMilestone');
     }
@@ -70,6 +73,7 @@ class ShippingContainer extends Model implements Auditable
         'seal_number',
         'shipping_line_vendor_id',
         'shipping_line_name',
+        'shipping_line_id',
         'tare_weight',
         'gross_weight',
         'cargo_weight',

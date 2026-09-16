@@ -87,7 +87,7 @@ class Pending extends Component
 
     public function render()
     {
-        $base = GoodsReceived::query()->with(['vendor', 'employee', 'user'])
+        $base = GoodsReceived::query()->with(['vendor', 'employee', 'user', 'inventories.product', 'tyres.product', 'assets.product'])
             ->where('authorization', 'pending');
 
         $base->when(filled($this->from) && filled($this->to), function ($q) {
@@ -110,6 +110,33 @@ class Pending extends Component
                     })
                     ->orWhereHas('employee', function ($sub) use ($term) {
                         $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                    })
+                    ->orWhereHas('inventories', function ($sub) use ($term) {
+                        $sub->where('inventory_number', 'like', $term)
+                            ->orWhere('serial_number', 'like', $term)
+                            ->orWhereHas('product', function ($p) use ($term) {
+                                $p->where('name', 'like', $term)
+                                    ->orWhere('product_number', 'like', $term)
+                                    ->orWhere('identification_number', 'like', $term);
+                            });
+                    })
+                    ->orWhereHas('tyres', function ($sub) use ($term) {
+                        $sub->where('tyre_number', 'like', $term)
+                            ->orWhere('serial_number', 'like', $term)
+                            ->orWhereHas('product', function ($p) use ($term) {
+                                $p->where('name', 'like', $term)
+                                    ->orWhere('product_number', 'like', $term)
+                                    ->orWhere('identification_number', 'like', $term);
+                            });
+                    })
+                    ->orWhereHas('assets', function ($sub) use ($term) {
+                        $sub->where('asset_number', 'like', $term)
+                            ->orWhere('serial_number', 'like', $term)
+                            ->orWhereHas('product', function ($p) use ($term) {
+                                $p->where('name', 'like', $term)
+                                    ->orWhere('product_number', 'like', $term)
+                                    ->orWhere('identification_number', 'like', $term);
+                            });
                     });
             });
         });

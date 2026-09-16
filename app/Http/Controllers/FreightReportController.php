@@ -92,7 +92,7 @@ class FreightReportController extends Controller
         $company = $user->employee?->company ?? $user->company ?? null;
         $compact = $request->query('view') !== 'details';
 
-        $calculator = new PortExposureCalculator($request->query('shipping_line_vendor_id') ?: null);
+        $calculator = new PortExposureCalculator($request->query('shipping_line_id') ?: null);
         [$vendorRows, $grandTotals] = $calculator->byShippingLine();
 
         return [

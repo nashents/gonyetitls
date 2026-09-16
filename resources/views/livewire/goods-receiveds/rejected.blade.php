@@ -55,7 +55,6 @@
                                   <tr>
                                     <th class="th-sm">GRV#</th>
                                     <th class="th-sm">Department</th>
-                                    <th class="th-sm">ReceivedBy</th>
                                     <th class="th-sm">Vendor</th>
                                     <th class="th-sm">Date</th>
                                     <th class="th-sm">Item(s)</th>
@@ -67,13 +66,26 @@
                                 <tbody>
                                     @forelse ($goods_receiveds as $goods_received)
                                   <tr>
-                                    <td>{{ucfirst($goods_received->goods_received_number)}}</td>
+                                    <td>
+                                        {{ucfirst($goods_received->goods_received_number)}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>CreatedBy:</strong> {{$goods_received->user ? $goods_received->user->name : ""}} {{$goods_received->user ? $goods_received->user->surname : ""}}<br>
+                                            <strong>CreatedOn:</strong> {{$goods_received->created_at ? \Carbon\Carbon::parse($goods_received->created_at)->format('Y-m-d') : ""}}
+                                        </small>
+                                    </td>
                                     <td>{{ucfirst($goods_received->department)}}</td>
-                                    <td>{{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}}</td>
-                                    <td>{{$goods_received->vendor ? $goods_received->vendor->name : ""}}</td>
+                                    <td>
+                                        {{$goods_received->vendor ? $goods_received->vendor->name : ""}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>Received By:</strong> {{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}}<br>
+                                            <strong>Received On:</strong> {{$goods_received->date}}
+                                        </small>
+                                    </td>
                                     <td>{{$goods_received->date}}</td>
                                     <td>
-                                        {{$goods_received->inventories->count() + $goods_received->tyres->count() + $goods_received->assets->count()}}
+                                        @include('livewire.goods-receiveds.partials.items-summary', ['goods_received' => $goods_received])
                                     </td>
                                     <td>
                                         <span class="badge bg-danger">rejected</span>
@@ -103,7 +115,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="8">
+                                    <td colspan="7">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Rejected GRVs Found ....
                                         </div>

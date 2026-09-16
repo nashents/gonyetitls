@@ -5,7 +5,7 @@ namespace App\Http\Livewire\Freight\Shipments;
 use App\Models\ContainerChargeExposure;
 use App\Models\Shipment;
 use App\Models\ShippingContainer;
-use App\Models\Vendor;
+use App\Models\ShippingLine;
 use App\Services\Freight\PortExposureService;
 use App\Services\Freight\ShippingContainerService;
 use Livewire\Component;
@@ -13,13 +13,12 @@ use Livewire\Component;
 class Containers extends Component
 {
     public $shipment;
-    public $vendors;
+    public $shippingLines;
 
     public $container_number;
     public $container_type;
     public $seal_number;
-    public $shipping_line_vendor_id;
-    public $shipping_line_name;
+    public $shipping_line_id;
     public $tare_weight;
     public $gross_weight;
     public $cargo_weight;
@@ -35,13 +34,13 @@ class Containers extends Component
     public function mount($shipmentId)
     {
         $this->shipment = Shipment::findOrFail($shipmentId);
-        $this->vendors = Vendor::orderBy('name', 'asc')->get();
+        $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
         $this->refreshShipment();
     }
 
     private function refreshShipment()
     {
-        $this->shipment = Shipment::with(['containers.shipping_line_vendor', 'containers.milestones', 'containers.cargo_items', 'containers.exposures.currency', 'cargo_items'])
+        $this->shipment = Shipment::with(['containers.shipping_line', 'containers.milestones', 'containers.cargo_items', 'containers.exposures.currency', 'cargo_items'])
             ->findOrFail($this->shipment->id);
     }
 
@@ -67,8 +66,7 @@ class Containers extends Component
             'container_number' => $this->container_number,
             'container_type' => $this->container_type,
             'seal_number' => $this->seal_number,
-            'shipping_line_vendor_id' => $this->shipping_line_vendor_id ?: null,
-            'shipping_line_name' => $this->shipping_line_name,
+            'shipping_line_id' => $this->shipping_line_id ?: null,
             'tare_weight' => $this->tare_weight ?: null,
             'gross_weight' => $this->gross_weight ?: null,
             'cargo_weight' => $this->cargo_weight ?: null,
@@ -76,7 +74,7 @@ class Containers extends Component
             'temperature' => $this->temperature,
         ], $cargoLinks);
 
-        $this->reset(['container_number', 'container_type', 'seal_number', 'shipping_line_vendor_id', 'shipping_line_name', 'tare_weight', 'gross_weight', 'cargo_weight', 'vgm', 'temperature', 'selected_cargo_ids']);
+        $this->reset(['container_number', 'container_type', 'seal_number', 'shipping_line_id', 'tare_weight', 'gross_weight', 'cargo_weight', 'vgm', 'temperature', 'selected_cargo_ids']);
 
         $this->refreshShipment();
         $this->dispatchBrowserEvent('hide-addContainerModal-' . $this->shipment->id);

@@ -41,7 +41,7 @@ class PortExposureService
 
     public function startTracking(ShippingContainer $container, string $chargeType, Carbon $startDate): ?ContainerChargeExposure
     {
-        $policy = $this->resolvePolicy($chargeType, $container->shipping_line_vendor_id);
+        $policy = $this->resolvePolicy($chargeType, $container->shipping_line_id);
 
         if (!$policy) {
             return null;
@@ -82,7 +82,7 @@ class PortExposureService
         $stopDate = $exposure->stop_date ? Carbon::parse($exposure->stop_date) : null;
         $chargeableDays = $this->calculator->chargeableDays($lastFreeDay, $stopDate);
 
-        $tiers = $this->resolveRateTiers($exposure->charge_type, $exposure->shipping_container->shipping_line_vendor_id);
+        $tiers = $this->resolveRateTiers($exposure->charge_type, $exposure->shipping_container->shipping_line_id);
 
         $exposure->last_free_day = $lastFreeDay;
         $exposure->chargeable_days = $chargeableDays;
@@ -117,10 +117,10 @@ class PortExposureService
             ->map(fn (ContainerChargeExposure $exposure) => $this->recalculate($exposure));
     }
 
-    private function resolvePolicy(string $chargeType, ?int $vendorId): ?ChargeFreeDayPolicy
+    private function resolvePolicy(string $chargeType, ?int $shippingLineId): ?ChargeFreeDayPolicy
     {
         $lineSpecific = ChargeFreeDayPolicy::where('charge_type', $chargeType)
-            ->where('shipping_line_vendor_id', $vendorId)
+            ->where('shipping_line_id', $shippingLineId)
             ->orderBy('id')
             ->first();
 
@@ -128,20 +128,20 @@ class PortExposureService
             return $lineSpecific;
         }
 
-        if ($vendorId === null) {
+        if ($shippingLineId === null) {
             return null;
         }
 
         return ChargeFreeDayPolicy::where('charge_type', $chargeType)
-            ->whereNull('shipping_line_vendor_id')
+            ->whereNull('shipping_line_id')
             ->orderBy('id')
             ->first();
     }
 
-    private function resolveRateTiers(string $chargeType, ?int $vendorId): Collection
+    private function resolveRateTiers(string $chargeType, ?int $shippingLineId): Collection
     {
         $lineSpecific = ChargeRateTier::where('charge_type', $chargeType)
-            ->where('shipping_line_vendor_id', $vendorId)
+            ->where('shipping_line_id', $shippingLineId)
             ->get();
 
         if ($lineSpecific->isNotEmpty()) {
@@ -149,7 +149,7 @@ class PortExposureService
         }
 
         return ChargeRateTier::where('charge_type', $chargeType)
-            ->whereNull('shipping_line_vendor_id')
+            ->whereNull('shipping_line_id')
             ->get();
     }
 }

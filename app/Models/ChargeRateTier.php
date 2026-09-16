@@ -15,6 +15,9 @@ class ChargeRateTier extends Model implements Auditable
     public function shipping_line_vendor(){
         return $this->belongsTo('App\Models\Vendor', 'shipping_line_vendor_id');
     }
+    public function shipping_line(){
+        return $this->belongsTo('App\Models\ShippingLine');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
@@ -28,6 +31,7 @@ class ChargeRateTier extends Model implements Auditable
     protected $fillable = [
         'charge_type',
         'shipping_line_vendor_id',
+        'shipping_line_id',
         'day_from',
         'day_to',
         'rate',

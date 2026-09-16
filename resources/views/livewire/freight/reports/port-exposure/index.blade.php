@@ -19,10 +19,10 @@
                                 <div class="col-lg-3">
                                     <div class="input-group">
                                         <span class="input-group-addon">Shipping Line</span>
-                                        <select class="form-control" wire:model="shipping_line_vendor_id">
+                                        <select class="form-control" wire:model="shipping_line_id">
                                             <option value="">All</option>
-                                            @foreach ($this->shippingLines as $vendor)
-                                                <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                            @foreach ($this->shippingLines as $line)
+                                                <option value="{{ $line->id }}">{{ $line->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -38,10 +38,10 @@
                                         <button wire:click.prevent="set_report('details')" class="btn btn-default {{$details == "details" ? 'border-primary' : ""}} btn-wide btn-rounded" type="button">Details</button>
                                     </div>
                                     <div class="btn-group" style="margin-left: 25px">
-                                        <a href="{{ route('freight.reports.port_exposure.print', ['shipping_line_vendor_id' => $shipping_line_vendor_id, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
+                                        <a href="{{ route('freight.reports.port_exposure.print', ['shipping_line_id' => $shipping_line_id, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                             <i class="fa fa-print"></i> Print
                                         </a>
-                                        <a href="{{ route('freight.reports.port_exposure.pdf', ['shipping_line_vendor_id' => $shipping_line_vendor_id, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
+                                        <a href="{{ route('freight.reports.port_exposure.pdf', ['shipping_line_id' => $shipping_line_id, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                             <i class="fa fa-file-pdf-o"></i> Export PDF
                                         </a>
                                     </div>

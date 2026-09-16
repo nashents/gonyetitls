@@ -15,6 +15,9 @@ class ChargeFreeDayPolicy extends Model implements Auditable
     public function shipping_line_vendor(){
         return $this->belongsTo('App\Models\Vendor', 'shipping_line_vendor_id');
     }
+    public function shipping_line(){
+        return $this->belongsTo('App\Models\ShippingLine');
+    }
 
     protected $casts = [
         'free_days' => 'integer',
@@ -23,6 +26,7 @@ class ChargeFreeDayPolicy extends Model implements Auditable
     protected $fillable = [
         'charge_type',
         'shipping_line_vendor_id',
+        'shipping_line_id',
         'free_days',
     ];
 }
