@@ -6,6 +6,7 @@ use App\Models\Horse;
 use App\Models\HorseMake;
 use App\Models\HorseModel;
 use App\Models\Transporter;
+use App\Imports\Concerns\ChecksFleetLimit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -29,7 +30,7 @@ WithChunkReading,
 WithBatchInserts
 {
 
-    use Importable, SkipsErrors;
+    use Importable, SkipsErrors, ChecksFleetLimit;
 
 
     public $horse_number;
@@ -94,10 +95,17 @@ WithBatchInserts
             $modelName = $row->get('model');
 
             $horse = Horse::firstOrNew(['registration_number' => $registrationNumber]);
+            $isNewHorse = ! $horse->exists;
 
             $transporter = Transporter::where('transporter_number', $transporterNumber)->first();
             if ($transporter) {
                 $horse->transporter_id = $transporter->id;
+            }
+
+            $company = $transporter ? $transporter->company : null;
+            if ($isNewHorse && $company && ! $this->canAddToFleet($company, 'horse')) {
+                $this->recordFleetLimitSkip($registrationNumber, $company);
+                continue;
             }
 
             $make = HorseMake::firstOrCreate(['name' => $makeName]);
@@ -127,6 +135,10 @@ WithBatchInserts
 
             // Save new or update existing
             $horse->save();
+
+            if ($isNewHorse && $company) {
+                $this->registerFleetAddition($company);
+            }
         }
     }
 

@@ -13,6 +13,7 @@ use App\Models\VehicleImage;
 use App\Models\VehicleModel;
 use Livewire\WithFileUploads;
 use App\Models\VehicleDocument;
+use App\Services\FleetLimitService;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Session;
@@ -60,6 +61,8 @@ class Create extends Component
     public $expires_at;
     public $file;
     public $filename;
+    public $fleetLimitReached = false;
+    public $fleetLimitMessage = '';
 
     public $inputs = [];
     public $i = 1;
@@ -144,6 +147,39 @@ class Create extends Component
         }
     }
 
+    public function updatedTransporterId($value)
+    {
+        $this->refreshFleetLimitStatus();
+    }
+
+    private function refreshFleetLimitStatus(): bool
+    {
+        $this->fleetLimitReached = false;
+        $this->fleetLimitMessage = '';
+
+        if (! $this->transporter_id) {
+            return true;
+        }
+
+        $transporter = Transporter::find($this->transporter_id);
+        $company = $transporter ? $transporter->company : null;
+
+        if (! $company) {
+            return true;
+        }
+
+        $fleetLimitService = app(FleetLimitService::class);
+
+        if ($fleetLimitService->canAdd($company, 'vehicle')) {
+            return true;
+        }
+
+        $this->fleetLimitReached = true;
+        $this->fleetLimitMessage = "Fleet limit reached for {$company->name}. Cannot add another vehicle.";
+
+        return false;
+    }
+
     public function vehicleNumber(){
 
         if (isset(Auth::user()->company)) {
@@ -178,6 +214,14 @@ class Create extends Component
 
     }
     public function store(){
+        if (! $this->refreshFleetLimitStatus()) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$this->fleetLimitMessage
+            ]);
+            return;
+        }
+
         $vehicle = new Vehicle;
         $vehicle->vehicle_number = $this->vehicleNumber();
         $vehicle->fleet_number = $this->fleet_number;

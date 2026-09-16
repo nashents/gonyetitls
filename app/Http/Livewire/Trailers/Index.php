@@ -23,6 +23,7 @@ use App\Models\VehicleDocument;
 use App\Services\Sage\SageSyncService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Integrations\IntegrationGate;
+use App\Services\FleetLimitService;
 use App\Jobs\Sage\SyncTrailerToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -50,6 +51,8 @@ class Index extends Component
     private $trailers;
     public $transporters;
     public $transporter_id;
+    public $fleetLimitReached = false;
+    public $fleetLimitMessage = '';
     public $trailer_id;
     public $trailer_type_id;
     public $fleet_number;
@@ -200,6 +203,40 @@ class Index extends Component
     public function updated($value){
         $this->validateOnly($value);
     }
+
+    public function updatedTransporterId($value)
+    {
+        $this->refreshFleetLimitStatus();
+    }
+
+    private function refreshFleetLimitStatus(): bool
+    {
+        $this->fleetLimitReached = false;
+        $this->fleetLimitMessage = '';
+
+        if (! $this->transporter_id) {
+            return true;
+        }
+
+        $transporter = Transporter::find($this->transporter_id);
+        $company = $transporter ? $transporter->company : null;
+
+        if (! $company) {
+            return true;
+        }
+
+        $fleetLimitService = app(FleetLimitService::class);
+
+        if ($fleetLimitService->canAdd($company, 'trailer')) {
+            return true;
+        }
+
+        $this->fleetLimitReached = true;
+        $this->fleetLimitMessage = "Fleet limit reached for {$company->name}. Cannot add another trailer.";
+
+        return false;
+    }
+
     protected $messages =[
 
       'title.*.required' => 'Title field is required',
@@ -235,6 +272,14 @@ public function activate($id){
 
 
     public function store(){
+        if (! $this->refreshFleetLimitStatus()) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$this->fleetLimitMessage
+            ]);
+            return;
+        }
+
         $trailer = new Trailer;
         $trailer->user_id = Auth::user()->id;
         $trailer->trailer_number = $this->trailerNumber();

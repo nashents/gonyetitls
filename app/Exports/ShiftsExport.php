@@ -189,6 +189,7 @@ WithCustomStartCell
         ->when(filled($this->filters['filter_horse_id']), fn (Builder $q) => $q->where('horse_id', $this->filters['filter_horse_id']))
         ->when(filled($this->filters['filter_vehicle_id']), fn (Builder $q) => $q->where('vehicle_id', $this->filters['filter_vehicle_id']))
         ->when(filled($this->filters['filter_shift_type']), fn (Builder $q) => $q->where('type', $this->filters['filter_shift_type']))
+        ->when(filled($this->filters['filter_for'] ?? null), fn (Builder $q) => $q->where('for', $this->filters['filter_for']))
         ->when(filled($this->filters['filter_user_id']), fn (Builder $q) => $q->where('user_id', $this->filters['filter_user_id']))
 
         // trips-based loading/offloading filters

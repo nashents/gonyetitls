@@ -12,6 +12,14 @@ class Company extends Model  implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    const FLEET_COMPOSITION_HORSE_VEHICLE = 'horse_vehicle';
+    const FLEET_COMPOSITION_HORSE_VEHICLE_TRAILER = 'horse_vehicle_trailer';
+
+    public function countsTrailersInFleet(): bool
+    {
+        return $this->fleet_composition === self::FLEET_COMPOSITION_HORSE_VEHICLE_TRAILER;
+    }
+
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
@@ -104,5 +112,6 @@ class Company extends Model  implements Auditable
         'city',
         'suburb',
         'street_address',
+        'fleet_composition',
     ];
 }

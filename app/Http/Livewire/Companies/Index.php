@@ -24,6 +24,7 @@ class Index extends Component
     public $selected_company_type_ids = [];
     public $companyTypes;
     public $selectedPlan;
+    public $fleetComposition = 'horse_vehicle';
     public $license_currency_id;
     public $fee;
     public $role_id = [];
@@ -68,6 +69,7 @@ class Index extends Component
         'email' => 'required|unique:users,email,NULL,id,deleted_at,NULL',
         'selected_company_type_ids' => 'required',
         'selectedPlan' => 'required',
+        'fleetComposition' => 'nullable|in:horse_vehicle,horse_vehicle_trailer',
         'fee' => 'required',
         'status' => 'required',
         'country' => 'required',
@@ -85,6 +87,7 @@ class Index extends Component
         $this->city = '';
         $this->selected_company_type_ids = [];
         $this->selectedPlan = '';
+        $this->fleetComposition = 'horse_vehicle';
         $this->license_currency_id = '';
         $this->fee = '';
         $this->status = '';
@@ -204,6 +207,7 @@ class Index extends Component
         $company->name = $this->name;
         $company->email = $this->email;
         $company->plan = $this->selectedPlan;
+        $company->fleet_composition = $this->fleetComposition ?: 'horse_vehicle';
         $company->currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
         $company->license_currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
         $company->fee = $this->fee;
@@ -284,6 +288,7 @@ class Index extends Component
         }
        
         $this->selectedPlan = $company->plan;
+        $this->fleetComposition = $company->fleet_composition ?: 'horse_vehicle';
         $this->fee = $company->fee;
         $this->license_currency_id = $company->license_currency_id;
         $this->phonenumber = $company->phonenumber;
@@ -324,6 +329,7 @@ class Index extends Component
                     $company->license_currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
                     $company->status = $this->status;
                     $company->plan = $this->selectedPlan;
+                    $company->fleet_composition = $this->fleetComposition ?: 'horse_vehicle';
                     $company->expiry_date = $this->expiry_date;
                     $company->fee = $this->fee;
                     $company->noreply = $this->noreply;

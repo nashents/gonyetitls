@@ -33,7 +33,7 @@ class CheckCompanyStatus
                 $company = optional(optional($user->employee)->company);
 
                 // Company inactive or missing
-                if (!$company || $company->status != "1") {
+                if ((!$company || $company->status != "1") && ! $user->is_admin()) {
                     auth()->logout();
 
                     $request->session()->invalidate();

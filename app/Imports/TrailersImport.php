@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Transporter;
+use App\Imports\Concerns\ChecksFleetLimit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -27,7 +28,7 @@ WithChunkReading,
 WithBatchInserts
 {
 
-    use Importable, SkipsErrors;
+    use Importable, SkipsErrors, ChecksFleetLimit;
     public $transporter;
     public $transporter_id;
     /**
@@ -117,8 +118,15 @@ WithBatchInserts
                 $transporter = Transporter::where('transporter_number',$row['transporter_number'])->first();
                 if (isset($transporter)) {
                     $transporter_id = $transporter->id;
-                }    
-                
+                }
+
+                $company = isset($transporter) ? $transporter->company : null;
+                if ($company && ! $this->canAddToFleet($company, 'trailer')) {
+                    $this->recordFleetLimitSkip($row['registration_number'], $company);
+                    $transporter_id = "";
+                    continue;
+                }
+
                  $trailer = new Trailer;
                  $trailer->user_id     = Auth::user()->id;
                  if (isset($transporter_id) && $transporter_id != "") {
@@ -137,6 +145,10 @@ WithBatchInserts
                  $trailer->no_of_wheels    = $row['no_of_wheels'];
                  $trailer->save();
                  $transporter_id = "";
+
+                 if ($company) {
+                     $this->registerFleetAddition($company);
+                 }
             }
             
         

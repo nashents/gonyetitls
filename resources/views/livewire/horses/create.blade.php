@@ -24,8 +24,11 @@
                                                     <option value="{{$transporter->id}}">{{$transporter->name}}</option>
                                                 @endforeach
                                             </select>
-                                            <small>  <a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small> 
+                                            <small>  <a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small>
                                             @error('transporter_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @if ($fleetLimitReached)
+                                                <div class="alert alert-danger" style="margin-top:10px">{{ $fleetLimitMessage }}</div>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -373,7 +376,7 @@
                                     <div class="col-md-12">
                                         <div class="btn-group pull-right mt-10" >
                                            <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                            <button type="submit" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Save</button>
+                                            <button type="submit" class="btn bg-success btn-wide btn-rounded" @if ($fleetLimitReached) disabled @endif> <i class="fa fa-save"></i>Save</button>
                                         </div>
                                     </div>
                                     </div>

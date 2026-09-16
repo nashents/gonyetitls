@@ -179,6 +179,26 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="fleetComposition">Fleet Tracking</label>
+                            @if (Auth::user()->is_admin() && $isTransporterSelected)
+                            <select wire:model.debounce.300ms="fleetComposition" class="form-control" required>
+                                <option value="horse_vehicle">Horses + Vehicles</option>
+                                <option value="horse_vehicle_trailer">Horses + Vehicles + Trailers</option>
+                            </select>
+                            @else
+                            <select wire:model.debounce.300ms="fleetComposition" class="form-control" disabled>
+                                <option value="horse_vehicle">Horses + Vehicles</option>
+                                <option value="horse_vehicle_trailer">Horses + Vehicles + Trailers</option>
+                            </select>
+                            @endif
+                            <small class="form-text text-muted">Which fleet asset types count toward this company's plan band.</small>
+                            @error('fleetComposition') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                </div>
                 @endif
                <div class="row">
                 <div class="col-md-6">
@@ -391,6 +411,26 @@
                                 <label for="email">License Fee<span class="required" style="color: red">*</span></label>
                                <input type="number" step="any" wire:model.debounce.300ms="fee" class="form-control" placeholder="Enter License Fee" required>
                                 @error('fee') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="fleetComposition">Fleet Tracking</label>
+                                @if (Auth::user()->is_admin() && $isTransporterSelectedEdit)
+                                <select wire:model.debounce.300ms="fleetComposition" class="form-control" required>
+                                    <option value="horse_vehicle">Horses + Vehicles</option>
+                                    <option value="horse_vehicle_trailer">Horses + Vehicles + Trailers</option>
+                                </select>
+                                @else
+                                <select wire:model.debounce.300ms="fleetComposition" class="form-control" disabled>
+                                    <option value="horse_vehicle">Horses + Vehicles</option>
+                                    <option value="horse_vehicle_trailer">Horses + Vehicles + Trailers</option>
+                                </select>
+                                @endif
+                                <small class="form-text text-muted">Which fleet asset types count toward this company's plan band.</small>
+                                @error('fleetComposition') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

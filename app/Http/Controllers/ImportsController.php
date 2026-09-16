@@ -76,6 +76,9 @@ class ImportsController extends Controller
         $import = new TrailersImport;
         $import->import($file);
         Session::flash('success','Trailer(s) Imported Successfully!!');
+        if (!empty($import->skippedForLimit)) {
+            Session::flash('warning', implode(' ', $import->skippedForLimit));
+        }
         return redirect()->back();
     }
    
@@ -215,6 +218,9 @@ class ImportsController extends Controller
         $import = new VehiclesImport;
         $import->import($file);
         Session::flash('success','Vehicle(s) Imported Successfully!!');
+        if (!empty($import->skippedForLimit)) {
+            Session::flash('warning', implode(' ', $import->skippedForLimit));
+        }
         return redirect()->back();
     }
     public function importCustomers(Request $request){
@@ -259,6 +265,9 @@ class ImportsController extends Controller
         $import = new HorsesImport;
         $import->import($file);
         Session::flash('success','Horse(s) Imported Successfully!!');
+        if (!empty($import->skippedForLimit)) {
+            Session::flash('warning', implode(' ', $import->skippedForLimit));
+        }
         return redirect()->back();
     }
     public function importDrivers(Request $request){

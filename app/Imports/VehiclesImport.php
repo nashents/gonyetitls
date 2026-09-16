@@ -6,6 +6,7 @@ use App\Models\Vehicle;
 use App\Models\Transporter;
 use App\Models\VehicleMake;
 use App\Models\VehicleModel;
+use App\Imports\Concerns\ChecksFleetLimit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -29,7 +30,7 @@ WithChunkReading,
 WithBatchInserts
 {
 
-    use Importable, SkipsErrors;
+    use Importable, SkipsErrors, ChecksFleetLimit;
     /**
     * @param array $row
     *
@@ -88,6 +89,7 @@ WithBatchInserts
 
         if ($row->filter()->isNotEmpty()) {
             $vehicle = Vehicle::firstOrNew(['registration_number' => $registrationNumber]);
+            $isNewVehicle = ! $vehicle->exists;
 
             // Helper closure to get or create related record IDs
             $getOrCreateId = function ($model, $column, $value) {
@@ -107,6 +109,12 @@ WithBatchInserts
             $transporter_id = $getOrCreateId(Transporter::class, 'transporter_number', $row->get('transporter_number'));
             $make_id        = $getOrCreateId(VehicleMake::class, 'name', $row->get('make'));
             $model_id       = $getOrCreateId(VehicleModel::class, 'name', $row->get('model'));
+
+            $company = $transporter_id ? Transporter::find($transporter_id)?->company : null;
+            if ($isNewVehicle && $company && ! $this->canAddToFleet($company, 'vehicle')) {
+                $this->recordFleetLimitSkip($registrationNumber, $company);
+                continue;
+            }
 
             if (!$vehicle->exists) {
                 $vehicle->user_id = Auth::user()->id;
@@ -131,8 +139,12 @@ WithBatchInserts
             $vehicle->fuel_consumption_loaded_standard = $row->get('fuel_consumption_loaded', 0);
 
             $vehicle->save();
+
+            if ($isNewVehicle && $company) {
+                $this->registerFleetAddition($company);
+            }
         }
-      
+
         }
     }
 

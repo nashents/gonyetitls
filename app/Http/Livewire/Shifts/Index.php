@@ -111,6 +111,7 @@ class Index extends Component
     public $filter_transporter_id;
     public $filter_team_id;
     public $filter_shift_type;
+    public $filter_for;
     public $shift_open_mileage;
     public $shift_open_hours;
     public $shift_close_hours;
@@ -2361,6 +2362,7 @@ class Index extends Component
             'filter_loading_point_id' => $this->filter_loading_point_id,
             'filter_offloading_point_id' => $this->filter_offloading_point_id,
             'filter_shift_type' => $this->filter_shift_type,
+            'filter_for' => $this->filter_for,
         ];
 
         if ((isset($this->fuel_exchange_rate) && $this->fuel_exchange_rate > 0 && is_numeric($this->fuel_exchange_rate)) && (isset($this->fuel_amount) && $this->fuel_amount > 0 && is_numeric($this->fuel_amount)) ) {
@@ -2413,6 +2415,7 @@ class Index extends Component
         ->when(filled($this->filter_horse_id), fn (Builder $q) => $q->where('horse_id', $this->filter_horse_id))
         ->when(filled($this->filter_vehicle_id), fn (Builder $q) => $q->where('vehicle_id', $this->filter_vehicle_id))
         ->when(filled($this->filter_shift_type), fn (Builder $q) => $q->where('type', $this->filter_shift_type))
+        ->when(filled($this->filter_for), fn (Builder $q) => $q->where('for', $this->filter_for))
         ->when(filled($this->filter_user_id), fn (Builder $q) => $q->where('user_id', $this->filter_user_id))
 
         // trips-based loading/offloading filters

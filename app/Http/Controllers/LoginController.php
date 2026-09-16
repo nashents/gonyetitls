@@ -102,7 +102,7 @@ class LoginController extends Controller
                 $ranks       = $employee->ranks ?? collect();
                 $departments = $employee->departments ?? collect();
 
-                if (! $company || $company->status !== 1) {
+                if ((! $company || $company->status !== 1) && ! $user->is_admin()) {
                     Auth::logout();
                     Session::flash('error', 'Failed to login. Company account suspended.');
                     return back();

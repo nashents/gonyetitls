@@ -14,6 +14,7 @@ use App\Models\HorseModel;
 use App\Models\Transporter;
 use App\Models\HorseDocument;
 use Livewire\WithFileUploads;
+use App\Services\FleetLimitService;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Session;
@@ -57,6 +58,8 @@ class Create extends Component
     public $expires_at;
     public $file;
     public $mechanical = False;
+    public $fleetLimitReached = false;
+    public $fleetLimitMessage = '';
 
     public $fuel_consumption_empty_standard;
     public $fuel_consumption_loaded_standard;
@@ -196,6 +199,39 @@ class Create extends Component
         
       ];
 
+    public function updatedTransporterId($value)
+    {
+        $this->refreshFleetLimitStatus();
+    }
+
+    private function refreshFleetLimitStatus(): bool
+    {
+        $this->fleetLimitReached = false;
+        $this->fleetLimitMessage = '';
+
+        if (! $this->transporter_id) {
+            return true;
+        }
+
+        $transporter = Transporter::find($this->transporter_id);
+        $company = $transporter ? $transporter->company : null;
+
+        if (! $company) {
+            return true;
+        }
+
+        $fleetLimitService = app(FleetLimitService::class);
+
+        if ($fleetLimitService->canAdd($company, 'horse')) {
+            return true;
+        }
+
+        $this->fleetLimitReached = true;
+        $this->fleetLimitMessage = "Fleet limit reached for {$company->name}. Cannot add another horse.";
+
+        return false;
+    }
+
     public function updatedSelectedMake($make)
     {
         if (!is_null($make) ) {
@@ -211,6 +247,14 @@ class Create extends Component
         }
     }
     public function store(){
+        if (! $this->refreshFleetLimitStatus()) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$this->fleetLimitMessage
+            ]);
+            return;
+        }
+
         $horse = new Horse;
         $horse->fleet_number = $this->fleet_number;
         $horse->horse_number = $this->horseNumber();
