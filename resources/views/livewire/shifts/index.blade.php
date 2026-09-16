@@ -335,43 +335,87 @@
                                                     <strong>Start:</strong> {{$shift->shift_start_time}} <br>
                                                     <strong>Close:</strong> {{$shift->shift_end_time}} <br>
                                                     <strong>Duration:</strong> {{$this->calculatedShiftDuration($shift)}} <br>
-                                                  @php
-                                                    $open = $shift->open_mileage;
-                                                    $close = $shift->close_mileage;
+                                                  @if ($shift->for === "Rehandling")
+                                                    @php
+                                                        $firstRehandling = $shift->rehandlings->first();
+                                                        $lastRehandling = $shift->rehandlings->last();
 
-                                                    $openMissing  = !is_numeric($open);
-                                                    $closeMissing = !is_numeric($close);
+                                                        $open = $firstRehandling->open_hours ?? null;
+                                                        $close = $lastRehandling->close_hours ?? null;
 
-                                                    $openNegative  = is_numeric($open) && $open < 0;
-                                                    $closeNegative = is_numeric($close) && $close < 0;
+                                                        $openMissing  = !is_numeric($open);
+                                                        $closeMissing = !is_numeric($close);
 
-                                                    $invalidRange  = is_numeric($open) && is_numeric($close) && $close < $open;
-                                                @endphp
+                                                        $openNegative  = is_numeric($open) && $open < 0;
+                                                        $closeNegative = is_numeric($close) && $close < 0;
 
-                                                <strong>Start Mileage:</strong>
-                                                <span class="badge 
-                                                    {{ $openMissing ? 'bg-secondary' : ($openNegative ? 'bg-danger' : 'bg-success') }}">
-                                                    {{ $openMissing ? 'N/A' : $open }}
-                                                </span>
+                                                        $invalidRange  = is_numeric($open) && is_numeric($close) && $close < $open;
+                                                    @endphp
 
-                                                @if($openNegative)
-                                                    <span class="badge bg-danger">Negative</span>
-                                                @endif
+                                                    <strong>Start Hours:</strong>
+                                                    <span class="badge
+                                                        {{ $openMissing ? 'bg-secondary' : ($openNegative ? 'bg-danger' : 'bg-success') }}">
+                                                        {{ $openMissing ? 'N/A' : $open }}
+                                                    </span>
 
-                                                <br>
+                                                    @if($openNegative)
+                                                        <span class="badge bg-danger">Negative</span>
+                                                    @endif
 
-                                                <strong>Close Mileage:</strong>
-                                                <span class="badge 
-                                                    {{ $closeMissing ? 'bg-secondary' : (($closeNegative || $invalidRange) ? 'bg-danger' : 'bg-success') }}">
-                                                    {{ $closeMissing ? 'N/A' : $close }}
-                                                </span>
+                                                    <br>
 
-                                                @if($closeNegative)
-                                                    <span class="badge bg-danger">Negative</span>
-                                                @endif
+                                                    <strong>Close Hours:</strong>
+                                                    <span class="badge
+                                                        {{ $closeMissing ? 'bg-secondary' : (($closeNegative || $invalidRange) ? 'bg-danger' : 'bg-success') }}">
+                                                        {{ $closeMissing ? 'N/A' : $close }}
+                                                    </span>
 
-                                                @if($invalidRange)
-                                                    <span class="badge bg-warning text-dark">Close &lt; Open</span>
+                                                    @if($closeNegative)
+                                                        <span class="badge bg-danger">Negative</span>
+                                                    @endif
+
+                                                    @if($invalidRange)
+                                                        <span class="badge bg-warning text-dark">Close &lt; Open</span>
+                                                    @endif
+                                                @else
+                                                    @php
+                                                        $open = $shift->open_mileage;
+                                                        $close = $shift->close_mileage;
+
+                                                        $openMissing  = !is_numeric($open);
+                                                        $closeMissing = !is_numeric($close);
+
+                                                        $openNegative  = is_numeric($open) && $open < 0;
+                                                        $closeNegative = is_numeric($close) && $close < 0;
+
+                                                        $invalidRange  = is_numeric($open) && is_numeric($close) && $close < $open;
+                                                    @endphp
+
+                                                    <strong>Start Mileage:</strong>
+                                                    <span class="badge
+                                                        {{ $openMissing ? 'bg-secondary' : ($openNegative ? 'bg-danger' : 'bg-success') }}">
+                                                        {{ $openMissing ? 'N/A' : $open }}
+                                                    </span>
+
+                                                    @if($openNegative)
+                                                        <span class="badge bg-danger">Negative</span>
+                                                    @endif
+
+                                                    <br>
+
+                                                    <strong>Close Mileage:</strong>
+                                                    <span class="badge
+                                                        {{ $closeMissing ? 'bg-secondary' : (($closeNegative || $invalidRange) ? 'bg-danger' : 'bg-success') }}">
+                                                        {{ $closeMissing ? 'N/A' : $close }}
+                                                    </span>
+
+                                                    @if($closeNegative)
+                                                        <span class="badge bg-danger">Negative</span>
+                                                    @endif
+
+                                                    @if($invalidRange)
+                                                        <span class="badge bg-warning text-dark">Close &lt; Open</span>
+                                                    @endif
                                                 @endif
 
                                                 </td>
@@ -408,6 +452,15 @@
                                                             @if ($shift->trips)
                                                                 @foreach ($shift->trips as $trip)
                                                                     {{$trip->trip_number}} {{$trip->cargo?->name}} {{$trip->weight ? $trip->weight."t" : ""}} @if (!$loop->last) <br> @endif
+                                                                @endforeach
+                                                            @endif
+                                                        </small>
+                                                    @elseif ($shift->for == "Rehandling")
+                                                        <strong>Total Works:</strong> {{$shift->rehandlings?->count()}} <br>
+                                                        <small>
+                                                            @if ($shift->rehandlings)
+                                                                @foreach ($shift->rehandlings as $rehandling)
+                                                                    {{$rehandling->rehandling_number}} - {{$rehandling->work?->description}}@if ($rehandling->location) @ {{$rehandling->location->name}}@endif @if (!$loop->last) <br> @endif
                                                                 @endforeach
                                                             @endif
                                                         </small>

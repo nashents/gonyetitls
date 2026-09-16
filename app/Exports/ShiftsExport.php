@@ -162,7 +162,19 @@ WithCustomStartCell
     public function query()
     { 
           $baseQuery = Shift::query()
-        ->with(['trips:id,shift_id,loading_point_id,offloading_point_id','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel']);
+        ->with([
+            'trips:id,shift_id,loading_point_id,offloading_point_id',
+            'rehandlings:id,shift_id,rehandling_number,work_id,location_id,open_hours,close_hours',
+            'rehandlings.work:id,description',
+            'rehandlings.location:id,name',
+            'customer:id,name',
+            'driver',
+            'horse',
+            'vehicle',
+            'cargo',
+            'transporter',
+            'fuel',
+        ]);
 
         /**
          * 1) Date filtering: range if from/to, else default current month/year
@@ -287,7 +299,20 @@ WithCustomStartCell
 
                 // Format as HH:MM:SS, even if hours > 24
                  $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
-      
+
+                $rehandlings = $shift->rehandlings ?? collect();
+
+                $workDone = $rehandlings->map(function ($rehandling) {
+                    $label = trim($rehandling->rehandling_number . ' - ' . optional($rehandling->work)->description);
+                    if ($rehandling->location) {
+                        $label .= ' @ ' . $rehandling->location->name;
+                    }
+                    return $label;
+                })->implode('; ');
+
+                $openHours = optional($rehandlings->first())->open_hours;
+                $closeHours = optional($rehandlings->last())->close_hours;
+
                 return   [
                     $shift->shift_number ,
                     $shift->type ,
@@ -302,8 +327,12 @@ WithCustomStartCell
                     $driver,
                     $shift?->trips->count(),
                     $shift?->trips?->sum('weight'),
+                    $rehandlings->count(),
+                    $workDone,
                     $shift->calculated_mileage,
                     $shift->actual_mileage,
+                    $openHours,
+                    $closeHours,
                     $shift->total_fuel,
                     $shift->fuel_consumption_mileage,
                      ];
@@ -325,8 +354,12 @@ WithCustomStartCell
                 'Driver',
                 'Total Loads',
                 'Total Weight',
+                'Total Works',
+                'Work Done',
                 'Calculated Mileage',
                 'Actual Mileage',
+                'Open Hours',
+                'Close Hours',
                 'Fuel',
                 'F/C (Mileage) (l/Km)',
             ];
@@ -336,8 +369,8 @@ WithCustomStartCell
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Styling for headings (now on A17:Q17)
-                $event->sheet->getStyle('A17:Q17')->applyFromArray([
+                // Styling for headings (now on A17:U17)
+                $event->sheet->getStyle('A17:U17')->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
@@ -351,7 +384,7 @@ WithCustomStartCell
                 $row = 7;
 
                 $event->sheet->setCellValue("A{$row}", 'Totals Summary');
-                $event->sheet->mergeCells("A{$row}:Q{$row}");
+                $event->sheet->mergeCells("A{$row}:U{$row}");
                 $event->sheet->getStyle("A{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 14],
                 ]);
