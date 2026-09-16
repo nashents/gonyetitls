@@ -1521,6 +1521,50 @@
     </script>
 
     <script type="text/javascript">
+            window.addEventListener('show-goods_receivedRestoreModal', event => {
+                $('#goods_receivedRestoreModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-goods_receivedRestoreModal', event => {
+                $('#goods_receivedRestoreModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-inventoryRestoreModal', event => {
+                $('#inventoryRestoreModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-inventoryRestoreModal', event => {
+                $('#inventoryRestoreModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-assetRestoreModal', event => {
+                $('#assetRestoreModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-assetRestoreModal', event => {
+                $('#assetRestoreModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-tyreRestoreModal', event => {
+                $('#tyreRestoreModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-tyreRestoreModal', event => {
+                $('#tyreRestoreModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-inventoryImportModal', event => {
                 $('#inventoryImportModal').modal('show');
             })

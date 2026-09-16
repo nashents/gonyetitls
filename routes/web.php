@@ -178,7 +178,9 @@ Route::get('horses/management','HorseController@manage')->name('horses.manage');
 Route::get('trailers/management','TrailerController@manage')->name('trailers.manage');
 Route::get('vehicles/management','VehicleController@manage')->name('vehicles.manage');
 Route::get('assets/management','AssetController@manage')->name('assets.manage');
+Route::get('assets/deleted','AssetController@deleted')->name('assets.deleted');
 Route::get('inventories/management','InventoryController@manage')->name('inventories.manage');
+Route::get('inventories/deleted','InventoryController@deleted')->name('inventories.deleted');
 Route::get('inventories/assignment','InventoryController@assignment')->name('inventories.assignment');
 Route::get('inventories/requisition','InventoryController@requisition')->name('inventories.requisition');
 Route::post('/inventories/import','ImportsController@importInventories')->name('inventories.import');
@@ -296,6 +298,7 @@ Route::get('/companies/export/pdf','ExportsController@exportCompaniesPDF')->name
 Route::post('/companies/import','ImportsController@importCompanies')->name('companies.import');
 
 Route::get('tyres/orders','TyreController@orders')->name('tyres.orders');
+Route::get('tyres/deleted','TyreController@deleted')->name('tyres.deleted');
 Route::post('/tyres/import','ImportsController@importTyres')->name('tyres.import');
 Route::get('retreads/orders','RetreadController@orders')->name('retreads.orders');
 Route::get('routes/{route}/trips','RouteController@trips')->name('routes.trips');
@@ -522,6 +525,7 @@ Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goo
 Route::get('goods_receiveds/pending','GoodsReceivedController@pending')->name('goods_receiveds.pending');
 Route::get('goods_receiveds/approved','GoodsReceivedController@approved')->name('goods_receiveds.approved');
 Route::get('goods_receiveds/rejected','GoodsReceivedController@rejected')->name('goods_receiveds.rejected');
+Route::get('goods_receiveds/deleted','GoodsReceivedController@deleted')->name('goods_receiveds.deleted');
 Route::get('goods_returned/{goods_returned}/preview','GoodsReturnedController@preview')->name('goods_returneds.preview');
 Route::get('goods-returned/tyres/','GoodsReturnedController@tyres')->name('goods_returneds.tyres');
 Route::get('goods-receireturnedved/assets/','GoodsReturnedController@assets')->name('goods_returneds.assets');
@@ -806,6 +810,7 @@ Route::get('freight/settings/charge-config','FreightChargeConfigController@index
 Route::get('freight/settings/charge-types','FreightChargeTypesController@index')->name('freight.settings.charge-types');
 Route::get('freight/settings/rate-cards','FreightRateCardsController@index')->name('freight.settings.rate-cards');
 Route::get('freight/settings/shipping-lines','FreightShippingLinesController@index')->name('freight.settings.shipping-lines');
+Route::get('freight/settings/service-types','FreightServiceTypesController@index')->name('freight.settings.service-types');
 
 Route::get('freight/reports/job-profitability','FreightReportController@jobProfitability')->name('freight.reports.job_profitability');
 Route::get('freight/reports/job-profitability/pdf','FreightReportController@jobProfitabilityPdf')->name('freight.reports.job_profitability.pdf');

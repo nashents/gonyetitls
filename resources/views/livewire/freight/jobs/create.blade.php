@@ -26,6 +26,8 @@
                                                 @endforeach
                                             </select>
                                             @error('customer_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small>
+                                            <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -43,6 +45,8 @@
                                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('freight.settings.service-types') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Service Type</a></small>
+                                            <a href="#" wire:click.prevent="refresh('freight_service_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -89,6 +93,8 @@
                                                     <option value="{{ $currency->id }}">{{ $currency->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small>
+                                            <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -100,6 +106,8 @@
                                                     <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }} - {{ $quotation->customer?->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('quotations.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Quotation</a></small>
+                                            <a href="#" wire:click.prevent="refresh('quotations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -119,6 +127,8 @@
                                                     <option value="{{ $country->id }}">{{ $country->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small>
+                                            <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -136,6 +146,8 @@
                                                     <option value="{{ $country->id }}">{{ $country->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small>
+                                            <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -233,6 +245,8 @@
                                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -244,6 +258,8 @@
                                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -255,6 +271,8 @@
                                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -266,6 +284,8 @@
                                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -296,6 +316,8 @@
                                                         <option value="{{ $cargo->id }}">{{ $cargo->name }}</option>
                                                     @endforeach
                                                 </select>
+                                                <small><a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                                <a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
                                         <div class="col-md-2">
@@ -375,6 +397,13 @@
                                                         @endforeach
                                                     @endif
                                                 </select>
+                                                @php
+                                                    $partyRoutes = ['customer' => 'customers.index', 'vendor' => 'vendors.index', 'consignee' => 'consignees.index', 'broker' => 'brokers.index', 'agent' => 'agents.index', 'transporter' => 'transporters.index', 'clearing_agent' => 'clearing_agents.index'];
+                                                @endphp
+                                                @if (!empty($row['party_type']) && isset($partyRoutes[$row['party_type']]))
+                                                    <small><a href="{{ route($partyRoutes[$row['party_type']]) }}" target="_blank"><i class="fa fa-plus-square-o"></i> New {{ ucfirst(str_replace('_', ' ', $row['party_type'])) }}</a></small>
+                                                    <a href="#" wire:click.prevent="refreshPartyOptions({{ $index }})" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @endif
                                             </div>
                                         </div>
                                         <div class="col-md-3">

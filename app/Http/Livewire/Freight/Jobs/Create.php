@@ -149,6 +149,58 @@ class Create extends Component
         $this->party_rows = array_values($this->party_rows);
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'customers') {
+            $this->customers = Customer::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Customers Refreshed Successfully!!.']);
+        } elseif ($category === 'freight_service_types') {
+            $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Service Types Refreshed Successfully!!.']);
+        } elseif ($category === 'currencies') {
+            $this->currencies = Currency::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        } elseif ($category === 'quotations') {
+            $this->quotations = Quotation::with('customer')->whereYear('date', date('Y'))->latest()->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Quotations Refreshed Successfully!!.']);
+        } elseif ($category === 'countries') {
+            $this->countries = Country::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Countries Refreshed Successfully!!.']);
+        } elseif ($category === 'cargos') {
+            $this->cargos = Cargo::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
+        } elseif ($category === 'locations') {
+            $this->locations = Location::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
+        }
+    }
+
+    public function refreshPartyOptions($index)
+    {
+        $type = $this->party_rows[$index]['party_type'] ?? null;
+
+        if (!$type || !isset($this->partyModels[$type])) {
+            return;
+        }
+
+        $modelClass = [
+            'customer' => Customer::class,
+            'vendor' => Vendor::class,
+            'consignee' => Consignee::class,
+            'broker' => Broker::class,
+            'agent' => Agent::class,
+            'transporter' => Transporter::class,
+            'clearing_agent' => ClearingAgent::class,
+        ][$type];
+
+        $this->partyModels[$type] = $modelClass::orderBy('name')->get(['id', 'name']);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => ucfirst(str_replace('_', ' ', $type)) . 's Refreshed Successfully!!.',
+        ]);
+    }
+
     protected function rules()
     {
         return [

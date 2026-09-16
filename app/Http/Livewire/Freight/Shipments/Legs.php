@@ -266,6 +266,26 @@ class Legs extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Trip ' . $trip->trip_number . ' created and linked to this leg.']);
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'vendors') {
+            $this->vendors = Vendor::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendors Refreshed Successfully!!.']);
+        } elseif ($category === 'locations') {
+            $this->locations = Location::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
+        } elseif ($category === 'transporters') {
+            $this->transporters = Transporter::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Transporters Refreshed Successfully!!.']);
+        } elseif (in_array($category, ['dispatch_horses', 'dispatch_vehicles', 'dispatch_drivers'], true)) {
+            // Re-run the same transporter-scoped query used to populate these
+            // dropdowns, rather than a bare reload, so a refresh never shows
+            // an asset belonging to a different transporter.
+            $this->updatedDispatchTransporterId($this->dispatch_transporter_id);
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Fleet Assets Refreshed Successfully!!.']);
+        }
+    }
+
     public function render(ShipmentLegService $service)
     {
         foreach ($this->shipment->legs->whereNotNull('trip_id') as $leg) {

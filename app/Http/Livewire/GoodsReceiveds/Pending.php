@@ -87,7 +87,12 @@ class Pending extends Component
 
     public function render()
     {
-        $base = GoodsReceived::query()->with(['vendor', 'employee', 'user', 'inventories.product', 'tyres.product', 'assets.product'])
+        $base = GoodsReceived::query()->with([
+                'vendor', 'employee', 'user',
+                'inventories' => fn ($q) => $q->withTrashed()->with('product'),
+                'tyres' => fn ($q) => $q->withTrashed()->with('product'),
+                'assets' => fn ($q) => $q->withTrashed()->with('product'),
+            ])
             ->where('authorization', 'pending');
 
         $base->when(filled($this->from) && filled($this->to), function ($q) {
@@ -116,7 +121,10 @@ class Pending extends Component
                         $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
                     })
                     ->orWhereHas('inventories', function ($sub) use ($term) {
-                        $sub->where('inventory_number', 'like', $term)
+                        // withTrashed: an item can be deleted individually without its
+                        // GRV being deleted, and search must still find it there.
+                        $sub->withTrashed()
+                            ->where('inventory_number', 'like', $term)
                             ->orWhere('serial_number', 'like', $term)
                             ->orWhereHas('product', function ($p) use ($term) {
                                 $p->where('name', 'like', $term)
@@ -125,7 +133,8 @@ class Pending extends Component
                             });
                     })
                     ->orWhereHas('tyres', function ($sub) use ($term) {
-                        $sub->where('tyre_number', 'like', $term)
+                        $sub->withTrashed()
+                            ->where('tyre_number', 'like', $term)
                             ->orWhere('serial_number', 'like', $term)
                             ->orWhereHas('product', function ($p) use ($term) {
                                 $p->where('name', 'like', $term)
@@ -134,7 +143,8 @@ class Pending extends Component
                             });
                     })
                     ->orWhereHas('assets', function ($sub) use ($term) {
-                        $sub->where('asset_number', 'like', $term)
+                        $sub->withTrashed()
+                            ->where('asset_number', 'like', $term)
                             ->orWhere('serial_number', 'like', $term)
                             ->orWhereHas('product', function ($p) use ($term) {
                                 $p->where('name', 'like', $term)

@@ -290,7 +290,14 @@ class Index extends Component
             ->get();
 
         $query = GoodsReceived::query()
-            ->with(['vendor', 'employee', 'user', 'sageMapping', 'inventories.product', 'tyres.product', 'assets.product'])
+            ->with([
+                'vendor', 'employee', 'user', 'sageMapping',
+                // withTrashed here too — an item can be deleted on its own without
+                // its GRV being deleted, and it should still show (as "deleted").
+                'inventories' => fn ($q) => $q->withTrashed()->with('product'),
+                'tyres' => fn ($q) => $q->withTrashed()->with('product'),
+                'assets' => fn ($q) => $q->withTrashed()->with('product'),
+            ])
             ->where('department', $this->department);
 
         // Date filter — skip the default "this month" restriction while searching so
@@ -325,7 +332,10 @@ class Index extends Component
                         );
                     })
                     ->orWhereHas('inventories', function ($sub) use ($search) {
-                        $sub->where('inventory_number', 'like', $search)
+                        // withTrashed: an item can be deleted individually without its
+                        // GRV being deleted, and search must still find it there.
+                        $sub->withTrashed()
+                            ->where('inventory_number', 'like', $search)
                             ->orWhere('serial_number', 'like', $search)
                             ->orWhereHas('product', function ($p) use ($search) {
                                 $p->where('name', 'like', $search)
@@ -334,7 +344,8 @@ class Index extends Component
                             });
                     })
                     ->orWhereHas('tyres', function ($sub) use ($search) {
-                        $sub->where('tyre_number', 'like', $search)
+                        $sub->withTrashed()
+                            ->where('tyre_number', 'like', $search)
                             ->orWhere('serial_number', 'like', $search)
                             ->orWhereHas('product', function ($p) use ($search) {
                                 $p->where('name', 'like', $search)
@@ -343,7 +354,8 @@ class Index extends Component
                             });
                     })
                     ->orWhereHas('assets', function ($sub) use ($search) {
-                        $sub->where('asset_number', 'like', $search)
+                        $sub->withTrashed()
+                            ->where('asset_number', 'like', $search)
                             ->orWhere('serial_number', 'like', $search)
                             ->orWhereHas('product', function ($p) use ($search) {
                                 $p->where('name', 'like', $search)

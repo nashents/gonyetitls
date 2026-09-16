@@ -1082,7 +1082,8 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Pending GRVs','slug'=>'pending-assets-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>null,'visibility'=>$assetPOVis]);
         $upsertSub($m, ['name'=>'Approved GRVs','slug'=>'approved-assets-grvs','icon'=>'fas fa-check','route_name'=>'goods_receiveds.approved','sort_order'=>30,'badge_key'=>null,'visibility'=>$assetPOVis]);
         $upsertSub($m, ['name'=>'Rejected GRVs','slug'=>'rejected-assets-grvs','icon'=>'fas fa-ban','route_name'=>'goods_receiveds.rejected','sort_order'=>40,'badge_key'=>null,'visibility'=>$assetPOVis]);
-       
+        $upsertSub($m, ['name'=>'Deleted GRVs','slug'=>'deleted-assets-grvs','icon'=>'fas fa-trash','route_name'=>'goods_receiveds.deleted','sort_order'=>50,'badge_key'=>null,'visibility'=>$assetPOVis]);
+
         $m = $upsertModule($g, [
             'name' => 'GR (Assets)',
             'slug' => 'gr-assets',
@@ -1101,6 +1102,7 @@ class MenuRegistrySeeder extends Seeder
         ]);
         $upsertSub($m, ['name'=>'Create Asset','slug'=>'create-asset','icon'=>'fas fa-plus','route_name'=>'assets.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Assets','slug'=>'manage-assets','icon'=>'fas fa-list','route_name'=>'assets.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Deleted Assets','slug'=>'deleted-assets','icon'=>'fas fa-trash','route_name'=>'assets.deleted','sort_order'=>30]);
 
         $m = $upsertModule($g, [
             'name' => 'Dispatches (Assets)',
@@ -2197,6 +2199,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Pending GRVs','slug'=>'pending-inventory-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>'goods_receiveds_inventory_pending_count','visibility'=>$invPOVis]);
         $upsertSub($m, ['name'=>'Approved GRVs','slug'=>'approved-inventory-grvs','icon'=>'fas fa-check','route_name'=>'goods_receiveds.approved','sort_order'=>30,'badge_key'=>'goods_receiveds_inventory_approved_count','visibility'=>$invPOVis]);
         $upsertSub($m, ['name'=>'Rejected GRVs','slug'=>'rejected-inventory-grvs','icon'=>'fas fa-ban','route_name'=>'goods_receiveds.rejected','sort_order'=>40,'badge_key'=>'goods_receiveds_inventory_rejected_count','visibility'=>$invPOVis]);
+        $upsertSub($m, ['name'=>'Deleted GRVs','slug'=>'deleted-inventory-grvs','icon'=>'fas fa-trash','route_name'=>'goods_receiveds.deleted','sort_order'=>50,'badge_key'=>null,'visibility'=>$invPOVis]);
 
         $m = $upsertModule($g, [
             'name' => 'GR (Inventory)',
@@ -2217,6 +2220,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Create Inventory','slug'=>'create-inventory','icon'=>'fas fa-plus','route_name'=>'inventories.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Inventory','slug'=>'manage-inventory','icon'=>'fas fa-list','route_name'=>'inventories.index','sort_order'=>20]);
         $upsertSub($m, ['name'=>'Disposed Items','slug'=>'disposed-items','icon'=>'fas fa-list','route_name'=>'disposes.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Deleted Inventory','slug'=>'deleted-inventory','icon'=>'fas fa-trash','route_name'=>'inventories.deleted','sort_order'=>40]);
 
         $m = $upsertModule($g, [
             'name' => 'Dispatches (Inventory)',
@@ -2294,6 +2298,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Pending GRVs','slug'=>'pending-tyre-grvs','icon'=>'fas fa-clock','route_name'=>'goods_receiveds.pending','sort_order'=>20,'badge_key'=>null,'visibility'=>$tyrePOVis]);
         $upsertSub($m, ['name'=>'Approved GRVs','slug'=>'approved-tyre-grvs','icon'=>'fas fa-check','route_name'=>'goods_receiveds.approved','sort_order'=>30,'badge_key'=>null,'visibility'=>$tyrePOVis]);
         $upsertSub($m, ['name'=>'Rejected GRVs','slug'=>'rejected-tyre-grvs','icon'=>'fas fa-ban','route_name'=>'goods_receiveds.rejected','sort_order'=>40,'badge_key'=>null,'visibility'=>$tyrePOVis]);
+        $upsertSub($m, ['name'=>'Deleted GRVs','slug'=>'deleted-tyre-grvs','icon'=>'fas fa-trash','route_name'=>'goods_receiveds.deleted','sort_order'=>50,'badge_key'=>null,'visibility'=>$tyrePOVis]);
 
           $m = $upsertModule($g, [
             'name' => 'GR (Tyres)',
@@ -2315,6 +2320,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Manage Tyres','slug'=>'manage-tyres','icon'=>'fas fa-list','route_name'=>'tyres.index','sort_order'=>20]);
         $upsertSub($m, ['name'=>'Tyre Assignments','slug'=>'tyre-assignments','icon'=>'fas fa-list','route_name'=>'tyre_assignments.index','sort_order'=>30]);
         $upsertSub($m, ['name'=>'Disposed Items','slug'=>'tyre-disposed-items','icon'=>'fas fa-list','route_name'=>'disposes.index','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Deleted Tyres','slug'=>'deleted-tyres','icon'=>'fas fa-trash','route_name'=>'tyres.deleted','sort_order'=>50]);
 
         $m = $upsertModule($g, [
             'name' => 'Retreads',

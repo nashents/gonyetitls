@@ -240,6 +240,20 @@ class CustomsDeclarations extends Component
         ]);
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'clearing_agents') {
+            $this->clearingAgents = ClearingAgent::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Clearing Agents Refreshed Successfully!!.']);
+        } elseif ($category === 'countries') {
+            $this->countries = Country::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Countries Refreshed Successfully!!.']);
+        } elseif ($category === 'currencies') {
+            $this->currencies = Currency::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        }
+    }
+
     public function render()
     {
         return view('livewire.freight.shipments.customs-declarations', [

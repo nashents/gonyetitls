@@ -25,6 +25,10 @@ class InventoryController extends Controller
     {
         return view('inventories.manage');
     }
+    public function deleted()
+    {
+        return view('inventories.deleted');
+    }
     public function requisition()
     {
         return view('inventories.requisition');

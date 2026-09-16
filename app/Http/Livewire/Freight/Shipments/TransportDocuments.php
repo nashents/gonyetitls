@@ -67,6 +67,14 @@ class TransportDocuments extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Transport document added successfully!']);
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'vendors') {
+            $this->vendors = Vendor::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendors Refreshed Successfully!!.']);
+        }
+    }
+
     public function render()
     {
         return view('livewire.freight.shipments.transport-documents');

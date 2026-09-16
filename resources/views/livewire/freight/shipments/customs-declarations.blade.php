@@ -180,6 +180,8 @@
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small>
+                                    <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -191,6 +193,8 @@
                                             <option value="{{ $currency->id }}">{{ $currency->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small>
+                                    <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -202,6 +206,8 @@
                                             <option value="{{ $agent->id }}">{{ $agent->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('clearing_agents.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                    <a href="#" wire:click.prevent="refresh('clearing_agents')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                         </div>

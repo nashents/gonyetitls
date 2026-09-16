@@ -43,6 +43,10 @@ class GoodsReceivedController extends Controller
     {
         return view('goods_receiveds.rejected');
     }
+    public function deleted()
+    {
+        return view('goods_receiveds.deleted');
+    }
 
     /**
      * Show the form for creating a new resource.

@@ -21,6 +21,10 @@ class AssetController extends Controller
     {
         return view('assets.manage');
     }
+    public function deleted()
+    {
+        return view('assets.deleted');
+    }
 
     /**
      * Show the form for creating a new resource.

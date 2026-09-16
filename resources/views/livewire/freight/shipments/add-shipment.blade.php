@@ -52,6 +52,8 @@
                                             <option value="{{ $location->id }}">{{ $location->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -63,6 +65,8 @@
                                             <option value="{{ $location->id }}">{{ $location->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -107,6 +111,8 @@
                                             <option value="{{ $cargo->id }}">{{ $cargo->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                    <a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                                 <div class="col-md-3">
                                     <input type="text" class="form-control" wire:model="cargo_rows.{{ $index }}.commodity" placeholder="Description">
@@ -146,6 +152,13 @@
                                             @endforeach
                                         @endif
                                     </select>
+                                    @php
+                                        $partyRoutes = ['customer' => 'customers.index', 'vendor' => 'vendors.index', 'consignee' => 'consignees.index', 'broker' => 'brokers.index', 'agent' => 'agents.index', 'transporter' => 'transporters.index', 'clearing_agent' => 'clearing_agents.index'];
+                                    @endphp
+                                    @if (!empty($row['party_type']) && isset($partyRoutes[$row['party_type']]))
+                                        <small><a href="{{ route($partyRoutes[$row['party_type']]) }}" target="_blank"><i class="fa fa-plus-square-o"></i> New {{ ucfirst(str_replace('_', ' ', $row['party_type'])) }}</a></small>
+                                        <a href="#" wire:click.prevent="refreshPartyOptions({{ $index }})" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @endif
                                 </div>
                                 <div class="col-md-3">
                                     <select class="form-control" wire:model="party_rows.{{ $index }}.role">

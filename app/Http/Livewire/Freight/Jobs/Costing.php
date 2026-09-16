@@ -339,6 +339,26 @@ class Costing extends Component
         $this->expanded_charge_id = $this->expanded_charge_id == $id ? null : $id;
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'vendors') {
+            $this->vendors = Vendor::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendors Refreshed Successfully!!.']);
+        } elseif ($category === 'charge_types') {
+            $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
+        } elseif ($category === 'customers') {
+            $this->customers = Customer::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Customers Refreshed Successfully!!.']);
+        } elseif ($category === 'currencies') {
+            $this->currencies = Currency::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        } elseif ($category === 'taxes') {
+            $this->taxes = Tax::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Taxes Refreshed Successfully!!.']);
+        }
+    }
+
     public function render(FreightCostingService $costing)
     {
         return view('livewire.freight.jobs.costing', [

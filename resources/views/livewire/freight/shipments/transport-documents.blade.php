@@ -84,6 +84,8 @@
                                     <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                                 @endforeach
                             </select>
+                            <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                            <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             <input type="text" class="form-control mt-10" wire:model="carrier_name" placeholder="or type free text">
                         </div>
                         <div class="row">

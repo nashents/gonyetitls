@@ -146,6 +146,8 @@
                                             <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                    <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     <input type="text" class="form-control mt-10" wire:model="carrier_name" placeholder="or type free text">
                                 </div>
                             </div>
@@ -163,6 +165,8 @@
                                             <option value="{{ $location->id }}">{{ $location->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -174,6 +178,8 @@
                                             <option value="{{ $location->id }}">{{ $location->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -235,6 +241,8 @@
                                 @endforeach
                             </select>
                             @error('dispatch_transporter_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                            <small><a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small>
+                            <a href="#" wire:click.prevent="refresh('transporters')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
@@ -246,6 +254,8 @@
                                             <option value="{{ $horse->id }}">{{ $horse->registration_number }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('horses.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Horse</a></small>
+                                    <a href="#" wire:click.prevent="refresh('dispatch_horses')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -257,6 +267,8 @@
                                             <option value="{{ $vehicle->id }}">{{ $vehicle->registration_number }}</option>
                                         @endforeach
                                     </select>
+                                    <small><a href="{{ route('vehicles.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vehicle</a></small>
+                                    <a href="#" wire:click.prevent="refresh('dispatch_vehicles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -271,6 +283,8 @@
                                 @endforeach
                             </select>
                             @error('dispatch_driver_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                            <small><a href="{{ route('drivers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small>
+                            <a href="#" wire:click.prevent="refresh('dispatch_drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                         </div>
                         <div class="row">
                             <div class="col-md-6">

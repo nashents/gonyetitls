@@ -21,6 +21,10 @@ class TyreController extends Controller
     {
         return view('tyres.orders');
     }
+    public function deleted()
+    {
+        return view('tyres.deleted');
+    }
 
     /**
      * Show the form for creating a new resource.

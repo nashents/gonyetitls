@@ -112,6 +112,14 @@ class Containers extends Component
         $this->expanded_container_id = $this->expanded_container_id == $containerId ? null : $containerId;
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'shipping_lines') {
+            $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Shipping Lines Refreshed Successfully!!.']);
+        }
+    }
+
     public function render(PortExposureService $exposureService)
     {
         if ($this->expanded_container_id) {
