@@ -67,8 +67,6 @@
                                     </th>
                                     <th class="th-sm">Vendor
                                     </th>
-                                    <th class="th-sm">Condition
-                                    </th>
                                     <th class="th-sm">Delivery
                                     </th>
                                     <th class="th-sm">Item(s)
@@ -128,7 +126,6 @@
                                             <strong>Received On:</strong> {{$goods_received->date}}
                                         </small>
                                     </td>
-                                    <td>{{$goods_received->condition}}</td>
                                     <td>
                                         <small class="text-muted">
                                             @php
@@ -136,6 +133,7 @@
                                                     $goods_received->delivery_number ? ['label' => 'Delivery#', 'value' => $goods_received->delivery_number] : null,
                                                     $goods_received->delivery_date ? ['label' => 'Date', 'value' => $goods_received->delivery_date] : null,
                                                     $goods_received->driver_name ? ['label' => 'Driver', 'value' => $goods_received->driver_name] : null,
+                                                    $goods_received->condition ? ['label' => 'Condition', 'value' => $goods_received->condition] : null,
                                                 ])->filter()->values();
                                             @endphp
                                             @foreach ($deliveryParts as $index => $part)
@@ -185,7 +183,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Goods Received Found ....
                                         </div>
