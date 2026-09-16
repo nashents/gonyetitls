@@ -55,19 +55,6 @@
                                         </div>
                                         <!-- /input-group -->
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                                Work Type
-                                            </span>
-                                            <select wire:model.debounce.300ms="filter_for" class="form-control" aria-label="..." >
-                                                <option value="">Select Work Type</option>
-                                                <option value="Trips">Trips</option>
-                                                <option value="Rehandling">Rehandling</option>
-                                            </select>
-                                        </div>
-                                        <!-- /input-group -->
-                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
@@ -253,6 +240,19 @@
                                                 @foreach ($teams as $team)
                                                         <option value="{{ $team->id }}"  > {{ $team->name }}</option>
                                                 @endforeach
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                                Work Type
+                                            </span>
+                                            <select wire:model.debounce.300ms="filter_for" class="form-control  " aria-label="..." >
+                                                <option value="">Select Work Type</option>
+                                                <option value="Trips">Trips</option>
+                                                <option value="Rehandling">Rehandling</option>
                                             </select>
                                         </div>
                                         <!-- /input-group -->
