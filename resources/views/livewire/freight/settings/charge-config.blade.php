@@ -35,6 +35,8 @@
                                                     <option value="{{ $line->id }}">{{ $line->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                            <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -107,6 +109,8 @@
                                                     <option value="{{ $line->id }}">{{ $line->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                            <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -141,6 +145,8 @@
                                                     <option value="{{ $currency->id }}">{{ $currency->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                            <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>

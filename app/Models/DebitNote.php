@@ -34,5 +34,8 @@ class DebitNote extends Model implements Auditable
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
     }
+    public function goods_returned(){
+        return $this->belongsTo('App\Models\GoodsReturned');
+    }
 
 }

@@ -27,7 +27,31 @@ class GoodsReturned extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
-  
+    public function authorized_by(){
+        return $this->belongsTo('App\Models\User', 'authorized_by_id');
+    }
+    public function goods_returned_items(){
+        return $this->hasMany('App\Models\GoodsReturnedItem');
+    }
+    public function debit_note(){
+        return $this->belongsTo('App\Models\DebitNote');
+    }
+
+    public function isDraft(): bool
+    {
+        return is_null($this->authorization);
+    }
+
+    public function isPending(): bool
+    {
+        return $this->authorization === 'pending';
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->authorization === 'approved';
+    }
+
     protected $fillable = [
     'user_id',
     'purchase_id',

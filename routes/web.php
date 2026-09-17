@@ -529,6 +529,10 @@ Route::get('goods_receiveds/deleted','GoodsReceivedController@deleted')->name('g
 Route::get('goods_returned/{goods_returned}/preview','GoodsReturnedController@preview')->name('goods_returneds.preview');
 Route::get('goods-returned/tyres/','GoodsReturnedController@tyres')->name('goods_returneds.tyres');
 Route::get('goods-receireturnedved/assets/','GoodsReturnedController@assets')->name('goods_returneds.assets');
+Route::get('goods_returneds/pending','GoodsReturnedController@pending')->name('goods_returneds.pending');
+Route::get('goods_returneds/approved','GoodsReturnedController@approved')->name('goods_returneds.approved');
+Route::get('goods_returneds/rejected','GoodsReturnedController@rejected')->name('goods_returneds.rejected');
+Route::get('goods_returneds/new/{department}/{goodsReturned?}','GoodsReturnedController@newReturn')->name('goods_returneds.new');
 
 Route::get('reminders/copy/','ReminderController@copy')->name('reminders.copy');
 

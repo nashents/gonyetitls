@@ -26,15 +26,31 @@ class GoodsReturnedController extends Controller
     {
         return view('goods_returneds.tyres');
     }
+    public function pending()
+    {
+        return view('goods_returneds.pending');
+    }
+    public function approved()
+    {
+        return view('goods_returneds.approved');
+    }
+    public function rejected()
+    {
+        return view('goods_returneds.rejected');
+    }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Item-picker / draft screen: choose an approved GRV, select which
+     * lines to return with a reason and qty each. $goodsReturned (optional)
+     * reopens an existing, still-editable draft. Named 'goods_returneds.new'
+     * (not '.create') to avoid colliding with the resource route below.
      */
-    public function create()
+    public function newReturn($department, $goodsReturned = null)
     {
-        //
+        return view('goods_returneds.create', [
+            'department' => $department,
+            'goodsReturnedId' => $goodsReturned,
+        ]);
     }
 
     /**
@@ -56,7 +72,12 @@ class GoodsReturnedController extends Controller
      */
     public function show(GoodsReturned $goodsReturned)
     {
-        //
+        $goodsReturned->load([
+            'vendor', 'employee', 'user', 'authorized_by', 'goods_received', 'debit_note',
+            'goods_returned_items.product',
+        ]);
+
+        return view('goods_returneds.show', compact('goodsReturned'));
     }
 
     /**

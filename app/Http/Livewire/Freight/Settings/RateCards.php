@@ -120,6 +120,29 @@ class RateCards extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Rate card removed.']);
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'vendors') {
+            $this->vendors = Vendor::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendors Refreshed Successfully!!.']);
+        } elseif ($category === 'customers') {
+            $this->customers = Customer::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Customers Refreshed Successfully!!.']);
+        } elseif ($category === 'charge_types') {
+            $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
+        } elseif ($category === 'locations') {
+            $this->locations = Location::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
+        } elseif ($category === 'cargos') {
+            $this->cargos = Cargo::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargos Refreshed Successfully!!.']);
+        } elseif ($category === 'currencies') {
+            $this->currencies = Currency::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        }
+    }
+
     private function resetForm()
     {
         $this->reset([

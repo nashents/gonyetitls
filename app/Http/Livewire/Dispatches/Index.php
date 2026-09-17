@@ -1704,8 +1704,12 @@ class Index extends Component
                     $q->whereDate($this->dispatch_filter, '>=', $this->from)
                     ->whereDate($this->dispatch_filter, '<=', $this->to);
                 }, function ($q) {
-                    $q->whereMonth($this->dispatch_filter, Carbon::now()->month)
-                    ->whereYear($this->dispatch_filter, Carbon::now()->year);
+                    // Skip the default "this month" restriction while searching so matches
+                    // outside the current period (e.g. by product/inventory/tyre/asset #) aren't hidden.
+                    if (! filled($this->search)) {
+                        $q->whereMonth($this->dispatch_filter, Carbon::now()->month)
+                        ->whereYear($this->dispatch_filter, Carbon::now()->year);
+                    }
                 });
 
                // Search filter (grouped to keep AND/OR logic correct)
@@ -1741,6 +1745,9 @@ class Index extends Component
                         $sub->where('product_number', 'like', $term)
                         ->orWhere('name', 'like', $term)
                         ->orWhere('identification_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.product.brand', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
                     })
                     ->orWhereHas('dispatch_items.inventory', function ($sub) use ($term) {
                         $sub->where('inventory_number', 'like', $term)

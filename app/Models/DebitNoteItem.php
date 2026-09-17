@@ -12,6 +12,17 @@ class DebitNoteItem extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    protected $fillable = [
+        'user_id',
+        'debit_note_id',
+        'bill_expense_id',
+        'item',
+        'description',
+        'qty',
+        'amount',
+        'subtotal',
+    ];
+
     public function debit_note(){
         return $this->belongsTo('App\Models\DebitNote');
     }

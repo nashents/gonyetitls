@@ -34,6 +34,8 @@
                                                         <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                                                     @endforeach
                                                 </select>
+                                                <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                                <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
                                     @else
@@ -46,6 +48,8 @@
                                                         <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                                     @endforeach
                                                 </select>
+                                                <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small>
+                                                <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
                                     @endif
@@ -58,6 +62,8 @@
                                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('freight.settings.charge-types') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Charge Type</a></small>
+                                            <a href="#" wire:click.prevent="refresh('charge_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -90,6 +96,8 @@
                                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -101,6 +109,8 @@
                                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
+                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -112,6 +122,8 @@
                                                     <option value="{{ $cargo->id }}">{{ $cargo->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small>
+                                            <a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -123,6 +135,8 @@
                                                     <option value="{{ $currency->id }}">{{ $currency->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small>
+                                            <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>

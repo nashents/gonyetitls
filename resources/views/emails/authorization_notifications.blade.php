@@ -83,6 +83,12 @@ Authorization Notification | {{$company->name}}
 														Your goods received voucher {{ $model->goods_received_number }} has been authorized.
 														<a href="{{ $baseUrl }}/goods_receiveds/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
+
+												@elseif ($notification == "Goods Returned Authorization")
+													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+														Your goods return {{ $model->goods_returned_number }} has been {{ $model->authorization }}.
+														<a href="{{ $baseUrl }}/goods_returneds/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
+													</p>
 												@endif
 												<br>
 											</td>

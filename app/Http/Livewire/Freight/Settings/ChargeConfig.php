@@ -140,6 +140,17 @@ class ChargeConfig extends Component
         $this->reset(['tier_id', 'tier_charge_type', 'tier_shipping_line_id', 'tier_day_from', 'tier_day_to', 'tier_rate', 'tier_currency_id']);
     }
 
+    public function refresh($category)
+    {
+        if ($category === 'shipping_lines') {
+            $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Shipping Lines Refreshed Successfully!!.']);
+        } elseif ($category === 'currencies') {
+            $this->currencies = Currency::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        }
+    }
+
     public function render()
     {
         return view('livewire.freight.settings.charge-config', [
