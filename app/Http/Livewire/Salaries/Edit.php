@@ -113,7 +113,7 @@ class Edit extends Component
         $this->gross = $salary->gross;
         $this->salary_number = $salary->salary_number;
         $this->currency_id = $salary->currency_id;
-        $this->currency_id = $salary->paye;
+        $this->paye = $salary->paye;
         $this->aids_levy = $salary->aids_levy;
         $this->frequency = $salary->frequency;
         $this->selectedEmployee = $salary->employee_id;
@@ -189,14 +189,14 @@ class Edit extends Component
                         if ($loan && $loan->balance >= $loan->payment_per_month) {
                             SalaryItem::create([
                                 'salary_id' => $this->salary_id,
-                                'selectedLoan' => $loanId,
+                                'loan_id' => $loanId,
                                 'amount' => $loan->payment_per_month,
                             ]);
                             $this->total_deductions += $loan->payment_per_month;
                         }elseif($loan && ($loan->balance > 0 && $loan->balance < $loan->payment_per_month)){
                             SalaryItem::create([
                                 'salary_id' => $this->salary_id,
-                                'selectedLoan' => $loanId,
+                                'loan_id' => $loanId,
                                 'amount' => $loan->balance,
                             ]);
                             $this->total_deductions += $loan->balance;
@@ -218,17 +218,16 @@ class Edit extends Component
                 $salary->total_allowances = $this->total_allowances;
                 $salary->total_deductions = $this->total_deductions;
                 $salary->update();
-                
-                Session::flash('success','Salary Created Successfully!!');
+
+                DB::commit();
+
+                Session::flash('success','Salary Updated Successfully!!');
                 return redirect()->route('salaries.index');
-
-
-            DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
-        
+
     }
 
 

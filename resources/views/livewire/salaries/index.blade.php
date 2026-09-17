@@ -33,6 +33,8 @@
                                     </th>
                                     <th class="th-sm">Net
                                     </th>
+                                    <th class="th-sm">Items (Allowances, Deductions, Loans, PAYE/AIDS)
+                                    </th>
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
@@ -58,10 +60,55 @@
                                     </td>
                                     <td>
                                         @if ($salary->net)
-                                          {{$salary->currency ? $salary->currency->symbol : ""}}{{number_format($salary->net,2)}}        
+                                          {{$salary->currency ? $salary->currency->symbol : ""}}{{number_format($salary->net,2)}}
                                         @endif
                                     </td>
-                                   
+
+                                    <td style="min-width:260px;">
+                                        <div class="d-flex flex-wrap" style="gap:4px;">
+                                            @if ($salary->paye)
+                                                <span class="badge bg-warning" title="PAYE deducted">PAYE</span>
+                                            @endif
+                                            @if ($salary->aids_levy)
+                                                <span class="badge bg-warning" title="AIDS Levy deducted">AIDS Levy</span>
+                                            @endif
+                                            @foreach ($salary->salary_items as $item)
+                                                @php
+                                                    $itemLabel = null;
+                                                    $itemBadge = 'secondary';
+                                                    $itemKind = null;
+
+                                                    if ($item->allowance) {
+                                                        $itemLabel = $item->allowance->name;
+                                                        $itemBadge = 'success';
+                                                        $itemKind = 'Earning';
+                                                    } elseif ($item->deduction) {
+                                                        $itemLabel = $item->deduction->name;
+                                                        $itemBadge = 'danger';
+                                                        $itemKind = 'Deduction';
+                                                    } elseif ($item->loan) {
+                                                        $itemLabel = 'Loan: ' . ($item->loan->loan_type->name ?? $item->loan->loan_number);
+                                                        $itemBadge = 'danger';
+                                                        $itemKind = 'Deduction';
+                                                    } elseif ($item->recovery) {
+                                                        $itemLabel = $item->recovery->name;
+                                                        $isGain = $item->recovery->type == 'Gain';
+                                                        $itemBadge = $isGain ? 'success' : 'danger';
+                                                        $itemKind = $isGain ? 'Earning' : 'Deduction';
+                                                    }
+                                                @endphp
+                                                @if ($itemLabel)
+                                                    <span class="badge bg-{{ $itemBadge }}" title="{{ $itemKind }}">
+                                                        {{ $itemLabel }}: {{ $salary->currency ? $salary->currency->symbol : "" }}{{ number_format($item->amount ?? 0, 2) }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                            @if (!$salary->paye && !$salary->aids_levy && $salary->salary_items->isEmpty())
+                                                <span class="text-muted">&mdash;</span>
+                                            @endif
+                                        </div>
+                                    </td>
+
                                     <td><span class="badge bg-{{$salary->status == 1 ? "success" : "danger"}}">{{$salary->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -80,7 +127,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="8">
+                                    <td colspan="9">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Salaries Found ....
                                         </div>
