@@ -161,6 +161,31 @@ WithColumnWidths
         return sprintf('%02dh %02dm', $hours, $minutes);
     }
 
+    private function formatWorkTiming(?string $start, ?string $end): string
+    {
+        $startLabel = filled($start) ? $start : '--';
+        $endLabel = filled($end) ? $end : '--';
+
+        $duration = '--';
+        if (filled($start) && filled($end)) {
+            try {
+                $startTime = Carbon::parse($start);
+                $endTime = Carbon::parse($end);
+
+                if ($endTime->lessThan($startTime)) {
+                    $endTime->addDay();
+                }
+
+                $diffMinutes = $endTime->diffInMinutes($startTime);
+                $duration = sprintf('%02d:%02d', intdiv($diffMinutes, 60), $diffMinutes % 60);
+            } catch (\Exception $e) {
+                $duration = '--';
+            }
+        }
+
+        return "Start: {$startLabel}  End: {$endLabel}  Duration: {$duration}";
+    }
+
     public function query()
     { 
           $baseQuery = Shift::query()
@@ -333,6 +358,7 @@ WithColumnWidths
                     if ($rehandling->location) {
                         $label .= ' @ ' . $rehandling->location->name;
                     }
+                    $label .= ' | ' . $this->formatWorkTiming($rehandling->start_time, $rehandling->stop_time);
                     return $label;
                 });
 

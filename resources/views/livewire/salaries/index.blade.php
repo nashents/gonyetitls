@@ -91,7 +91,7 @@
                                                         $itemBadge = 'danger';
                                                         $itemKind = 'Deduction';
                                                     } elseif ($item->recovery) {
-                                                        $itemLabel = $item->recovery->name;
+                                                        $itemLabel = $item->recovery->deduction->name ?? ('Recovery: ' . $item->recovery->recovery_number);
                                                         $isGain = $item->recovery->type == 'Gain';
                                                         $itemBadge = $isGain ? 'success' : 'danger';
                                                         $itemKind = $isGain ? 'Earning' : 'Deduction';

@@ -32,7 +32,8 @@ class Index extends Component
             ->with([
                 'salary_items.allowance:id,name',
                 'salary_items.deduction:id,name',
-                'salary_items.recovery:id,name,type',
+                'salary_items.recovery:id,recovery_number,type,deduction_id',
+                'salary_items.recovery.deduction:id,name',
                 'salary_items.loan:id,loan_number,loan_type_id',
                 'salary_items.loan.loan_type:id,name',
             ])
