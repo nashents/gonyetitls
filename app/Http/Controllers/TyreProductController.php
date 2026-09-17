@@ -22,6 +22,10 @@ class TyreProductController extends Controller
     {
         return view('tyre_products.manage');
     }
+    public function deleted()
+    {
+        return view('tyre_products.deleted');
+    }
 
     /**
      * Show the form for creating a new resource.

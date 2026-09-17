@@ -1050,6 +1050,7 @@ class MenuRegistrySeeder extends Seeder
         ]);
         $upsertSub($m, ['name'=>'Create Product','slug'=>'create-product','icon'=>'fas fa-plus','route_name'=>'products.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Products','slug'=>'manage-products','icon'=>'fas fa-list','route_name'=>'products.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Deleted Products','slug'=>'deleted-products','icon'=>'fas fa-trash','route_name'=>'products.deleted','sort_order'=>30]);
 
         $m = $upsertModule($g, [
             'name' => 'Purchase Orders',
@@ -2168,6 +2169,7 @@ class MenuRegistrySeeder extends Seeder
         ]);
         $upsertSub($m, ['name'=>'Create Product','slug'=>'create-inventory-product','icon'=>'fas fa-plus','route_name'=>'inventory_products.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Products','slug'=>'manage-inventory-products','icon'=>'fas fa-list','route_name'=>'inventory_products.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Deleted Products','slug'=>'deleted-inventory-products','icon'=>'fas fa-trash','route_name'=>'inventory_products.deleted','sort_order'=>30]);
 
         $m = $upsertModule($g, [
             'name' => 'Purchase Orders',
@@ -2266,6 +2268,7 @@ class MenuRegistrySeeder extends Seeder
         ]);
         $upsertSub($m, ['name'=>'Create Product','slug'=>'create-tyre-product','icon'=>'fas fa-plus','route_name'=>'tyre_products.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Products','slug'=>'manage-tyre-products','icon'=>'fas fa-list','route_name'=>'tyre_products.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Deleted Products','slug'=>'deleted-tyre-products','icon'=>'fas fa-trash','route_name'=>'tyre_products.deleted','sort_order'=>30]);
 
         $m = $upsertModule($g, [
             'name' => 'Purchase Orders',

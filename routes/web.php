@@ -973,6 +973,9 @@ Route::get('/employees/{employee}/deactivate','EmployeeController@deactivate')->
 
 Route::get('inventory_products/management','InventoryProductController@manage')->name('inventory_products.manage');
 Route::get('products/management','ProductController@manage')->name('products.manage');
+Route::get('products/deleted','ProductController@deleted')->name('products.deleted');
+Route::get('inventory_products/deleted','InventoryProductController@deleted')->name('inventory_products.deleted');
+Route::get('tyre_products/deleted','TyreProductController@deleted')->name('tyre_products.deleted');
 
 Route::get('logs/management','LogController@manage')->name('logs.manage');
 

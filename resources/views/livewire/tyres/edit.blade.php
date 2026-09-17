@@ -138,31 +138,31 @@
                                       <div class="col-md-6">
                                         @if ($source == "Purchase" && $selectedPurchase)
                                             <div class="form-group">
-                                                <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control" required>
+                                                <label for="country">Product(s) — from this Purchase Order</label>
+                                                <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control">
                                                     <option value="">Select Product</option>
                                                     @foreach ($purchase_products as $purchase_product)
-                                                        <option value="{{$purchase_product->id}}">  {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
+                                                        <option value="{{$purchase_product->id}}">  {{$purchase_product->product ? $purchase_product->product->product_number : ""}} - {{$purchase_product->product ? $purchase_product->product->name : ""}} ({{$purchase_product->product ? $purchase_product->product->identification_number : ""}})</option>
                                                     @endforeach
                                                 </select>
                                                 @error('selectedPurchaseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @elseif($source == "Transfer" && $selectedTransfer)
                                             <div class="form-group">
-                                                <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedTransferItem.0" class="form-control" required>
+                                                <label for="country">Product(s) — from this Transfer</label>
+                                                <select wire:model.debounce.300ms="selectedTransferItem.0" class="form-control">
                                                     <option value="">Select Product</option>
                                                     @foreach ($transfer_items as $transfer_item)
-                                                        <option value="{{$transfer_item->id}}"> 
+                                                        <option value="{{$transfer_item->id}}">
                                                             @if ($transfer_item->product)
-                                                                {{$transfer_item->product ? $transfer_item->product->name : ""}} {{$transfer_item->product->brand ? $transfer_item->product->brand->name : ""}} {{$transfer_item->product ? $transfer_item->product->identification_number : ""}}        
+                                                                {{$transfer_item->product->product_number}} - {{$transfer_item->product->name}} ({{$transfer_item->product->identification_number}})
                                                             @endif
                                                         </option>
                                                     @endforeach
                                                 </select>
                                                 @error('selectedTransferItem.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
-                                        @else   
+                                        @endif
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
                                                 <div class="mb-10">
@@ -173,14 +173,12 @@
                                                 <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($products as $product)
-                                                        <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}}</option>
+                                                        <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} — it's a {{ $product->department }} product." @endif> {{ $product->product_number }} - {{ $product->name }} ({{ $product->identification_number }}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
                                                     @endforeach
                                                 </select>
-                                                 <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
+                                                 <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
-                                           
-                                        @endif
                                        
                                     </div>
                                     <div class="col-md-3">

@@ -178,10 +178,69 @@ class Create extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-      
-        'name' => 'required|unique:products,name,NULL,id,deleted_at,NULL',
+        // Name uniqueness (active AND deleted matches, same/other department) is
+        // handled by checkForDuplicateName() instead of a plain unique rule — a
+        // blunt "taken" error can't tell the user WHY or point them at a fix.
+        'name' => 'required',
         'unit_of_measure' => 'required',
     ];
+
+    public $duplicateProductId;
+    public $duplicateProductDepartment;
+    public $duplicateProductEditRoute;
+
+    public function updatedName(){
+        $this->checkForDuplicateName();
+    }
+
+    /**
+     * Blocks a name collision with either an active product (same or a
+     * different department — cross-department is very likely the same
+     * physical thing filed under the wrong department, not a real duplicate)
+     * or a soft-deleted one (silently reusing a deleted product's name is how
+     * "two products, one name, different #" happens — see Deleted Products).
+     * Returns true (and sets a field error + duplicateProduct* properties for
+     * the "edit that product instead" link) when the save should be blocked.
+     */
+    private function checkForDuplicateName(): bool
+    {
+        $this->resetErrorBag('name');
+        $this->duplicateProductId = null;
+        $this->duplicateProductDepartment = null;
+        $this->duplicateProductEditRoute = null;
+
+        if (blank($this->name)) {
+            return false;
+        }
+
+        $editRoutes = [
+            'asset' => 'products.edit',
+            'inventory' => 'inventory_products.edit',
+            'tyre' => 'tyre_products.edit',
+        ];
+
+        $activeMatch = Product::where('name', $this->name)->first();
+        if ($activeMatch) {
+            $this->duplicateProductId = $activeMatch->id;
+            $this->duplicateProductDepartment = $activeMatch->department;
+            $this->duplicateProductEditRoute = $editRoutes[$activeMatch->department] ?? null;
+
+            if ($activeMatch->department === $this->department) {
+                $this->addError('name', "A product with this name already exists in this department (Product#: {$activeMatch->product_number}). Please use a different name, or edit the existing product below.");
+            } else {
+                $this->addError('name', "A product named \"{$this->name}\" already exists, but in the " . ucfirst($activeMatch->department) . " department (Product#: {$activeMatch->product_number}). If it should really be " . ucfirst($this->department) . ", edit it below and change its department instead of creating a duplicate.");
+            }
+            return true;
+        }
+
+        $deletedMatch = Product::onlyTrashed()->where('name', $this->name)->first();
+        if ($deletedMatch) {
+            $this->addError('name', "A deleted product with this name already exists (Product#: {$deletedMatch->product_number}, deleted " . optional($deletedMatch->deleted_at)->format('Y-m-d') . "). Restore it from Deleted Products instead of creating a duplicate, or use a different name.");
+            return true;
+        }
+
+        return false;
+    }
 
     public function storeCategory(){
 
@@ -299,6 +358,10 @@ class Create extends Component
     public function store(){
 
         $this->validate();
+
+        if ($this->checkForDuplicateName()) {
+            return;
+        }
 
         DB::transaction(function () {
 

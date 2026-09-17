@@ -159,6 +159,9 @@ class Index extends Component
                     })
                     ->orWhereHas('currency', function ($q2) use ($search) {
                         $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('goods_received', function ($q2) use ($search) {
+                        $q2->where('goods_received_number', 'like', "%{$search}%");
                     });
             });
         } else {

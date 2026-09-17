@@ -275,7 +275,7 @@
                                                 <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($products as $product)
-                                                        <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}}</option>
+                                                        <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} — it's a {{ $product->department }} product." @endif> {{ $product->product_number }} - {{ $product->name }} ({{ $product->identification_number }}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
                                                     @endforeach
                                                 </select>
                                                  <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
@@ -452,7 +452,7 @@
                                             <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
                                                 <option value="">Select Product</option>
                                                 @foreach ($products as $product)
-                                                    <option value="{{$product->id}}">{{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}}</option>
+                                                    <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} — it's a {{ $product->department }} product." @endif>{{ $product->product_number }} - {{ $product->name }} ({{ $product->identification_number }}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
                                                 @endforeach
                                             </select>
                                             <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  

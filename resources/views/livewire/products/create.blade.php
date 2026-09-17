@@ -65,6 +65,12 @@
                                         <label for="name">Name<span class="required" style="color: red">*</span></label>
                                         <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Product Name, Model etc" required>
                                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @if ($duplicateProductId && $duplicateProductEditRoute)
+                                            <br>
+                                            <a href="{{ route($duplicateProductEditRoute, $duplicateProductId) }}" target="_blank">
+                                                <i class="fa fa-edit"></i> Edit that product instead
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="col-md-2">

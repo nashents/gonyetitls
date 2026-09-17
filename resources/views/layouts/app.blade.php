@@ -1565,6 +1565,17 @@
     </script>
 
     <script type="text/javascript">
+            window.addEventListener('show-productRestoreModal', event => {
+                $('#productRestoreModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-productRestoreModal', event => {
+                $('#productRestoreModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-inventoryImportModal', event => {
                 $('#inventoryImportModal').modal('show');
             })

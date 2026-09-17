@@ -242,7 +242,8 @@ class Index extends Component
                     ->orWhereHas('product.brand', fn ($b) => $b->where('name', 'like', $like))
                     ->orWhereHas('currency', fn ($c) => $c->where('name', 'like', $like))
                     ->orWhereHas('store', fn ($s) => $s->where('name', 'like', $like))
-                    ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', $like));
+                    ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', $like))
+                    ->orWhereHas('goods_received', fn ($g) => $g->where('goods_received_number', 'like', $like));
 
                     // ✅ Search in active assignments by asset registration_number
                     $qq->orWhereHas('tyre_assignments', function ($ta) use ($like) {

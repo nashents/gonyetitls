@@ -21,6 +21,10 @@ class InventoryProductController extends Controller
     {
         return view('inventory_products.manage');
     }
+    public function deleted()
+    {
+        return view('inventory_products.deleted');
+    }
 
     /**
      * Show the form for creating a new resource.

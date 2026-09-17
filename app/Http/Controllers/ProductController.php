@@ -23,6 +23,11 @@ class ProductController extends Controller
         return view('products.all')->with('category',$category);
     }
 
+    public function deleted()
+    {
+        return view('products.deleted');
+    }
+
     /**
      * Show the form for creating a new resource.
      *
