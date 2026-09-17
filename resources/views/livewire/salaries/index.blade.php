@@ -33,7 +33,9 @@
                                     </th>
                                     <th class="th-sm">Net
                                     </th>
-                                    <th class="th-sm">Items (Allowances, Deductions, Loans, PAYE/AIDS)
+                                    <th class="th-sm">Allowances
+                                    </th>
+                                    <th class="th-sm">Deductions (incl. Loans, PAYE, AIDS Levy)
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -64,7 +66,47 @@
                                         @endif
                                     </td>
 
-                                    <td style="min-width:260px;">
+                                    @php
+                                        $allowanceBadges = [];
+                                        $deductionBadges = [];
+
+                                        foreach ($salary->salary_items as $item) {
+                                            $label = null;
+
+                                            if ($item->allowance) {
+                                                $label = $item->allowance->name;
+                                            } elseif ($item->deduction) {
+                                                $label = $item->deduction->name;
+                                            } elseif ($item->loan) {
+                                                $label = 'Loan: ' . ($item->loan->loan_type->name ?? $item->loan->loan_number);
+                                            } elseif ($item->recovery) {
+                                                $label = $item->recovery->deduction->name ?? ('Recovery: ' . $item->recovery->recovery_number);
+                                            }
+
+                                            if (!$label) {
+                                                continue;
+                                            }
+
+                                            $amount = ($salary->currency ? $salary->currency->symbol : "") . number_format($item->amount ?? 0, 2);
+                                            $isEarning = $item->allowance || ($item->recovery && $item->recovery->type == 'Gain');
+
+                                            if ($isEarning) {
+                                                $allowanceBadges[] = $label . ': ' . $amount;
+                                            } else {
+                                                $deductionBadges[] = $label . ': ' . $amount;
+                                            }
+                                        }
+                                    @endphp
+                                    <td style="min-width:200px;">
+                                        <div class="d-flex flex-wrap" style="gap:4px;">
+                                            @forelse ($allowanceBadges as $badge)
+                                                <span class="badge bg-success">{{ $badge }}</span>
+                                            @empty
+                                                <span class="text-muted">&mdash;</span>
+                                            @endforelse
+                                        </div>
+                                    </td>
+                                    <td style="min-width:220px;">
                                         <div class="d-flex flex-wrap" style="gap:4px;">
                                             @if ($salary->paye)
                                                 <span class="badge bg-warning" title="PAYE deducted">PAYE</span>
@@ -72,38 +114,10 @@
                                             @if ($salary->aids_levy)
                                                 <span class="badge bg-warning" title="AIDS Levy deducted">AIDS Levy</span>
                                             @endif
-                                            @foreach ($salary->salary_items as $item)
-                                                @php
-                                                    $itemLabel = null;
-                                                    $itemBadge = 'secondary';
-                                                    $itemKind = null;
-
-                                                    if ($item->allowance) {
-                                                        $itemLabel = $item->allowance->name;
-                                                        $itemBadge = 'success';
-                                                        $itemKind = 'Earning';
-                                                    } elseif ($item->deduction) {
-                                                        $itemLabel = $item->deduction->name;
-                                                        $itemBadge = 'danger';
-                                                        $itemKind = 'Deduction';
-                                                    } elseif ($item->loan) {
-                                                        $itemLabel = 'Loan: ' . ($item->loan->loan_type->name ?? $item->loan->loan_number);
-                                                        $itemBadge = 'danger';
-                                                        $itemKind = 'Deduction';
-                                                    } elseif ($item->recovery) {
-                                                        $itemLabel = $item->recovery->deduction->name ?? ('Recovery: ' . $item->recovery->recovery_number);
-                                                        $isGain = $item->recovery->type == 'Gain';
-                                                        $itemBadge = $isGain ? 'success' : 'danger';
-                                                        $itemKind = $isGain ? 'Earning' : 'Deduction';
-                                                    }
-                                                @endphp
-                                                @if ($itemLabel)
-                                                    <span class="badge bg-{{ $itemBadge }}" title="{{ $itemKind }}">
-                                                        {{ $itemLabel }}: {{ $salary->currency ? $salary->currency->symbol : "" }}{{ number_format($item->amount ?? 0, 2) }}
-                                                    </span>
-                                                @endif
+                                            @foreach ($deductionBadges as $badge)
+                                                <span class="badge bg-danger">{{ $badge }}</span>
                                             @endforeach
-                                            @if (!$salary->paye && !$salary->aids_levy && $salary->salary_items->isEmpty())
+                                            @if (!$salary->paye && !$salary->aids_levy && empty($deductionBadges))
                                                 <span class="text-muted">&mdash;</span>
                                             @endif
                                         </div>
@@ -127,7 +141,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="10">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Salaries Found ....
                                         </div>

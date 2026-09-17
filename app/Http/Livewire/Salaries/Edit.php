@@ -175,43 +175,55 @@ class Edit extends Component
                 $salary->aids_levy = $this->aids_levy;
                 $salary->update();
                 $this->salary_id = $salary->id;
-                
-                // Process Allowances
-                $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount);
-                
-                // Process Deductions
-                $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount);
-                
-                // Process Loans
+
+                // Add any newly selected allowances/deductions/loans. Existing
+                // items from before this edit are left as-is — this form only
+                // adds new lines, it doesn't show existing ones for removal.
+                $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount);
+                $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount);
+
                 if (!empty($this->selectedLoan)) {
                     foreach ($this->selectedLoan as $key => $loanId) {
                         $loan = Loan::find($loanId);
-                        if ($loan && $loan->balance >= $loan->payment_per_month) {
+                        if ($loan && $loan->balance > 0) {
                             SalaryItem::create([
                                 'salary_id' => $this->salary_id,
                                 'loan_id' => $loanId,
-                                'amount' => $loan->payment_per_month,
+                                'amount' => min($loan->balance, $loan->payment_per_month),
                             ]);
-                            $this->total_deductions += $loan->payment_per_month;
-                        }elseif($loan && ($loan->balance > 0 && $loan->balance < $loan->payment_per_month)){
-                            SalaryItem::create([
-                                'salary_id' => $this->salary_id,
-                                'loan_id' => $loanId,
-                                'amount' => $loan->balance,
-                            ]);
-                            $this->total_deductions += $loan->balance;
                         }
                     }
                 }
-                
+
+                // PAYE/AIDS Levy are always derived fresh from gross, never
+                // manually entered — clear any previously computed lines first
+                // so re-saving a salary doesn't stack duplicate PAYE/AIDS items
+                // on top of the ones from the last save.
+                $payeDeductionId = Deduction::where('name', 'PAYE')->value('id');
+                $aidsLevyDeductionId = Deduction::where('name', 'AIDS Levy')->value('id');
+                SalaryItem::where('salary_id', $this->salary_id)
+                    ->whereIn('deduction_id', array_filter([$payeDeductionId, $aidsLevyDeductionId]))
+                    ->delete();
+
+                // Recompute totals from the full current set of salary items
+                // (not just what changed this session) so gross/net/PAYE stay
+                // correct even when this edit didn't re-touch every existing
+                // allowance/deduction.
+                $this->total_allowances = (float) SalaryItem::where('salary_id', $this->salary_id)
+                    ->whereNotNull('allowance_id')->sum('amount');
+                $this->total_deductions = (float) SalaryItem::where('salary_id', $this->salary_id)
+                    ->where(function ($q) {
+                        $q->whereNotNull('deduction_id')->orWhereNotNull('loan_id');
+                    })->sum('amount');
+
                 // Calculate Gross Salary
                 $gross = $this->basic + $this->total_allowances;
-                
+
                 // Process PAYE & AIDS Levy
                 if ($this->paye) {
                     $this->processPayeAndAidsLevy($gross);
                 }
-                
+
                 // Final Salary Calculation
                 $salary->gross = $gross;
                 $salary->net = $gross - $this->total_deductions;
