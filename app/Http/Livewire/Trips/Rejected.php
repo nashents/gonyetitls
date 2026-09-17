@@ -1448,8 +1448,7 @@ public function updatingSearch()
             elseif (isset($this->search)) {
                
                 return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','rejected')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
+                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','rejected')
                 ->where('trip_number','like', '%'.$this->search.'%')
                 ->orWhere('trip_status','like', '%'.$this->search.'%')
                 ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -1541,8 +1540,7 @@ public function updatingSearch()
             elseif (isset($this->search)) {
 
                 return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','rejected')->whereMonth($this->trip_filter, date('m'))
-                ->whereYear($this->trip_filter, date('Y'))->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
+                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','rejected')->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
                 ->where('trip_number','like', '%'.$this->search.'%')
                 ->orWhere('trip_status','like', '%'.$this->search.'%')
                 ->orWhere('authorization','like', '%'.$this->search.'%')

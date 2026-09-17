@@ -87,8 +87,12 @@ class Pending extends Component
                     ]);
                 },
                 function ($q) {
-                    $q->whereMonth($this->fuel_request_filter, now()->month)
-                        ->whereYear($this->fuel_request_filter, now()->year);
+                    // Skip the default "this month" restriction while searching so
+                    // matches outside the current period aren't hidden.
+                    if (! filled($this->search)) {
+                        $q->whereMonth($this->fuel_request_filter, now()->month)
+                            ->whereYear($this->fuel_request_filter, now()->year);
+                    }
                 }
             );
         }

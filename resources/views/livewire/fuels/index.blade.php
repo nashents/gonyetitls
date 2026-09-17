@@ -104,6 +104,12 @@
                             <a href="#" wire:click="exportFuelsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                             <a href="#" wire:click="exportFuelsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                             <a href="#" wire:click="exportFuelsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                            @if (Auth::user()->is_admin() && $missingTripExpensesCount > 0)
+                                <a href="#" wire:click="backfillMissingTripExpenses()" wire:loading.attr="disabled" class="btn btn-warning btn-rounded btn-wide"
+                                    onclick="return confirm('Create {{ $missingTripExpensesCount }} missing trip expense record(s) for fuel orders that already have a trip attached?')">
+                                    <i class="fa fa-wrench"></i> Create Missing Trip Expenses ({{ $missingTripExpensesCount }})
+                                </a>
+                            @endif
                             
                             </div>
                             <div class="col-md-5" style="float: right;">

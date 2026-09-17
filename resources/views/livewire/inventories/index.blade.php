@@ -24,6 +24,8 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">Inventory#
+                                    </th>
                                     <th class="th-sm">Product
                                     </th>
                                     <th class="th-sm">Location
@@ -53,7 +55,21 @@
                                 @if (isset($inventories))
                                 <tbody>
                                     @forelse ($inventories as $inventory)
-                                  <tr> 
+                                  <tr>
+                                    <td>
+                                        {{$inventory->inventory_number}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>CreatedBy:</strong> {{$inventory->user ? $inventory->user->name : ""}} {{$inventory->user ? $inventory->user->surname : ""}}<br>
+                                            <strong>CreatedOn:</strong> {{$inventory->created_at ? \Carbon\Carbon::parse($inventory->created_at)->format('Y-m-d') : ""}}<br>
+                                            <strong>GRV#:</strong>
+                                            @if ($inventory->goods_received)
+                                                <a href="{{route('goods_receiveds.show',$inventory->goods_received->id)}}">{{$inventory->goods_received->goods_received_number}}</a>
+                                            @else
+                                                &mdash;
+                                            @endif
+                                        </small>
+                                    </td>
                                     <td>
                                         @if ($inventory->product)
                                             
@@ -127,7 +143,12 @@
                                             </small>
                                         @endif
                                     </td>
-                                    <td><span class="badge bg-{{$inventory->status == 1 ? "success" : "danger"}}">{{$inventory->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
+                                    <td>
+                                        <span class="badge bg-{{$inventory->status == 1 ? "success" : "danger"}}">{{$inventory->status == 1 ? "Instore" : "Out Of stock"}}</span>
+                                        @if ($inventory->disposed)
+                                            <br><span class="badge bg-dark">Disposed</span>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -146,7 +167,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="11">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Inventory Item(s) Found ....
                                         </div>

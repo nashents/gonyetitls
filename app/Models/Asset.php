@@ -40,6 +40,9 @@ class Asset extends Model implements Auditable
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function category(){
         return $this->belongsTo('App\Models\Category');
     }
@@ -66,6 +69,9 @@ class Asset extends Model implements Auditable
     }
     public function movements(){
         return $this->hasMany('App\Models\Movement');
+    }
+    public function dispatch_items(){
+        return $this->hasMany('App\Models\DispatchItem');
     }
     public function fuels(){
         return $this->hasMany('App\Models\Fuel');

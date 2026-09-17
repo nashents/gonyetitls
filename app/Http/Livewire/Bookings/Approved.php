@@ -182,10 +182,10 @@ class Approved extends Component
                
             }
             elseif (isset($this->search)) {
-               
+                // Skip the default "this month/this year" restriction while searching
+                // so matches outside the current period aren't hidden.
                 return view('livewire.bookings.approved',[
-                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
-                    ->whereYear('created_at', date('Y'))
+                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')
                     ->where('booking_number','like', '%'.$this->search.'%')
                     ->orWhereHas('horse', function ($query) {
                         return $query->where('registration_number', 'like', '%'.$this->search.'%');
@@ -265,9 +265,10 @@ class Approved extends Component
                
             }
             elseif (isset($this->search)) {
+                // Skip the default "this month/this year" restriction while searching
+                // so matches outside the current period aren't hidden.
                 return view('livewire.bookings.approved',[
-                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->whereMonth('created_at', date('m'))
-                    ->whereYear('created_at', date('Y'))->where('user_id',Auth::user()->id)
+                    'bookings' => Booking::query()->with('ticket.sageMapping','inspection','horse','trailer','vehicle')->where('authorization','approved')->where('user_id',Auth::user()->id)
                     ->where('booking_number','like', '%'.$this->search.'%')
                     ->orWhereHas('horse', function ($query) {
                         return $query->where('registration_number', 'like', '%'.$this->search.'%');

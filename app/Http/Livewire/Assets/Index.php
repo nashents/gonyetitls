@@ -88,12 +88,16 @@ class Index extends Component
             'store',
             'vendor',
             'currency',
-        ])
-        ->where('disposed', 0)
-        ->where('status', 1);
+            'user',
+            'goods_received',
+        ]);
 
         if (filled($this->search)) {
             $search = $this->search;
+
+            // Searching: don't restrict to in-stock/non-disposed — the point of a
+            // search is to find the record (e.g. by asset#/serial#) even if it's
+            // out of stock or disposed.
 
             $query->where(function ($q) use ($search) {
                 $q->where('asset_number', 'like', "%{$search}%")
@@ -134,8 +138,8 @@ class Index extends Component
                     });
             });
         } else {
-            // No search: default sort
-            $query->orderByDesc('created_at');
+            // No search: default listing stays scoped to in-stock, non-disposed items.
+            $query->where('disposed', 0)->where('status', 1)->orderByDesc('created_at');
         }
 
         return view('livewire.assets.index', [

@@ -125,13 +125,17 @@ class Index extends Component
             $q->where('driver_id', $this->driver->id);
             });
 
-            // Date filter: use provided range, else current month
+            // Date filter: use provided range, else current month — but skip the
+            // default restriction while searching so matches outside the current
+            // period aren't hidden.
             $base->when(filled($this->from) && filled($this->to), function ($q) {
                 $q->whereDate($this->checklist_filter, '>=', $this->from)
                 ->whereDate($this->checklist_filter, '<=', $this->to);
             }, function ($q) {
-                $q->whereMonth($this->checklist_filter, Carbon::now()->month)
-                ->whereYear($this->checklist_filter, Carbon::now()->year);
+                if (! filled($this->search)) {
+                    $q->whereMonth($this->checklist_filter, Carbon::now()->month)
+                    ->whereYear($this->checklist_filter, Carbon::now()->year);
+                }
             });
 
             // Search filter (grouped to keep AND/OR logic correct)

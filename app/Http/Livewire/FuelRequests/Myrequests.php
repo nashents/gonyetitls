@@ -268,9 +268,12 @@ class Myrequests extends Component
 
                 function ($q) {
 
-                    // Default: Current Month
-                    $q->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
+                    // Default: Current Month — skipped while searching so matches
+                    // outside the current period aren't hidden.
+                    if (! filled($this->search)) {
+                        $q->whereMonth('created_at', now()->month)
+                        ->whereYear('created_at', now()->year);
+                    }
                 }
             )
 

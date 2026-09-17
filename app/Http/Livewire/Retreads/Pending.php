@@ -177,8 +177,9 @@ class Pending extends Component
         elseif (isset($this->search)) {
            
             return view('livewire.retreads.pending',[
-                'retreads' => Retread::query()->with('currency','vendor','account','retread_tyres')->where('authorization','pending')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
+                // Skip the default "this month" restriction while searching so matches
+                // outside the current period aren't hidden.
+                'retreads' => Retread::query()->with('currency','vendor','account','retread_tyres')->where('authorization','pending')
                 ->where('retread_number','like', '%'.$this->search.'%')
                 ->orWhere('status','like', '%'.$this->search.'%')
                 ->orWhere('date','like', '%'.$this->search.'%')

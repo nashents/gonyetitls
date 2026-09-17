@@ -500,7 +500,9 @@ class Index extends Component
                 ])
                 ->where('department',$this->department)
                 ->when($from && $to, fn (Builder $q) => $q->whereBetween($this->transfer_filter, [$from, $to]))
-                ->when(!($from && $to), fn (Builder $q) => $q->whereMonth($this->transfer_filter, now()->month)->whereYear($this->transfer_filter, now()->year))
+                // Skip the default "this month" restriction while searching so matches
+                // outside the current period aren't hidden.
+                ->when(!($from && $to) && $search === '', fn (Builder $q) => $q->whereMonth($this->transfer_filter, now()->month)->whereYear($this->transfer_filter, now()->year))
                 ->when($search !== '', function (Builder $q) use ($search) {
                     // IMPORTANT: group OR conditions so they don't break your date filters
                     $q->where(function (Builder $qq) use ($search) {

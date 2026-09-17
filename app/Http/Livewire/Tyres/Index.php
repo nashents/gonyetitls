@@ -210,6 +210,8 @@ class Index extends Component
         $tyres = Tyre::query()
             ->with([
                 'product.brand',
+                'user',
+                'goods_received',
                 // load active assignment + its asset relations if you show them in the list
                 'tyre_assignments' => function ($q) {
                     $q->where('status', 1)
@@ -217,9 +219,14 @@ class Index extends Component
                     ->with(['horse', 'vehicle', 'trailer']);
                 },
             ])
-            ->where('disposed', 0)
             ->where('retread', 0)
+            ->when($search === '', function ($q) {
+                // No search: default listing stays scoped to non-disposed tyres.
+                $q->where('disposed', 0);
+            })
             ->when($search !== '', function ($q) use ($search) {
+                // Searching: don't restrict to non-disposed — the point of a search is
+                // to find the record (e.g. by tyre#/serial#) even if it's disposed.
                 $like = "%{$search}%";
 
                 $q->where(function ($qq) use ($like) {

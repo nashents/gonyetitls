@@ -26,6 +26,8 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">Tyre#
+                                    </th>
                                     <th class="th-sm">Tyre
                                     </th>
                                     <th class="th-sm">Dimensions
@@ -61,9 +63,23 @@
                                            $assignment = App\Models\TyreAssignment::with(['horse','tyre'])->where('tyre_id',$tyre->id)->where('status',1)->latest()->first();
                                         @endphp
                                     <td>
+                                        {{$tyre->tyre_number}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>CreatedBy:</strong> {{$tyre->user ? $tyre->user->name : ""}} {{$tyre->user ? $tyre->user->surname : ""}}<br>
+                                            <strong>CreatedOn:</strong> {{$tyre->created_at ? \Carbon\Carbon::parse($tyre->created_at)->format('Y-m-d') : ""}}<br>
+                                            <strong>GRV#:</strong>
+                                            @if ($tyre->goods_received)
+                                                <a href="{{route('goods_receiveds.show',$tyre->goods_received->id)}}">{{$tyre->goods_received->goods_received_number}}</a>
+                                            @else
+                                                &mdash;
+                                            @endif
+                                        </small>
+                                    </td>
+                                    <td>
                                          {{$tyre->product ? $tyre->product->name : ""}} <strong>{{$tyre->product && $tyre->product->brand ? "(".$tyre->product->brand->name.")" : ""}}</strong>
                                          <br>
-                                        <small><strong>Type: </strong>  
+                                        <small><strong>Type: </strong>
                                             @if ($tyre->type == "Diff")
                                                  <span class="badge bg-primary">{{$tyre->type}}</span>
                                             @elseif($tyre->type == "Supersingle")
@@ -90,7 +106,10 @@
                                     
                                     </td>
                                     <td>
-                                       
+                                        @if ($tyre->disposed)
+                                            <span class="badge bg-dark">Disposed</span>
+                                            <br>
+                                        @endif
                                         @if ($assignment)
                                             <a href="{{route('tyre_assignments.show',$assignment->id)}}" style="color: blue">
                                             @if ($assignment->horse)
@@ -253,7 +272,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="12">
+                                    <td colspan="13">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Tyres Found ....
                                         </div>

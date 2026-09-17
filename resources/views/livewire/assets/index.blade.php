@@ -23,6 +23,8 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                   <th class="th-sm">Asset#
+                                    </th>
                                    <th class="th-sm">Product
                                     </th>
                                     <th class="th-sm">ID/Serial#
@@ -55,6 +57,20 @@
                                 <tbody>
                                     @forelse ($assets as $asset)
                                   <tr>
+                                    <td>
+                                        {{$asset->asset_number}}
+                                        <br>
+                                        <small class="text-muted">
+                                            <strong>CreatedBy:</strong> {{$asset->user ? $asset->user->name : ""}} {{$asset->user ? $asset->user->surname : ""}}<br>
+                                            <strong>CreatedOn:</strong> {{$asset->created_at ? \Carbon\Carbon::parse($asset->created_at)->format('Y-m-d') : ""}}<br>
+                                            <strong>GRV#:</strong>
+                                            @if ($asset->goods_received)
+                                                <a href="{{route('goods_receiveds.show',$asset->goods_received->id)}}">{{$asset->goods_received->goods_received_number}}</a>
+                                            @else
+                                                &mdash;
+                                            @endif
+                                        </small>
+                                    </td>
                                     <td>
                                         {{$asset->product ? $asset->product->name : ""}} <strong>{{$asset->product?->brand ? "(".$asset->product?->brand?->name.")" : ""}}</strong>
                                     </td>
@@ -109,7 +125,12 @@
                                             </small>
                                         @endif
                                     </td>
-                                    <td><span class="badge bg-{{$asset->status == 1 ? "success" : "danger"}}">{{$asset->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
+                                    <td>
+                                        <span class="badge bg-{{$asset->status == 1 ? "success" : "danger"}}">{{$asset->status == 1 ? "Instore" : "Out Of stock"}}</span>
+                                        @if ($asset->disposed)
+                                            <br><span class="badge bg-dark">Disposed</span>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -128,7 +149,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="10">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Assets Found ....
                                         </div>

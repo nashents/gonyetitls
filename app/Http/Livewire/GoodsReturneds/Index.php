@@ -117,10 +117,12 @@ class Index extends Component
             ->with(['vendor', 'employee', 'user', 'goods_received', 'goods_returned_items'])
             ->where('department', $this->department);
 
+        // Date filter — skip the default "this month" restriction while searching so
+        // matches outside the current period aren't hidden.
         if ($this->from && $this->to) {
             $query->whereDate($this->goods_returned_filter, '>=', $this->from)
                   ->whereDate($this->goods_returned_filter, '<=', $this->to);
-        } else {
+        } elseif (! filled($this->search)) {
             $query->whereMonth($this->goods_returned_filter, now()->month)
                   ->whereYear($this->goods_returned_filter, now()->year);
         }

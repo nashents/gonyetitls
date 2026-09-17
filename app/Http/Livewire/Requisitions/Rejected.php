@@ -234,11 +234,12 @@ class Rejected extends Component
         }
 
 
-        // 1. Date range / default period
+        // 1. Date range / default period — default skipped while searching so
+        // matches outside the current period aren't hidden.
         if (!empty($this->from) && !empty($this->to)) {
             // Use the selected column in $this->requisition_filter
             $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
-        } else {
+        } elseif (! filled($this->search)) {
             // Default to current month & year on created_at
             $base->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year);

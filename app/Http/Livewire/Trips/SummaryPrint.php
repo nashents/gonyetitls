@@ -82,8 +82,7 @@ class SummaryPrint extends Component
             elseif (!is_null($this->search)) {
                
               $this->trips = Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-              'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth('created_at', date('m'))
-              ->whereYear('created_at', date('Y'))
+              'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
               ->where('trip_number','like', '%'.$this->search.'%')
               ->orWhere('trip_status','like', '%'.$this->search.'%')
               ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -169,8 +168,7 @@ class SummaryPrint extends Component
             elseif (!is_null($this->search)) {
 
                $this->trips = Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-               'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth($this->trip_filter, date('m'))
-               ->whereYear($this->trip_filter, date('Y'))->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
+               'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
                ->where('trip_number','like', '%'.$this->search.'%')
                ->orWhere('trip_status','like', '%'.$this->search.'%')
                ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -282,8 +280,7 @@ class SummaryPrint extends Component
                
                 return view('livewire.trips.summary-print',[
                     'trips' => Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth('created_at', date('m'))
-                    ->whereYear('created_at', date('Y'))
+                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
                     ->where('trip_number','like', '%'.$this->search.'%')
                     ->orWhere('trip_status','like', '%'.$this->search.'%')
                     ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -380,8 +377,7 @@ class SummaryPrint extends Component
             elseif (!is_null($this->search)) {
                 return view('livewire.trips.summary-print',[
                     'trips' => Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth($this->trip_filter, date('m'))
-                    ->whereYear($this->trip_filter, date('Y'))->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
+                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
                     ->where('trip_number','like', '%'.$this->search.'%')
                     ->orWhere('trip_status','like', '%'.$this->search.'%')
                     ->orWhere('authorization','like', '%'.$this->search.'%')

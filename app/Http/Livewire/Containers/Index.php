@@ -146,8 +146,9 @@ class Index extends Component
                         $purchaseQuery->whereDate($this->filter, '>=', $this->search_from);
                     } elseif (filled($this->search_to)) {
                         $purchaseQuery->whereDate($this->filter, '<=', $this->search_to);
-                    } else {
-                        // Fallback: current year if both are cleared
+                    } elseif (! filled($this->searchPurchase)) {
+                        // Fallback: current year if both are cleared — but skip while
+                        // searching so purchases outside the current period aren't hidden.
                         $purchaseQuery->whereYear($this->filter, date('Y'))->whereMonth($this->filter, date('m'));
                     }
 

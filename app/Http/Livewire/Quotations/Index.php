@@ -97,8 +97,7 @@ class Index extends Component
         elseif (isset($this->search)) {
            
             return view('livewire.quotations.index',[
-                'quotations' => Quotation::query()->with(['customer:id,name','currency'])->whereMonth($this->quotation_filter, date('m'))
-                ->whereYear($this->quotation_filter, date('Y'))
+                'quotations' => Quotation::query()->with(['customer:id,name','currency'])
                 ->where('quotation_number','like', '%'.$this->search.'%')
                 ->orWhere('date','like', '%'.$this->search.'%')
                 ->orWhere('expiry','like', '%'.$this->search.'%')

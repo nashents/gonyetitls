@@ -146,7 +146,7 @@ class Pending extends Component
             if (!empty($this->from) && !empty($this->to)) {
                 $query->whereDate($this->bill_filter, '>=', $this->from)
                     ->whereDate($this->bill_filter, '<=', $this->to);
-            } else {
+            } elseif (empty($this->search)) {
                 $query->whereMonth($this->bill_filter, now()->month)
                     ->whereYear($this->bill_filter, now()->year);
             }

@@ -147,10 +147,10 @@ class Rejected extends Component
            
         }
         elseif (isset($this->search)) {
-           
-            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth('created_at', date('m'))
+            // Skip the default "this month/this year" restriction while searching
+            // so matches outside the current period aren't hidden.
+            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
             ->where('authorization','rejected')
-            ->whereYear('created_at', date('Y'))
             ->where('bill_number','like', '%'.$this->search.'%')
             ->where('to_be_paid', True)
             ->orWhere('status','like', '%'.$this->search.'%')

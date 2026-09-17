@@ -27,6 +27,9 @@ class Inventory extends Model implements Auditable
     public function movements(){
         return $this->hasMany('App\Models\Movement');
     }
+    public function dispatch_items(){
+        return $this->hasMany('App\Models\DispatchItem');
+    }
     public function store(){
         return $this->belongsTo('App\Models\Store');
     }
@@ -75,6 +78,9 @@ class Inventory extends Model implements Auditable
 
     public function product(){
         return $this->belongsTo('App\Models\Product');
+    }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
     }
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');

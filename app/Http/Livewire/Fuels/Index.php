@@ -78,6 +78,10 @@ class Index extends Component
     public $fuel_requests;
     public $selectedFuelRequest;
 
+    // Admin-only: fuel orders with a trip attached but no matching trip
+    // expense record (e.g. from edits made before that sync existed).
+    public $missingTripExpensesCount = 0;
+
     public $unit_price = 0;
     public $amount = 0;
     public $quantity = 0 ;
@@ -201,8 +205,8 @@ class Index extends Component
         $this->trips = collect();
         $this->containers = Container::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
-    
 
+        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count();
     }
 
     public function refreshStations()
@@ -211,6 +215,55 @@ class Index extends Component
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Fueling Stations Refreshed Successfully!!."
+        ]);
+    }
+
+    /** Fuel orders that have a trip but no trip expense at all yet. */
+    protected function missingTripExpensesQuery()
+    {
+        return Fuel::query()
+            ->whereNotNull('trip_id')
+            ->whereDoesntHave('trip_expense');
+    }
+
+    /**
+     * Admin-only backfill: creates the trip expense for any fuel order that
+     * has a trip attached but never got one — mirrors the same field mapping
+     * used when a trip expense is created/synced on save elsewhere in this
+     * component (see store()/update() above).
+     */
+    public function backfillMissingTripExpenses()
+    {
+        abort_unless(Auth::user()->is_admin(), 403);
+
+        $fuels = $this->missingTripExpensesQuery()->get();
+        $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
+        $created = 0;
+
+        foreach ($fuels as $fuel) {
+            $trip_expense = new TripExpense;
+            $trip_expense->user_id = $fuel->user_id;
+            $trip_expense->trip_id = $fuel->trip_id;
+            $trip_expense->fuel_id = $fuel->id;
+            if ($fuel_expense) {
+                $trip_expense->expense_id = $fuel_expense->id;
+            }
+            $trip_expense->currency_id = $fuel->currency_id;
+            $trip_expense->category = $fuel->category ?: 'Self';
+            $trip_expense->amount = $fuel->amount;
+            $trip_expense->exchange_rate = $fuel->exchange_rate;
+            $trip_expense->exchange_amount = $fuel->exchange_amount;
+            $trip_expense->date = $fuel->trip?->start_date ?? $fuel->date;
+            $trip_expense->save();
+
+            $created++;
+        }
+
+        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Created {$created} missing trip expense record(s).",
         ]);
     }
 
@@ -1534,10 +1587,12 @@ class Index extends Component
                     'sageMapping',
                 ]);
 
-            // Date filter: from/to if set, otherwise current month
+            // Date filter: from/to if set, otherwise current month — but skip the
+            // default "this month" restriction while searching so matches outside
+            // the current period aren't hidden.
             if ($this->from && $this->to) {
                 $query->whereBetween($this->fuel_filter, [$this->from, $this->to]);
-            } else {
+            } elseif (! filled($this->search)) {
                 $query->whereMonth($this->fuel_filter, now()->month)
                     ->whereYear($this->fuel_filter, now()->year);
             }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Livewire\Products;
 
+use App\Models\Asset;
+use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Tyre;
 use Livewire\Component;
 
 class Items extends Component
@@ -12,12 +15,12 @@ class Items extends Component
     public $items;
 
     public function mount($id, $department){
-        
+
         $this->product = Product::find($id);
         $this->department = $department;
 
-       
-        
+
+
     }
 
     public function deleteShow(){
@@ -40,13 +43,36 @@ class Items extends Component
     }
     public function render()
     {
-        if ($this->department == "tyre") {
-            $this->items = $this->product->tyres->where('status',1);
-        }elseif ($this->department == "inventory") {
-            $this->items = $this->product->inventories->where('status',1)->where('balance','>',0);
-        }elseif ($this->department == "asset") {
-            $this->items = $this->product->assets->where('status',1)->where('balance','>',0);
+        $map = [
+            'tyre' => Tyre::class,
+            'inventory' => Inventory::class,
+            'asset' => Asset::class,
+        ];
+
+        $model = $map[$this->department] ?? null;
+
+        // Tyre has no rack/bin relation — only eager-load what the model actually has.
+        $with = [
+            'product.brand', 'product.category', 'product.category_value',
+            'store', 'currency',
+            'goods_received',
+            'dispatch_items.dispatch',
+        ];
+        if ($this->department !== 'tyre') {
+            $with[] = 'rack';
+            $with[] = 'bin';
         }
+
+        // Every instance regardless of stock/disposed status — this list exists to
+        // trace a product's full history (received via which GRV, dispatched where),
+        // so hiding out-of-stock/disposed rows would defeat the point.
+        $this->items = $model
+            ? $model::where('product_id', $this->product->id)
+                ->with($with)
+                ->orderByDesc('created_at')
+                ->get()
+            : collect();
+
         return view('livewire.products.items',[
             'items' => $this->items
         ]);

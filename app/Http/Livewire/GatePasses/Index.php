@@ -486,10 +486,10 @@ class Index extends Component
             ]);
             }
         }elseif (filled($this->search)) {
+            // Skip the default "this month/this year" restriction while searching
+            // so matches outside the current period aren't hidden.
              return view('livewire.gate-passes.index',[
                 'individual_gate_passes' => GatePass::with('branch:id,name')
-                ->whereMonth('created_at',date('m'))
-                ->whereYear('created_at',date('Y'))
                 ->where('type','Individual')
                 ->where(function ($query) {
                     $query->where('gate_pass_number','like', '%'.$this->search.'%')

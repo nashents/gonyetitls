@@ -509,8 +509,7 @@ class Index extends Component
             elseif (isset($this->search)) {
                
                 return view('livewire.sales.index',[
-                    'sales' => Sale::query()->with(['customer:id,name','currency'])->whereMonth($this->sale_filter, date('m'))
-                    ->whereYear($this->sale_filter, date('Y'))
+                    'sales' => Sale::query()->with(['customer:id,name','currency'])
                     ->where('sale_number','like', '%'.$this->search.'%')
                         ->orWhere('status','like', '%'.$this->search.'%')
                         ->orWhere('date','like', '%'.$this->search.'%')

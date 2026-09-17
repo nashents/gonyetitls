@@ -837,8 +837,9 @@ class Index extends Component
         elseif (isset($this->search)) {
            
             return view('livewire.tyre-purchases.index',[
-                'purchases' => Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereMonth($this->purchase_filter, date('m'))
-                ->whereYear($this->purchase_filter, date('Y'))
+                // Skip the default "this month" restriction while searching so matches
+                // outside the current period aren't hidden.
+                'purchases' => Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)
                 ->where('department',$this->department)
                 ->where('purchase_number','like', '%'.$this->search.'%')
                 ->orWhere('date','like', '%'.$this->search.'%')

@@ -7,6 +7,8 @@
    
     <table id="itemsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead >
+        <th class="th-sm">Item#
+        </th>
         <th class="th-sm">Product
         </th>
         <th class="th-sm">Part/Serial#
@@ -27,13 +29,27 @@
         </th>
         <th class="th-sm">Status
         </th>
+        <th class="th-sm">Dispatch(es)
+        </th>
           </tr>
         </thead>
 
         <tbody>
             @foreach ($items as $item)
-        
+
           <tr>
+            <td>
+                {{$item->inventory_number ?? $item->tyre_number ?? $item->asset_number}}
+                <br>
+                <small class="text-muted">
+                    <strong>GRV#:</strong>
+                    @if ($item->goods_received)
+                        <a href="{{route('goods_receiveds.show',$item->goods_received->id)}}">{{$item->goods_received->goods_received_number}}</a>
+                    @else
+                        &mdash;
+                    @endif
+                </small>
+            </td>
             <td>{{$item->product->brand ? $item->product->brand->name : ""}} {{$item->product ? $item->product->name : ""}}</td>
             <td>{{$item->serial_number ? "SN#: ".$item->serial_number : ""}} {{$item->product->identification_number ? "PN#: ".$item->product->identification_number : ""}}</td>
             <td>
@@ -72,8 +88,28 @@
                     {{$item->currency ? $item->currency->symbol : ""}}{{number_format($item->total,2)}}  
                 @endif
             </td>
-            <td><span class="badge bg-{{$item->status == 1 ? "success" : "danger"}}">{{$item->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
-        
+            <td>
+                <span class="badge bg-{{$item->status == 1 ? "success" : "danger"}}">{{$item->status == 1 ? "Instore" : "Out Of stock"}}</span>
+                @if ($item->disposed)
+                    <br><span class="badge bg-dark">Disposed</span>
+                @endif
+            </td>
+            <td>
+                @forelse ($item->dispatch_items as $dispatch_item)
+                    @if ($dispatch_item->dispatch)
+                        <div class="text-nowrap">
+                            <small>
+                                <a href="{{route('dispatches.show',$dispatch_item->dispatch->id)}}">{{$dispatch_item->dispatch->dispatch_number}}</a>
+                                &middot; {{$dispatch_item->dispatch->date}}
+                                &middot; Qty: {{$dispatch_item->qty}}
+                            </small>
+                        </div>
+                    @endif
+                @empty
+                    <span class="text-muted">&mdash;</span>
+                @endforelse
+            </td>
+
           </tr>
          
           @endforeach

@@ -318,11 +318,11 @@ catch(\Exception $e){
                
             }
             elseif (isset($this->search)) {
-               
+                // Skip the default "this month/this year" restriction while searching
+                // so matches outside the current period aren't hidden.
                 return view('livewire.bills.approved',[
-                    'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth('created_at', date('m'))
+                    'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
                     ->where('authorization','approved')
-                    ->whereYear('created_at', date('Y'))
                       ->where('to_be_paid', True)
                     ->where('bill_number','like', '%'.$this->search.'%')
                     ->orWhere('status','like', '%'.$this->search.'%')

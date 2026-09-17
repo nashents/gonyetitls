@@ -136,7 +136,9 @@ class Pending extends Component
                 ])
                 ->where('authorization','pending')
                 ->when($from && $to, fn (Builder $q) => $q->whereBetween('created_at', [$from, $to]))
-                ->when(!($from && $to), fn (Builder $q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
+                // Skip the default "this month" restriction while searching so matches
+                // outside the current period aren't hidden.
+                ->when(!($from && $to) && $search === '', fn (Builder $q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
                 ->when($search !== '', function (Builder $q) use ($search) {
                     // IMPORTANT: group OR conditions so they don't break your date filters
                     $q->where(function (Builder $qq) use ($search) {

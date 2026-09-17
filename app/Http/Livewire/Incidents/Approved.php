@@ -89,10 +89,11 @@ class Approved extends Component
             $query->where('user_id', $user->id);
         }
 
-        // Date filter
+        // Date filter — default skipped while searching so matches outside the
+        // current period aren't hidden.
         if (!empty($this->from) && !empty($this->to)) {
             $query->whereBetween('created_at', [$this->from, $this->to]);
-        } else {
+        } elseif (empty($this->search)) {
             $query->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year);
         }

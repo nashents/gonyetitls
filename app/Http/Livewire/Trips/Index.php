@@ -1778,7 +1778,9 @@ class Index extends Component
             $trips->whereHas('delivery_note', function ($q) {
                 if (filled($this->from) && filled($this->to)) {
                     $q->whereBetween('offloaded_date', [$this->from, $this->to]);
-                } else {
+                } elseif (! filled($this->search)) {
+                    // Skip the default "this month" restriction while searching so
+                    // matches outside the current period aren't hidden.
                     $q->whereMonth('offloaded_date', date('m'))
                     ->whereYear('offloaded_date', date('Y'));
                 }

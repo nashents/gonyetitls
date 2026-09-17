@@ -823,15 +823,21 @@ class Index extends Component
             $base->where('currency_id',$cur)->where('status', '!=', 'Paid');
         }
         else{
-            // Date filter: use provided range, else current month
+            // Date filter: use provided range, else current month — but skip the
+            // default "this month" restriction while searching so matches outside
+            // the current period aren't hidden.
             $base->when(
                 filled($this->from) && filled($this->to),
                 fn ($q) => $q->whereBetween($this->bill_filter, [
                     Carbon::parse($this->from)->startOfDay(),
                     Carbon::parse($this->to)->endOfDay(),
                 ]),
-                fn ($q) => $q->whereMonth($this->bill_filter, now()->month)
-                            ->whereYear($this->bill_filter, now()->year)
+                function ($q) {
+                    if (! filled($this->search)) {
+                        $q->whereMonth($this->bill_filter, now()->month)
+                            ->whereYear($this->bill_filter, now()->year);
+                    }
+                }
             );
         }
 

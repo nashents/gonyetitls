@@ -81,8 +81,7 @@ class Summary extends Component
             elseif (!is_null($this->search)) {
                
               $this->trips = Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-              'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth('created_at', date('m'))
-              ->whereYear('created_at', date('Y'))
+              'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
               ->where('trip_number','like', '%'.$this->search.'%')
               ->orWhere('trip_status','like', '%'.$this->search.'%')
               ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -168,8 +167,7 @@ class Summary extends Component
             elseif (!is_null($this->search)) {
 
                $this->trips = Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-               'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth($this->trip_filter, date('m'))
-               ->whereYear($this->trip_filter, date('Y'))->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
+               'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
                ->where('trip_number','like', '%'.$this->search.'%')
                ->orWhere('trip_status','like', '%'.$this->search.'%')
                ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -203,7 +201,7 @@ class Summary extends Component
                ->orderBy('trip_number','desc')->get();
             }
             else {
-                
+
                $this->trips = Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth($this->trip_filter, date('m'))
                ->whereYear($this->trip_filter, date('Y'))->where('user_id',Auth::user()->id)->orderBy('trip_number','desc')->get();
@@ -281,8 +279,7 @@ class Summary extends Component
                
                 return view('livewire.trips.summary',[
                     'trips' => Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth('created_at', date('m'))
-                    ->whereYear('created_at', date('Y'))
+                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
                     ->where('trip_number','like', '%'.$this->search.'%')
                     ->orWhere('trip_status','like', '%'.$this->search.'%')
                     ->orWhere('authorization','like', '%'.$this->search.'%')
@@ -373,14 +370,13 @@ class Summary extends Component
                         'trip_filter' => $this->trip_filter
                     ]);
                 }
-              
-               
+
+
             }
             elseif (!is_null($this->search)) {
                 return view('livewire.trips.summary',[
                     'trips' => Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth($this->trip_filter, date('m'))
-                    ->whereYear($this->trip_filter, date('Y'))->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
+                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
                     ->where('trip_number','like', '%'.$this->search.'%')
                     ->orWhere('trip_status','like', '%'.$this->search.'%')
                     ->orWhere('authorization','like', '%'.$this->search.'%')

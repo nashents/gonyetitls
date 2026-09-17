@@ -35,6 +35,9 @@ class Tyre extends Model implements Auditable
     public function movements(){
         return $this->hasMany('App\Models\Movement');
     }
+    public function dispatch_items(){
+        return $this->hasMany('App\Models\DispatchItem');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

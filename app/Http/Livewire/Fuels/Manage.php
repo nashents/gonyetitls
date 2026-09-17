@@ -517,11 +517,11 @@ class Manage extends Component
                    
                 }
                 elseif (isset($this->search)) {
-                   
+                    // Skip the default "this month/this year" restriction while searching
+                    // so matches outside the current period aren't hidden.
                     return view('livewire.fuels.manage',[
                         'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                        ])->whereMonth('created_at', date('m'))
-                        ->whereYear('created_at', date('Y'))
+                        ])
                         ->where('order_number','like', '%'.$this->search.'%')
                         ->orWhereHas('horse', function ($query) {
                             return $query->where('registration_number', 'like', '%'.$this->search.'%');
@@ -609,10 +609,11 @@ class Manage extends Component
                    
                 }
                 elseif (isset($this->search)) {
+                    // Skip the default "this month/this year" restriction while searching
+                    // so matches outside the current period aren't hidden.
                     return view('livewire.fuels.manage',[
                         'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
-                        ])->whereMonth($this->fuel_filter, date('m'))
-                        ->whereYear($this->fuel_filter, date('Y'))->where('order_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
+                        ])->where('user_id',Auth::user()->id)
                         ->where('order_number','like', '%'.$this->search.'%')
                         ->orWhereHas('horse', function ($query) {
                             return $query->where('registration_number', 'like', '%'.$this->search.'%');

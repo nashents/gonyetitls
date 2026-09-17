@@ -1816,10 +1816,11 @@ class Index extends Component
         $base->whereIn('department_id', (array) $this->department_ids);
     }
 
-     // Date filter: range OR default current month/year
+     // Date filter: range OR default current month/year — skipped while searching so
+     // matches outside the current period aren't hidden.
         if (filled($this->from) && filled($this->to)) {
             $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
-        } else {
+        } elseif (! filled($this->search)) {
             $base->whereMonth($this->requisition_filter, now()->month)
                 ->whereYear($this->requisition_filter, now()->year);
         }

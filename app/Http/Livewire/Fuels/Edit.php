@@ -7,12 +7,14 @@ use App\Models\Trip;
 use App\Models\Asset;
 use App\Models\Horse;
 use App\Models\Driver;
+use App\Models\Expense;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Employee;
 use App\Models\Container;
+use App\Models\TripExpense;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 
@@ -223,6 +225,8 @@ class Edit extends Component
             $fuel->employee_id = $this->employee_id;
             $fuel->horse_id = $this->selectedHorse;
             $fuel->asset_id = $this->asset_id;
+            // Was never persisted before — selecting a trip here had no effect at all.
+            $fuel->trip_id = $this->selectedTrip ?: null;
             if (isset($trip)) {
                 $fuel->driver_id = $trip->driver_id;
             }
@@ -238,12 +242,19 @@ class Edit extends Component
             $fuel->comments = $this->comments;
 
             $fuel->update();
-          
+
+            if ($fuel->trip_id) {
+                $this->syncTripExpense($fuel, $trip);
+            }
+
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Fuel Order Updated Successfully!!"
             ]);
-            return redirect()->route('fuels.manage');
+            // 'fuels.manage' isn't a registered route (only fuels.index/edit/etc
+            // exist from the resource route) — redirecting to it 500'd after every
+            // save, right after the update above had already gone through.
+            return redirect()->route('fuels.index');
 
         }
     // }
@@ -254,6 +265,34 @@ class Edit extends Component
     //         'message'=>"Something went wrong while updating fuel order!!"
     //     ]);
     // }
+    }
+
+    /**
+     * Keeps this fuel order's trip expense in step whenever it's attached (or
+     * re-attached) to a trip — mirrors Fuels\Index::update()'s existing
+     * find-or-create-by-fuel_id pattern for the same relationship.
+     */
+    protected function syncTripExpense(Fuel $fuel, ?Trip $trip): void
+    {
+        $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
+
+        $trip_expense = TripExpense::where('fuel_id', $fuel->id)
+            ->where('trip_id', $fuel->trip_id)
+            ->first() ?? new TripExpense;
+
+        $trip_expense->user_id = $fuel->user_id;
+        $trip_expense->trip_id = $fuel->trip_id;
+        $trip_expense->fuel_id = $fuel->id;
+        if ($fuel_expense) {
+            $trip_expense->expense_id = $fuel_expense->id;
+        }
+        $trip_expense->currency_id = $fuel->currency_id;
+        $trip_expense->category = $fuel->category ?: 'Self';
+        $trip_expense->amount = $fuel->amount;
+        $trip_expense->exchange_rate = $fuel->exchange_rate;
+        $trip_expense->exchange_amount = $fuel->exchange_amount;
+        $trip_expense->date = $trip?->start_date ?? $fuel->date;
+        $trip_expense->save();
     }
     
     public function render()
