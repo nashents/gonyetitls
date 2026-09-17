@@ -112,7 +112,7 @@
                                             <div class="col-md-1">
                                                 <div class="form-group">
                                                     <label for=""></label>
-                                                    <button class="btn btn-danger btn-rounded btn-sm"   wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                    <button class="btn btn-danger btn-rounded btn-sm"   wire:click.prevent="remove({{$key}}, {{$value}})"> <i class="fa fa-times"></i></button>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -183,7 +183,7 @@
                                             <div class="col-md-1">
                                                 <div class="form-group">
                                                     <label for=""></label>
-                                                    <button class="btn btn-danger btn-rounded btn-sm"   wire:click.prevent="deductionsRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                    <button class="btn btn-danger btn-rounded btn-sm"   wire:click.prevent="deductionsRemove({{$key}}, {{$value}})"> <i class="fa fa-times"></i></button>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -197,27 +197,20 @@
                                     </div>
 
                                     <label for="">Loan</label>
-                                    @if ($existing_selectedLoan)
-                                  
-                                        @foreach ($existing_selectedLoan as $key => $value)
-                                            <div class="row">  
-                                                <div class="col-md-12">
-                                                <div class="form-group">
-                                                    <select wire:model.debounce.300ms="selectedLoan.0" class="form-control">
-                                                        <option value="">Select Loan</option>
-                                                        @foreach ($loans as $loan)
-                                                        <option value="{{ $loan->id }}"> {{ $loan->loan_number }} {{ $loan->loan_type ? $loan->loan_type->name : "" }} Monthly Installments: {{$loan->currency ? $loan->currency->name : ""}} {{$loan->currency ? $loan->currency->symbol : ""}}{{number_format($loan->payment_per_month ? $loan->payment_per_month : 0,2)}}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('selectedLoan.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    @endif
-                                   
-                                
-                                   
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                        <div class="form-group">
+                                            <select wire:model.debounce.300ms="selectedLoan.0" class="form-control">
+                                                <option value="">Select Loan</option>
+                                                @foreach ($loans as $loan)
+                                                <option value="{{ $loan->id }}"> {{ $loan->loan_number }} {{ $loan->loan_type ? $loan->loan_type->name : "" }} Monthly Installments: {{$loan->currency ? $loan->currency->name : ""}} {{$loan->currency ? $loan->currency->symbol : ""}}{{number_format($loan->payment_per_month ? $loan->payment_per_month : 0,2)}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedLoan.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        </div>
+                                    </div>
+
                                         @foreach ($loans_inputs as $key => $value)
                                         <div class="row">
                                             <div class="col-md-10">
@@ -233,7 +226,7 @@
                                             <div class="col-md-1">
                                                 <div class="form-group">
                                                     <label for=""></label>
-                                                    <button class="btn btn-danger btn-rounded btn-sm"   wire:click.prevent="loansRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                    <button class="btn btn-danger btn-rounded btn-sm"   wire:click.prevent="loansRemove({{$key}}, {{$value}})"> <i class="fa fa-times"></i></button>
                                                 </div>
                                             </div>
                                         </div>

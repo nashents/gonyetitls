@@ -66,9 +66,12 @@ class Edit extends Component
         array_push($this->inputs ,$i);
     }
     
-    public function remove($i)
+    public function remove($i, $rowIndex = null)
     {
         unset($this->inputs[$i]);
+        if ($rowIndex !== null) {
+            unset($this->selectedAllowance[$rowIndex], $this->allowance_amount[$rowIndex]);
+        }
     }
 
     public $deductions_inputs = [];
@@ -82,9 +85,12 @@ class Edit extends Component
         array_push($this->deductions_inputs ,$l);
     }
     
-    public function deductionsRemove($l)
+    public function deductionsRemove($l, $rowIndex = null)
     {
         unset($this->deductions_inputs[$l]);
+        if ($rowIndex !== null) {
+            unset($this->selectedDeduction[$rowIndex], $this->deduction_amount[$rowIndex]);
+        }
     }
     
     public $loans_inputs = [];
@@ -98,9 +104,12 @@ class Edit extends Component
         array_push($this->loans_inputs ,$j);
     }
     
-    public function loansRemove($j)
+    public function loansRemove($j, $rowIndex = null)
     {
         unset($this->loans_inputs[$j]);
+        if ($rowIndex !== null) {
+            unset($this->selectedLoan[$rowIndex]);
+        }
     }
     
 
@@ -118,27 +127,55 @@ class Edit extends Component
         $this->frequency = $salary->frequency;
         $this->selectedEmployee = $salary->employee_id;
         $this->salary_items = $salary->salary_items;
-        $salary_items_loans = SalaryItem::where('salary_id',$id)->whereNotNull('loan_id')->get();
-        $salary_items_deductions = SalaryItem::where('salary_id',$id)->whereNotNull('deduction_id')->get();
-        $salary_items_allowances = SalaryItem::where('salary_id',$id)->whereNotNull('allowance_id')->get();
-        if ($salary_items_loans) {
-           foreach ($salary_items_loans as $item) {
-                $this->existing_selectedLoan[] = $item->loan_id;
-           }
+
+        // Pre-load existing allowances/deductions/loans directly into the same
+        // selectedAllowance/selectedDeduction/selectedLoan arrays the "add new"
+        // rows use (row 0, then the dynamic $inputs/$deductions_inputs/
+        // $loans_inputs rows) — the blade already renders those correctly, it
+        // was just never being handed the existing data (the old
+        // existing_selectedAllowance/existing_selectedDeduction arrays were
+        // computed but never referenced anywhere in the view; the loan version
+        // of this was rendered but bound every row to selectedLoan.0, so
+        // multiple existing loans collapsed onto the same slot).
+        //
+        // PAYE / AIDS Levy are excluded here — those stay driven purely by the
+        // paye/aids_levy checkboxes and are recomputed automatically on save.
+        $payeDeductionId = Deduction::where('name', 'PAYE')->value('id');
+        $aidsLevyDeductionId = Deduction::where('name', 'AIDS Levy')->value('id');
+        $autoDeductionIds = array_filter([$payeDeductionId, $aidsLevyDeductionId]);
+
+        $existingAllowances = SalaryItem::where('salary_id', $id)->whereNotNull('allowance_id')->get()->values();
+        foreach ($existingAllowances as $idx => $item) {
+            $this->selectedAllowance[$idx] = $item->allowance_id;
+            $this->allowance_amount[$idx] = $item->amount;
+            if ($idx > 0) {
+                $this->inputs[] = $idx;
+                $this->i = $idx + 1;
+            }
         }
-        if ($salary_items_allowances) {
-           foreach ($salary_items_allowances as $item) {
-            $this->existing_selectedAllowance[] = $item->allowance_id;
-            $this->existing_allowance_amount[] = $item->amount;
-           }
+
+        $existingDeductions = SalaryItem::where('salary_id', $id)
+            ->whereNotNull('deduction_id')
+            ->whereNotIn('deduction_id', $autoDeductionIds)
+            ->get()->values();
+        foreach ($existingDeductions as $idx => $item) {
+            $this->selectedDeduction[$idx] = $item->deduction_id;
+            $this->deduction_amount[$idx] = $item->amount;
+            if ($idx > 0) {
+                $this->deductions_inputs[] = $idx;
+                $this->l = $idx + 1;
+            }
         }
-        if ($salary_items_deductions) {
-           foreach ($salary_items_deductions as $item) {
-            $this->existing_selectedDeduction[] = $item->deduction_id;
-            $this->existing_deduction_amount[] = $item->amount;
-           }
+
+        $existingLoans = SalaryItem::where('salary_id', $id)->whereNotNull('loan_id')->get()->values();
+        foreach ($existingLoans as $idx => $item) {
+            $this->selectedLoan[$idx] = $item->loan_id;
+            if ($idx > 0) {
+                $this->loans_inputs[] = $idx;
+                $this->j = $idx + 1;
+            }
         }
-       
+
 
         $this->employees = Employee::with('user')
         ->whereHas('user', function ($query) {
@@ -176,14 +213,25 @@ class Edit extends Component
                 $salary->update();
                 $this->salary_id = $salary->id;
 
-                // Add any newly selected allowances/deductions/loans. Existing
-                // items from before this edit are left as-is — this form only
-                // adds new lines, it doesn't show existing ones for removal.
+                // The form now shows the full current set of allowances/
+                // deductions/loans (pre-loaded in mount(), editable, and
+                // removable), so it represents the complete intended state —
+                // replace the existing rows with it rather than appending, or
+                // every save would duplicate everything already there.
+                SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('allowance_id')->delete();
+                SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('loan_id')->delete();
+                // Deductions include PAYE/AIDS Levy alongside manual ones —
+                // clearing all of them here (not just the manual selections)
+                // means the fresh PAYE/AIDS computation below never stacks on
+                // top of last save's amounts.
+                SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('deduction_id')->delete();
+
                 $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount);
                 $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount);
 
                 if (!empty($this->selectedLoan)) {
                     foreach ($this->selectedLoan as $key => $loanId) {
+                        if (empty($loanId)) continue;
                         $loan = Loan::find($loanId);
                         if ($loan && $loan->balance > 0) {
                             SalaryItem::create([
@@ -194,16 +242,6 @@ class Edit extends Component
                         }
                     }
                 }
-
-                // PAYE/AIDS Levy are always derived fresh from gross, never
-                // manually entered — clear any previously computed lines first
-                // so re-saving a salary doesn't stack duplicate PAYE/AIDS items
-                // on top of the ones from the last save.
-                $payeDeductionId = Deduction::where('name', 'PAYE')->value('id');
-                $aidsLevyDeductionId = Deduction::where('name', 'AIDS Levy')->value('id');
-                SalaryItem::where('salary_id', $this->salary_id)
-                    ->whereIn('deduction_id', array_filter([$payeDeductionId, $aidsLevyDeductionId]))
-                    ->delete();
 
                 // Recompute totals from the full current set of salary items
                 // (not just what changed this session) so gross/net/PAYE stay
@@ -263,22 +301,29 @@ class Edit extends Component
     
         // Helper function to process PAYE and AIDS Levy
         private function processPayeAndAidsLevy($gross) {
-         
+
+            // tax_brackets.lower_band/upper_band are stored as strings. Binding
+            // $gross as a PHP float (rather than an int) against those VARCHAR
+            // columns makes MySQL's implicit cast pick the wrong row — it was
+            // matching the unbounded top bracket (upper_band IS NULL) instead
+            // of the correct one, producing a negative amount that the
+            // `$paye_var > 0` guard below then silently skipped. Casting both
+            // sides explicitly to DECIMAL avoids that regardless of $gross's
+            // PHP type.
             $tax_bracket = TaxBracket::where('currency_id', $this->currency_id)
                 ->where('frequency', $this->frequency)
                 ->where(function ($query) use ($gross) {
-                    $query->where('lower_band', '<=', $gross)->orWhereNull('lower_band');
+                    $query->whereRaw('CAST(lower_band AS DECIMAL(18,2)) <= ?', [$gross])->orWhereNull('lower_band');
                 })
                 ->where(function ($query) use ($gross) {
-                    $query->where('upper_band', '>=', $gross)->orWhereNull('upper_band');
+                    $query->whereRaw('CAST(upper_band AS DECIMAL(18,2)) >= ?', [$gross])->orWhereNull('upper_band');
                 })
                 ->first();
-             
-            
+
             if ($tax_bracket && is_numeric($tax_bracket->percentage)) {
                 $gross_percentage = $gross * ($tax_bracket->percentage / 100);
                 $paye_var = $gross_percentage - ($tax_bracket->rate ?? 0);
-              
+
                 if ($paye_var > 0) {
                   
                     $payeDeduction = Deduction::where('name', 'PAYE')->first();
