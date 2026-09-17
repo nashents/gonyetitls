@@ -523,7 +523,7 @@
                                 <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
                                     <option value="">Select Product</option>
                                     @foreach ($products as $product)
-                                    <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
+                                    <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here @endif</option>
                                     @endforeach
                                 </select>
                                 @if ($department == "tyre")
@@ -603,7 +603,7 @@
                                     <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
                                         <option value="">Select Product</option>
                                         @foreach ($products as $product)
-                                        <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
+                                        <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here @endif</option>
                                         @endforeach
                                     </select>
                                     @error('selectedProduct.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
@@ -962,7 +962,7 @@
                                     <select wire:model.debounce.300ms="selectedCurrentProduct.{{$key}}" class="form-control" required>
                                         <option value="">Select Product</option>
                                         @foreach ($products as $product)
-                                        <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
+                                        <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here @endif</option>
                                         @endforeach
                                     </select>
                                     <small>  <a href="{{ route('products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small>
@@ -1043,7 +1043,7 @@
                                         <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
                                             <option value="">Select Product</option>
                                             @foreach ($products as $product)
-                                            <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif>{{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here@endif</option>
+                                            <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} purchases — it's a {{ $product->department }} product." @endif>{{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}} ({{$product->product_number}}) @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here @endif</option>
                                             @endforeach
                                         </select>
                                         @error('selectedProduct.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror

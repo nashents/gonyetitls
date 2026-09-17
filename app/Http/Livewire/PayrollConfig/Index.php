@@ -112,10 +112,24 @@ class Index extends Component
                     'user'       => trim(($audit->user?->name ?? 'Unknown') . ' ' . ($audit->user?->surname ?? '')),
                     'event'      => $audit->event,
                     'created_at' => optional($audit->created_at)->format('Y-m-d H:i'),
-                    'changes'    => $audit->getModified(),
+                    'changes'    => collect($audit->getModified())->map(fn ($values) => [
+                        'old' => $this->formatAuditValue($values['old'] ?? null),
+                        'new' => $this->formatAuditValue($values['new'] ?? null),
+                    ])->all(),
                 ])
                 ->toArray()
             : [];
+    }
+
+    /**
+     * Audit old/new values come straight off the model's casts — work_week_days
+     * is cast to array (e.g. [1,2,3,4,5]), so its audit value is a PHP array,
+     * not a scalar. Blade's {{ }} can't echo an array, so flatten it here
+     * rather than leaving that to the view.
+     */
+    private function formatAuditValue($value)
+    {
+        return is_array($value) ? implode(', ', $value) : $value;
     }
 
     /**
