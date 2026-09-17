@@ -106,8 +106,8 @@
                             <a href="#" wire:click="exportFuelsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                             @if (Auth::user()->is_admin() && $missingTripExpensesCount > 0)
                                 <a href="#" wire:click="backfillMissingTripExpenses()" wire:loading.attr="disabled" class="btn btn-warning btn-rounded btn-wide"
-                                    onclick="return confirm('Create {{ $missingTripExpensesCount }} missing trip expense record(s) for fuel orders that already have a trip attached?')">
-                                    <i class="fa fa-wrench"></i> Create Missing Trip Expenses ({{ $missingTripExpensesCount }})
+                                    onclick="return confirm('Create/fix {{ $missingTripExpensesCount }} trip expense record(s) for fuel orders with a trip attached (missing records and ones with no amount)?')">
+                                    <i class="fa fa-wrench"></i> Fix Trip Expenses ({{ $missingTripExpensesCount }})
                                 </a>
                             @endif
                             

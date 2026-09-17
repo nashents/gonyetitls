@@ -288,7 +288,11 @@ class Edit extends Component
         }
         $trip_expense->currency_id = $fuel->currency_id;
         $trip_expense->category = $fuel->category ?: 'Self';
-        $trip_expense->amount = $fuel->amount;
+        // fuels.amount is nullable — fall back to quantity * unit_price rather
+        // than risk copying a null/0 amount onto the trip expense.
+        $trip_expense->amount = is_numeric($fuel->amount) && (float) $fuel->amount > 0
+            ? (float) $fuel->amount
+            : round((float) $fuel->quantity * (float) $fuel->unit_price, 2);
         $trip_expense->exchange_rate = $fuel->exchange_rate;
         $trip_expense->exchange_amount = $fuel->exchange_amount;
         $trip_expense->date = $trip?->start_date ?? $fuel->date;

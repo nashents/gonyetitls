@@ -206,7 +206,8 @@ class Index extends Component
         $this->containers = Container::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
 
-        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count();
+        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count()
+            + $this->zeroAmountFuelTripExpensesQuery()->count();
     }
 
     public function refreshStations()
@@ -227,10 +228,41 @@ class Index extends Component
     }
 
     /**
+     * Trip expenses linked to a fuel order but with no amount — including any
+     * the backfill above already created before this fix, since fuels.amount
+     * is nullable and older/imported fuel orders often never had it set.
+     */
+    protected function zeroAmountFuelTripExpensesQuery()
+    {
+        return TripExpense::query()
+            ->whereNotNull('fuel_id')
+            ->where(function ($q) {
+                $q->whereNull('amount')->orWhere('amount', 0)->orWhere('amount', '');
+            });
+    }
+
+    /**
+     * fuels.amount is nullable — plenty of older/imported fuel orders never
+     * had it set even though quantity/unit_price are. Every other place in
+     * this component computes amount the same way, so fall back to it here
+     * too instead of copying a possibly-null amount onto the trip expense.
+     */
+    protected function resolveFuelAmount(Fuel $fuel): float
+    {
+        $amount = is_numeric($fuel->amount) ? (float) $fuel->amount : 0.0;
+
+        return $amount > 0
+            ? $amount
+            : round((float) $fuel->quantity * (float) $fuel->unit_price, 2);
+    }
+
+    /**
      * Admin-only backfill: creates the trip expense for any fuel order that
-     * has a trip attached but never got one — mirrors the same field mapping
-     * used when a trip expense is created/synced on save elsewhere in this
-     * component (see store()/update() above).
+     * has a trip attached but never got one, and repairs any trip expense
+     * (including ones this same backfill already created) left with no
+     * amount — mirrors the same field mapping used when a trip expense is
+     * created/synced on save elsewhere in this component (see store()/
+     * update() above).
      */
     public function backfillMissingTripExpenses()
     {
@@ -250,7 +282,7 @@ class Index extends Component
             }
             $trip_expense->currency_id = $fuel->currency_id;
             $trip_expense->category = $fuel->category ?: 'Self';
-            $trip_expense->amount = $fuel->amount;
+            $trip_expense->amount = $this->resolveFuelAmount($fuel);
             $trip_expense->exchange_rate = $fuel->exchange_rate;
             $trip_expense->exchange_amount = $fuel->exchange_amount;
             $trip_expense->date = $fuel->trip?->start_date ?? $fuel->date;
@@ -259,11 +291,22 @@ class Index extends Component
             $created++;
         }
 
-        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count();
+        $repaired = 0;
+        foreach ($this->zeroAmountFuelTripExpensesQuery()->get() as $trip_expense) {
+            if (!$trip_expense->fuel) {
+                continue;
+            }
+            $trip_expense->amount = $this->resolveFuelAmount($trip_expense->fuel);
+            $trip_expense->save();
+            $repaired++;
+        }
+
+        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count()
+            + $this->zeroAmountFuelTripExpensesQuery()->count();
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => "Created {$created} missing trip expense record(s).",
+            'message' => "Created {$created} missing trip expense record(s), repaired {$repaired} with no amount.",
         ]);
     }
 
