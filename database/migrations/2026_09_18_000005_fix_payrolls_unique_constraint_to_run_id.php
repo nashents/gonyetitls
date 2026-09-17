@@ -36,6 +36,15 @@ return new class extends Migration
             WHERE p1.payroll_run_id IS NOT NULL
         ');
 
+        // payrolls_user_month_year_unique (user_id, month, year) is also the
+        // only index covering the user_id foreign key (users.id), since it
+        // starts with that column. MySQL refuses to drop it otherwise ("1553
+        // ... needed in a foreign key constraint") — add a plain index on
+        // user_id first so the FK stays supported once it's gone.
+        Schema::table('payrolls', function (Blueprint $table) {
+            $table->index('user_id', 'payrolls_user_id_index');
+        });
+
         Schema::table('payrolls', function (Blueprint $table) {
             $table->dropUnique('payrolls_user_month_year_unique');
             $table->unique('payroll_run_id', 'payrolls_payroll_run_id_unique');
@@ -50,6 +59,10 @@ return new class extends Migration
                 ['user_id', 'month', 'year'],
                 'payrolls_user_month_year_unique'
             );
+        });
+
+        Schema::table('payrolls', function (Blueprint $table) {
+            $table->dropIndex('payrolls_user_id_index');
         });
     }
 };
