@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TaxBracket;
 use App\Http\Requests\StoreTaxBracketRequest;
 use App\Http\Requests\UpdateTaxBracketRequest;
+use Illuminate\Support\Facades\Session;
 
 class TaxBracketController extends Controller
 {
@@ -81,6 +82,8 @@ class TaxBracketController extends Controller
      */
     public function destroy(TaxBracket $taxBracket)
     {
-        //
+        $taxBracket->delete();
+        Session::flash('success','Tax Bracket Deleted Successfully!!');
+        return redirect()->back();
     }
 }

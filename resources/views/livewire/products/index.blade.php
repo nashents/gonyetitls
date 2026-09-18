@@ -44,6 +44,8 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">Image
+                                    </th>
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">Code
@@ -53,6 +55,10 @@
                                     <th class="th-sm">Item(s) in Inventory
                                     </th>
                                     <th class="th-sm">UOM
+                                    </th>
+                                    <th class="th-sm">Buy Price
+                                    </th>
+                                    <th class="th-sm">Sell Price
                                     </th>
                                     <th class="th-sm">Total Value
                                     </th>
@@ -68,6 +74,9 @@
                                 <tbody>
                                     @forelse ($products as $product)
                                   <tr>
+                                    <td class="text-center">
+                                        <img src="{{ asset('images/uploads/' . ($product->filename ?: 'noimage.png')) }}" alt="{{ $product->name }}" style="height:40px; width:40px; object-fit:cover; border-radius:4px;">
+                                    </td>
                                     <td>
                                         {{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}
                                         @if ($this->sageEnabled)
@@ -95,6 +104,16 @@
                                         @endif
                                     </td>
                                     <td>{{$product->unit_of_measure}}</td>
+                                    <td>
+                                        @if ($product->price)
+                                            {{ $base_currency->name }} {{ $base_currency->symbol }}{{ number_format($product->price, 2) }}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($product->sell_price)
+                                            {{ $base_currency->name }} {{ $base_currency->symbol }}{{ number_format($product->sell_price, 2) }}
+                                        @endif
+                                    </td>
                                     <td>
                                         @php
                                             $totalValue = $this->calculateTotalValue($product->id);
@@ -140,7 +159,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="12">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Products Found ....
                                         </div>
