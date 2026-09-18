@@ -110,15 +110,28 @@
                                     <i class="fa fa-wrench"></i> Fix Trip Expenses ({{ $missingTripExpensesCount }})
                                 </a>
                             @endif
-                            
+
                             </div>
                             <div class="col-md-5" style="float: right;">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search Fuel Orders....">
                                 </div>
-                               
+
                             </div>
                             <br>
+
+                            @if (Auth::user()->is_admin() && count($unresolvableFuelTripExpenses) > 0)
+                                <div class="alert alert-danger" style="font-size:12px;">
+                                    <strong><i class="fa fa-exclamation-triangle"></i> {{ count($unresolvableFuelTripExpenses) }} fuel order(s) have no price recorded anywhere</strong>
+                                    (no amount, quantity, or unit price to compute from) — the "Fix Trip Expenses" button can't fill these in on its own. Open each one and enter the real cost:
+                                    <br>
+                                    @foreach ($unresolvableFuelTripExpenses as $u)
+                                        <a href="{{ route('fuels.edit', $u['fuel_id']) }}" target="_blank" class="mr-10">
+                                            Fuel #{{ $u['order_number'] ?? $u['fuel_id'] }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
                             {{-- Legend --}}
                             <div class="mb-10" style="font-size:12px;">
                                 <span class="badge badge-success">&nbsp;</span> Initial fill

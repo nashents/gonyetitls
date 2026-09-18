@@ -80,7 +80,13 @@ class Index extends Component
 
     // Admin-only: fuel orders with a trip attached but no matching trip
     // expense record (e.g. from edits made before that sync existed).
+    // missingTripExpensesCount only ever counts what the backfill button can
+    // actually fix; unresolvableFuelTripExpenses lists the ones it can't —
+    // fuel orders with no amount, quantity, or unit_price recorded anywhere,
+    // so there's no number to recompute from. Those need a human to open the
+    // fuel order and enter the real price.
     public $missingTripExpensesCount = 0;
+    public $unresolvableFuelTripExpenses = [];
 
     public $unit_price = 0;
     public $amount = 0;
@@ -206,8 +212,7 @@ class Index extends Component
         $this->containers = Container::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
 
-        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count()
-            + $this->zeroAmountFuelTripExpensesQuery()->count();
+        $this->refreshTripExpenseCounts();
     }
 
     public function refreshStations()
@@ -246,6 +251,9 @@ class Index extends Component
      * had it set even though quantity/unit_price are. Every other place in
      * this component computes amount the same way, so fall back to it here
      * too instead of copying a possibly-null amount onto the trip expense.
+     * Returns 0.0 when there's genuinely no cost data anywhere on the fuel
+     * order (amount, quantity and unit_price all empty/zero) — that can't be
+     * fixed by recomputing, only by someone entering the real price.
      */
     protected function resolveFuelAmount(Fuel $fuel): float
     {
@@ -254,6 +262,31 @@ class Index extends Component
         return $amount > 0
             ? $amount
             : round((float) $fuel->quantity * (float) $fuel->unit_price, 2);
+    }
+
+    /**
+     * Zero-amount fuel trip expenses split into ones this tool can actually
+     * fix (resolveFuelAmount finds a real number) vs ones with no cost data
+     * anywhere on the underlying fuel order — those can only be fixed by
+     * someone editing the fuel order to enter its real unit price.
+     */
+    protected function splitZeroAmountFuelTripExpenses(): array
+    {
+        $resolvable = collect();
+        $unresolvable = collect();
+
+        foreach ($this->zeroAmountFuelTripExpensesQuery()->with('fuel')->get() as $trip_expense) {
+            if (!$trip_expense->fuel) {
+                continue;
+            }
+            if ($this->resolveFuelAmount($trip_expense->fuel) > 0) {
+                $resolvable->push($trip_expense);
+            } else {
+                $unresolvable->push($trip_expense);
+            }
+        }
+
+        return [$resolvable, $unresolvable];
     }
 
     /**
@@ -291,23 +324,50 @@ class Index extends Component
             $created++;
         }
 
+        // Only re-save (and count as "repaired") the ones that actually
+        // resolve to a real amount — re-saving a still-zero amount would
+        // just write 0 back over 0, leaving the button's count stuck forever
+        // with no indication anything was actually wrong.
+        [$resolvable] = $this->splitZeroAmountFuelTripExpenses();
         $repaired = 0;
-        foreach ($this->zeroAmountFuelTripExpensesQuery()->get() as $trip_expense) {
-            if (!$trip_expense->fuel) {
-                continue;
-            }
+        foreach ($resolvable as $trip_expense) {
             $trip_expense->amount = $this->resolveFuelAmount($trip_expense->fuel);
             $trip_expense->save();
             $repaired++;
         }
 
-        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count()
-            + $this->zeroAmountFuelTripExpensesQuery()->count();
+        $this->refreshTripExpenseCounts();
+
+        $message = "Created {$created} missing trip expense record(s), repaired {$repaired} with no amount.";
+        if (count($this->unresolvableFuelTripExpenses) > 0) {
+            $message .= ' ' . count($this->unresolvableFuelTripExpenses) . ' still need the fuel order edited manually (no price recorded anywhere on it).';
+        }
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => "Created {$created} missing trip expense record(s), repaired {$repaired} with no amount.",
+            'message' => $message,
         ]);
+    }
+
+    /**
+     * Recomputes the admin badge count (only what backfillMissingTripExpenses
+     * can actually fix) and the separate unresolvable list (fuel orders with
+     * no price anywhere — need manual editing, not a re-run of the button).
+     */
+    protected function refreshTripExpenseCounts(): void
+    {
+        [$resolvable, $unresolvable] = $this->splitZeroAmountFuelTripExpenses();
+
+        $this->missingTripExpensesCount = $this->missingTripExpensesQuery()->count() + $resolvable->count();
+
+        $this->unresolvableFuelTripExpenses = $unresolvable
+            ->map(fn ($te) => [
+                'fuel_id' => $te->fuel_id,
+                'trip_expense_id' => $te->id,
+                'order_number' => $te->fuel->order_number ?? null,
+            ])
+            ->values()
+            ->all();
     }
 
     public function updatedSearchHorse()
