@@ -269,18 +269,29 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         if ($this->trip_filter === 'offloaded_date') {
             $trips->whereHas('delivery_note', function ($q) {
                 if (filled($this->from) && filled($this->to)) {
-                    $q->whereBetween('offloaded_date', [$this->from, $this->to]);
+                    // offloaded_date is a VARCHAR storing datetime-local values
+                    // (e.g. "2026-09-30T14:30"), so a plain string whereBetween
+                    // against "2026-09-30" excludes any trip offloaded later that
+                    // day — DATE() extracts just the date portion for comparison.
+                    $q->whereRaw('DATE(offloaded_date) BETWEEN ? AND ?', [$this->from, $this->to]);
                 } else {
                     $q->whereMonth('offloaded_date', date('m'))
                     ->whereYear('offloaded_date', date('Y'));
                 }
             });
         } else {
+            // Whitelist the column before it ever reaches raw SQL — trip_filter
+            // is passed in from a public Livewire property and can be tampered
+            // with client-side.
+            $dateColumn = in_array($this->trip_filter, ['created_at', 'start_date', 'end_date', 'trip_status_date'], true)
+                ? $this->trip_filter
+                : 'created_at';
+
             if (filled($this->from) && filled($this->to)) {
-                $trips->whereBetween("trips.{$this->trip_filter}", [$this->from, $this->to]);
+                $trips->whereRaw("DATE(trips.{$dateColumn}) BETWEEN ? AND ?", [$this->from, $this->to]);
             } else {
-                $trips->whereMonth("trips.{$this->trip_filter}", date('m'))
-                    ->whereYear("trips.{$this->trip_filter}", date('Y'));
+                $trips->whereMonth("trips.{$dateColumn}", date('m'))
+                    ->whereYear("trips.{$dateColumn}", date('Y'));
             }
         }
 

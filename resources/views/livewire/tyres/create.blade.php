@@ -253,7 +253,18 @@
                                                 </select>
                                                 @error('selectedTransferItem.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
-                                        @else   
+                                        @elseif ($source == "Purchase" && $selectedPurchase)
+                                            <div class="form-group">
+                                                <label for="country">Product(s) — from this Purchase Order<span class="required" style="color: red">*</span></label>
+                                                <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control" required>
+                                                    <option value="">Select Product</option>
+                                                    @foreach ($purchase_products as $purchase_product)
+                                                        <option value="{{$purchase_product->id}}">{{$purchase_product->product ? $purchase_product->product->product_number : ""}} - {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product && $purchase_product->product->identification_number ? "(".$purchase_product->product->identification_number.")" : ""}}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('selectedPurchaseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        @else
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
                                                 <div class="mb-10">
@@ -418,7 +429,18 @@
                                             </select>
                                             @error('selectedTransferItem.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
-                                    @else   
+                                    @elseif ($source == "Purchase" && $selectedPurchase)
+                                        <div class="form-group">
+                                            <label for="country">Product(s) — from this Purchase Order<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="selectedPurchaseProduct.{{$value}}" class="form-control" required>
+                                                <option value="">Select Product</option>
+                                                @foreach ($purchase_products as $purchase_product)
+                                                    <option value="{{$purchase_product->id}}">{{$purchase_product->product ? $purchase_product->product->product_number : ""}} - {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product && $purchase_product->product->identification_number ? "(".$purchase_product->product->identification_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedPurchaseProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @else
                                         <div class="form-group">
                                             <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
                                             <div class="mb-10">

@@ -804,6 +804,12 @@ class Create extends Component
         if(!is_null($id)){
             $goods_received = GoodsReceived::find($id);
             $this->vendor_id = $goods_received->vendor_id ?? null;
+
+            if ($goods_received && $goods_received->purchase_id) {
+                $this->source = "Purchase";
+                $this->selectedPurchase = $goods_received->purchase_id;
+                $this->updatedSelectedPurchase($this->selectedPurchase);
+            }
         }
     }
 

@@ -1777,7 +1777,7 @@ class Index extends Component
         if ($this->trip_filter === 'offloaded_date') {
             $trips->whereHas('delivery_note', function ($q) {
                 if (filled($this->from) && filled($this->to)) {
-                    $q->whereBetween('offloaded_date', [$this->from, $this->to]);
+                    $q->whereRaw('DATE(offloaded_date) BETWEEN ? AND ?', [$this->from, $this->to]);
                 } elseif (! filled($this->search)) {
                     // Skip the default "this month" restriction while searching so
                     // matches outside the current period aren't hidden.
@@ -1795,12 +1795,18 @@ class Index extends Component
                 ->select('trips.*')
                 ->orderBy('delivery_notes.offloaded_date', 'desc');
         } else {
+            // Whitelist the column before it ever reaches raw SQL — trip_filter
+            // is a public Livewire property and can be tampered with client-side.
+            $dateColumn = in_array($this->trip_filter, ['created_at', 'start_date', 'end_date', 'trip_status_date'], true)
+                ? $this->trip_filter
+                : 'created_at';
+
             if (filled($this->from) && filled($this->to)) {
-                $trips->whereBetween($this->trip_filter, [$this->from, $this->to]);
+                $trips->whereRaw("DATE({$dateColumn}) BETWEEN ? AND ?", [$this->from, $this->to]);
             } else {
                 if (!filled($this->search)) {
-                    $trips->whereMonth($this->trip_filter, date('m'))
-                        ->whereYear($this->trip_filter, date('Y'));
+                    $trips->whereMonth($dateColumn, date('m'))
+                        ->whereYear($dateColumn, date('Y'));
                 }
             }
 
