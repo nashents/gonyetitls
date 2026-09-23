@@ -487,7 +487,10 @@
                                             |--------------------------------------------------------------------------
                                             */
                                             $offloadedDate = $newformatDate($trip->delivery_note?->offloaded_date);
-                                           
+
+                                            // Actual only when it comes from a real delivery note (offloaded);
+                                            // the final fallback below is an estimate, not a confirmed offload.
+                                            $offloadedDateIsActual = (bool) $offloadedDate;
 
                                             /*
                                             |--------------------------------------------------------------------------
@@ -501,6 +504,8 @@
                                                 ->filter()
                                                 ->unique()
                                                 ->join(', ');
+
+                                                $offloadedDateIsActual = (bool) $offloadedDate;
                                             }
 
                                             /*
@@ -513,6 +518,8 @@
                                                 $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
                                                                    ? $newformatDate($trip->trip_status_date)
                                                                      : $newformatDate($trip->end_date);
+
+                                                $offloadedDateIsActual = false;
                                             }
 
                                           
@@ -649,7 +656,14 @@
                                                 <td>
                                                     {{ $formatDate($trip->start_date) }}
                                                     <hr class="my-1">
-                                                    {{ $offloadedDate }}
+                                                    @if ($offloadedDate)
+                                                        {{ $offloadedDate }}
+                                                        @if ($offloadedDateIsActual)
+                                                            <span class="badge badge-success" title="Actual offloading date, from the delivery note">Ofld</span>
+                                                        @else
+                                                            <span class="badge badge-secondary" title="Estimated — no delivery note offload recorded yet">Est</span>
+                                                        @endif
+                                                    @endif
                                                 </td>
 
                                                <td>
@@ -826,6 +840,20 @@
                                                                     : ($trip->exchange_rate ?: '-') }}
                                                             </small>
                                                         @endif
+
+                                                        <hr class="my-1">
+                                                        <small><strong>Payment:</strong></small><br>
+                                                        @if ($trip->payment_status == "Paid")
+                                                            <span class="label label-success label-wide">
+                                                                Paid {{ $trip->currency?->symbol }}{{ number_format((float) $trip->amount_paid, 2) }}
+                                                            </span>
+                                                        @elseif ($trip->payment_status == "Partial")
+                                                            <span class="label label-warning label-wide">
+                                                                Partial {{ $trip->currency?->symbol }}{{ number_format((float) $trip->amount_paid, 2) }}
+                                                            </span>
+                                                        @else
+                                                            <span class="label label-default label-wide">Unpaid</span>
+                                                        @endif
                                                     </td>
                                                 @endif
 
@@ -989,6 +1017,91 @@
                                         class="btn bg-success btn-wide btn-rounded">
                                     <i class="fa fa-save"></i>
                                     Save Changes
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false"
+            class="modal"
+            id="paidModal"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="paidModalLabel"
+            data-backdrop-color="blue">
+
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="paidModalLabel">
+                            <i class="fa fa-money"></i>
+                            Mark As Paid - {{ $trip ? $trip->trip_number : "" }}
+
+                            <button type="button"
+                                    class="close"
+                                    data-dismiss="modal"
+                                    aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </h4>
+                    </div>
+
+                    <form wire:submit.prevent="markPaid()">
+
+                        <div class="modal-body">
+
+                            <div class="form-group">
+                                <label>
+                                    Freight Amount:
+                                    {{ $trip && $trip->currency ? $trip->currency->name.' '.$trip->currency->symbol : '' }}
+                                    {{ $trip ? number_format((float) $trip->freight, 2) : '' }}
+                                </label>
+                            </div>
+
+                            <div class="mb-10">
+                                <input type="radio" wire:model="payment_amount_type" value="full" class="line-style" id="paidTypeFull" />
+                                <label for="paidTypeFull" class="radio-label">Full Freight Amount</label>
+                                <input type="radio" wire:model="payment_amount_type" value="custom" class="line-style" id="paidTypeCustom" />
+                                <label for="paidTypeCustom" class="radio-label">Custom Amount</label>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Amount Paid<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0.01"
+                                       class="form-control"
+                                       wire:model.debounce.300ms="paid_amount"
+                                       {{ $payment_amount_type == 'full' ? 'disabled' : '' }}
+                                       required>
+                                @error('paid_amount')
+                                    <span class="error" style="color:red">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <div class="btn-group" role="group">
+
+                                <button type="button"
+                                        class="btn btn-gray btn-wide btn-rounded"
+                                        data-dismiss="modal">
+                                    <i class="fa fa-times"></i>
+                                    Close
+                                </button>
+
+                                <button type="submit"
+                                        class="btn bg-success btn-wide btn-rounded">
+                                    <i class="fa fa-save"></i>
+                                    Save Payment
                                 </button>
 
                             </div>

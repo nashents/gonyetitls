@@ -52,10 +52,17 @@ class Trip extends Model implements Auditable, EditAuthorizable
     'multiple_destinations'      => 'boolean',
     'deal_id' => 'integer',
     'unlocked_until' => 'datetime',
+    'amount_paid'          => 'float',
+    'exchange_amount_paid' => 'float',
+    'paid_at'              => 'datetime',
 ];
 
     public function unlocked_by_user(){
         return $this->belongsTo(User::class, 'unlocked_by');
+    }
+
+    public function paid_by_user(){
+        return $this->belongsTo(User::class, 'paid_by');
     }
 
     /** True while an admin's temporary unlock window (see unlockTrip()) is still active. */

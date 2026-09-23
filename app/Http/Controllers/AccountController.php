@@ -118,4 +118,25 @@ class AccountController extends Controller
         Session::flash('success','Account Deleted Successfully');
         return redirect()->back();
     }
+
+    public function deactivate(Account $account)
+    {
+        if ($account->is_locked) {
+            Session::flash('error', 'This account is a core system account required by the application and cannot be deactivated.');
+            return redirect()->back();
+        }
+
+        $account->status = 0;
+        $account->update();
+        Session::flash('success', 'Account Deactivated Successfully');
+        return redirect()->back();
+    }
+
+    public function activate(Account $account)
+    {
+        $account->status = 1;
+        $account->update();
+        Session::flash('success', 'Account Activated Successfully');
+        return redirect()->back();
+    }
 }

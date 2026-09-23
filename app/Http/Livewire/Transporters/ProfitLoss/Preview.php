@@ -26,6 +26,9 @@ class Preview extends Component
     public $fromDt;
     public $toDt;
 
+    // 'accrual' (default) or 'cash' — see Index.php for the full explanation.
+    public $basis = 'accrual';
+
     public $company;
     public $default_currency;
     public $default_currency_id;
@@ -73,7 +76,7 @@ class Preview extends Component
     // Foreign Exchange, and any other account type under the Expenses group.
     public $opex_groups = [];
 
-    public function mount($selectedTransporter, $from, $to)
+    public function mount($selectedTransporter, $from, $to, $basis = 'accrual')
     {
         $this->company = Auth::user()->employee->company;
 
@@ -82,6 +85,7 @@ class Preview extends Component
 
         $this->from = $from;
         $this->to   = $to;
+        $this->basis = in_array($basis, ['cash', 'accrual']) ? $basis : 'accrual';
 
         $this->fromDt = Carbon::parse($from)->startOfDay();
         $this->toDt   = Carbon::parse($to)->endOfDay();
@@ -139,10 +143,12 @@ class Preview extends Component
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
             ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            ->when($this->basis === 'cash', fn ($x) => $x->whereNotNull('paid_at'))
             ->get([
                 'id', 'currency_id',
                 'freight', 'exchange_customer_freight',
                 'transporter_agreement', 'transporter_freight', 'exchange_transporter_freight',
+                'amount_paid', 'exchange_amount_paid',
             ]);
 
         $this->total_trips = $matchingTrips->count();
@@ -150,6 +156,13 @@ class Preview extends Component
         $totalIncome = 0.0;
         foreach ($matchingTrips as $trip) {
             $sameCurrency = ((int) $trip->currency_id === (int) $this->default_currency_id);
+
+            if ($this->basis === 'cash') {
+                $totalIncome += $sameCurrency
+                    ? (float) $trip->amount_paid
+                    : (float) ($trip->exchange_amount_paid ?? $trip->amount_paid);
+                continue;
+            }
 
             $useTransporterFreight = $this->isThirdPartyTransporter
                 && (bool) $trip->transporter_agreement
@@ -309,6 +322,7 @@ class Preview extends Component
             }, function ($x) {
                 $x->whereBetween('bills.bill_date', [$this->fromDt, $this->toDt]);
             })
+            ->when($this->basis === 'cash', fn ($x) => $x->whereIn('bills.status', ['Paid', 'Partial']))
             ->with([
                 'account:id,name,account_type_id',
                 'account.account_type:id,name',
@@ -320,7 +334,7 @@ class Preview extends Component
                 'inventory.product:id,name,brand_id',
                 'inventory.product.brand:id,name',
 
-                'bill:id,bill_number,currency_id,bill_date,trip_id,horse_id,trailer_id,driver_id',
+                'bill:id,bill_number,currency_id,bill_date,trip_id,horse_id,trailer_id,driver_id,total,balance,status',
                 'bill.currency:id,name,symbol',
                 'bill.trip:id,trip_number,start_date',
                 'bill.horse:id,registration_number,fleet_number',
@@ -347,6 +361,13 @@ class Preview extends Component
             $amount = ((int)($bill?->currency_id) === (int)$this->default_currency_id)
                 ? (float) $be->subtotal_incl
                 : (float) $be->exchange_amount;
+
+            if ($this->basis === 'cash') {
+                $billTotal = (float) ($bill?->total ?? 0);
+                $billBalance = (float) ($bill?->balance ?? 0);
+                $paidFraction = $billTotal > 0 ? max(0, min(1, ($billTotal - $billBalance) / $billTotal)) : 0;
+                $amount *= $paidFraction;
+            }
 
             if (abs($amount) < 0.00001) continue;
 

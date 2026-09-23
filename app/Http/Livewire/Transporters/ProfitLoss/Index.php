@@ -28,6 +28,11 @@ class Index extends Component
     public $fromDt;
     public $toDt;
 
+    // 'accrual' (default) shows all approved trips/bills in the date range, regardless
+    // of payment. 'cash' restricts to trips marked paid and bills with a payment
+    // recorded, using the actual amount paid instead of the full trip/bill amount.
+    public $basis = 'accrual';
+
     public $company;
     public $default_currency;
     public $default_currency_id;
@@ -139,6 +144,7 @@ class Index extends Component
     public function updatedSelectedTransporter() { $this->recalculate(); }
     public function updatedFrom()                { $this->recalculate(); }
     public function updatedTo()                  { $this->recalculate(); }
+    public function updatedBasis()                { $this->recalculate(); }
 
     public function generateStatement()
     {
@@ -229,10 +235,14 @@ class Index extends Component
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
             ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            // Cash basis: only trips marked Paid (via the Trips index "Mark as Paid"
+            // action) count as income, and only for the amount actually paid.
+            ->when($this->basis === 'cash', fn ($x) => $x->whereNotNull('paid_at'))
             ->get([
                 'id', 'currency_id',
                 'freight', 'exchange_customer_freight',
                 'transporter_agreement', 'transporter_freight', 'exchange_transporter_freight',
+                'amount_paid', 'exchange_amount_paid',
             ]);
 
         $this->total_trips = $matchingTrips->count();
@@ -240,6 +250,13 @@ class Index extends Component
         $totalIncome = 0.0;
         foreach ($matchingTrips as $trip) {
             $sameCurrency = ((int) $trip->currency_id === (int) $this->default_currency_id);
+
+            if ($this->basis === 'cash') {
+                $totalIncome += $sameCurrency
+                    ? (float) $trip->amount_paid
+                    : (float) ($trip->exchange_amount_paid ?? $trip->amount_paid);
+                continue;
+            }
 
             $useTransporterFreight = $this->isThirdPartyTransporter
                 && (bool) $trip->transporter_agreement
@@ -386,6 +403,10 @@ class Index extends Component
             }, function ($x) {
                 $x->whereBetween('bills.bill_date', [$this->fromDt, $this->toDt]);
             })
+            // Cash basis: only bills with a payment recorded against them (status
+            // set by the Bills payment/drawdown flow) — the paid fraction is then
+            // applied to each line's amount below.
+            ->when($this->basis === 'cash', fn ($x) => $x->whereIn('bills.status', ['Paid', 'Partial']))
             ->with([
                 'account:id,name,account_type_id',
                 'account.account_type:id,name',
@@ -397,7 +418,7 @@ class Index extends Component
                 'inventory.product:id,name,brand_id',
                 'inventory.product.brand:id,name',
 
-                'bill:id,bill_number,currency_id,bill_date,trip_id,horse_id,trailer_id,driver_id',
+                'bill:id,bill_number,currency_id,bill_date,trip_id,horse_id,trailer_id,driver_id,total,balance,status',
                 'bill.currency:id,name,symbol',
                 'bill.trip:id,trip_number,start_date',
                 'bill.horse:id,registration_number,fleet_number',
@@ -425,6 +446,16 @@ class Index extends Component
             $amount = ((int)($bill?->currency_id) === (int)$this->default_currency_id)
                 ? (float) $be->subtotal_incl
                 : (float) $be->exchange_amount;
+
+            // Cash basis: bill_expenses has no per-line payment record, so prorate
+            // each line by how much of the whole bill has actually been paid
+            // (total - balance) / total — a fully paid bill scales by 1.0.
+            if ($this->basis === 'cash') {
+                $billTotal = (float) ($bill?->total ?? 0);
+                $billBalance = (float) ($bill?->balance ?? 0);
+                $paidFraction = $billTotal > 0 ? max(0, min(1, ($billTotal - $billBalance) / $billTotal)) : 0;
+                $amount *= $paidFraction;
+            }
 
             // Skip true zeros (optional)
             if (abs($amount) < 0.00001) {

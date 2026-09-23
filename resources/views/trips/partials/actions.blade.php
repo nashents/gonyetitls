@@ -41,6 +41,14 @@
                         </a>
                     </li>
                 @endif
+                @if ($showFreight ?? false)
+                    <li>
+                        <a href="" wire:click.prevent="showPaid({{$trip->id}})">
+                            <i class="fas fa-money color-success"></i>
+                            {{ $trip->payment_status == "Paid" ? "Update Payment" : "Mark as Paid" }}
+                        </a>
+                    </li>
+                @endif
                 @if ($trip->status == False)
                     @if ($trip->trip_status == "Offloaded")
                         <li>

@@ -414,6 +414,8 @@ class Index extends Component
     public $cargo_type;
     public $importFile;
     public $mark_completed;
+    public $payment_amount_type = 'full';
+    public $paid_amount;
 
     protected $listeners = ['tripStatusUpdated' => '$refresh', 'tripNoteAdded' => '$refresh'];
 
@@ -481,6 +483,67 @@ class Index extends Component
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Trip Completed Successfully!!"
+        ]);
+    }
+
+    public function showPaid($id){
+
+        if (is_null($id)) {
+            return;
+        }
+
+        $this->trip_id = $id;
+        $this->trip = Trip::find($id);
+        $this->payment_amount_type = 'full';
+        $this->paid_amount = $this->trip ? number_format((float) $this->trip->freight, 2, '.', '') : null;
+        $this->dispatchBrowserEvent('show-paidModal');
+    }
+
+    public function updatedPaymentAmountType($value){
+        if ($value === 'full' && $this->trip) {
+            $this->paid_amount = number_format((float) $this->trip->freight, 2, '.', '');
+        }
+    }
+
+    public function markPaid(){
+
+        $trip = Trip::find($this->trip_id);
+
+        if (!$trip) {
+            return;
+        }
+
+        $amount = $this->payment_amount_type === 'full'
+            ? (float) $trip->freight
+            : (float) $this->paid_amount;
+
+        $this->validate([
+            'paid_amount' => 'required_if:payment_amount_type,custom|nullable|numeric|min:0.01',
+        ], [], ['paid_amount' => 'Amount Paid']);
+
+        if ($amount <= 0) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Please enter a valid amount paid."
+            ]);
+            return;
+        }
+
+        DB::transaction(function () use ($trip, $amount) {
+            $trip->amount_paid = $amount;
+            $trip->exchange_amount_paid = $trip->exchange_rate
+                ? $amount * (float) $trip->exchange_rate
+                : null;
+            $trip->paid_at = now();
+            $trip->paid_by = Auth::user()->id;
+            $trip->payment_status = $amount >= ((float) $trip->freight - 0.01) ? 'Paid' : 'Partial';
+            $trip->update();
+        });
+
+        $this->dispatchBrowserEvent('hide-paidModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip Marked As Paid Successfully!!"
         ]);
     }
 

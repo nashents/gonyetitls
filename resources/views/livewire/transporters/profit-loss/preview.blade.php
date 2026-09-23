@@ -69,6 +69,7 @@
                                 <br>
                                 <h5 class="to">Statement of Comprehensive Income</h5>
                                 <div><strong>{{ $selected_transporter?->name ?? '—' }}</strong></div>
+                                <div><small>{{ $basis === 'cash' ? 'Cash Basis (paid trips/bills only)' : 'Accrual Basis' }}</small></div>
                                 <br>
                             </div>
                         </div>

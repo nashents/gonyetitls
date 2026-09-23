@@ -25,6 +25,7 @@
                 'selectedTransporter' => $selectedTransporter,
                 'from' => $from,
                 'to' => $to,
+                'basis' => request('basis', 'accrual'),
                 ])
         </div>
     </div>

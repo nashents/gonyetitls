@@ -360,6 +360,16 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-paidModal', event => {
+                $('#paidModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-paidModal', event => {
+                $('#paidModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-bulkCompletedModal', event => {
                 $('#bulkCompletedModal').modal('show');
             })

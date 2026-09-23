@@ -87,5 +87,27 @@ class Account extends Model implements Auditable
         'description',
         'hs_code',
         'is_locked',
+        'status',
     ];
+
+    /** Active accounts only — for pickers where nothing is already selected (e.g. Create forms). */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
+    /**
+     * Active accounts, plus a specific inactive one kept visible — for Edit forms, so a bill/
+     * invoice/etc already pointing at a since-deactivated account doesn't silently lose it
+     * from the dropdown (and doesn't get its account_id blanked out on next save).
+     */
+    public function scopeSelectable($query, $keepId = null)
+    {
+        return $query->where(function ($q) use ($keepId) {
+            $q->where('status', 1);
+            if (!empty($keepId)) {
+                $q->orWhere('id', $keepId);
+            }
+        });
+    }
 }

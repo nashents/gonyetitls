@@ -53,11 +53,28 @@
                                                         <input type="date" wire:model.debounce.300ms="to" class="form-control">
                                                     </div>
                                                 </div>
+
+                                                <div class="col-lg-2" style="margin-left: 10px">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">Basis</span>
+                                                        <select wire:model="basis" class="form-control">
+                                                            <option value="accrual">Accrual</option>
+                                                            <option value="cash">Cash</option>
+                                                        </select>
+                                                    </div>
+                                                    <small style="color: green">
+                                                        @if ($basis === 'cash')
+                                                            Only paid trips/bills, using amounts actually paid.
+                                                        @else
+                                                            All approved trips/bills, regardless of payment.
+                                                        @endif
+                                                    </small>
+                                                </div>
                                             </form>
 
                                             @if (!empty($selectedTransporter) && !empty($from) && !empty($to))
                                                 <div class="col-lg-2">
-                                                    <a href="{{ route('transporters.statement.preview', ['selectedTransporter' => $selectedTransporter, 'from' => $from, 'to' => $to]) }}"
+                                                    <a href="{{ route('transporters.statement.preview', ['selectedTransporter' => $selectedTransporter, 'from' => $from, 'to' => $to, 'basis' => $basis]) }}"
                                                        class="btn btn-default border-primary btn-rounded btn-wide">
                                                         <i class="fa fa-eye"></i> Preview Report (PDF)
                                                     </a>
