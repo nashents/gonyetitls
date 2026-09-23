@@ -115,7 +115,7 @@ class Index extends Component
         $this->currencies = Currency::latest()->get();
         $this->bank_accounts = BankAccount::latest()->get();
         $this->customers = Customer::latest()->get();
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
 
     }
 

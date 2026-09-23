@@ -101,15 +101,15 @@ class Edit extends Component
         $this->description = $this->product->description;
         $this->previous_image = $this->product->filename;
 
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::selectable($this->expense_account_id)->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+         $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
     }

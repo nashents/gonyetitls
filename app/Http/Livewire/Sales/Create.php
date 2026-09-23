@@ -229,18 +229,18 @@ class Create extends Component
 
     public function mount(){
 
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
         $this->sale_number = $this->saleNumber();
         $this->invoice_number = $this->invoiceNumber();
         $this->inventories = collect();
 
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
         $this->income_account_id = Account::where('name','Sales')->first()->id;
@@ -735,7 +735,7 @@ class Create extends Component
 
         }
 
-           $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+           $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
 

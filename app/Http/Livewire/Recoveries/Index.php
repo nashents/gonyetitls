@@ -87,7 +87,7 @@ class Index extends Component
         $this->driver = Auth::user()->employee->driver;
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::latest()->get();
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
     }
 
     public function receiptNumber(){

@@ -372,15 +372,15 @@ public function quotationNumber(){
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
 
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
         $this->income_account_id = Account::where('name','Sales')->first()->id;
@@ -980,11 +980,11 @@ public function quotationNumber(){
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-       
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
             return view('livewire.quotations.create',[

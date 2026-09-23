@@ -94,14 +94,14 @@ class Items extends Component
         $this->tax_amount =   $this->quotation->tax_amount; 
         $this->quotation_items = $this->quotation->quotation_items;
 
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
         $this->income_account_id = Account::where('name','Sales')->first()->id;
@@ -345,7 +345,7 @@ class Items extends Component
 
         $this->quotation_items = QuotationItem::where('quotation_id',$this->quotation_id)->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
         return view('livewire.quotations.items',[

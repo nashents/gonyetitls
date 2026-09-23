@@ -190,10 +190,10 @@ class Create extends Component
             ->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
         $this->tax_accounts = Tax::whereHas('account', function ($query) {

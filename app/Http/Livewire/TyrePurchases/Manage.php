@@ -117,7 +117,7 @@ class Manage extends Component
             ->where('department','tyre')->get();
         }
         $this->vendor_types = VendorType::latest()->get();
-        $this->accounts = Account::orderBy('name','asc')->get();
+        $this->accounts = Account::active()->orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::all();

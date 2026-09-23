@@ -43,11 +43,11 @@ class Index extends Component
     public function mount($category){
         $this->resetPage();
         $this->category = $category;
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
@@ -119,6 +119,16 @@ class Index extends Component
             $this->expense_account_id = $this->product->expense_account_id;
             $this->income_account_id = $this->product->account_id;
             $this->price = $this->product->price;
+
+            // Keep this product's already-assigned accounts visible in the dropdown
+            // even if since deactivated (mount() only listed active ones by default).
+            $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type', function($q){
+                $q->where('name', 'Income');
+             })->orderBy('name','asc')->get();
+            $this->expense_accounts = Account::selectable($this->expense_account_id)->whereHas('account_type.account_type_group', function($q){
+                $q->where('name', 'Expenses');
+             })->orderBy('name','asc')->get();
+
             $this->dispatchBrowserEvent('show-product_serviceEditModal');
 
         }

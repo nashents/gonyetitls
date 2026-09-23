@@ -50,10 +50,10 @@ class Index extends Component
     public function mount(){
         $this->employees = Employee::orderBy('name')->get();
         $this->vendors = Vendor::orderBy('name')->get();
-        $this->liability_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->liability_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Liabilities & Credit Cards');
         })->orderBy('name','asc')->get();
-        $this->asset_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->asset_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Assets');
         })->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name')->get();
@@ -245,10 +245,10 @@ class Index extends Component
         }
         $this->vendors = Vendor::orderBy('name')->get();
           $this->employees = Employee::orderBy('name')->get();
-        $this->liability_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->liability_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Liabilities & Credit Cards');
         })->orderBy('name','asc')->get();
-        $this->asset_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->asset_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Assets');
         })->orderBy('name','asc')->get();
         $this->loan_types = LoanType::orderBy('name')->get();

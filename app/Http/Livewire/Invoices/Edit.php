@@ -1137,15 +1137,15 @@ class Edit extends Component
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');

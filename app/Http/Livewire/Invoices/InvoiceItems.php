@@ -96,14 +96,14 @@ class InvoiceItems extends Component
         $this->subtotal =  $this->invoice->subtotal;
         $this->total =   $this->invoice->total;
         $this->tax_amount =   $this->invoice->tax_amount; 
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->accounts = Account::active()->where('account_type_id',1)->latest()->get();
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
         $this->income_account_id = Account::where('name','Sales')->first()->id;
@@ -431,7 +431,7 @@ class InvoiceItems extends Component
         }
 
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
         return view('livewire.invoices.invoice-items',[

@@ -67,10 +67,10 @@ class Expenses extends Component
         $this->bill = Bill::find($id);
        
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+        $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
 

@@ -115,7 +115,7 @@ class Index extends Component
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
         $this->horses = collect();
@@ -375,7 +375,7 @@ class Index extends Component
          
         }
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
 

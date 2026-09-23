@@ -29,11 +29,11 @@ class ChargeTypes extends Component
 
     public function mount()
     {
-        $this->revenueAccounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+        $this->revenueAccounts = Account::active()->with('account_type')->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name', 'Income');
         })->orderBy('name', 'asc')->get();
 
-        $this->expenseAccounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+        $this->expenseAccounts = Account::active()->with('account_type')->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name', 'Expenses');
         })->orderBy('name', 'asc')->get();
     }
@@ -47,6 +47,14 @@ class ChargeTypes extends Component
         $this->is_locked = $chargeType->is_locked;
         $this->revenue_account_id = $chargeType->revenue_account_id;
         $this->expense_account_id = $chargeType->expense_account_id;
+
+        // Keep this charge type's already-assigned accounts visible even if since deactivated.
+        $this->revenueAccounts = Account::selectable($this->revenue_account_id)->with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name', 'Income');
+        })->orderBy('name', 'asc')->get();
+        $this->expenseAccounts = Account::selectable($this->expense_account_id)->with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name', 'Expenses');
+        })->orderBy('name', 'asc')->get();
     }
 
     public function save()

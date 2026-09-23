@@ -97,16 +97,19 @@ class Account extends Model implements Auditable
     }
 
     /**
-     * Active accounts, plus a specific inactive one kept visible — for Edit forms, so a bill/
+     * Active accounts, plus specific inactive one(s) kept visible — for Edit forms, so a bill/
      * invoice/etc already pointing at a since-deactivated account doesn't silently lose it
-     * from the dropdown (and doesn't get its account_id blanked out on next save).
+     * from the dropdown (and doesn't get its account_id blanked out on next save). Accepts a
+     * single id or an array (e.g. one id per line item on a multi-line Edit form).
      */
-    public function scopeSelectable($query, $keepId = null)
+    public function scopeSelectable($query, $keepIds = null)
     {
-        return $query->where(function ($q) use ($keepId) {
+        $keepIds = array_values(array_filter(is_array($keepIds) ? $keepIds : [$keepIds]));
+
+        return $query->where(function ($q) use ($keepIds) {
             $q->where('status', 1);
-            if (!empty($keepId)) {
-                $q->orWhere('id', $keepId);
+            if (!empty($keepIds)) {
+                $q->orWhereIn('id', $keepIds);
             }
         });
     }

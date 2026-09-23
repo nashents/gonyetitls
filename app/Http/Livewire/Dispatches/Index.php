@@ -533,7 +533,7 @@ class Index extends Component
                  $this->tax_accounts = Tax::whereHas('account', function ($query) {
                         return $query->where('name','Value Added Tax');
                     })->orderBy('name','asc')->get();
-                $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+                $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
                     return $query->where('name','Expenses');
                 })->orderBy('name','asc')->get();
             }

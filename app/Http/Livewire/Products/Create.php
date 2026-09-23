@@ -138,11 +138,11 @@ class Create extends Component
         $this->department = $category;
       
 
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
          $this->expense_account_id = $this->expense_accounts->where('name','Uncategorized Expense')->first()?->id;
@@ -308,7 +308,7 @@ class Create extends Component
             ]);
         }
         elseif($category == "expense_accounts"){
-             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+             $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
                 return $query->where('name','Expenses');
             })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -317,7 +317,7 @@ class Create extends Component
             ]);
         }
         elseif($category == "income_expenses"){
-              $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+              $this->income_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
                     $q->where('name', 'Income');
                 })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -450,11 +450,11 @@ class Create extends Component
 
         $this->categories = Category::orderBy('name','asc')->get();
 
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 

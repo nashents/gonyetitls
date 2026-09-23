@@ -642,6 +642,8 @@ Route::resource('breakdown_assignments','BreakdownAssignmentController');
 Route::resource('breakdowns','BreakdownController');
 Route::resource('measurements','MeasurementController');
 Route::resource('accounts','AccountController');
+Route::get('/accounts/{account}/activate','AccountController@activate')->name('accounts.activate');
+Route::get('/accounts/{account}/deactivate','AccountController@deactivate')->name('accounts.deactivate');
 Route::resource('invoice_products','InvoiceProductController');
 Route::resource('product_services','ProductServiceController');
 Route::resource('account_types','AccountTypeController');

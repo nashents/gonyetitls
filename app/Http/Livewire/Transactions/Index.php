@@ -304,7 +304,7 @@ class Index extends Component
 
         $account_type_names = ['Cash & Bank', 'Business Owner Contribution & Drawing', 'Other Short-Term Asset', 'Due to You & Other Business Owners', 'Other Short-Term Liability']; 
         $this->transaction_account_types = AccountType::whereIn('name', $account_type_names)->get();
-        $this->accounts = Account::where('account_type_id',1)->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();

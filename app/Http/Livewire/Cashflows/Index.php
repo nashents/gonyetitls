@@ -71,7 +71,7 @@ class Index extends Component
             $this->payments = collect();
         }
        
-        $this->accounts = Account::orderBy('name','asc')->get();
+        $this->accounts = Account::active()->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();

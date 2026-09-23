@@ -58,7 +58,7 @@ class Index extends Component
         $this->reset(['search']);
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
-        $this->accounts = Account::whereHas('account_type', function ($query) {
+        $this->accounts = Account::active()->whereHas('account_type', function ($query) {
             $query->where('name', 'Cost Of Goods Sold');
         })->orderBy('name','asc')->get();
         $this->taxes = Tax::whereHas('account', function ($query) {

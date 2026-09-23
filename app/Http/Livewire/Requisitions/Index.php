@@ -559,7 +559,7 @@ class Index extends Component
         $this->departments = Department::orderBy('name','asc')->get();
         $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
 
@@ -570,7 +570,7 @@ class Index extends Component
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
 

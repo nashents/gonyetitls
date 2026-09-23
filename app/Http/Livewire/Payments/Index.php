@@ -211,7 +211,7 @@ class Index extends Component
    
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
-            $this->accounts = Account::where('account_type_id',1)->where('currency_id',$id)->orderBy('name','asc')->get();
+            $this->accounts = Account::active()->where('account_type_id',1)->where('currency_id',$id)->orderBy('name','asc')->get();
         } 
     }
     public function updatedSelectedAccount($id){

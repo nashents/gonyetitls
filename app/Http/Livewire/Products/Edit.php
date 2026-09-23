@@ -127,11 +127,11 @@ class Edit extends Component
         $this->status = $product->status;
         $this->product_id = $product->id;
 
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::selectable($this->expense_account_id)->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
@@ -334,7 +334,7 @@ class Edit extends Component
             ]);
         }
         elseif($category == "expense_accounts"){
-             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+             $this->expense_accounts = Account::selectable($this->expense_account_id)->whereHas('account_type.account_type_group', function ($query) {
                 return $query->where('name','Expenses');
             })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -343,7 +343,7 @@ class Edit extends Component
             ]);
         }
         elseif($category == "income_expenses"){
-              $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+              $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type.account_type_group', function($q){
                     $q->where('name', 'Income');
                 })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -365,11 +365,11 @@ class Edit extends Component
 
     public function render()
     {
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+        $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::selectable($this->expense_account_id)->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 

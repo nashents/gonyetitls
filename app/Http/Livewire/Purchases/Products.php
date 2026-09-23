@@ -76,7 +76,7 @@ class Products extends Component
     $this->category_values = CategoryValue::all();
     $this->products = Product::with('brand')->orderBy('name','asc')->get();
     $this->purchase_products = PurchaseProduct::where('purchase_id', $this->purchase->id)->latest()->get();
-    $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+    $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
         return $query->where('name','Sales Taxes');
     })->orderBy('name','asc')->get();
     }

@@ -34,7 +34,7 @@ class Index extends Component
     }
 
     public function mount(){
-      $this->accounts = Account::orderBy('name','asc')->get();
+      $this->accounts = Account::active()->orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -92,6 +92,8 @@ class Index extends Component
         $this->rate = $tax->rate;
         $this->tax_id = $tax->id;
         $this->account_id = $tax->account_id;
+        // Keep this tax's already-linked account visible even if since deactivated.
+        $this->accounts = Account::selectable($this->account_id)->orderBy('name','asc')->get();
 
         $this->dispatchBrowserEvent('show-taxEditModal');
 

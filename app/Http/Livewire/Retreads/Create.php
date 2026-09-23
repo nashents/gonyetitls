@@ -85,10 +85,10 @@ class Create extends Component
     }
 
     public function mount(){
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
-    
+
         $this->retread_number = $this->retreadNumber();
         $this->tyres = Tyre::with('product.brand')->where('disposed',0)->get()->sortBy('product.brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();

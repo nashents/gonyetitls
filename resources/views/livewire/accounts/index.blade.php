@@ -46,6 +46,7 @@
                                                     <th class="w-10 text-center">GL Code</th>
                                                     <th class="w-20">Account Name</th>
                                                     <th class="w-20">Description</th>
+                                                    <th class="w-10 text-center">Status</th>
                                                     <th class="w-10 text-center">Actions</th>
                                                 </tr>
                                             </thead>
@@ -72,6 +73,9 @@
                                                         @endif
                                                     </td>
                                                     <td class="w-20 line-height-35">{{$account->description}}</td>
+                                                    <td class="w-10 text-center line-height-35">
+                                                        <span class="label {{ $account->status ? 'label-success' : 'label-default' }}">{{ $account->status ? 'Active' : 'Inactive' }}</span>
+                                                    </td>
                                                     <td class="w-10 line-height-35 table-dropdown">
                                                         <div class="dropdown">
                                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -85,18 +89,25 @@
                                                                      <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
                                                                      {{-- <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li> --}}
                                                                 @endif
-                                                              
-                                                              
+                                                                @unless ($account->is_locked)
+                                                                    @if ($account->status)
+                                                                        <li><a href="{{ route('accounts.deactivate', $account->id) }}"><i class="fa fa-toggle-on color-danger"></i> Deactivate</a></li>
+                                                                    @else
+                                                                        <li><a href="{{ route('accounts.activate', $account->id) }}"><i class="fa fa-toggle-off color-success"></i> Activate</a></li>
+                                                                    @endif
+                                                                @endunless
+
                                                             </ul>
                                                         </div>
                                                         @include('accounts.delete')
                                                 </td>
-                                                </tr> 
+                                                </tr>
                                             @endforeach
                                             <tr>
                                                 <th></th>
                                                 <td></td>
                                                 <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$account_type_group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
+                                                <td></td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>
@@ -107,11 +118,13 @@
                                                 <td class="w-50 line-height-35" ><small>You haven't added any {{$account_type->name}} accounts yet.</small></td>
                                                 <td></td>
                                                 <td></td>
+                                                <td></td>
                                             </tr>
                                             <tr>
                                                 <th></th>
                                                 <td></td>
                                                 <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$account_type_group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
+                                                <td></td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>
@@ -134,6 +147,7 @@
                                                         <th class="w-10 text-center">GL Code</th>
                                                         <th class="w-20">Account Name</th>
                                                         <th class="w-20">Description</th>
+                                                        <th class="w-10 text-center">Status</th>
                                                         <th class="w-10 text-center">Actions</th>
                                                     </tr>
                                                 </thead>
@@ -151,6 +165,9 @@
                                                             </td>
                                                             <td class="w-20 line-height-35">{{$account->name}}</td>
                                                             <td class="w-20 line-height-35">{{$account->description}}</td>
+                                                            <td class="w-10 text-center line-height-35">
+                                                                <span class="label {{ $account->status ? 'label-success' : 'label-default' }}">{{ $account->status ? 'Active' : 'Inactive' }}</span>
+                                                            </td>
                                                             <td class="w-10 line-height-35 table-dropdown">
                                                                 <div class="dropdown">
                                                                     <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -164,19 +181,25 @@
                                                                         <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
                                                                         @endif
                                                                         @unless ($account->is_locked)
+                                                                            @if ($account->status)
+                                                                                <li><a href="{{ route('accounts.deactivate', $account->id) }}"><i class="fa fa-toggle-on color-danger"></i> Deactivate</a></li>
+                                                                            @else
+                                                                                <li><a href="{{ route('accounts.activate', $account->id) }}"><i class="fa fa-toggle-off color-success"></i> Activate</a></li>
+                                                                            @endif
                                                                         <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                                         @endunless
-                                                                       
+
                                                                     </ul>
                                                                 </div>
                                                                 @include('accounts.delete')
                                                         </td>
-                                                        </tr> 
+                                                        </tr>
                                                     @endforeach
                                                     <tr>
                                                         <th></th>
                                                         <td></td>
                                                         <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
+                                                        <td></td>
                                                         <td></td>
                                                         <td></td>
                                                     </tr>
@@ -187,11 +210,13 @@
                                                         <td class="w-50 line-height-35" ><small>You haven't added any {{$account_type->name}} accounts yet.</small></td>
                                                         <td></td>
                                                         <td></td>
+                                                        <td></td>
                                                     </tr>
                                                     <tr>
                                                         <th></th>
                                                         <td></td>
                                                         <td class="w-20 line-height-35" ><a href="#" wire:click.prevent="showAccount({{$account_type->id}},{{$group->id}})"><i class="fa fa-plus-square-o"></i> Add a new account</a></td>
+                                                        <td></td>
                                                         <td></td>
                                                         <td></td>
                                                     </tr>

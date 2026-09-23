@@ -289,7 +289,7 @@ class Index extends Component
         $this->trailers = Trailer::orderByIdentifier('asc')->get();
         $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first()->id;
         $this->bank_accounts = BankAccount::orderBy('name','asc')->get()->sortBy('account_name');
-        $this->accounts = Account::where('account_type_id',1)->orderBy('name','asc')->get();
+        $this->accounts = Account::active()->where('account_type_id',1)->orderBy('name','asc')->get();
         $this->transaction_category = "Bills";
         $this->tax_status = "all";
         $this->vendors = Vendor::orderBy('name','asc')->get();

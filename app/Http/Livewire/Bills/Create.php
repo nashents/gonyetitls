@@ -158,14 +158,14 @@ class Create extends Component
         $this->bill_number = $this->billNumber();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        
-        $this->expense_accounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+
+        $this->expense_accounts = Account::active()->with('account_type')->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name', 'Expenses');
         })->orderBy('name', 'asc')->get();
 
@@ -517,7 +517,7 @@ class Create extends Component
             $this->trailers = Trailer::orderByIdentifier('asc')->get();
             $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
             $this->drivers = Driver::all();
-            $this->income_accounts = Account::whereHas('account_type', function($q){
+            $this->income_accounts = Account::active()->whereHas('account_type', function($q){
                 $q->where('name', 'Income');
              })->orderBy('name','asc')->get();
            

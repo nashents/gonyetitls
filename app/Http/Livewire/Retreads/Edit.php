@@ -96,10 +96,10 @@ class Edit extends Component
         $this->vendor_id = $this->retread->vendor_id;
         $this->account_id = $this->retread->account_id;
 
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->accounts = Account::selectable($this->account_id)->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
-    
+
         $this->tyres = Tyre::with('product.brand')->where('disposed',0)->get()->sortBy('product.brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();

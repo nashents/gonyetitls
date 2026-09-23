@@ -313,13 +313,16 @@ class Edit extends Component
         $this->trailers = Trailer::orderByIdentifier('asc')->get();
         $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::with('account_type')->whereHas('account_type.account_type_group', function ($query) {
+        // Keep any accounts already used on this bill's lines selectable even if since
+        // deactivated, so editing an old bill doesn't silently blank out its account_id.
+        $usedAccountIds = $this->bill ? $this->bill->bill_expenses->pluck('account_id')->all() : [];
+        $this->expense_accounts = Account::selectable($usedAccountIds)->with('account_type')->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name', 'Expenses');
         })->orderBy('name', 'asc')->get();
         $this->selectedCurrency = $this->bill->currency_id;
@@ -734,10 +737,10 @@ class Edit extends Component
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->drivers = Driver::all();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-      
+
         $this->bill_expenses = BillExpense::where('bill_id',$this->bill_id)->get();
         return view('livewire.bills.edit',[
             'expenses' => $this->expenses,

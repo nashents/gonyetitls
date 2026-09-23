@@ -202,16 +202,16 @@ class Edit extends Component
         $this->racks = Rack::orderBy('name','asc')->get();
         $this->bins = Bin::orderBy('name','asc')->get();
        
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+        $this->expense_accounts = Account::selectable($inventory->account_id)->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::selectable($inventory->account_id)->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
         $this->tax_accounts = Tax::whereHas('account', function ($query) {
             return $query->where('name','Value Added Tax');
         })->orderBy('name','asc')->get();
-      
+
        
         $this->balance = $inventory->balance;
         $this->stores = Store::latest()->get();

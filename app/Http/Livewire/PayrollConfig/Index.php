@@ -208,7 +208,28 @@ class Index extends Component
 
     private function loadAccounts(): void
     {
-        $accounts = Account::with(['account_type', 'account_type_group'])
+        // Keep any account already saved on this company's payroll config selectable even
+        // if since deactivated, so an existing config doesn't lose/blank out its mapping.
+        $keepAccountIds = array_filter([
+            $this->gl_wages_account_admin,
+            $this->gl_wages_account_drivers,
+            $this->gl_nssa_account,
+            $this->gl_paye_account,
+            $this->gl_pension_account,
+            $this->gl_nec_account,
+            $this->gl_nssa_employer_expense_account_admin,
+            $this->gl_nssa_employer_expense_account_drivers,
+            $this->gl_nec_employer_expense_account_admin,
+            $this->gl_nec_employer_expense_account_drivers,
+            $this->gl_pension_employer_expense_account_admin,
+            $this->gl_pension_employer_expense_account_drivers,
+            $this->gl_nssa_employee_account,
+            $this->gl_aids_levy_account,
+            $this->gl_payroll_suspense_account,
+            $this->gl_wages_payable_account,
+        ]);
+
+        $accounts = Account::selectable($keepAccountIds)->with(['account_type', 'account_type_group'])
             ->orderBy('code')
             ->get();
 

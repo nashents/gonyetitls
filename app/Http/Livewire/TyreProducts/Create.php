@@ -87,15 +87,15 @@ class Create extends Component
         $this->attribute_values = collect();
 
         
-        $this->income_accounts = Account::whereHas('account_type', function($q){
+        $this->income_accounts = Account::active()->whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
-         
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
+
+        $this->expense_accounts = Account::active()->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
 
-         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+         $this->tax_accounts = Account::active()->whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
 
