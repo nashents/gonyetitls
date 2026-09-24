@@ -19,4 +19,8 @@ class InvoicePayment extends Model implements Auditable
     public function payment(){
         return $this->belongsTo('App\Models\Payment');
     }
+
+    public function customer_fuel_supply(){
+        return $this->belongsTo('App\Models\CustomerFuelSupply');
+    }
 }

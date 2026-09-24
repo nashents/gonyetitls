@@ -14,6 +14,9 @@ class TopUp extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'vendor_id',
+        'supplied_by_customer',
+        'customer_id',
+        'trip_id',
         'currency_id',
         'fuel_type',
         'capacity',
@@ -29,6 +32,15 @@ class TopUp extends Model implements Auditable
 
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
+    }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
+    public function trip(){
+        return $this->belongsTo('App\Models\Trip');
+    }
+    public function customer_fuel_supply(){
+        return $this->hasOne('App\Models\CustomerFuelSupply');
     }
     public function container(){
         return $this->belongsTo('App\Models\Container');

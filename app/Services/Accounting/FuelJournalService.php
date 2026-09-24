@@ -38,7 +38,8 @@ class FuelJournalService
     public function __construct(
         private BillJournalService $billJournal,
         private JournalReversalService $journalReversal,
-        private LedgerResyncService $ledgerResync
+        private LedgerResyncService $ledgerResync,
+        private CustomerFuelSupplyService $customerFuel
     ) {
     }
 
@@ -46,9 +47,25 @@ class FuelJournalService
      * Bulk Buy container top-up. Builds/reuses the TopUp's Bill+BillExpense
      * (account -> Fuel Inventory, dimensioned to the container) and posts it
      * - a genuine new payable to the fuel vendor.
+     *
+     * A customer-supplied top-up (the customer delivered fuel into our tank)
+     * has no vendor to pay: it settles against the customer instead -
+     * DR Fuel Inventory / CR Accounts Receivable, see
+     * CustomerFuelSupplyService.
      */
     public function postTopUp(TopUp $topUp): JournalEntry
     {
+        if ($this->customerFuel->appliesToTopUp($topUp)) {
+            return DB::transaction(function () use ($topUp) {
+                $this->removeTopUpBill($topUp, "Top up {$topUp->order_number} marked as customer supplied");
+                $supply = $this->customerFuel->syncFromTopUp($topUp);
+
+                return $this->customerFuel->post($supply);
+            });
+        }
+
+        $this->customerFuel->voidForTopUp($topUp);
+
         return DB::transaction(function () use ($topUp) {
             $fuelInventory = Account::where('name', 'Fuel Inventory')->firstOrFail();
             $fuelExpense = Expense::where('name', 'Fuel Topup')->first();
@@ -109,6 +126,25 @@ class FuelJournalService
      */
     public function postConsumption(Fuel $fuel): JournalEntry
     {
+        // Customer-supplied Once Off Buy fuel: no supplier, so no Bill/AP -
+        // it settles against the customer's receivable instead (DR Fuel -
+        // COGS/Ops, CR AR). A Bulk Buy fuel order is drawn from our own
+        // stock, so it always falls through to the normal inventory
+        // consumption below even if flagged - the customer supply for it is
+        // recorded on the top-up that filled the tank.
+        if ($this->customerFuel->appliesToFuel($fuel)) {
+            return DB::transaction(function () use ($fuel) {
+                $this->removeConsumptionBill($fuel, "Fuel order {$fuel->order_number} marked as customer supplied");
+                $supply = $this->customerFuel->syncFromFuel($fuel);
+
+                return $this->customerFuel->post($supply);
+            });
+        }
+
+        // Flag switched off (or the order moved to a Bulk Buy station) after
+        // a supply was already posted - undo it before the normal Bill path.
+        $this->customerFuel->voidForFuel($fuel);
+
         return DB::transaction(function () use ($fuel) {
             $targetAccount = $fuel->trip_id
                 ? Account::where('name', 'Fuel - COGS')->firstOrFail()
@@ -199,23 +235,38 @@ class FuelJournalService
      */
     public function reverseConsumption(Fuel $fuel): void
     {
-        $bill = Bill::where('fuel_id', $fuel->id)->first();
+        $this->customerFuel->voidForFuel($fuel, "Fuel order {$fuel->order_number} deleted");
+        $this->removeConsumptionBill($fuel, "Fuel order #{$fuel->id} deleted");
+    }
 
-        if (!$bill) {
-            return;
+    /**
+     * Reverse + remove the Bill a fuel order posted. Matches both the
+     * service-built bill (bills.fuel_id) and the legacy inline trip-approval
+     * bills, which only carry the trip_expense_id of the fuel's trip expense.
+     */
+    private function removeConsumptionBill(Fuel $fuel, string $reason): void
+    {
+        $tripExpenseId = optional($fuel->trip_expense)->id;
+
+        $bills = Bill::where('fuel_id', $fuel->id)
+            ->when($tripExpenseId, fn ($q) => $q->orWhere('trip_expense_id', $tripExpenseId))
+            ->get();
+
+        foreach ($bills as $bill) {
+            $this->removeBill($bill, $reason);
         }
+    }
 
-        $entry = JournalEntry::where('bill_id', $bill->id)
-            ->where('status', '!=', 'reversed')
-            ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
-            ->first();
-
-        if ($entry) {
-            $this->journalReversal->reverse($entry, "Fuel order #{$fuel->id} deleted");
+    private function removeTopUpBill(TopUp $topUp, string $reason): void
+    {
+        foreach (Bill::where('top_up_id', $topUp->id)->get() as $bill) {
+            $this->removeBill($bill, $reason);
         }
+    }
 
-        $bill->bill_expenses()->delete();
-        $bill->delete();
+    private function removeBill(Bill $bill, string $reason): void
+    {
+        $this->customerFuel->removeBill($bill, $reason);
     }
 
     private function billNumber(): string

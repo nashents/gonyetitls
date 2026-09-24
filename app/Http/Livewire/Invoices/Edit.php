@@ -1017,7 +1017,7 @@ class Edit extends Component
         $invoice->total = $this->total;
         $invoice->subtotal = $this->subtotal;
         $invoice->tax_amount = $this->tax_amount;
-        $invoice->balance = $this->total;
+        $invoice->balance = max(0, $this->total - app(\App\Services\Accounting\CustomerFuelSupplyService::class)->allocatedToInvoice($invoice));
         $invoice->update();
 
         $this->invoice_item->delete();
@@ -2418,6 +2418,9 @@ class Edit extends Component
                 ->whereNotNull('amount')
                 ->where('amount', '!=', '')
                 ->sum('amount');
+                // Customer-supplied fuel applied to this invoice settles it
+                // just like a payment - keep it off the recomputed balance.
+                $total_paid += app(\App\Services\Accounting\CustomerFuelSupplyService::class)->allocatedToInvoice($invoice);
 
                 $invoice->balance = (is_numeric($total_paid) && $total_paid > 0 && $this->total > $total_paid)
                     ? $this->total - $total_paid

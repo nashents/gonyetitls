@@ -2195,13 +2195,13 @@
                                 @error('trip_expenses') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                                     @if ($trip_expenses == True)
-                                        <small style="color: green">For new expenses to appear in this list make sure you select Trip Expense on account selection at expense creation.</small> <br>
                                         <div style="height: 400px; overflow: auto">
                                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                                     
                                                     <thead>
                                                         <tr>
                                                             <th>Expense<span class="required" style="color: red">*</span></th>
+                                                            <th>Funded By<span class="required" style="color: red">*</span></th>
                                                             <th>Category<span class="required" style="color: red">*</span></th>
                                                             <th>Payment Method</th>
                                                             <th>Currency<span class="required" style="color: red">*</span></th>
@@ -2217,7 +2217,7 @@
                                                                     $id = $expense->id;
                                                                     $rowHasInput = !empty($expense_id[$id] ?? null);
                                                                 @endphp
-                                                                <tr>
+                                                                <tr wire:key="trip-expense-row-{{ $id }}">
                                                                     <td>
                                                                         <div class="mb-10">
                                                                             <input type="checkbox" wire:model="expense_id.{{ $id }}" value="{{ $id }}" class="line-style" {{ $rowHasInput ? 'required' : '' }} />
@@ -2226,6 +2226,23 @@
                                                                         </div>
                                                                     </td>
 
+                                                                    {{-- Only ticked rows render their inputs: rendering every vendor/currency
+                                                                         dropdown for every expense exhausts PHP memory. --}}
+                                                                    @if (!$rowHasInput)
+                                                                    <td colspan="6"><small class="text-muted">Tick to enter details</small></td>
+                                                                    @else
+                                                                    <td>
+                                                                        <div class="form-group">
+                                                                            <select class="form-control" wire:model="expense_funded_by.{{ $id }}">
+                                                                                <option value="0">Company</option>
+                                                                                <option value="1">Customer</option>
+                                                                            </select>
+                                                                            @if (($expense_funded_by[$id] ?? '0') === '1')
+                                                                                <small class="text-muted">No supplier bill - credited to the trip customer.</small>
+                                                                            @endif
+                                                                            @error('expense_funded_by.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                        </div>
+                                                                    </td>
                                                                     <td>
                                                                         <div class="form-group">
                                                                             <select class="form-control" wire:model="category.{{ $id }}" {{ $rowHasInput ? 'required' : '' }}>
@@ -2301,6 +2318,7 @@
                                                                             @error('amount.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
                                                                         </div>
                                                                     </td>
+                                                                    @endif
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
@@ -2332,7 +2350,7 @@
                             </div>
                             @endif
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     @if ($selectedHorse && $fuel_source == "truck")
                                     <div class="form-group">
                                         <label for="source_horse">Source Truck<span class="required" style="color: red">*</span></label>
@@ -2375,7 +2393,8 @@
                                     </div>
                                     @endif
                                 </div>
-                                <div class="col-md-4">
+                                @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'fuel_supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => $this->fuelFundingSelectable, 'col' => 'col-md-3'])
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="vendors">Categories<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.debounce.300ms="fuel_category" required>
@@ -2387,13 +2406,14 @@
                                         @error('fuel_category') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="date">Fillup Date</label>
                                         <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date"/>
                                         @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
+                                @include('livewire.fuels._customer_supplied', ['part' => 'customer', 'flag' => 'fuel_supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => $this->fuelFundingSelectable, 'col' => 'col-md-3'])
                             </div>
                             @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                 <div class="form-group">

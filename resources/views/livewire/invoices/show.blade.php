@@ -190,6 +190,31 @@
                                     @endif 
                                 </ul>
                             </nav>    
+                            @php
+                                $fuel_allocations = \App\Models\InvoicePayment::with('customer_fuel_supply')
+                                    ->where('invoice_id', $invoice->id)
+                                    ->where('source', \App\Services\Accounting\CustomerFuelSupplyService::SOURCE)
+                                    ->get();
+                            @endphp
+                            @if ($fuel_allocations->count() > 0)
+                            <div style="clear: both"></div>
+                            <h5>Customer Supplied Fuel Applied</h5>
+                            <table class="table table-bordered table-sm" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr><th>Supply#</th><th>Date</th><th>Details</th><th>Applied</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($fuel_allocations as $fuel_allocation)
+                                        <tr>
+                                            <td><a href="{{ route('customer_fuel_supplies.index', ['search' => $fuel_allocation->customer_fuel_supply ? $fuel_allocation->customer_fuel_supply->supply_number : '']) }}" style="color: blue">{{ $fuel_allocation->customer_fuel_supply ? $fuel_allocation->customer_fuel_supply->supply_number : '' }}</a></td>
+                                            <td>{{ $fuel_allocation->customer_fuel_supply && $fuel_allocation->customer_fuel_supply->date ? $fuel_allocation->customer_fuel_supply->date->format('Y-m-d') : '' }}</td>
+                                            <td>{{ $fuel_allocation->customer_fuel_supply ? $fuel_allocation->customer_fuel_supply->description : '' }}</td>
+                                            <td>{{ $invoice->currency ? $invoice->currency->symbol : '' }}{{ number_format((float) $fuel_allocation->amount, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @endif
                   </div>
                 <div class="row">
                     <div class="col-md-12">

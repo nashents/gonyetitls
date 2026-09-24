@@ -85,17 +85,15 @@
                                                             <ul class="dropdown-menu">
                                                                 <li><a href="{{ route('accounts.show',$account->id) }}"  ><i class="fas fa-eye color-default" ></i> View</a></li>
                                                                 <li><a href="#"  wire:click="showTransaction({{$account->id}})" ><i class="fas fa-credit-card color-primary" ></i> Transact</a></li>
-                                                                @if (!$account->user_id == Null)
+                                                                @if ($account->user_id != Null && !$account->is_locked)
                                                                      <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
                                                                      {{-- <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li> --}}
                                                                 @endif
-                                                                @unless ($account->is_locked)
-                                                                    @if ($account->status)
-                                                                        <li><a href="{{ route('accounts.deactivate', $account->id) }}"><i class="fa fa-toggle-on color-danger"></i> Deactivate</a></li>
-                                                                    @else
-                                                                        <li><a href="{{ route('accounts.activate', $account->id) }}"><i class="fa fa-toggle-off color-success"></i> Activate</a></li>
-                                                                    @endif
-                                                                @endunless
+                                                                @if ($account->status)
+                                                                    <li><a href="{{ route('accounts.deactivate', $account->id) }}"><i class="fa fa-toggle-on color-danger"></i> Deactivate</a></li>
+                                                                @else
+                                                                    <li><a href="{{ route('accounts.activate', $account->id) }}"><i class="fa fa-toggle-off color-success"></i> Activate</a></li>
+                                                                @endif
 
                                                             </ul>
                                                         </div>
@@ -177,15 +175,15 @@
                                                                     <ul class="dropdown-menu">
                                                                         <li><a href="{{ route('accounts.show',$account->id) }}"  ><i class="fas fa-eye color-default" ></i> View</a></li>
                                                                         <li><a href="#"  wire:click="showTransaction({{$account->id}})" ><i class="fas fa-credit-card color-primary" ></i> Transact</a></li>
-                                                                        @if (!$account->user_id == Null)
+                                                                        @if ($account->user_id != Null && !$account->is_locked)
                                                                         <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
                                                                         @endif
+                                                                        @if ($account->status)
+                                                                            <li><a href="{{ route('accounts.deactivate', $account->id) }}"><i class="fa fa-toggle-on color-danger"></i> Deactivate</a></li>
+                                                                        @else
+                                                                            <li><a href="{{ route('accounts.activate', $account->id) }}"><i class="fa fa-toggle-off color-success"></i> Activate</a></li>
+                                                                        @endif
                                                                         @unless ($account->is_locked)
-                                                                            @if ($account->status)
-                                                                                <li><a href="{{ route('accounts.deactivate', $account->id) }}"><i class="fa fa-toggle-on color-danger"></i> Deactivate</a></li>
-                                                                            @else
-                                                                                <li><a href="{{ route('accounts.activate', $account->id) }}"><i class="fa fa-toggle-off color-success"></i> Activate</a></li>
-                                                                            @endif
                                                                         <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                                         @endunless
 

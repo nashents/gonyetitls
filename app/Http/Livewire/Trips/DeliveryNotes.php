@@ -386,16 +386,7 @@ class DeliveryNotes extends Component
         }
 
         // Fall back to DB query with dual-FK fallback
-        $dn = DeliveryNote::where('trip_id', $trip->id)
-            ->where(function ($q) use ($tto) {
-                $q->where('trip_transport_order_id', $tto->id)
-                ->orWhere(function ($q2) use ($tto) {
-                    $q2->whereNull('trip_transport_order_id')
-                        ->where('transport_order_id', $tto->transport_order_id);
-                });
-            })
-            ->latest()
-            ->first();
+        $dn = DeliveryNote::resolveForTripTransportOrder($trip, $tto);
 
         if (! $dn) {
             $dn = new DeliveryNote();
@@ -445,16 +436,7 @@ class DeliveryNotes extends Component
 
             // Always query directly — don't rely on the eager-loaded relationship
             // since it only matches on trip_transport_order_id
-            $dn = DeliveryNote::where('trip_id', $trip->id)
-                ->where(function ($q) use ($tto) {
-                    $q->where('trip_transport_order_id', $tto->id)
-                    ->orWhere(function ($q2) use ($tto) {
-                        $q2->whereNull('trip_transport_order_id')
-                            ->where('transport_order_id', $tto->transport_order_id);
-                    });
-                })
-                ->latest()
-                ->first();
+            $dn = DeliveryNote::resolveForTripTransportOrder($trip, $tto);
 
             if (! $dn) {
                 // Create and immediately persist a seeded DN
@@ -603,16 +585,7 @@ class DeliveryNotes extends Component
 
                     if (! $dn) {
                         // Fallback dual-FK query
-                        $dn = DeliveryNote::where('trip_id', $trip->id)
-                            ->where(function ($q) use ($tto) {
-                                $q->where('trip_transport_order_id', $tto->id)
-                                ->orWhere(function ($q2) use ($tto) {
-                                    $q2->whereNull('trip_transport_order_id')
-                                        ->where('transport_order_id', $tto->transport_order_id);
-                                });
-                            })
-                            ->latest()
-                            ->first();
+                        $dn = DeliveryNote::resolveForTripTransportOrder($trip, $tto);
                     }
 
                     if (! $dn) {

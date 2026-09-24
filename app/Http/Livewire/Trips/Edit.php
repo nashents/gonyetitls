@@ -435,6 +435,11 @@ class Edit extends Component
     public $fuel_exchange_rate;
     public $fuel_exchange_amount;
     public $fuel_category;
+
+    // Fuel "Funded By": '0' = company, '1' = customer (part-payment of this
+    // trip) - see CustomerFuelSupplyService.
+    public $fuel_supplied_by_customer = '0';
+    public $fuel_customer_id;
     public $unit_price = 0;
     public $fuel_amount;
     public $fuel_quantity = 0 ;
@@ -1406,6 +1411,8 @@ class Edit extends Component
             $this->fuel_exchange_rate = $this->fuel->exchange_rate;
             $this->fuel_exchange_amount = $this->fuel->exchange_amount;
             $this->fuel_category = $this->fuel->category;
+            $this->fuel_supplied_by_customer = $this->fuel->supplied_by_customer ? '1' : '0';
+            $this->fuel_customer_id = $this->fuel->customer_id;
             $this->fuel_type = $this->fuel->fuel_type ? ucfirst(strtolower($this->fuel->fuel_type)) : null;
             $this->is_full_tank = $this->fuel->is_full_tank;
             $this->deduct_from = $this->fuel->deduct_from ?: "quantity";
@@ -2496,7 +2503,51 @@ class Edit extends Component
         ]);
     }
 
+
+    /**
+     * Customer funding only applies to Once Off Buy station fuel - a Bulk
+     * Buy tank is our own stock (the customer's fuel is recorded on the
+     * top-up) and a truck-to-truck transfer isn't a supply.
+     */
+    public function getFuelFundingSelectableProperty()
+    {
+        return !($this->selectedHorse && $this->fuel_source == 'truck')
+            && optional(Container::find($this->selectedContainer))->purchase_type !== 'Bulk Buy';
+    }
+
+    public function getFuelCustomerFundedProperty()
+    {
+        return (string) $this->fuel_supplied_by_customer === '1' && $this->fuelFundingSelectable;
+    }
+
+    public function updatedFuelSuppliedByCustomer($value)
+    {
+        if ($value === '1') {
+            $this->fuel_customer_id = $this->fuel_customer_id ?: $this->customer_id;
+            if ($this->fuel_category == 'Customer') {
+                $this->fuel_category = 'Self';
+            }
+        }
+    }
+
+    protected function validateFuelFunding(): void
+    {
+        if ($this->fuel_order && $this->fuelCustomerFunded) {
+            $this->validate([
+                'fuel_customer_id' => 'required|exists:customers,id',
+                // "Customer" recharges the fuel onto the invoice - the opposite
+                // of the customer having supplied it.
+                'fuel_category' => 'required|in:Self,Transporter',
+            ], [
+                'fuel_customer_id.required' => 'Select the customer who funded this fuel.',
+                'fuel_category.in' => 'Customer funded fuel can\'t also be recharged to the customer - use Self or Transporter.',
+            ]);
+        }
+    }
+
     public function update(){
+
+        $this->validateFuelFunding();
 
         DB::transaction(function () {
 
@@ -3223,7 +3274,16 @@ class Edit extends Component
                     $fuel->authorization = $trip->authorization;
                     $fuel->authorized_by_id = $trip->authroized_by_id;
                     $fuel->reason = $trip->reason;
+                    $fuel->supplied_by_customer = $this->fuelCustomerFunded;
+                    $fuel->customer_id = $this->fuelCustomerFunded ? ($this->fuel_customer_id ?: $trip->customer_id) : null;
                     $fuel->update();
+
+                    // Funding switched (company <-> customer) or amount changed on an
+                    // approved customer-funded fuel: re-post through the service, which
+                    // removes/restores the supplier bill and (re)posts the supply.
+                    if ($fuel->authorization == 'approved' && ($fuel->supplied_by_customer || \App\Models\CustomerFuelSupply::where('fuel_id', $fuel->id)->exists())) {
+                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                    }
 
                     $bill = Bill::where('trip_id',$trip->id)->where('fuel_id',$fuel->id)->first();
 
@@ -3314,6 +3374,8 @@ class Edit extends Component
                 $fuel->authorized_by_id = $trip->authroized_by_id;
                 $fuel->reason = $trip->reason;
 
+                $fuel->supplied_by_customer = $this->fuelCustomerFunded;
+                $fuel->customer_id = $this->fuelCustomerFunded ? ($this->fuel_customer_id ?: $trip->customer_id) : null;
                 $fuel->save();
 
                 $trip_expense = new TripExpense;
@@ -3431,6 +3493,10 @@ class Edit extends Component
                         $container->update();
                     }
 
+                    if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                        // Customer funded - no supplier Bill; settles against the customer.
+                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                    } else {
                     $account = Account::where('name','Trip Expense')->get()->first();
 
                     $bill = new Bill;
@@ -3478,6 +3544,7 @@ class Edit extends Component
                     $bill_expense->subtotal = $trip_expense->amount;
                     $bill_expense->subtotal_incl = $trip_expense->amount;
                     $bill_expense->save();
+                    }
                 }
 
             

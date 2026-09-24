@@ -27,7 +27,11 @@
             <tbody>
                 @foreach ($top_ups as $top_up)
               <tr>
-                <td>{{$top_up->order_number}}</td>
+                <td>{{$top_up->order_number}}
+                    @if ($top_up->supplied_by_customer)
+                        <br><span class="badge bg-info">Supplied by {{ $top_up->customer ? $top_up->customer->name : 'customer' }}</span>
+                    @endif
+                </td>
                 <td>{{$top_up->date}}</td>
                 <td>{{$top_up->fuel_type}}</td>
                 <td>{{$top_up->quantity ? $top_up->quantity." Litres" : ""}}</td>
@@ -72,6 +76,7 @@
                                     @error('container_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            @if (!$supplied_by_customer)
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="vendor_id">Vendors</label>
@@ -84,7 +89,50 @@
                                     @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            @endif
                         </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Funded By<span class="required" style="color: red">*</span></label>
+                                    <select wire:model="supplied_by_customer" class="form-control">
+                                        <option value="0">Company (bought from a supplier)</option>
+                                        <option value="1">Customer (delivered into the tank as part-payment)</option>
+                                    </select>
+                                    @if ($supplied_by_customer)
+                                    <small class="text-muted">No supplier bill is raised - it goes into Fuel Inventory and is credited to the customer's account.</small>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        @if ($supplied_by_customer)
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="customer_id">Supplied By (Customer)<span class="required" style="color: red">*</span></label>
+                                   <select wire:model="customer_id" class="form-control" required>
+                                       <option value="">Select Customer</option>
+                                       @foreach ($customers as $customer)
+                                        <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                       @endforeach
+                                   </select>
+                                    @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="trip_id">For Trip <small>(optional - applies it to that trip's invoice)</small></label>
+                                   <select wire:model.debounce.300ms="trip_id" class="form-control">
+                                       <option value="">Select Trip</option>
+                                       @foreach ($customer_trips as $trip)
+                                        <option value="{{$trip->id}}">{{$trip->trip_number}}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}}</option>
+                                       @endforeach
+                                   </select>
+                                    @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">

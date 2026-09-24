@@ -480,6 +480,7 @@ Route::get('fuel-top-ups/authorization/approved','TopUpController@approved')->na
 Route::get('fuel-top-ups/authorization/rejected','TopUpController@rejected')->name('top_ups.rejected');
 
 Route::get('invoices/customer-statements','InvoiceController@customerStatements')->name('customer_statements.index');
+Route::get('invoices/customer-supplied-fuel','CustomerFuelSupplyController@index')->name('customer_fuel_supplies.index');
 Route::get('bills/vendor-statements','BillController@vendorStatements')->name('vendor_statements.index');
 
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/send-email/','InvoiceController@customerStatementsEmail')->name('customer_statements.email.outstanding');

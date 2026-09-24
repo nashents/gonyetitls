@@ -72,7 +72,11 @@
                     @endif
                 </td>
                 <td>{{$trip_expense->payment_method ? $trip_expense->payment_method->name : ""}}</td>
-                <td>{{$trip_expense->category}}</td>
+                <td>{{$trip_expense->category}}
+                    @if ($trip_expense->supplied_by_customer)
+                        <br><span class="badge bg-info" title="Funded by {{ $trip_expense->customer ? $trip_expense->customer->name : 'customer' }} - no supplier bill">Customer funded</span>
+                    @endif
+                </td>
                 <td>{{ $trip_expense->currency ? $trip_expense->currency->name : ""}}</td>
                 <td>{{ $trip_expense->vendor ? $trip_expense->vendor->name : ""}}</td>
                 <td>
@@ -254,6 +258,21 @@
                             </div>
                         </div>
                         @endif
+                        @if (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'expense')
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Funded By<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model="funded_by.0">
+                                    <option value="0">Company</option>
+                                    <option value="1">Customer (paid / supplied as part-payment)</option>
+                                </select>
+                                @if ((string) data_get($this, 'funded_by.0') === '1')
+                                    <small class="text-muted">No supplier bill - credited to {{ $trip->customer ? $trip->customer->name : 'the trip customer' }} and applied against this trip's invoice.</small>
+                                @endif
+                                @error('funded_by.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        @endif
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Categories<span class="required" style="color: red">*</span></label>
@@ -388,6 +407,21 @@
                                     <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> <a href="#" wire:click.prevent="refresh('allowances')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
+                        @endif
+                        @if (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'expense')
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Funded By<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model="funded_by.{{$value}}">
+                                    <option value="0">Company</option>
+                                    <option value="1">Customer (paid / supplied as part-payment)</option>
+                                </select>
+                                @if ((string) data_get($this, 'funded_by.{{$value}}') === '1')
+                                    <small class="text-muted">No supplier bill - credited to {{ $trip->customer ? $trip->customer->name : 'the trip customer' }} and applied against this trip's invoice.</small>
+                                @endif
+                                @error('funded_by.{{$value}}') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                         @endif
                         <div class="col-md-4">
                             <div class="form-group">
@@ -562,6 +596,21 @@
                         </div>
                         @endif
 
+                    @if (isset($trip_expense_type) && $trip_expense_type == 'expense')
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Funded By<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model="funded_by">
+                                <option value="0">Company</option>
+                                <option value="1">Customer (paid / supplied as part-payment)</option>
+                            </select>
+                            @if ((string) data_get($this, 'funded_by') === '1')
+                                <small class="text-muted">No supplier bill - credited to {{ $trip->customer ? $trip->customer->name : 'the trip customer' }} and applied against this trip's invoice.</small>
+                            @endif
+                            @error('funded_by') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
+                    </div>
+                    @endif
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="title">Categories<span class="required" style="color: red">*</span></label>

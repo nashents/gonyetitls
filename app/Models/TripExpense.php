@@ -39,6 +39,12 @@ class TripExpense extends Model implements Auditable
     public function bill(){
         return $this->hasOne('App\Models\Bill');
     }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
+    public function customer_fuel_supply(){
+        return $this->hasOne('App\Models\CustomerFuelSupply');
+    }
 
     public function getCanDeleteAttribute()
     {
@@ -80,11 +86,14 @@ class TripExpense extends Model implements Auditable
         'amount',
         'payment_method_id',
         'category',
+        'supplied_by_customer',
+        'customer_id',
         'visible_on_trip_sheet',
         'date',
     ];
 
     protected $casts = [
         'visible_on_trip_sheet' => 'boolean',
+        'supplied_by_customer' => 'boolean',
     ];
 }

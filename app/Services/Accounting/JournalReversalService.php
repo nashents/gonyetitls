@@ -38,6 +38,7 @@ class JournalReversalService
                 'payment_id'     => $entry->payment_id,
                 'credit_note_id' => $entry->credit_note_id,
                 'payroll_run_id' => $entry->payroll_run_id,
+                'customer_fuel_supply_id' => $entry->customer_fuel_supply_id,
                 'is_manual'      => false,
                 'journal_number' => $this->generateNumber(),
                 'date'           => now()->toDateString(),

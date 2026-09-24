@@ -721,18 +721,7 @@ class TripStatusManager extends Component
     private function resolveDeliveryNote(Trip $trip, $tto): DeliveryNote
     {
       
-        $dn = DeliveryNote::where('trip_id', $trip->id)
-            ->where(function ($q) use ($tto) {
-                $q->where('trip_transport_order_id', $tto->id)
-                  ->orWhere(function ($q2) use ($tto) {
-                      $q2->whereNull('trip_transport_order_id')
-                         ->where('transport_order_id', $tto->transport_order_id);
-                  });
-            })
-            ->latest()
-            ->first();
-
-        
+        $dn = DeliveryNote::resolveForTripTransportOrder($trip, $tto);
 
         if (! $dn) {
             $dn = new DeliveryNote();

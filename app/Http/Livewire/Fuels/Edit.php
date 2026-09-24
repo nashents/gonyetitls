@@ -14,6 +14,7 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Employee;
 use App\Models\Container;
+use App\Models\Customer;
 use App\Models\TripExpense;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -68,6 +69,11 @@ class Edit extends Component
     public $selectedCategoryValue;
     public $selectedTrip;
 
+    // Funded by: '0' = company, '1' = customer (trip fuel only) - see CustomerFuelSupplyService.
+    public $supplied_by_customer = '0';
+    public $fuel_customer_id;
+    public $customers;
+
 
     public function mount($id){
 
@@ -114,6 +120,7 @@ class Edit extends Component
         $this->trips = Trip::where('authorization','approved')->orderBy('trip_number','desc')->latest()->get();
         $this->containers = Container::where('balance','>',0)->orderBy('name','asc')->latest()->get();
         $this->drivers = Driver::latest()->get();
+        $this->customers = Customer::orderBy('name','asc')->get(['id','name']);
 
         
         $fuel = Fuel::find($id);
@@ -136,6 +143,8 @@ class Edit extends Component
         $this->currency_id = $fuel->currency_id;
         $this->quantity = $fuel->quantity;
         $this->fuel_id = $fuel->id;
+        $this->supplied_by_customer = $fuel->supplied_by_customer ? '1' : '0';
+        $this->fuel_customer_id = $fuel->customer_id;
         if ($fuel->asset_id) {
             $this->selectedCategory = Asset::find($fuel->asset_id)->category_id;
         }
@@ -165,6 +174,23 @@ class Edit extends Component
             $this->container_balance = $this->container->balance;
             $this->currency_id = $this->container->currency_id;
             }
+    }
+
+    public function updatedSuppliedByCustomer($value)
+    {
+        if ($value === '1' && !$this->fuel_customer_id && $this->selectedTrip) {
+            $this->fuel_customer_id = Trip::find($this->selectedTrip)?->customer_id;
+        }
+    }
+
+    public function getIsBulkBuyProperty()
+    {
+        return optional(Container::find($this->selectedContainer))->purchase_type === 'Bulk Buy';
+    }
+
+    public function getIsCustomerSuppliedProperty()
+    {
+        return (string) $this->supplied_by_customer === '1' && $this->selectedTrip && !$this->isBulkBuy;
     }
 
     public function updatedSelectedVehicle($vehicle)
@@ -218,6 +244,10 @@ class Edit extends Component
  
         if ($this->fuel_id) {
 
+            if ($this->isCustomerSupplied) {
+                $this->validate(['fuel_customer_id' => 'required|exists:customers,id']);
+            }
+
             $trip = Trip::find($this->selectedTrip);
 
             $fuel = Fuel::find($this->fuel_id);
@@ -240,11 +270,24 @@ class Edit extends Component
             $fuel->fillup = $this->fillup;
             $fuel->type = $this->type;
             $fuel->comments = $this->comments;
+            $fuel->supplied_by_customer = $this->isCustomerSupplied;
+            $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : null;
 
             $fuel->update();
 
             if ($fuel->trip_id) {
                 $this->syncTripExpense($fuel, $trip);
+            }
+
+            // Approved already - re-post so a change of funding (company <-> customer)
+            // or amount reaches the ledger, same as Fuels\Index::update().
+            if ($fuel->authorization == 'approved') {
+                try {
+                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                } catch (\RuntimeException $e) {
+                    $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $e->getMessage()]);
+                    return;
+                }
             }
 
             $this->dispatchBrowserEvent('alert',[

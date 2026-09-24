@@ -425,7 +425,13 @@ public function updatingSearch()
 
                                 if (isset($fuel)) {
                             
-                                    if (isset($fuel->container)) {
+                                    if (isset($fuel->container) && app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                                        // Customer supplied - no supplier Bill; settles against the customer once
+                                        // the fuel order itself is approved (its own approval posts it otherwise).
+                                        if ($fuel->authorization == "approved") {
+                                            app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                                        }
+                                    } elseif (isset($fuel->container)) {
 
                                          $account = Account::where('name','Trip Expense')->get()->first();
     
@@ -1005,7 +1011,13 @@ public function updatingSearch()
 
                                     if (isset($fuel)) {
                             
-                                        if (isset($fuel->container)) {
+                                        if (isset($fuel->container) && app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                                            // Customer supplied - no supplier Bill; settles against the customer once
+                                            // the fuel order itself is approved (its own approval posts it otherwise).
+                                            if ($fuel->authorization == "approved") {
+                                                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                                            }
+                                        } elseif (isset($fuel->container)) {
 
                                              $account = Account::where('name','Trip Expense')->get()->first();
         

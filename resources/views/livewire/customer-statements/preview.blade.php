@@ -224,6 +224,7 @@
                                     ->whereBetween('date', [$from, $to])
                                     ->whereRaw('amount REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
                                     ->sum('amount');
+                                $fuel_supplied = App\Models\CustomerFuelSupply::where('customer_id', $customer->id)->where('currency_id', $currency->id)->whereBetween('date', [$from, $to])->sum('amount');
                             @endphp
 
                             <div class="row contacts">
@@ -265,6 +266,9 @@
                                             <strong>Paid ({{ $currency->name }})</strong>
                                             {{ $currency->symbol }}{{ number_format($paid, 2) }}
                                         </div>
+                                    @endif
+                                    @if ($fuel_supplied > 0)
+                                        <div class="date" style="padding-bottom: 3px"><strong>Customer Supplied Fuel/Expenses ({{ $currency->name }})</strong> {{ $currency->symbol }}{{ number_format($fuel_supplied, 2) }}</div>
                                     @endif
                                     <div class="date" style="padding-bottom: 3px">
                                         <strong>Closing Balance ({{ $currency->name }}) on {{ date('F j, Y', strtotime($to)) }}</strong>
@@ -319,7 +323,9 @@
                                                     {{ date('F j, Y', strtotime($result->transaction_date)) }}
                                                 </td>
                                                 <td class="text-center">
-                                                    @if ($result->transaction_type === 'invoice' && isset($invoice))
+                                                    @if ($result->transaction_type === 'customer_fuel')
+                                                        @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                    @elseif ($result->transaction_type === 'invoice' && isset($invoice))
                                                         <a href="{{ route('invoices.show', $invoice->id) }}"
                                                            target="_blank" rel="noopener noreferrer" style="color: blue">
                                                             Invoice# {{ $result->number }}

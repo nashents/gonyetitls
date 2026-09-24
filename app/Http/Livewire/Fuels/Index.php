@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\CategoryValue;
 use App\Models\Container;
 use App\Models\Currency;
+use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\ExchangeRate;
@@ -126,6 +127,12 @@ class Index extends Component
     public $previous_hours;
     public $previous_quantity;
     public $fuel_category = "Self";
+
+    // Customer-supplied fuel (Once Off Buy only) - see CustomerFuelSupplyService.
+    // '0' = company funded, '1' = customer funded (string for the <select>)
+    public $supplied_by_customer = '0';
+    public $fuel_customer_id;
+    public $customers;
     public $trip_expenses;
 
     public $selectedDriver;
@@ -211,6 +218,7 @@ class Index extends Component
         $this->trips = collect();
         $this->containers = Container::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
+        $this->customers = Customer::orderBy('name','asc')->get(['id','name']);
 
         $this->refreshTripExpenseCounts();
     }
@@ -662,6 +670,9 @@ class Index extends Component
             $this->distance = $trip->distance;
             $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
             $this->fuel_consumption = $this->horse->fuel_consumption;
+            if ($this->supplied_by_customer && !$this->fuel_customer_id) {
+                $this->fuel_customer_id = $trip->customer_id;
+            }
         }
 
         // $this->quantity = $this->fuel_consumption * $this->distance;
@@ -857,6 +868,15 @@ class Index extends Component
             $rules['fuel_category'] = 'required|in:Self,Transporter,Customer';
         }
 
+        if ($this->isCustomerSupplied) {
+            $rules['fuel_customer_id'] = 'required|exists:customers,id';
+            // "Customer" category recharges the fuel onto the customer's
+            // invoice - the opposite of the customer having supplied it.
+            if ($this->selectedTrip) {
+                $rules['fuel_category'] = 'required|in:Self,Transporter';
+            }
+        }
+
         if ($this->selectedCurrency && $this->company && $this->selectedCurrency != $this->company->currency_id) {
             $rules['exchange_rate'] = 'required|numeric|min:0.0001';
         }
@@ -869,6 +889,34 @@ class Index extends Component
         return isset($this->selected_container)
             && $this->selected_container
             && $this->selected_container->purchase_type == 'Bulk Buy';
+    }
+
+    /**
+     * Only trip fuel from a Once Off Buy station can be customer supplied -
+     * the customer is paying for that trip. A Bulk Buy fuel order is drawn
+     * from our own tank (record the customer's fuel on the tank's top-up
+     * instead), and a truck-to-truck transfer isn't a supply at all.
+     */
+    public function getCanBeCustomerSuppliedProperty()
+    {
+        return (bool) $this->selectedTrip
+            && !$this->isBulkBuy
+            && !($this->type == 'Horse' && $this->fuel_source == 'truck');
+    }
+
+    public function getIsCustomerSuppliedProperty()
+    {
+        return (string) $this->supplied_by_customer === '1' && $this->canBeCustomerSupplied;
+    }
+
+    public function updatedSuppliedByCustomer($value)
+    {
+        if ($value === '1' && !$this->fuel_customer_id && $this->selectedTrip) {
+            $this->fuel_customer_id = Trip::find($this->selectedTrip)?->customer_id;
+        }
+        if ($value === '1' && $this->fuel_category == 'Customer') {
+            $this->fuel_category = 'Self';
+        }
     }
 
     public function getEffectiveContainerBalanceProperty()
@@ -986,6 +1034,8 @@ class Index extends Component
         $this->selectedHorse = Null;
         $this->selectedTrip = Null;
         $this->fuel_category = "Self";
+        $this->supplied_by_customer = '0';
+        $this->fuel_customer_id = Null;
         $this->deduct_from = "quantity";
         $this->selectedContainer = Null;
         $this->fuel_source = "station";
@@ -1119,6 +1169,8 @@ class Index extends Component
         $fuel->fillup = $this->fillup;
         $fuel->type = $this->type;
         $fuel->comments = $this->comments;
+        $fuel->supplied_by_customer = $this->isCustomerSupplied;
+        $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : Null;
         $fuel->save();
 
         if ($fuel->trip) {
@@ -1254,6 +1306,8 @@ class Index extends Component
     $this->is_full_tank = $fuel->is_full_tank;
     $this->selectedTrip = $fuel->trip_id;
     $this->fuel_category = $fuel->trip_id ? ($fuel->category ?: "Self") : "Self";
+    $this->supplied_by_customer = $fuel->supplied_by_customer ? '1' : '0';
+    $this->fuel_customer_id = $fuel->customer_id;
     $this->fuel_type = $fuel->fuel_type ? ucfirst(strtolower($fuel->fuel_type)) : null;
     $this->trips = Trip::where('trip_status','!=','Cancelled')->orderBy('created_at','desc')->orderBy('created_at','desc')->get();
     $this->selectedCurrency = $fuel->currency_id;
@@ -1361,6 +1415,8 @@ class Index extends Component
             $fuel->fillup = $this->fillup;
             $fuel->type = $this->type;
             $fuel->comments = $this->comments;
+            $fuel->supplied_by_customer = $this->isCustomerSupplied;
+            $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : Null;
 
             $fuel->update();
 
@@ -1553,7 +1609,9 @@ class Index extends Component
         $this->dispatchBrowserEvent('hide-fuelEditModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'error',
-            'message'=>"Something went wrong while updating fuel order!!"
+            // RuntimeExceptions carry a user-facing reason (e.g. the fuel's
+            // supplier bill is already paid, so it can't become customer supplied).
+            'message'=> $e instanceof \RuntimeException ? $e->getMessage() : "Something went wrong while updating fuel order!!"
         ]);
     }
     }

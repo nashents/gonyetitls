@@ -138,7 +138,11 @@ class Pending extends Component
                     }
                   
 
-                   if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
+                   if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToTopUp($top_up)) {
+                       // Customer delivered this fuel into our tank - no supplier Bill; DR Fuel
+                       // Inventory / CR Accounts Receivable via CustomerFuelSupplyService.
+                       app(\App\Services\Accounting\FuelJournalService::class)->postTopUp($top_up->fresh());
+                   } elseif (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
 
                         $account = Account::where('name','Fuel - Ops')->get()->first();
                         $billAmount = $top_up->amount ? $top_up->amount : $top_up->account_amount;
@@ -271,7 +275,11 @@ class Pending extends Component
                
         
 
-                if (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
+                if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToTopUp($top_up)) {
+                    // Customer delivered this fuel into our tank - no supplier Bill; DR Fuel
+                    // Inventory / CR Accounts Receivable via CustomerFuelSupplyService.
+                    app(\App\Services\Accounting\FuelJournalService::class)->postTopUp($top_up->fresh());
+                } elseif (isset($top_up->amount) && $top_up->amount > 0 || isset($top_up->account_amount) && $top_up->account_amount ) {
 
                     $account = Account::where('name','Fuel - Ops')->get()->first();
                     

@@ -121,11 +121,6 @@ class AccountController extends Controller
 
     public function deactivate(Account $account)
     {
-        if ($account->is_locked) {
-            Session::flash('error', 'This account is a core system account required by the application and cannot be deactivated.');
-            return redirect()->back();
-        }
-
         $account->status = 0;
         $account->update();
         Session::flash('success', 'Account Deactivated Successfully');

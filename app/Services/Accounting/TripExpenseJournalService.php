@@ -29,8 +29,10 @@ use Illuminate\Support\Facades\DB;
  */
 class TripExpenseJournalService
 {
-    public function __construct(private LedgerResyncService $ledgerResync)
-    {
+    public function __construct(
+        private LedgerResyncService $ledgerResync,
+        private CustomerFuelSupplyService $customerFuel
+    ) {
     }
 
     /**
@@ -43,6 +45,23 @@ class TripExpenseJournalService
         if ($tripExpense->fuel_id || $tripExpense->transporter_id) {
             return null;
         }
+
+        // Funded By: Customer - the customer paid this cost (typically fuel
+        // captured on the expenses list instead of as a fuel order). No
+        // supplier Bill: DR Trip Expense / CR Accounts Receivable, applied to
+        // the trip's invoice. See CustomerFuelSupplyService.
+        if ($this->customerFuel->appliesToTripExpense($tripExpense)) {
+            return DB::transaction(function () use ($tripExpense) {
+                foreach (Bill::where('trip_expense_id', $tripExpense->id)->get() as $bill) {
+                    $this->customerFuel->removeBill($bill, "Trip expense #{$tripExpense->id} marked as customer funded");
+                }
+
+                return $this->customerFuel->post($this->customerFuel->syncFromTripExpense($tripExpense));
+            });
+        }
+
+        // Switched back to company funded - undo the customer supply first.
+        $this->customerFuel->voidForTripExpense($tripExpense);
 
         return DB::transaction(function () use ($tripExpense) {
             $account = Account::where('name', 'Trip Expense')->firstOrFail();

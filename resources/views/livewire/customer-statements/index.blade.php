@@ -234,7 +234,9 @@
                                                     <tr>
                                                         <td>{{ date('F j, Y', strtotime($result->transaction_date)) }}</td>
                                                         <td>
-                                                            @if ($credit_note)
+                                                            @if ($result->transaction_type === 'customer_fuel')
+                                                                @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                            @elseif ($credit_note)
                                                                 Credit Note# {{ $result->number }}
                                                                 @if ($credit_note->invoice)
                                                                     for <a href="{{ route('invoices.show', $credit_note->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $credit_note->invoice->invoice_number }}</a>

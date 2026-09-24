@@ -7,6 +7,8 @@ use App\Models\Vendor;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Container;
+use App\Models\Customer;
+use App\Models\Trip;
 use App\Services\Accounting\FuelJournalService;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,6 +34,14 @@ class TopUps extends Component
     public $phonenumber;
     public $address;
 
+    // Customer-supplied top-up - see CustomerFuelSupplyService.
+    // Funded by: '0' = company, '1' = customer (string for the <select>)
+    public $supplied_by_customer = '0';
+    public $customer_id;
+    public $trip_id;
+    public $customers;
+    public $customer_trips = [];
+
 
     public function mount($id){
         $this->container_id = $id;
@@ -45,6 +55,15 @@ class TopUps extends Component
        $q->where('name', '=', $value);
         })->get();
         $this->top_ups = $this->container->top_ups;
+        $this->customers = Customer::orderBy('name','asc')->get(['id','name']);
+    }
+
+    public function updatedCustomerId($id)
+    {
+        $this->trip_id = null;
+        $this->customer_trips = $id
+            ? Trip::where('customer_id', $id)->where('trip_status', '!=', 'Cancelled')->orderBy('created_at', 'desc')->take(100)->get(['id', 'trip_number', 'trip_ref', 'start_date'])
+            : [];
     }
 
         
@@ -61,6 +80,10 @@ class TopUps extends Component
         $this->quantity = "";
         $this->rate = "";
         $this->amount = "";
+        $this->supplied_by_customer = '0';
+        $this->customer_id = "";
+        $this->trip_id = "";
+        $this->customer_trips = [];
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -114,6 +137,16 @@ class TopUps extends Component
     }
     public function topup(){
 
+        if ($this->supplied_by_customer) {
+            $this->validate([
+                'customer_id' => 'required|exists:customers,id',
+                'currency_id' => 'required',
+                'quantity' => 'required|numeric|min:0.01',
+                'amount' => 'required|numeric|min:0.01',
+                'date' => 'required',
+            ]);
+        }
+
         try{
 
         $container = Container::find($this->container_id);
@@ -122,7 +155,10 @@ class TopUps extends Component
         $top_up->user_id = Auth::user()->id;
         $top_up->order_number = $this->orderNumber();
         $top_up->container_id = $container->id ? $container->id : NULL;
-        $top_up->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
+        $top_up->vendor_id = !$this->supplied_by_customer && $this->vendor_id ? $this->vendor_id : NULL;
+        $top_up->supplied_by_customer = (bool) $this->supplied_by_customer;
+        $top_up->customer_id = $this->supplied_by_customer ? $this->customer_id : NULL;
+        $top_up->trip_id = $this->supplied_by_customer && $this->trip_id ? $this->trip_id : NULL;
         $top_up->date = $this->date;
         $top_up->currency_id = $this->currency_id ? $this->currency_id : NULL;
         $top_up->fuel_type = $container->fuel_type;

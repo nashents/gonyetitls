@@ -15,6 +15,12 @@ class Fuel extends Model implements Auditable
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
+    public function customer_fuel_supply(){
+        return $this->hasOne('App\Models\CustomerFuelSupply');
+    }
     public function shift(){
         return $this->belongsTo('App\Models\Shift');
     }
@@ -113,6 +119,8 @@ class Fuel extends Model implements Auditable
         'odometer',
         'hours',
         'category',
+        'supplied_by_customer',
+        'customer_id',
         'exchange_amount',
         'exchange_rate',
         'fillup',

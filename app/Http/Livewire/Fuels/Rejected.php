@@ -263,6 +263,10 @@ class Rejected extends Component
 
                         $container->update();
                     }
+                    if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                        // Customer supplied - no supplier Bill; settles against the customer.
+                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                    } else {
 
                     $expense = Expense::where('name','Fuel Topup')->get()->first();
 
@@ -332,6 +336,7 @@ class Rejected extends Component
                     $bill_expense->subtotal = $fuel->amount;
                     $bill_expense->subtotal_incl = $fuel->amount;
                     $bill_expense->save();
+                    }
 
 
                     // sending fuel order email to station
@@ -559,6 +564,10 @@ class Rejected extends Component
             
 
                 $expense = Expense::where('name','Fuel Topup')->get()->first();
+                if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                    // Customer supplied - no supplier Bill; settles against the customer.
+                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                } else {
              
 
                 $bill = new Bill;
@@ -625,6 +634,7 @@ class Rejected extends Component
                 $bill_expense->subtotal = $fuel->amount;
                 $bill_expense->subtotal_incl = $fuel->amount;
                 $bill_expense->save();
+                }
        
 
 

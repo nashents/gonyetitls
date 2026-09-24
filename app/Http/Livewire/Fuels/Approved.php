@@ -99,8 +99,11 @@ class Approved extends Component
                 }
                 $container->update();
             }
-            if($fuel->container->purchase_type == "Once Off Buy" && isset($fuel->trip)){
-        
+            if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                // Customer supplied - no supplier Bill; settles against the customer.
+                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+            }elseif($fuel->container->purchase_type == "Once Off Buy" && isset($fuel->trip)){
+
                 $bill = new Bill;
                 $bill->user_id = Auth::user()->id;
                 $bill->company_id = Auth::user()->employee->company_id;

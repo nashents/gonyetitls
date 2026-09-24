@@ -75,6 +75,12 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @if ($selectedTrip)
+                                    <div class="row">
+                                        @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy])
+                                        @include('livewire.fuels._customer_supplied', ['part' => 'customer', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy])
+                                    </div>
+                                    @endif
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">

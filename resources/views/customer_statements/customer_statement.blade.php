@@ -212,6 +212,7 @@
 
                                                $invoiced = App\Models\Invoice::where('customer_id',$customer->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('total');
                                                $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('amount');
+                                               $fuel_supplied = App\Models\CustomerFuelSupply::where('customer_id', $customer->id)->where('currency_id', $currency->id)->whereBetween('date', [$from, $to])->sum('amount');
                                             @endphp
                                             
                                                 <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance : 0,2) }}</div>
@@ -222,6 +223,9 @@
                                             @if (isset($paid))
                                                     <div class="date" style="padding-bottom: 3px" ><strong>Paid({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($paid,2) }}</div>
                                                 @endif
+                                            @if ($fuel_supplied > 0)
+                                                <div class="date" style="padding-bottom: 3px"><strong>Customer Supplied Fuel/Expenses ({{ $currency->name }})</strong> {{ $currency->symbol }}{{ number_format($fuel_supplied, 2) }}</div>
+                                            @endif
                                           
                                                 <div class="date" style="padding-bottom: 3px" ><strong>Closing Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($to)) }}</strong> {{$currency->symbol}}{{ number_format($closing_balance ? $closing_balance : 0,2) }}</div>
                                              
@@ -268,7 +272,9 @@
                                                                             ->first();
                                                             }
                                                         @endphp
-                                                        @if ($result->transaction_type === 'invoice')
+                                                        @if ($result->transaction_type === 'customer_fuel')
+                                                            @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                        @elseif ($result->transaction_type === 'invoice')
                                                             <a href="{{ route('invoices.show',$invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $result->number }} </a><br>
                                                             Due {{ $invoice->expiry }}
                                                         @elseif ($result->transaction_type === 'payment')

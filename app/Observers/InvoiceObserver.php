@@ -3,9 +3,11 @@
 namespace App\Observers;
 
 use App\Models\Invoice;
+use App\Services\Accounting\CustomerFuelSupplyService;
 use App\Services\Accounting\InvoiceJournalService;
 use App\Services\Accounting\InvoiceTripFreightSyncService;
 use App\Services\Sage\SageSyncService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class InvoiceObserver
@@ -22,6 +24,7 @@ class InvoiceObserver
             app(InvoiceJournalService::class)->post($invoice);
             app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
+            $this->applyCustomerSuppliedFuel($invoice);
         }
     }
 
@@ -37,6 +40,7 @@ class InvoiceObserver
             app(InvoiceJournalService::class)->post($invoice);
             app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
+            $this->applyCustomerSuppliedFuel($invoice);
         }
     }
 
@@ -52,6 +56,27 @@ class InvoiceObserver
         } catch (\Throwable $e) {
             Log::warning('Sage invoice sync failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Apply any customer-supplied fuel recorded for this invoice's trips
+     * against its balance. Deferred until the surrounding transaction
+     * commits - invoices are often saved approved before their trip line
+     * items (and final balance) are written - and guarded so a failure here
+     * never blocks the approval itself.
+     */
+    protected function applyCustomerSuppliedFuel(Invoice $invoice): void
+    {
+        DB::afterCommit(function () use ($invoice) {
+            try {
+                $fresh = Invoice::find($invoice->id);
+                if ($fresh && $fresh->authorization === 'approved') {
+                    app(CustomerFuelSupplyService::class)->autoAllocateForInvoice($fresh);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Customer supplied fuel allocation failed for invoice #' . $invoice->id . ': ' . $e->getMessage());
+            }
+        });
     }
 
     /**

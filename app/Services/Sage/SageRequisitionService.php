@@ -54,8 +54,11 @@ class SageRequisitionService
         // "PR - Diesel" via SageFuelDieselService (see SageProjectService::syncTrip);
         // including them here would double-post the same fuel spend to Sage as
         // two separate purchasing documents.
+        // Customer-funded lines are excluded too: the customer paid for them,
+        // so there's nothing to requisition from a vendor.
         $expenses = $trip->trip_expenses()
             ->whereNull('fuel_id')
+            ->where('supplied_by_customer', false)
             ->where(fn ($q) => $q->whereNotNull('expense_id')->orWhereNotNull('allowance_id'))
             ->with(['vendor', 'currency', 'expense', 'allowance'])
             ->get();

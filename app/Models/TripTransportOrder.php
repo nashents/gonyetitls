@@ -69,7 +69,7 @@ class TripTransportOrder extends Model implements Auditable
     }
     public function delivery_note()
     {
-        return $this->hasOne(DeliveryNote::class, 'trip_transport_order_id');
+        return $this->hasOne(DeliveryNote::class, 'trip_transport_order_id')->latestOfMany();
     }
 
     public function transport_order()

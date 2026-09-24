@@ -116,6 +116,14 @@ class TripDeletionService
                 }
             }
 
+            // Customer-funded fuel orders / expense lines of this trip credited
+            // the customer instead of raising a bill - reverse those too. A
+            // customer top-up into a tank stays: that fuel is physically there.
+            \App\Models\CustomerFuelSupply::where('trip_id', $trip->id)
+                ->whereNull('top_up_id')
+                ->get()
+                ->each(fn ($supply) => app(CustomerFuelSupplyService::class)->void($supply, $reasonText));
+
             // -----------------------------
             // 3) Refuse if a Payment remains anywhere reachable from this
             // trip that the above didn't already clean up.

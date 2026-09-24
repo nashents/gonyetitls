@@ -137,7 +137,7 @@
                                                 {{-- FOrder# --}}
                                                 <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $fuel->id }}" value="{{ $fuel->id }}"></td>
                                                 <td>
-                                                    <strong>{{ $fuel->order_number }}</strong>
+                                                    <strong>{{ $fuel->order_number }}</strong>@if ($fuel->supplied_by_customer) <span class="badge bg-info" title="Supplied by {{ $fuel->customer ? $fuel->customer->name : 'customer' }} - no supplier bill">Customer fuel</span>@endif
                                                     <div class="fuel-meta text-muted">
                                                         <small><strong>By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small><br>
                                                         <small><strong>On:</strong> {{ $fuel->created_at }}</small>

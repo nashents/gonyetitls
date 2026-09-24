@@ -178,7 +178,7 @@
 
                                                 {{-- FOrder# --}}
                                                 <td>
-                                                    <strong>{{ $fuel->order_number }}</strong>
+                                                    <strong>{{ $fuel->order_number }}</strong>@if ($fuel->supplied_by_customer) <span class="badge bg-info" title="Supplied by {{ $fuel->customer ? $fuel->customer->name : 'customer' }} - no supplier bill">Customer fuel</span>@endif
                                                     <div class="fuel-meta text-muted">
                                                         <small><strong>By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small><br>
                                                         <small><strong>On:</strong> {{ $fuel->created_at }}</small>
@@ -567,7 +567,8 @@
                         </div>
                         @if ($selectedTrip)
                         <div class="row">
-                            <div class="col-md-4">
+                            @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy && !($type == 'Horse' && $fuel_source == 'truck'), 'col' => 'col-md-6'])
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="fuel_category">Category<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="fuel_category" class="form-control" required>
@@ -579,6 +580,7 @@
                                     @error('fuel_category') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            @include('livewire.fuels._customer_supplied', ['part' => 'customer', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy && !($type == 'Horse' && $fuel_source == 'truck'), 'col' => 'col-md-6'])
                         </div>
                         @endif
                     @elseif($type == "Asset")
@@ -1051,7 +1053,8 @@
                         </div>
                         @if ($selectedTrip)
                         <div class="row">
-                            <div class="col-md-4">
+                            @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy && !($type == 'Horse' && $fuel_source == 'truck'), 'col' => 'col-md-6'])
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="fuel_category">Category<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="fuel_category" class="form-control" required>
@@ -1063,6 +1066,7 @@
                                     @error('fuel_category') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            @include('livewire.fuels._customer_supplied', ['part' => 'customer', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy && !($type == 'Horse' && $fuel_source == 'truck'), 'col' => 'col-md-6'])
                         </div>
                         @endif
                     @elseif($type == "Asset")

@@ -43,6 +43,14 @@ class Index extends Component
     public $selectedCurrency;
     public $currencies;
     public $vendor_id;
+
+    // Customer-supplied top-up - see CustomerFuelSupplyService.
+    // Funded by: '0' = company, '1' = customer (string for the <select>)
+    public $supplied_by_customer = '0';
+    public $customer_id;
+    public $trip_id;
+    public $customers;
+    public $customer_trips = [];
     // The fuelling station's OWN Sage vendor (container.vendor_id) - kept
     // separate from $vendor_id (which belongs to the top-up/purchase form) so
     // the two modals don't overwrite each other. This is what the Sage PR -
@@ -94,6 +102,15 @@ class Index extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
          $this->purchases = collect();
+        $this->customers = \App\Models\Customer::orderBy('name','asc')->get(['id','name']);
+    }
+
+    public function updatedCustomerId($id)
+    {
+        $this->trip_id = null;
+        $this->customer_trips = $id
+            ? \App\Models\Trip::where('customer_id', $id)->where('trip_status', '!=', 'Cancelled')->orderBy('created_at', 'desc')->take(100)->get(['id', 'trip_number', 'trip_ref', 'start_date'])
+            : [];
     }
     public function containerNumber(){
        
@@ -321,7 +338,11 @@ class Index extends Component
     }
  
     private function resetInputFields(){
-        
+
+        $this->supplied_by_customer = '0';
+        $this->customer_id = Null;
+        $this->trip_id = Null;
+        $this->customer_trips = [];
         $this->account_amount = Null;
         $this->balance = Null;
         $this->account_balance = Null;
@@ -370,7 +391,19 @@ class Index extends Component
 
     public function topup(){
 
-        DB::transaction(function () {
+        $customerSupplied = $this->supplied_by_customer && !$this->attach_po && $this->top_up_to == 'quantity';
+
+        if ($customerSupplied) {
+            $this->validate([
+                'customer_id' => 'required|exists:customers,id',
+                'selectedCurrency' => 'required',
+                'quantity' => 'required|numeric|min:0.01',
+                'amount' => 'required|numeric|min:0.01',
+                'date' => 'required',
+            ]);
+        }
+
+        DB::transaction(function () use ($customerSupplied) {
 
         $container = Container::find($this->container_id);
         $top_up = new TopUp;
@@ -378,7 +411,10 @@ class Index extends Component
         $top_up->order_number = $this->orderNumber();
         $top_up->purchase_id = $this->selectedPurchase ?: NULL;
         $top_up->container_id = $container->id ? $container->id : NULL;
-        $top_up->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
+        $top_up->vendor_id = !$customerSupplied && $this->vendor_id ? $this->vendor_id : NULL;
+        $top_up->supplied_by_customer = $customerSupplied;
+        $top_up->customer_id = $customerSupplied ? $this->customer_id : NULL;
+        $top_up->trip_id = $customerSupplied && $this->trip_id ? $this->trip_id : NULL;
         $top_up->date = $this->date;
         $top_up->currency_id = $this->selectedCurrency ? $this->selectedCurrency : NULL;
         $top_up->fuel_type = $container->fuel_type;

@@ -47,6 +47,11 @@ class Expenses extends Component
     public $net_profit;
     public $trip_expense;
 
+    // Funded By per line: '0' = company, '1' = the trip's customer (paid /
+    // supplied as part-payment) - see CustomerFuelSupplyService. Array on
+    // the add form, scalar on the edit form, same as $category.
+    public $funded_by;
+
 
 
     public $name;
@@ -116,6 +121,7 @@ class Expenses extends Component
         $this->selectedVendor = Null;
         $this->visible_on_trip_sheet = Null;
         $this->date = Null;
+        $this->funded_by = Null;
         $this->total_customer_expenses = 0;
         $this->total_transporter_expenses = 0;
         $this->total_expenses = 0;
@@ -266,7 +272,13 @@ class Expenses extends Component
 
     public function store(){
 
-
+            if ($this->trip_expense_type) {
+                foreach ($this->trip_expense_type as $key => $type) {
+                    if ($type === 'expense' && !empty($this->selectedExpense[$key])) {
+                        $this->validateFunding((string) ($this->funded_by[$key] ?? '0'), $this->category[$key] ?? null, "funded_by.{$key}", "category.{$key}");
+                    }
+                }
+            }
 
             if ($this->trip_expense_type) {
 
@@ -317,6 +329,9 @@ class Expenses extends Component
                     }
                 
                     $trip_expense->category = $this->category[$key] ?? null;
+                    $customerFunded = $type === 'expense' && (string) ($this->funded_by[$key] ?? '0') === '1';
+                    $trip_expense->supplied_by_customer = $customerFunded;
+                    $trip_expense->customer_id = $customerFunded ? $this->trip->customer_id : null;
                     $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet[$key] ?? true;
                     $trip_expense->amount = $this->amount[$key] ?? 0;
                     $trip_expense->date = $this->date[$key] ?? $this->tripStartDate();
@@ -473,6 +488,7 @@ class Expenses extends Component
             $this->trip_expense_type = "allowance";
         }
         $this->category = $expense->category;
+        $this->funded_by = $expense->supplied_by_customer ? '1' : '0';
         $this->visible_on_trip_sheet = $expense->visible_on_trip_sheet;
         $this->amount = $expense->amount;
         $this->date = $expense->date ?? $this->tripStartDate();
@@ -489,6 +505,9 @@ class Expenses extends Component
 
                 $trip_expense = TripExpense::find($this->trip_expense_id);
                 abort_unless($trip_expense->can_edit, 403);
+                if ($this->trip_expense_type == 'expense') {
+                    $this->validateFunding((string) ($this->funded_by ?? '0'), $this->category, 'funded_by', 'category');
+                }
                 $trip_expense->amount = $this->amount;
                 $trip_expense->trip_id = $this->trip_id;
                 $trip_expense->user_id = Auth::user()->id;
@@ -501,6 +520,9 @@ class Expenses extends Component
                 }
 
                 $trip_expense->category = $this->category;
+                $customerFunded = $this->trip_expense_type == 'expense' && (string) ($this->funded_by ?? '0') === '1';
+                $trip_expense->supplied_by_customer = $customerFunded;
+                $trip_expense->customer_id = $customerFunded ? $this->trip->customer_id : null;
                 $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet;
                 $trip_expense->date = $this->date;
                 $trip_expense->currency_id = $this->selectedCurrency;
@@ -521,7 +543,12 @@ class Expenses extends Component
 
                 $trip_expense->update();
 
-                app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
+                try {
+                    app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
+                } catch (\RuntimeException $e) {
+                    $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $e->getMessage()]);
+                    return;
+                }
 
                 $this->recalculateExpenses($this->trip->id);
 
@@ -558,6 +585,8 @@ class Expenses extends Component
             }
             
 
+           app(\App\Services\Accounting\CustomerFuelSupplyService::class)->voidForTripExpense($this->trip_expense, "Trip expense #{$this->trip_expense->id} deleted");
+
            $this->trip_expense->delete();
 
            $this->recalculateExpenses($this->trip->id);
@@ -571,6 +600,26 @@ class Expenses extends Component
         }
 
 
+
+    /**
+     * A customer-funded line settles against the trip's customer, so the trip
+     * needs one - and it can't also be category "Customer" (that recharges
+     * the cost onto the invoice, the opposite of the customer having paid it).
+     */
+    private function validateFunding(string $fundedBy, ?string $category, string $fundedField, string $categoryField): void
+    {
+        if ($fundedBy !== '1') {
+            return;
+        }
+
+        if (!$this->trip->customer_id) {
+            throw \Illuminate\Validation\ValidationException::withMessages([$fundedField => 'This trip has no customer - set the trip customer before marking an expense as customer funded.']);
+        }
+
+        if ($category === 'Customer') {
+            throw \Illuminate\Validation\ValidationException::withMessages([$categoryField => 'Customer funded expenses can\'t also be recharged to the customer - use Self or Transporter.']);
+        }
+    }
 
     /** Sage sync column only shows when THIS trip's own company has Sage active. */
     public function getSageEnabledProperty()

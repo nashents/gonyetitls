@@ -2051,7 +2051,7 @@
                                    </div>
                                    @endif
                                    <div class="row">
-                                       <div class="col-md-4">
+                                       <div class="col-md-3">
                                            @if ($selectedHorse && $fuel_source == "truck")
                                            <div class="form-group">
                                                <label for="source_horse">Source Truck<span class="required" style="color: red">*</span></label>
@@ -2094,7 +2094,8 @@
                                            </div>
                                            @endif
                                        </div>
-                                       <div class="col-md-4">
+                                       @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'fuel_supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => $this->fuelFundingSelectable, 'col' => 'col-md-3'])
+                                       <div class="col-md-3">
                                            <div class="form-group">
                                                <label for="vendors">Categories<span class="required" style="color: red">*</span></label>
                                                <select class="form-control" wire:model.debounce.300ms="fuel_category" required>
@@ -2106,13 +2107,14 @@
                                                @error('fuel_category') <span class="text-danger error">{{ $message }}</span>@enderror
                                            </div>
                                        </div>
-                                       <div class="col-md-4">
+                                       <div class="col-md-3">
                                            <div class="form-group">
                                                <label for="date">Fillup Date</label>
                                                <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date"/>
                                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                            </div>
                                        </div>
+                                       @include('livewire.fuels._customer_supplied', ['part' => 'customer', 'flag' => 'fuel_supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => $this->fuelFundingSelectable, 'col' => 'col-md-3'])
                                    </div>
                                    @if (isset($selected_container) && $selected_container->purchase_type == "Bulk Buy")
                                        <div class="form-group">

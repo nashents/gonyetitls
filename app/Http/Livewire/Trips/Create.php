@@ -442,6 +442,13 @@ class Create extends Component
     public $containers;
     public $selected_container;
     public $fuel_category;
+
+    // Fuel "Funded By": '0' = company, '1' = customer (part-payment of this
+    // trip) - see CustomerFuelSupplyService.
+    public $fuel_supplied_by_customer = '0';
+    public $fuel_customer_id;
+    // Funded By per expense line (keyed by expense id): '0' company, '1' the trip customer.
+    public $expense_funded_by = [];
     public $date;
     public $selectedFuelCurrency;
     public $selected_fuel_currency;
@@ -1360,9 +1367,14 @@ class Create extends Component
 
         
 
+        // Latest TripExpense per expense in one query (was one query per expense).
+        $lastTripExpenses = TripExpense::whereIn('id', TripExpense::selectRaw('MAX(id)')->whereNotNull('expense_id')->groupBy('expense_id'))
+                ->get(['id', 'expense_id', 'category', 'vendor_id'])
+                ->keyBy('expense_id');
+
         foreach($this->expenses as $expense){
                 $id = $expense->id;
-                $lastTripExpense = TripExpense::where('expense_id', $id)->latest('id')->first();
+                $lastTripExpense = $lastTripExpenses->get($id);
                 $this->category[$id] = $lastTripExpense->category ?? $expense->category;
                 $this->expense_currency_id[$id] = $expense->currency_id;
                 $this->amount[$id] = $expense->amount;
@@ -2057,8 +2069,11 @@ class Create extends Component
 
     public function createDeliveryNotes($trip_transport_order){
         
+            $trip = $trip_transport_order->trip;
+
             $delivery_note = new DeliveryNote;
             $delivery_note->user_id =  $trip_transport_order->created_by;
+            $delivery_note->trip_id = $trip_transport_order->trip_id;
             $delivery_note->transport_order_id = $trip_transport_order->transport_order_id;
             $delivery_note->trip_transport_order_id = $trip_transport_order->id;
             $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id ?: Null;
@@ -2085,10 +2100,62 @@ class Create extends Component
 
    
 
+
+    /**
+     * Customer funding only applies to Once Off Buy station fuel - a Bulk
+     * Buy tank is our own stock (the customer's fuel is recorded on the
+     * top-up) and a truck-to-truck transfer isn't a supply.
+     */
+    public function getFuelFundingSelectableProperty()
+    {
+        return !($this->selectedHorse && $this->fuel_source == 'truck')
+            && optional(Container::find($this->selectedContainer))->purchase_type !== 'Bulk Buy';
+    }
+
+    public function getFuelCustomerFundedProperty()
+    {
+        return (string) $this->fuel_supplied_by_customer === '1' && $this->fuelFundingSelectable;
+    }
+
+    public function updatedFuelSuppliedByCustomer($value)
+    {
+        if ($value === '1') {
+            $this->fuel_customer_id = $this->fuel_customer_id ?: $this->customer_id;
+            if ($this->fuel_category == 'Customer') {
+                $this->fuel_category = 'Self';
+            }
+        }
+    }
+
+    protected function validateFuelFunding(): void
+    {
+        // Customer funded expense lines can't also be recharged to the customer.
+        foreach ((array) $this->expense_id as $key => $value) {
+            if ($value && (string) ($this->expense_funded_by[$key] ?? '0') === '1' && ($this->category[$key] ?? null) === 'Customer') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "category.{$key}" => 'Customer funded expenses can\'t also be recharged to the customer - use Self or Transporter.',
+                ]);
+            }
+        }
+
+        if ($this->fuel_order && $this->fuelCustomerFunded) {
+            $this->validate([
+                'fuel_customer_id' => 'required|exists:customers,id',
+                // "Customer" recharges the fuel onto the invoice - the opposite
+                // of the customer having supplied it.
+                'fuel_category' => 'required|in:Self,Transporter',
+            ], [
+                'fuel_customer_id.required' => 'Select the customer who funded this fuel.',
+                'fuel_category.in' => 'Customer funded fuel can\'t also be recharged to the customer - use Self or Transporter.',
+            ]);
+        }
+    }
+
     public function store(){
 
         // $this->validate();
         $this->validateTripExpenses();
+        $this->validateFuelFunding();
         //start trip creation logic
         // try{
 
@@ -2646,6 +2713,8 @@ class Create extends Component
                         $fuel->fillup = 1;
                         $fuel->status = 1;
                         $fuel->comments = $this->fuel_comments;
+                        $fuel->supplied_by_customer = $this->fuelCustomerFunded;
+                        $fuel->customer_id = $this->fuelCustomerFunded ? ($this->fuel_customer_id ?: $trip->customer_id) : null;
                         $fuel->save();
                     
                         $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
@@ -2690,6 +2759,16 @@ class Create extends Component
                         $trip_expense->vendor_id = $this->expense_vendor_id[$key] ?? null;
                         $trip_expense->payment_method_id = $this->payment_method_id[$key] ?? null;
                         $trip_expense->category = $this->category[$key] ?? null;
+                        if ((string) ($this->expense_funded_by[$key] ?? '0') === '1') {
+                            // Settles against the trip's customer (DR Trip Expense / CR AR) at approval.
+                            if (!$trip->customer_id) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    "expense_funded_by.{$key}" => 'Set the trip customer before marking an expense as customer funded.',
+                                ]);
+                            }
+                            $trip_expense->supplied_by_customer = true;
+                            $trip_expense->customer_id = $trip->customer_id;
+                        }
                         $trip_expense->amount = $this->amount[$key] ?? 0;
                         $trip_expense->exchange_rate = $this->expense_exchange_rate[$key] ?? null;
                         $trip_expense->exchange_amount = $this->expense_exchange_amount[$key] ?? 0;

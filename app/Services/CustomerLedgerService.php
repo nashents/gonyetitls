@@ -80,8 +80,28 @@ class CustomerLedgerService
             ->where('authorization', 'approved')
             ->whereNull('deleted_at');
 
+        // Fuel the customer supplied in kind - settles their account like a
+        // payment (see CustomerFuelSupplyService), shown as its own line.
+        $fuelSupplies = DB::table('customer_fuel_supplies')
+            ->select([
+                'id',
+                DB::raw("'customer_fuel' as transaction_type"),
+                'supply_number as number',
+                'currency_id',
+                'date',
+                'date as transaction_date',
+                'created_at',
+                DB::raw('CAST(amount AS DECIMAL(20,2)) as amount'),
+                DB::raw('CAST(amount AS DECIMAL(20,2)) as balance'),
+                DB::raw('CAST(amount AS DECIMAL(20,2)) * -1 as signed_amount'),
+                DB::raw('1 as type_priority'),
+            ])
+            ->where('customer_id', $customerId)
+            ->where('currency_id', $currencyId)
+            ->whereNull('deleted_at');
+
         $rows = DB::query()
-            ->fromSub($invoices->unionAll($payments)->unionAll($creditNotes), 'ledger')
+            ->fromSub($invoices->unionAll($payments)->unionAll($creditNotes)->unionAll($fuelSupplies), 'ledger')
             ->orderBy('date')
             ->orderBy('created_at')
             ->orderBy('type_priority') // invoices settle before payments/credit notes on an exact tie

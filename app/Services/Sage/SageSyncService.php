@@ -61,6 +61,12 @@ class SageSyncService
     /** Fuel order → Sage "PR - Diesel" (supplier = fuelling station). */
     public function syncFuel(\App\Models\Fuel $fuel): array
     {
+        // Customer-supplied fuel has no vendor to buy from - a PR - Diesel
+        // purchase would fabricate one in Sage.
+        if ($fuel->supplied_by_customer) {
+            return ['success' => false, 'skipped' => true, 'error' => 'Customer supplied fuel is not a purchase - nothing to push to Sage.'];
+        }
+
         return $this->run($fuel, 'fuel');
     }
 

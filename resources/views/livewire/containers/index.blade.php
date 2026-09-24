@@ -154,7 +154,48 @@
                             @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     @endif
+                    @if (!$attach_po && $top_up_to == "quantity")
+                    <div class="form-group">
+                        <label>Funded By<span class="required" style="color: red">*</span></label>
+                        <select wire:model="supplied_by_customer" class="form-control">
+                            <option value="0">Company (bought from a supplier)</option>
+                            <option value="1">Customer (delivered into the tank as part-payment)</option>
+                        </select>
+                        @if ($supplied_by_customer)
+                        <small class="text-muted">No supplier bill is raised - on approval it goes into Fuel Inventory and is credited to the customer's account.</small>
+                        @endif
+                    </div>
+                    @if ($supplied_by_customer)
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="customer_id">Supplied By (Customer)<span class="required" style="color: red">*</span></label>
+                                <select wire:model="customer_id" class="form-control" required>
+                                    <option value="">Select Customer</option>
+                                    @foreach ($customers as $customer)
+                                        <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="trip_id">For Trip <small>(optional - applies it to that trip's invoice)</small></label>
+                                <select wire:model.debounce.300ms="trip_id" class="form-control">
+                                    <option value="">Select Trip</option>
+                                    @foreach ($customer_trips as $trip)
+                                        <option value="{{$trip->id}}">{{$trip->trip_number}}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}}</option>
+                                    @endforeach
+                                </select>
+                                @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    @endif
+                    <div class="row">
+                        @if (!$supplied_by_customer)
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="vendor_id">Vendors</label>
@@ -168,6 +209,7 @@
                                 @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                        @endif
                          <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name"> Date<span class="required" style="color: red">*</span></label>
