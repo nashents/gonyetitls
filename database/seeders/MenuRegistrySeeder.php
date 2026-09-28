@@ -733,6 +733,11 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 40,
         ]);
         $upsertSub($m, ['name'=>'Manage Statements','slug'=>'manage-statements','icon'=>'fas fa-list','route_name'=>'customer_statements.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Debtors Journal','slug'=>'debtor-journals','icon'=>'fas fa-book','route_name'=>'debtor_journals.index','sort_order'=>20,'visibility'=>$any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isSuperAdmin']),
+        ])]);
 
         // Credit Notes
         $m = $upsertModule($g, [

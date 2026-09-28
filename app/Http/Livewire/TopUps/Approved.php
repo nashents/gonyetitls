@@ -94,55 +94,13 @@ class Approved extends Component
             $container->update();
         }
 
-    if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToTopUp($top_up)) {
-        // Customer delivered this fuel into our tank - no supplier Bill; DR Fuel
-        // Inventory / CR Accounts Receivable via CustomerFuelSupplyService.
+    if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToTopUp($top_up)
+        || (isset($top_up->amount) && $top_up->amount > 0)) {
+        // Customer-supplied: no supplier Bill, DR Fuel Inventory / CR Accounts
+        // Receivable. Vendor-purchased: a genuine new payable, DR Fuel
+        // Inventory / CR Accounts Payable. FuelJournalService branches on
+        // which this is internally.
         app(\App\Services\Accounting\FuelJournalService::class)->postTopUp($top_up->fresh());
-    } elseif (isset($top_up->amount) && $top_up->amount > 0) {
-
-        $account = Account::where('name','Fuel - Ops')->get()->first();
-
-        $bill = new Bill;
-        $bill->user_id = Auth::user()->id;
-        $bill->bill_number = $this->billNumber();
-        $bill->container_id = $container->id;
-        $bill->top_up_id = $top_up->id;
-        $bill->vendor_id = $top_up->vendor_id;
-        if (isset($account)) {
-            $bill->account_id = $account->id;
-            $bill->account_type_id = $account->account_type->id;
-        }
-        $bill->category = "Fuel Station Fuel Topup";
-        $bill->bill_date = date("Y-m-d");
-        $bill->currency_id =  $top_up->currency_id;
-        $bill->total =  $top_up->amount;
-        $bill->balance =  $top_up->amount;
-        $bill->exchange_rate = $top_up->exchange_rate;
-        $bill->exchange_amount = $top_up->exchange_amount;
-        $bill->authorized_by_id = $top_up->authorized_by_id;
-        $bill->authorization = $top_up->authorization;
-        $bill->comments = $top_up->reason;
-        $bill->save();
-
-        // $expense = Expense::where('name','Fuel Topup')->get()->first();
-
-        $bill_expense = new BillExpense;
-        $bill_expense->user_id = Auth::user()->id;
-        $bill_expense->bill_id = $bill->id;
-        $bill_expense->currency_id = $bill->currency_id;
-        if (isset($expense)) {
-            $bill_expense->expense_id = $expense->id;
-        }
-        if (isset($account)) {
-            $bill_expense->account_id = $account->id;
-            $bill_expense->account_type_id = $account->account_type->id;
-        }
-        $bill_expense->qty = 1;
-        $bill_expense->amount = $top_up->amount;
-        $bill_expense->subtotal = $top_up->amount;
-        $bill_expense->subtotal_incl = $top_up->amount;
-        $bill_expense->save();
-
     }
 
         $this->dispatchBrowserEvent('hide-authorizationModal');

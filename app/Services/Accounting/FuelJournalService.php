@@ -68,7 +68,12 @@ class FuelJournalService
 
         return DB::transaction(function () use ($topUp) {
             $fuelInventory = Account::where('name', 'Fuel Inventory')->firstOrFail();
-            $fuelExpense = Expense::where('name', 'Fuel Topup')->first();
+            $fuelExpense = Expense::where('name', Expense::FUEL_TOPUP)->first();
+
+            // A top-up entered by monetary value (Containers/Index.php's "account"
+            // mode) leaves quantity/rate/amount null and puts the value in
+            // account_amount instead - fall back to it so those top-ups still post.
+            $billAmount = $topUp->amount ?: $topUp->account_amount;
 
             $bill = Bill::where('top_up_id', $topUp->id)->first() ?: new Bill;
             $bill->user_id = $bill->user_id ?? Auth::id();
@@ -81,9 +86,9 @@ class FuelJournalService
             $bill->currency_id = $topUp->currency_id;
             $bill->exchange_rate = $topUp->exchange_rate;
             $bill->exchange_amount = $topUp->exchange_amount;
-            $bill->total = $topUp->amount;
-            $bill->subtotal = $topUp->amount;
-            $bill->balance = $topUp->amount;
+            $bill->total = $billAmount;
+            $bill->subtotal = $billAmount;
+            $bill->balance = $billAmount;
             $bill->authorized_by_id = $bill->authorized_by_id ?? Auth::id();
             // authorization/to_be_paid deliberately NOT set on this save -
             // BillObserver::created() auto-posts as soon as both are dirty
@@ -102,9 +107,9 @@ class FuelJournalService
             $billExpense->account_id = $fuelInventory->id;
             $billExpense->account_type_id = $fuelInventory->account_type_id;
             $billExpense->qty = 1;
-            $billExpense->amount = $topUp->amount;
-            $billExpense->subtotal = $topUp->amount;
-            $billExpense->subtotal_incl = $topUp->amount;
+            $billExpense->amount = $billAmount;
+            $billExpense->subtotal = $billAmount;
+            $billExpense->subtotal_incl = $billAmount;
             $billExpense->save();
 
             $bill->to_be_paid = true;
@@ -150,7 +155,7 @@ class FuelJournalService
                 ? Account::where('name', 'Fuel - COGS')->firstOrFail()
                 : Account::where('name', 'Fuel - Ops')->firstOrFail();
 
-            $fuelExpense = Expense::where('name', 'Fuel Topup')->first();
+            $fuelExpense = Expense::where('name', Expense::FUEL_TOPUP)->first();
             $isOnceOffBuy = optional($fuel->container)->purchase_type === 'Once Off Buy';
 
             $bill = Bill::where('fuel_id', $fuel->id)->first() ?: new Bill;

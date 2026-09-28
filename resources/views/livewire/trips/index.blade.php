@@ -16,7 +16,19 @@
             word-break: break-word;
             overflow-wrap: break-word;
         }
-        .trips-index-table thead th:nth-child(-n+3) { background: #f8f9fa; z-index: 3; }
+        /* Freeze the header row so column headings stay visible while
+           scrolling down through the trip rows. */
+        .trips-index-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background: #f8f9fa;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,.15);
+        }
+        /* Header cells that are also frozen columns sit at the intersection
+           of both sticky axes, so they need to stack above the other
+           sticky headers/columns. */
+        .trips-index-table thead th:nth-child(-n+3) { z-index: 4; }
         .trips-index-table tbody tr:nth-child(even) td:nth-child(-n+3) { background: #f8f9fa; }
         .trips-index-table tbody tr:hover td:nth-child(-n+3) { background: #f5f5f5; }
         .trips-index-table th:nth-child(1), .trips-index-table td:nth-child(1) { left: 0; min-width: 230px; max-width: 230px; }
@@ -434,7 +446,7 @@
                                
                               
                                 {{-- <div class="table-responsive"> --}}
-                                    <table class="table  table-striped table-bordered table-sm table-responsive sortable trips-index-table" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
+                                    <table class="table  table-striped table-bordered table-sm sortable trips-index-table" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
                                         <thead>
                                             <tr>
                                                 <th>Trip#<hr style="margin-top:2px; margin-bottom:2px">Type</th>

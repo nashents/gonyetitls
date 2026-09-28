@@ -310,7 +310,7 @@ class Index extends Component
         abort_unless(Auth::user()->is_admin(), 403);
 
         $fuels = $this->missingTripExpensesQuery()->get();
-        $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
+        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
         $created = 0;
 
         foreach ($fuels as $fuel) {
@@ -1175,7 +1175,7 @@ class Index extends Component
 
         if ($fuel->trip) {
 
-            $fuel_expense = Expense::where('name','Fuel Topup')->get()->first();
+            $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
         
             $trip_expense = new TripExpense;
             $trip_expense->user_id =  $fuel->user_id;
@@ -1424,7 +1424,7 @@ class Index extends Component
                 
                 $trip_expense = TripExpense::where('fuel_id',$fuel->id)->where('trip_id',$fuel->trip_id)->first();
                 if(isset($trip_expense)){
-                    $fuel_expense = Expense::where('name','Fuel Topup')->first();
+                    $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
             
                     $trip_expense->user_id =  $fuel->user_id;
                     $trip_expense->trip_id = $fuel->trip_id;
@@ -1439,7 +1439,7 @@ class Index extends Component
                     $trip_expense->exchange_amount = $this->exchange_amount;
                     $trip_expense->update();
                 }else{
-                    $fuel_expense = Expense::where('name','Fuel Topup')->get()->first();
+                    $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
             
                     $trip_expense = new TripExpense;
                     $trip_expense->user_id =  $fuel->user_id;

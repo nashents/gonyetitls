@@ -6,7 +6,7 @@
   <title>Customer Statement</title>
  
 
-@include('includes.css')
+@include('includes.pdf_css')
 
 </head>
 <body>
@@ -16,16 +16,16 @@
         <div class="card-body">
             <div id="invoice"  style="font-size: 16px">
                 <div class="invoice overflow-auto">
-                    <div style="margin-left: -30px; margin-right:-30px">
-                        <header style="margin-top:-25px; padding-bottom:10px">
+                    <div>
+                        <header style="padding-bottom:10px">
                             <div class="row">
-                                <div class="col" style="margin-top:-15px;">
+                                <div class="col">
                                     <a href="javascript:;">
                                                     <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
                                                 </a>
                                                
                                 </div>
-                                <div class="col company-details" style="margin-top:-120px;">
+                                <div class="col company-details">
                                     <h4 class="name" >
                                         <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
                                             {{$company->name}}
@@ -93,9 +93,9 @@
                                     <div class="email"><a href="mailto:{{$customer->email}}">{{$customer->email}}</a>
                                     </div>
                                 </div>
-                                <div class="col invoice-details" style="margin-top:-150px;">
+                                <div class="col invoice-details">
                                     <h3 class="to" >{{$currency->fullname}} {{$currency->name}}</h3>
-                                    <div class="date" style="padding-bottom: 3px; padding-top: -10px"> <strong>As of {{date('F j, Y')}}</strong> </div>
+                                    <div class="date" style="padding-bottom: 3px; "> <strong>As of {{date('F j, Y')}}</strong> </div>
                                     @php
                                         $balance = App\Models\Invoice::where('customer_id',$customer->id)->where('currency_id',$currency->id)
                                         ->where('status', 'Unpaid')
@@ -274,6 +274,8 @@
                                                         @endphp
                                                         @if ($result->transaction_type === 'customer_fuel')
                                                             @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                        @elseif ($result->transaction_type === 'debtor_journal')
+                                                            @include('customer_statements._debtor_journal_row', ['result' => $result])
                                                         @elseif ($result->transaction_type === 'invoice')
                                                             <a href="{{ route('invoices.show',$invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $result->number }} </a><br>
                                                             Due {{ $invoice->expiry }}

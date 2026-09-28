@@ -325,6 +325,8 @@
                                                 <td class="text-center">
                                                     @if ($result->transaction_type === 'customer_fuel')
                                                         @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                    @elseif ($result->transaction_type === 'debtor_journal')
+                                                        @include('customer_statements._debtor_journal_row', ['result' => $result])
                                                     @elseif ($result->transaction_type === 'invoice' && isset($invoice))
                                                         <a href="{{ route('invoices.show', $invoice->id) }}"
                                                            target="_blank" rel="noopener noreferrer" style="color: blue">

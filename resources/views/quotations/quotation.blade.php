@@ -6,7 +6,7 @@
   <title>Quotation Template</title>
  
 
-@include('includes.css')
+@include('includes.pdf_css')
 
 </head>
 <body>
@@ -16,21 +16,44 @@
         <div class="card-body">
             <div id="invoice"  style="font-size: 16px">
                 <div class="invoice overflow-auto" >
-                    <div  style="margin-left: -30px; margin-right:-30px" >
-                        <header style="margin-top:-25px; padding-top:-25px; padding-bottom:10px" >
+                    <div>
+                        <header>
                             <div class="row">
-                                <div class="col" style="padding-bottom: 5px">
+                                <div class="col" style="width: 40%">
     								<img src="{{asset('images/uploads/'.$company->logo)}}" width="150" >
                                 </div>
-                                <div class="col company-details" style="margin-top:-100px;">
+                                <div class="col company-details">
                                      <h4 class="name" style="color:  {{$company->color ? $company->color : "#000000" }}" >
                                         {{$company->name}}
                                     </h4>
                                     <div>{{$company->street_address}}, {{$company->suburb}}, {{$company->city}} {{$company->country}}</div>
-                                    <div>{{$company->phonenumber}}
+                                    <div>
+                                        {{$company->phonenumber}}
+                                        @if ($company->second_phonenumber)
+                                        | {{$company->second_phonenumber}}
+                                        @endif
+                                        @if ($company->third_phonenumber)
+                                        | {{$company->third_phonenumber}}
+                                        @endif
                                     </div>
                                     <div>{{$company->email}}</div>
+                                    @if ($company->second_email)
+                                    <div>{{$company->second_email}}</div>
+                                    @endif
+                                    @if ($company->third_email)
+                                    <div>{{$company->third_email}}</div>
+                                    @endif
+                                    @if (isset($company->vat_number))
+                                    <div>VAT No.: {{$company->vat_number}}</div>
+                                    @endif
+                                    @if (isset($company->tin_number))
+                                    <div>TIN.: {{$company->tin_number}}</div>
+                                    @endif
                                 </div>
+                            </div>
+
+                            <div style="padding-top: 20px; padding-bottom: 5px">
+                                <center><h2>QUOTATION</h2></center>
                             </div>
                         </header>
                         <main>
@@ -69,7 +92,7 @@
                                     </div>
                                 </div>
                                
-                                    <div class="col invoice-details" style="margin-top:-120px;" >
+                                    <div class="col invoice-details">
                                         <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$quotation->quotation_number}}</div>
                                         <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$quotation->date}}</div>
                                         <div class="date" style="padding-bottom: 3px"><strong>Valid Until:</strong> {{$quotation->expiry}}</div>
@@ -78,12 +101,21 @@
                                 </div>
                            
                                 <table>
+                                    <colgroup>
+                                        <col style="width: 8%">
+                                        <col style="width: 36%">
+                                        <col style="width: 7%">
+                                        <col style="width: 12%">
+                                        <col style="width: 13%">
+                                        <col style="width: 11%">
+                                        <col style="width: 13%">
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th class="text-left"> <strong>HS Code</strong></th>
                                             <th class="text-left"> <strong>Description</strong></th>
                                             <th class="text-center"> <strong>Qty</strong></th>
-                                            <th class="text-center"><strong>Unit Price</th> 
+                                            <th class="text-center"><strong>Unit Price</strong></th> 
                                             <th class="text-center"><strong>Total(Excl)</strong></th>
                                             <th class="text-center"><strong>VAT Amount</strong></th>
                                             <th class="text-center"><strong>Total(Incl)</strong></th>

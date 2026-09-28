@@ -236,6 +236,8 @@
                                                         <td>
                                                             @if ($result->transaction_type === 'customer_fuel')
                                                                 @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                            @elseif ($result->transaction_type === 'debtor_journal')
+                                                                @include('customer_statements._debtor_journal_row', ['result' => $result])
                                                             @elseif ($credit_note)
                                                                 Credit Note# {{ $result->number }}
                                                                 @if ($credit_note->invoice)

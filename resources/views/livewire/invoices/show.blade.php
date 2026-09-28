@@ -215,6 +215,31 @@
                                 </tbody>
                             </table>
                             @endif
+                            @php
+                                $journal_allocations = \App\Models\InvoicePayment::with('debtor_journal')
+                                    ->where('invoice_id', $invoice->id)
+                                    ->where('source', \App\Services\Accounting\DebtorJournalService::SOURCE)
+                                    ->get();
+                            @endphp
+                            @if ($journal_allocations->count() > 0)
+                            <div style="clear: both"></div>
+                            <h5>Debtors Journal Credits Applied</h5>
+                            <table class="table table-bordered table-sm" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr><th>Journal#</th><th>Date</th><th>Details</th><th>Applied</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($journal_allocations as $journal_allocation)
+                                        <tr>
+                                            <td><a href="{{ route('debtor_journals.index', ['search' => $journal_allocation->debtor_journal ? $journal_allocation->debtor_journal->journal_number : '']) }}" style="color: blue">{{ $journal_allocation->debtor_journal ? $journal_allocation->debtor_journal->journal_number : '' }}</a></td>
+                                            <td>{{ $journal_allocation->debtor_journal && $journal_allocation->debtor_journal->date ? $journal_allocation->debtor_journal->date->format('Y-m-d') : '' }}</td>
+                                            <td>{{ $journal_allocation->debtor_journal ? $journal_allocation->debtor_journal->description : '' }}</td>
+                                            <td>{{ $invoice->currency ? $invoice->currency->symbol : '' }}{{ number_format((float) $journal_allocation->amount, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @endif
                   </div>
                 <div class="row">
                     <div class="col-md-12">

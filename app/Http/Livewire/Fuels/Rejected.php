@@ -268,7 +268,7 @@ class Rejected extends Component
                         app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
                     } else {
 
-                    $expense = Expense::where('name','Fuel Topup')->get()->first();
+                    $expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
 
 
                     $bill = new Bill;
@@ -563,7 +563,7 @@ class Rejected extends Component
                     }
             
 
-                $expense = Expense::where('name','Fuel Topup')->get()->first();
+                $expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
                 if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
                     // Customer supplied - no supplier Bill; settles against the customer.
                     app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());

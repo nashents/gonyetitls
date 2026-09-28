@@ -100,8 +100,30 @@ class CustomerLedgerService
             ->where('currency_id', $currencyId)
             ->whereNull('deleted_at');
 
+        // Debtors journal adjustments (see DebtorJournalService) - a debit
+        // raises what the customer owes, a credit reduces it. Voided ones
+        // are excluded; their journal entry has been reversed.
+        $debtorJournals = DB::table('debtor_journals')
+            ->select([
+                'id',
+                DB::raw("'debtor_journal' as transaction_type"),
+                'journal_number as number',
+                'currency_id',
+                'date',
+                'date as transaction_date',
+                'created_at',
+                DB::raw('CAST(amount AS DECIMAL(20,2)) as amount'),
+                DB::raw('CAST(amount AS DECIMAL(20,2)) as balance'),
+                DB::raw("CASE WHEN type = 'credit' THEN CAST(amount AS DECIMAL(20,2)) * -1 ELSE CAST(amount AS DECIMAL(20,2)) END as signed_amount"),
+                DB::raw("CASE WHEN type = 'credit' THEN 1 ELSE 0 END as type_priority"),
+            ])
+            ->where('customer_id', $customerId)
+            ->where('currency_id', $currencyId)
+            ->where('status', 'posted')
+            ->whereNull('deleted_at');
+
         $rows = DB::query()
-            ->fromSub($invoices->unionAll($payments)->unionAll($creditNotes)->unionAll($fuelSupplies), 'ledger')
+            ->fromSub($invoices->unionAll($payments)->unionAll($creditNotes)->unionAll($fuelSupplies)->unionAll($debtorJournals), 'ledger')
             ->orderBy('date')
             ->orderBy('created_at')
             ->orderBy('type_priority') // invoices settle before payments/credit notes on an exact tie

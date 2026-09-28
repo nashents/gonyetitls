@@ -481,6 +481,7 @@ Route::get('fuel-top-ups/authorization/rejected','TopUpController@rejected')->na
 
 Route::get('invoices/customer-statements','InvoiceController@customerStatements')->name('customer_statements.index');
 Route::get('invoices/customer-supplied-fuel','CustomerFuelSupplyController@index')->name('customer_fuel_supplies.index');
+Route::get('invoices/debtors-journal','DebtorJournalController@index')->name('debtor_journals.index');
 Route::get('bills/vendor-statements','BillController@vendorStatements')->name('vendor_statements.index');
 
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/send-email/','InvoiceController@customerStatementsEmail')->name('customer_statements.email.outstanding');

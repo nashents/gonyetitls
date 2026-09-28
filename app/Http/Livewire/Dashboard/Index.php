@@ -334,8 +334,9 @@ class Index extends Component
             ->where('invoices.currency_id', $cur)
             ->whereBetween('invoice_payments.created_at', [$monthStart.' 00:00:00', $monthEnd.' 23:59:59'])
             ->whereNull('invoice_payments.deleted_at')
-            // customer-supplied fuel settles invoices but isn't cash collected
-            ->where(fn ($q) => $q->whereNull('invoice_payments.source')->orWhere('invoice_payments.source', '!=', 'customer_fuel'))
+            // customer-supplied fuel and debtors journal credits settle
+            // invoices but aren't cash collected
+            ->where(fn ($q) => $q->whereNull('invoice_payments.source')->orWhereNotIn('invoice_payments.source', ['customer_fuel', 'debtor_journal']))
             ->sum(DB::raw('COALESCE(invoice_payments.amount+0,0)'));
 
         $oi = Invoice::where('authorization', 'approved')->where('currency_id', $cur)

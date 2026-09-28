@@ -25,7 +25,7 @@
                                 <a href="#" wire:click="exportExpensesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                 {{-- Backfill: create + link a non-inventory billable product for any expense missing one. --}}
                                 <button wire:click="syncMissingProducts" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-link"></i> Sync expenses with missing products</button>
-                                {{-- Repair "core" expenses (Fuel Topup, Transporter Payment) that fuel/trip billing looks up by name - re-points a drifted account back to its correct default and restores it if deleted. --}}
+                                {{-- Repair "core" expenses (Fuel - COGS, formerly Fuel Topup; Transporter Payment) that fuel/trip billing looks up by name - re-points a drifted account back to its correct default and restores it if deleted. --}}
                                 <button wire:click="resolveDefaultExpenses" wire:loading.attr="disabled" class="btn btn-default border-warning btn-rounded btn-wide"><i class="fa fa-wrench"></i> Resolve Default Expenses</button>
                             </div>
                         </div>

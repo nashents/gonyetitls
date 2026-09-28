@@ -2717,7 +2717,7 @@ class Create extends Component
                         $fuel->customer_id = $this->fuelCustomerFunded ? ($this->fuel_customer_id ?: $trip->customer_id) : null;
                         $fuel->save();
                     
-                        $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
+                        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
                     
                         $trip_expense = new TripExpense;
                         $trip_expense->user_id = $this->user->id;

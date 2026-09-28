@@ -357,10 +357,14 @@ class Index extends Component
 
     public function render()
     {
+        $with = [
+            'company_types',
+            'default_transporter' => fn ($q) => $q->withCount(['horses', 'vehicles', 'trailers']),
+        ];
         if ($this->user->is_admin()) {
-            $this->companies = Company::with('company_types')->orderBy('name','asc')->get();
+            $this->companies = Company::with($with)->orderBy('name','asc')->get();
         }else {
-            $this->companies = Company::with('company_types')->where('type','!=','admin')->orderBy('name','asc')->get();
+            $this->companies = Company::with($with)->where('type','!=','admin')->orderBy('name','asc')->get();
         }
         return view('livewire.companies.index',[
             'companies' => $this->companies

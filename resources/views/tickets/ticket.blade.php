@@ -19,7 +19,7 @@
 }
 </style>
 
-@include('includes.css')
+@include('includes.pdf_css')
 
 </head>
 <body>
@@ -29,15 +29,15 @@
         <div class="card-body">
             <div id="invoice">
                 <div class="invoice overflow-auto">
-                    <div style="margin-left: -30px; margin-right:-30px">
-                        <header style="margin-top:-25px; padding-top:-25px; padding-bottom:10px" >
+                    <div>
+                        <header style="padding-bottom:10px" >
                             <div class="row">
                                 <div class="col" >
                                     <a href="javascript:;">
                                         <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
                                     </a>
                                 </div>
-                                <div class="col company-details" style="margin-top:-110px;">
+                                <div class="col company-details">
                                     <h4 class="name" >
                                         <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
                                     {{$company->name}}
@@ -77,7 +77,7 @@
                                             @endif
                                         </div>
                                 </div>
-                                <div class="col invoice-details " style="margin-top:-130px;">
+                                <div class="col invoice-details ">
                                     <div class="date"> <strong>Booking Number:</strong> {{$ticket->booking ? $ticket->booking->booking_number : ""}}</div>
                                     <div class="date"><strong>Job Card Number:</strong> {{$ticket->ticket_number}}</div>
                                     <div class="date"><strong>Date:</strong> {{$ticket->in_date}}</div>

@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>Purchase Order</title>
-@include('includes.css')
+@include('includes.pdf_css')
 
 </head>
 <body style="font-family: FontAwesome; font-size: 14px;">
@@ -13,13 +13,13 @@
             <div class="card-body">
                 <div id="invoice">
                     <div class="invoice overflow-auto">
-                        <div style="margin-left: -30px; margin-right:-30px" >
-                            <header style="margin-top:-45px; padding-bottom:10px"> 
+                        <div>
+                            <header style="padding-bottom:10px"> 
                                 <div class="row"  >
-                                    <div class="col" style="margin-top:-15px;">
+                                    <div class="col">
                                         <a href="#"><img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt=""></a>
                                     </div>
-                                    <div class="col company-details" style="margin-top:-120px;">
+                                    <div class="col company-details">
                                         <h4 class="name" >
                                             <a target="_blank" href="#" style="color:  {{$company->color ? $company->color : "#000000" }}">
                                         {{$company->name}}
@@ -68,7 +68,7 @@
                                         <div class="address"><strong>Dpt:</strong> {{$requisition->department ? $requisition->department->name : ""}}</div>
                                     
                                     </div>
-                                    <div class="col invoice-details" style="margin-top:-120px;">
+                                    <div class="col invoice-details">
                                         <div class="date" style="padding-bottom: 3px"> <strong>Requisition No.:</strong> {{$requisition->requisition_number}}</div>
                                         <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$requisition->date}}</div>
                                     </div>

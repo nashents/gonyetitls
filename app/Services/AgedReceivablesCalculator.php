@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use App\Models\DebtorJournal;
 use App\Models\Invoice;
 
 /**
@@ -92,6 +93,47 @@ class AgedReceivablesCalculator
 
             $rows[$customerId] ??= [
                 'label' => $invoice->customer->name ?? 'Uncategorized Customer',
+                'buckets' => array_fill_keys(self::BUCKETS, 0.0),
+                'total' => 0.0,
+            ];
+
+            $rows[$customerId]['buckets'][$bucket] += $amount;
+            $rows[$customerId]['total'] += $amount;
+
+            $grandTotals[$bucket] += $amount;
+            $grandTotal += $amount;
+        }
+
+        // Debtors journals: a debit is an open amount owed from its own date;
+        // a credit's unallocated remainder reduces the customer's balance in
+        // its date's bucket (the allocated part already came off an invoice
+        // balance above).
+        $allocated = '(select COALESCE(SUM(ip.amount+0),0) from invoice_payments ip where ip.debtor_journal_id = debtor_journals.id and ip.deleted_at is null)';
+
+        $journals = DebtorJournal::posted()
+            ->whereDate('date', '<=', $this->asOfDate)
+            ->with('customer:id,name')
+            ->select('debtor_journals.*')
+            ->selectRaw("{$allocated} as allocated_total")
+            ->get();
+
+        foreach ($journals as $journal) {
+            $open = $journal->isCredit()
+                ? -round((float) $journal->amount - (float) $journal->allocated_total, 2)
+                : (float) $journal->amount;
+
+            $amount = $this->reportingAmount($journal->currency_id, number_format($open, 2, '.', ''), (string) $journal->exchange_rate);
+
+            if (abs($amount) < 0.005) {
+                continue;
+            }
+
+            $customerId = $journal->customer_id ?? 0;
+            $daysOld = Carbon::parse($journal->date)->startOfDay()->diffInDays($asOf->copy()->startOfDay());
+            $bucket = $this->bucketFor($daysOld);
+
+            $rows[$customerId] ??= [
+                'label' => $journal->customer->name ?? 'Uncategorized Customer',
                 'buckets' => array_fill_keys(self::BUCKETS, 0.0),
                 'total' => 0.0,
             ];

@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>Payslip</title>
-@include('includes.css')
+@include('includes.pdf_css')
 
 </head>
 <body style="font-family: FontAwesome; font-size: 14px;">

@@ -71,6 +71,10 @@ class Company extends Model  implements Auditable
     public function transporters(){
         return $this->hasMany('App\Models\Transporter');
     }
+    /** The company's system default transporter (its own fleet). */
+    public function default_transporter(){
+        return $this->hasOne('App\Models\Transporter')->where('default', true);
+    }
     public function brokers(){
         return $this->hasMany('App\Models\Broker');
     }

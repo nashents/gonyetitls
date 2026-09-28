@@ -279,6 +279,8 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                         @endphp
                                                         @if ($result->transaction_type === 'customer_fuel')
                                                             @include('customer_statements._fuel_supply_row', ['result' => $result])
+                                                        @elseif ($result->transaction_type === 'debtor_journal')
+                                                            @include('customer_statements._debtor_journal_row', ['result' => $result])
                                                         @elseif ($result->transaction_type === 'invoice')
                                                             <a href="{{ route('invoices.show',$invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $result->number }} </a><br>
                                                             Due {{ $invoice->expiry }}

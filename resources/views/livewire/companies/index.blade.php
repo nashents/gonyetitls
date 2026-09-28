@@ -31,6 +31,8 @@
                                     </th>
                                     <th class="th-sm">Address
                                     </th>
+                                    <th class="th-sm">Fleet
+                                    </th>
                                     <th class="th-sm">Expiry
                                     </th>
                                     <th class="th-sm">Status
@@ -49,6 +51,17 @@
                                     <td>{{$company->email}}</td>
                                     <td>{{$company->pin}}</td>
                                     <td>{{$company->street_address}} {{$company->suburb}} {{$company->city ? ", ".$company->city : ""}} {{$company->country ? $company->country : ""}}</td>
+                                    <td>
+                                        @if ($company->default_transporter)
+                                            <span title="Default transporter: {{ $company->default_transporter->name }}">
+                                                <span class="badge bg-primary">{{ $company->default_transporter->horses_count }} Horses</span>
+                                                <span class="badge bg-info">{{ $company->default_transporter->vehicles_count }} Vehicles</span>
+                                                <span class="badge bg-secondary">{{ $company->default_transporter->trailers_count }} Trailers</span>
+                                            </span>
+                                        @else
+                                            <span class="text-muted">No default transporter</span>
+                                        @endif
+                                    </td>
                                     <td>{{$company->expiry_date}}</td>
                                     <td><span class="badge bg-{{$company->status == 1 ? "success" : "danger"}}">{{$company->status == 1 ? "Active" : "Suspended"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -83,7 +96,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="companyModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Create Company <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -319,7 +332,7 @@
     </div>
 
 <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="companyEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog mw-100 w-50" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Company <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

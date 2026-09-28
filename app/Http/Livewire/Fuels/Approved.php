@@ -122,7 +122,7 @@ class Approved extends Component
                 $bill->authorization = 'approved';
                 $bill->save();
 
-                $fuel_expense = Expense::where('name','Fuel Topup')->get()->first();
+                $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
 
                 $bill_expense = new BillExpense;
                 $bill_expense->user_id = Auth::user()->id;

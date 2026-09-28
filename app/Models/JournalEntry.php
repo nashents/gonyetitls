@@ -28,6 +28,7 @@ class JournalEntry extends Model implements Auditable
             'credit_note_id',
             'debit_note_id',
             'customer_fuel_supply_id',
+            'debtor_journal_id',
             'is_manual',
             'journal_number',
             'date',
@@ -83,6 +84,11 @@ class JournalEntry extends Model implements Auditable
     public function customerFuelSupply()
     {
         return $this->belongsTo(CustomerFuelSupply::class);
+    }
+
+    public function debtorJournal()
+    {
+        return $this->belongsTo(DebtorJournal::class);
     }
 
     public function created_by()

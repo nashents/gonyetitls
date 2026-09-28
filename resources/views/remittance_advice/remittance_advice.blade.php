@@ -6,7 +6,7 @@
   <title>Remittance Advice</title>
 
 
-@include('includes.css')
+@include('includes.pdf_css')
 
 <style>
     /* includes.css forces table th to white-space:nowrap and 15px padding, which
@@ -25,7 +25,7 @@
         <div class="card-body">
             <div id="invoice"  style="font-size: 16px">
                 <div class="invoice overflow-auto">
-                    <div style="margin-left: -30px; margin-right:-30px">
+                    <div>
                         @include('remittance_advice._advice', ['forPdf' => true])
                     </div>
                     <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->

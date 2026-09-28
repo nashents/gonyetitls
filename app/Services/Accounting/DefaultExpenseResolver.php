@@ -22,8 +22,13 @@ class DefaultExpenseResolver
 {
     /** name => [account name, type] */
     private const DEFINITIONS = [
-        'Fuel Topup' => ['Fuel - COGS', 'Direct'],
+        Expense::FUEL_TOPUP => ['Fuel - COGS', 'Direct'],
         'Transporter Payment' => ['Creditor Payment', 'Direct'],
+    ];
+
+    /** current name => previous name, renamed in place rather than duplicated */
+    private const FORMER_NAMES = [
+        Expense::FUEL_TOPUP => Expense::LEGACY_FUEL_TOPUP,
     ];
 
     /**
@@ -43,6 +48,15 @@ class DefaultExpenseResolver
 
             $expense = Expense::withTrashed()->where('name', $name)->first();
             $changes = [];
+
+            $formerName = self::FORMER_NAMES[$name] ?? null;
+            if (!$expense && $formerName) {
+                $expense = Expense::withTrashed()->where('name', $formerName)->first();
+                if ($expense) {
+                    $changes[] = "renamed from {$formerName}";
+                    $expense->name = $name;
+                }
+            }
 
             if (!$expense) {
                 Expense::create([

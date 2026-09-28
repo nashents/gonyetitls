@@ -13,6 +13,13 @@ class Expense extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    /**
+     * Core expense that fuel/trip billing looks up by name. Renamed from
+     * "Fuel Topup" 2026-09-28 (DefaultExpenseResolver renames the old row).
+     */
+    const FUEL_TOPUP = 'Fuel - COGS';
+    const LEGACY_FUEL_TOPUP = 'Fuel Topup';
+
     /** Keep the linked Product's name in step when an expense is renamed. */
     protected static function booted()
     {

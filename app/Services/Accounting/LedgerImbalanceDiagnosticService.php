@@ -125,6 +125,10 @@ class LedgerImbalanceDiagnosticService
             return ['type' => 'debit_note', 'id' => $entry->debit_note_id, 'fixable' => true];
         }
 
+        if ($entry->debtor_journal_id) {
+            return ['type' => 'debtor_journal', 'id' => $entry->debtor_journal_id, 'fixable' => false];
+        }
+
         return ['type' => $entry->is_manual ? 'manual' : 'unknown', 'id' => null, 'fixable' => false];
     }
 

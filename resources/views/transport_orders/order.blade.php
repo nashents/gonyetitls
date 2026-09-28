@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>Transport Order</title>
-    @include('includes.css')
+    @include('includes.pdf_css')
 </head>
 <body>
 
@@ -39,15 +39,15 @@
         <div class="card-body">
             <div id="invoice"  style="font-size: 16px">
                 <div class="invoice overflow-auto">
-                    <div style="margin-left: -30px; margin-right:-30px">
-                        <header style="margin-top:-25px; padding-top:-25px; padding-bottom:10px" >
+                    <div>
+                        <header style="padding-bottom:10px" >
                         <div class="row">
                             <div class="col">
                                 <a href="javascript:;">
                                     <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
                                 </a>
                             </div>
-                             <div class="col company-details" style="margin-top:-100px;">
+                             <div class="col company-details">
                                 <div class="text-right" style="float:right; margin-left: 15px;">
                                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($qrData) }}" alt="QR Code" width="100" height="100">
                                 </div>
@@ -102,7 +102,7 @@
                                 @endif
                         
                             </div>
-                            <div class="col invoice-details" style="margin-top: -100px;">
+                            <div class="col invoice-details">
                                 <div class="date"> <strong>Trip Number:</strong> {{$trip->trip_number}}{{ $trip->trip_ref ? '/'.$trip->trip_ref : ""  }}</div>
                                 <div class="date"><strong>Issue Date:</strong>
                                     @php

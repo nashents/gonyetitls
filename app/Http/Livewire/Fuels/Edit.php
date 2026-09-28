@@ -317,7 +317,7 @@ class Edit extends Component
      */
     protected function syncTripExpense(Fuel $fuel, ?Trip $trip): void
     {
-        $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
+        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
 
         $trip_expense = TripExpense::where('fuel_id', $fuel->id)
             ->where('trip_id', $fuel->trip_id)

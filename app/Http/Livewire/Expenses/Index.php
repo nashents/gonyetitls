@@ -251,7 +251,7 @@ class Index extends Component
     }
 
     /**
-     * Repair the small set of "core" expense categories (Fuel Topup,
+     * Repair the small set of "core" expense categories (Fuel - COGS i.e. Expense::FUEL_TOPUP,
      * Transporter Payment) that fuel/trip billing flows look up by hardcoded
      * name - re-points a drifted account_id/type back to the intended
      * default and restores the row if it was ever deleted. Same definitions

@@ -3299,7 +3299,7 @@ class Edit extends Component
                         }
                         $bill->update();
 
-                        $fuel_expense = Expense::where('name','Fuel Topup')->first();
+                        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
                         if($fuel_expense){
                             $bill_expense = BillExpense::where('bill_id', $bill->id)->where('expense_id', $fuel_expense->id)->first();
                             if($bill_expense){
@@ -3382,7 +3382,7 @@ class Edit extends Component
                 $trip_expense->user_id = $this->user->id;
                 $trip_expense->trip_id = $trip->id;
                 $trip_expense->fuel_id = $fuel->id;
-                $fuel_expense = Expense::where('name','Fuel Topup')->first();
+                $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
                 if (isset($fuel_expense)) {
                     $trip_expense->expense_id = $fuel_expense->id;
                 }

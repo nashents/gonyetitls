@@ -6,7 +6,7 @@
   <title>Credit Note</title>
  
 
-@include('includes.css')
+@include('includes.pdf_css')
 
 </head>
 <body>
@@ -18,13 +18,13 @@
                       <div id="invoice">
        
         <div class="invoice overflow-auto">
-                      <div style="margin-left: -30px; margin-right:-30px" >
-                            <header style="margin-top:-45px; padding-bottom:10px"> 
+                      <div>
+                            <header style="padding-bottom:10px"> 
                                 <div class="row"  >
-                                    <div class="col" style="margin-top:-15px;">
+                                    <div class="col">
                                         <a href="javascript:;"><img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt=""></a>
                                     </div>
-                                <div class="col company-details" style="margin-top:-120px;">
+                                <div class="col company-details">
                                 
                                     <h4 class="name" >
                                         <a target="_blank" href="javascript:;" style="color:  {{$company->color ? $company->color : "#000000" }}">

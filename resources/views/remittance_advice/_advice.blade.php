@@ -9,14 +9,14 @@
         return $bill_payment->amount ?? 0;
     };
 @endphp
-<header @if ($forPdf) style="margin-top:-25px; padding-bottom:10px" @endif>
+<header>
     <div class="row">
-        <div class="col" @if ($forPdf) style="margin-top:-15px;" @endif>
+        <div class="col" >
             <a href="javascript:;">
                 <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
             </a>
         </div>
-        <div class="col company-details" @if ($forPdf) style="margin-top:-120px;" @endif>
+        <div class="col company-details" >
             <h4 class="name" >
                 <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
                     {{$company->name}}
@@ -74,7 +74,7 @@
             <div class="email"><a href="mailto:{{$vendor->email}}">{{$vendor->email}}</a>
             </div>
         </div>
-        <div class="col invoice-details" @if ($forPdf) style="margin-top:-150px;" @endif>
+        <div class="col invoice-details" >
             <h3 class="to" >{{$payment->currency ? $payment->currency->fullname : ""}} {{$payment->currency ? $payment->currency->name : ""}}</h3>
             <div class="date" style="padding-bottom: 3px;"><strong>Payment Date</strong> {{ date('F j, Y', strtotime($payment->date)) }}</div>
             <div class="date" style="padding-bottom: 3px;"><strong>Payment #</strong> {{ $payment->payment_number }}</div>

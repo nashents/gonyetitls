@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Repairs a trip's auto-managed TripExpense rows (the "Fuel Topup" and
+ * Repairs a trip's auto-managed TripExpense rows (the Fuel Topup ("Fuel - COGS") and
  * "Transporter Payment" ones the app creates itself - identified by
  * fuel_id/transporter_id, not by anything the user picked) after the
  * Expense row they pointed at was deleted and later recreated with a new
@@ -64,7 +64,7 @@ class TripExpenseRepairService
     /**
      * Fuel-linked trip expenses always belong to a trip by construction, so
      * their GL routing must resolve to Fuel - COGS, never the generic
-     * Fuel Topup Expense's own .account_id (which defaults to Fuel - Ops).
+     * Fuel Topup Expense's own .account_id (which a user can repoint).
      * Delegates the Bill/BillExpense/JournalEntry rebuild to
      * FuelJournalService::postConsumption() - it already resolves
      * COGS/Ops and Once-Off-Buy/Bulk-Buy correctly and is idempotent, so
@@ -72,14 +72,14 @@ class TripExpenseRepairService
      */
     private function repairFuel(TripExpense $tripExpense, Trip $trip): bool
     {
-        if ($this->isCorrectlyLinked($tripExpense, 'Fuel Topup')) {
+        if ($this->isCorrectlyLinked($tripExpense, Expense::FUEL_TOPUP)) {
             return false;
         }
 
-        $correctExpense = Expense::where('name', 'Fuel Topup')->first();
+        $correctExpense = Expense::where('name', Expense::FUEL_TOPUP)->first();
 
         if (!$correctExpense) {
-            Log::warning("TripExpenseRepairService: 'Fuel Topup' expense not found while repairing trip #{$trip->id}, trip_expense #{$tripExpense->id}");
+            Log::warning("TripExpenseRepairService: '" . Expense::FUEL_TOPUP . "' expense not found while repairing trip #{$trip->id}, trip_expense #{$tripExpense->id}");
             return false;
         }
 
