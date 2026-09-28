@@ -24,7 +24,7 @@
             <tbody>
                 @if ($requisition_items->count()>0)
                 @foreach ($requisition_items as $requisition_item)
-              <tr>
+              <tr wire:key="{{ 'c90ebc-26-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($requisition_item->id ?? '') }}">
                   <td>
                     @if ($requisition_item->expense)
                             {{ $requisition_item->expense ? $requisition_item->expense->name : ""}}

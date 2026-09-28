@@ -92,7 +92,7 @@
                                     @if (isset($requisitions))
                                     <tbody>
                                         @forelse ($requisitions as $requisition)
-                                        <tr  
+                                        <tr wire:key="{{ '28c18a-94-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($requisition->id ?? '') }}"  
                                             @if($requisition->type == 'po_requisition')
                                                 style="background-color:#e8f4fd;border-left:6px solid #17a2b8;"
                                             @elseif($requisition->type == 'payment_requisition')

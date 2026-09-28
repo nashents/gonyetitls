@@ -18,7 +18,7 @@
         </thead>
         <tbody>
             @forelse ($shipment->containers as $container)
-                <tr>
+                <tr wire:key="{{ 'e0bf4a-20-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($container->id ?? '') }}">
                     <td>{{ $container->container_number }}</td>
                     <td>{{ $container->container_type }}</td>
                     <td>{{ $container->seal_number }}</td>

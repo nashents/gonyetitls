@@ -46,7 +46,7 @@
                                 @if ($agents->count()>0)
                                 <tbody>
                                     @foreach ($agents as $agent)
-                                  <tr>
+                                  <tr wire:key="{{ '4c6a87-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($agent->id ?? '') }}">
                                     <td>{{$agent->agent_number}}</td>
                                     <td>{{ucfirst($agent->name)}}</td>
                                     <td>{{ucfirst($agent->surname)}}</td>

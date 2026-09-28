@@ -32,7 +32,7 @@
                                 @if (isset($loss_categories))
                                 <tbody>
                                     @forelse ($loss_categories as $loss_category)
-                                  <tr>
+                                  <tr wire:key="{{ '4ecbec-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loss_category->id ?? '') }}">
                                     <td>{{$loss_category->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

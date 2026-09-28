@@ -28,7 +28,7 @@
                                 @if ($groups->count()>0)
                                 <tbody>
                                     @foreach ($groups as $group)
-                                  <tr>
+                                  <tr wire:key="{{ '454312-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($group->id ?? '') }}">
                                     <td>{{ucfirst($group->name)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

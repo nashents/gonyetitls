@@ -80,7 +80,7 @@
                                 @if ($containers->count()>0)
                                 <tbody>
                                     @foreach ($containers as $container)
-                                  <tr>
+                                  <tr wire:key="{{ '67f3d7-82-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($container->id ?? '') }}">
                                   <td>{{$container->id}}</td>
                                     <td>{{$container->container_number}}</td>
                                     <td>{{$container->vendor->name}}</td>

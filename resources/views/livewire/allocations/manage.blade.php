@@ -52,7 +52,7 @@
                                 @if ($allocations->count()>0)
                                 <tbody>
                                     @foreach ($allocations as $allocation)
-                                  <tr>
+                                  <tr wire:key="{{ '4bb1f6-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($allocation->id ?? '') }}">
                                     <td>{{$allocation->allocation_number}}</td>
                                     <td>{{$allocation->allocation_type}}</td>
                                     <td>{{$allocation->employee->name}} {{$allocation->employee->surname}} ({{$allocation->employee->employee_number}})</td>

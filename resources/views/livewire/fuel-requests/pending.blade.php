@@ -104,7 +104,7 @@
                                 @if (isset($fuel_requests))
                                     <tbody>
                                         @forelse ($fuel_requests as $fuel_request)
-                                            <tr>
+                                            <tr wire:key="{{ '942c7a-106-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel_request->id ?? '') }}">
                                                 <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $fuel_request->id }}" value="{{ $fuel_request->id }}"></td>
                                                 <td>
                                                     {{$fuel_request->request_number}} <br>

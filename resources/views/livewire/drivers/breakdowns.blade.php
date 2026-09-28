@@ -45,7 +45,7 @@
             <tbody>
                 @forelse ($breakdowns as $breakdown)
             
-              <tr>
+              <tr wire:key="{{ '225cf9-46-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($breakdown->id ?? '') }}">
                 <td>{{$breakdown->breakdown_number}}</td>
                 <td>{{$breakdown->transporter ? $breakdown->transporter->name : ""}}</td>
                 <td>

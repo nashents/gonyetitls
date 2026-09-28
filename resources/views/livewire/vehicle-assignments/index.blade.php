@@ -47,7 +47,7 @@
                                 @if ($assignments->count()>0)
                                 <tbody>
                                     @foreach ($assignments as $assignment)
-                                  <tr>
+                                  <tr wire:key="{{ 'b042b2-49-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($assignment->id ?? '') }}">
                                        <td>{{$assignment->transporter ? $assignment->transporter->name : ""}}</td>
                                     <td>
                                         @if ($assignment->vehicle)

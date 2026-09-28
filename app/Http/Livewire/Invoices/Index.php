@@ -667,7 +667,6 @@ class Index extends Component
         $this->invoice = Invoice::find($id);
         $this->invoice_currency = $this->invoice->currency;
         $this->selectedCurrency = $this->invoice->currency_id;
-        $this->customer_id = $this->invoice->customer_id;
         $this->loans = Loan::where('authorization','approved')->where('currency_id',$this->invoice_currency->id)->where('movement','In')->where('balance','>',0)->where('status','Unpaid')->orWhere('status','Partial')->get();
         $this->invoice_balance = $this->invoice->balance;
         $this->current_balance = $this->invoice_balance - $this->amount;

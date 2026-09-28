@@ -42,7 +42,7 @@
                                 @if (isset($waste_types))
                                 <tbody>
                                     @forelse ($waste_types as $waste_type)
-                                  <tr>
+                                  <tr wire:key="{{ '82e50c-44-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($waste_type->id ?? '') }}">
                                     <td>{{$waste_type->name}}</td>
                                     <td>{{$waste_type->category}}</td>
                                     <td>{{$waste_type->general_composition}}</td>

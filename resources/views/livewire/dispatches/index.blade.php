@@ -94,7 +94,7 @@
                                 @if (isset($dispatches))
                                 <tbody>
                                     @forelse ($dispatches as $dispatch)
-                                  <tr>
+                                  <tr wire:key="{{ 'af0780-96-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($dispatch->id ?? '') }}">
                                     <td>
                                         {{$dispatch->dispatch_number}}
                                         @if ($dispatch->isReversed())

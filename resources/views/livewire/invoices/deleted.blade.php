@@ -54,7 +54,7 @@
                                         $now = new DateTime();
                                         $expiry_date = new DateTime($expiry);
                                     @endphp
-                                  <tr>
+                                  <tr wire:key="{{ '5d2638-51-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($invoice->id ?? '') }}">
                                     <td>{{$invoice->invoice_number}}</td>
                                     <td>
                                         {{$invoice->customer ? $invoice->customer->name : ""}}

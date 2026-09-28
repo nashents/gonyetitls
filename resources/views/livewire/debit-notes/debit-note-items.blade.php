@@ -30,7 +30,7 @@
             @if ($debit_note_items->count()>0)
             <tbody>
                 @foreach ($debit_note_items as $debit_note_item)
-              <tr>
+              <tr wire:key="{{ '2f18c9-32-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($debit_note_item->id ?? '') }}">
                 <td>{{$debit_note_item->debit_note->debit_note_number}}</td>
                 <td>{{$debit_note_item->bill_expense ? $debit_note_item->bill_expense->description : ""}}</td>
                 <td>{{$debit_note_item->description}}</td>

@@ -45,7 +45,7 @@
                                 @if (isset($consignees))
                                 <tbody>
                                     @forelse ($consignees as $consignee)
-                                  <tr>
+                                  <tr wire:key="{{ '23d180-47-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($consignee->id ?? '') }}">
                                     <td>{{$consignee->name}}</td>
                                     <td>{{$consignee->email}}</td>
                                     <td>{{$consignee->phonenumber}}</td>

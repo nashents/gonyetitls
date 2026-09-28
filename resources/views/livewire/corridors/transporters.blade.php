@@ -20,7 +20,7 @@
             </thead>
             <tbody>
                 @foreach ($corridor_transporters as $corridor_transporter)
-              <tr>
+              <tr wire:key="{{ '63d2cf-22-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($corridor_transporter->id ?? '') }}">
                 <a href="{{ route('transporters.show',$corridor_transporter->id) }}">
                 <td>{{$corridor_transporter->name}}</td>
                 <td>{{$corridor_transporter->email}}</td>

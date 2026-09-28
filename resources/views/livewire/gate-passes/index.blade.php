@@ -98,7 +98,7 @@
                                     @forelse ($individual_gate_passes as $gate_pass)
                                         
                                   
-                                  <tr>
+                                  <tr wire:key="{{ '1ddafc-98-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($gate_pass->id ?? '') }}">
                                     @php
                                         $invited_by = App\Models\Employee::find($gate_pass->invited_by_id);
                                         $authorized_by = App\Models\Employee::find($gate_pass->authorized_by_id);
@@ -207,7 +207,7 @@
                                 <tbody>
                                     @forelse ($trip_gate_passes as $gate_pass)
                                   
-                                  <tr>
+                                  <tr wire:key="{{ '1ddafc-208-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($gate_pass->id ?? '') }}">
                                     @php
                                         $workshop = App\Models\Employee::find($gate_pass->workshop_authorized_by_id);
                                         $logistics = App\Models\Employee::find($gate_pass->logistics_authorized_by_id);

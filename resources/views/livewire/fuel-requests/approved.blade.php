@@ -82,7 +82,7 @@
                                 @if (isset($fuel_requests))
                                     <tbody>
                                         @forelse ($fuel_requests as $fuel_request)
-                                            <tr>
+                                            <tr wire:key="{{ '7f168f-84-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel_request->id ?? '') }}">
                                                 <td>
                                                     {{$fuel_request->request_number}} <br>
                                                     <small class="text-muted">

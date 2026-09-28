@@ -32,7 +32,7 @@
                                 <tbody>
                                     @foreach ($horse_makes as $horse_make)
                                     @foreach ($horse_make->horse_models as $horse_model)
-                                  <tr>
+                                  <tr wire:key="{{ '31ba95-33-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse_make->id ?? '') }}">
                                     <td>{{$horse_make->name}}</td>
                                     <td>{{$horse_model->name}}</td>
                                     <td><span class="badge bg-{{$horse_make->status == 1 ? "success" : "danger"}}">{{$horse_make->status == 1 ? "Active" : "Inactive"}}</span></td>

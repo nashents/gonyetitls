@@ -46,7 +46,7 @@
                                 @if ($brokers->count()>0)
                                 <tbody>
                                     @foreach ($brokers as $broker)
-                                  <tr>
+                                  <tr wire:key="{{ '2a1efd-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($broker->id ?? '') }}">
                                     <td>{{$broker->broker_number}}</td>
                                     <td>{{ucfirst($broker->name)}}</td>
                                     <td>{{$broker->email}}</td>

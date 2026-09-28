@@ -255,7 +255,7 @@
                             @if (isset($shifts))
                                 <tbody>
                                     @forelse($shifts as $shift)
-                                <tr>
+                                <tr wire:key="{{ '899458-257-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($shift->id ?? '') }}">
 
                                     <td>
                                         <strong>{{ucfirst($shift->type)}}  {{ucfirst($shift->for)}}</strong>

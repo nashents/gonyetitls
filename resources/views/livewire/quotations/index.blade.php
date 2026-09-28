@@ -93,7 +93,7 @@
                                 @if (isset($quotations))
                                 <tbody>
                                     @forelse ($quotations as $quotation)
-                                  <tr>
+                                  <tr wire:key="{{ '6da1c4-95-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($quotation->id ?? '') }}">
                                     @php
                                         $expiry = $quotation->expiry;
                                         $now = new DateTime();

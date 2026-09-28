@@ -26,7 +26,7 @@
                 @if (isset($damages))
                 @if ($damages->count() > 0)
                 @foreach ($damages as $damage)
-              <tr>
+              <tr wire:key="{{ 'd04730-28-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($damage->id ?? '') }}">
                 <td>{{$damage->damage}}</td>
                 <td>{{$damage->nature_of_damage}}</td>
                 <td>{{$damage->currency ? $damage->currency->name : ""}}</td>

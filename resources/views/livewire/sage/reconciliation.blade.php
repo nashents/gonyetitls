@@ -71,7 +71,7 @@
                                             $ss = $m->sync_status;
                                             $cls = $ss === 'synced' ? 'success' : ($ss === 'failed' ? 'danger' : ($ss === 'requires_attention' ? 'warning' : 'secondary'));
                                         @endphp
-                                        <tr>
+                                        <tr wire:key="{{ '134622-69-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($m->id ?? '') }}">
                                             <td>{{ $labels[$m->entity_type] ?? ucwords(str_replace('_',' ', $m->entity_type)) }}</td>
                                             <td>{{ $m->local_reference ?: ('#'.$m->local_id) }}</td>
                                             <td>{{ $m->external_id ?: '—' }}</td>

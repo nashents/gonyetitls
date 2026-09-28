@@ -79,7 +79,7 @@
                                 @if ($vendors->count()>0)
                                 <tbody>
                                     @foreach ($vendors as $vendor)
-                                  <tr>
+                                  <tr wire:key="{{ '12a68a-81-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vendor->id ?? '') }}">
                                   <td>{{$vendor->id}}</td>
                                     <td>{{$vendor->vendor_type->name}}</td>
                                     <td>{{ucfirst($vendor->name)}}</td>

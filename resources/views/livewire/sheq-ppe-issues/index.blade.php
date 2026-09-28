@@ -43,7 +43,7 @@
                                 @if (isset($sheq_ppe_issues))
                                 <tbody>
                                     @forelse ($sheq_ppe_issues as $issue)
-                                  <tr>
+                                  <tr wire:key="{{ '64ce13-45-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($issue->id ?? '') }}">
                                     <td>{{$issue->employee ? $issue->employee->name.' '.$issue->employee->surname : '-'}}</td>
                                     <td>{{$issue->ppe_type}}</td>
                                     <td>{{$issue->size ?? '-'}}</td>

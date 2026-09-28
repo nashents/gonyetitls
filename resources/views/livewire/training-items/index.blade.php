@@ -28,7 +28,7 @@
                                 @if (isset($training_items) && $training_items->count()>0)
                                 <tbody>
                                     @forelse ($training_items as $training_item)
-                                  <tr>
+                                  <tr wire:key="{{ '44c300-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($training_item->id ?? '') }}">
                                     <td>{{$training_item->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

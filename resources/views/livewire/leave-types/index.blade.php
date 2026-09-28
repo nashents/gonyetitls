@@ -37,7 +37,7 @@
                                 @if ($leave_types->count() > 0)
                                     <tbody>
                                         @foreach ($leave_types as $leave_type)
-                                            <tr>
+                                            <tr wire:key="{{ '6f549a-39-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leave_type->id ?? '') }}">
                                                 <td>{{ $leave_type->name }}</td>
                                                 <td>{{ $leave_type->code }}</td>
                                                 <td>

@@ -40,7 +40,7 @@
                                 @if (isset($purchases))
                                 <tbody>
                                     @forelse ($purchases as $purchase)
-                                    <tr>
+                                    <tr wire:key="{{ 'e26e51-42-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($purchase->id ?? '') }}">
                                              <td>{{$purchase->purchase_number}}</td>
                                         <td>
                                             @if ($purchase->user)

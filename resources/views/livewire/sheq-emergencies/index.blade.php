@@ -44,7 +44,7 @@
                                 @if (isset($sheq_emergencies))
                                 <tbody>
                                     @forelse ($sheq_emergencies as $emergency)
-                                  <tr>
+                                  <tr wire:key="{{ '4109a3-46-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($emergency->id ?? '') }}">
                                     <td>{{$emergency->scenario}}</td>
                                     <td>{{$emergency->department->name ?? '-'}}</td>
                                     <td>{{$emergency->location}}</td>

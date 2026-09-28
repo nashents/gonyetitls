@@ -59,7 +59,7 @@
                                 @if (isset($sheq_hygiene_surveys))
                                 <tbody>
                                     @forelse ($sheq_hygiene_surveys as $survey)
-                                  <tr>
+                                  <tr wire:key="{{ 'ad985e-61-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($survey->id ?? '') }}">
                                     <td>{{$survey->survey_number}}</td>
                                     <td>{{ucwords($survey->stressor)}}</td>
                                     <td>{{$survey->department->name ?? '-'}}</td>

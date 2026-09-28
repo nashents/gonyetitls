@@ -54,7 +54,7 @@
                                 @if (isset($sheq_risk_assessments))
                                 <tbody>
                                     @forelse ($sheq_risk_assessments as $assessment)
-                                  <tr>
+                                  <tr wire:key="{{ '4ee90d-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($assessment->id ?? '') }}">
                                     <td>{{$assessment->assessment_number}}</td>
                                     <td>{{ucwords(str_replace('_',' ',$assessment->type))}}</td>
                                     <td>{{$assessment->department->name ?? '-'}}</td>

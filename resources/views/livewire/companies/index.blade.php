@@ -44,7 +44,7 @@
                                 @if ($companies->count()>0)
                                 <tbody>
                                     @foreach ($companies as $company)
-                                  <tr>
+                                  <tr wire:key="{{ '565f5d-46-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($company->id ?? '') }}">
                                     <td>{{ $company->company_types->pluck('name')->implode(', ') ?: $company->type }}</td>
                                     <td>{{$company->name}}</td>
                                     <td>{{$company->phonenumber}}</td>

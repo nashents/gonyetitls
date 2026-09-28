@@ -48,7 +48,7 @@
                                 @if ($allowances->count()>0)
                                 <tbody>
                                     @foreach ($allowances as $allowance)
-                                  <tr>
+                                  <tr wire:key="{{ '547de9-50-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($allowance->id ?? '') }}">
                                     <td>{{$allowance->name}}</td>
                                     <td>{{$allowance->account ? $allowance->account->name : ""}}</td>
                                     <td>{{$allowance->currency ? $allowance->currency->name : ""}}</td>

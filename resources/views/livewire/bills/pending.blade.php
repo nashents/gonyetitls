@@ -116,7 +116,7 @@
                                 @if (isset($bills))
                                 <tbody>
                                     @forelse ($bills as $bill)
-                                  <tr>
+                                  <tr wire:key="{{ '13910f-118-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($bill->id ?? '') }}">
                                     <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $bill->id }}" value="{{ $bill->id }}"></td>
                                     <td>{{$bill->bill_number}}</td>
                                     <td>

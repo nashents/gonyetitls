@@ -42,7 +42,7 @@
                                 @if (isset($tax_brackets))
                                 <tbody>
                                     @forelse ($tax_brackets as $tax_bracket)
-                                  <tr>
+                                  <tr wire:key="{{ '67db2e-44-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tax_bracket->id ?? '') }}">
                                     <td>{{ucfirst($tax_bracket->frequency)}}</td>
                                     <td>{{ucfirst($tax_bracket->currency ? $tax_bracket->currency->name : "")}}</td>
                                     <td>

@@ -137,7 +137,7 @@
                                                 $s = $statusMap[$transport_order->status] ?? ['row' => null, 'border' => null, 'cell' => '', 'badge' => 'secondary'];
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
+                                            <tr wire:key="{{ '7df0a2-135-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($transport_order->id ?? '') }}" @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $transport_order->id }}" value="{{ $transport_order->id }}"></td>
                                                 <td>
                                                     <strong>{{ $transport_order->transport_order_number }}@if($transport_order->transport_order_ref)/{{ $transport_order->transport_order_ref }}@endif</strong>

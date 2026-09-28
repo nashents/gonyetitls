@@ -34,7 +34,7 @@
                                 @if (isset($works))
                                 <tbody>
                                     @forelse ($works as $work)
-                                  <tr>
+                                  <tr wire:key="{{ 'bffc84-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($work->id ?? '') }}">
                                     <td>{{ucfirst($work->description)}}</td>
                                     <td><span class="badge bg-{{$work->status == 1 ? "success" : "danger"}}">{{$work->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">

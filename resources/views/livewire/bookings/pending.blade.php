@@ -101,7 +101,7 @@
                                     @if (isset($bookings))
                                     <tbody>
                                         @forelse ($bookings as $booking)
-                                      <tr>
+                                      <tr wire:key="{{ '5ab1e7-103-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($booking->id ?? '') }}">
                                         <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $booking->id }}" value="{{ $booking->id }}"></td>
                                         <td>{{ucfirst($booking->booking_number)}}</td>
                                         <td>{{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</td>

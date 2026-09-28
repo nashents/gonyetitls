@@ -76,7 +76,7 @@
                                 @if ($assignments->count()>0)
                                 <tbody>
                                     @foreach ($assignments as $assignment)
-                                  <tr>
+                                  <tr wire:key="{{ '2406b8-78-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($assignment->id ?? '') }}">
                                   <td>{{$assignment->id}}</td>
                                     <td>{{$assignment->vehicle->make}} {{$assignment->vehicle->model}} ({{$assignment->vehicle->registration_number}})</td>
                                     <td>{{ucfirst($assignment->driver->employee->name)}} {{ucfirst($assignment->driver->employee->surname)}}</td>

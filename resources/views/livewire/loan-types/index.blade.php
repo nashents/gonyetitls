@@ -27,7 +27,7 @@
                                 @if ($loan_types->count()>0)
                                 <tbody>
                                     @foreach ($loan_types as $loan_type)
-                                  <tr>
+                                  <tr wire:key="{{ '5d6fa1-29-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loan_type->id ?? '') }}">
                                     <td>{{$loan_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

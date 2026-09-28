@@ -43,7 +43,7 @@
                                 @if (isset($purchases))
                                 <tbody>
                                     @forelse ($purchases as $purchase)
-                                    <tr>
+                                    <tr wire:key="{{ '15e5c6-45-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($purchase->id ?? '') }}">
                                         <td>{{$purchase->purchase_number}}</td>
                                         <td>{{$purchase->date}}</td>
                                         <td><span class="label label-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>

@@ -284,7 +284,7 @@
                                                 $s = $statusMap[$transport_order->status] ?? ['row' => null, 'border' => null, 'cell' => '', 'badge' => 'secondary'];
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
+                                            <tr wire:key="{{ 'a67573-282-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($transport_order->id ?? '') }}" @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td>
                                                     <strong>{{ $transport_order->transport_order_number }}@if($transport_order->custom_ref)/{{ $transport_order->custom_ref }}@endif</strong>
                                                     <br>

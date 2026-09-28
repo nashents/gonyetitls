@@ -19,7 +19,7 @@
             <tbody>
                 @if ($clearing_agent_borders->count()>0)
                 @foreach ($clearing_agent_borders as $clearing_agent_border)
-              <tr>
+              <tr wire:key="{{ '5e279b-21-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($clearing_agent_border->id ?? '') }}">
                 <td>{{ucfirst(App\Models\Country::find($clearing_agent_border->country_a)->name)}}</td>
                 <td>{{ucfirst(App\Models\Country::find($clearing_agent_border->country_b)->name)}}</td>
                 <td>{{ucfirst($clearing_agent_border->name)}}</td>

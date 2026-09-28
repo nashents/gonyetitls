@@ -39,7 +39,7 @@
                                 @if (isset($bins))
                                 <tbody>
                                     @forelse ($bins as $bin)
-                                  <tr>
+                                  <tr wire:key="{{ '44605d-41-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($bin->id ?? '') }}">
                                     <td>{{$bin->name}}</td>
                                     <td>{{$bin->bin_number}}</td>
                                     <td>{{$bin->description}}</td>

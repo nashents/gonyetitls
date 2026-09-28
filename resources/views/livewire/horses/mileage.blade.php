@@ -54,7 +54,7 @@
                                 @if ($horses->count()>0)
                                 <tbody>
                                     @foreach ($horses as $horse)
-                                  <tr>
+                                  <tr wire:key="{{ 'd633ad-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse->id ?? '') }}">
                                     <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                     <td>{{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->identifier_label}}</td>
                                       <td>{{$horse->prev_service_date}}</td> 

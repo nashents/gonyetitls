@@ -96,7 +96,7 @@
 
                     $hasScore = $candidate->scores->isNotEmpty();
                 @endphp
-                <tr>
+                <tr wire:key="{{ '34cacd-84-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($application->id ?? '') }}">
 
                     {{-- Application --}}
                     <td>

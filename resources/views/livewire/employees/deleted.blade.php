@@ -57,7 +57,7 @@
                                     <tbody>
                                         @foreach ($employees as $employee)
                                         @if (!$employee->driver)
-                                        <tr>
+                                        <tr wire:key="{{ 'ba5ba2-58-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($employee->id ?? '') }}">
                                             <td>{{ucfirst($employee->employee_number)}}</td>
                                             <td>{{ucfirst($employee->name)}}</td>
                                             <td>{{ucfirst($employee->surname)}}</td>

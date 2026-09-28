@@ -38,7 +38,7 @@
                                 @if (isset($compliances))
                                 <tbody>
                                     @forelse ($compliances as $compliance)
-                                  <tr>
+                                  <tr wire:key="{{ '34cca8-40-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($compliance->id ?? '') }}">
                                     <td>{{$compliance->user ? $compliance->user->name : ""}} {{$compliance->user ? $compliance->user->surname : ""}}</td>
                                     <td>{{$compliance->customer ? $compliance->customer->name : ""}}</td>
                                     <td>{{$compliance->driver->employee ? $compliance->driver->employee->name : ""}} {{$compliance->driver->employee ? $compliance->driver->employee->surname : ""}}</td>

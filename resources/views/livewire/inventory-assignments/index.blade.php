@@ -51,7 +51,7 @@
                                 @if ($inventory_assignments->count()>0)
                                 <tbody>
                                     @foreach ($inventory_assignments as $assignment)
-                                  <tr>
+                                  <tr wire:key="{{ 'ad4bfd-53-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($assignment->id ?? '') }}">
                                     <td>{{$assignment->inventory ? $assignment->inventory->inventory_number : ""}}</td>
                                     <td>
                                         @if ($assignment->inventory)

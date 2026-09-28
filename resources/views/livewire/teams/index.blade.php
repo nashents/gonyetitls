@@ -36,7 +36,7 @@
                                 @if (isset($teams))
                                 <tbody>
                                     @forelse ($teams as $team)
-                                  <tr>
+                                  <tr wire:key="{{ '9eebc8-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($team->id ?? '') }}">
                                     <td>{{$team->name}}</td>
                                     <td>
                                         @foreach ($team->employees as $employee)

@@ -33,7 +33,7 @@
                         @if (isset($inspection_services))
                         <tbody>
                             @forelse ($inspection_services as $inspection_service)
-                          <tr>
+                          <tr wire:key="{{ '7d8823-35-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inspection_service->id ?? '') }}">
                             {{-- <td>{{$inspection_service->category}}</td> --}}
                             <td>{{$inspection_service->inspection_group ? $inspection_service->inspection_group->name : ""}}</td>
                             <td>{{$inspection_service->inspection_type ? $inspection_service->inspection_type->name : ""}}</td>

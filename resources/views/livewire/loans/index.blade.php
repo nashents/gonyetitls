@@ -56,7 +56,7 @@
                                 @if (isset($loans))
                                 <tbody>
                                     @forelse ($loans as $loan)
-                                  <tr>
+                                  <tr wire:key="{{ 'b0e56e-58-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loan->id ?? '') }}">
                                     <td>{{$loan->loan_number}}</td>
                                     <td>
                                         <center>

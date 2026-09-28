@@ -102,7 +102,7 @@
                                                 </thead>
                                                 <tbody>
                                                     @forelse ($billExpenses as $billExpense)
-                                                        <tr>
+                                                        <tr wire:key="{{ 'a591b1-104-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($billExpense->id ?? '') }}">
                                                             <td>{{ $billExpense->description ?: ($billExpense->account ? $billExpense->account->name : '') }}</td>
                                                             <td class="text-right">{{ $bill->currency ? $bill->currency->symbol : "" }}{{ number_format($billExpense->subtotal, 2) }}</td>
                                                             <td class="text-right">

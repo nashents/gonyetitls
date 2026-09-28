@@ -18,7 +18,7 @@
         </thead>
         <tbody>
             @forelse ($shipment->customs_declarations as $declaration)
-                <tr>
+                <tr wire:key="{{ 'b7446c-20-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($declaration->id ?? '') }}">
                     <td>{{ $declaration->declaration_number }}</td>
                     <td>{{ ucfirst($declaration->declaration_type ?? '') }}</td>
                     <td>{{ $declaration->entry_number }}</td>
@@ -53,7 +53,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($declaration->lines as $line)
-                                        <tr>
+                                        <tr wire:key="{{ 'b7446c-55-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($line->id ?? '') }}">
                                             <td>{{ $line->hs_code }}</td>
                                             <td>{{ $line->description }}</td>
                                             <td>{{ $line->quantity }} {{ $line->uom }}</td>

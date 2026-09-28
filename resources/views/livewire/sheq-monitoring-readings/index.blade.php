@@ -56,7 +56,7 @@
                                 @if (isset($sheq_monitoring_readings))
                                 <tbody>
                                     @forelse ($sheq_monitoring_readings as $reading)
-                                  <tr>
+                                  <tr wire:key="{{ 'edea71-58-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($reading->id ?? '') }}">
                                     <td>{{$reading->reading_date ? \Carbon\Carbon::parse($reading->reading_date)->format('d M Y') : '-'}}</td>
                                     <td>{{$reading->parameter->name ?? '-'}}</td>
                                     <td>{{$reading->department->name ?? '-'}}</td>

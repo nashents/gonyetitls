@@ -48,7 +48,7 @@
                                 @if (isset($rehandlings))
                                 <tbody>
                                     @forelse($rehandlings as $rehandling)
-                                  <tr>
+                                  <tr wire:key="{{ 'e2ef43-50-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($rehandling->id ?? '') }}">
                                     <td>
                                          {{$rehandling->rehandling_number}}
                                     </td>

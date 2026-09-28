@@ -53,7 +53,7 @@
                                 @if ($requests->count() > 0)
                                 <tbody>
                                     @foreach ($requests as $request)
-                                  <tr>
+                                  <tr wire:key="{{ '899cc8-55-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($request->id ?? '') }}">
                                     <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="request-{{ $request->id }}" value="{{ $request->id }}"></td>
                                     <td>{{ ucfirst($request->module) }}</td>
                                     <td>{{ $request->editable?->editAuthLabel() }}</td>

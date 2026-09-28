@@ -36,7 +36,7 @@
                                 @if (isset($job_titles))
                                 <tbody>
                                     @forelse ($job_titles as $job_title)
-                                  <tr>
+                                  <tr wire:key="{{ '5de6bd-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($job_title->id ?? '') }}">
                                     <td>
                                         {{$job_title->title}} <br>
                                         <small>

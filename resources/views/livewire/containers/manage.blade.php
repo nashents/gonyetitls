@@ -38,7 +38,7 @@
                                 @if (isset($containers))
                                 <tbody>
                                     @forelse ($containers as $container)
-                                  <tr>
+                                  <tr wire:key="{{ '689825-40-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($container->id ?? '') }}">
 
                                     <td>{{$container->container_number}}</td>
                                     <td>{{$container->name}}</td>

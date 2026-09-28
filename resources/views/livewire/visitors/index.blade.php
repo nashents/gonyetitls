@@ -35,7 +35,7 @@
                                 @if ($visitors->count()>0)
                                 <tbody>
                                     @foreach ($visitors as $visitor)
-                                  <tr>
+                                  <tr wire:key="{{ 'd103dc-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($visitor->id ?? '') }}">
                                     <td>{{ucfirst($visitor->name)}}</td>
                                     <td>{{ucfirst($visitor->surname)}}</td>
                                     <td>{{ucfirst($visitor->gender)}}</td>

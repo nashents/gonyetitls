@@ -69,7 +69,7 @@
                                 @if ($expenses->count()>0)
                                 <tbody>
                                     @foreach ($expenses as $expense)
-                                  <tr>
+                                  <tr wire:key="{{ 'dca697-71-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($expense->id ?? '') }}">
 
                                     <td>
                                         @if ($expense->account)

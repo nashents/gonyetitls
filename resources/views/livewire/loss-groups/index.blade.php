@@ -34,7 +34,7 @@
                                 @if (isset($loss_groups))
                                 <tbody>
                                     @forelse ($loss_groups as $loss_group)
-                                  <tr>
+                                  <tr wire:key="{{ '5bc1f3-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loss_group->id ?? '') }}">
                                     <td>{{$loss_group->loss_category ? $loss_group->loss_category->name : ""}}</td>
                                     <td>{{$loss_group->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

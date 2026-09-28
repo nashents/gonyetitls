@@ -219,7 +219,7 @@
                                    
                                     <tbody>
                                         @forelse ($tickets as $ticket)
-                                      <tr>
+                                      <tr wire:key="{{ '144026-221-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($ticket->id ?? '') }}">
                                         <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $ticket->id }}" value="{{ $ticket->id }}"></td>
                                         <td>
                                            {{$ticket->ticket_number}}

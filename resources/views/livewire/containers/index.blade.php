@@ -51,7 +51,7 @@
                                 @if (isset($containers))
                                 <tbody>
                                     @forelse ($containers as $container)
-                                  <tr>
+                                  <tr wire:key="{{ 'fdcd11-53-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($container->id ?? '') }}">
                                     <td>{{$container->name}}</td>
                                     <td>{{$container->purchase_type}}</td>
                                     <td>{{$container->fuel_type}}</td>

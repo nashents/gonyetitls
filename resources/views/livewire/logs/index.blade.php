@@ -52,7 +52,7 @@
                                 @if ($logs->count()>0)
                                 <tbody>
                                     @foreach ($logs as $log)
-                                  <tr>
+                                  <tr wire:key="{{ 'd54f0c-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($log->id ?? '') }}">
                                     <td>{{$log->log_number}}</td>
                                     <td>{{$log->employee ? $log->employee->name : ""}} {{$log->employee ? $log->employee->surname : ""}}</td>
                                     <td>

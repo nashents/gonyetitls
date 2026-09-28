@@ -63,7 +63,7 @@
                                 @if (isset($sheq_equipment))
                                 <tbody>
                                     @forelse ($sheq_equipment as $equipment)
-                                  <tr>
+                                  <tr wire:key="{{ '5b82be-65-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($equipment->id ?? '') }}">
                                     <td>{{$equipment->equipment_number}}</td>
                                     <td>{{$equipment->equipment_class->name ?? '-'}}</td>
                                     <td>{{ \Illuminate\Support\Str::limit($equipment->description, 50) }}</td>

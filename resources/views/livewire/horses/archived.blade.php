@@ -47,7 +47,7 @@
                                     @if (isset($horses))
                                     <tbody>
                                         @forelse ($horses as $horse)
-                                      <tr>
+                                      <tr wire:key="{{ '222efc-49-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse->id ?? '') }}">
                                        
                                         <td>{{$horse->horse_number}}</td>
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>

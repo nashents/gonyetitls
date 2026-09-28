@@ -74,7 +74,7 @@
                                     <tbody>
                                         @forelse ($drivers as $driver)
                                         @if (isset($driver->employee))
-                                      <tr>
+                                      <tr wire:key="{{ 'b75bc6-75-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($driver->id ?? '') }}">
                                         @php
                                             $user = App\Models\User::find($driver->user_id);
                                             $lastLogin = $user?->last_login_at;

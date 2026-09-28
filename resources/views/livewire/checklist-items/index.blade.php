@@ -35,7 +35,7 @@
                                 @if (isset($checklist_items))
                                 <tbody>
                                     @forelse ($checklist_items as $checklist_item)
-                                  <tr>
+                                  <tr wire:key="{{ '8cd86d-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($checklist_item->id ?? '') }}">
                                     <td>{{$checklist_item->name}}</td>
                                     <td>{{$checklist_item->notes}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

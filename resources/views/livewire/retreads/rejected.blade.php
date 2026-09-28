@@ -93,7 +93,7 @@
                                     @if (isset($retreads))
                                     <tbody>
                                         @forelse ($retreads as $retread)
-                                      <tr>
+                                      <tr wire:key="{{ '79c1a1-95-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($retread->id ?? '') }}">
                                         <td>{{$retread->retread_number}}</td>
                                         <td>{{$retread->vendor ? $retread->vendor->name : ""}}</td>
                                         <td>{{$retread->account ? $retread->account->name : ""}}</td>

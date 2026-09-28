@@ -54,7 +54,7 @@
                                 @if (isset($sheq_changes))
                                 <tbody>
                                     @forelse ($sheq_changes as $change)
-                                  <tr>
+                                  <tr wire:key="{{ '54491a-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($change->id ?? '') }}">
                                     <td>{{$change->change_number}}</td>
                                     <td>{{$change->department->name ?? '-'}}</td>
                                     <td>{{$change->requested_by ? $change->requested_by->name.' '.$change->requested_by->surname : '-'}}</td>

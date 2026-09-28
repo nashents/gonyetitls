@@ -24,7 +24,7 @@
                 @if (isset($contracts))
                 @if ($contracts->count() > 0)
                 @foreach ($contracts as $contract)
-              <tr>
+              <tr wire:key="{{ '577eb0-26-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($contract->id ?? '') }}">
                 <td>{{$contract->start_date}}</td>
                 <td>{{$contract->end_date}}</td>
                 <td>{{$contract->duration ? $contract->duration." Months" : ""}}</td>

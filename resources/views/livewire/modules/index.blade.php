@@ -78,7 +78,7 @@
                                         @endphp
 
                                         {{-- GROUP ROW (now includes toggle + actions) --}}
-                                        <tr class="table-active">
+                                        <tr wire:key="{{ '7220d8-67-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($group->id ?? '') }}" class="table-active">
                                             <td colspan="3">
                                                 <span class="badge badge-primary chip">GROUP</span>
 
@@ -142,7 +142,7 @@
                                                 $moduleActiveSubCount = $module->sub_modules->where('is_active', true)->count();
                                             @endphp
 
-                                            <tr>
+                                            <tr wire:key="{{ '7220d8-139-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($module->id ?? '') }}">
                                                 <td class="row-muted"></td>
 
                                                 <td>
@@ -208,7 +208,7 @@
                                             </tr>
 
                                             @foreach($module->sub_modules as $submodule)
-                                                <tr>
+                                                <tr wire:key="{{ '7220d8-210-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($submodule->id ?? '') }}">
                                                     <td></td>
 
                                                     <td class="indent text-muted">

@@ -47,7 +47,7 @@
                                     <tbody>
                                         @foreach ($drivers as $driver)
                                         @if (isset($driver->employee))
-                                      <tr>
+                                      <tr wire:key="{{ '8b81ce-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($driver->id ?? '') }}">
                                         <td>{{ucfirst($driver->driver_number)}}</td>
                                         <td>{{ucfirst($driver->transporter ? $driver->transporter->name : "")}}</td>
                                         <td>{{ucfirst($driver->employee ? $driver->employee->name : "")}}</td>

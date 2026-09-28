@@ -42,7 +42,7 @@
                                             </thead>
                                             <tbody>
                                                 @forelse ($section->items as $item)
-                                                    <tr>
+                                                    <tr wire:key="{{ '1393b2-44-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($item->id ?? '') }}">
                                                         <td>{{$item->code}}</td>
                                                         <td>{{$item->requirement}}</td>
                                                         <td>{{$item->guidance}}</td>

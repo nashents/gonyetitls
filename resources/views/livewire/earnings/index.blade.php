@@ -34,7 +34,7 @@
                                 @if ($earnings->count()>0)
                                 <tbody>
                                     @foreach ($earnings as $earning)
-                                  <tr>
+                                  <tr wire:key="{{ '2a693f-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($earning->id ?? '') }}">
                                     <td>{{$earning->name}}</td>
                                     <td>{{$earning->currency ? $earning->currency->name : ""}}</td>
                                     <td>{{$earning->description}}</td>

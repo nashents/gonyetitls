@@ -46,7 +46,7 @@
                         </thead>
                         <tbody>
                             @forelse ($consolidation->house_shipments as $houseShipment)
-                                <tr>
+                                <tr wire:key="{{ '43c0e1-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($houseShipment->id ?? '') }}">
                                     <td>{{ $houseShipment->shipment_number }}</td>
                                     <td>{{ $houseShipment->freight_job?->job_number }}</td>
                                     <td>{{ $houseShipment->freight_job?->customer?->name }}</td>

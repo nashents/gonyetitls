@@ -35,7 +35,7 @@
                                 @if (isset($criterions))
                                 <tbody>
                                     @forelse ($criterions as $criterion)
-                                  <tr>
+                                  <tr wire:key="{{ '01ffb7-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($criterion->id ?? '') }}">
                                     <td>{{$criterion->name}}</td>
                                     <td>{{$criterion->description}}</td>
                                     <td><span class="badge bg-{{$criterion->status == 1 ? "success" : "danger"}}">{{$criterion->status == 1 ? "Active" : "Inactive"}}</span></td>

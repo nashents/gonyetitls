@@ -63,7 +63,7 @@
                                             $applied = (float) $supply->allocated_total;
                                             $open = round((float) $supply->amount - $applied, 2);
                                         @endphp
-                                        <tr>
+                                        <tr wire:key="{{ '488348-60-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($supply->id ?? '') }}">
                                             <td>{{ $supply->supply_number }}</td>
                                             <td>{{ $supply->date ? $supply->date->format('Y-m-d') : '' }}</td>
                                             <td>{{ $supply->customer ? $supply->customer->name : '' }}</td>
@@ -131,7 +131,7 @@
                             <thead><tr><th>Invoice#</th><th>Applied</th><th></th></tr></thead>
                             <tbody>
                                 @forelse ($allocations as $allocation)
-                                    <tr>
+                                    <tr wire:key="{{ '488348-133-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($allocation->id ?? '') }}">
                                         <td>
                                             @if ($allocation->invoice)
                                                 <a href="{{ route('invoices.show', $allocation->invoice->id) }}" target="_blank" style="color: blue">{{ $allocation->invoice->invoice_number }}</a>

@@ -37,7 +37,7 @@
                                 @if ($checklists->count()>0)
                                 <tbody>
                                     @foreach ($checklists as $checklist)
-                                  <tr>
+                                  <tr wire:key="{{ 'cbceb2-39-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($checklist->id ?? '') }}">
                                     <td>{{$checklist->checklist_number}}</td>
                                     <td>{{$checklist->date}}</td>
                                     <td>{{$checklist->user ? $checklist->user->name : ""}} {{$checklist->user ? $checklist->user->surname : ""}}</td>

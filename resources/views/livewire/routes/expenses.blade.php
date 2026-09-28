@@ -42,7 +42,7 @@
                                 @if (isset($route_expenses))
                                 <tbody>
                                     @forelse ($route_expenses as $route_expense)
-                                  <tr>
+                                  <tr wire:key="{{ 'ab9a44-44-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($route_expense->id ?? '') }}">
                                     <td>{{$route_expense->expense ? $route_expense->expense->name : ""}} @if ($route_expense->source == 'fuel') <span class="badge bg-info" title="Auto-generated from the route's fuel fields">Auto</span> @endif</td>
                                     <td>{{$route_expense->category}}</td>
                                     <td>{{$route_expense->payment_method ? $route_expense->currency->name : ""}}</td>

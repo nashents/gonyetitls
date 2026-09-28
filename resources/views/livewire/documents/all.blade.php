@@ -28,7 +28,7 @@
                                 <tbody>
                                     @if ($folders->count()>0)
                                         @foreach ($folders as $folder)
-                                            <tr>
+                                            <tr wire:key="{{ '8f8898-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($folder->id ?? '') }}">
                                                 <td style="padding-top: 15px; width:100px" >   
                                                     @if ($selectedFolder != $folder->id)   
                                                         <a href="#" wire:click="setFolder({{$folder->id}})"><i class="fa fa-folder"></i> {{$folder->title}}</a> 
@@ -53,7 +53,7 @@
                                                             @endphp
                                                             @if ($folder_documents->count()>0)
                                                                 @foreach ($folder_documents as $document)
-                                                                    <tr>
+                                                                    <tr wire:key="{{ '8f8898-55-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($document->id ?? '') }}">
                                                                     <td style="padding-left: 29px;">
                                                                         <a href="{{asset('myfiles/documents/'.$document->filename)}}"><i class="fa fa-file"></i> {{$document->title}} -  {{$document->filename}}</a> | {{$document->expires_at}} <span class="badge bg-{{$document->status == 1 ? "success" : "danger"}}">{{$document->status == 1 ? "Valid" : "Expired"}}</span> <i>UploadedBy: </i> {{$document->user ? $document->user->name." ".$document->user->surname : ""}} <a href="#" wire:click="edit({{$document->id}})" ><i class="fa fa-edit color-success"></i></a> <a href="#" wire:click="showDocumentDelete({{$document->id}})"><i class="fa fa-trash color-danger"></i></a>
                                                                     </td>
@@ -79,7 +79,7 @@
                                     @if ($uncategorized_documents->count()>0)
                                
                                         @foreach ($uncategorized_documents as $document)
-                                        <tr>
+                                        <tr wire:key="{{ '8f8898-81-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($document->id ?? '') }}">
                                             <td> 
                                                 <a href="{{asset('myfiles/documents/'.$document->filename)}}"><i class="fa fa-file"></i> {{$document->title}} -  {{$document->filename}}</a> | {{$document->expires_at}} <span class="badge bg-{{$document->status == 1 ? "success" : "danger"}}">{{$document->status == 1 ? "Valid" : "Expired"}}</span> <i>UploadedBy: </i> {{$document->user ? $document->user->name." ".$document->user->surname : ""}} <a href="#" wire:click="edit({{$document->id}})" ><i class="fa fa-edit color-success"></i></a> <a href="#" wire:click="showDocumentDelete({{$document->id}})"><i class="fa fa-trash color-danger"></i></a>
                                             </td>

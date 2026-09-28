@@ -52,7 +52,7 @@
                                 @if (isset($vendors))
                                 <tbody>
                                     @forelse ($vendors as $vendor)
-                                  <tr>
+                                  <tr wire:key="{{ 'ab0fd6-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vendor->id ?? '') }}">
                                     <td>
                                         {{$vendor->vendor_number}}
                                         @if ($vendor->custom_ref)

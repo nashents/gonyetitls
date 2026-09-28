@@ -35,7 +35,7 @@
                                 @if ($rate_cards->count()>0)
                                 <tbody>
                                     @foreach ($rate_cards as $rate_card)
-                                  <tr>
+                                  <tr wire:key="{{ 'fddb30-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($rate_card->id ?? '') }}">
                                     <td>{{$rate_card->load_status}}</td>
                                     <td>{{$rate_card->days}}</td>
                                     <td>{{$rate_card->currency ? $rate_card->currency->name : ""}}</td>

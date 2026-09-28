@@ -53,7 +53,7 @@
                                     <tbody>
                                         @forelse ($employees as $employee)
                                       
-                                        <tr>
+                                        <tr wire:key="{{ '073354-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($employee->id ?? '') }}">
                                             <td>
                                                 <strong>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</strong> <br>
                                                 <small class="text-muted">

@@ -54,7 +54,7 @@
                                 @if (isset($sheq_audits))
                                 <tbody>
                                     @forelse ($sheq_audits as $sheq_audit)
-                                  <tr>
+                                  <tr wire:key="{{ '898be7-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($sheq_audit->id ?? '') }}">
                                     <td><a href="{{route('sheq_audits.show',$sheq_audit->id)}}">{{$sheq_audit->audit_number}}</a></td>
                                     <td>{{$sheq_audit->template->name ?? '-'}}</td>
                                     <td>{{$sheq_audit->department->name ?? '-'}}</td>

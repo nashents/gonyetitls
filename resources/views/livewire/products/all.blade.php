@@ -40,7 +40,7 @@
                                 @if ($items->count()>0)
                                 <tbody>
                                     @foreach ($items as $item)
-                                  <tr>
+                                  <tr wire:key="{{ 'e76fff-42-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($item->id ?? '') }}">
                                     <td>{{ucfirst($item->name)}}</td>
                                     <td>{{$item->description}}</td>
                                     <td>{{$item->price}}</td>

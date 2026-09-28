@@ -110,7 +110,7 @@
                                         $now = new DateTime();
                                         $expiry_date = new DateTime($expiry);
                                     @endphp
-                                  <tr>
+                                  <tr wire:key="{{ 'c16eef-107-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($invoice->id ?? '') }}">
                                     <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $invoice->id }}" value="{{ $invoice->id }}"></td>
                                     <td>{{$invoice->invoice_number}}</td>
                                     <td>

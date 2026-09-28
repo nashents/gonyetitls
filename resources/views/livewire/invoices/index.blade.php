@@ -164,7 +164,7 @@
                                 @if (isset($invoices))
                                 <tbody>
                                     @forelse ($invoices as $invoice)
-                                    <tr>
+                                    <tr wire:key="invoice-row-{{ $invoice->id }}">
                                         <td>
                                             {{$invoice->invoice_number}} <br>
                                             <small>
@@ -337,7 +337,7 @@
                                                     <li><a href="{{route('invoices.modern',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
                                                 @endif
                                                 @if ($invoice->authorization == "approved" && $invoice->balance > 0 )
-                                                    <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
+                                                    <li wire:key="invoice-pay-{{ $invoice->id }}"><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
                                                 @endif
 
                                                 {{-- @if ($invoice->payments->isEmpty()) --}}

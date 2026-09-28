@@ -27,7 +27,7 @@
                                 @if ($horse_types->count()>0)
                                 <tbody>
                                     @foreach ($horse_types as $horse_type)
-                                  <tr>
+                                  <tr wire:key="{{ '815119-29-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse_type->id ?? '') }}">
                                     <td>{{$horse_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

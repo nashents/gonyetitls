@@ -36,7 +36,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($exchange_rates as $exchange_rate)
-                                  <tr>
+                                  <tr wire:key="{{ '493fb3-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($exchange_rate->id ?? '') }}">
                                     <td>{{$exchange_rate->user ? $exchange_rate->user->name : ""}} {{$exchange_rate->user ? $exchange_rate->user->surname : ""}}</td>
                                     <td>{{ucfirst($exchange_rate->frequency)}}</td>
                                     @php

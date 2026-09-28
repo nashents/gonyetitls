@@ -32,7 +32,7 @@
                                 @if (isset($checklist_sub_categories))
                                 <tbody>
                                     @forelse ($checklist_sub_categories as $checklist_sub_category)
-                                  <tr>
+                                  <tr wire:key="{{ 'fad976-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($checklist_sub_category->id ?? '') }}">
                                     <td>{{$checklist_sub_category->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

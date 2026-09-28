@@ -40,7 +40,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($serviceTypes as $type)
-                                        <tr>
+                                        <tr wire:key="{{ 'f35d40-42-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($type->id ?? '') }}">
                                             <td>{{ $type->name }}</td>
                                             <td>{{ $type->description }}</td>
                                             <td>{{ $type->is_locked ? 'Yes' : 'No' }}</td>

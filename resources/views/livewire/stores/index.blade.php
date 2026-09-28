@@ -48,7 +48,7 @@
                                 @if (isset($stores))
                                 <tbody>
                                     @forelse ($stores as $store)
-                                  <tr>
+                                  <tr wire:key="{{ 'd73abb-50-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($store->id ?? '') }}">
                                     <td>{{$store->name}}
                                         @if ($this->sageEnabled)
                                             @php $sm = $store->sageMapping; $ss = optional($sm)->sync_status; @endphp

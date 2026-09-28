@@ -32,7 +32,7 @@
                                 @if (isset($reminder_items))
                                 <tbody>
                                     @forelse ($reminder_items as $reminder_item)
-                                  <tr>
+                                  <tr wire:key="{{ 'e80101-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($reminder_item->id ?? '') }}">
                                     <td>{{ucfirst($reminder_item->name)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

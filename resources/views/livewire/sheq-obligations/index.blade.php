@@ -67,7 +67,7 @@
                                 @if (isset($sheq_obligations))
                                 <tbody>
                                     @forelse ($sheq_obligations as $obligation)
-                                  <tr>
+                                  <tr wire:key="{{ '18ad62-69-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($obligation->id ?? '') }}">
                                     <td>{{$obligation->obligation_number}}</td>
                                     <td>{{$obligation->title}} @if($obligation->reference_number)<br><small>{{$obligation->reference_number}}</small>@endif</td>
                                     <td>{{ucwords(str_replace('_',' ',$obligation->type))}}</td>

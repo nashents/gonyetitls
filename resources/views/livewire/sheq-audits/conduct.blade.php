@@ -42,7 +42,7 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($section->items as $item)
-                                                    <tr>
+                                                    <tr wire:key="{{ '29e131-44-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($item->id ?? '') }}">
                                                         <td>{{$item->code}}</td>
                                                         <td>
                                                             {{$item->requirement}}

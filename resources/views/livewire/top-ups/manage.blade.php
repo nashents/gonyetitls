@@ -43,7 +43,7 @@
                                 @if ($top_ups->count()>0)
                                 <tbody>
                                     @foreach ($top_ups as $top_up)
-                                  <tr>
+                                  <tr wire:key="{{ 'db7702-45-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($top_up->id ?? '') }}">
                                     <td>
                                         {{$top_up->order_number}} 
                                         <br>

@@ -54,7 +54,7 @@
                                 @if (isset($rentals))
                                 <tbody>
                                     @forelse ($rentals as $rental)
-                                  <tr>
+                                  <tr wire:key="{{ 'aa7822-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($rental->id ?? '') }}">
                                     <td>
                                         {{$rental->car_rental_number}}
                                         

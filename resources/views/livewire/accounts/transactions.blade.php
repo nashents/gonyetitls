@@ -21,7 +21,7 @@
         @if ($payments->count()>0)
         <tbody>
             @foreach ($payments as $payment)
-          <tr>
+          <tr wire:key="{{ 'a73b80-23-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($payment->id ?? '') }}">
             <td>{{$payment->date}}</td>
             <td>
                                        

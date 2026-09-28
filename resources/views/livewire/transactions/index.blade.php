@@ -65,7 +65,7 @@
                                 <tbody>
                                   @foreach ($payments as $payment)
 
-                                  <tr>
+                                  <tr wire:key="{{ '836cce-66-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($payment->id ?? '') }}">
                                     <td>{{Carbon\Carbon::parse($payment->date)->format('d M Y')}}</td>
                                     <td>
                                         @if ($payment->invoice)

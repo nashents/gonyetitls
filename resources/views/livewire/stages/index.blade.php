@@ -35,7 +35,7 @@
                                 @if (isset($stages))
                                 <tbody>
                                     @forelse ($stages as $stage)
-                                  <tr>
+                                  <tr wire:key="{{ '3a22ba-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($stage->id ?? '') }}">
                                     <td>{{$stage->name}}</td>
                                     <td>{{$stage->description}}</td>
                                     <td><span class="badge bg-{{$stage->status == 1 ? "success" : "danger"}}">{{$stage->status == 1 ? "Active" : "Inactive"}}</span></td>

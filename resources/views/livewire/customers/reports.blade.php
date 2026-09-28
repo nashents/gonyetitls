@@ -86,7 +86,7 @@
                                 @if ($customers->count()>0)
                                 <tbody>
                                     @foreach ($customers as $customer)
-                                  <tr>
+                                  <tr wire:key="{{ 'f6ec4e-88-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($customer->id ?? '') }}">
                                   <td>{{$customer->id}}</td>
                                     <td>{{ucfirst($customer->name)}}</td>
                                     <td>{{ucfirst($customer->contact_name)}}</td>

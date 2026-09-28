@@ -26,7 +26,7 @@
                 @if (isset($injuries))
                 @if ($injuries->count() > 0)
                 @foreach ($injuries as $injury)
-              <tr>
+              <tr wire:key="{{ '510d6b-28-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($injury->id ?? '') }}">
                 <td>{{$injury->name}}</td>
                 <td>{{$injury->taken_to}}</td>
                 <td>{{$injury->body_part}}</td>

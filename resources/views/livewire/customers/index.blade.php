@@ -56,7 +56,7 @@
                                 @if (isset($customers))
                                 <tbody>
                                     @forelse ($customers as $customer)
-                                  <tr>
+                                  <tr wire:key="{{ 'fad0bc-58-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($customer->id ?? '') }}">
                                     <td>
                                         {{$customer->customer_number}}
                                         @if ($customer->custom_ref)

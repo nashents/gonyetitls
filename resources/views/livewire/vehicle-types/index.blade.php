@@ -27,7 +27,7 @@
                                 @if ($vehicle_types->count()>0)
                                 <tbody>
                                     @foreach ($vehicle_types as $vehicle_type)
-                                  <tr>
+                                  <tr wire:key="{{ '129f03-29-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vehicle_type->id ?? '') }}">
                                     <td>{{$vehicle_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

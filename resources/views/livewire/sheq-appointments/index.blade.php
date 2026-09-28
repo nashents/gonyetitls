@@ -60,7 +60,7 @@
                                 @if (isset($sheq_appointments))
                                 <tbody>
                                     @forelse ($sheq_appointments as $appointment)
-                                  <tr>
+                                  <tr wire:key="{{ '94828e-62-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($appointment->id ?? '') }}">
                                     <td>{{$appointment->employee ? $appointment->employee->name.' '.$appointment->employee->surname : '-'}}</td>
                                     <td>{{$appointment->title}}</td>
                                     <td>

@@ -29,7 +29,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($company_integrations as $integration)
-                                    <tr>
+                                    <tr wire:key="{{ '9b589e-31-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($integration->id ?? '') }}">
                                         <td>{{ $integration->integration_provider->name ?? '' }}</td>
                                         <td>{{ ucfirst($integration->integration_provider->type ?? '') }}</td>
                                         <td>

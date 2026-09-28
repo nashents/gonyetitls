@@ -32,7 +32,7 @@
                                 @if ($trailer_links->count()>0)
                                 <tbody>
                                     @foreach ($trailer_links as $trailer_link)
-                                  <tr>
+                                  <tr wire:key="{{ '7d4f99-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trailer_link->id ?? '') }}">
                                     <td>{{$trailer_link->transporter ? $trailer_link->transporter->name : ""}}</td>
                                     <td>{{ucfirst(App\Models\Trailer::find($trailer_link->trailer_a)->registration_number)}}</td>
                                     <td>{{ucfirst(App\Models\Trailer::find($trailer_link->trailer_b)->registration_number)}}</td>

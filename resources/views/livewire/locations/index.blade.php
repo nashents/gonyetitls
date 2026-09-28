@@ -41,7 +41,7 @@
                                 @if (isset($locations))
                                 <tbody>
                                     @forelse($locations as $location)
-                                  <tr>
+                                  <tr wire:key="{{ '4ac809-43-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($location->id ?? '') }}">
                                     <td>
                                         @if ($location->location)
                                         <a href="{{$location->location}}" target="_blank"><i class="fa fa-map-marker"></i> {{ucfirst($location->name)}}</a>

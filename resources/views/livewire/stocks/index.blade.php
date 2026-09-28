@@ -36,7 +36,7 @@
                                 @if ($stocks->count()>0)
                                 <tbody>
                                     @foreach ($stocks as $stock)
-                                  <tr>
+                                  <tr wire:key="{{ 'de4859-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($stock->id ?? '') }}">
                                     <td>{{$stock->stock_number}}</td>
                                     <td>{{$stock->name}}</td>
                                     <td>{{$stock->type}}</td>

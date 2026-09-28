@@ -50,7 +50,7 @@
                                 @if (isset($inspection_schedules))
                                 <tbody>
                                     @forelse ($inspection_schedules as $inspection_schedule)
-                                  <tr>
+                                  <tr wire:key="{{ '926212-52-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inspection_schedule->id ?? '') }}">
                                     <td>
                                         {{$inspection_schedule->inspection_schedule_number}}
                                         <small class="text-muted">

@@ -86,7 +86,7 @@
                                 @if (isset($transfers))
                                     <tbody>
                                         @forelse ($transfers as $transfer)
-                                            <tr>
+                                            <tr wire:key="{{ 'daad37-88-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($transfer->id ?? '') }}">
                                                 <td>
                                                     {{$transfer->transfer_number}} <br>
                                                     <small>

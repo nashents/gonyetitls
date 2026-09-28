@@ -36,7 +36,7 @@
                                 @if ($truck_stops->count()>0)
                                 <tbody>
                                     @foreach ($truck_stops as $truck_stop)
-                                  <tr>
+                                  <tr wire:key="{{ 'ce0604-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($truck_stop->id ?? '') }}">
                                     <td>{{ucfirst($truck_stop->name)}}</td>
                                     <td>{{ucfirst($truck_stop->route ? $truck_stop->route->name : "")}}</td>
                                     <td>{{$truck_stop->rating}}</td>

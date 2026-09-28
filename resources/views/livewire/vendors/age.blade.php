@@ -37,7 +37,7 @@
                                 @if ($vendors->count()>0)
                                 <tbody>
                                     @foreach ($vendors as $vendor)
-                                  <tr>
+                                  <tr wire:key="{{ 'ccca37-39-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vendor->id ?? '') }}">
                                     <td>{{$vendor->name}}</td>
                                     @php
                                         $contract = $vendor->contracts->where('status',1)->first();

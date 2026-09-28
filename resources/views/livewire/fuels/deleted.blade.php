@@ -40,7 +40,7 @@
                                 <tbody>
                                     @foreach ($fuels as $fuel)
                                     @if ($fuel->fillup == 1)
-                                    <tr style="background-color: #4CAF50">
+                                    <tr wire:key="{{ 'b5cbe3-41-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel->id ?? '') }}" style="background-color: #4CAF50">
                                       <td>{{$fuel->order_number}}</td>
                                       <td>{{$fuel->date}}</td>
                                       <td>

@@ -87,7 +87,7 @@
                                 @if (isset($audits))
                                 <tbody>
                                     @forelse ($audits as $audit)
-                                    <tr>
+                                    <tr wire:key="{{ '6b6636-89-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($audit->id ?? '') }}">
                                         <td>{{ $audit->created_at ? $audit->created_at->format('Y-m-d H:i:s') : '' }}</td>
                                         <td>{{ $audit->user ? trim($audit->user->name.' '.$audit->user->surname) : 'System' }}</td>
                                         <td>

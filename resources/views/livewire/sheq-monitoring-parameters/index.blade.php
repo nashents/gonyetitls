@@ -30,7 +30,7 @@
                                 @if (isset($sheq_monitoring_parameters))
                                 <tbody>
                                     @forelse ($sheq_monitoring_parameters as $parameter)
-                                  <tr>
+                                  <tr wire:key="{{ '92dbbe-32-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($parameter->id ?? '') }}">
                                     <td>{{$parameter->name}}</td>
                                     <td>{{ucwords($parameter->category)}}</td>
                                     <td>{{$parameter->unit}}</td>

@@ -32,7 +32,7 @@
                                 @if (isset($training_plans))
                                 <tbody>
                                     @forelse ($training_plans as $training_plan)
-                                  <tr>
+                                  <tr wire:key="{{ 'b3a957-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($training_plan->id ?? '') }}">
                                     <td>{{$training_plan->training_item ? $training_plan->training_item->name : ""}}</td>
                                     <td>{{$training_plan->period}}</td>
                                     <td>{{$training_plan->participants}}</td>

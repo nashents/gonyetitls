@@ -36,7 +36,7 @@
                                 @if (isset($losses))
                                 <tbody>
                                     @forelse ($losses as $loss)
-                                  <tr>
+                                  <tr wire:key="{{ 'a3cd61-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loss->id ?? '') }}">
                                     <td>{{$loss->loss_category ? $loss->loss_category->name : ""}}</td>
                                     <td>{{$loss->loss_group ? $loss->loss_group->name : ""}}</td>
                                     <td>{{$loss->name}}</td>

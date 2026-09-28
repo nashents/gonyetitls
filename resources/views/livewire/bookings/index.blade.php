@@ -252,7 +252,7 @@
                                                     $role_names[] = $role->name;
                                                 }
                                         @endphp 
-                                      <tr>
+                                      <tr wire:key="{{ '3b684f-241-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($booking->id ?? '') }}">
                                         <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $booking->id }}" value="{{ $booking->id }}"></td>
                                         <td>
                                             {{$booking->booking_number}}

@@ -56,7 +56,7 @@
                                     <tbody>
                                         @foreach ($trackers as $tracker)
                                         @php $mapping = $mappings->get((string) $tracker['id']); @endphp
-                                        <tr>
+                                        <tr wire:key="{{ '160baf-57-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tracker->id ?? '') }}">
                                             <td>{{ $tracker['label'] ?? '-' }}</td>
                                             <td>{{ $tracker['id'] }}</td>
                                             <td>

@@ -46,7 +46,7 @@
                                 @if (isset($job_postings))
                                 <tbody>
                                     @forelse ($job_postings as $job_posting)
-                                  <tr>
+                                  <tr wire:key="{{ 'a95203-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($job_posting->id ?? '') }}">
                                     <td>
                                         {{$job_posting->job_title ? $job_posting->job_title->title : ""}} <br>
                                         <small><strong>Dpt:</strong> {{$job_posting->department ? $job_posting->department->name : ""}}</small> <br>

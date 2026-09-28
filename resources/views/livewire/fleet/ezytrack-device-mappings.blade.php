@@ -66,7 +66,7 @@
                                     <tbody>
                                         @foreach ($devices as $device)
                                         @php $mapping = $mappings->get($device->serial_number); @endphp
-                                        <tr>
+                                        <tr wire:key="{{ '70ae78-67-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($device->id ?? '') }}">
                                             <td>{{ $device->serial_number }}</td>
                                             <td>{{ $device->imei }}</td>
                                             <td>{{ $device->last_seen_at ? $device->last_seen_at->diffForHumans() : '-' }}</td>

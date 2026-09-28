@@ -61,7 +61,7 @@
                                 @if (isset($sheq_risks))
                                 <tbody>
                                     @forelse ($sheq_risks as $sheq_risk)
-                                  <tr>
+                                  <tr wire:key="{{ '60f5cd-63-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($sheq_risk->id ?? '') }}">
                                     <td>{{ucwords($sheq_risk->category)}}</td>
                                     <td>{{ \Illuminate\Support\Str::limit($sheq_risk->hazard, 60) }}</td>
                                     <td>{{ \Illuminate\Support\Str::limit($sheq_risk->risk, 60) }}</td>
@@ -230,7 +230,7 @@
                         </thead>
                         <tbody>
                             @forelse ($current_controls as $control)
-                                <tr>
+                                <tr wire:key="{{ '60f5cd-232-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($control->id ?? '') }}">
                                     <td>{{$control->description}}</td>
                                     <td>{{ucwords($control->hierarchy)}}</td>
                                     <td>

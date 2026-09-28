@@ -52,7 +52,7 @@
                                 @if (isset($sheq_contractor_onboardings))
                                 <tbody>
                                     @forelse ($sheq_contractor_onboardings as $onboarding)
-                                  <tr>
+                                  <tr wire:key="{{ 'd60a64-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($onboarding->id ?? '') }}">
                                     <td>{{$onboarding->contractorName()}}</td>
                                     <td>{{ $onboarding->contractorable_type == 'App\Models\Transporter' ? 'Transporter' : 'Vendor / Supplier' }}</td>
                                     <td>

@@ -67,7 +67,7 @@
                                 @if (isset($sheq_non_conformities))
                                 <tbody>
                                     @forelse ($sheq_non_conformities as $nc)
-                                  <tr>
+                                  <tr wire:key="{{ '45cfcf-69-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($nc->id ?? '') }}">
                                     <td>{{$nc->nc_number}}</td>
                                     <td>{{ucwords(str_replace('_',' ',$nc->source))}}</td>
                                     <td>{{$nc->department->name ?? '-'}}</td>

@@ -95,7 +95,7 @@
                                 @if (isset($leaves))
                                 <tbody>
                                     @forelse ($leaves as $leave)
-                                  <tr>
+                                  <tr wire:key="{{ '8105aa-97-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leave->id ?? '') }}">
                                     <td>
                                         {{$leave->user?->name}} {{$leave->user?->surname}}
                                     </td>

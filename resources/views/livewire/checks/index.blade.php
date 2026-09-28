@@ -35,7 +35,7 @@
                                 @if (isset($checks))
                                 <tbody>
                                     @forelse ($checks as $check)
-                                  <tr>
+                                  <tr wire:key="{{ '219bc9-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($check->id ?? '') }}">
                                     <td>{{$check->name}}</td>
                                     <td>{{$check->description}}</td>
                                     <td><span class="badge bg-{{$check->status == 1 ? "success" : "danger"}}">{{$check->status == 1 ? "Active" : "Inactive"}}</span></td>

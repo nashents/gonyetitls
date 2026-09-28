@@ -34,7 +34,7 @@
                                 @if (isset($waste_receptacles))
                                 <tbody>
                                     @forelse ($waste_receptacles as $waste_receptacle)
-                                  <tr>
+                                  <tr wire:key="{{ '6f2261-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($waste_receptacle->id ?? '') }}">
                                     <td>{{$waste_receptacle->name}}</td>
                                     <td>{{$waste_receptacle->description}}</td>
                                     <td><span class="badge bg-{{$waste_receptacle->status == 1 ? "success" : "danger"}}">{{$waste_receptacle->status == 1 ? "Active" : "Inactive"}}</span></td>

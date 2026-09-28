@@ -66,7 +66,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($chargeTypes as $type)
-                                        <tr>
+                                        <tr wire:key="{{ '8bd8f5-68-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($type->id ?? '') }}">
                                             <td>{{ $type->name }}</td>
                                             <td>{{ $type->description }}</td>
                                             <td>{{ $type->revenue_account->name ?? '—' }}</td>

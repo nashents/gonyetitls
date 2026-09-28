@@ -28,7 +28,7 @@
                                 @if ($vendor_types->count()>0)
                                 <tbody>
                                     @foreach ($vendor_types as $vendor_type)
-                                  <tr>
+                                  <tr wire:key="{{ '6258c2-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vendor_type->id ?? '') }}">
                                     <td>{{$vendor_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

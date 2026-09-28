@@ -32,7 +32,7 @@
                                 @if (isset($inspection_types))
                                 <tbody>
                                     @forelse ($inspection_types as $inspection_type)
-                                  <tr>
+                                  <tr wire:key="{{ '852a25-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inspection_type->id ?? '') }}">
                                     <td>{{$inspection_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

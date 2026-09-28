@@ -79,7 +79,7 @@
                                     @if (isset($bookings))
                                     <tbody>
                                         @forelse ($bookings as $booking)
-                                      <tr>
+                                      <tr wire:key="{{ 'bd5887-81-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($booking->id ?? '') }}">
                                         <td>{{ucfirst($booking->booking_number)}}</td>
                                         <td>{{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</td>
                                         <td>{{ucfirst($booking->employee ? $booking->employee->name : "")}} {{ucfirst($booking->employee ? $booking->employee->surname : "")}}</td>

@@ -55,7 +55,7 @@
                                 @if (isset($inventories))
                                 <tbody>
                                     @forelse ($inventories as $inventory)
-                                  <tr>
+                                  <tr wire:key="{{ '40e172-57-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inventory->id ?? '') }}">
                                     <td>
                                         {{$inventory->inventory_number}}
                                         <br>

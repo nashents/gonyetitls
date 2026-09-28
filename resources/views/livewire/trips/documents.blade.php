@@ -29,7 +29,7 @@
 
             <tbody>
                 @forelse ($documents as $document)
-              <tr>
+              <tr wire:key="{{ '90e681-31-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($document->id ?? '') }}">
                 <td>
                     {{$document->user ? $document->user->name : ""}} {{$document->user ? $document->user->surname : ""}}
                     <br>

@@ -43,7 +43,7 @@
                                 @if (isset($destinations))
                                 <tbody>
                                     @forelse ($destinations as $destination)
-                                  <tr>
+                                  <tr wire:key="{{ '7f388e-45-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($destination->id ?? '') }}">
                                     <td>{{$destination->country ? $destination->country->name : ""}}</td>
                                     <td>
                                         @if ($destination->location)

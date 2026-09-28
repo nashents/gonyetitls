@@ -115,7 +115,7 @@
                                     @if (isset($trip_gate_passes))
                                     <tbody>
                                         @forelse ($trip_gate_passes as $gate_pass)
-                                      <tr>
+                                      <tr wire:key="{{ 'aa1abf-117-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($gate_pass->id ?? '') }}">
                                         @php
                                             $workshop = App\Models\Employee::find($gate_pass->workshop_authorized_by_id);
                                             $logistics = App\Models\Employee::find($gate_pass->logistics_authorized_by_id);

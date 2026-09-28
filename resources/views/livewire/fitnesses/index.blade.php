@@ -30,7 +30,7 @@
         <tbody>
             @if (isset($fitnesses))
             @forelse ($fitnesses as $fitness)
-            <tr>
+            <tr wire:key="{{ '48cf28-32-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fitness->id ?? '') }}">
                 <td>
                     {{$fitness->reminder_item ? $fitness->reminder_item->name : ""}} <br>
                     <small>

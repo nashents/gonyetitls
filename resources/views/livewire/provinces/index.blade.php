@@ -33,7 +33,7 @@
                                 @if ($provinces->count()>0)
                                 <tbody>
                                     @foreach ($provinces as $province)
-                                  <tr>
+                                  <tr wire:key="{{ '1abe81-35-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($province->id ?? '') }}">
                                     <td>{{$province->country ? $province->country->name : ""}}</td>
                                     <td>{{$province->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

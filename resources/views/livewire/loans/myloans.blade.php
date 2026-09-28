@@ -49,7 +49,7 @@
                                 @if (isset($loans))
                                 <tbody>
                                     @forelse ($loans as $loan)
-                                  <tr>
+                                  <tr wire:key="{{ '8fbb59-51-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loan->id ?? '') }}">
                                     <td>{{$loan->loan_number}}</td>
                                     <td>{{ucfirst($loan->employee ? $loan->employee->name : "")}} {{ucfirst($loan->employee ? $loan->employee->surname : "")}}</td>
                                     <td>{{$loan->loan_type ? $loan->loan_type->name : ""}}</td>

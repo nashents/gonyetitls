@@ -64,7 +64,7 @@
                                             ];
                                             $color = $statusColors[$run->status] ?? 'secondary';
                                         @endphp
-                                        <tr>
+                                        <tr wire:key="{{ 'e13724-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($run->id ?? '') }}">
                                             <td><strong>{{ $run->name }}</strong></td>
                                             <td>{{ \Carbon\Carbon::parse($run->period_start)->format('d M') }} – {{ \Carbon\Carbon::parse($run->period_end)->format('d M Y') }}</td>
                                             <td>{{ $run->frequency?->name ?? '—' }}</td>

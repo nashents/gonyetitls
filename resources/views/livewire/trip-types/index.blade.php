@@ -30,7 +30,7 @@
                                 @if ($trip_types->count()>0)
                                 <tbody>
                                     @foreach ($trip_types as $trip_type)
-                                  <tr>
+                                  <tr wire:key="{{ '41a340-32-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip_type->id ?? '') }}">
                                     <td>{{$trip_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

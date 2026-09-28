@@ -32,7 +32,7 @@
                                 <tbody>
                                     @foreach ($vehicle_makes as $vehicle_make)
                                     @foreach ($vehicle_make->vehicle_models as $vehicle_model)
-                                  <tr>
+                                  <tr wire:key="{{ 'bdc2b0-33-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vehicle_make->id ?? '') }}">
                                     <td>{{$vehicle_make->name}}</td>
                                     <td>{{$vehicle_model->name}}</td>
                                     <td><span class="badge bg-{{$vehicle_make->status == 1 ? "success" : "danger"}}">{{$vehicle_make->status == 1 ? "Active" : "Inactive"}}</span></td>

@@ -28,7 +28,7 @@
             </thead>
             <tbody>
                 @foreach ($purchase_products as $purchase_product)
-              <tr>
+              <tr wire:key="{{ '1dbeb6-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($purchase_product->id ?? '') }}">
                 <td>{{$purchase_product->purchase ? $purchase_product->purchase->purchase_number : ""}}</td>
                 <td>{{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}}</td>
                 <td>{{$purchase_product->qty}}</td>

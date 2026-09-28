@@ -24,7 +24,7 @@
             @if ($cargo_transporters->count()>0)
             <tbody>
                 @foreach ($cargo_transporters as $cargo_transporter)
-              <tr>
+              <tr wire:key="{{ '3beeb8-26-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($cargo_transporter->id ?? '') }}">
                 <td>{{ucfirst($cargo_transporter->transporter_number)}}</td>
                 <td>{{ucfirst($cargo_transporter->name)}}</td>
                 <td>{{ucfirst($cargo_transporter->email)}}</td>

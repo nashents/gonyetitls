@@ -57,7 +57,7 @@
                                 @if (isset($transporters))
                                 <tbody>
                                     @forelse ($transporters as $transporter)
-                                  <tr>
+                                  <tr wire:key="{{ 'f792c2-59-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($transporter->id ?? '') }}">
                                     <td>
                                         {{$transporter->transporter_number}}
                                           @if ($transporter->custom_ref)

@@ -27,7 +27,7 @@
                                 @if ($payment_methods->count()>0)
                                 <tbody>
                                     @foreach ($payment_methods as $payment_method)
-                                  <tr>
+                                  <tr wire:key="{{ 'd138a6-29-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($payment_method->id ?? '') }}">
                                     <td>{{ucfirst($payment_method->name)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

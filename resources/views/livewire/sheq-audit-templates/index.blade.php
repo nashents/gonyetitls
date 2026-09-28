@@ -34,7 +34,7 @@
                                 @if (isset($sheq_audit_templates))
                                 <tbody>
                                     @forelse ($sheq_audit_templates as $sheq_audit_template)
-                                  <tr>
+                                  <tr wire:key="{{ 'b29abd-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($sheq_audit_template->id ?? '') }}">
                                     <td><a href="{{route('sheq_audit_templates.show',$sheq_audit_template->id)}}">{{$sheq_audit_template->name}}</a></td>
                                     <td>{{$sheq_audit_template->standard}}</td>
                                     <td>{{ \Illuminate\Support\Str::limit($sheq_audit_template->description, 80) }}</td>

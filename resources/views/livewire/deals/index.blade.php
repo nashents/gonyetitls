@@ -58,7 +58,7 @@
                                                 $dealState = $deal->cancelled ? 'Cancelled' : ($deal->completed ? 'Completed' : 'Active');
                                                 $ds = $dealStatusMap[$dealState];
                                             @endphp
-                                            <tr style="background-color: {{ $ds['row'] }}; border-left: 6px solid {{ $ds['border'] }};">
+                                            <tr wire:key="{{ '789d0a-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($deal->id ?? '') }}" style="background-color: {{ $ds['row'] }}; border-left: 6px solid {{ $ds['border'] }};">
                                                 <td>{{ $deal->deal_number }}</td>
                                                 <td>{{ $deal->reference ?? 'N/A' }}</td>
                                                 <td>{{ $deal->customer ? $deal->customer->name : 'N/A' }}</td>

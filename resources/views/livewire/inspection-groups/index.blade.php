@@ -31,7 +31,7 @@
                                 @if (isset($inspection_groups))
                                 <tbody>
                                     @forelse ($inspection_groups as $inspection_group)
-                                  <tr>
+                                  <tr wire:key="{{ '10b32f-33-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inspection_group->id ?? '') }}">
                                     <td>{{$inspection_group->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

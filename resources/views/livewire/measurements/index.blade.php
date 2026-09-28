@@ -30,7 +30,7 @@
                                 @if ($measurements->count()>0)
                                 <tbody>
                                     @foreach ($measurements as $measurement)
-                                  <tr>
+                                  <tr wire:key="{{ '850437-32-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($measurement->id ?? '') }}">
                                     <td>{{ucfirst($measurement->cargo_type)}}</td>
                                     <td>{{ucfirst($measurement->name)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

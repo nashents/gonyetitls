@@ -145,7 +145,7 @@
                                     @if (isset($payments))
                                     <tbody>
                                         @forelse ($payments as $payment)
-                                      <tr>
+                                      <tr wire:key="{{ '2758e2-147-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($payment->id ?? '') }}">
                                         <td>
                                             {{$payment->payment_number}}
                                             <small>

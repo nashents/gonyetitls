@@ -46,7 +46,7 @@
                                 @if (isset($products))
                                 <tbody>
                                     @forelse ($products as $product)
-                                  <tr>
+                                  <tr wire:key="{{ '906673-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($product->id ?? '') }}">
                                     <td>{{ucfirst($product->name)}}
                                         @if ($this->sageEnabled)
                                         <br>

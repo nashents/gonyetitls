@@ -58,7 +58,7 @@
                                 @if (isset($tyres))
                                 <tbody>
                                     @forelse ($tyres as $tyre)
-                                  <tr>
+                                  <tr wire:key="{{ '23107b-60-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tyre->id ?? '') }}">
                                      @php
                                            $assignment = App\Models\TyreAssignment::with(['horse','tyre'])->where('tyre_id',$tyre->id)->where('status',1)->latest()->first();
                                         @endphp

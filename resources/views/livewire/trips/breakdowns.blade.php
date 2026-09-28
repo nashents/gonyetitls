@@ -41,7 +41,7 @@
             <tbody>
                 @forelse ($breakdowns as $breakdown)
             
-              <tr>
+              <tr wire:key="{{ '0ec709-42-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($breakdown->id ?? '') }}">
                 <td>
                     {{$breakdown->user ? $breakdown->user->name : ""}} {{$breakdown->user ? $breakdown->user->surname : ""}} 
                     <br>
@@ -129,7 +129,7 @@
 
             <tbody>
                 @forelse ($breakdown_assignments as $breakdown_assignment)
-              <tr>
+              <tr wire:key="{{ '0ec709-131-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($breakdown_assignment->id ?? '') }}">
                 <td>
                     {{$breakdown_assignment->user ? $breakdown_assignment->user->name : ""}} {{$breakdown_assignment->user ? $breakdown_assignment->user->surname : ""}} 
                     <br>

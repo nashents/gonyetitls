@@ -62,7 +62,7 @@
                             @if (isset($incidents) && $incidents->count())
                                 <tbody>
                                 @forelse ($incidents as $incident)
-                                    <tr>
+                                    <tr wire:key="{{ '960227-64-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($incident->id ?? '') }}">
                                         {{-- Incident meta --}}
                                         <td>
                                             <strong>{{ $incident->incident_number }}</strong>

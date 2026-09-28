@@ -28,7 +28,7 @@
                                 @if (isset($sheq_equipment_classes))
                                 <tbody>
                                     @forelse ($sheq_equipment_classes as $class)
-                                  <tr>
+                                  <tr wire:key="{{ 'bd5e56-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($class->id ?? '') }}">
                                     <td>{{$class->name}}</td>
                                     <td>{{$class->inspection_frequency_days ?? '-'}}</td>
                                     <td>

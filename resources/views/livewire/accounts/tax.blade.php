@@ -39,7 +39,7 @@
                                 @if (isset($accounts))
                                 <tbody>
                                     @foreach ($accounts as $account)
-                                  <tr>
+                                  <tr wire:key="{{ 'b9cd48-41-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($account->id ?? '') }}">
                                     <td>
                                          @if ($account->account_type)
                                              {{$account->account_type->account_type_group ? $account->account_type->account_type_group->name : ""}}       

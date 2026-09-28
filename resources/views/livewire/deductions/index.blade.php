@@ -41,7 +41,7 @@
                                 @if ($deductions->count()>0)
                                 <tbody>
                                     @foreach ($deductions as $deduction)
-                                  <tr>
+                                  <tr wire:key="{{ 'bf6079-43-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($deduction->id ?? '') }}">
                                     <td>{{$deduction->name}}</td>
                                     <td>{{$deduction->currency ? $deduction->currency->name : ""}}</td>
                                     <td>{{$deduction->description}}</td>

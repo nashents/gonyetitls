@@ -65,7 +65,7 @@
                                 @if (isset($sheq_objectives))
                                 <tbody>
                                     @forelse ($sheq_objectives as $objective)
-                                  <tr>
+                                  <tr wire:key="{{ '7f9da3-67-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($objective->id ?? '') }}">
                                     <td>{{$objective->year}}</td>
                                     <td>{{ucwords($objective->category)}}</td>
                                     <td>{{ \Illuminate\Support\Str::limit($objective->objective, 70) }}</td>

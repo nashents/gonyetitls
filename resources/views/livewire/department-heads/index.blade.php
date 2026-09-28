@@ -31,7 +31,7 @@
                                 @if ($department_heads->count()>0)
                                 <tbody>
                                     @foreach ($department_heads as $department_head)
-                                  <tr>
+                                  <tr wire:key="{{ '1a631e-33-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($department_head->id ?? '') }}">
                                     <td>{{$department_head->department ? $department_head->department->name : ""}}</td>
                                     <td>{{$department_head->employee ? $department_head->employee->name : ""}} {{$department_head->employee ? $department_head->employee->surname : ""}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

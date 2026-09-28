@@ -46,7 +46,7 @@
                                 @if (isset($top_ups))
                                 <tbody>
                                     @forelse ($top_ups as $top_up)
-                                  <tr>
+                                  <tr wire:key="{{ '7f13db-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($top_up->id ?? '') }}">
                                     <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $top_up->id }}" value="{{ $top_up->id }}"></td>
                                      <td>
                                         @if ($top_up->container)

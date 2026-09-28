@@ -41,7 +41,7 @@
                                     @php
                                         $matches = ($activeMatches[$product->name] ?? collect())->where('id', '!=', $product->id);
                                     @endphp
-                                  <tr>
+                                  <tr wire:key="{{ 'a5a65a-40-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($product->id ?? '') }}">
                                     <td>{{$product->name}} {{$product->model}}</td>
                                     <td>{{$product->product_number}}</td>
                                     <td>{{$product->identification_number}}</td>

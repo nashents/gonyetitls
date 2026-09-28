@@ -149,7 +149,7 @@
                         @endforeach
                     </div>
                     @foreach($this->results as $row)
-                        <div class="table-row p-1 {{ $this->rowClasses($row, $loop) }}">
+                        <div wire:key="{{ 'dt-row-' . $loop->index . '-' . ($row->id ?? '') }}" class="table-row p-1 {{ $this->rowClasses($row, $loop) }}">
                             @foreach($this->columns as $column)
                                 @if($column['hidden'])
                                     @if($hideable === 'inline')

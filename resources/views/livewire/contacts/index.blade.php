@@ -24,7 +24,7 @@
                 @if (isset($contacts))
                 @if ($contacts->count() > 0)
                 @foreach ($contacts as $contact)
-              <tr>
+              <tr wire:key="{{ '465039-26-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($contact->id ?? '') }}">
                 <td>{{$contact->name}}</td>
                 <td>{{$contact->surname}}</td>
                 <td>{{$contact->email}}</td>

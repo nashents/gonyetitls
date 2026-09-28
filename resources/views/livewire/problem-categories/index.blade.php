@@ -33,7 +33,7 @@
                                 @if (isset($problem_categories))
                                 <tbody>
                                     @forelse ($problem_categories as $problem_category)
-                                  <tr>
+                                  <tr wire:key="{{ '48d495-35-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($problem_category->id ?? '') }}">
                                     <td>{{$problem_category->name}}</td>
                                     <td>{{$problem_category->description}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

@@ -50,7 +50,7 @@
                                 @if (isset($sheq_medical_surveillances))
                                 <tbody>
                                     @forelse ($sheq_medical_surveillances as $surveillance)
-                                  <tr>
+                                  <tr wire:key="{{ '282320-52-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($surveillance->id ?? '') }}">
                                     <td>{{$surveillance->employee ? $surveillance->employee->name.' '.$surveillance->employee->surname : '-'}}</td>
                                     <td>{{ucwords(str_replace('_',' ',$surveillance->exam_type))}}</td>
                                     <td>{{$surveillance->exam_date ? \Carbon\Carbon::parse($surveillance->exam_date)->format('d M Y') : '-'}}</td>

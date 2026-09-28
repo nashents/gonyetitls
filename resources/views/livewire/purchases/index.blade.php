@@ -103,7 +103,7 @@
                                 @if (isset($purchases))
                                 <tbody>
                                     @forelse ($purchases as $purchase)
-                                    <tr>
+                                    <tr wire:key="{{ 'be3895-105-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($purchase->id ?? '') }}">
                                         <td>
                                             {{$purchase->purchase_number}}
                                             @if ($this->sageEnabled)

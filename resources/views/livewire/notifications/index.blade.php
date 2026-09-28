@@ -36,7 +36,7 @@
                                 @if ($notifications->count()>0)
                                 <tbody>
                                     @foreach ($notifications as $notification)
-                                  <tr>
+                                  <tr wire:key="{{ '6fa8ff-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($notification->id ?? '') }}">
                                     <td>{{$notification->user ? $notification->user->name : ""}} {{$notification->user ? $notification->user->surname : ""}}</td>
                                     <td>{{$notification->when}}</td>
                                     <td>{{$notification->category}}</td>
@@ -101,7 +101,7 @@
                                 @if ($trip_edit_authorizers->count() > 0)
                                 <tbody>
                                     @foreach ($trip_edit_authorizers as $authorizer)
-                                  <tr>
+                                  <tr wire:key="{{ '6fa8ff-103-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($authorizer->id ?? '') }}">
                                     <td>{{$authorizer->user ? $authorizer->user->name : ""}} {{$authorizer->user ? $authorizer->user->surname : ""}}</td>
                                     <td>{{ config('edit_authorization.'.$authorizer->module.'.label', ucfirst($authorizer->module)) }}</td>
                                     <td>{{$authorizer->creator ? $authorizer->creator->name : ""}} {{$authorizer->creator ? $authorizer->creator->surname : ""}}</td>

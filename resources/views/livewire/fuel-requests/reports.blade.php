@@ -71,7 +71,7 @@
                                 @if ($fuel_requests->count()>0)
                                 <tbody>
                                     @foreach ($fuel_requests as $fuel_request)
-                                  <tr>
+                                  <tr wire:key="{{ '93be08-73-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel_request->id ?? '') }}">
                                     <td>{{ucfirst($fuel_request->request_number)}}</td>
                                     <td>{{ucfirst($fuel_request->request_type)}}</td>
                                     <td>{{ucfirst($fuel_request->employee->employee_number)}}</td>

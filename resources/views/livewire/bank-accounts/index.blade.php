@@ -38,7 +38,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($bank_accounts as $bank_account)
-                                  <tr>
+                                  <tr wire:key="{{ 'a38525-40-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($bank_account->id ?? '') }}">
                                     <td>{{$bank_account->name}}</td>
                                     <td>{{$bank_account->account_name}}</td>
                                     <td>{{$bank_account->account_number}}</td>

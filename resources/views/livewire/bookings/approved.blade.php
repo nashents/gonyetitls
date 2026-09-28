@@ -80,7 +80,7 @@
                                     @if (isset($bookings))
                                     <tbody>
                                         @forelse ($bookings as $booking)
-                                      <tr>
+                                      <tr wire:key="{{ 'd289c6-82-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($booking->id ?? '') }}">
                                         <td>{{ucfirst($booking->booking_number)}}
                                             @if (\App\Services\Sage\SageIntegration::enabledForUser() && $booking->authorization === 'approved')
                                                 @php $sm = optional($booking->ticket)->sageMapping; $ss = optional($sm)->sync_status; @endphp

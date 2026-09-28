@@ -20,7 +20,7 @@
             </thead>
             <tbody>
                 @foreach ($documents as $document)
-              <tr>
+              <tr wire:key="{{ '78bc78-22-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($document->id ?? '') }}">
                 <td>{{$document->title}}</td>
                 <td><a href="{{asset('myfiles/documents/'.$document->filename)}}"> <i class="fa fa-file"></i> {{$document->filename}}</a></td>
                 <td>{{$document->expiry_date}}</td>

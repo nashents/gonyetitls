@@ -46,7 +46,7 @@
                                 @if (isset($cargos))
                                 <tbody>
                                     @forelse ($cargos as $cargo)
-                                  <tr>
+                                  <tr wire:key="{{ 'db213c-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($cargo->id ?? '') }}">
                                     <td>{{$cargo->type}}</td>
                                     <td>{{$cargo->group}}</td>
                                     <td>{{$cargo->name}}</td>

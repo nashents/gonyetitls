@@ -49,7 +49,7 @@
                                     <tbody>
                                         @forelse  ($waste_disposals as $waste_disposal)
                                        
-                                      <tr>
+                                      <tr wire:key="{{ '4c4999-50-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($waste_disposal->id ?? '') }}">
                                         <td>
                                             {{$waste_disposal->waste_disposal_number}}
                                             <br>

@@ -133,7 +133,7 @@
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
+                                            <tr wire:key="{{ 'ffa067-128-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip->id ?? '') }}" @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td>
                                                     <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong>
                                                     <br>

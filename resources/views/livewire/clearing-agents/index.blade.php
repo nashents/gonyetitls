@@ -41,7 +41,7 @@
                                 @if ($clearing_agents->count()>0)
                                 <tbody>
                                     @foreach ($clearing_agents as $clearing_agent)
-                                  <tr>
+                                  <tr wire:key="{{ '35ba67-43-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($clearing_agent->id ?? '') }}">
                                     <td>{{$clearing_agent->clearing_agent_number}}</td>
                                     <td>{{ucfirst($clearing_agent->name)}}</td>
                                     <td>{{$clearing_agent->email}}</td>

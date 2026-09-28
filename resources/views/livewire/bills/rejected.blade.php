@@ -94,7 +94,7 @@
                                 @if (isset($bills))
                                 <tbody>
                                     @forelse ($bills as $bill)
-                                  <tr>
+                                  <tr wire:key="{{ '89e196-96-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($bill->id ?? '') }}">
                                     <td>{{$bill->bill_number}}</td>
                                     <td>
                                         @if ($bill->transporter)

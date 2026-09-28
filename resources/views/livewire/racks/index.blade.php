@@ -35,7 +35,7 @@
                                 @if ($racks->count()>0)
                                 <tbody>
                                     @foreach ($racks as $rack)
-                                  <tr>
+                                  <tr wire:key="{{ 'a88fab-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($rack->id ?? '') }}">
                                     <td>{{$rack->name}}</td>
                                     <td>{{$rack->rack_number}}</td>
                                     <td>{{$rack->description}}</td>

@@ -54,7 +54,7 @@
                                 @if (isset($sheq_drills))
                                 <tbody>
                                     @forelse ($sheq_drills as $drill)
-                                  <tr>
+                                  <tr wire:key="{{ 'a10690-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($drill->id ?? '') }}">
                                     <td>{{$drill->drill_number}}</td>
                                     <td>{{$drill->emergency->scenario ?? '-'}}</td>
                                     <td>{{$drill->department->name ?? '-'}}</td>

@@ -554,7 +554,7 @@
                         @if ($employee_departments->count()>0)
                             <tbody>
                                 @foreach ($employee_departments as $department)
-                                    <tr>
+                                    <tr wire:key="{{ '294b34-556-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($department->id ?? '') }}">
                                         <td>{{$department->name}}</td>
                                         <td>{{$department->department_code}}</td>
                                         <td class="w-10 line-height-35 table-dropdown">

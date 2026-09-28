@@ -37,7 +37,7 @@
                                 <tbody>
                                     @forelse ($categories as $category)
                                             @foreach ($category->category_values as $value)
-                                                <tr>
+                                                <tr wire:key="{{ '9bac89-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($category->id ?? '') }}">
                                                     <td>{{ucfirst($category->name)}}</td>
                                                     <td>{{ucfirst($value->name)}}</td>
                                                     <td><span class="badge bg-{{$category->status == 1 ? "success" : "danger"}}">{{$category->status == 1 ? "Active" : "Inactive"}}</span></td>

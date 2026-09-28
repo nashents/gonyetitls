@@ -38,7 +38,7 @@
                                 @if ($asset_assignments->count()>0)
                                 <tbody>
                                     @foreach ($asset_assignments as $assignment)
-                                  <tr>
+                                  <tr wire:key="{{ 'ed0302-40-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($assignment->id ?? '') }}">
                                     <td>{{$assignment->asset ? $assignment->asset->asset_number : ""}}</td>       
                                     <td>
                                         @if (isset($assignment->asset->product))

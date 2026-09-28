@@ -212,7 +212,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($rateCards as $card)
-                                        <tr>
+                                        <tr wire:key="{{ 'ba19c6-214-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($card->id ?? '') }}">
                                             <td>{{ $directions[$card->direction] ?? $card->direction }}</td>
                                             <td>{{ $card->vendor?->name ?? $card->customer?->name ?? 'Any' }}</td>
                                             <td>{{ $card->charge_type?->name ?? 'Any' }}</td>

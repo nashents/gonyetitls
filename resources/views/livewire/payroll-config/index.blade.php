@@ -277,7 +277,7 @@
                                     </thead>
                                     <tbody>
                                         @forelse($frequencies as $freq)
-                                        <tr>
+                                        <tr wire:key="{{ '96efdc-279-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($freq->id ?? '') }}">
                                             <td>{{ $freq['name'] }}</td>
                                             <td><code>{{ $freq['code'] }}</code></td>
                                             <td class="text-center">{{ $freq['periods_per_year'] }}</td>

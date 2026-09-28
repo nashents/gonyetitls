@@ -47,7 +47,7 @@
                         @if ($ticket_inventories->count()>0)
                         <tbody>
                            @foreach ($ticket_inventories as  $ticket_inventory)
-                            <tr>
+                            <tr wire:key="{{ 'c56965-49-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($ticket_inventory->id ?? '') }}">
                                 <td>{{$ticket->ticket_number}}</td>
                                 <td>
                                     @if ($ticket_inventory->inventory)

@@ -24,7 +24,7 @@
                 @if (isset($others))
                 @if ($others->count() > 0)
                 @foreach ($others as $other)
-              <tr>
+              <tr wire:key="{{ 'f22f32-26-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($other->id ?? '') }}">
                 <td>{{$other->type}}</td>
                 <td>{{$other->currency ? $other->currency->name : ""}}</td>
                 <td>

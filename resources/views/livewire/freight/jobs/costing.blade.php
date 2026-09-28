@@ -70,7 +70,7 @@
         </thead>
         <tbody>
             @forelse ($job->costs as $cost)
-                <tr>
+                <tr wire:key="{{ 'f54020-72-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($cost->id ?? '') }}">
                     <td>{{ $cost->charge_type?->name }}</td>
                     <td>{{ $cost->vendor?->name }}</td>
                     <td>{{ $cost->currency?->symbol }}{{ number_format($cost->amount, 2) }}</td>
@@ -120,7 +120,7 @@
         </thead>
         <tbody>
             @forelse ($job->charges as $charge)
-                <tr>
+                <tr wire:key="{{ 'f54020-122-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($charge->id ?? '') }}">
                     <td>{{ $charge->charge_type?->name }}</td>
                     <td>{{ $charge->customer?->name }}</td>
                     <td>{{ $charge->currency?->symbol }}{{ number_format($charge->amount, 2) }}</td>

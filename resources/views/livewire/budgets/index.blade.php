@@ -46,7 +46,7 @@
 
                                     @forelse ($budgets as $budget)
 
-                                        <tr>
+                                        <tr wire:key="{{ 'e951d5-47-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($budget->id ?? '') }}">
 
                                             <td>{{ $budget->module }}</td>
 

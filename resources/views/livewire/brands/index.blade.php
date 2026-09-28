@@ -36,7 +36,7 @@
                                 @if (isset($brands))
                                 <tbody>
                                     @forelse ($brands as $brand)
-                                  <tr>
+                                  <tr wire:key="{{ 'b2dab3-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($brand->id ?? '') }}">
                                     <td>{{ucfirst($brand->category ? $brand->category->name : "")}} {{ucfirst($brand->category_value ? $brand->category_value->name : "")}}</td>
                                     <td>{{ucfirst($brand->name)}}</td>
                                     <td><span class="badge bg-{{$brand->status == 1 ? "success" : "danger"}}">{{$brand->status == 1 ? "Active" : "Inactive"}}</span></td>

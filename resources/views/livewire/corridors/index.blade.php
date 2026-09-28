@@ -33,7 +33,7 @@
                                 @if ($corridors->count()>0)
                                 <tbody>
                                     @foreach ($corridors as $corridor)
-                                  <tr>
+                                  <tr wire:key="{{ '6b09e8-35-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($corridor->id ?? '') }}">
                                     <td>{{ucfirst($corridor->name)}}</td>
                                     <td>{{ucfirst(App\Models\Country::find($corridor->from)->name)}} </td>
                                     <td>{{ucfirst(App\Models\Country::find($corridor->to)->name)}} </td>

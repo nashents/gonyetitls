@@ -36,7 +36,7 @@
                                 @if (isset($assets))
                                 <tbody>
                                     @forelse ($assets as $asset)
-                                  <tr>
+                                  <tr wire:key="{{ '7ed106-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($asset->id ?? '') }}">
                                     <td>
                                         <strong>{{$asset->asset_number}}</strong>
                                         <br>

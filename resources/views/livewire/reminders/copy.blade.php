@@ -37,7 +37,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($copies as $copy)
-                                  <tr>
+                                  <tr wire:key="{{ '417615-39-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($copy->id ?? '') }}">
                                     <td>{{ $copy->name }} {{ $copy->surname }}</td>
                                     <td>{{ $copy->email }}</td>
                                     <td>{{ $copy->phonenumber }}</td>

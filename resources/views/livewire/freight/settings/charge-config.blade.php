@@ -59,7 +59,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($policies as $policy)
-                                        <tr>
+                                        <tr wire:key="{{ '85f7f9-61-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($policy->id ?? '') }}">
                                             <td>{{ $chargeTypes[$policy->charge_type] ?? $policy->charge_type }}</td>
                                             <td>{{ $policy->shipping_line?->name ?? 'Generic Default' }}</td>
                                             <td>{{ $policy->free_days }}</td>
@@ -159,7 +159,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($tiers as $tier)
-                                        <tr>
+                                        <tr wire:key="{{ '85f7f9-161-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tier->id ?? '') }}">
                                             <td>{{ $chargeTypes[$tier->charge_type] ?? $tier->charge_type }}</td>
                                             <td>{{ $tier->shipping_line?->name ?? 'Generic Default' }}</td>
                                             <td>{{ $tier->day_from }}{{ $tier->day_to ? ' - '.$tier->day_to : '+' }}</td>

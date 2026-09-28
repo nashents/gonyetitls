@@ -31,7 +31,7 @@
                                 @if ($currencies->count()>0)
                                 <tbody>
                                     @foreach ($currencies as $currency)
-                                  <tr>
+                                  <tr wire:key="{{ '546fd9-33-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($currency->id ?? '') }}">
                                     <td>{{ucfirst($currency->fullname)}}</td>
                                     <td>{{ucfirst($currency->name)}}</td>
                                     <td>{{ucfirst($currency->symbol)}}</td>

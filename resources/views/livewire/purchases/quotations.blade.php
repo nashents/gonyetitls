@@ -18,7 +18,7 @@
             </thead>
             <tbody>
                 @foreach ($purchase_documents as $purchase_document)
-              <tr>
+              <tr wire:key="{{ '6d457b-20-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($purchase_document->id ?? '') }}">
                 <td>{{$purchase_document->title}}</td>
                 <td>{{$purchase_document->vendor->name}}</td>
                 <td><a href="{{asset('myfiles/documents/'.$purchase_document->filename)}}">{{$purchase_document->filename}}</a></td>

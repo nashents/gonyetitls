@@ -56,7 +56,7 @@
                                 <tbody>
                                    
                                     @forelse ($recoveries as $recovery)
-                                  <tr>
+                                  <tr wire:key="{{ '434b65-58-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($recovery->id ?? '') }}">
                                     <td>{{$recovery->recovery_number}}</td>
                                     <td>{{$recovery->date}}</td>
                                     <td>{{$recovery->driver ? $recovery->driver->driver_number : ""}} {{$recovery->driver ? $recovery->driver->employee->name : ""}} {{$recovery->driver ? $recovery->driver->employee->surname : ""}}</td>

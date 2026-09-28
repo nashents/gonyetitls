@@ -152,7 +152,7 @@
                                     @if (isset($horses))
                                     <tbody>
                                         @forelse ($horses as $horse)
-                                     <tr>
+                                     <tr wire:key="{{ 'b10ad8-154-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse->id ?? '') }}">
                                         <td>
                                             @if ($this->sageEnabled)
                                             <input type="checkbox" wire:model="sageSelected" value="{{ $horse->id }}" title="Select for Sage bulk sync">

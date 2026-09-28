@@ -41,7 +41,7 @@
                                 @if (isset($tyre_assignments))
                                 <tbody>
                                     @forelse ($tyre_assignments as $tyre_assignment)
-                                  <tr>
+                                  <tr wire:key="{{ 'b9573b-43-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tyre_assignment->id ?? '') }}">
                                     <td>
                                         @if ($tyre_assignment->tyre)
                                             @if ($tyre_assignment->tyre->product)

@@ -29,7 +29,7 @@
                                 @if ($job_types->count()>0)
                                 <tbody>
                                     @foreach ($job_types as $job_type)
-                                  <tr>
+                                  <tr wire:key="{{ 'b39071-31-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($job_type->id ?? '') }}">
                                     <td>{{ucfirst($job_type->name)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

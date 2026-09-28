@@ -82,7 +82,7 @@
                               @if (isset($dispatches))
                                 <tbody>
                                     @forelse ($dispatches as $dispatch)
-                                  <tr>
+                                  <tr wire:key="{{ 'c281e7-84-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($dispatch->id ?? '') }}">
                                                                    <td>{{$dispatch->dispatch_number}}</td>
                                     <td>{{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}}</td>
                                     <td>{{$dispatch->date}}</td>

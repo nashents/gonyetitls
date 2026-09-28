@@ -46,7 +46,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($reminders as $reminder)
-                                  <tr>
+                                  <tr wire:key="{{ '3847c0-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($reminder->id ?? '') }}">
                                     <td>
                                         {{$reminder->reminder_item ? $reminder->reminder_item->name : ""}}
                                         @if (isset($reminder->horse))

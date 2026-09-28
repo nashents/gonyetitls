@@ -539,7 +539,7 @@
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp
 
-                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
+                                            <tr wire:key="{{ 'fc0087-477-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip->id ?? '') }}" @if($s['row']) style="background-color: {{ $s['row'] }}; border-left: 6px solid {{ $s['border'] }};" @endif>
                                                 <td>
                                                     @php $syncable = $trip->is_sage_syncable; @endphp
                                                     @if ($this->sageEnabled && $syncable)

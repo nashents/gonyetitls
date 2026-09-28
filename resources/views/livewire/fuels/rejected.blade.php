@@ -127,7 +127,7 @@
                                                 $fuelRequest = $fuel->fuel_request ?? null;
                                             @endphp
 
-                                            <tr 
+                                            <tr wire:key="{{ '351f52-114-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel->id ?? '') }}" 
                                                 style="background-color:{{ $rowAccent }}; border-left: 6px solid {{ $borderAccent }};"
                                             >
 

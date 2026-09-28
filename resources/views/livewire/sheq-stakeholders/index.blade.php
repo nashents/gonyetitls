@@ -52,7 +52,7 @@
                                 @if (isset($sheq_stakeholders))
                                 <tbody>
                                     @forelse ($sheq_stakeholders as $stakeholder)
-                                  <tr>
+                                  <tr wire:key="{{ '1ebdc8-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($stakeholder->id ?? '') }}">
                                     <td>{{$stakeholder->name}}</td>
                                     <td>{{ucwords($stakeholder->type)}}</td>
                                     <td>{{ucwords(str_replace('_',' ',$stakeholder->category))}}</td>

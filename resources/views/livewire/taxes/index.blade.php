@@ -46,7 +46,7 @@
                                 @if (isset($taxes))
                                 <tbody>
                                     @forelse ($taxes as $tax)
-                                  <tr>
+                                  <tr wire:key="{{ '59912a-48-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tax->id ?? '') }}">
                                     <td>{{$tax->category}}</td>
                                     <td>{{$tax->account?->name}}</td>
                                     <td>{{$tax->name}}

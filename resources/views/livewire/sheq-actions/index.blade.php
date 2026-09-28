@@ -73,7 +73,7 @@
                                 @if (isset($sheq_actions))
                                 <tbody>
                                     @forelse ($sheq_actions as $sheq_action)
-                                  <tr>
+                                  <tr wire:key="{{ 'c18678-75-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($sheq_action->id ?? '') }}">
                                     <td>{{$sheq_action->action_number}}</td>
                                     <td>{{$sheq_action->title}}</td>
                                     <td>{{ucwords(str_replace('_',' ',$sheq_action->source))}}</td>

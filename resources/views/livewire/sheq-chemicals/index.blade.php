@@ -60,7 +60,7 @@
                                 @if (isset($sheq_chemicals))
                                 <tbody>
                                     @forelse ($sheq_chemicals as $chemical)
-                                  <tr>
+                                  <tr wire:key="{{ '6cb874-62-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($chemical->id ?? '') }}">
                                     <td>{{$chemical->name}} @if($chemical->trade_name)<br><small>{{$chemical->trade_name}}</small>@endif</td>
                                     <td>{{ucwords(str_replace('_',' ',$chemical->hazard_class))}}</td>
                                     <td>{{$chemical->supplier}}</td>

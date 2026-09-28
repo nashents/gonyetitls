@@ -36,7 +36,7 @@
                                 @if (isset($checklist_categories))
                                 <tbody>
                                     @forelse ($checklist_categories as $checklist_category)
-                                  <tr>
+                                  <tr wire:key="{{ '9b9bb3-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($checklist_category->id ?? '') }}">
                                     <td>{{$checklist_category->name}}</td>
                                     <td>
                                         @if (!in_array($checklist_category->name,['Tyre Inspection','Stock on board']))

@@ -55,7 +55,7 @@
                                         $from = App\Models\Destination::find($trip_group->from);
                                         $to = App\Models\Destination::find($trip_group->to);
                                     @endphp
-                                  <tr>
+                                  <tr wire:key="{{ 'f2a6be-53-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip_group->id ?? '') }}">
                                     <td>{{ucfirst($trip_group->name)}}</td>
                                     <td>{{$trip_group->date}}</td>
                                     <td>{{$trip_group->customer ? $trip_group->customer->name : ""}}</td>

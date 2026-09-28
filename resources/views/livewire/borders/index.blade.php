@@ -32,7 +32,7 @@
                                 @if ($borders->count()>0)
                                 <tbody>
                                     @foreach ($borders as $border)
-                                  <tr>
+                                  <tr wire:key="{{ '99320c-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($border->id ?? '') }}">
                                     @php
                                         $country_a = App\Models\Country::find($border->country_a);
                                         $country_b = App\Models\Country::find($border->country_b);

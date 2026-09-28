@@ -67,7 +67,7 @@
                                 @if ($leaves->count()>0)
                                 <tbody>
                                     @foreach ($leaves as $leave)
-                                  <tr>
+                                  <tr wire:key="{{ 'c7e9e5-69-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leave->id ?? '') }}">
                                     <td>{{$leave->created_at}}</td>
                                     <td>{{ucfirst($leave->user ? $leave->user->name : "")}} {{ucfirst($leave->user ? $leave->user->surname : "")}}</td>
                                     <td>{{$leave->leave_type ? $leave->leave_type->name : ""}}</td>

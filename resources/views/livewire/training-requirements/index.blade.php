@@ -32,7 +32,7 @@
                                 @if ($training_requirements->count()>0)
                                 <tbody>
                                     @foreach ($training_requirements as $training_requirement)
-                                  <tr>
+                                  <tr wire:key="{{ 'f8fe51-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($training_requirement->id ?? '') }}">
                                     <td>{{$training_requirement->training_department ? $training_requirement->training_department->name : ""}}</td>
                                     <td>{{$training_requirement->training_item ? $training_requirement->training_item->name : ""}}</td>
                                     <td>{{$training_requirement->required}}</td>

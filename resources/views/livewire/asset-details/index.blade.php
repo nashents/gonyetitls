@@ -16,7 +16,7 @@
             </thead>
             <tbody>
                 @foreach ($asset_details as $asset_detail)
-              <tr>
+              <tr wire:key="{{ 'ffe2a6-18-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($asset_detail->id ?? '') }}">
                 <td>{{$asset_detail->asset ? $asset_detail->asset->asset_number : "undefined"}}</td>
                 <td>{{$asset_detail->serial_number}}</td>
                 <td class="w-10 line-height-35 table-dropdown">

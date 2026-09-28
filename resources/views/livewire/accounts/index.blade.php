@@ -51,7 +51,7 @@
                                                 </tr>
                                             </thead>
                                             @foreach ($account_type->accounts as $account)
-                                                <tr>
+                                                <tr wire:key="{{ '84607b-53-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($account->id ?? '') }}">
                                                     <th class="w-10 text-center line-height-35">{{$account->account_reference}}</th>
                                                     <td class="w-10 text-center line-height-35">
                                                         @if ($account->code)
@@ -152,7 +152,7 @@
                                                 <tbody class="text-center line-height-35 ">
                                                     @if ($account_type->accounts->count()>0)
                                                     @foreach ($account_type->accounts as $account)
-                                                        <tr>
+                                                        <tr wire:key="{{ '84607b-154-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($account->id ?? '') }}">
                                                             <th class="w-10 text-center line-height-35">{{$account->account_reference}}</th>
                                                             <td class="w-10 text-center line-height-35">
                                                                 @if ($account->code)

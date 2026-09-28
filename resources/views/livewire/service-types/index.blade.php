@@ -37,7 +37,7 @@
                                 @if (isset($service_types))
                                 <tbody>
                                     @forelse ($service_types as $service_type)
-                                  <tr>
+                                  <tr wire:key="{{ 'b86ea8-39-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($service_type->id ?? '') }}">
                                     <td>{{$service_type->name}}</td>
                                     <td>
                                          @php

@@ -20,7 +20,7 @@
         </thead>
         <tbody>
             @forelse ($milestones as $milestone)
-                <tr>
+                <tr wire:key="{{ '8f3648-22-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($milestone->id ?? '') }}">
                     <td>{{ $milestone->shipment?->shipment_number }}</td>
                     <td>{{ $milestone->shipping_container?->container_number }}</td>
                     <td>{{ $milestone->milestone_name }}</td>

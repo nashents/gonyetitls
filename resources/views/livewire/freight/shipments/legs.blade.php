@@ -13,7 +13,7 @@
         </thead>
         <tbody>
             @forelse ($shipment->legs as $leg)
-                <tr>
+                <tr wire:key="{{ '56c716-15-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leg->id ?? '') }}">
                     <td>{{ $leg->sequence }}</td>
                     <td>{{ ucfirst($leg->transport_mode ?? '') }}</td>
                     <td>{{ $leg->carrier_vendor?->name ?? $leg->carrier_name ?? '—' }}</td>

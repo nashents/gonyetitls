@@ -59,7 +59,7 @@
                                 @if ($fuels->count()>0)
                                 <tbody>
                                     @foreach ($fuels as $fuel)
-                                  <tr>
+                                  <tr wire:key="{{ '230ea5-61-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel->id ?? '') }}">
                                     <td>{{$fuel->order_number}}</td>
                                     <td>{{ucfirst($fuel->user ? $fuel->user->name : "undefined")}} {{ucfirst($fuel->user ? $fuel->user->surname : "")}}</td>
                                     <td>{{$fuel->date}}</td>

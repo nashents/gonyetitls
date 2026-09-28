@@ -72,7 +72,7 @@
                                             </thead>
                                             <tbody>
                                                 @forelse($statementLines as $line)
-                                                <tr class="{{ $selectedStatementLineId == $line->id ? 'table-info' : '' }}">
+                                                <tr wire:key="{{ '38eaf5-74-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($line->id ?? '') }}" class="{{ $selectedStatementLineId == $line->id ? 'table-info' : '' }}">
                                                     <td>
                                                         @if($line->status === 'unmatched')
                                                         <input type="radio" wire:click="selectStatementLine({{ $line->id }})" @checked($selectedStatementLineId == $line->id)>
@@ -116,7 +116,7 @@
                                             </thead>
                                             <tbody>
                                                 @forelse($bookLines as $line)
-                                                <tr class="{{ $selectedBookLineId == $line->id ? 'table-info' : '' }}">
+                                                <tr wire:key="{{ '38eaf5-118-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($line->id ?? '') }}" class="{{ $selectedBookLineId == $line->id ? 'table-info' : '' }}">
                                                     <td>
                                                         @if(!$line->cleared_at)
                                                         <input type="radio" wire:click="selectBookLine({{ $line->id }})" @checked($selectedBookLineId == $line->id)>

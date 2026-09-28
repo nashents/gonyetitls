@@ -102,7 +102,7 @@
                                                 </thead>
                                                 <tbody>
                                                     @forelse ($invoiceItems as $invoiceItem)
-                                                        <tr>
+                                                        <tr wire:key="{{ '7b0c80-104-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($invoiceItem->id ?? '') }}">
                                                             <td>{{ $invoiceItem->description ?: $invoiceItem->trip_details }}</td>
                                                             <td class="text-right">{{ $invoice->currency ? $invoice->currency->symbol : "" }}{{ number_format($invoiceItem->subtotal, 2) }}</td>
                                                             <td class="text-right">

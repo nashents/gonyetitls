@@ -34,7 +34,7 @@
                                 @if (isset($inspection_services))
                                 <tbody>
                                     @foreach ($inspection_services as $inspection_service)
-                                  <tr>
+                                  <tr wire:key="{{ '151774-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inspection_service->id ?? '') }}">
                                     <td>{{$inspection_service->category}}</td>
                                     <td>{{$inspection_service->service_type ? $inspection_service->service_type->name : ""}}</td>
                                     <td>{{$inspection_service->inspection_group ? $inspection_service->inspection_group->name : ""}}</td>

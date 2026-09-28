@@ -19,7 +19,7 @@
             <tbody>
                 @if ($transporter_corridors->count()>0)
                 @foreach ($transporter_corridors as $transporter_corridor)
-              <tr>
+              <tr wire:key="{{ '660634-21-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($transporter_corridor->id ?? '') }}">
                 <td>{{$transporter_corridor->name}}</td>
                 <td>{{App\Models\Country::find($transporter_corridor->from)->name}} </td>
                 <td>{{App\Models\Country::find($transporter_corridor->to)->name}} </td>

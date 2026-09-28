@@ -59,7 +59,7 @@
                                             $mapping = $mappings->get((string) $tracker['uin']);
                                             $label = $tracker['plate'] ?: ($tracker['name'] ?? '');
                                         @endphp
-                                        <tr>
+                                        <tr wire:key="{{ 'fc4984-57-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tracker->id ?? '') }}">
                                             <td>{{ $tracker['name'] ?? '-' }}</td>
                                             <td>{{ $tracker['plate'] ?: '-' }}</td>
                                             <td>{{ $tracker['uin'] }}</td>

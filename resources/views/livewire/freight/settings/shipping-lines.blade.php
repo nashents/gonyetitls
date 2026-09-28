@@ -52,7 +52,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($shippingLines as $line)
-                                        <tr>
+                                        <tr wire:key="{{ '7c2899-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($line->id ?? '') }}">
                                             <td>{{ $line->name }}</td>
                                             <td>{{ $line->vendor->name ?? '—' }}</td>
                                             <td>{{ $line->is_active ? 'Yes' : 'No' }}</td>

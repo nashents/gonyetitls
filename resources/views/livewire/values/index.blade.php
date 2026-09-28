@@ -27,7 +27,7 @@
                                 @if ($values->count()>0)
                                 <tbody>
                                     @foreach ($values as $value)
-                                  <tr>
+                                  <tr wire:key="{{ '3c5dbb-29-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($value->id ?? '') }}">
                                     <td>{{ucfirst($value->attribute ? $value->attribute->name : "No Attribute Selected" )}}</td>
                                     <td>{{ucfirst($value->name)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

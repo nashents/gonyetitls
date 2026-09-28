@@ -77,7 +77,7 @@
                                 @if (isset($transfers))
                                 <tbody>
                                     @forelse ($transfers as $transfer)
-                                  <tr>
+                                  <tr wire:key="{{ '21b194-79-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($transfer->id ?? '') }}">
                                     <td>{{$transfer->transfer_number}}</td>
                                     @php
                                         $from = App\Models\Store::find($transfer->from);

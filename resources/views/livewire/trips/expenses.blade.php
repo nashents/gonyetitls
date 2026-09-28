@@ -43,7 +43,7 @@
 
             <tbody>
                 @forelse ($trip_expenses as $trip_expense)
-              <tr>
+              <tr wire:key="{{ '72b021-45-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip_expense->id ?? '') }}">
                 <td>
                     {{$trip_expense->user ? $trip_expense->user->name : ""}} {{$trip_expense->user ? $trip_expense->user->surname : ""}}
                     <br>

@@ -44,7 +44,7 @@
                                 @if (isset($grades))
                                 <tbody>
                                     @forelse ($grades as $grade)
-                                  <tr>
+                                  <tr wire:key="{{ '351231-46-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($grade->id ?? '') }}">
                                     <td>
                                         <strong>Code: </strong>  {{$grade->grade_code}} <br>
                                         <strong>Name: </strong>{{$grade->grade_name}} <br>

@@ -52,7 +52,7 @@
                                 @if (isset($sheq_context_issues))
                                 <tbody>
                                     @forelse ($sheq_context_issues as $issue)
-                                  <tr>
+                                  <tr wire:key="{{ 'a378c0-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($issue->id ?? '') }}">
                                     <td>{{ucwords($issue->type)}}</td>
                                     <td>{{strtoupper($issue->framework)}}</td>
                                     <td>{{ucwords($issue->category)}}</td>

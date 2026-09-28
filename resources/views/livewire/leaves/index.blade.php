@@ -49,7 +49,7 @@
                                 @if (isset($leaves))
                                 <tbody>
                                     @forelse ($leaves as $leave)
-                                  <tr>
+                                  <tr wire:key="{{ '91ef44-51-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leave->id ?? '') }}">
      <td>
                                         {{ucfirst($leave->employee ? $leave->employee->name : '')}} {{ucfirst($leave->employee ? $leave->employee->surname : '')}}
                                         @if ($leave->department)

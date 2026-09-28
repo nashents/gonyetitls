@@ -44,7 +44,7 @@
                                 @if (isset($qualifications))
                                 <tbody>
                                     @forelse ($qualifications as $qualification)
-                                  <tr>
+                                  <tr wire:key="{{ 'e1dabb-46-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($qualification->id ?? '') }}">
                                     <td>{{$qualification->code}}</td>
                                     <td>{{$qualification->name}}</td>
                                     <td>{{$qualification->category}}</td>

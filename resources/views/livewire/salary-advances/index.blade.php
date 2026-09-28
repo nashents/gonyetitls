@@ -96,7 +96,7 @@
                                             $statusColor = ['Unpaid'=>'danger','Partially Paid'=>'warning','Paid'=>'success'][$adv->status] ?? 'secondary';
                                             $pct = $adv->amount > 0 ? round((($adv->amount - $adv->balance) / $adv->amount) * 100) : 0;
                                         @endphp
-                                        <tr>
+                                        <tr wire:key="{{ 'f82d19-93-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($adv->id ?? '') }}">
                                             <td><code>{{ $adv->advance_number }}</code></td>
                                             <td>{{ $adv->employee?->name }} {{ $adv->employee?->surname }}</td>
                                             <td>{{ \Carbon\Carbon::parse($adv->advance_date)->format('d M Y') }}</td>

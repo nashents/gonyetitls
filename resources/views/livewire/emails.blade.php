@@ -37,7 +37,7 @@
                                 @if ($emails->count()>0)
                                 <tbody>
                                     @foreach ($emails as $email)
-                                  <tr>
+                                  <tr wire:key="{{ '803460-39-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($email->id ?? '') }}">
                                     <td>
                                         @if ($email->destination == "employee")
                                             {{ucfirst($email->employee ? $email->employee->email : "")}}

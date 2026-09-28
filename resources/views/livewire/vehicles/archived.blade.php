@@ -45,7 +45,7 @@
                                     @if (isset($vehicles))
                                     <tbody>
                                         @forelse ($vehicles as $vehicle)
-                                      <tr>
+                                      <tr wire:key="{{ 'aa87bf-47-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vehicle->id ?? '') }}">
                                         <td>{{$vehicle->vehicle_number}}</td>
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>

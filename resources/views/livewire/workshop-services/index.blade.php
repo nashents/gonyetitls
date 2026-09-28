@@ -60,7 +60,7 @@
                                 @if (isset($workshop_services))
                                 <tbody>
                                     @forelse ($workshop_services as $workshop_service)
-                                  <tr>
+                                  <tr wire:key="{{ '104a55-62-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($workshop_service->id ?? '') }}">
                                     <td>{{$workshop_service->workshop_service_number}}</td>
                                     {{-- <td>{{$workshop_service->user ? $workshop_service->user->name : ""}} {{$workshop_service->user ? $workshop_service->user->surname : ""}}</td> --}}
                                     <td>{{$workshop_service->transporter ? $workshop_service->transporter->name : ""}}</td>

@@ -42,7 +42,7 @@
                                 @if (isset($stations))
                                 <tbody>
                                     @forelse ($stations as $station)
-                                  <tr>
+                                  <tr wire:key="{{ 'dcfaa1-44-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($station->id ?? '') }}">
                                     <td>{{$station->name}}</td>
                                     <td>{{$station->country}}</td>
                                     <td>{{$station->city}}</td>

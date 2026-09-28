@@ -35,7 +35,7 @@
 
             <tbody>
                 @forelse ($trip_locations as $trip_location)
-              <tr>
+              <tr wire:key="{{ '07cea8-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip_location->id ?? '') }}">
                 <td>
                     {{$trip_location->user ? $trip_location->user->name : ""}} {{$trip_location->user ? $trip_location->user->surname : ""}}
                     <br>

@@ -52,7 +52,7 @@
                                 @if (isset($sheq_management_reviews))
                                 <tbody>
                                     @forelse ($sheq_management_reviews as $review)
-                                  <tr>
+                                  <tr wire:key="{{ '122fec-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($review->id ?? '') }}">
                                     <td>{{$review->review_number}}</td>
                                     <td>{{$review->department->name ?? 'Organisation-Wide'}}</td>
                                     <td>{{$review->chairperson ? $review->chairperson->name.' '.$review->chairperson->surname : '-'}}</td>

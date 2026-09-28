@@ -180,7 +180,7 @@
                                                 $cargoDetails = $transportOrder?->cargo_details
                                                     ?: collect([$trip?->customer?->name, $trip?->cargo?->type, $trip?->haulage_type])->filter()->implode(' / ');
                                             @endphp
-                                            <tr>
+                                            <tr wire:key="{{ '1c5c74-151-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse->id ?? '') }}">
                                                 <td>{{ $loop->iteration + ($horses->currentPage() - 1) * $horses->perPage() }}</td>
                                                 <td>
                                                     <a href="{{ route($horse->asset_type === 'horse' ? 'horses.show' : 'vehicles.show', $horse->id) }}" target="_blank" rel="noopener">{{ $horse->registration_number }}</a>

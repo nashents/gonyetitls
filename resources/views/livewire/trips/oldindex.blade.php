@@ -63,7 +63,7 @@
                                         @endphp
                                       
                                         @if ($trip->trip_status == "Offloaded")
-                                      <tr style="background-color: #5cb85c">
+                                      <tr wire:key="{{ 'e27476-59-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trip->id ?? '') }}" style="background-color: #5cb85c">
                                       
                                           <td>
                                             {{ucfirst($trip->trip_number)}}

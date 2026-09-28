@@ -45,7 +45,7 @@
                                 @if ($trailers->count()>0)
                                 <tbody>
                                     @foreach ($trailers as $trailer)
-                                  <tr>
+                                  <tr wire:key="{{ 'dfdd39-47-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($trailer->id ?? '') }}">
                                     <td>{{$trailer->transporter ? $trailer->transporter->name : ""}}</td>
                                     <td>{{$trailer->make}} {{$trailer->model}} {{$trailer->identifier_label}}</td>
                                     <td>{{$trailer->year}}</td>

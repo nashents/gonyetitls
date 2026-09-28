@@ -17,7 +17,7 @@
         <tbody>
             @foreach ($product_attributes as $product_attribute)
         
-          <tr>
+          <tr wire:key="{{ 'cc8875-18-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($product_attribute->id ?? '') }}">
             <td>{{$product_attribute->attribute ? $product_attribute->attribute->name : ""}}</td>
             <td>{{$product_attribute->attribute_value ? $product_attribute->attribute_value->name : ""}}</td>
             <td class="w-10 line-height-35 table-dropdown">

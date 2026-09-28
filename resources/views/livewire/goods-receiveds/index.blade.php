@@ -84,7 +84,7 @@
                                 @if (isset($goods_receiveds))
                                 <tbody>
                                     @forelse ($goods_receiveds as $goods_received)
-                                  <tr>
+                                  <tr wire:key="{{ 'eed27f-86-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($goods_received->id ?? '') }}">
                                     <td>
                                         {{ucfirst($goods_received->goods_received_number)}}
                                         <br>

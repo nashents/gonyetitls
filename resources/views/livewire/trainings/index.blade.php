@@ -54,7 +54,7 @@
                                 @if (isset($trainings))
                                 <tbody>
                                     @forelse ($trainings as $training)
-                                  <tr>
+                                  <tr wire:key="{{ 'dc3078-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($training->id ?? '') }}">
                                     <td>
                                         @if ($training->employee)
                                             {{$training->employee ? $training->employee->name : ""}}   {{$training->employee ? $training->employee->surname : ""}}

@@ -36,7 +36,7 @@
                                 @if (isset($tyres))
                                 <tbody>
                                     @forelse ($tyres as $tyre)
-                                  <tr>
+                                  <tr wire:key="{{ '4fb95f-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tyre->id ?? '') }}">
                                     <td>
                                         <strong>{{$tyre->tyre_number}}</strong>
                                         <br>

@@ -32,7 +32,7 @@
                                 @if ($expense_categories->count()>0)
                                 <tbody>
                                     @foreach ($expense_categories as $expense_category)
-                                  <tr>
+                                  <tr wire:key="{{ 'eb7def-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($expense_category->id ?? '') }}">
                                     <td>{{ucfirst($expense_category->account_type ? $expense_category->account_type->name : "")}}</td>
                                     <td>{{ucfirst($expense_category->name)}}</td>
                                     <td>{{ucfirst($expense_category->description)}}</td>

@@ -35,7 +35,7 @@
                                 @if ($branches->count()>0)
                                 <tbody>
                                     @foreach ($branches as $branch)
-                                  <tr>
+                                  <tr wire:key="{{ '7e98fb-37-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($branch->id ?? '') }}">
                                     <td>{{$branch->name}}</td>
                                     <td>{{$branch->email}}</td>
                                     <td>{{$branch->phonenumber}}</td>

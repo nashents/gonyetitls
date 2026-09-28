@@ -47,7 +47,7 @@
                                 @if (isset($rates))
                                 <tbody>
                                     @forelse ($rates as $rate)
-                                  <tr>
+                                  <tr wire:key="{{ 'b4daa5-49-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($rate->id ?? '') }}">
                                     @php
                                         $from = App\Models\Destination::find($rate->from);
                                         $to = App\Models\Destination::find($rate->to);

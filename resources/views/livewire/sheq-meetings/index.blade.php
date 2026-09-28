@@ -54,7 +54,7 @@
                                 @if (isset($sheq_meetings))
                                 <tbody>
                                     @forelse ($sheq_meetings as $meeting)
-                                  <tr>
+                                  <tr wire:key="{{ '19d0f9-56-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($meeting->id ?? '') }}">
                                     <td>{{$meeting->meeting_number}}</td>
                                     <td>{{ucwords(str_replace('_',' ',$meeting->type))}}</td>
                                     <td>{{$meeting->department->name ?? '-'}}</td>

@@ -32,7 +32,7 @@
                                 @if ($income_streams->count()>0)
                                 <tbody>
                                     @foreach ($income_streams as $income_stream)
-                                  <tr>
+                                  <tr wire:key="{{ 'e39e43-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($income_stream->id ?? '') }}">
                                     <td>{{ucfirst($income_stream->type)}}</td>
                                     <td>{{ucfirst($income_stream->name)}}</td>
                                     <td>{{ucfirst($income_stream->description)}}</td>

@@ -45,7 +45,7 @@
                                 @if ($vehicles->count()>0)
                                 <tbody>
                                     @foreach ($vehicles as $vehicle)
-                                  <tr>
+                                  <tr wire:key="{{ 'c7966c-47-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($vehicle->id ?? '') }}">
                                     <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                     <td>{{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->identifier_label}}</td>
                                     <td>{{$vehicle->year}}</td>

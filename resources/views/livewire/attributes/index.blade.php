@@ -37,7 +37,7 @@
                                 <tbody>
                                     @forelse ($attributes as $attribute)
                                             @forelse ($attribute->attribute_values as $value)
-                                                <tr>
+                                                <tr wire:key="{{ '2778fa-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($attribute->id ?? '') }}">
                                                     <td>{{ucfirst($attribute->name)}}</td>
                                                     <td>{{ucfirst($value->name)}}</td>
                                                     <td><span class="badge bg-{{$attribute->status == 1 ? "success" : "danger"}}">{{$attribute->status == 1 ? "Active" : "Inactive"}}</span></td>

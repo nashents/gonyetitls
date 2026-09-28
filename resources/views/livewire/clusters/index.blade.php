@@ -38,7 +38,7 @@
                                 @if (isset($clusters))
                                 <tbody>
                                     @forelse ($clusters as $cluster)
-                                  <tr>
+                                  <tr wire:key="{{ '7c9a5b-40-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($cluster->id ?? '') }}">
                                     <td>{{$cluster->name}}</td>
                                     <td>
                                         @if ($cluster->horse)

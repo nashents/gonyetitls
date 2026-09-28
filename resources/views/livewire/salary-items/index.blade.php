@@ -36,7 +36,7 @@
                                 @if ($salary_items->count()>0)
                                 <tbody>
                                     @foreach ($salary_items as $salary_item)
-                                  <tr>
+                                  <tr wire:key="{{ 'd3914b-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($salary_item->id ?? '') }}">
                                     <td>{{$salary_item->type}}</td>
                                     <td>{{ucfirst($salary_item->name)}}</td>
                                     <td>

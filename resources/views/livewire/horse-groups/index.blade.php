@@ -28,7 +28,7 @@
                                 @if ($horse_groups->count()>0)
                                 <tbody>
                                     @foreach ($horse_groups as $horse_group)
-                                  <tr>
+                                  <tr wire:key="{{ 'c32881-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($horse_group->id ?? '') }}">
                                     <td>{{$horse_group->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

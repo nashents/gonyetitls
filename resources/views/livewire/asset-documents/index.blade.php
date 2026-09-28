@@ -18,7 +18,7 @@
             </thead>
             <tbody>
                 @foreach ($asset_documents as $asset_document)
-              <tr>
+              <tr wire:key="{{ 'bfe9d8-20-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($asset_document->id ?? '') }}">
                 <td>{{$asset_document->title}}</td>
                 <td>{{$asset_document->vendor ? $asset_document->vendor->name : ""}}</td>
                 <td><a href="{{asset('myfiles/documents/'.$asset_document->filename)}}">{{$asset_document->filename}}</a></td>

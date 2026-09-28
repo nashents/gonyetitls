@@ -22,7 +22,7 @@
             </thead>
             <tbody>      
                 @forelse ($category_checklists as $category_checklist)
-                    <tr>
+                    <tr wire:key="{{ '77c7e5-24-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($category_checklist->id ?? '') }}">
                         <td>{{$category_checklist->checklist_sub_category ? $category_checklist->checklist_sub_category->name : ""}}</td>
                         <td>{{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}}</td>
                         <td>{{$category_checklist->condition}}</td>

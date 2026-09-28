@@ -26,7 +26,7 @@
                         @if (isset($ticket_requests))
                         <tbody>
                            @forelse ($ticket_requests as  $ticket_request)
-                            <tr>
+                            <tr wire:key="{{ '648f47-28-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($ticket_request->id ?? '') }}">
                                 <td>
                                     @if ($ticket_request->user)
                                          {{$ticket_request->user ? $ticket_request->user->name  : "" }} {{$ticket_request->user ? $ticket_request->user->surname  : "" }} <small>{{$ticket_request->user->employee->job_title ? $ticket_request->user->employee->job_title->name  : "" }}</small>

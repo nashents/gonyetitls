@@ -99,7 +99,7 @@
                                     <tbody>
                                         @forelse  ($attendances as $attendance)
                                        
-                                      <tr>
+                                      <tr wire:key="{{ 'abfe12-100-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($attendance->id ?? '') }}">
                                         <td>
                                             {{$attendance->attendance_number}}
                                         </td>

@@ -31,7 +31,7 @@
             @if ($credit_note_items->count()>0)
             <tbody>
                 @foreach ($credit_note_items as $credit_note_item)
-              <tr>
+              <tr wire:key="{{ '8338ef-33-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($credit_note_item->id ?? '') }}">
                 <td>{{$credit_note_item->credit_note->credit_note_number}}</td>
                 <td>{{$credit_note_item->invoice_product ? $credit_note_item->invoice_product->name : ""}}</td>
                 <td>{{$credit_note_item->description}}</td>

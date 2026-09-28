@@ -57,7 +57,7 @@
                                         $to = $destinationsById->get($route->to);
                                         $expiry = $route->expiry_date ? \Carbon\Carbon::parse($route->expiry_date) : null;
                                     @endphp
-                                  <tr>
+                                  <tr wire:key="{{ '7b4bba-54-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($route->id ?? '') }}">
                                     <td>{{ucfirst($route->name)}}</td>
                                     <td>
                                         @if (isset($from))
