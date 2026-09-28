@@ -4,6 +4,8 @@ namespace App\Http\Livewire\TopUps;
 
 use Carbon\Carbon;
 use App\Models\TopUp;
+use App\Services\Accounting\FuelJournalService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Container;
@@ -65,8 +67,23 @@ class Index extends Component
     public function destroy(){
 
         $topup = TopUp::find($this->top_up_id);
-        $topup->delete();
-        
+
+        // Take its bill/customer supply out of the ledger with it - refused
+        // (RuntimeException) if the supplier was already paid on the bill.
+        try {
+            DB::transaction(function () use ($topup) {
+                app(FuelJournalService::class)->reverseTopUp($topup, "Top up {$topup->order_number} deleted");
+                $topup->delete();
+            });
+        } catch (\RuntimeException $e) {
+            $this->dispatchBrowserEvent('hide-deleteModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Top up not deleted: " . $e->getMessage()
+            ]);
+            return;
+        }
+
         $this->dispatchBrowserEvent('hide-deleteModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -133,11 +150,10 @@ class Index extends Component
         $top_up->quantity = $this->quantity;
         $top_up->rate = $this->rate;
         $top_up->amount = $this->amount;
+        // Pending - the tank is topped up (by TopUpObserver) once it's
+        // approved. This used to overwrite the tank balance with the top-up
+        // quantity here, before approval.
         $top_up->save();
-
-        $container = Container::find($this->container_id);
-        $container->balance = $this->quantity;
-        $container->update();
 
         $notifications = Notification::where('when','before')->where('category','Fuel Top Up Authorization')->where('status',1)->get();
                 
@@ -191,17 +207,25 @@ class Index extends Component
     {
         if ($this->top_up_id) {
             try{
-            $top_up = TopUp::find($this->top_up_id);
-            $top_up->update([
-                'user_id' => Auth::user()->id,
-                'container_id' => $this->container_id,
-                'currency_id' => $this->currency_id,
-                'fuel_type' => $this->fuel_type,
-                'date' => $this->date,
-                'quantity' => $this->quantity,
-                'rate' => $this->rate,
-                'amount' => $this->amount,
-            ]);
+            DB::transaction(function () {
+                $top_up = TopUp::find($this->top_up_id);
+                $top_up->update([
+                    'user_id' => Auth::user()->id,
+                    'container_id' => $this->container_id,
+                    'currency_id' => $this->currency_id,
+                    'fuel_type' => $this->fuel_type,
+                    'date' => $this->date,
+                    'quantity' => $this->quantity,
+                    'rate' => $this->rate,
+                    'amount' => $this->amount,
+                ]);
+
+                // Already in the ledger - repost its bill at the new figures
+                // (a no-op if the amount/rate/currency didn't change).
+                if ($top_up->authorization === 'approved') {
+                    app(FuelJournalService::class)->postTopUp($top_up->fresh());
+                }
+            });
             $this->dispatchBrowserEvent('hide-top_upEditModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
@@ -215,7 +239,7 @@ class Index extends Component
             $this->dispatchBrowserEvent('alert',[
 
                 'type'=>'error',
-                'message'=>"Something went wrong while creating broker!!"
+                'message'=>"Top up not updated: " . $e->getMessage()
             ]);
         }
         }

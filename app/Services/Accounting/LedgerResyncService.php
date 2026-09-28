@@ -67,8 +67,10 @@ class LedgerResyncService
     {
         return DB::transaction(function () use ($bill, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('bill_id', $bill->id));
+            // Fuel Inventory for a Bulk Buy consumption bill, else Accounts Payable.
+            $controlAccount = $this->billJournal->creditAccountFor($bill)->name;
 
-            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, $controlAccount, (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
                 return $existing;
             }
 
@@ -143,10 +145,18 @@ class LedgerResyncService
         });
     }
 
+    /**
+     * Only entries carrying a live effect of the document - never a REV-
+     * reversal that's cancelling an earlier posting (reversing that would
+     * re-instate the posting it cancelled, so every resync layered the
+     * document into the ledger once more). See
+     * JournalReversalService::isLiveEffect().
+     */
     private function reverseExisting(Builder $query, string $reason): void
     {
         $query->where('status', '!=', 'reversed')
             ->get()
+            ->filter(fn (JournalEntry $entry) => $this->journalReversal->isLiveEffect($entry))
             ->each(fn (JournalEntry $entry) => $this->journalReversal->reverse($entry, $reason));
     }
 

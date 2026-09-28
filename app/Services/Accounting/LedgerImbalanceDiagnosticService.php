@@ -42,6 +42,11 @@ class LedgerImbalanceDiagnosticService
                 ) as total_credit')
             ->get()
             ->filter(fn ($entry) => abs((float) $entry->total_debit - (float) $entry->total_credit) > 0.01)
+            // A REV- reversal of a one-sided entry is itself one-sided, but it
+            // nets to zero with the (reversed) entry it cancels - not a real
+            // imbalance. Flagging it made Repair resync the document, reverse
+            // the reversal and re-instate the broken original.
+            ->filter(fn (JournalEntry $entry) => app(JournalReversalService::class)->isLiveEffect($entry))
             ->map(function (JournalEntry $entry) {
                 $entry->diff = round((float) $entry->total_debit - (float) $entry->total_credit, 2);
                 $entry->source = $this->resolveSource($entry);

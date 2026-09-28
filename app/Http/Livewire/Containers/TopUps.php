@@ -165,11 +165,14 @@ class TopUps extends Component
         $top_up->quantity = $this->quantity;
         $top_up->rate = $this->rate;
         $top_up->amount = $this->amount;
+        // Takes effect immediately (tank + ledger), as it always has - so
+        // record it as approved rather than leaving it in the pending queue,
+        // where approving it again used to add its litres a second time.
+        // The tank balance itself is added by TopUpObserver on this save.
+        $top_up->authorization = 'approved';
+        $top_up->authorized_by_id = Auth::user()->id;
+        $top_up->authorization_date = now();
         $top_up->save();
-
-        $container = Container::find($this->container_id);
-        $container->balance = $container->balance + $this->quantity;
-        $container->update();
 
         if (isset($top_up->amount) && $top_up->amount > 0) {
 

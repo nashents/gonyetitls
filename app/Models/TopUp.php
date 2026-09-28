@@ -17,6 +17,10 @@ class TopUp extends Model implements Auditable
         'supplied_by_customer',
         'customer_id',
         'trip_id',
+        // Edited on TopUps Index/Manage - were silently dropped before.
+        // A station change moves the litres across (TopUpStockService).
+        'container_id',
+        'date',
         'currency_id',
         'fuel_type',
         'capacity',

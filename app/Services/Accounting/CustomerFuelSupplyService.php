@@ -192,13 +192,13 @@ class CustomerFuelSupplyService
     public function removeBill(Bill $bill, string $reason): void
     {
         if ($bill->bill_payments()->exists()) {
-            throw new \RuntimeException("Bill {$bill->bill_number} already has payments recorded against it - reverse those payments before marking this as customer funded.");
+            throw new \RuntimeException("Bill {$bill->bill_number} already has payments recorded against it - reverse those payments first.");
         }
 
         JournalEntry::where('bill_id', $bill->id)
             ->where('status', '!=', 'reversed')
-            ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
             ->get()
+            ->filter(fn ($entry) => $this->journalReversal->isLiveEffect($entry))
             ->each(fn ($entry) => $this->journalReversal->reverse($entry, $reason));
 
         $bill->bill_expenses()->delete();

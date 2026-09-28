@@ -3283,11 +3283,11 @@ class Edit extends Component
                     // removes/restores the supplier bill and (re)posts the supply.
                     if ($fuel->authorization == 'approved' && ($fuel->supplied_by_customer || \App\Models\CustomerFuelSupply::where('fuel_id', $fuel->id)->exists())) {
                         app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
-                    }
-
-                    $bill = Bill::where('trip_id',$trip->id)->where('fuel_id',$fuel->id)->first();
-
-                    if(isset($bill)){
+                    } elseif ($fuel->authorization == 'approved' && $fuel->container) {
+                        // Updates the bill AND its journal entry (the inline update below
+                        // only changed the bill, leaving the ledger on the old amount).
+                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
+                    } elseif ($bill = Bill::where('trip_id',$trip->id)->where('fuel_id',$fuel->id)->first()) {
                         $bill->bill_date = $fuel->date;
                         $bill->currency_id = $fuel->currency_id;
                         $bill->total = $fuel->amount;
@@ -3497,53 +3497,10 @@ class Edit extends Component
                         // Customer funded - no supplier Bill; settles against the customer.
                         app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
                     } else {
-                    $account = Account::where('name','Trip Expense')->get()->first();
-
-                    $bill = new Bill;
-                    $bill->user_id = Auth::user()->id;
-                    $bill->bill_number = $this->billNumber();
-                    $bill->trip_id = $trip->id;
-                    $bill->fuel_id = $trip_expense->fuel_id;
-                    $bill->trip_expense_id = $trip_expense->id;
-                    $bill->horse_id = $trip->horse_id;
-                    $bill->vehicle_id = $trip->vehicle_id;
-                    if (isset($account)) {
-                        $bill->account_id = $account->id;
-                        $bill->account_type_id = $account->account_type->id;
-                    }
-                    if($fuel->container && $fuel->container->purchase_type == "Once Off Buy"){
-                        $bill->to_be_paid = True;
-                    }else{
-                        $bill->to_be_paid = False;
-                    }
-                    $bill->driver_id = $trip->driver_id;
-                    $bill->category = "Trip Expense - Fuel Order";
-                    $bill->bill_date = date("Y-m-d");
-                    $bill->currency_id = $trip_expense->currency_id;
-                    $bill->vendor_id = $trip_expense->vendor_id;
-                    $bill->subtotal = $trip_expense->amount;
-                    $bill->total = $trip_expense->amount;
-                    $bill->exchange_amount = $trip_expense->exchange_amount;
-                    $bill->balance = $trip_expense->amount;
-                    $bill->authorized_by_id = $fuel->authorized_by_id;
-                    $bill->authorization = $fuel->authorization;
-                    $bill->comments = $fuel->reason;
-                    $bill->save();
-
-                    $bill_expense = new BillExpense;
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    if (isset($account)) {
-                        $bill_expense->account_id = $account->id;
-                        $bill_expense->account_type_id = $account->account_type->id;
-                    }
-                    $bill_expense->currency_id = $bill->currency_id;
-                    $bill_expense->expense_id = $trip_expense->expense_id;
-                    $bill_expense->qty = 1;
-                    $bill_expense->amount = $trip_expense->amount;
-                    $bill_expense->subtotal = $trip_expense->amount;
-                    $bill_expense->subtotal_incl = $trip_expense->amount;
-                    $bill_expense->save();
+                        // FuelJournalService builds the Bill (Fuel - COGS; Once Off Buy -> Accounts
+                        // Payable, Bulk Buy -> Fuel Inventory) and posts it balanced. It reuses the
+                        // fuel order's bill if its own approval already made one, so no duplicates.
+                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
                     }
                 }
 

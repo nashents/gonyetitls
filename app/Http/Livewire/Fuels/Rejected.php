@@ -263,80 +263,10 @@ class Rejected extends Component
 
                         $container->update();
                     }
-                    if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
-                        // Customer supplied - no supplier Bill; settles against the customer.
-                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
-                    } else {
-
-                    $expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
-
-
-                    $bill = new Bill;
-                    if($fuel->trip){
-                        $bill->trip_id = $fuel->trip_id;
-                        $trip_expense = $fuel->trip_expense;
-                        if(isset($trip_expense)){
-                            $bill->trip_expense_id = $trip_expense->id;
-                        }
-                        $bill->category = "Trip Expense - Fuel Order";
-                        $account = Account::where('name','Trip Expense')->get()->first();
-                    }else{
-                        $bill->category = "Fuel";
-                        $account = Account::where('name','Fuel - Ops')->get()->first();
-                    }
-                    $bill->user_id = Auth::user()->id;
-                    $bill->bill_number = $this->billNumber();
-                  
-                    if (isset($account)) {
-                        $bill->account_id = $account->id;
-                        $bill->account_type_id = $account->account_type->id;
-                    }
-    
-                    if($fuel->container->purchase_type == "Once Off Buy"){
-                        $bill->to_be_paid = True;
-                    }else{
-                        $bill->to_be_paid = False;
-                    }
-    
-                   
-                   
-                    
-                    
-    
-                    $bill->fuel_id = $fuel->id;
-                    $bill->bill_date = $fuel->date;
-                    $bill->horse_id = $fuel->horse_id;
-                    $bill->vehicle_id = $fuel->vehicle_id;
-                    $bill->asset_id = $fuel->asset_id;
-                    $bill->currency_id = $fuel->currency_id;
-                    $bill->subtotal = $fuel->amount;
-                    $bill->total = $fuel->amount;
-                    $bill->balance = $fuel->amount;
-                    $bill->authorized_by_id = Auth::user()->id;
-                    $bill->authorization = $this->authorize;
-                    $bill->comments = $this->comments;
-                    $bill->save();
-    
-                    $bill_expense = new BillExpense;
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-                    if($fuel->trip){
-                        if (isset($expense)) {
-                            $bill_expense->expense_id = $expense->id;
-                        }
-                    }
-                  
-                    if (isset($account)) {
-                        $bill_expense->account_id = $account->id;
-                        $bill_expense->account_type_id = $account->account_type->id;
-                    }
-                    $bill_expense->qty = $fuel->quantity;
-                    $bill_expense->amount = $fuel->unit_price;
-                    $bill_expense->subtotal = $fuel->amount;
-                    $bill_expense->subtotal_incl = $fuel->amount;
-                    $bill_expense->save();
-                    }
+                    // FuelJournalService builds and posts the Bill (Fuel - COGS/Ops; Once Off Buy ->
+                    // Accounts Payable, Bulk Buy -> Fuel Inventory), or the customer supply when the
+                    // fuel was customer funded - same call as the Fuels/Pending approval.
+                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
 
 
                     // sending fuel order email to station
@@ -563,78 +493,10 @@ class Rejected extends Component
                     }
             
 
-                $expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
-                if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
-                    // Customer supplied - no supplier Bill; settles against the customer.
-                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
-                } else {
-             
-
-                $bill = new Bill;
-                if($fuel->trip){
-                    $bill->trip_id = $fuel->trip_id;
-                    $trip_expense = $fuel->trip_expense;
-                    if(isset($trip_expense)){
-                        $bill->trip_expense_id = $trip_expense->id;
-                    }
-                    $bill->category = "Trip Expense - Fuel Order";
-                    $account = Account::where('name','Trip Expense')->get()->first();
-                }else{
-                    $bill->category = "Fuel";
-                    $account = Account::where('name','Fuel - Ops')->get()->first();
-                }
-                $bill->user_id = Auth::user()->id;
-                $bill->bill_number = $this->billNumber();
-              
-                if (isset($account)) {
-                    $bill->account_id = $account->id;
-                    $bill->account_type_id = $account->account_type->id;
-                }
-
-                if($fuel->container->purchase_type == "Once Off Buy"){
-                    $bill->to_be_paid = True;
-                }else{
-                    $bill->to_be_paid = False;
-                }
-               
-               
-                
-
-                $bill->fuel_id = $fuel->id;
-                $bill->bill_date = $fuel->date;
-                $bill->currency_id = $fuel->currency_id;
-                $bill->horse_id = $fuel->horse_id;
-                $bill->vehicle_id = $fuel->vehicle_id;
-                $bill->asset_id = $fuel->asset_id;
-                $bill->total = $fuel->amount;
-                $bill->subtotal = $fuel->amount;
-                $bill->balance = $fuel->amount;
-                $bill->authorized_by_id = Auth::user()->id;
-                $bill->authorization = $this->authorize;
-                $bill->comments = $this->comments;
-                $bill->save();
-
-                $bill_expense = new BillExpense;
-                $bill_expense->user_id = Auth::user()->id;
-                $bill_expense->bill_id = $bill->id;
-                $bill_expense->currency_id = $bill->currency_id;
-
-                if($fuel->trip){
-                    if (isset($expense)) {
-                        $bill_expense->expense_id = $expense->id;
-                    }
-                }
-               
-                if (isset($account)) {
-                    $bill_expense->account_id = $account->id;
-                    $bill_expense->account_type_id = $account->account_type->id;
-                }
-                $bill_expense->qty = $fuel->quantity;
-                $bill_expense->amount = $fuel->unit_price;
-                $bill_expense->subtotal = $fuel->amount;
-                $bill_expense->subtotal_incl = $fuel->amount;
-                $bill_expense->save();
-                }
+                // FuelJournalService builds and posts the Bill (Fuel - COGS/Ops; Once Off Buy ->
+                // Accounts Payable, Bulk Buy -> Fuel Inventory), or the customer supply when the
+                // fuel was customer funded - same call as the Fuels/Pending approval.
+                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
        
 
 

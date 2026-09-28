@@ -9,16 +9,17 @@ use Illuminate\Support\Facades\Log;
 class BillObserver
 {
     /**
-     * Handle the Bill "created" event.
-     *
-     * @param  \App\Models\Bill  $bill
-     * @return void
+     * Deliberately does NOT post. A bill that was just inserted can't have
+     * any bill_expenses yet (they need its id), so posting here always
+     * wrote an Accounts Payable credit with no debit leg - and that entry
+     * then blocked the correct post via BillJournalService's existing-entry
+     * guard. A bill created already approved + to_be_paid is posted by
+     * BillExpenseObserver instead, once its expense lines add up to the
+     * bill total.
      */
     public function created(Bill $bill)
     {
-        if ($bill->isDirty('authorization') && $bill->authorization === 'approved' && $bill->to_be_paid == True) {
-            $this->post($bill);
-        }
+        //
     }
 
     /**

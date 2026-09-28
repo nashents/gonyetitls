@@ -76,6 +76,23 @@ class Approved extends Component
       public function update(){
    
         $top_up = TopUp::find($this->top_up_id);
+
+        // Rejecting a top-up that was already approved takes it back out of
+        // the ledger - refused if the supplier was already paid on its bill.
+        if ($this->authorize != "approved" && $top_up->authorization === 'approved') {
+            try {
+                app(\App\Services\Accounting\FuelJournalService::class)
+                    ->reverseTopUp($top_up, "Top up {$top_up->order_number} rejected after approval");
+            } catch (\RuntimeException $e) {
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"Top up not rejected: " . $e->getMessage()
+                ]);
+                return;
+            }
+        }
+
         $top_up->authorized_by_id = Auth::user()->id;
         $top_up->authorization = $this->authorize;
         $top_up->reason = $this->comments;
@@ -83,16 +100,8 @@ class Approved extends Component
 
     if ($this->authorize == "approved") {
 
-    $container = Container::find($this->container->id);
-        if($container){
-            if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
-                $container->balance = $container->balance + $this->top_up->quantity;
-            }
-            if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
-                $container->account_balance = $container->account_balance + $this->top_up->amount;
-            }
-            $container->update();
-        }
+    // Tank balance: TopUpObserver keeps it in step - re-approving an
+    // approved top-up no longer adds its litres a second time.
 
     if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToTopUp($top_up)
         || (isset($top_up->amount) && $top_up->amount > 0)) {

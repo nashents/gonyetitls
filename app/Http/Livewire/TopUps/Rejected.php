@@ -99,20 +99,7 @@ class Rejected extends Component
 
         if ($this->authorize == "approved") {
 
-        $container = Container::find($this->container_id);
-           if ($container) {
-
-                    if (is_numeric($this->top_up->quantity)) {
-                        $container->balance = (float)($container->balance ?: 0) + (float)$this->top_up->quantity;
-                    }
-
-                    if (is_numeric($this->top_up->account_amount)) {
-                        $container->account_balance = (float)($container->account_balance ?: 0) + (float)$this->top_up->account_amount;
-                    }
-
-                    $container->save();
-                }
-       
+        // Tank balance: added by TopUpObserver on the update() above.
 
         if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToTopUp($top_up)
             || (isset($top_up->amount) && $top_up->amount > 0)

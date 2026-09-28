@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Bill;
+use App\Models\BillExpense;
 use App\Models\Booking;
 use App\Models\CreditNote;
 use App\Models\DebitNote;
@@ -13,7 +14,9 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Purchase;
 use App\Models\Ticket;
+use App\Models\TopUp;
 use App\Models\Trip;
+use App\Observers\BillExpenseObserver;
 use App\Observers\BillObserver;
 use App\Observers\BookingObserver;
 use App\Observers\CreditNoteObserver;
@@ -25,6 +28,7 @@ use App\Observers\InvoiceObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\PurchaseObserver;
 use App\Observers\TicketObserver;
+use App\Observers\TopUpObserver;
 use App\Observers\TripObserver;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
@@ -71,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Bill::observe(BillObserver::class);
+        BillExpense::observe(BillExpenseObserver::class);
         Invoice::observe(InvoiceObserver::class);
         Payment::observe(PaymentObserver::class);
         CreditNote::observe(CreditNoteObserver::class);
@@ -80,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
         GoodsReceived::observe(GoodsReceivedObserver::class);
         Booking::observe(BookingObserver::class);
         Ticket::observe(TicketObserver::class);
+        TopUp::observe(TopUpObserver::class);
         DispatchItem::observe(DispatchItemObserver::class);
         Trip::observe(TripObserver::class);
     }

@@ -11,6 +11,7 @@ use App\Models\JournalEntry;
 use App\Models\TopUp;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Single place fuel/top-up Bills get built and posted - replaces the ~10
@@ -88,7 +89,7 @@ class FuelJournalService
             $bill->exchange_amount = $topUp->exchange_amount;
             $bill->total = $billAmount;
             $bill->subtotal = $billAmount;
-            $bill->balance = $billAmount;
+            $bill->balance = $this->outstanding($bill, $billAmount);
             $bill->authorized_by_id = $bill->authorized_by_id ?? Auth::id();
             // authorization/to_be_paid deliberately NOT set on this save -
             // BillObserver::created() auto-posts as soon as both are dirty
@@ -110,13 +111,35 @@ class FuelJournalService
             $billExpense->amount = $billAmount;
             $billExpense->subtotal = $billAmount;
             $billExpense->subtotal_incl = $billAmount;
+            $accountChanged = $billExpense->exists && $billExpense->isDirty('account_id');
             $billExpense->save();
 
             $bill->to_be_paid = true;
             $bill->authorization = 'approved';
             $bill->save();
 
-            return $this->billJournal->post($bill->fresh());
+            // resyncBill, not post() - postTopUp() also runs when an approved
+            // top-up is edited, and post() would hand back the existing entry
+            // at the old amount. Resync is a no-op when nothing changed.
+            return $this->ledgerResync->resyncBill(
+                $bill->fresh(),
+                "Top up {$topUp->order_number} posted/updated",
+                force: $accountChanged
+            );
+        });
+    }
+
+    /**
+     * Take a top-up back out of the ledger - it was deleted, or rejected
+     * after approval. Reverses its supplier Bill (and removes it) or its
+     * customer supply. Refuses, via CustomerFuelSupplyService::removeBill(),
+     * when the supplier has already been paid against the bill.
+     */
+    public function reverseTopUp(TopUp $topUp, string $reason): void
+    {
+        DB::transaction(function () use ($topUp, $reason) {
+            $this->customerFuel->voidForTopUp($topUp, $reason);
+            $this->removeTopUpBill($topUp, $reason);
         });
     }
 
@@ -176,8 +199,14 @@ class FuelJournalService
             $bill->exchange_amount = $fuel->exchange_amount;
             $bill->total = $fuel->amount;
             $bill->subtotal = $fuel->amount;
-            $bill->balance = $fuel->amount;
+            $bill->balance = $this->outstanding($bill, (float) $fuel->amount);
             $bill->authorized_by_id = $bill->authorized_by_id ?? Auth::id();
+            // The fuel's own trip expense names the supplier; a station
+            // linked to a vendor is the fallback. Never overwrite one
+            // already on the bill.
+            $bill->vendor_id = $bill->vendor_id
+                ?? optional($fuel->trip_expense)->vendor_id
+                ?? optional($fuel->container)->vendor_id;
             // authorization/to_be_paid deliberately NOT set on this save -
             // see the matching note in postTopUp() above: setting both
             // together here would let BillObserver::created() auto-post
@@ -196,6 +225,10 @@ class FuelJournalService
             $billExpense->qty = $fuel->quantity;
             $billExpense->amount = $fuel->unit_price;
             $billExpense->subtotal = $fuel->amount;
+            // A bill built by the old inline trip-approval code was booked to
+            // "Trip Expense" - moving it to Fuel - COGS/Ops must repost, since
+            // resync otherwise only compares the control account's amount.
+            $accountChanged = $billExpense->exists && $billExpense->isDirty('account_id');
             $billExpense->save();
 
             // Once Off Buy is a genuine new payable; Bulk Buy consumption
@@ -219,7 +252,8 @@ class FuelJournalService
             if ($isOnceOffBuy) {
                 return $this->ledgerResync->resyncBill(
                     $bill,
-                    "Fuel order #{$fuel->id} consumption posted/updated"
+                    "Fuel order #{$fuel->id} consumption posted/updated",
+                    force: $accountChanged
                 );
             }
 
@@ -227,9 +261,29 @@ class FuelJournalService
             return $this->ledgerResync->resyncBillWithCreditAccount(
                 $bill,
                 $fuelInventory,
-                "Fuel order #{$fuel->id} consumption posted/updated"
+                "Fuel order #{$fuel->id} consumption posted/updated",
+                force: $accountChanged
             );
         });
+    }
+
+    /**
+     * postConsumption() for the trip approval/edit screens, which approve a
+     * whole trip in one go: a posting failure (e.g. an unseeded Fuel - COGS /
+     * Fuel Inventory account) is logged instead of rolling back the trip
+     * approval around it - the inner transaction is a savepoint, so only the
+     * fuel posting is undone. The fuel order's own Pending/Approved screens
+     * keep calling postConsumption() directly.
+     */
+    public function postConsumptionSafely(Fuel $fuel): ?JournalEntry
+    {
+        try {
+            return $this->postConsumption($fuel);
+        } catch (\Throwable $e) {
+            Log::error("FuelJournalService: posting fuel order #{$fuel->id} ({$fuel->order_number}) failed: " . $e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -272,6 +326,17 @@ class FuelJournalService
     private function removeBill(Bill $bill, string $reason): void
     {
         $this->customerFuel->removeBill($bill, $reason);
+    }
+
+    /**
+     * What's still owed on $bill at $total - re-running a posting after the
+     * supplier was part-paid must not reset the balance to the full amount.
+     */
+    private function outstanding(Bill $bill, float $total): float
+    {
+        $paid = $bill->exists ? (float) $bill->bill_payments()->sum('amount') : 0.0;
+
+        return max($total - $paid, 0);
     }
 
     private function billNumber(): string

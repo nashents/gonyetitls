@@ -103,6 +103,43 @@ class JournalReversalService
         return $this->reverse($reversalEntry, $reason);
     }
 
+    /**
+     * Whether $entry currently carries a live ledger effect of the document
+     * it belongs to - i.e. reversing it is what un-posts that document.
+     *
+     * A reversal (REV-X) keeps status 'posted' and cancels X, so it's NOT a
+     * live effect: reversing it re-instates X. That's exactly what unreverse()
+     * does on purpose (restoring a deleted document), which makes the
+     * reversal-of-a-reversal a live effect again. So it comes down to how
+     * many REV- hops separate the entry from its original: even = live
+     * (0 = the original itself), odd = a canceller. Treating every posted
+     * entry as live is what let resync/TB-repair runs reverse reversals and
+     * double-post documents.
+     */
+    public function isLiveEffect(JournalEntry $entry): bool
+    {
+        if (in_array($entry->status, ['reversed', 'draft'], true)) {
+            return false;
+        }
+
+        return $this->reversalDepth($entry) % 2 === 0;
+    }
+
+    public function reversalDepth(JournalEntry $entry): int
+    {
+        $depth = 0;
+        $reference = (string) $entry->reference;
+
+        while (str_starts_with($reference, 'REV-') && $depth < 50) {
+            $depth++;
+            $reference = (string) JournalEntry::withTrashed()
+                ->where('journal_number', substr($reference, 4))
+                ->value('reference');
+        }
+
+        return $depth;
+    }
+
     protected function generateNumber(): string
     {
         $last = JournalEntry::orderByDesc('id')->value('journal_number');

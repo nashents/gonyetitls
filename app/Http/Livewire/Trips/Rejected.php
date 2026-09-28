@@ -433,54 +433,10 @@ public function updatingSearch()
                                         }
                                     } elseif (isset($fuel->container)) {
 
-                                         $account = Account::where('name','Trip Expense')->get()->first();
-    
-                                        $bill = new Bill;
-                                        $bill->user_id = Auth::user()->id;
-                                        $bill->bill_number = $this->billNumber();
-                                        $bill->trip_id = $trip->id;
-                                        $bill->fuel_id = $trip_expense->fuel_id;
-                                        $bill->trip_expense_id = $trip_expense->id ?: null;
-                                        $bill->horse_id = $trip->horse_id ?: null;
-                                        $bill->vehicle_id = $trip->vehicle_id ?: null;
-                                        if (isset($account)) {
-                                            $bill->account_id = $account->id ?: null;
-                                            $bill->account_type_id = $account->account_type->id;
-                                        }
-                                        if($fuel->container->purchase_type == "Once Off Buy"){
-                                            $bill->to_be_paid = True;
-                                        }else{
-                                            $bill->to_be_paid = False;
-                                        }
-                                        $bill->driver_id = $trip->driver_id ?: null;
-                                        $bill->category = "Trip Expense - Fuel Order";
-                                        $bill->bill_date = date("Y-m-d");
-                                        $bill->currency_id = $trip_expense->currency_id;
-                                        $bill->vendor_id = $trip_expense->vendor_id;
-                                        $bill->subtotal = $trip_expense->amount;
-                                        $bill->total = $trip_expense->amount;
-                                        $bill->exchange_amount = $trip_expense->exchange_amount;
-                                        $bill->balance = $trip_expense->amount;
-
-                                        $bill->authorized_by_id = Auth::user()->id;
-                                        $bill->authorization = $this->authorize;
-                                        $bill->comments = $this->comments;
-                                        $bill->save();
-                    
-                                        $bill_expense = new BillExpense;
-                                        $bill_expense->user_id = Auth::user()->id;
-                                        $bill_expense->bill_id = $bill->id;
-                                        if (isset($account)) {
-                                            $bill_expense->account_id = $account->id;
-                                            $bill_expense->account_type_id = $account->account_type->id;
-                                        }
-                                        $bill_expense->currency_id = $bill->currency_id;
-                                        $bill_expense->expense_id = $trip_expense->expense_id;
-                                        $bill_expense->qty = 1;
-                                        $bill_expense->amount = $trip_expense->amount;
-                                        $bill_expense->subtotal = $trip_expense->amount;
-                                        $bill_expense->subtotal_incl = $trip_expense->amount;
-                                        $bill_expense->save();
+                                        // FuelJournalService builds the Bill (Fuel - COGS; Once Off Buy -> Accounts
+                                        // Payable, Bulk Buy -> Fuel Inventory) and posts it balanced. It reuses the
+                                        // fuel order's bill if its own approval already made one, so no duplicates.
+                                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
                                   
                                 }
                              
@@ -1019,54 +975,10 @@ public function updatingSearch()
                                             }
                                         } elseif (isset($fuel->container)) {
 
-                                             $account = Account::where('name','Trip Expense')->get()->first();
-        
-                                            $bill = new Bill;
-                                            $bill->user_id = Auth::user()->id;
-                                            $bill->bill_number = $this->billNumber();
-                                            $bill->trip_id = $trip->id ?: null;
-                                            $bill->fuel_id = $trip_expense->fuel_id ?: null;
-                                            $bill->trip_expense_id = $trip_expense->id ?: null;
-                                            $bill->horse_id = $trip->horse_id ?: null;
-                                            $bill->vehicle_id = $trip->vehicle_id ?: null;
-                                            if (isset($account)) {
-                                                $bill->account_id = $account->id;
-                                                $bill->account_type_id = $account->account_type->id;
-                                            }
-                                            if($fuel->container->purchase_type == "Once Off Buy"){
-                                                $bill->to_be_paid = True;
-                                            }else{
-                                                $bill->to_be_paid = False;
-                                            }
-                                            $bill->driver_id = $trip->driver_id ?: null;
-                                            $bill->category = "Trip Expense - Fuel Order";
-                                            $bill->bill_date = date("Y-m-d");
-                                            $bill->currency_id = $trip_expense->currency_id;
-                                            $bill->vendor_id = $trip_expense->vendor_id;
-                                            $bill->subtotal = $trip_expense->amount;
-                                            $bill->total = $trip_expense->amount;
-                                            $bill->exchange_amount = $trip_expense->exchange_amount;
-                                            $bill->balance = $trip_expense->amount;
-
-                                            $bill->authorized_by_id = Auth::user()->id;
-                                            $bill->authorization = $this->authorize;
-                                            $bill->comments = $this->comments;
-                                            $bill->save();
-                        
-                                            $bill_expense = new BillExpense;
-                                            $bill_expense->user_id = Auth::user()->id;
-                                            $bill_expense->bill_id = $bill->id;
-                                            if (isset($account)) {
-                                                $bill_expense->account_id = $account->id;
-                                                $bill_expense->account_type_id = $account->account_type->id;
-                                            }
-                                            $bill_expense->currency_id = $bill->currency_id;
-                                            $bill_expense->expense_id = $trip_expense->expense_id;
-                                            $bill_expense->qty = 1;
-                                            $bill_expense->amount = $trip_expense->amount;
-                                            $bill_expense->subtotal = $trip_expense->amount;
-                                            $bill_expense->subtotal_incl = $trip_expense->amount;
-                                            $bill_expense->save();
+                                            // FuelJournalService builds the Bill (Fuel - COGS; Once Off Buy -> Accounts
+                                            // Payable, Bulk Buy -> Fuel Inventory) and posts it balanced. It reuses the
+                                            // fuel order's bill if its own approval already made one, so no duplicates.
+                                            app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
                                       
                                     }
                                  
