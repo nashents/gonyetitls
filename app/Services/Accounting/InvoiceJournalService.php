@@ -81,6 +81,8 @@ class InvoiceJournalService
                     'description'     => "Customer Advance - Invoice {$invoice->invoice_number}",
                 ]);
 
+                $entry->assertBalanced();
+
                 return $entry;
             }
 
@@ -159,6 +161,8 @@ class InvoiceJournalService
                     'description'     => "Discount - Invoice {$invoice->invoice_number}",
                 ]);
             }
+
+            $entry->assertBalanced();
 
             return $entry;
         });

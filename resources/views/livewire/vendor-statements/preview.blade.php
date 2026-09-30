@@ -254,7 +254,9 @@
                                                         // use $debit_note
                                                     }
                                                 @endphp
-                                                @if ($result->transaction_type === 'bill')
+                                                @if ($result->transaction_type === 'supplier_journal')
+                                                    @include('vendor_statements._supplier_journal_row', ['result' => $result])
+                                                @elseif ($result->transaction_type === 'bill')
                                                     <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
                                                     Due {{ $bill->expiry }}
                                                 @elseif ($result->transaction_type === 'debit_note' && isset($debit_note))

@@ -196,7 +196,9 @@
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::parse($result->transaction_date)->format('F j, Y') }}</td>
                                                     <td>
-                                                        @if ($debit_note)
+                                                        @if ($result->transaction_type === 'supplier_journal')
+                                                            @include('vendor_statements._supplier_journal_row', ['result' => $result])
+                                                        @elseif ($debit_note)
                                                             Debit Note# {{ $result->number }}
                                                             @if ($debit_note->bill)
                                                                 for <a href="{{ route('bills.show', $debit_note->bill->id) }}" target="_blank" style="color:blue">Bill# {{ $debit_note->bill->bill_number }}</a>

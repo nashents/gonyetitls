@@ -81,6 +81,8 @@ class PaymentJournalService
                 default      => null,
             };
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

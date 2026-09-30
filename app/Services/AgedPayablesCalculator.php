@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use App\Models\Bill;
+use App\Models\SupplierJournal;
 
 /**
  * Aged Payables: outstanding vendor balances bucketed by how overdue they
@@ -93,6 +94,48 @@ class AgedPayablesCalculator
 
             $rows[$vendorId] ??= [
                 'label' => $bill->vendor->name ?? 'Uncategorized Vendor',
+                'buckets' => array_fill_keys(self::BUCKETS, 0.0),
+                'total' => 0.0,
+            ];
+
+            $rows[$vendorId]['buckets'][$bucket] += $amount;
+            $rows[$vendorId]['total'] += $amount;
+
+            $grandTotals[$bucket] += $amount;
+            $grandTotal += $amount;
+        }
+
+        // Suppliers journals: a credit is an open amount owed from its own
+        // date (journals carry no due date, so the date is treated as due);
+        // a debit's unallocated remainder reduces the vendor's balance in
+        // that date's bucket (the allocated part already came off a bill
+        // balance above).
+        $allocated = '(select COALESCE(SUM(bp.amount+0),0) from bill_payments bp where bp.supplier_journal_id = supplier_journals.id and bp.deleted_at is null)';
+
+        $journals = SupplierJournal::posted()
+            ->whereDate('date', '<=', $this->asOfDate)
+            ->with('vendor:id,name')
+            ->select('supplier_journals.*')
+            ->selectRaw("{$allocated} as allocated_total")
+            ->get();
+
+        foreach ($journals as $journal) {
+            $open = $journal->isDebit()
+                ? -round((float) $journal->amount - (float) $journal->allocated_total, 2)
+                : (float) $journal->amount;
+
+            $amount = $this->reportingAmount($journal->currency_id, number_format($open, 2, '.', ''), (string) $journal->exchange_rate);
+
+            if (abs($amount) < 0.005) {
+                continue;
+            }
+
+            $vendorId = $journal->vendor_id ?? 0;
+            $daysOverdue = Carbon::parse($journal->date)->startOfDay()->diffInDays($asOf, false);
+            $bucket = $this->bucketFor($daysOverdue);
+
+            $rows[$vendorId] ??= [
+                'label' => $journal->vendor->name ?? 'Uncategorized Vendor',
                 'buckets' => array_fill_keys(self::BUCKETS, 0.0),
                 'total' => 0.0,
             ];

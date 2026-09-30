@@ -451,6 +451,8 @@ class Edit extends Component
         $bill->subtotal = $this->subtotal;
         $bill->tax_amount = $this->tax_amount;
         $total_paid = $bill->payments->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
+        // Suppliers journal debits applied to this bill settle it like a payment.
+        $total_paid += app(\App\Services\Accounting\SupplierJournalService::class)->allocatedToBill($bill);
         if((isset($total_paid) && is_numeric($total_paid) && $total_paid > 0) && $this->total > $total_paid){
             $bill->balance = $this->total - $total_paid;
            
@@ -691,6 +693,8 @@ class Edit extends Component
         $bill->exchange_rate = $this->exchange_rate;
         $bill->exchange_amount = $this->exchange_amount;
         $total_paid = $bill->payments->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
+        // Suppliers journal debits applied to this bill settle it like a payment.
+        $total_paid += app(\App\Services\Accounting\SupplierJournalService::class)->allocatedToBill($bill);
         if((isset($total_paid) && is_numeric($total_paid) && $total_paid > 0) && $this->total > $total_paid){
             $bill->balance = $this->total - $total_paid;
            

@@ -105,6 +105,8 @@ class DebitNoteJournalService
                 ]);
             }
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

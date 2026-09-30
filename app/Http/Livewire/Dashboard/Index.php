@@ -375,6 +375,8 @@ class Index extends Component
             ->where('bills.currency_id', $cur)
             ->whereBetween('bill_payments.created_at', [$monthStart.' 00:00:00', $monthEnd.' 23:59:59'])
             ->whereNull('bill_payments.deleted_at')
+            // suppliers journal debits settle bills but aren't cash paid
+            ->where(fn ($q) => $q->whereNull('bill_payments.source')->orWhere('bill_payments.source', '!=', 'supplier_journal'))
             ->sum(DB::raw('COALESCE(bill_payments.amount+0,0)'));
         $kpis['cash_position'] = $kpis['collections_mtd'] - $billsPaidMtd;
 

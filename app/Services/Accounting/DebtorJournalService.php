@@ -121,6 +121,8 @@ class DebtorJournalService
                 'description'     => "{$contra->name} - {$customerName} - {$journal->journal_number} - {$narration}",
             ]);
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

@@ -157,6 +157,8 @@ class ReconciliationService
                 'cleared_at'             => now(),
             ]);
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

@@ -78,8 +78,30 @@ class VendorLedgerService
             ->where('authorization', 'approved')
             ->whereNull('deleted_at');
 
+        // Suppliers journal adjustments (see SupplierJournalService) - a
+        // credit raises what we owe the vendor, a debit reduces it. Voided
+        // ones are excluded; their journal entry has been reversed.
+        $supplierJournals = DB::table('supplier_journals')
+            ->select([
+                'id',
+                DB::raw("'supplier_journal' as transaction_type"),
+                'journal_number as number',
+                'currency_id',
+                'date',
+                'date as transaction_date',
+                'created_at',
+                DB::raw('CAST(amount AS DECIMAL(20,2)) as amount'),
+                DB::raw('CAST(amount AS DECIMAL(20,2)) as balance'),
+                DB::raw("CASE WHEN type = 'debit' THEN CAST(amount AS DECIMAL(20,2)) * -1 ELSE CAST(amount AS DECIMAL(20,2)) END as signed_amount"),
+                DB::raw("CASE WHEN type = 'debit' THEN 1 ELSE 0 END as type_priority"),
+            ])
+            ->where('vendor_id', $vendorId)
+            ->where('currency_id', $currencyId)
+            ->where('status', 'posted')
+            ->whereNull('deleted_at');
+
         $rows = DB::query()
-            ->fromSub($bills->unionAll($payments)->unionAll($debitNotes), 'ledger')
+            ->fromSub($bills->unionAll($payments)->unionAll($debitNotes)->unionAll($supplierJournals), 'ledger')
             ->orderBy('date')
             ->orderBy('created_at')
             ->orderBy('type_priority') // bills settle before payments/debit notes on an exact tie

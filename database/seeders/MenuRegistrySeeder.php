@@ -878,6 +878,7 @@ class MenuRegistrySeeder extends Seeder
             'visibility' => $vInFinanceOrSuper,
         ]);
         $upsertSub($m, ['name'=>'Manage Statements','slug'=>'manage-vendor-statements','icon'=>'fas fa-list','route_name'=>'vendor_statements.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Suppliers Journal','slug'=>'supplier-journals','icon'=>'fas fa-book','route_name'=>'supplier_journals.index','sort_order'=>20,'visibility'=>$dnManageVis]);
 
         // Products & Services (Bills)
         $m = $upsertModule($g, [

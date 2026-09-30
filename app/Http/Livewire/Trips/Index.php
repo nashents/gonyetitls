@@ -65,6 +65,11 @@ class Index extends Component
     public $bulkCompleteSelected = [];
     public $bulk_mark_completed;
 
+    // Bulk temporary unlock of every completed trip (admin only).
+    public $bulkUnlockHours = 24;
+    public $bulkUnlockCompletedCount = 0;
+    public $bulkUnlockActiveCount = 0;
+
     /** Whether the acting user's company has an active Sage integration. */
     public function getSageEnabledProperty()
     {
@@ -600,6 +605,60 @@ class Index extends Component
             'message'=> "{$completed} trip(s) updated"
                 . ($skipped ? ", {$skipped} skipped (not Offloaded)" : '')
                 . '.'
+        ]);
+    }
+
+    /** Admin-only: the bulk counterpart of Trips\Edit::unlockTrip() - opens
+     *  every completed trip for editing for a fixed window. Nothing has to
+     *  re-lock them: Trip::isTemporarilyUnlocked() compares unlocked_until
+     *  to now(), so they lock again the moment the window passes.
+     */
+    public function showBulkUnlockCompleted(){
+        if (! Auth::user()->is_admin()) {
+            return;
+        }
+
+        $this->bulkUnlockHours = 24;
+        $this->bulkUnlockCompletedCount = Trip::where('status', 1)->count();
+        $this->bulkUnlockActiveCount = Trip::where('status', 1)->where('unlocked_until', '>', now())->count();
+        $this->dispatchBrowserEvent('show-bulkUnlockModal');
+    }
+
+    public function bulkUnlockCompleted(){
+        if (! Auth::user()->is_admin()) {
+            abort(403);
+        }
+
+        $this->validate([
+            'bulkUnlockHours' => 'required|integer|min:1|max:168',
+        ], [], ['bulkUnlockHours' => 'hours']);
+
+        $count = Trip::where('status', 1)->update([
+            'unlocked_until' => now()->addHours((int) $this->bulkUnlockHours),
+            'unlocked_by' => Auth::id(),
+        ]);
+
+        $this->dispatchBrowserEvent('hide-bulkUnlockModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"{$count} completed trip(s) unlocked for editing for {$this->bulkUnlockHours} hour(s)."
+        ]);
+    }
+
+    public function bulkRelockCompleted(){
+        if (! Auth::user()->is_admin()) {
+            abort(403);
+        }
+
+        $count = Trip::where('status', 1)->whereNotNull('unlocked_until')->update([
+            'unlocked_until' => null,
+            'unlocked_by' => null,
+        ]);
+
+        $this->dispatchBrowserEvent('hide-bulkUnlockModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"{$count} completed trip(s) re-locked."
         ]);
     }
 
@@ -1882,8 +1941,20 @@ class Index extends Component
         // Pull only currencies that actually exist in those expenses:
         $this->expense_currencies = \App\Models\Currency::whereIn('id', $this->expenseTotalsByCurrency->keys())->get();
 
+            $trips = $trips->paginate($this->perPage);
+
+            // Completed trips this user holds an approved, unused edit grant
+            // for - the trip status edit icon stays available on those rows.
+            $editGrantTripIds = \App\Models\EditAuthorizationRequest::where('editable_type', Trip::class)
+                ->whereIn('editable_id', $trips->pluck('id'))
+                ->where('user_id', Auth::id())
+                ->approvedUnconsumed()
+                ->pluck('editable_id')
+                ->all();
+
             return view('livewire.trips.index', [
-                'trips' => $trips->paginate($this->perPage),
+                'trips' => $trips,
+                'editGrantTripIds' => $editGrantTripIds,
                 'trip_filter' => $this->trip_filter,
                 'totalsByCurrency' => $this->totalsByCurrency,
                 'trips_currencies' => $this->trips_currencies,

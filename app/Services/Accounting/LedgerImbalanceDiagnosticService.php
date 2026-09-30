@@ -133,6 +133,9 @@ class LedgerImbalanceDiagnosticService
         if ($entry->debtor_journal_id) {
             return ['type' => 'debtor_journal', 'id' => $entry->debtor_journal_id, 'fixable' => false];
         }
+        if ($entry->supplier_journal_id) {
+            return ['type' => 'supplier_journal', 'id' => $entry->supplier_journal_id, 'fixable' => false];
+        }
 
         return ['type' => $entry->is_manual ? 'manual' : 'unknown', 'id' => null, 'fixable' => false];
     }

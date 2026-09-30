@@ -150,6 +150,8 @@ class AdvanceInvoiceReclassService
             ]);
         }
 
+        $entry->assertBalanced();
+
         return $entry;
     }
 }

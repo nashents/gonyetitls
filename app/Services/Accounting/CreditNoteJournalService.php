@@ -94,6 +94,8 @@ class CreditNoteJournalService
                 'description'     => "AR - Credit Note {$creditNote->credit_note_number}",
             ]);
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

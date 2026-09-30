@@ -333,6 +333,8 @@ class CustomerFuelSupplyService
                 'description'     => "Fuel supplied by {$customerName} - {$supply->supply_number}",
             ]);
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

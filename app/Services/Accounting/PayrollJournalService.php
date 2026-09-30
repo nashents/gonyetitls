@@ -104,6 +104,8 @@ class PayrollJournalService
             $this->line($entry, $config?->gl_payroll_suspense_account, 'Payroll Suspense', 0, $totals['other_deductions'], $currencyId, "Loans/advances/other deductions - {$run->name}");
             $this->line($entry, $config?->gl_wages_payable_account, 'Salaries & Wages Payable', 0, $totals['net'], $currencyId, "Net pay owed to staff - {$run->name}");
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }
@@ -336,6 +338,8 @@ class PayrollJournalService
                 $this->line($entry, $toDriversAccountId, "{$label} - Drivers", $amount, 0, $currencyId, "Reclassify {$label} to Drivers/COGS - {$run->name}");
                 $this->line($entry, $fromAdminAccountId, "{$label} - Admin", 0, $amount, $currencyId, "Reclassify {$label} out of Admin/Ops - {$run->name}");
             }
+
+            $entry->assertBalanced();
 
             return $entry;
         });

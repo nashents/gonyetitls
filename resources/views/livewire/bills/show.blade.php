@@ -281,10 +281,35 @@
                     <nav class="text-center" style="float: right">
                         <ul class="pagination rounded-corners">
                             @if (isset($payments))
-                                {{ $payments->links() }} 
-                            @endif 
+                                {{ $payments->links() }}
+                            @endif
                         </ul>
-                    </nav>   
+                    </nav>
+                    @php
+                        $journal_allocations = \App\Models\BillPayment::with('supplier_journal')
+                            ->where('bill_id', $bill->id)
+                            ->where('source', \App\Services\Accounting\SupplierJournalService::SOURCE)
+                            ->get();
+                    @endphp
+                    @if ($journal_allocations->count() > 0)
+                    <div style="clear: both"></div>
+                    <h5>Suppliers Journal Debits Applied</h5>
+                    <table class="table table-bordered table-sm" cellspacing="0" width="100%">
+                        <thead>
+                            <tr><th>Journal#</th><th>Date</th><th>Details</th><th>Applied</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($journal_allocations as $journal_allocation)
+                                <tr>
+                                    <td><a href="{{ route('supplier_journals.index', ['search' => $journal_allocation->supplier_journal ? $journal_allocation->supplier_journal->journal_number : '']) }}" style="color: blue">{{ $journal_allocation->supplier_journal ? $journal_allocation->supplier_journal->journal_number : '' }}</a></td>
+                                    <td>{{ $journal_allocation->supplier_journal && $journal_allocation->supplier_journal->date ? $journal_allocation->supplier_journal->date->format('Y-m-d') : '' }}</td>
+                                    <td>{{ $journal_allocation->supplier_journal ? $journal_allocation->supplier_journal->description : '' }}</td>
+                                    <td>{{ $bill->currency ? $bill->currency->symbol : '' }}{{ number_format((float) $journal_allocation->amount, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    @endif
                 </div>  
                <div class="row">
                     <div class="col-md-12">

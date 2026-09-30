@@ -430,6 +430,9 @@
                                                         <li><a href="#" wire:click="bulkSyncToSage" wire:loading.attr="disabled"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</a></li>
                                                         @endif
                                                         <li><a href="#" wire:click.prevent="showBulkMarkCompleted"><i class="fa fa-check-circle"></i>Bulk Mark as Completed</a></li>
+                                                        @if (Auth::user()->is_admin())
+                                                        <li><a href="#" wire:click.prevent="showBulkUnlockCompleted"><i class="fa fa-unlock"></i>Bulk Unlock Completed Trips</a></li>
+                                                        @endif
                                                     </ul>
                                                 </div>
                                             </div>
@@ -784,7 +787,7 @@
                                                     <span class="label label-{{ $s['badge'] }} label-wide">
                                                         {{ $trip->trip_status }}
                                                         @if($trip->authorization === "approved")
-                                                            @if ($trip->status == 0)
+                                                            @if ($trip->status == 0 || $trip->isTemporarilyUnlocked() || in_array($trip->id, $editGrantTripIds))
                                                                 <a href="#" wire:click.prevent="$emit('openTripStatusModal', {{ $trip->id }})" class="ms-1">
                                                                     <i class="fa fa-edit" style="color:black"></i>
                                                                 </a>
@@ -1202,6 +1205,37 @@
             </div>
         </div>
 
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bulkUnlockModal" tabindex="-1" role="dialog" aria-labelledby="bulkUnlockModalLabel" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="bulkUnlockModalLabel"><i class="fa fa-unlock"></i> Bulk Unlock Completed Trips - {{ $bulkUnlockCompletedCount }} trip(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="bulkUnlockCompleted()">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="bulkUnlockHours">Unlock for how many hours?<span class="required" style="color: red">*</span></label>
+                                <input type="number" min="1" max="168" class="form-control" wire:model.defer="bulkUnlockHours">
+                                <small style="color: green">Defaults to 24 hours. Every trip marked Completed is opened for editing and re-locks automatically once this expires.</small>
+                                @error('bulkUnlockHours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                            @if ($bulkUnlockActiveCount)
+                                <small class="text-muted">{{ $bulkUnlockActiveCount }} completed trip(s) are currently unlocked - unlocking again resets their window.</small>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                                @if ($bulkUnlockActiveCount)
+                                <button type="button" class="btn btn-danger btn-wide btn-rounded" wire:click="bulkRelockCompleted" wire:loading.attr="disabled"><i class="fa fa-lock"></i>Re-lock Now</button>
+                                @endif
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled"><i class="fa fa-unlock"></i>Unlock</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="locationsEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
             <div class="modal-dialog  mw-100 w-90" role="document">

@@ -19,4 +19,8 @@ class BillPayment extends Model implements Auditable
     public function payment(){
         return $this->belongsTo('App\Models\Payment');
     }
+
+    public function supplier_journal(){
+        return $this->belongsTo('App\Models\SupplierJournal');
+    }
 }

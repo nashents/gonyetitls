@@ -173,6 +173,8 @@ class BillJournalService
                 'description'     => "{$creditAccount->name} - Bill {$bill->bill_number}",
             ]);
 
+            $entry->assertBalanced();
+
             return $entry;
         });
     }

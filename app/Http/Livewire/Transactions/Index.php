@@ -177,6 +177,7 @@ class Index extends Component
             return;
         }
 
+        try {
         DB::transaction(function () {
 
             $companyId = Auth::user()->employee->company_id;
@@ -220,9 +221,17 @@ class Index extends Component
                     'trailer_id'       => null,
                     'transporter_id'   => null,
                 ]);
-                        
+
             }
+
+            $entry->assertBalanced();
         });
+        } catch (\App\Exceptions\UnbalancedJournalEntryException $e) {
+            // The check above is on the entered amounts; this one is on what
+            // was actually saved, in the reporting currency - nothing was kept.
+            $this->addError('lines', $e->getMessage());
+            return;
+        }
 
         $this->reset(['reference', 'description', 'lines']);
 
