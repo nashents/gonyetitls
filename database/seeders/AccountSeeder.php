@@ -183,6 +183,48 @@ class AccountSeeder extends Seeder
                 'hs_code'               => '',
             ],
 
+            // ── Payroll Expenses (unsplit — defaults while the split is off) ─
+            [
+                'name'                  => 'Salaries & Wages Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Gross salaries and wages expense for all employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NSSA Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of NSSA contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of NEC levy contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+
             // ── Payroll Expenses (split Admin/Ops vs Drivers/COGS) ─────────
             [
                 'name'                  => 'Salaries & Wages Expense - Admin',

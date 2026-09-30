@@ -170,7 +170,7 @@ class Create extends Component
 
         $fleetLimitService = app(FleetLimitService::class);
 
-        if ($fleetLimitService->canAdd($company, 'vehicle')) {
+        if ($fleetLimitService->canAdd($company, 'vehicle', 1, $transporter)) {
             return true;
         }
 

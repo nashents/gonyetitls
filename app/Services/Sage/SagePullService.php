@@ -14,14 +14,17 @@ use App\Models\Horse;
 use App\Models\IntegrationLog;
 use App\Models\IntegrationMapping;
 use App\Models\Product;
+use App\Models\Role;
 use App\Models\Store;
 use App\Models\Tax;
 use App\Models\Trailer;
 use App\Models\TrailerAssignment;
 use App\Models\Transporter;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Sage\Concerns\ManagesMappings;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -406,10 +409,11 @@ class SagePullService
 
     protected function pullDrivers(): array
     {
-        $dept = (string) config('sageintacct.project.department_id', 'D2-1');
+        // Pull EVERY Sage employee as a driver, regardless of department — all
+        // employees in this client's Sage are drivers.
         $rows = $this->readAll('EMPLOYEE', [
             'EMPLOYEEID', 'PERSONALINFO.FIRSTNAME', 'PERSONALINFO.LASTNAME', 'PERSONALINFO.PRINTAS',
-        ], "DEPARTMENTID = '{$dept}'");
+        ], 'RECORDNO > 0');
 
         $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
         foreach ($rows as $row) {
@@ -466,6 +470,11 @@ class SagePullService
                 $driver->custom_ref = $driver->custom_ref ?: $empId;     // Sage EMPLOYEEID
                 $driver->saveQuietly();
 
+                // Create the login User + link it to the employee/driver — the same
+                // associated records a manual driver creation makes — so the account
+                // shows instead of "No account". Idempotent: skips when already set.
+                $this->ensureDriverUser($employee, $driver, $empId, $first, $last);
+
                 // Mapping is keyed on the Employee (entity_type driver_employee).
                 $this->linkMapping('driver_employee', $employee, $empId, trim(($first ?? '') . ' ' . ($last ?? '')));
 
@@ -476,6 +485,56 @@ class SagePullService
         }
 
         return $s;
+    }
+
+    /**
+     * Ensure a pulled driver has a login User (category 'driver') linked to both
+     * the Employee and the Driver — the same associated records a manual driver
+     * creation makes. Idempotent: no-op once a user is linked. No email is sent
+     * (bulk pull, no Auth context); username falls back to the Sage EMPLOYEEID.
+     */
+    protected function ensureDriverUser(Employee $employee, Driver $driver, string $empId, ?string $first, ?string $last): void
+    {
+        if ($employee->user_id && $driver->user_id) {
+            return;
+        }
+
+        $user = $employee->user_id ? User::find($employee->user_id) : null;
+
+        if (! $user) {
+            // Prefer the employee's email/phone as the login (like manual creation);
+            // fall back to the Sage EMPLOYEEID. Keep the username unique.
+            $username = $employee->email ?: ($employee->phonenumber ?: $empId);
+            if (User::where('username', $username)->exists()) {
+                $username = $empId . '-' . $employee->id;
+            }
+
+            $user                       = new User();
+            $user->name                 = $first ?: ($employee->name ?: 'Driver');
+            $user->surname              = $last ?: ($employee->surname ?: '');
+            $user->category             = 'driver';
+            $user->email                = $employee->email ?: null;
+            $user->phonenumber          = $employee->phonenumber ?: null;
+            $user->username             = $username;
+            $user->use_email_as_username = $employee->email ? 1 : 0;
+            $user->password             = Hash::make((string) random_int(100000, 999999));
+            $user->active               = 1;
+            $user->save();
+
+            // Drivers get the standard "User" role (matches existing driver logins).
+            if ($roleId = optional(Role::where('name', 'User')->first())->id) {
+                $user->roles()->sync([$roleId]);
+            }
+        }
+
+        if ((int) $employee->user_id !== (int) $user->id) {
+            $employee->user_id = $user->id;
+            $employee->saveQuietly();
+        }
+        if ((int) $driver->user_id !== (int) $user->id) {
+            $driver->user_id = $user->id;
+            $driver->saveQuietly();
+        }
     }
 
     // ── Item tax groups (Sage ITEMTAXGROUP → Gonyeti taxes module) ──

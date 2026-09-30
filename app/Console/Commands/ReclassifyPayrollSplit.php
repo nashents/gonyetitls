@@ -18,7 +18,7 @@ class ReclassifyPayrollSplit extends Command
         {--force : Skip the confirmation prompt}
         {--run=* : Limit to these payroll run IDs (repeatable)}';
 
-    protected $description = "Reclassify driver wages/statutory employer cost out of the Admin/Ops GL accounts into the Drivers/COGS accounts, for payroll runs posted before split-by-employee-type accounting was turned on for their company. Posts one balanced adjusting journal entry per run; the original entry, PAYE/NSSA/NEC/Pension payables and net pay are untouched.";
+    protected $description = "Reclassify wages/statutory employer cost out of the single unsplit GL accounts into the Drivers/COGS accounts (driver share) and Admin/Ops accounts (the rest, if not already there), for payroll runs posted before split-by-employee-type accounting was turned on for their company. Posts one balanced adjusting journal entry per run; the original entry, PAYE/NSSA/NEC/Pension payables and net pay are untouched.";
 
     public function handle(PayrollJournalService $service)
     {
@@ -44,8 +44,8 @@ class ReclassifyPayrollSplit extends Command
 
         if ($this->option('dry-run')) {
             $this->warn(
-                count($candidates) . ' payroll run(s) above would get one adjusting journal entry each, moving driver-attributable '
-                . 'wages/NSSA/NEC/Pension employer cost out of the Admin/Ops GL accounts into the Drivers/COGS accounts. '
+                count($candidates) . ' payroll run(s) above would get one adjusting journal entry each, moving wages/NSSA/NEC/Pension '
+                . 'employer cost out of the unsplit GL accounts into the Drivers/COGS and Admin/Ops accounts. '
                 . 'Nothing has changed. Re-run without --dry-run to apply.'
             );
 

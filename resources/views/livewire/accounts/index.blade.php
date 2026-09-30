@@ -61,6 +61,9 @@
                                                         @endif
                                                     </td>
                                                     <td class="w-20 line-height-35">{{$account->name}}
+                                                        @if ($account->is_locked)
+                                                            <span class="label label-info" title="Seeded system account - its name can't be changed">Seeded</span>
+                                                        @endif
                                                         @if ($account->balance)
                                                         {{$account->currency ? $account->currency->name : ""}} {{$account->currency ? $account->currency->symbol : ""}}{{number_format($account->balance,2)}}
                                                         @endif
@@ -85,7 +88,7 @@
                                                             <ul class="dropdown-menu">
                                                                 <li><a href="{{ route('accounts.show',$account->id) }}"  ><i class="fas fa-eye color-default" ></i> View</a></li>
                                                                 <li><a href="#"  wire:click="showTransaction({{$account->id}})" ><i class="fas fa-credit-card color-primary" ></i> Transact</a></li>
-                                                                @if ($account->user_id != Null && !$account->is_locked)
+                                                                @if ($account->user_id != Null || $account->is_locked)
                                                                      <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
                                                                      {{-- <li><a href="#" data-toggle="modal" data-target="#accountDeleteModal{{ $account->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li> --}}
                                                                 @endif
@@ -161,7 +164,11 @@
                                                                     <a href="#" wire:click.prevent="edit({{$account->id}})"><i class="fa fa-plus-square-o"></i> Add code</a>
                                                                 @endif
                                                             </td>
-                                                            <td class="w-20 line-height-35">{{$account->name}}</td>
+                                                            <td class="w-20 line-height-35">{{$account->name}}
+                                                                @if ($account->is_locked)
+                                                                    <span class="label label-info" title="Seeded system account - its name can't be changed">Seeded</span>
+                                                                @endif
+                                                            </td>
                                                             <td class="w-20 line-height-35">{{$account->description}}</td>
                                                             <td class="w-10 text-center line-height-35">
                                                                 <span class="label {{ $account->status ? 'label-success' : 'label-default' }}">{{ $account->status ? 'Active' : 'Inactive' }}</span>
@@ -175,7 +182,7 @@
                                                                     <ul class="dropdown-menu">
                                                                         <li><a href="{{ route('accounts.show',$account->id) }}"  ><i class="fas fa-eye color-default" ></i> View</a></li>
                                                                         <li><a href="#"  wire:click="showTransaction({{$account->id}})" ><i class="fas fa-credit-card color-primary" ></i> Transact</a></li>
-                                                                        @if ($account->user_id != Null && !$account->is_locked)
+                                                                        @if ($account->user_id != Null || $account->is_locked)
                                                                         <li><a href="#"  wire:click="edit({{$account->id}})" ><i class="fas fa-edit color-success" ></i> Edit</a></li>
                                                                         @endif
                                                                         @if ($account->status)
@@ -593,7 +600,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Account Name<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Account Name" required />
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Account Name" required @if($lock_name) disabled @endif />
+                                    @if($lock_name)
+                                        <small class="text-muted">Seeded account - its name can't be changed.</small>
+                                    @endif
                                     @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>

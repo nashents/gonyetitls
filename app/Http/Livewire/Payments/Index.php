@@ -648,7 +648,7 @@ class Index extends Component
                         $lockedAccount->balance = (float) $lockedAccount->balance + (float) $payment->amount;
                     } else {
                         // invoice/sale/recovery/unset all incremented cash on creation (money in) - reverse is -amount
-                        $lockedAccount->balance = (float) $lockedAccount->balance - (float) $payment->amount;
+                        $lockedAccount->balance = (float) $lockedAccount->balance - $payment->cashAmount();
                     }
 
                     $lockedAccount->save();

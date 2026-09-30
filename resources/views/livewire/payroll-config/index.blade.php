@@ -145,7 +145,7 @@
 
                                 {{-- GL ACCOUNTS TAB --}}
                                 @if($activeTab === 'gl')
-                                <p class="text-muted mb-3"><i class="fa fa-info-circle"></i> These accounts drive the actual payroll journal entry posted for each pay run. Accounts are grouped by their chart-of-accounts category so you can see whether you're picking an Expense or a Liability account. Leave a field blank to fall back to the default account of that name.</p>
+                                <p class="text-muted mb-3"><i class="fa fa-info-circle"></i> These accounts drive the actual payroll journal entry posted for each pay run. Accounts are grouped by their chart-of-accounts category so you can see whether you're picking an Expense or a Liability account. Leave a field blank to fall back to the default account of that name. For the expense lines that default follows the split setting below: off uses the plain accounts (e.g. "Salaries &amp; Wages Expense"), on uses the "- Admin" and "- Drivers" ones. An account picked here is used whichever way the split is set.</p>
 
                                 <div class="panel panel-default mb-3">
                                     <div class="panel-body py-2 px-3 d-flex align-items-center justify-content-between">
@@ -343,7 +343,7 @@
 
                                 {{-- SPLIT RECLASSIFICATION TAB (admin only) --}}
                                 @if($isAdmin && $activeTab === 'reclass')
-                                <p class="text-muted mb-2"><i class="fa fa-info-circle"></i> One-time correction for payroll runs that were posted to the ledger <strong>before</strong> split-by-employee-type accounting was turned on. Posts a single balanced adjusting entry per run, moving driver-attributable wages and employer statutory contributions out of the Admin/Ops GL accounts into the Drivers/COGS accounts. It never touches the original entry, PAYE/NSSA/NEC/Pension payables, or net pay — only reclassifies the expense side.</p>
+                                <p class="text-muted mb-2"><i class="fa fa-info-circle"></i> One-time correction for payroll runs that were posted to the ledger <strong>before</strong> split-by-employee-type accounting was turned on. Posts a single balanced adjusting entry per run, moving wages and employer statutory contributions out of the single account they were posted to: the driver share into the Drivers/COGS accounts, and the rest into the Admin/Ops accounts if it isn't there already. It never touches the original entry, PAYE/NSSA/NEC/Pension payables, or net pay — only reclassifies the expense side.</p>
 
                                 @if(!$split_payroll_expenses_by_employee_type)
                                 <div class="alert alert-warning"><i class="fa fa-warning"></i> Split accounting is currently OFF for this company. Turn it on (Controls tab) and save before reclassifying — otherwise there is nothing to correct.</div>

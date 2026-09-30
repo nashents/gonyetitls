@@ -33,6 +33,7 @@ use App\Models\TransactionType;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
 use App\Services\Accounting\InvoiceDeletionService;
+use App\Services\Accounting\CustomerDepositService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -100,18 +101,22 @@ class Index extends Component
     public $customer_accounts;
     public $selectedCustomerAccount;
     public $unpaid_invoices;
-    public $selectedInvoice;
+    // Bulk invoice payments - the deposits and invoices ticked in the modal
+    public $selectedDeposits = [];
+    public $selectedInvoices = [];
     public $account_payments;
     public $selected_currency;
     public $selected_customer;
-    public $last_payment;
     public $payment_id;
-    public $drawdown_invoice_balance;
-    public $drawdown_amount;
-    public $invoice_drawdown_current_balance;
-    public $invoice_drawdown_balance;
-    public $payment_drawdown_balance;
-    public $amount_paid;
+    // Direct invoice payment received in a currency other than the invoice's
+    public $payment_currency_id;
+    public $payment_currency;
+    public $paid_amount;
+    public $paid_exchange_rate;
+    // Payment currency -> invoice currency (1 payment unit = ? invoice units);
+    // _auto while it is still the suggestion, not something the user typed
+    public $invoice_conversion_rate;
+    public $invoice_conversion_rate_auto = true;
     public $uninvoiced_trips;
     public $item_subtotal = 0;
     public $subtotal = 0;
@@ -263,13 +268,131 @@ class Index extends Component
         if (!is_null($id)) {
             $this->selectedCustomer = $id;
             $this->selected_customer = Customer::find($id);
-        } 
+        }
+        $this->selectedDeposits = [];
+        $this->selectedInvoices = [];
     }
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
-         
+
             $this->selected_currency = Currency::find($id);
-        } 
+        }
+        $this->selectedDeposits = [];
+        $this->selectedInvoices = [];
+    }
+
+    public function updatedPaymentCurrencyId($id){
+        $this->payment_currency = filled($id) ? Currency::find($id) : null;
+        // Receiving accounts are listed per currency, so the old pick no longer applies
+        $this->account_id = null;
+        $this->paid_amount = null;
+        $this->paid_exchange_rate = null;
+        $this->invoice_conversion_rate = null;
+        $this->invoice_conversion_rate_auto = true;
+        $this->suggestInvoiceConversionRate();
+    }
+
+    public function updatedModeOfPayment($mode){
+        // A loan repayment clears through the loan's own account, in the invoice's currency
+        if ($mode == "Loan" && $this->invoice_currency) {
+            $this->payment_currency_id = $this->invoice_currency->id;
+            $this->payment_currency = $this->invoice_currency;
+        }
+    }
+
+    public function updatedPaidAmount(){
+        $this->suggestAppliedAmount();
+    }
+
+    public function updatedPaidExchangeRate(){
+        $this->suggestInvoiceConversionRate();
+        $this->suggestAppliedAmount();
+    }
+
+    public function updatedInvoiceConversionRate(){
+        $this->invoice_conversion_rate_auto = false;
+        $this->suggestAppliedAmount();
+    }
+
+    public function updatedAmount(){
+        // Typing the applied amount directly is the same as giving the rate
+        // it implies - keep the rate field saying so.
+        if ($this->showsInvoiceConversionRate() && is_numeric($this->amount) && $this->amount > 0 && is_numeric($this->paid_amount) && $this->paid_amount > 0) {
+            $this->invoice_conversion_rate = round($this->amount / $this->paid_amount, 6);
+            $this->invoice_conversion_rate_auto = false;
+        }
+    }
+
+    /**
+     * Whether the payment form asks for a payment-currency to
+     * invoice-currency rate of its own. Not when the invoice is in the
+     * company's currency - the payment's conversion rate to the company
+     * currency is already that rate.
+     */
+    protected function showsInvoiceConversionRate(): bool
+    {
+        return $this->isCrossCurrencyPayment()
+            && (int) $this->invoice->currency_id !== (int) $this->company->currency_id;
+    }
+
+    /**
+     * Starts the payment-currency to invoice-currency rate off at what the
+     * invoice's own booking rate implies, until the user gives the actual
+     * rate the payment was agreed at.
+     */
+    protected function suggestInvoiceConversionRate(): void
+    {
+        if (! $this->showsInvoiceConversionRate() || ! $this->invoice_conversion_rate_auto) {
+            return;
+        }
+
+        if ((int) $this->payment_currency_id === (int) $this->company->currency_id) {
+            $paid_rate = 1;
+        } elseif (is_numeric($this->paid_exchange_rate) && $this->paid_exchange_rate > 0) {
+            $paid_rate = (float) $this->paid_exchange_rate;
+        } else {
+            return;
+        }
+
+        if (is_numeric($this->invoice->exchange_rate) && $this->invoice->exchange_rate > 0) {
+            $this->invoice_conversion_rate = round($paid_rate / $this->invoice->exchange_rate, 6);
+        }
+    }
+
+    /**
+     * Whether the payment being recorded is in a different currency to the
+     * invoice it settles.
+     */
+    protected function isCrossCurrencyPayment(): bool
+    {
+        return $this->invoice
+            && filled($this->payment_currency_id)
+            && (int) $this->payment_currency_id !== (int) $this->invoice->currency_id;
+    }
+
+    /**
+     * Pre-fills what a payment in another currency takes off the invoice
+     * (still editable, capped at the invoice balance): the amount received
+     * converted at the payment-currency to invoice-currency rate. That rate
+     * differing from the one the invoice was booked at is what posts an FX
+     * gain/loss.
+     */
+    protected function suggestAppliedAmount(): void
+    {
+        if (! $this->isCrossCurrencyPayment() || ! is_numeric($this->paid_amount)) {
+            return;
+        }
+
+        // For an invoice in the company's currency, the payment's rate to
+        // the company currency is the rate to the invoice currency
+        $rate = $this->showsInvoiceConversionRate() ? $this->invoice_conversion_rate : $this->paid_exchange_rate;
+
+        if (! is_numeric($rate) || $rate <= 0) {
+            return;
+        }
+
+        $worth = round($this->paid_amount * $rate, 2);
+        $this->amount = is_numeric($this->invoice_balance) ? min($worth, (float) $this->invoice_balance) : $worth;
     }
 
     public function updatedSelectedCustomerAccount($id){
@@ -286,15 +409,6 @@ class Index extends Component
     }
 
  
-
-    public function updatedSelectedInvoice($id){
-        if (!is_null($id)) {
-        $this->selectedInvoice = $id;
-        $this->invoice = Invoice::find($id);
-        $this->invoice_drawdown_balance = $this->invoice->balance;
-        }
-      
-    }
 
     public function refresh($category){
 
@@ -314,68 +428,47 @@ class Index extends Component
         }
     }
 
+    /**
+     * Bulk invoice payments: applies the deposits ticked in the modal to the
+     * invoices ticked in the modal (oldest first on both sides), recording
+     * each allocation against the deposit that funded it.
+     */
     public function drawdownPayments(){
 
-        DB::transaction(function () {
-
-        $this->amount_paid = 0;
-        $this->payment_drawdown_balance = 0;
-       
-      
-
-        if (isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount >= $this->invoice_drawdown_balance)) { 
-            $this->payment_drawdown_balance = $this->drawdown_amount - $this->invoice_drawdown_balance;
-            $this->amount_paid = $this->invoice_drawdown_balance;
-            $this->invoice_drawdown_balance = 0;
-        }elseif(isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount <= $this->invoice_drawdown_balance)){
-           
-            $this->invoice_drawdown_balance = $this->invoice_drawdown_balance - $this->drawdown_amount;
-            $this->amount_paid = $this->drawdown_amount;
-            $this->payment_drawdown_balance = 0;
-            
-        }else{
+        if (blank($this->selectedCustomer) || blank($this->selectedCurrency) || empty($this->selectedDeposits) || empty($this->selectedInvoices)) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
-                'message'=>"Invalid Drawdown Amount!!"
+                'message'=>"Select at least one payment and one invoice."
             ]);
             return;
         }
 
-       
-
-        $invoice = Invoice::find($this->selectedInvoice);
-
-        $payment = Payment::find($this->last_payment->id);
-        $payment->drawdown_balance = $this->payment_drawdown_balance;
-        $payment->update();
-
-    
-        
-        $invoice->balance = $this->invoice_drawdown_balance;
-        if ($this->invoice_drawdown_balance <= 0) {
-            $invoice->status = "Paid";
-        }else {
-            $invoice->status = "Partial";
+        try {
+            $result = app(CustomerDepositService::class)->allocate(
+                (int) $this->selectedCustomer,
+                (int) $this->selectedCurrency,
+                $this->selectedDeposits,
+                $this->selectedInvoices
+            );
+        } catch (\RuntimeException $e) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$e->getMessage()
+            ]);
+            return;
         }
-        $invoice->update();
 
-        $invoice_payment = new InvoicePayment;
-        $invoice_payment->customer_id = $invoice->customer_id;
-        $invoice_payment->invoice_id = $invoice->id;
-        $invoice_payment->payment_id = $payment->id;
-        $invoice_payment->source = 'drawdown';
-        $invoice_payment->currency_id = $invoice->currency_id;
-        $invoice_payment->amount = $this->amount_paid;
-        $invoice_payment->save();  
- 
+        $this->selectedDeposits = [];
+        $this->selectedInvoices = [];
+
+        $symbol = $this->selected_currency ? $this->selected_currency->symbol : "";
+
         $this->dispatchBrowserEvent('hide-paymentDrawdownModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Payment Drawdown Effected Successfully!!"
+            'message'=>$symbol.number_format($result['applied'],2)." applied to ".$result['invoices']." invoice(s) successfully!!"
         ]);
 
-        });
-       
     }
 
     public function invoiceNumber(){
@@ -666,8 +759,14 @@ class Index extends Component
         $this->invoice_id = $id ;
         $this->invoice = Invoice::find($id);
         $this->invoice_currency = $this->invoice->currency;
-        $this->selectedCurrency = $this->invoice->currency_id;
-        $this->loans = Loan::where('authorization','approved')->where('currency_id',$this->invoice_currency->id)->where('movement','In')->where('balance','>',0)->where('status','Unpaid')->orWhere('status','Partial')->get();
+        $this->payment_currency_id = $this->invoice->currency_id;
+        $this->payment_currency = $this->invoice_currency;
+        $this->account_id = null;
+        $this->paid_amount = null;
+        $this->paid_exchange_rate = null;
+        $this->invoice_conversion_rate = null;
+        $this->invoice_conversion_rate_auto = true;
+        $this->loans =Loan::where('authorization','approved')->where('currency_id',$this->invoice_currency->id)->where('movement','In')->where('balance','>',0)->where('status','Unpaid')->orWhere('status','Partial')->get();
         $this->invoice_balance = $this->invoice->balance;
         $this->current_balance = $this->invoice_balance - $this->amount;
         $this->dispatchBrowserEvent('show-paymentModal');
@@ -676,7 +775,39 @@ class Index extends Component
 
     public function recordPayment(){
 
-        DB::transaction(function () {
+        $crossCurrency = $this->isCrossCurrencyPayment() && ! $this->loan;
+        $baseCurrencyId = $this->company->currency_id;
+        $error = null;
+
+        if ($crossCurrency) {
+            if (! is_numeric($this->paid_amount) || $this->paid_amount <= 0) {
+                $error = "Enter the amount received in ".($this->payment_currency ? $this->payment_currency->name : "the payment currency").".";
+            } elseif ((int) $this->payment_currency_id !== (int) $baseCurrencyId && (! is_numeric($this->paid_exchange_rate) || $this->paid_exchange_rate <= 0)) {
+                $error = "Enter the conversion rate for the payment currency.";
+            }
+        }
+
+        if (! $error && ! $this->loan && $this->account_id) {
+            $receiving_account = Account::find($this->account_id);
+            $payment_currency_id = $crossCurrency ? $this->payment_currency_id : $this->invoice->currency_id;
+            if ($receiving_account && $receiving_account->currency_id && (int) $receiving_account->currency_id !== (int) $payment_currency_id) {
+                $error = "The receiving account is not held in the payment currency.";
+            }
+        }
+
+        if (! $error && $crossCurrency && (! is_numeric($this->amount) || $this->amount <= 0 || $this->amount > (float) $this->invoice->balance)) {
+            $error = "The amount applied to the invoice should be greater than zero and not more than the invoice balance.";
+        }
+
+        if ($error) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$error
+            ]);
+            return;
+        }
+
+        DB::transaction(function () use ($crossCurrency, $baseCurrencyId) {
 
         $payment = new Payment;
         $payment->company_id = Auth::user()->employee->company ? Auth::user()->employee->company->id : "";
@@ -711,6 +842,25 @@ class Index extends Component
         $payment->amount = $this->amount;
         $payment->exchange_rate = $this->exchange_rate;
         $payment->exchange_amount = $this->exchange_amount;
+        if ($crossCurrency) {
+            // amount/currency_id above stay in the invoice's currency (what
+            // comes off the invoice and shows on the statement); these carry
+            // what was actually received into the account.
+            $paid_rate = (int) $this->payment_currency_id === (int) $baseCurrencyId ? 1 : $this->paid_exchange_rate;
+            $payment->paid_currency_id = $this->payment_currency_id;
+            $payment->paid_amount = $this->paid_amount;
+            $payment->paid_exchange_rate = $paid_rate;
+
+            if ((int) $this->invoice->currency_id !== (int) $baseCurrencyId) {
+                // Reporting-currency value of what was received, and the
+                // effective rate that gives the applied amount that value
+                $payment->exchange_amount = round($this->paid_amount * $paid_rate, 2);
+                $payment->exchange_rate = round($payment->exchange_amount / $this->amount, 6);
+            } else {
+                $payment->exchange_rate = null;
+                $payment->exchange_amount = null;
+            }
+        }
         if (is_numeric($this->invoice->balance) && is_numeric($this->amount)) {
             $this->current_balance = $this->invoice->balance - $this->amount;
         }
@@ -794,7 +944,7 @@ class Index extends Component
             $account = Account::find($this->account_id);
             $current_balance = $account->balance;
             if(is_numeric($current_balance) && is_numeric($this->amount) ){
-                $account->balance = $current_balance + $this->amount;
+                $account->balance = $current_balance + $payment->cashAmount();
             }
           
             $account->update();
@@ -1057,17 +1207,15 @@ class Index extends Component
     public function render()
     {
 
-        if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) {
-        
-            $this->last_payment = Payment::where('customer_id', $this->selectedCustomer)
-            ->where('currency_id',$this->selectedCurrency)
-            ->where('transaction_category', "Customer Deposits")
-            ->orderBy('created_at','desc')->first();
+        // Bulk invoice payments: every deposit that still has funds on it
+        $deposits = collect();
 
-            if(isset($this->last_payment)){
-                $this->drawdown_amount = $this->last_payment->drawdown_balance;
-                $this->payment_drawdown_balance = $this->last_payment->drawdown_balance;
-            }
+        if (filled($this->selectedCustomer) && filled($this->selectedCurrency)) {
+
+            $deposits = app(CustomerDepositService::class)
+                ->deposits((int) $this->selectedCustomer, (int) $this->selectedCurrency)
+                ->filter(fn ($deposit) => $deposit->available > 0)
+                ->values();
 
             $this->unpaid_invoices = Invoice::where('customer_id',$this->selectedCustomer)
                                         ->where('currency_id',$this->selectedCurrency)
@@ -1189,6 +1337,7 @@ class Index extends Component
             return view('livewire.invoices.index', [
                 'invoices' => $query->orderByDesc($this->invoice_filter)->paginate(10),
                 'current_balance' => $this->current_balance,
+                'deposits' => $deposits,
             ]);
          
         

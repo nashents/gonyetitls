@@ -76,6 +76,30 @@ class Payment extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function paid_currency(){
+        return $this->belongsTo('App\Models\Currency', 'paid_currency_id');
+    }
+
+    /**
+     * Whether this payment settled an invoice in a currency other than the
+     * invoice's own - amount/currency_id then carry what was applied to the
+     * invoice, paid_amount/paid_currency_id what was actually received.
+     */
+    public function isCrossCurrency(): bool
+    {
+        return $this->paid_currency_id
+            && is_numeric($this->paid_amount)
+            && (int) $this->paid_currency_id !== (int) $this->currency_id;
+    }
+
+    /**
+     * What actually moved through the cash/bank account, in that account's
+     * currency.
+     */
+    public function cashAmount(): float
+    {
+        return (float) ($this->isCrossCurrency() ? $this->paid_amount : $this->amount);
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

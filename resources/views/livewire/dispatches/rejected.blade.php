@@ -140,7 +140,16 @@
                                                 @elseif($dispatch_item->tyre)
                                                     {{$dispatch_item->tyre->product ? $dispatch_item->tyre->product->name : ""}}
                                                 @endif
-                                                @if (!$loop->last),@endif
+                                                @php
+                                                    $dispatch_source = $dispatch_item->inventory ?? $dispatch_item->asset ?? $dispatch_item->tyre;
+                                                    $dispatch_unit = optional($dispatch_source)->measurement
+                                                        ?? optional(optional($dispatch_source)->product)->unit_of_measure
+                                                        ?? optional($dispatch_item->product)->unit_of_measure;
+                                                @endphp
+                                                @if ($dispatch_item->qty)
+                                                    x {{is_numeric($dispatch_item->qty) ? (float) $dispatch_item->qty : $dispatch_item->qty}} {{$dispatch_unit ? "(".$dispatch_unit.")" : ""}}
+                                                @endif
+                                                @if (!$loop->last)<br>@endif
                                             @endforeach
                                         @endif
                                     </td>

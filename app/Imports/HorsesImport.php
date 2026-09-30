@@ -103,7 +103,7 @@ WithBatchInserts
             }
 
             $company = $transporter ? $transporter->company : null;
-            if ($isNewHorse && $company && ! $this->canAddToFleet($company, 'horse')) {
+            if ($isNewHorse && $company && ! $this->canAddToFleet($company, 'horse', $transporter)) {
                 $this->recordFleetLimitSkip($registrationNumber, $company);
                 continue;
             }
@@ -137,7 +137,7 @@ WithBatchInserts
             $horse->save();
 
             if ($isNewHorse && $company) {
-                $this->registerFleetAddition($company);
+                $this->registerFleetAddition($company, $transporter);
             }
         }
     }

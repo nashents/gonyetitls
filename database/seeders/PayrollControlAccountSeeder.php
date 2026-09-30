@@ -15,26 +15,6 @@ class PayrollControlAccountSeeder extends Seeder
         $payrollExpense = AccountType::where('name', 'Payroll Expense')->firstOrFail();
         $costOfGoodsSold = AccountType::where('name', 'Cost Of Goods Sold')->firstOrFail();
 
-        // One-time rename: these single wages/employer-expense accounts are being
-        // split into "- Admin" (stays Payroll Expense) and a new "- Drivers"
-        // (Cost Of Goods Sold) account below. Renaming in place preserves the
-        // existing id/history rather than orphaning these as unused locked
-        // accounts, and must run before the updateOrCreate loop so that loop's
-        // "- Admin" entry finds this renamed row instead of creating a second
-        // one. Guarded by a not-exists check since AccountSeeder (which runs
-        // earlier in DatabaseSeeder, but is normally only re-run on a fresh
-        // install) seeds the "- Admin"/"- Drivers" names directly.
-        foreach ([
-            'Salaries & Wages Expense'             => 'Salaries & Wages Expense - Admin',
-            'NSSA Employer Contribution Expense'    => 'NSSA Employer Contribution Expense - Admin',
-            'NEC Employer Contribution Expense'     => 'NEC Employer Contribution Expense - Admin',
-            'Pension Employer Contribution Expense' => 'Pension Employer Contribution Expense - Admin',
-        ] as $oldName => $newName) {
-            if (!Account::where('name', $newName)->exists()) {
-                Account::where('name', $oldName)->update(['name' => $newName]);
-            }
-        }
-
         $accounts = [
 
             // ── Payroll Liabilities (Due for Payroll) ─────────────────────
@@ -120,9 +100,53 @@ class PayrollControlAccountSeeder extends Seeder
             ],
 
             // ── Payroll Expenses ──────────────────────────────────────────
+            // Unsplit: the default accounts while "split payroll expenses by
+            // employee type" is off, covering every employee, drivers included.
+            [
+                'name'                  => 'Salaries & Wages Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Gross salaries and wages expense for all employees.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NSSA Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of NSSA contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'NEC Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of NEC levy contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+            [
+                'name'                  => 'Pension Employer Contribution Expense',
+                'account_type_id'       => $payrollExpense->id,
+                'account_type_group_id' => $payrollExpense->account_type_group_id,
+                'description'           => 'Employer cost of pension fund contributions.',
+                'abbreviation'          => '',
+                'rate'                  => '',
+                'currency_id'           => null,
+                'hs_code'               => '',
+            ],
+
             // Split Admin (Payroll Expense, i.e. Ops) vs Drivers (Cost Of Goods
             // Sold) so driver payroll cost reports as a direct cost of hauling,
             // matching the Fuel - COGS / Fuel - Ops split already used for fuel.
+            // These are the defaults while the split is on.
             [
                 'name'                  => 'Salaries & Wages Expense - Admin',
                 'account_type_id'       => $payrollExpense->id,

@@ -37,6 +37,10 @@ use Illuminate\Support\Facades\DB;
  * (the default), every expense line posts to the *_admin GL accounts
  * regardless of employee type — a single line per category, same as before
  * the split existed.
+ *
+ * The *_admin GL fields are shared by both modes, but the account a blank
+ * field falls back to is not: split off defaults to the plain, company-wide
+ * accounts ("Salaries & Wages Expense"), split on to the "- Admin" ones.
  */
 class PayrollJournalService
 {
@@ -88,10 +92,10 @@ class PayrollJournalService
                 $this->line($entry, $config?->gl_pension_employer_expense_account_drivers, 'Pension Employer Contribution Expense - Drivers', $totals['pension_employer_drivers'], 0, $currencyId, "Pension employer cost (drivers) - {$run->name}");
             } else {
                 // Lean: one line per category for all employees, drivers included
-                $this->line($entry, $config?->gl_wages_expense_account_admin, 'Salaries & Wages Expense - Admin', $totals['gross'], 0, $currencyId, "Gross salaries - {$run->name}");
-                $this->line($entry, $config?->gl_nssa_employer_expense_account_admin, 'NSSA Employer Contribution Expense - Admin', $totals['nssa_employer'], 0, $currencyId, "NSSA employer cost - {$run->name}");
-                $this->line($entry, $config?->gl_nec_employer_expense_account_admin, 'NEC Employer Contribution Expense - Admin', $totals['nec_employer'], 0, $currencyId, "NEC employer cost - {$run->name}");
-                $this->line($entry, $config?->gl_pension_employer_expense_account_admin, 'Pension Employer Contribution Expense - Admin', $totals['pension_employer'], 0, $currencyId, "Pension employer cost - {$run->name}");
+                $this->line($entry, $config?->gl_wages_expense_account_admin, 'Salaries & Wages Expense', $totals['gross'], 0, $currencyId, "Gross salaries - {$run->name}");
+                $this->line($entry, $config?->gl_nssa_employer_expense_account_admin, 'NSSA Employer Contribution Expense', $totals['nssa_employer'], 0, $currencyId, "NSSA employer cost - {$run->name}");
+                $this->line($entry, $config?->gl_nec_employer_expense_account_admin, 'NEC Employer Contribution Expense', $totals['nec_employer'], 0, $currencyId, "NEC employer cost - {$run->name}");
+                $this->line($entry, $config?->gl_pension_employer_expense_account_admin, 'Pension Employer Contribution Expense', $totals['pension_employer'], 0, $currencyId, "Pension employer cost - {$run->name}");
             }
 
             // ── CR: payables ────────────────────────────────────────────────
@@ -234,13 +238,14 @@ class PayrollJournalService
     //
     // Covers a run that was posted BEFORE split_payroll_expenses_by_employee_type
     // was turned on for its company, so every wage/employer-contribution line
-    // landed in the *_admin (Ops) accounts regardless of employee type. The
-    // split only ever changes which expense account the DR lines hit — the
-    // CR/payable side (PAYE, NSSA, NEC, Pension, net pay) is identical either
-    // way — so correcting this is a pure reclassification: move the
-    // driver-attributable share of each DR line from *_admin into *_drivers
-    // (COGS) via one balanced adjusting entry. It never touches the original
-    // entry or the run's status.
+    // landed in one shared account per category regardless of employee type.
+    // The split only ever changes which expense account the DR lines hit —
+    // the CR/payable side (PAYE, NSSA, NEC, Pension, net pay) is identical
+    // either way — so correcting this is a pure reclassification: move the
+    // driver-attributable share of each DR line into *_drivers (COGS) via one
+    // balanced adjusting entry, and the admin share into *_admin too when the
+    // run sat in a different account (the plain lean default). It never
+    // touches the original entry or the run's status.
 
     /**
      * PayrollRuns already posted to the ledger whose company now has split
@@ -265,9 +270,8 @@ class PayrollJournalService
             return false;
         }
 
-        $hasOriginalEntry = JournalEntry::where('payroll_run_id', $run->id)->where('is_manual', false)->exists();
-
-        if (!$hasOriginalEntry) {
+        // No unsplit lines means the run was posted with the split already on.
+        if (empty($this->unsplitExpenseAccounts($run))) {
             return false;
         }
 
@@ -304,15 +308,16 @@ class PayrollJournalService
             throw new \RuntimeException("PayrollRun {$run->id} has no payroll batch.");
         }
 
-        $totals = $this->aggregate($payroll);
+        $totals  = $this->aggregate($payroll);
+        $sources = $this->unsplitExpenseAccounts($run);
 
-        return DB::transaction(function () use ($run, $totals, $config, $reference) {
+        return DB::transaction(function () use ($run, $totals, $config, $reference, $sources) {
             $entry = JournalEntry::create([
                 'company_id'    => $run->company_id,
                 'journal_number'=> $this->generateNumber(),
                 'date'          => now(),
                 'reference'     => $reference,
-                'description'   => "Payroll split reclassification - {$run->name} (driver wages/statutory cost moved Admin/Ops to Drivers/COGS)",
+                'description'   => "Payroll split reclassification - {$run->name} (wages/statutory employer cost moved from the unsplit accounts to Admin/Ops and Drivers/COGS)",
                 'is_manual'     => true,
                 'status'        => 'posted',
                 'created_by_id' => Auth::id(),
@@ -322,27 +327,77 @@ class PayrollJournalService
 
             $currencyId = $run->currency_id;
 
-            // [label, amount attributable to drivers, admin account it's currently sitting in, drivers account it belongs in]
+            // [label, drivers share, admin share, admin account it belongs in, drivers account it belongs in]
             $moves = [
-                ['Salaries & Wages Expense', $totals['gross_drivers'], $config->gl_wages_expense_account_admin, $config->gl_wages_expense_account_drivers],
-                ['NSSA Employer Contribution Expense', $totals['nssa_employer_drivers'], $config->gl_nssa_employer_expense_account_admin, $config->gl_nssa_employer_expense_account_drivers],
-                ['NEC Employer Contribution Expense', $totals['nec_employer_drivers'], $config->gl_nec_employer_expense_account_admin, $config->gl_nec_employer_expense_account_drivers],
-                ['Pension Employer Contribution Expense', $totals['pension_employer_drivers'], $config->gl_pension_employer_expense_account_admin, $config->gl_pension_employer_expense_account_drivers],
+                ['Salaries & Wages Expense', $totals['gross_drivers'], $totals['gross_admin'], $config->gl_wages_expense_account_admin, $config->gl_wages_expense_account_drivers],
+                ['NSSA Employer Contribution Expense', $totals['nssa_employer_drivers'], $totals['nssa_employer_admin'], $config->gl_nssa_employer_expense_account_admin, $config->gl_nssa_employer_expense_account_drivers],
+                ['NEC Employer Contribution Expense', $totals['nec_employer_drivers'], $totals['nec_employer_admin'], $config->gl_nec_employer_expense_account_admin, $config->gl_nec_employer_expense_account_drivers],
+                ['Pension Employer Contribution Expense', $totals['pension_employer_drivers'], $totals['pension_employer_admin'], $config->gl_pension_employer_expense_account_admin, $config->gl_pension_employer_expense_account_drivers],
             ];
 
-            foreach ($moves as [$label, $amount, $fromAdminAccountId, $toDriversAccountId]) {
-                if ($amount <= 0) {
+            foreach ($moves as [$label, $driversAmount, $adminAmount, $adminAccountId, $driversAccountId]) {
+                // The account the run actually posted this category to: the
+                // plain lean default, the "- Admin" account (runs posted while
+                // that was still the lean default) or a custom pick.
+                $fromAccountId = $sources[$label] ?? null;
+
+                if ($fromAccountId === null) {
                     continue;
                 }
 
-                $this->line($entry, $toDriversAccountId, "{$label} - Drivers", $amount, 0, $currencyId, "Reclassify {$label} to Drivers/COGS - {$run->name}");
-                $this->line($entry, $fromAdminAccountId, "{$label} - Admin", 0, $amount, $currencyId, "Reclassify {$label} out of Admin/Ops - {$run->name}");
+                $adminAccount = $adminAccountId !== null && $adminAccountId !== ''
+                    ? Account::findOrFail($adminAccountId)
+                    : Account::where('name', "{$label} - Admin")->firstOrFail();
+
+                // Already sitting in the admin account: only the driver share moves.
+                if ((int) $adminAccount->id === (int) $fromAccountId) {
+                    $adminAmount = 0;
+                }
+
+                $this->line($entry, $driversAccountId, "{$label} - Drivers", $driversAmount, 0, $currencyId, "Reclassify {$label} to Drivers/COGS - {$run->name}");
+                $this->line($entry, (string) $adminAccount->id, "{$label} - Admin", $adminAmount, 0, $currencyId, "Reclassify {$label} to Admin/Ops - {$run->name}");
+                $this->line($entry, (string) $fromAccountId, $label, 0, $driversAmount + $adminAmount, $currencyId, "Reclassify {$label} out of the unsplit account - {$run->name}");
             }
 
             $entry->assertBalanced();
 
             return $entry;
         });
+    }
+
+    /**
+     * Account each expense category of $run's original entry was posted to
+     * while the split was off, keyed by the category's account label. The
+     * unsplit lines are recognised by the description post() gives them
+     * ("Gross salaries - ..." as opposed to "Gross salaries (admin) - ...").
+     * Empty when the run was posted with the split already on.
+     */
+    private function unsplitExpenseAccounts(PayrollRun $run): array
+    {
+        $entry = JournalEntry::where('payroll_run_id', $run->id)->where('is_manual', false)->first();
+
+        if (!$entry) {
+            return [];
+        }
+
+        $prefixes = [
+            'Salaries & Wages Expense'              => 'Gross salaries - ',
+            'NSSA Employer Contribution Expense'    => 'NSSA employer cost - ',
+            'NEC Employer Contribution Expense'     => 'NEC employer cost - ',
+            'Pension Employer Contribution Expense' => 'Pension employer cost - ',
+        ];
+
+        $sources = [];
+
+        foreach ($entry->journal_entry_lines()->where('debit', '>', 0)->get() as $line) {
+            foreach ($prefixes as $label => $prefix) {
+                if (strpos((string) $line->description, $prefix) === 0) {
+                    $sources[$label] = $line->account_id;
+                }
+            }
+        }
+
+        return $sources;
     }
 
     private function reclassificationReference(PayrollRun $run): string

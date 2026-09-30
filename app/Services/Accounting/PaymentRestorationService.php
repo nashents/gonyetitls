@@ -154,7 +154,7 @@ class PaymentRestorationService
                     } elseif (in_array($category, ['vendor', 'bill'], true)) {
                         $lockedAccount->balance = (float) $lockedAccount->balance - (float) $payment->amount;
                     } else {
-                        $lockedAccount->balance = (float) $lockedAccount->balance + (float) $payment->amount;
+                        $lockedAccount->balance = (float) $lockedAccount->balance + $payment->cashAmount();
                     }
 
                     $lockedAccount->save();

@@ -110,8 +110,9 @@ WithBatchInserts
             $make_id        = $getOrCreateId(VehicleMake::class, 'name', $row->get('make'));
             $model_id       = $getOrCreateId(VehicleModel::class, 'name', $row->get('model'));
 
-            $company = $transporter_id ? Transporter::find($transporter_id)?->company : null;
-            if ($isNewVehicle && $company && ! $this->canAddToFleet($company, 'vehicle')) {
+            $transporter = $transporter_id ? Transporter::find($transporter_id) : null;
+            $company = $transporter?->company;
+            if ($isNewVehicle && $company && ! $this->canAddToFleet($company, 'vehicle', $transporter)) {
                 $this->recordFleetLimitSkip($registrationNumber, $company);
                 continue;
             }
@@ -141,7 +142,7 @@ WithBatchInserts
             $vehicle->save();
 
             if ($isNewVehicle && $company) {
-                $this->registerFleetAddition($company);
+                $this->registerFleetAddition($company, $transporter);
             }
         }
 

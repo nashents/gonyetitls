@@ -121,7 +121,7 @@ WithBatchInserts
                 }
 
                 $company = isset($transporter) ? $transporter->company : null;
-                if ($company && ! $this->canAddToFleet($company, 'trailer')) {
+                if ($company && ! $this->canAddToFleet($company, 'trailer', $transporter)) {
                     $this->recordFleetLimitSkip($row['registration_number'], $company);
                     $transporter_id = "";
                     continue;
@@ -147,7 +147,7 @@ WithBatchInserts
                  $transporter_id = "";
 
                  if ($company) {
-                     $this->registerFleetAddition($company);
+                     $this->registerFleetAddition($company, $transporter);
                  }
             }
             

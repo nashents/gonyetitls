@@ -186,6 +186,14 @@ class PaymentJournalService
     // ── 3. Direct Invoice Payment ─────────────────────────────────────────────
     // Invoice component: category = invoice, invoice_id set directly
     // DR Cash/Bank   CR Accounts Receivable
+    //
+    // An invoice can be settled in a currency other than its own (paid_*
+    // columns set - see Payment::isCrossCurrency()). amount/currency_id are
+    // then what came off the invoice, in the invoice's currency, and that is
+    // what AR is credited with; the Cash/Bank leg carries what was actually
+    // received, in the account's currency, at its own rate. The two legs
+    // only meet in reporting currency, and whatever they differ by is the
+    // realized FX gain/loss.
     private function postInvoicePayment(
         JournalEntry $entry,
         Payment $payment,
@@ -196,18 +204,23 @@ class PaymentJournalService
         $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
         $invoiceRate = $this->bookingRate($payment->invoice, $rate);
         $bookedValue = $amount * $invoiceRate;
-        $settledValue = $amount * $rate;
+
+        $crossCurrency = $payment->isCrossCurrency();
+        $cashAmount = $crossCurrency ? (float) $payment->paid_amount : $amount;
+        $cashRate = $crossCurrency ? (is_numeric($payment->paid_exchange_rate) ? (float) $payment->paid_exchange_rate : 1.0) : $rate;
+        $cashCurrencyId = $crossCurrency ? $payment->paid_currency_id : $payment->currency_id;
+        $settledValue = $cashAmount * $cashRate;
 
         $entry->journal_entry_lines()->create([
             'account_id'      => $cashBankAccount->id,
             'customer_id'     => $payment->customer_id,
             'vendor_id'       => null,
-            'debit'           => $amount,
+            'debit'           => $cashAmount,
             'credit'          => 0,
             'exchange_debit'  => $settledValue,
             'exchange_credit' => 0,
-            'currency_id'     => $payment->currency_id,
-            'exchange_rate'   => $rate,
+            'currency_id'     => $cashCurrencyId,
+            'exchange_rate'   => $cashRate,
             'description'     => "Invoice payment - {$payment->payment_number}",
         ]);
 
@@ -609,11 +622,15 @@ class PaymentJournalService
      */
     private function assertCurrencyMatchesAccount(Payment $payment, Account $cashBankAccount): void
     {
-        if (!$cashBankAccount->currency_id || !$payment->currency_id) {
+        // An invoice settled in another currency lands in the account in the
+        // currency it was paid in, not the invoice's.
+        $cashCurrencyId = $payment->isCrossCurrency() ? $payment->paid_currency_id : $payment->currency_id;
+
+        if (!$cashBankAccount->currency_id || !$cashCurrencyId) {
             return;
         }
 
-        if ((int) $cashBankAccount->currency_id !== (int) $payment->currency_id) {
+        if ((int) $cashBankAccount->currency_id !== (int) $cashCurrencyId) {
             throw new \RuntimeException(
                 "Payment currency does not match the currency of \"{$cashBankAccount->name}\" - select an account held in the same currency as this payment, or record the currency conversion separately."
             );

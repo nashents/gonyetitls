@@ -114,6 +114,17 @@
                                     @endif
                                 </td>
                             </tr>
+                            @if ($payment->isCrossCurrency())
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Amount Received</th>
+                                <td class="w-20 line-height-35">
+                                    {{ $payment->paid_currency ? $payment->paid_currency->name : "" }} {{ $payment->paid_currency ? $payment->paid_currency->symbol : "" }}{{ number_format($payment->paid_amount,2)}}
+                                    @if (is_numeric($payment->paid_exchange_rate) && $payment->paid_exchange_rate != 1)
+                                        @ {{ $payment->paid_exchange_rate }}
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
                             @if ($payment->exchange_amount)
                             <tr>
                                 <th class="w-10 text-center line-height-35">Total in {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }}</th>
@@ -138,6 +149,12 @@
                                 <th class="w-10 text-center line-height-35">Drawdown Balance</th>
                                 <td class="w-20 line-height-35">{{ $payment->currency ? $payment->currency->symbol : "" }}{{ number_format($payment->drawdown_balance ?? 0, 2) }}</td>
                             </tr>
+                            @if (!is_null($deposit_available))
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Available On This Payment</th>
+                                <td class="w-20 line-height-35">{{ $payment->currency ? $payment->currency->symbol : "" }}{{ number_format($deposit_available, 2) }}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <th class="w-10 text-center line-height-35">Drawdown Transactions</th>
                                 <td class="w-20 line-height-35">

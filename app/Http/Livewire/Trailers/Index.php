@@ -227,7 +227,7 @@ class Index extends Component
 
         $fleetLimitService = app(FleetLimitService::class);
 
-        if ($fleetLimitService->canAdd($company, 'trailer')) {
+        if ($fleetLimitService->canAdd($company, 'trailer', 1, $transporter)) {
             return true;
         }
 

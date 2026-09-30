@@ -5,14 +5,14 @@ namespace App\Services\Accounting;
 use App\Models\Account;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
-use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceDeletionService
 {
     public function __construct(
         protected JournalReversalService $journalReversal,
-        protected BillDeletionService $billDeletion
+        protected BillDeletionService $billDeletion,
+        protected CustomerDepositService $customerDeposits
     ) {
     }
 
@@ -40,18 +40,17 @@ class InvoiceDeletionService
             // -----------------------------
             // 1) Reverse allocations recorded against this invoice (direct + drawdown)
             // -----------------------------
+            $hadDrawdowns = $invoice->invoice_payments->contains(fn ($invoice_payment) => $invoice_payment->source === 'drawdown' && $invoice_payment->payment_id);
+
             foreach ($invoice->invoice_payments as $invoice_payment) {
-
-                if ($invoice_payment->source === 'drawdown' && $invoice_payment->payment_id) {
-                    // Give the money back to the wallet it was drawn down from
-                    $funding_payment = Payment::where('id', $invoice_payment->payment_id)->lockForUpdate()->first();
-                    if ($funding_payment) {
-                        $funding_payment->drawdown_balance = (float) ($funding_payment->drawdown_balance ?? 0) + (float) $invoice_payment->amount;
-                        $funding_payment->save();
-                    }
-                }
-
                 $invoice_payment->delete();
+            }
+
+            // Give the money back to the wallet it was drawn down from - the
+            // allocations are gone, so each funding deposit is available
+            // again; the running wallet total just needs recomputing.
+            if ($hadDrawdowns && $invoice->customer_id && $invoice->currency_id) {
+                $this->customerDeposits->syncWalletBalance((int) $invoice->customer_id, (int) $invoice->currency_id);
             }
 
             // -----------------------------
@@ -63,7 +62,7 @@ class InvoiceDeletionService
                     $account = Account::where('id', $payment->account_id)->lockForUpdate()->first();
                     if ($account) {
                         // Invoice payments credited the account (cash in); deleting must debit it back out
-                        $account->balance = (float) $account->balance - (float) $payment->amount;
+                        $account->balance = (float) $account->balance - $payment->cashAmount();
                         $account->save();
                     }
                 }

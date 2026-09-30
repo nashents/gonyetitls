@@ -3,6 +3,7 @@
 namespace App\Imports\Concerns;
 
 use App\Models\Company;
+use App\Models\Transporter;
 use App\Services\FleetLimitService;
 
 trait ChecksFleetLimit
@@ -12,11 +13,15 @@ trait ChecksFleetLimit
 
     public array $skippedForLimit = [];
 
-    protected function canAddToFleet(Company $company, string $assetType): bool
+    protected function canAddToFleet(Company $company, string $assetType, ?Transporter $transporter = null): bool
     {
         $service = app(FleetLimitService::class);
 
         if (! $service->isAssetTypeCounted($company, $assetType)) {
+            return true;
+        }
+
+        if ($transporter && ! $service->isTransporterCounted($company, $transporter)) {
             return true;
         }
 
@@ -30,8 +35,12 @@ trait ChecksFleetLimit
         return $max === null || $this->fleetCompanyCounts[$company->id] < $max;
     }
 
-    protected function registerFleetAddition(Company $company): void
+    protected function registerFleetAddition(Company $company, ?Transporter $transporter = null): void
     {
+        if ($transporter && ! app(FleetLimitService::class)->isTransporterCounted($company, $transporter)) {
+            return;
+        }
+
         if (array_key_exists($company->id, $this->fleetCompanyCounts)) {
             $this->fleetCompanyCounts[$company->id]++;
         }

@@ -4,7 +4,6 @@ namespace App\Services\Accounting;
 
 use App\Models\Invoice;
 use App\Models\JournalEntry;
-use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceRestorationService
@@ -12,7 +11,8 @@ class InvoiceRestorationService
     public function __construct(
         protected JournalReversalService $journalReversal,
         protected PaymentRestorationService $paymentRestoration,
-        protected BillRestorationService $billRestoration
+        protected BillRestorationService $billRestoration,
+        protected CustomerDepositService $customerDeposits
     ) {
     }
 
@@ -38,17 +38,14 @@ class InvoiceRestorationService
             // -----------------------------
             // 1) Reinstate allocations recorded against this invoice (drawdown)
             // -----------------------------
+            $hadDrawdowns = $invoice->invoice_payments->contains(fn ($invoice_payment) => $invoice_payment->source === 'drawdown' && $invoice_payment->payment_id);
+
             foreach ($invoice->invoice_payments as $invoice_payment) {
-
-                if ($invoice_payment->source === 'drawdown' && $invoice_payment->payment_id) {
-                    $funding_payment = Payment::where('id', $invoice_payment->payment_id)->lockForUpdate()->first();
-                    if ($funding_payment) {
-                        $funding_payment->drawdown_balance = (float) ($funding_payment->drawdown_balance ?? 0) - (float) $invoice_payment->amount;
-                        $funding_payment->save();
-                    }
-                }
-
                 $invoice_payment->restore();
+            }
+
+            if ($hadDrawdowns && $invoice->customer_id && $invoice->currency_id) {
+                $this->customerDeposits->syncWalletBalance((int) $invoice->customer_id, (int) $invoice->currency_id);
             }
 
             // -----------------------------

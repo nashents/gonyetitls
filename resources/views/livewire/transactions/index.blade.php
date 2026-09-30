@@ -102,6 +102,10 @@
                                             {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
                                             <br>
                                             @endif
+                                            @if ($payment->isCrossCurrency())
+                                            <small>Received {{ $payment->paid_currency ? $payment->paid_currency->name : "" }} {{ $payment->paid_currency ? $payment->paid_currency->symbol : "" }}{{ number_format($payment->paid_amount,2) }}</small>
+                                            <br>
+                                            @endif
                                             @if ($payment->currency_id && Auth::user()->employee->company && $payment->currency_id != Auth::user()->employee->company->currency_id)
                                             <small style="color: green">{{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($payment->exchange_amount,2)}} @ {{$payment->exchange_rate}}</small>
                                             @endif

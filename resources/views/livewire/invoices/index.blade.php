@@ -547,55 +547,86 @@
                             </div>
                         </div>
                     </div>
+                    @php
+                        $base_currency = Auth::user()->employee->company ? Auth::user()->employee->company->currency : null;
+                        $cross_currency = $invoice_currency && $payment_currency_id && $payment_currency_id != $invoice_currency->id;
+                    @endphp
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vat">Payment Currency<span class="required" style="color: red">*</span></label>
+                               <select class="form-control" wire:model="payment_currency_id" required {{$mode_of_payment == "Loan" ? "disabled" : ""}}>
+                                <option value="">Select Currency</option>
+                                @foreach ($currencies as $currency)
+                                <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                @endforeach
+                               </select>
+                                @error('payment_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if ($cross_currency)
+                                <small style="color: green">Invoice is in {{ $invoice_currency->name }} - the payment is applied to the invoice and shown on the statement in {{ $invoice_currency->name }}.</small>
+                                @endif
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="country">Receiving Accounts<span class="required" style="color: red">*</span> </label>
                                <select wire:model.debounce.300ms="account_id" class="form-control" required  {{$mode_of_payment == "Loan" ? "disabled" : ""}}>
                                    <option value="">Select Receiving Account</option>
                                  @foreach ($accounts as $account)
-                                    @if ($invoice_currency && $account->currency)
-                                        @if ($account->currency->id == $invoice_currency->id)
-                                            <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>
-                                        @endif     
-                                    @else  
-                                        select currency for invoice
+                                    @if ($payment_currency_id && $account->currency_id == $payment_currency_id)
+                                        <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>
                                     @endif
                                  @endforeach
                                </select>
                                 @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small style="color: green">Any account into which you deposit and withdraw funds from.</small> <br>
+                                <small style="color: green">Only accounts held in the selected payment currency are listed.</small> <br>
                                 <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Account</a></small> <a href="#" wire:click.prevent="refresh('accounts')" class="float-end"><i class="fa fa-refresh"></i></a>
-                                
+
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="vat">Currencies<span class="required" style="color: red">*</span></label>
-                               <select class="form-control" wire:model.debounce.300ms="selectedCurrency" required disabled>
-                                <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                              
-                                @endforeach
-                               </select>
-                                @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                            @if (!is_null($invoice_currency))
-                                @if (Auth::user()->employee->company)
-                                    @if ($invoice_currency->id != Auth::user()->employee->company->currency_id)
-                                    <div class="form-group">
-                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate" required>
-                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
-                                    </div> 
-                                    @endif
-                                @endif
-                            @endif 
                         </div>
                     </div>
-                   
-                   
+                    @if ($cross_currency)
+                    <div class="row" wire:key="payment-cross-currency">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Amount Received ({{ $payment_currency ? $payment_currency->name : "" }})<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="paid_amount" placeholder="Amount received in {{ $payment_currency ? $payment_currency->name : "" }}" required >
+                                @error('paid_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if ($base_currency && $payment_currency_id != $base_currency->id)
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="customer">Conversion Rate ({{ $payment_currency ? $payment_currency->name : "" }} to {{ $base_currency->name }})<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="paid_exchange_rate"  placeholder="1 {{ $payment_currency ? $payment_currency->name : "" }} = ? {{ $base_currency->name }}" required>
+                                @error('paid_exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                @if (is_numeric($paid_amount) && is_numeric($paid_exchange_rate))
+                                <small>The converted amount is: {{ $base_currency->symbol }}{{ number_format($paid_amount * $paid_exchange_rate, 2) }}</small>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+                        @if ($base_currency && $invoice_currency->id != $base_currency->id)
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="customer">Conversion Rate ({{ $payment_currency ? $payment_currency->name : "" }} to {{ $invoice_currency->name }})<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="invoice_conversion_rate"  placeholder="1 {{ $payment_currency ? $payment_currency->name : "" }} = ? {{ $invoice_currency->name }}" required>
+                                @error('invoice_conversion_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                <small style="color: green">The rate this payment was agreed at - it sets how much of the invoice is settled.@if ($invoice_conversion_rate_auto && is_numeric($invoice_conversion_rate)) Started at the rate the invoice was booked at.@endif</small>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @elseif (!is_null($invoice_currency) && $base_currency && $invoice_currency->id != $base_currency->id)
+                    <div class="form-group" wire:key="payment-conversion-rate">
+                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate" required>
+                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
+                    </div>
+                    @endif
+
+
                     @if ($mode_of_payment == "Bank Payment" || $mode_of_payment == "Credit Card" || $mode_of_payment == "Paypal")
                     <div class="row">
                         <div class="col-md-6">
@@ -712,11 +743,19 @@
                         @else   
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Amount<span class="required" style="color: red">*</span></label>
+                                <label for="name">{{ $cross_currency ? "Amount Applied To Invoice (".$invoice_currency->name.")" : "Amount" }}<span class="required" style="color: red">*</span></label>
                                 <input type="number" max="{{ $invoice_balance }}" {{ $amount > $invoice_balance ? "disabled" : "" }} step="any"  class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount" required >
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 @if ($amount > $invoice_balance)
                                 <small style="color: red">Amount should be less than or equal to invoice balance.</small>   
+                                @endif
+                                @php
+                                    // What the amount received converts to in the invoice's currency
+                                    $paid_to_invoice_rate = $cross_currency ? ($base_currency && $invoice_currency->id == $base_currency->id ? $paid_exchange_rate : $invoice_conversion_rate) : null;
+                                    $paid_worth = is_numeric($paid_amount) && is_numeric($paid_to_invoice_rate) ? round($paid_amount * $paid_to_invoice_rate, 2) : null;
+                                @endphp
+                                @if (!is_null($paid_worth) && is_numeric($invoice_balance) && $paid_worth > $invoice_balance + 0.005)
+                                <small style="color: red">The amount received converts to {{ $invoice_currency->symbol }}{{ number_format($paid_worth, 2) }}, more than the invoice balance. Only the balance can be applied here - the excess would post as an exchange gain, so record it as a separate customer deposit instead.</small>
                                 @endif
                             </div>
                         </div>
@@ -764,12 +803,12 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentDrawdownModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Payment Drawdown <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Bulk Invoices Payments <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-        
+
                 <form wire:submit.prevent="drawdownPayments()" >
                 <div class="modal-body">
                     <div class="row">
@@ -791,58 +830,132 @@
                                <select class="form-control" wire:model.debounce.300ms="selectedCurrency" required>
                                 <option value="">Select Currency</option>
                                 @foreach ($currencies as $currency)
-                                <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                              
+                                <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                 @endforeach
                                </select>
                                 @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                       
+
                     </div>
-                        @if (isset($selected_customer) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
-                            <blockquote>
-                                {{$selected_customer->name}} has {{$selected_currency->name}} {{$selected_currency->symbol}}{{number_format($last_payment->drawdown_balance ? $last_payment->drawdown_balance : 0,2)}}
-                            </blockquote>
-                        @endif
-                    <div class="form-group">
-                        <label for="country">Invoices<span class="required" style="color: red">*</span> </label>
-                        <select wire:model.debounce.300ms="selectedInvoice" class="form-control" required>
-                            <option value="">Select Invoice</option>
-                            @if (!is_null($selectedCustomer) && !is_null($selectedCurrency) )
-                                @foreach ($unpaid_invoices as $invoice)
-                                    <option value="{{ $invoice->id }}">{{$invoice->invoice_number}} | {{$invoice->customer ? $invoice->customer->name : ""}} | Balance: {{$invoice->currency ? $invoice->currency->name : ""}} {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->balance ? $invoice->balance : 0,2)}} | {{ $invoice->status }}</option>
-                                @endforeach
-                            @endif 
-                        </select>
-                         @error('selectedInvoice') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Drawdown Balance<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="payment_drawdown_balance" placeholder="Payment Drawdown Balance" disabled required >
-                                @error('payment_drawdown_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    @php
+                        $drawdown_ready = filled($selectedCustomer) && filled($selectedCurrency);
+                        $drawdown_symbol = isset($selected_currency) ? $selected_currency->symbol : "";
+                        $drawdown_invoices = $drawdown_ready && $unpaid_invoices ? $unpaid_invoices : collect();
+                        $selected_funds = $deposits->filter(fn ($deposit) => in_array($deposit->payment->id, $selectedDeposits))->sum('available');
+                        $selected_due = $drawdown_invoices->filter(fn ($invoice) => in_array($invoice->id, $selectedInvoices))->sum(fn ($invoice) => (float) $invoice->balance);
+                        $to_apply = min($selected_funds, $selected_due);
+                    @endphp
+                    @if ($drawdown_ready)
+                        <blockquote>
+                            {{ isset($selected_customer) ? $selected_customer->name : "" }} has {{ isset($selected_currency) ? $selected_currency->name : "" }} {{ $drawdown_symbol }}{{ number_format($deposits->sum('available'), 2) }} available across {{ $deposits->count() }} payment(s)
+                        </blockquote>
+
+                        <div class="form-group">
+                            <label>Payments<span class="required" style="color: red">*</span></label>
+                            <div style="max-height: 220px; overflow-y: auto;">
+                                <table class="table table-bordered table-condensed" style="margin-bottom: 0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 30px"></th>
+                                            <th>Payment#</th>
+                                            <th>Date</th>
+                                            <th>Reference</th>
+                                            <th class="text-right">Amount</th>
+                                            <th class="text-right">Used</th>
+                                            <th class="text-right">Available</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($deposits as $deposit)
+                                        <tr wire:key="drawdown-deposit-{{ $deposit->payment->id }}">
+                                            <td><input type="checkbox" wire:model="selectedDeposits" value="{{ $deposit->payment->id }}"></td>
+                                            <td>{{ $deposit->payment->payment_number }}</td>
+                                            <td>{{ $deposit->payment->date }}</td>
+                                            <td>{{ $deposit->payment->reference_code }} {{ $deposit->payment->mode_of_payment }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $deposit->payment->amount, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $deposit->payment->amount - $deposit->available, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($deposit->available, 2) }}</td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center">No payments with funds available for this customer and currency.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            @error('selectedDeposits') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Invoices<span class="required" style="color: red">*</span></label>
+                            <div style="max-height: 220px; overflow-y: auto;">
+                                <table class="table table-bordered table-condensed" style="margin-bottom: 0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 30px"></th>
+                                            <th>Invoice#</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th class="text-right">Total</th>
+                                            <th class="text-right">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($drawdown_invoices as $invoice)
+                                        <tr wire:key="drawdown-invoice-{{ $invoice->id }}">
+                                            <td><input type="checkbox" wire:model="selectedInvoices" value="{{ $invoice->id }}"></td>
+                                            <td>{{ $invoice->invoice_number }}</td>
+                                            <td>{{ $invoice->date }}</td>
+                                            <td>{{ $invoice->status }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $invoice->total, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $invoice->balance, 2) }}</td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center">No unpaid invoices for this customer and currency.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            @error('selectedInvoices') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Selected Payments</label>
+                                    <input type="text" class="form-control" value="{{ $drawdown_symbol }}{{ number_format($selected_funds, 2) }}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Selected Invoices Balance</label>
+                                    <input type="text" class="form-control" value="{{ $drawdown_symbol }}{{ number_format($selected_due, 2) }}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>To Be Applied</label>
+                                    <input type="text" class="form-control" value="{{ $drawdown_symbol }}{{ number_format($to_apply, 2) }}" disabled>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Balance<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="invoice_drawdown_balance" placeholder="Invoice Balance" disabled required >
-                                @error('invoice_drawdown_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-            
+                        <small style="color: green">Payments and invoices are matched oldest first. Anything left on a payment stays available; anything left on an invoice stays outstanding.</small>
+                    @endif
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        @if (isset($selected_customer) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
+                        @if ($to_apply > 0)
                         <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
                         @else
                         <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled><i class="fa fa-save"></i>Save</button>
                         @endif
-                       
+
                     </div>
                     <!-- /.btn-group -->
                 </div>

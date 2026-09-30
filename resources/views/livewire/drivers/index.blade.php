@@ -200,7 +200,7 @@
                                                         </a>
                                                     @endif
                                                 @else
-                                                <span class="badge bg-danger">Deleted</span>
+                                                <span class="badge bg-secondary">No account</span>
                                                 @endif
                                             </td>
                                             <td>

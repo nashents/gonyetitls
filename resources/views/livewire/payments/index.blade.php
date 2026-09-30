@@ -208,6 +208,10 @@
                                             @if ($payment->amount)
                                                 {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
                                             @endif
+                                            @if ($payment->isCrossCurrency())
+                                                <br>
+                                                <small>Received {{ $payment->paid_currency?->name }} {{ $payment->paid_currency?->symbol }}{{ number_format($payment->paid_amount, 2) }}</small>
+                                            @endif
 
                                             @php $payCompany = Auth::user()->employee->company ?? null; @endphp
                                             @if ($payment->currency_id && $payCompany && (int) $payment->currency_id !== (int) $payCompany->currency_id)

@@ -69,6 +69,7 @@ class Index extends Component
     public $user_id;
     public $account;
     public $lock_type_currency = false;
+    public $lock_name = false;
 
     // Inline "also create the bank account record" option, shown when account_type is Cash & Bank
     public $create_bank_account = false;
@@ -279,6 +280,7 @@ class Index extends Component
     $this->account_reference = $account->account_reference;
     $this->account_id = $account->id;
     $this->lock_type_currency = optional($account->account_type)->name === 'Cash & Bank';
+    $this->lock_name = (bool) $account->is_locked;
     $this->dispatchBrowserEvent('show-accountEditModal');
 
     }

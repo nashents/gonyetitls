@@ -49,14 +49,33 @@ class FleetLimitService
     }
 
     /**
-     * The company's current live fleet count, summed across all of its
-     * transporters, for whichever asset types its composition counts.
+     * Whether assets under this transporter count toward the company's plan
+     * band. Only the company's own fleet (its default transporter) is
+     * licensed; third-party transporters are not. A company with no default
+     * transporter flagged falls back to counting all of its transporters.
+     */
+    public function isTransporterCounted(Company $company, Transporter $transporter): bool
+    {
+        if ((int) $transporter->company_id !== (int) $company->id) {
+            return false;
+        }
+
+        return $transporter->default || ! $company->default_transporter()->exists();
+    }
+
+    /**
+     * The company's current live fleet count on its own fleet (default
+     * transporter), for whichever asset types its composition counts.
      */
     public function currentFleetCount(Company $company): int
     {
         $relations = array_map(fn (string $type) => $type.'s', $this->assetTypesCounted($company));
 
-        $transporters = $company->transporters()->withCount($relations)->get();
+        $query = $company->default_transporter()->exists()
+            ? $company->default_transporter()
+            : $company->transporters();
+
+        $transporters = $query->withCount($relations)->get();
 
         return $transporters->reduce(function (int $carry, Transporter $transporter) use ($relations) {
             foreach ($relations as $relation) {
@@ -78,9 +97,13 @@ class FleetLimitService
         return max(0, $max - $this->currentFleetCount($company));
     }
 
-    public function canAdd(Company $company, string $assetType, int $qty = 1): bool
+    public function canAdd(Company $company, string $assetType, int $qty = 1, ?Transporter $transporter = null): bool
     {
         if (! $this->isAssetTypeCounted($company, $assetType)) {
+            return true;
+        }
+
+        if ($transporter && ! $this->isTransporterCounted($company, $transporter)) {
             return true;
         }
 
