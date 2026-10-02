@@ -842,9 +842,10 @@
                         $drawdown_ready = filled($selectedCustomer) && filled($selectedCurrency);
                         $drawdown_symbol = isset($selected_currency) ? $selected_currency->symbol : "";
                         $drawdown_invoices = $drawdown_ready && $unpaid_invoices ? $unpaid_invoices : collect();
-                        $selected_funds = $deposits->filter(fn ($deposit) => in_array($deposit->payment->id, $selectedDeposits))->sum('available');
-                        $selected_due = $drawdown_invoices->filter(fn ($invoice) => in_array($invoice->id, $selectedInvoices))->sum(fn ($invoice) => (float) $invoice->balance);
-                        $to_apply = min($selected_funds, $selected_due);
+                        $to_apply = round($allocating['payments']->sum(), 2);
+                        $over_allocated = $deposits->contains(fn ($deposit) => ($allocating['payments'][$deposit->payment->id] ?? 0) > $deposit->available + 0.005)
+                            || $drawdown_invoices->contains(fn ($invoice) => ($allocating['invoices'][$invoice->id] ?? 0) > (float) $invoice->balance + 0.005);
+                        $incomplete_line = collect($allocations)->contains(fn ($line) => (filled($line['payment_id']) || filled($line['invoice_id']) || filled($line['amount'])) && (blank($line['payment_id']) || blank($line['invoice_id']) || !is_numeric($line['amount']) || $line['amount'] <= 0));
                     @endphp
                     @if ($drawdown_ready)
                         <blockquote>
@@ -852,30 +853,81 @@
                         </blockquote>
 
                         <div class="form-group">
-                            <label>Payments<span class="required" style="color: red">*</span></label>
-                            <div style="max-height: 220px; overflow-y: auto;">
+                            <label>Apply Payments To Invoices<span class="required" style="color: red">*</span></label>
+                            <br>
+                            <small style="color: green">Each line applies one payment to one invoice. Add more lines to split a payment across invoices, or to put several payments on one invoice.</small>
+                            <table class="table table-bordered table-condensed" style="margin-bottom: 5px">
+                                <thead>
+                                    <tr>
+                                        <th>Payment</th>
+                                        <th>Invoice</th>
+                                        <th style="width: 150px">Amount</th>
+                                        <th style="width: 40px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($allocations as $index => $line)
+                                    <tr wire:key="allocation-{{ $line['key'] }}">
+                                        <td>
+                                            <select class="form-control" wire:model="allocations.{{ $index }}.payment_id">
+                                                <option value="">Select Payment</option>
+                                                @foreach ($deposits as $deposit)
+                                                <option value="{{ $deposit->payment->id }}">{{ $deposit->payment->payment_number }} | {{ $deposit->payment->date }} | Available: {{ $drawdown_symbol }}{{ number_format($deposit->available, 2) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="form-control" wire:model="allocations.{{ $index }}.invoice_id">
+                                                <option value="">Select Invoice</option>
+                                                @foreach ($drawdown_invoices as $invoice)
+                                                <option value="{{ $invoice->id }}">{{ $invoice->invoice_number }} | {{ $invoice->date }} | Balance: {{ $drawdown_symbol }}{{ number_format((float) $invoice->balance, 2) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="allocations.{{ $index }}.amount" placeholder="Amount">
+                                        </td>
+                                        <td>
+                                            @if (count($allocations) > 1)
+                                            <button type="button" class="btn btn-danger btn-rounded xs" wire:click.prevent="removeAllocation({{ $index }})"><i class="fa fa-times"></i></button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-success btn-rounded" wire:click.prevent="addAllocation()"><i class="fa fa-plus"></i>Line</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Payments</label>
+                            <div style="max-height: 200px; overflow-y: auto;">
                                 <table class="table table-bordered table-condensed" style="margin-bottom: 0">
                                     <thead>
                                         <tr>
-                                            <th style="width: 30px"></th>
                                             <th>Payment#</th>
                                             <th>Date</th>
                                             <th>Reference</th>
                                             <th class="text-right">Amount</th>
-                                            <th class="text-right">Used</th>
                                             <th class="text-right">Available</th>
+                                            <th class="text-right">Applying Now</th>
+                                            <th class="text-right">Left After</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse ($deposits as $deposit)
+                                        @php
+                                            $applying = $allocating['payments'][$deposit->payment->id] ?? 0;
+                                            $left = round($deposit->available - $applying, 2);
+                                        @endphp
                                         <tr wire:key="drawdown-deposit-{{ $deposit->payment->id }}">
-                                            <td><input type="checkbox" wire:model="selectedDeposits" value="{{ $deposit->payment->id }}"></td>
                                             <td>{{ $deposit->payment->payment_number }}</td>
                                             <td>{{ $deposit->payment->date }}</td>
                                             <td>{{ $deposit->payment->reference_code }} {{ $deposit->payment->mode_of_payment }}</td>
                                             <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $deposit->payment->amount, 2) }}</td>
-                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $deposit->payment->amount - $deposit->available, 2) }}</td>
                                             <td class="text-right">{{ $drawdown_symbol }}{{ number_format($deposit->available, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($applying, 2) }}</td>
+                                            <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
                                         </tr>
                                         @empty
                                         <tr>
@@ -885,72 +937,61 @@
                                     </tbody>
                                 </table>
                             </div>
-                            @error('selectedDeposits') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="form-group">
-                            <label>Invoices<span class="required" style="color: red">*</span></label>
-                            <div style="max-height: 220px; overflow-y: auto;">
+                            <label>Invoices</label>
+                            <div style="max-height: 200px; overflow-y: auto;">
                                 <table class="table table-bordered table-condensed" style="margin-bottom: 0">
                                     <thead>
                                         <tr>
-                                            <th style="width: 30px"></th>
                                             <th>Invoice#</th>
                                             <th>Date</th>
                                             <th>Status</th>
                                             <th class="text-right">Total</th>
                                             <th class="text-right">Balance</th>
+                                            <th class="text-right">Applying Now</th>
+                                            <th class="text-right">Balance After</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse ($drawdown_invoices as $invoice)
+                                        @php
+                                            $applying = $allocating['invoices'][$invoice->id] ?? 0;
+                                            $left = round((float) $invoice->balance - $applying, 2);
+                                        @endphp
                                         <tr wire:key="drawdown-invoice-{{ $invoice->id }}">
-                                            <td><input type="checkbox" wire:model="selectedInvoices" value="{{ $invoice->id }}"></td>
                                             <td>{{ $invoice->invoice_number }}</td>
                                             <td>{{ $invoice->date }}</td>
                                             <td>{{ $invoice->status }}</td>
                                             <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $invoice->total, 2) }}</td>
                                             <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $invoice->balance, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($applying, 2) }}</td>
+                                            <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">No unpaid invoices for this customer and currency.</td>
+                                            <td colspan="7" class="text-center">No unpaid invoices for this customer and currency.</td>
                                         </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
-                            @error('selectedInvoices') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>Selected Payments</label>
-                                    <input type="text" class="form-control" value="{{ $drawdown_symbol }}{{ number_format($selected_funds, 2) }}" disabled>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>Selected Invoices Balance</label>
-                                    <input type="text" class="form-control" value="{{ $drawdown_symbol }}{{ number_format($selected_due, 2) }}" disabled>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>To Be Applied</label>
-                                    <input type="text" class="form-control" value="{{ $drawdown_symbol }}{{ number_format($to_apply, 2) }}" disabled>
-                                </div>
-                            </div>
-                        </div>
-                        <small style="color: green">Payments and invoices are matched oldest first. Anything left on a payment stays available; anything left on an invoice stays outstanding.</small>
+                        <strong>Total to be applied: {{ $drawdown_symbol }}{{ number_format($to_apply, 2) }}</strong>
+                        @if ($over_allocated)
+                        <br><small style="color: red">The lines add up to more than a payment has available or an invoice has outstanding - see the figures in red.</small>
+                        @elseif ($incomplete_line)
+                        <br><small style="color: red">Every line needs a payment, an invoice and an amount.</small>
+                        @endif
                     @endif
 
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        @if ($to_apply > 0)
+                        @if ($to_apply > 0 && !$over_allocated && !$incomplete_line)
                         <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
                         @else
                         <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled><i class="fa fa-save"></i>Save</button>

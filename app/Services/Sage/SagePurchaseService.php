@@ -84,9 +84,12 @@ class SagePurchaseService
             if (empty($item['success']) || empty($item['external_id'])) {
                 return $this->fail($mapping, $entity, $po, 'Item sync failed: ' . ($item['error'] ?? 'unknown'), IntegrationMapping::STATUS_FAILED);
             }
+            // Inventory lines require a warehouse (emitted before quantity in the
+            // driver); non-inventory/service lines send none.
             $lines[] = [
                 'itemid'       => $item['external_id'],
                 'itemdesc'     => optional($pp->product)->name ?: 'Purchase item',
+                'warehouseid'  => $this->lineWarehouse($pp->product, $pp->store_id),
                 'quantity'     => $this->qty($pp->qty),
                 'unit'         => (string) config('sageintacct.purchasing.line_unit', 'Each'),
                 'price'        => $this->unitPrice($pp->subtotal ?: $pp->amount, $pp->qty),
@@ -182,6 +185,8 @@ class SagePurchaseService
             $lines[] = [
                 'itemid'        => $itemId,
                 'itemdesc'      => optional($rcv->product)->name ?: 'Received item',
+                // Receive into the item's own store warehouse (else the default).
+                'warehouseid'   => $this->lineWarehouse($rcv->product, $rcv->store_id ?? null),
                 'quantity'      => $this->qty($rcv->qty),
                 'unit'          => (string) config('sageintacct.purchasing.line_unit', 'Each'),
                 'price'         => $this->unitPrice($rcv->amount, $rcv->qty),
@@ -300,6 +305,20 @@ class SagePurchaseService
         $q = (float) ($qty ?: 0);
 
         return $q > 0 ? $q : 1;
+    }
+
+    /**
+     * Warehouse for a line, resolved by product: only INVENTORY products need one
+     * (Sage emits it before quantity); non-inventory/service products and missing
+     * products send none. Inventory → the store's mapped warehouse, else default.
+     */
+    protected function lineWarehouse($product, ?int $storeId): ?string
+    {
+        if (! $product || strcasecmp((string) $product->type, 'Non Inventory') === 0) {
+            return null;
+        }
+
+        return $this->warehouseId($storeId ?: $product->store_id);
     }
 
     /**

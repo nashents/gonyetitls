@@ -76,82 +76,80 @@ class CustomerDepositService
     }
 
     /**
-     * Applies the chosen deposits to the chosen invoices - oldest deposit
-     * and oldest invoice first - until either the deposits or the invoice
-     * balances run out. Each invoice_payments row is recorded against the
-     * deposit that actually funded it.
+     * Applies deposits to invoices exactly as paired by the user - each
+     * line says which deposit pays which invoice and by how much, so one
+     * deposit can be split across invoices and several deposits can go to
+     * one invoice. Nothing is matched automatically. The whole batch is
+     * rejected if any line is invalid or a deposit/invoice is over-allocated.
      *
+     * @param  array<int, array{payment_id: mixed, invoice_id: mixed, amount: mixed}>  $lines
      * @return array{applied: float, invoices: int}
      */
-    public function allocate(int $customerId, int $currencyId, array $paymentIds, array $invoiceIds): array
+    public function allocate(int $customerId, int $currencyId, array $lines): array
     {
-        return DB::transaction(function () use ($customerId, $currencyId, $paymentIds, $invoiceIds) {
-
-            $paymentIds = array_map('intval', $paymentIds);
+        return DB::transaction(function () use ($customerId, $currencyId, $lines) {
 
             $funds = $this->deposits($customerId, $currencyId, lock: true)
-                ->filter(fn ($deposit) => in_array((int) $deposit->payment->id, $paymentIds, true) && $deposit->available > 0)
-                ->values();
+                ->keyBy(fn ($deposit) => (int) $deposit->payment->id);
 
-            $invoices = Invoice::whereIn('id', $invoiceIds)
+            $invoices = Invoice::whereIn('id', collect($lines)->pluck('invoice_id')->filter()->unique())
                 ->where('customer_id', $customerId)
                 ->where('currency_id', $currencyId)
                 ->where('authorization', 'approved')
-                ->orderBy('date')
-                ->orderBy('id')
                 ->lockForUpdate()
-                ->get();
+                ->get()
+                ->keyBy('id');
 
+            // Running figures as lines are applied; $available keeps what each
+            // deposit started with, for the error message
+            $available = $funds->map(fn ($deposit) => $deposit->available);
+            $due = $invoices->map(fn ($invoice) => round((float) $invoice->balance, 2));
             $applied = 0.0;
-            $settled = 0;
 
-            foreach ($invoices as $invoice) {
-                $due = round((float) $invoice->balance, 2);
-                $paid = 0.0;
+            foreach ($lines as $line) {
+                $fund = $funds->get((int) ($line['payment_id'] ?? 0));
+                $invoice = $invoices->get((int) ($line['invoice_id'] ?? 0));
+                $amount = is_numeric($line['amount'] ?? null) ? round((float) $line['amount'], 2) : 0.0;
 
-                foreach ($funds as $fund) {
-                    if ($due <= 0) {
-                        break;
-                    }
-                    if ($fund->available <= 0) {
-                        continue;
-                    }
-
-                    $amount = round(min($fund->available, $due), 2);
-
-                    $invoice_payment = new InvoicePayment;
-                    $invoice_payment->customer_id = $invoice->customer_id;
-                    $invoice_payment->invoice_id = $invoice->id;
-                    $invoice_payment->payment_id = $fund->payment->id;
-                    $invoice_payment->source = 'drawdown';
-                    $invoice_payment->currency_id = $invoice->currency_id;
-                    $invoice_payment->amount = $amount;
-                    $invoice_payment->save();
-
-                    $fund->available = round($fund->available - $amount, 2);
-                    $due = round($due - $amount, 2);
-                    $paid = round($paid + $amount, 2);
+                if (! $fund || ! $invoice || $amount <= 0) {
+                    throw new \RuntimeException('Each line needs a payment, an invoice and an amount greater than zero.');
                 }
 
-                if ($paid <= 0) {
-                    continue;
+                if ($amount > $fund->available + 0.005) {
+                    throw new \RuntimeException("Payment {$fund->payment->payment_number} only has " . number_format($available[$fund->payment->id], 2) . ' available - the lines against it add up to more than that.');
                 }
 
-                $invoice->balance = $due;
-                $invoice->status = $due <= 0 ? 'Paid' : 'Partial';
-                $invoice->save();
+                if ($amount > $due[$invoice->id] + 0.005) {
+                    throw new \RuntimeException("Invoice {$invoice->invoice_number} only has " . number_format((float) $invoice->balance, 2) . ' outstanding - the lines against it add up to more than that.');
+                }
 
-                $applied = round($applied + $paid, 2);
-                $settled++;
+                $invoice_payment = new InvoicePayment;
+                $invoice_payment->customer_id = $invoice->customer_id;
+                $invoice_payment->invoice_id = $invoice->id;
+                $invoice_payment->payment_id = $fund->payment->id;
+                $invoice_payment->source = 'drawdown';
+                $invoice_payment->currency_id = $invoice->currency_id;
+                $invoice_payment->amount = $amount;
+                $invoice_payment->save();
+
+                $fund->available = round($fund->available - $amount, 2);
+                $due[$invoice->id] = max(round($due[$invoice->id] - $amount, 2), 0);
+                $applied = round($applied + $amount, 2);
             }
 
             if ($applied <= 0) {
-                throw new \RuntimeException('Nothing to allocate - select at least one payment with funds available and one invoice with a balance.');
+                throw new \RuntimeException('Nothing to allocate - add at least one line.');
+            }
+
+            foreach ($invoices as $invoice) {
+                $invoice->balance = $due[$invoice->id];
+                $invoice->status = $due[$invoice->id] <= 0 ? 'Paid' : 'Partial';
+                $invoice->save();
             }
 
             $this->syncWalletBalance($customerId, $currencyId);
 
-            return ['applied' => $applied, 'invoices' => $settled];
+            return ['applied' => $applied, 'invoices' => $invoices->count()];
         });
     }
 

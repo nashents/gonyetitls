@@ -423,6 +423,10 @@ class SageXmlDriver implements SageDriver
         foreach ($lines as $l) {
             $line  = $this->el('itemid', $l['itemid']);
             $line .= $this->elIf('itemdesc', $l['itemdesc'] ?? null);
+            // warehouseid MUST come before quantity (strict potransitem sequence:
+            // itemid, itemdesc, itemaliasid, taxable, warehouseid, quantity, …).
+            // Required for inventory items; omitted (null) for non-inventory.
+            $line .= $this->elIf('warehouseid', $l['warehouseid'] ?? null);
             $line .= $this->el('quantity', $l['quantity'] ?? 1);
             $line .= $this->elIf('unit', $l['unit'] ?? null);
             $line .= $this->elIf('price', $l['price'] ?? null);
@@ -430,10 +434,6 @@ class SageXmlDriver implements SageDriver
             $line .= $this->elIf('sourcelinekey', $l['sourcelinekey'] ?? null);
             $line .= $this->elIf('locationid', $l['locationid'] ?? null);
             $line .= $this->elIf('departmentid', $l['departmentid'] ?? null);
-            // NOTE: create_potransaction has NO line-level warehouse element
-            // (warehouseid/warehouse are rejected by the schema at every position;
-            // the warehouse comes from the item / transaction definition), so it
-            // is deliberately not emitted here.
             $line .= $this->elIf('projectid', $l['projectid'] ?? null);
             $line .= $this->elIf('employeeid', $l['employeeid'] ?? null);
             $line .= $this->elIf('classid', $l['classid'] ?? null);
@@ -487,6 +487,10 @@ class SageXmlDriver implements SageDriver
     protected function soLine(array $l): string
     {
         $line  = $this->el('itemid', $l['itemid']);
+        // warehouseid MUST come before quantity (strict sotransitem sequence:
+        // itemid, itemdesc, itemaliasid, taxable, warehouseid, quantity, …).
+        // Required for inventory items; omitted (null) for non-inventory.
+        $line .= $this->elIf('warehouseid', $l['warehouseid'] ?? null);
         $line .= $this->el('quantity', $l['quantity'] ?? 1);
         $line .= $this->elIf('unit', $l['unit'] ?? null);
         $line .= $this->elIf('price', $l['price'] ?? null);

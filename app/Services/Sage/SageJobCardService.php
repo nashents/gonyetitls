@@ -285,6 +285,9 @@ class SageJobCardService
             }
             $lines[] = [
                 'itemid'       => $itemId,
+                // Inventory parts need a warehouse (emitted before quantity); labour
+                // / non-inventory lines resolve to null and send none.
+                'warehouseid'  => $this->warehouseForProduct($this->dispatchProduct($di)),
                 'quantity'     => $this->qty($di->qty),
                 'unit'         => (string) config('sageintacct.jobcard.line_unit', 'Each'),
                 'price'        => $this->linePrice($di),
@@ -341,6 +344,43 @@ class SageJobCardService
     }
 
     /** Resolve a dispatch item to a Sage ITEMID (product, else its inventory/tyre/asset product, else a named item from the description). */
+    /** The Gonyeti Product behind a dispatch item (part/inventory/tyre/asset), if any. */
+    protected function dispatchProduct($di)
+    {
+        return $di->product
+            ?: optional($di->inventory)->product
+            ?: optional($di->tyre)->product
+            ?: optional($di->asset)->product;
+    }
+
+    /**
+     * Sage WAREHOUSEID for a dispatch line's product — only for inventory products
+     * (which carry a store_id); labour / non-inventory lines get null (no warehouse
+     * sent). Resolves store_id → store_warehouse mapping, else the configured default.
+     */
+    protected function warehouseForProduct($product): ?string
+    {
+        // Only inventory parts need a warehouse; labour / non-inventory send none.
+        if (! $product || strcasecmp((string) $product->type, 'Non Inventory') === 0) {
+            return null;
+        }
+
+        if ($product->store_id) {
+            $m = IntegrationMapping::where([
+                'company_integration_id' => $this->integration->id,
+                'entity_type'            => 'store_warehouse',
+                'local_id'               => $product->store_id,
+            ])->whereNotNull('external_id')->first();
+
+            if ($m && $m->external_id) {
+                return $m->external_id;
+            }
+        }
+
+        // Inventory product with no mapped store → the configured default warehouse.
+        return trim((string) config('sageintacct.warehouse.default_id', '')) ?: null;
+    }
+
     protected function resolveLineItem($di): ?string
     {
         $product = $di->product

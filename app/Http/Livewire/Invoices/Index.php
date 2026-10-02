@@ -101,9 +101,9 @@ class Index extends Component
     public $customer_accounts;
     public $selectedCustomerAccount;
     public $unpaid_invoices;
-    // Bulk invoice payments - the deposits and invoices ticked in the modal
-    public $selectedDeposits = [];
-    public $selectedInvoices = [];
+    // Bulk invoice payments - one line per "this payment pays this invoice"
+    // pairing made in the modal: [key, payment_id, invoice_id, amount]
+    public $allocations = [];
     public $account_payments;
     public $selected_currency;
     public $selected_customer;
@@ -269,16 +269,64 @@ class Index extends Component
             $this->selectedCustomer = $id;
             $this->selected_customer = Customer::find($id);
         }
-        $this->selectedDeposits = [];
-        $this->selectedInvoices = [];
+        $this->resetAllocations();
     }
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
 
             $this->selected_currency = Currency::find($id);
         }
-        $this->selectedDeposits = [];
-        $this->selectedInvoices = [];
+        $this->resetAllocations();
+    }
+
+    protected function resetAllocations(): void
+    {
+        $this->allocations = [];
+        $this->addAllocation();
+    }
+
+    public function addAllocation(){
+        $this->allocations[] = ['key' => uniqid(), 'payment_id' => '', 'invoice_id' => '', 'amount' => ''];
+    }
+
+    public function removeAllocation($index){
+        unset($this->allocations[$index]);
+        $this->allocations = array_values($this->allocations);
+    }
+
+    /**
+     * Picking the payment or the invoice on a line fills in the most that
+     * pairing can take - what is left on the payment or what is left on the
+     * invoice, whichever is smaller, after the other lines.
+     */
+    public function updatedAllocations($value, $key){
+        [$index, $field] = array_pad(explode('.', $key), 2, null);
+
+        if (! in_array($field, ['payment_id', 'invoice_id'], true) || ! isset($this->allocations[$index])) {
+            return;
+        }
+
+        $line = $this->allocations[$index];
+
+        if (blank($line['payment_id']) || blank($line['invoice_id'])) {
+            return;
+        }
+
+        $others = collect($this->allocations)->except($index)->filter(fn ($other) => is_numeric($other['amount'] ?? null));
+
+        $deposit = app(CustomerDepositService::class)
+            ->deposits((int) $this->selectedCustomer, (int) $this->selectedCurrency)
+            ->first(fn ($deposit) => (int) $deposit->payment->id === (int) $line['payment_id']);
+        $invoice = Invoice::find($line['invoice_id']);
+
+        if (! $deposit || ! $invoice) {
+            return;
+        }
+
+        $left_on_payment = $deposit->available - $others->where('payment_id', $line['payment_id'])->sum('amount');
+        $left_on_invoice = (float) $invoice->balance - $others->where('invoice_id', $line['invoice_id'])->sum('amount');
+
+        $this->allocations[$index]['amount'] = max(round(min($left_on_payment, $left_on_invoice), 2), 0);
     }
 
     public function updatedPaymentCurrencyId($id){
@@ -429,16 +477,21 @@ class Index extends Component
     }
 
     /**
-     * Bulk invoice payments: applies the deposits ticked in the modal to the
-     * invoices ticked in the modal (oldest first on both sides), recording
-     * each allocation against the deposit that funded it.
+     * Bulk invoice payments: applies each line made in the modal - this
+     * payment to this invoice for this amount - exactly as paired.
      */
     public function drawdownPayments(){
 
-        if (blank($this->selectedCustomer) || blank($this->selectedCurrency) || empty($this->selectedDeposits) || empty($this->selectedInvoices)) {
+        // Untouched blank lines are just ignored
+        $lines = collect($this->allocations)
+            ->reject(fn ($line) => blank($line['payment_id'] ?? null) && blank($line['invoice_id'] ?? null) && blank($line['amount'] ?? null))
+            ->values()
+            ->all();
+
+        if (blank($this->selectedCustomer) || blank($this->selectedCurrency) || empty($lines)) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
-                'message'=>"Select at least one payment and one invoice."
+                'message'=>"Add at least one line saying which payment pays which invoice."
             ]);
             return;
         }
@@ -447,8 +500,7 @@ class Index extends Component
             $result = app(CustomerDepositService::class)->allocate(
                 (int) $this->selectedCustomer,
                 (int) $this->selectedCurrency,
-                $this->selectedDeposits,
-                $this->selectedInvoices
+                $lines
             );
         } catch (\RuntimeException $e) {
             $this->dispatchBrowserEvent('alert',[
@@ -458,8 +510,7 @@ class Index extends Component
             return;
         }
 
-        $this->selectedDeposits = [];
-        $this->selectedInvoices = [];
+        $this->resetAllocations();
 
         $symbol = $this->selected_currency ? $this->selected_currency->symbol : "";
 
@@ -1338,6 +1389,11 @@ class Index extends Component
                 'invoices' => $query->orderByDesc($this->invoice_filter)->paginate(10),
                 'current_balance' => $this->current_balance,
                 'deposits' => $deposits,
+                // What the lines in the bulk payments modal add up to, per payment and per invoice
+                'allocating' => [
+                    'payments' => collect($this->allocations)->filter(fn ($line) => filled($line['payment_id'] ?? null) && is_numeric($line['amount'] ?? null))->groupBy('payment_id')->map(fn ($lines) => round($lines->sum('amount'), 2)),
+                    'invoices' => collect($this->allocations)->filter(fn ($line) => filled($line['invoice_id'] ?? null) && is_numeric($line['amount'] ?? null))->groupBy('invoice_id')->map(fn ($lines) => round($lines->sum('amount'), 2)),
+                ],
             ]);
          
         

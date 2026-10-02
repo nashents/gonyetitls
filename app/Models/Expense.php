@@ -43,6 +43,12 @@ class Expense extends Model implements Auditable
         return $this->belongsTo('App\Models\Product');
     }
 
+    /** Sage Intacct link (entity_type expense_item) for the sync badge/status. */
+    public function sageMapping(){
+        return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
+            ->where('entity_type', 'expense_item');
+    }
+
      public function route_expenses(){
         return $this->hasMany('App\Models\RouteExpense');
     }

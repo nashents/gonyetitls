@@ -85,6 +85,15 @@
                                         @else
                                             <small class="badge bg-secondary">Not synced to product</small>
                                         @endif
+                                        @if ($this->sageEnabled)
+                                            @php $sageId = optional($expense->sageMapping)->external_id ?: optional(optional($expense->product)->sageMapping)->external_id; @endphp
+                                            <br>
+                                            @if ($sageId)
+                                                <small class="badge bg-success" title="Sage item: {{ $sageId }}"><i class="fa fa-check"></i> Sage synced</small>
+                                            @else
+                                                <small class="badge bg-secondary">Not synced to Sage</small>
+                                            @endif
+                                        @endif
                                     </td>
                                     <td>{{$expense->payment_method ? $expense->payment_method->name : ""}}</td>
                                     <td>{{$expense->currency ? $expense->currency->name : ""}}</td>

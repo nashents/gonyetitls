@@ -318,7 +318,7 @@ class Index extends Component
     {
         if (filled($this->search)) {
             return view('livewire.expenses.index',[
-                'expenses' => Expense::query()->with('currency','account','tax','product')
+                'expenses' => Expense::query()->with('currency','account','tax','product','product.sageMapping','sageMapping')
                 ->where('name','like', '%'.$this->search.'%')
                 ->orWhere('type','like', '%'.$this->search.'%')
                 ->orWhere('amount','like', '%'.$this->search.'%')
