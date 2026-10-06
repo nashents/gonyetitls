@@ -236,6 +236,19 @@ class Edit extends Component
             $this->recalculateTotals();
 
             $credit_note = CreditNote::find($this->credit_note_id);
+
+            // The edited total (or a move to another invoice) must not over-credit the invoice.
+            if ($this->invoice_attached === 'Yes') {
+                $blockReason = Invoice::find($this->selectedInvoice)?->creditNoteBlockReason($credit_note->id, true, $this->total);
+                if ($blockReason) {
+                    $this->dispatchBrowserEvent('alert',[
+                        'type'=>'error',
+                        'message'=>$blockReason
+                    ]);
+                    return;
+                }
+            }
+
             $credit_note->user_id = Auth::user()->id;
             $credit_note->company_id = Auth::user()->employee->company_id;
             $credit_note->currency_id = $this->currency_id;

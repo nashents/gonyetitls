@@ -13,6 +13,7 @@ use App\Models\Expense;
 use App\Models\Horse;
 use App\Models\IntegrationLog;
 use App\Models\IntegrationMapping;
+use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\Store;
@@ -77,6 +78,7 @@ class SagePullService
                 'product'     => $this->pullProducts($options),
                 'expense'     => $this->pullExpenses($options),
                 'store'       => $this->pullStores(),
+                'inventory'   => $this->pullInventory(),
                 default       => ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0],
             };
         } catch (Throwable $e) {
@@ -1006,6 +1008,93 @@ class SagePullService
                 $this->linkMapping('store_warehouse', $store, $warehouseId, $name);
 
                 $isNew ? $s['created']++ : $s['linked']++;
+            } catch (Throwable $e) {
+                $s['failed']++;
+            }
+        }
+
+        return $s;
+    }
+
+    // ── Inventory stock (Sage on-hand → Gonyeti opening balances) ──
+
+    /**
+     * Pull current Sage on-hand (ITEMWAREHOUSEINFO.WONHAND per item × warehouse)
+     * into Gonyeti as opening-balance inventory records — the sitting balances.
+     * One inventory row per (item, warehouse) with stock; qty = WONHAND, unit cost
+     * = AVERAGE_COST, filed into the store mapped to that warehouse against the
+     * item's Gonyeti product. From there GRVs top up and dispatches deduct.
+     *
+     * Idempotent: keyed by "ITEMID|WAREHOUSEID" in an `inventory_stock` mapping, so
+     * a re-run never duplicates (and never overwrites a balance Gonyeti has since
+     * moved). Items with no stock, no mapped product, or no mapped store are skipped.
+     */
+    protected function pullInventory(): array
+    {
+        $rows = $this->readAll('ITEMWAREHOUSEINFO', ['ITEMID', 'WAREHOUSEID', 'WONHAND', 'AVERAGE_COST'], 'RECORDNO > 0');
+
+        // Sage ITEMID → Gonyeti product id, and WAREHOUSEID → store id.
+        $productByItem = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'product_item',
+        ])->whereNotNull('external_id')->pluck('local_id', 'external_id')->all();
+
+        $storeByWarehouse = IntegrationMapping::where([
+            'company_integration_id' => $this->integration->id,
+            'entity_type'            => 'store_warehouse',
+        ])->whereNotNull('external_id')->pluck('local_id', 'external_id')->all();
+
+        $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
+        foreach ($rows as $row) {
+            $itemId = trim((string) ($row['ITEMID'] ?? ''));
+            $whId   = trim((string) ($row['WAREHOUSEID'] ?? ''));
+            $onhand = (float) ($row['WONHAND'] ?? 0);
+
+            // Only register items that actually have stock, with a known product + store.
+            $productId = $productByItem[$itemId] ?? null;
+            $storeId   = $storeByWarehouse[$whId] ?? null;
+            if ($itemId === '' || $whId === '' || $onhand == 0.0 || ! $productId || ! $storeId) {
+                $s['skipped']++;
+                continue;
+            }
+
+            $key = $itemId . '|' . $whId;
+
+            try {
+                // Already imported this item-warehouse balance → don't duplicate or
+                // clobber whatever Gonyeti has moved since.
+                $exists = IntegrationMapping::where([
+                    'company_integration_id' => $this->integration->id,
+                    'entity_type'            => 'inventory_stock',
+                    'external_id'            => $key,
+                ])->whereNotNull('external_id')->exists();
+                if ($exists) {
+                    $s['linked']++;
+                    continue;
+                }
+
+                $cost  = is_numeric($row['AVERAGE_COST'] ?? null) ? (float) $row['AVERAGE_COST'] : 0.0;
+                $value = $onhand * $cost;
+
+                $inv                   = new Inventory();
+                $inv->user_id          = $this->creatorId;
+                $inv->product_id       = $productId;
+                $inv->store_id         = $storeId;
+                $inv->inventory_number = $this->nextNumber(Inventory::class, 'I');
+                $inv->qty              = $onhand;
+                $inv->amount           = $cost;   // unit cost
+                $inv->subtotal         = $value;
+                $inv->subtotal_incl    = $value;
+                $inv->total            = $value;
+                $inv->condition        = 'New';
+                $inv->purchase_type    = 'Sage Opening Balance';
+                $inv->status           = 1;
+                $inv->disposed         = 0;
+                $inv->saveQuietly();
+
+                $this->linkMapping('inventory_stock', $inv, $key, $itemId);
+
+                $s['created']++;
             } catch (Throwable $e) {
                 $s['failed']++;
             }

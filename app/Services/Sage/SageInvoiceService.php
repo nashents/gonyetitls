@@ -210,7 +210,7 @@ class SageInvoiceService
                 'id'       => $id,
                 'name'     => $name,
                 'taxgroup' => config('sageintacct.customer.tax_group') ?: null,
-                'currency' => optional($invoice->currency)->code ?: null,
+                'currency' => optional($invoice->currency)->name ?: null,
                 'status'   => 'active',
             ]);
             if (! empty($res['success']) || str_contains(strtolower((string) ($res['error'] ?? '')), 'already exists')) {

@@ -12,6 +12,9 @@
                             <div class="panel-title">
                                 <a href="{{route('inventories.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Inventory</a>
                                 <a href="" data-toggle="modal" data-target="#inventoryImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                @if ($this->sageEnabled)
+                                <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i> Pull stock from Sage</button>
+                                @endif
                             </div>
 
                         </div>

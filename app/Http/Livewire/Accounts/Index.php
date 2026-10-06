@@ -172,12 +172,30 @@ class Index extends Component
     }
 
     public function showAccount($id,$group_id){
+        $this->account_id = null;
         $this->account_type_id = $id;
         $this->active_group = $group_id;
         $this->dispatchBrowserEvent('show-accountModal');
     }
 
+    private function bankAccountLinkedElsewhere($bank_account_id, $except_account_id = null)
+    {
+        if (!$bank_account_id) {
+            return null;
+        }
+
+        return Account::withTrashed()
+            ->where('bank_account_id', $bank_account_id)
+            ->when($except_account_id, fn ($q) => $q->where('id', '!=', $except_account_id))
+            ->first();
+    }
+
     public function store(){
+        $create_new_bank = optional(AccountType::find($this->account_type_id))->name === 'Cash & Bank' && $this->create_bank_account;
+        if (!$create_new_bank && ($linked = $this->bankAccountLinkedElsewhere($this->bank_account_id))) {
+            $this->addError('bank_account_id', "This bank account is already linked to account \"{$linked->name}\".");
+            return;
+        }
         // try{
         $account = new Account;
         $account->user_id = Auth::user()->id;
@@ -290,6 +308,10 @@ class Index extends Component
     public function update()
     {
         if ($this->account_id) {
+            if ($linked = $this->bankAccountLinkedElsewhere($this->bank_account_id, $this->account_id)) {
+                $this->addError('bank_account_id', "This bank account is already linked to account \"{$linked->name}\".");
+                return;
+            }
             try{
             $account = Account::find($this->account_id);
             $locked = optional($account->account_type)->name === 'Cash & Bank';
@@ -563,6 +585,12 @@ class Index extends Component
         $this->bank_accounts = BankAccount::whereNotNull('company_id')
             ->where('company_id', $this->company->id ?? 0)
             ->where('currency_id', $this->selectedCurrency)
+            // accounts.bank_account_id is unique - hide bank accounts already linked
+            // to another ledger account (soft-deleted ones still hold the index).
+            ->whereNotIn('id', Account::withTrashed()
+                ->whereNotNull('bank_account_id')
+                ->when($this->account_id, fn ($q) => $q->where('id', '!=', $this->account_id))
+                ->select('bank_account_id'))
             ->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();

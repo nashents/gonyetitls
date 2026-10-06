@@ -116,7 +116,7 @@ class SageTripMapper
             'managerid'     => $managerId ?: null,
             'begindate'     => SageFormat::date($trip->start_date),
             'enddate'       => SageFormat::date($trip->end_date),
-            'currency'      => optional($trip->currency)->code ?: null,
+            'currency'      => optional($trip->currency)->name ?: null,
             'status'        => self::status($trip),
             'projectstatus' => self::projectStatus($trip),
             'description'   => self::description($trip, $trailerRegs),

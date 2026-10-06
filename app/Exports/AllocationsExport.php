@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Allocation;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;

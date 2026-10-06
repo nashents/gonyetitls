@@ -61,6 +61,18 @@ class CreditNoteItems extends Component
 
     public function store(){
         if (isset($this->item)) {
+            $added = 0;
+            foreach ($this->item as $key => $value) {
+                if (isset($this->amount[$key]) && isset($this->qty[$key])) {
+                    $added += $this->amount[$key] * $this->qty[$key];
+                }
+            }
+            if ($this->blockOverCredit($this->total + $added)) {
+                return;
+            }
+        }
+
+        if (isset($this->item)) {
             foreach($this->item as $key => $value){
                 $credit_note_item = new CreditNoteItem;
                 $credit_note_item->credit_note_id = $this->credit_note->id;
@@ -122,6 +134,13 @@ class CreditNoteItems extends Component
 
     public function update(){
         if ($this->credit_note_item_id) {
+            $newTotal = CreditNoteItem::where('credit_note_id', $this->credit_note->id)
+                ->where('id', '!=', $this->credit_note_item_id)->sum('subtotal')
+                + ((float) $this->amount * (float) $this->qty);
+            if ($this->blockOverCredit($newTotal)) {
+                return;
+            }
+
             $credit_note_item = CreditNoteItem::find($this->credit_note_item_id);
             $credit_note_item->item = $this->item;
             $credit_note_item->description = $this->description;
@@ -180,6 +199,24 @@ class CreditNoteItems extends Component
             'type'=>'success',
             'message'=>"Credit Note Item Deleted Successfully!!"
         ]);
+    }
+
+    /**
+     * Refuse a change that would push the credit note past what its invoice
+     * can still be credited (CreditNoteObserver applies approved totals).
+     */
+    private function blockOverCredit($newTotal): bool
+    {
+        $credit_note = CreditNote::find($this->credit_note->id);
+        $blockReason = $credit_note->invoice?->creditNoteBlockReason($credit_note->id, true, $newTotal);
+        if ($blockReason) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$blockReason
+            ]);
+            return true;
+        }
+        return false;
     }
 
     public function render()

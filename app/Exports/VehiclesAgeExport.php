@@ -59,7 +59,7 @@ WithCustomStartCell
         }else {
             $yearsDifference = "";
         }
-        if ((preg_match($pattern, $vehicle->end_date)) ){
+        if (isset($start_date) && preg_match($pattern, $vehicle->end_date)) {
             $end_date = Carbon::parse($vehicle->end_date);
             $yearsOfVehicleDifference = $start_date->diffInYears($end_date);
         }else {

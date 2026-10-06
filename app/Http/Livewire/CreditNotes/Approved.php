@@ -56,10 +56,7 @@ class Approved extends Component
             return redirect()->route('credit_notes.approved');
         }else {
 
-            $invoice = Invoice::find($this->invoice->id);
-            $invoice->total = $this->invoice_total + $this->credit_note->total;
-            $invoice->balance = $this->invoice_balance + $this->credit_note->total;
-            $invoice->update();
+            // CreditNoteObserver restores the invoice balance and reverses the journal.
             
             $this->dispatchBrowserEvent('hide-credit_noteAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[

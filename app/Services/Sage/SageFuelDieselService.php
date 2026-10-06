@@ -260,7 +260,7 @@ class SageFuelDieselService
                 'id'       => $id,
                 'name'     => $name,
                 'taxgroup' => config('sageintacct.vendor.tax_group') ?: null,
-                'currency' => optional($fuel->currency)->code ?: null,
+                'currency' => optional($fuel->currency)->name ?: null,
                 'status'   => 'active',
             ]);
             if (! empty($res['success']) || $this->isDuplicate($res['error'] ?? null)) {

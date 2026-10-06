@@ -467,7 +467,47 @@ class Index extends Component
         return Store::whereKey($id)->exists() ? $id : null;
     }
 
+    /**
+     * Every line being saved needs a numeric amount and quantity - store()
+     * and update() work out line totals from them.
+     */
+    protected function linesAreValid(bool $includeCurrent = false): bool
+    {
+        $sets = [['selectedProduct', 'amount', 'qty']];
+        if ($includeCurrent) {
+            $sets[] = ['selectedCurrentProduct', 'current_amount', 'current_qty'];
+        }
+        $valid = true;
+
+        foreach ($sets as [$products, $amounts, $qtys]) {
+            foreach ((array) $this->{$products} as $key => $value) {
+                if (! is_numeric($this->{$amounts}[$key] ?? null)) {
+                    $this->addError("{$amounts}.{$key}", 'Enter a valid amount (numbers only, no commas).');
+                    $valid = false;
+                }
+                if (! is_numeric($this->{$qtys}[$key] ?? null)) {
+                    $this->addError("{$qtys}.{$key}", 'Enter a valid quantity (numbers only).');
+                    $valid = false;
+                }
+            }
+        }
+
+        if (! $valid) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Every item line needs a numeric amount and quantity.',
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
     public function store(){
+
+        if (! $this->linesAreValid()) {
+            return;
+        }
 
         DB::transaction(function () {
 
@@ -519,6 +559,7 @@ class Index extends Component
             if (isset($this->selectedTax[$key])) {
                 $purchase_product->tax_id = $this->selectedTax[$key];
             }
+             $item_subtotal = 0;
              if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
 
                 $item_subtotal = $this->amount[$key]*$this->qty[$key];
@@ -684,6 +725,10 @@ class Index extends Component
     }
     public function update(){
 
+        if (! $this->linesAreValid(true)) {
+            return;
+        }
+
          DB::transaction(function () {
 
         if ($this->purchase_id) {
@@ -737,6 +782,8 @@ class Index extends Component
             if (isset($this->selectedCurrentTax[$key])) {
                 $purchase_product->tax_id = $this->selectedCurrentTax[$key];
             }
+
+             $item_subtotal = 0;
 
              if ((isset($this->current_amount[$key]) && is_numeric($this->current_amount[$key])) && ( isset($this->current_qty[$key]) && is_numeric($this->current_qty[$key]) ) ) {
 
@@ -806,6 +853,7 @@ class Index extends Component
                 if (isset($this->selectedTax[$key])) {
                     $purchase_product->tax_id = $this->selectedTax[$key];
                 }
+                 $item_subtotal = 0;
                  if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
     
                     $item_subtotal = $this->amount[$key]*$this->qty[$key];

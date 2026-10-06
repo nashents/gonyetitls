@@ -3,6 +3,8 @@
 namespace App\Exports;
 
 use App\Models\FuelRequest;
+use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;

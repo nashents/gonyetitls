@@ -9,11 +9,26 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use App\Imports\InventoriesImport;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Sage\SageIntegration;
+use App\Http\Livewire\Concerns\PullsFromSage;
 
 class Index extends Component
 {
     use WithFileUploads;
     use WithPagination;
+    use PullsFromSage;
+
+    /** Sage integration gate — controls the "Pull stock from Sage" button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Import current Sage on-hand (ITEMWAREHOUSEINFO) as opening-balance inventory. */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('inventory', 'inventory stock');
+    }
 
     protected $paginationTheme = 'bootstrap';
     public $search;

@@ -322,7 +322,7 @@ class Create extends Component
                 $this->source = "Booking";
                 $this->selectedCustomer = Null;
                 $this->selectedCurrency = Auth::user()->employee->company->currency_id;
-                $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+                $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
             }elseif($value == "Customer"){
                  $this->selectedTransporter = Null;
             }
@@ -2155,7 +2155,7 @@ class Create extends Component
         if (!is_null($id)) {
             $this->selected_currency = Currency::find($id);
             $this->invoice_currency = $this->selectedCurrency;
-            $this->bank_accounts = BankAccount::where('currency_id',$id)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+            $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
             if($id != $this->company->currency_id){
                 $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
                     ->where('status', 1)
@@ -2198,7 +2198,7 @@ class Create extends Component
 
         }
         elseif($category == "bank_accounts"){
-            $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+            $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bank Accounts Refreshed Successfully!!."

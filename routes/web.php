@@ -291,6 +291,7 @@ Route::get('/agents/export/pdf','ExportsController@exportAgentsPDF')->name('agen
 Route::post('/agents/import','ImportsController@importAgents')->name('agents.import');
 
 Route::get('/companies/{company}/profile','CompanyController@getProfile')->name('company-profile');
+Route::get('/data-backups/{dataBackup}/download','DataBackupsController@download')->name('data-backups.download');
 Route::get('companies/management','CompanyController@manage')->name('companies.manage');
 Route::get('/companies/export/excel','ExportsController@exportCompaniesExcel')->name('companies.export.excel');
 Route::get('/companies/export/csv','ExportsController@exportCompaniesCSV')->name('companies.export.csv');

@@ -441,7 +441,7 @@ class Edit extends Component
                 $this->source = "Booking";
                 $this->selectedCustomer = Null;
                 $this->selectedCurrency = Auth::user()->employee->company->currency_id;
-                $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+                $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
             }elseif($value == "Customer"){
                  $this->selectedTransporter = Null;
             }
@@ -1017,10 +1017,8 @@ class Edit extends Component
         $invoice->total = $this->total;
         $invoice->subtotal = $this->subtotal;
         $invoice->tax_amount = $this->tax_amount;
-        $invoice->balance = max(0, $this->total
-            - app(\App\Services\Accounting\CustomerFuelSupplyService::class)->allocatedToInvoice($invoice)
-            - app(\App\Services\Accounting\DebtorJournalService::class)->allocatedToInvoice($invoice));
         $invoice->update();
+        $invoice->recalculateBalance();
 
         $this->invoice_item->delete();
         $this->invoice_items = InvoiceItem::where('invoice_id',$this->invoice_id)->get();
@@ -2416,21 +2414,10 @@ class Edit extends Component
                 $invoice->total = $this->total;
                 $invoice->exchange_rate = $this->exchange_rate;
                 $invoice->exchange_amount = $this->exchange_amount;
-                $total_paid = $invoice->payments
-                ->whereNotNull('amount')
-                ->where('amount', '!=', '')
-                ->sum('amount');
-                // Customer-supplied fuel applied to this invoice settles it
-                // just like a payment - keep it off the recomputed balance.
-                $total_paid += app(\App\Services\Accounting\CustomerFuelSupplyService::class)->allocatedToInvoice($invoice);
-                // ...and so do debtors journal credits allocated to it.
-                $total_paid += app(\App\Services\Accounting\DebtorJournalService::class)->allocatedToInvoice($invoice);
-
-                $invoice->balance = (is_numeric($total_paid) && $total_paid > 0 && $this->total > $total_paid)
-                    ? $this->total - $total_paid
-                    : $this->total;
-
                 $invoice->update();
+                // Balance = total less payments, customer-supplied fuel,
+                // debtors journal credits and approved credit notes.
+                $invoice->recalculateBalance();
         
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
@@ -2446,7 +2433,7 @@ class Edit extends Component
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
              $this->selected_currency = Currency::find($id);
-             $this->bank_accounts = BankAccount::where('currency_id',$id)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+             $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
              if($id != $this->company->currency_id){
                 $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
                     ->where('status', 1)
@@ -2704,7 +2691,7 @@ class Edit extends Component
 
         }
         elseif($category == "bank_accounts"){
-            $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+            $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bank Accounts Refreshed Successfully!!."

@@ -246,9 +246,9 @@ class BillsExport implements
         $symbol   = $bill->currency ? $bill->currency->symbol : "";
         $currency = $bill->currency ? $bill->currency->name : "";
 
-        $subtotal    = number_format($bill?->subtotal ??  0, 2);
-        $tax_amount  = number_format($bill?->tax_amount ?? 0, 2);
-        $total       = number_format($bill?->total ?? 0, 2);
+        $subtotal    = number_format((float) ($bill?->subtotal ?? 0), 2);
+        $tax_amount  = number_format((float) ($bill?->tax_amount ?? 0), 2);
+        $total       = number_format((float) ($bill?->total ?? 0), 2);
 
         if (isset($bill->payments)) {
             $payments = number_format($bill->payments->sum('amount'), 2);
@@ -256,7 +256,7 @@ class BillsExport implements
             $payments = number_format($bill->bill_payments->sum('amount'), 2);
         }
 
-        $balance = number_format($bill->balance, 2);
+        $balance = number_format((float) $bill->balance, 2);
 
         // ✅ reset items per row (prevents “carry-over”)
         $items = [];

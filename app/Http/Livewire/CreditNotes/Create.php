@@ -103,6 +103,12 @@ class Create extends Component
     public function updatedSelectedInvoice($id){
         if (!is_null($id)) {
             $this->invoice = Invoice::find($this->selectedInvoice);
+            if ($blockReason = $this->invoice->creditNoteBlockReason()) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'warning',
+                    'message'=>$blockReason
+                ]);
+            }
             $this->currency_id = $this->invoice->currency_id;
             $this->tax_rate =  $this->invoice->tax_rate;
             $this->selectedCustomer =  $this->invoice->customer_id;
@@ -321,6 +327,18 @@ class Create extends Component
         }
 
         $this->recalculateTotals();
+
+        if ($this->invoice_attached === 'Yes') {
+            $blockReason = Invoice::find($this->selectedInvoice)?->creditNoteBlockReason(null, true, $this->total);
+            if ($blockReason) {
+                $this->isSubmitting = false;
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>$blockReason
+                ]);
+                return;
+            }
+        }
 
         $credit_note = new CreditNote;
         $credit_note->user_id = Auth::user()->id;

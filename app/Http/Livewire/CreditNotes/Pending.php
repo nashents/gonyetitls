@@ -39,6 +39,17 @@ class Pending extends Component
       public function update(){
     //   try{
             $credit_note = CreditNote::find($this->credit_note_id);
+
+            if ($this->authorize == "approved" && $credit_note->invoice
+                && ($blockReason = $credit_note->invoice->creditNoteBlockReason($credit_note->id, false, $credit_note->total))) {
+                $this->dispatchBrowserEvent('hide-credit_noteAuthorizationModal');
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>$blockReason
+                ]);
+                return;
+            }
+
             $credit_note->authorized_by_id = Auth::user()->id;
             $credit_note->authorization = $this->authorize;
             $credit_note->reason = $this->comments;
@@ -46,12 +57,7 @@ class Pending extends Component
             
 
         if ($this->authorize == "approved") {
-            $invoice = Invoice::find($this->invoice->id);
-            $invoice->balance = 0;
-            $invoice->paid = $this->credit_note->total;
-            $invoice->status = "Paid";
-            $invoice->invoice_status = 0;
-            $invoice->update();
+            // CreditNoteObserver recomputes the invoice balance and posts the journal.
 
             $this->dispatchBrowserEvent('hide-credit_noteAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[

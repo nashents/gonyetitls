@@ -102,7 +102,9 @@ class SagePurchaseService
             return $this->result(true, 'skipped', null, null, $entity, $po);
         }
 
-        $header = $this->header((string) config('sageintacct.purchasing.purchase_order_type', 'Purchase order'), $po->date, $vendorSageId, $this->purchaseRef($po), $vendorContact, optional($po->currency)->code);
+        // Currency ISO code is stored in currencies.name (no `code` column), so the
+        // PO posts in the source currency instead of defaulting to the base currency.
+        $header = $this->header((string) config('sageintacct.purchasing.purchase_order_type', 'Purchase order'), $po->date, $vendorSageId, $this->purchaseRef($po), $vendorContact, optional($po->currency)->name);
         $res    = $this->driver->createRequisition($header, $lines);
 
         return $this->finishSync($mapping, $res, $header['referenceno'], 'create', $entity, $po);
@@ -200,7 +202,14 @@ class SagePurchaseService
             return $this->result(true, 'skipped', null, null, $entity, $gr);
         }
 
-        $header = $this->header((string) config('sageintacct.purchasing.receipt_type', 'Receipt'), $gr->delivery_date ?: $gr->date, $vendorSageId, $this->receiptRef($gr), $vendorContact, optional($purchase->currency)->code);
+        // Currency ISO code is in currencies.name (no `code` column) — match source currency.
+        $header = $this->header((string) config('sageintacct.purchasing.receipt_type', 'Receipt'), $gr->delivery_date ?: $gr->date, $vendorSageId, $this->receiptRef($gr), $vendorContact, optional($purchase->currency)->name);
+        // Convert FROM the source PO so Sage shows "Converted from Purchase order-…"
+        // (header source doc + each line's <sourcelinekey> together make the conversion).
+        $header['createdfrom'] = $poDocId;
+        // Supplier document number (the supplier's delivery note / invoice ref) —
+        // required to later convert the receipt to a purchase invoice.
+        $header['vendordocno'] = $gr->delivery_number ?: $gr->goods_received_number;
         $res    = $this->driver->createRequisition($header, $lines);
 
         return $this->finishSync($mapping, $res, $header['referenceno'], 'create', $entity, $gr);

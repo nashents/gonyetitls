@@ -30,6 +30,9 @@
         @endif
         <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
         <li role="presentation"><a href="#budgets" aria-controls="budgtes" role="tab" data-toggle="tab">Budgets</a></li>
+        @if (App\Models\DataBackup::userCanManage(Auth::user()))
+            <li role="presentation"><a href="#backup" aria-controls="backup" role="tab" data-toggle="tab">Backup</a></li>
+        @endif
         @if (Auth::user()->is_admin())
                 <li role="presentation"><a href="#integrations" aria-controls="integrations" role="tab" data-toggle="tab">Integrations</a></li>
                 <li role="presentation"><a href="#reset-data" aria-controls="reset-data" role="tab" data-toggle="tab">Data Reset</a></li>
@@ -168,6 +171,11 @@
         <div role="tabpanel" class="tab-pane" id="budgets">
             @livewire('budgets.index', ['id' => $company->id])
         </div>
+        @if (App\Models\DataBackup::userCanManage(Auth::user()))
+            <div role="tabpanel" class="tab-pane" id="backup">
+                @livewire('companies.backup')
+            </div>
+        @endif
         @if (Auth::user()->is_admin())
             <div role="tabpanel" class="tab-pane" id="integrations">
                 @livewire('company-integrations.index', ['id' => $company->id])

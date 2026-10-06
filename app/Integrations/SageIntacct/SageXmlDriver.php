@@ -442,8 +442,16 @@ class SageXmlDriver implements SageDriver
 
         $hdr  = $this->el('transactiontype', $h['transactiontype']);
         $hdr .= $this->poDate('datecreated', $h['datecreated'] ?? null);
+        // Source document for a conversion (e.g. Receipt converted from a PO) — the
+        // document shows "Converted from …". Sequence: after datecreated, before
+        // vendorid. Omitted (null) for non-conversion documents.
+        $hdr .= $this->elIf('createdfrom', $h['createdfrom'] ?? null);
         $hdr .= $this->el('vendorid', $h['vendorid']);
         $hdr .= $this->elIf('referenceno', $h['referenceno'] ?? null);
+        // Supplier/vendor document number (their delivery note / invoice no) — needed
+        // so the receipt can convert to a purchase invoice. Sequence: after
+        // referenceno, before datedue. Omitted (null) when not provided.
+        $hdr .= $this->elIf('vendordocno', $h['vendordocno'] ?? null);
         $hdr .= $this->poDate('datedue', $h['datedue'] ?? null);
         // returnto + payto are REQUIRED (a valid contact name).
         $hdr .= '<returnto>' . $this->el('contactname', $h['contactname'] ?? '') . '</returnto>';
