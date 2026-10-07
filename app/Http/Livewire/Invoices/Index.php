@@ -34,6 +34,7 @@ use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
 use App\Services\Accounting\InvoiceDeletionService;
 use App\Services\Accounting\CustomerDepositService;
+use App\Services\Accounting\InvoicePaymentLineService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -117,6 +118,12 @@ class Index extends Component
     // _auto while it is still the suggestion, not something the user typed
     public $invoice_conversion_rate;
     public $invoice_conversion_rate_auto = true;
+    // Direct invoice payment split across the invoice's lines:
+    // [id, trip_id, label, total, paid, outstanding] per line, and the
+    // ticked state / amount per line keyed by invoice_item_id
+    public $payment_lines = [];
+    public $line_checked = [];
+    public $line_amounts = [];
     public $uninvoiced_trips;
     public $item_subtotal = 0;
     public $subtotal = 0;
@@ -363,6 +370,7 @@ class Index extends Component
     }
 
     public function updatedAmount(){
+        $this->distributeAmountToLines();
         // Typing the applied amount directly is the same as giving the rate
         // it implies - keep the rate field saying so.
         if ($this->showsInvoiceConversionRate() && is_numeric($this->amount) && $this->amount > 0 && is_numeric($this->paid_amount) && $this->paid_amount > 0) {
@@ -441,6 +449,99 @@ class Index extends Component
 
         $worth = round($this->paid_amount * $rate, 2);
         $this->amount = is_numeric($this->invoice_balance) ? min($worth, (float) $this->invoice_balance) : $worth;
+        $this->distributeAmountToLines();
+    }
+
+    /**
+     * Ticking a line puts its whole outstanding amount on it, unticking
+     * takes it off; either way the payment amount becomes the lines' total.
+     */
+    public function updatedLineChecked($value, $key){
+        $line = collect($this->payment_lines)->firstWhere('id', (int) $key);
+        $this->line_amounts[$key] = $value && $line ? number_format($line['outstanding'], 2, '.', '') : 0;
+        $this->syncAmountFromLines();
+    }
+
+    public function updatedLineAmounts($value, $key){
+        $this->line_checked[$key] = is_numeric($value) && $value > 0;
+        $this->syncAmountFromLines();
+    }
+
+    protected function syncAmountFromLines(): void
+    {
+        if (empty($this->payment_lines)) {
+            return;
+        }
+
+        $this->amount = round($this->checkedLineTotal(), 2);
+        // keeps the cross-currency rate in line with the new applied amount
+        if ($this->showsInvoiceConversionRate() && $this->amount > 0 && is_numeric($this->paid_amount) && $this->paid_amount > 0) {
+            $this->invoice_conversion_rate = round($this->amount / $this->paid_amount, 6);
+            $this->invoice_conversion_rate_auto = false;
+        }
+    }
+
+    protected function checkedLineTotal(): float
+    {
+        $total = 0.0;
+        foreach ($this->payment_lines as $line) {
+            $amount = $this->line_amounts[$line['id']] ?? 0;
+            if (! empty($this->line_checked[$line['id']]) && is_numeric($amount)) {
+                $total += (float) $amount;
+            }
+        }
+        return $total;
+    }
+
+    /** invoice_item_id => amount for the ticked lines with something on them */
+    protected function checkedLineAmounts(): array
+    {
+        $amounts = [];
+        foreach ($this->payment_lines as $line) {
+            $amount = $this->line_amounts[$line['id']] ?? 0;
+            if (! empty($this->line_checked[$line['id']]) && is_numeric($amount) && $amount > 0) {
+                $amounts[$line['id']] = round((float) $amount, 2);
+            }
+        }
+        return $amounts;
+    }
+
+    /**
+     * Spreads the payment amount over the lines top-down, each up to what
+     * it still has outstanding.
+     */
+    protected function distributeAmountToLines(): void
+    {
+        $remaining = is_numeric($this->amount) ? round((float) $this->amount, 2) : 0.0;
+
+        foreach ($this->payment_lines as $line) {
+            $share = round(min($line['outstanding'], max(0, $remaining)), 2);
+            $remaining = round($remaining - $share, 2);
+            $this->line_amounts[$line['id']] = number_format($share, 2, '.', '');
+            $this->line_checked[$line['id']] = $share > 0;
+        }
+    }
+
+    protected function lineAllocationError(): ?string
+    {
+        foreach ($this->payment_lines as $line) {
+            if (empty($this->line_checked[$line['id']])) {
+                continue;
+            }
+            $amount = $this->line_amounts[$line['id']] ?? 0;
+            if (! is_numeric($amount) || $amount < 0) {
+                return "Enter a valid amount for {$line['label']}.";
+            }
+            if ($amount > $line['outstanding'] + 0.009) {
+                return "The amount on {$line['label']} is more than its outstanding ".number_format($line['outstanding'], 2).".";
+            }
+        }
+
+        if (abs($this->checkedLineTotal() - (float) $this->amount) > 0.009) {
+            return "The line item amounts (".number_format($this->checkedLineTotal(), 2).") must add up to the payment amount (".number_format((float) $this->amount, 2).").";
+        }
+
+        return null;
     }
 
     public function updatedSelectedCustomerAccount($id){
@@ -473,6 +574,7 @@ class Index extends Component
         if(!is_null($id)){
             $this->loan = Loan::find($id);
             $this->amount = $this->loan->payment_per_month;
+            $this->distributeAmountToLines();
         }
     }
 
@@ -819,6 +921,12 @@ class Index extends Component
         $this->invoice_conversion_rate_auto = true;
         $this->loans =Loan::where('authorization','approved')->where('currency_id',$this->invoice_currency->id)->where('movement','In')->where('balance','>',0)->where('status','Unpaid')->orWhere('status','Partial')->get();
         $this->invoice_balance = $this->invoice->balance;
+        // Every line ticked by default, the balance spread over what each owes
+        $this->payment_lines = app(InvoicePaymentLineService::class)->lines($this->invoice);
+        $this->line_checked = [];
+        $this->line_amounts = [];
+        $this->amount = is_numeric($this->invoice_balance) ? round((float) $this->invoice_balance, 2) : null;
+        $this->distributeAmountToLines();
         $this->current_balance = $this->invoice_balance - $this->amount;
         $this->dispatchBrowserEvent('show-paymentModal');
     }
@@ -844,6 +952,10 @@ class Index extends Component
             if ($receiving_account && $receiving_account->currency_id && (int) $receiving_account->currency_id !== (int) $payment_currency_id) {
                 $error = "The receiving account is not held in the payment currency.";
             }
+        }
+
+        if (! $error && ! empty($this->payment_lines)) {
+            $error = $this->lineAllocationError();
         }
 
         if (! $error && $crossCurrency && (! is_numeric($this->amount) || $this->amount <= 0 || $this->amount > (float) $this->invoice->balance)) {
@@ -928,6 +1040,10 @@ class Index extends Component
         $invoice_payment->currency_id = $this->invoice->currency_id;
         $invoice_payment->amount = $this->amount;
         $invoice_payment->save();  
+
+        if (! empty($this->payment_lines)) {
+            app(InvoicePaymentLineService::class)->apply($invoice_payment, $this->invoice, $this->checkedLineAmounts());
+        }
 
 
         if(isset($this->pop)){

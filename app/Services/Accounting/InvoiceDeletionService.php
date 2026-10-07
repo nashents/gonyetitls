@@ -43,6 +43,8 @@ class InvoiceDeletionService
             $hadDrawdowns = $invoice->invoice_payments->contains(fn ($invoice_payment) => $invoice_payment->source === 'drawdown' && $invoice_payment->payment_id);
 
             foreach ($invoice->invoice_payments as $invoice_payment) {
+                // per-line split comes back off the trips it was paid against
+                app(InvoicePaymentLineService::class)->reverse($invoice_payment);
                 $invoice_payment->delete();
             }
 

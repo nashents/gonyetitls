@@ -28,6 +28,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 {
     protected string $shiftDateColumn = 'shift_start_time';
     protected string $shiftTypeColumn = 'type';
+    protected string $shiftWorkTypeColumn = 'for';
     protected string $tripWeightColumn = 'weight';
     protected string $shiftOpenMileageColumn = 'open_mileage';
     protected string $shiftCloseMileageColumn = 'close_mileage';
@@ -46,12 +47,14 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     public function __construct(
         protected string $periodTitle = 'Key Operating Metrics - ',
         protected ?Carbon $asAt = null,
-        protected array $loadingPointFilterNames = []
+        protected array $loadingPointFilterNames = [],
+        protected ?string $workType = null
     ) {
         $reportDate = ($this->asAt ?: now())->copy()->subDay();
 
         $this->periodTitle = $this->periodTitle .
-            $reportDate->format('M - d, Y');
+            $reportDate->format('M - d, Y') .
+            (filled($this->workType) ? " ({$this->workType})" : '');
         $this->asAt = $this->asAt ?: now();
 
         $this->bootLoadingPoints();
@@ -527,10 +530,10 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     protected function computePeriod(Carbon $from, Carbon $to, array $lpMap): array
     {
         $shiftBase = Shift::query()
-            ->whereBetween($this->shiftDateColumn, [$from, $to]);
+            ->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to));
 
         $tripBase = Trip::query()
-            ->whereHas('shift', fn (Builder $q) => $q->whereBetween($this->shiftDateColumn, [$from, $to]));
+            ->whereHas('shift', fn (Builder $q) => $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to)));
 
         $oreLongTrips = (clone $tripBase)
             ->where('haulage_type', 'long_haul')
@@ -542,7 +545,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 
         $fuelLong = Fuel::query()
             ->whereHas('shift', fn (Builder $q) =>
-                $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
                     ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'long_haul'))
             )
             ->sum('quantity');
@@ -566,7 +569,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 
         $fuelShort = Fuel::query()
             ->whereHas('shift', fn (Builder $q) =>
-                $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
                     ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'short_haul'))
             )
             ->sum('quantity');
@@ -588,7 +591,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 
         $fuelConc = Fuel::query()
             ->whereHas('shift', fn (Builder $q) =>
-                $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
                     ->whereHas('trips', fn (Builder $t) =>
                         $t->whereHas('cargo', fn (Builder $c) => $c->where('name', 'Platinum Concentrate'))
                     )
@@ -622,10 +625,19 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         ];
     }
 
+    /**
+     * Shift date window plus the optional work type (shifts.for: Trips / Rehandlings).
+     */
+    protected function applyShiftScope(Builder $q, Carbon $from, Carbon $to): Builder
+    {
+        return $q->whereBetween($this->shiftDateColumn, [$from, $to])
+            ->when(filled($this->workType), fn (Builder $q) => $q->where($this->shiftWorkTypeColumn, $this->workType));
+    }
+
     protected function shiftBreakdown(Carbon $from, Carbon $to): array
     {
         $shifts = Shift::query()
-            ->whereBetween($this->shiftDateColumn, [$from, $to]);
+            ->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to));
 
         return [
             'morning_shifts' => (clone $shifts)
@@ -642,21 +654,21 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 
             'morning_loads' => Trip::query()
                 ->whereHas('shift', function ($q) use ($from, $to) {
-                    $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                    $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
                         ->where($this->shiftTypeColumn, 'Morning');
                 })
                 ->count(),
 
             'night_loads' => Trip::query()
                 ->whereHas('shift', function ($q) use ($from, $to) {
-                    $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                    $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
                         ->where($this->shiftTypeColumn, 'Night');
                 })
                 ->count(),
 
             'backshift_loads' => Trip::query()
                 ->whereHas('shift', function ($q) use ($from, $to) {
-                    $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                    $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
                         ->where($this->shiftTypeColumn, 'Backshift');
                 })
                 ->count(),

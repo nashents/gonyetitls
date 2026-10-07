@@ -24,6 +24,7 @@ use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripDocument;
 use App\Models\TripTransportOrder;
+use App\Services\Accounting\InvoiceTripFreightSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,10 @@ class Edit extends Component
     public $description = [];
     public $selectedAccount = [];
     public array $is_custom_item = [];
+    // "Update Trip Freight" per trip line - new lines keyed like the other
+    // line arrays, existing lines by their position in invoice_items
+    public array $update_trip_freight = [];
+    public $current_update_trip_freight = [];
     public $qty = [];
     public $amount = [];
     public $invoices;
@@ -230,6 +235,7 @@ class Edit extends Component
       
         unset($this->inputs[$i]);
         unset($this->is_custom_item[$value]);
+        unset($this->update_trip_freight[$value]);
         unset($this->description[$value]);
         unset($this->qty[$value]);
         unset($this->amount[$value]);
@@ -1098,7 +1104,8 @@ class Edit extends Component
 
             $this->selectedCurrentProduct[] = $item->product_id;
             $this->current_is_custom_item[] = $item->is_custom_item;
-            
+            $this->current_update_trip_freight[] = (bool) $item->is_update_trip_freight;
+
             $this->selectedCurrentTrip[] = $item->trip_id;
             $this->selectedCurrentTTO[] = $item->trip_transport_id;
             $this->selectedCurrentRental[] = $item->rental_id;
@@ -1263,8 +1270,53 @@ class Edit extends Component
         'footer' => 'required',
     ];
 
+    /**
+     * A ticked "Update Trip Freight" line can't overwrite a trip whose
+     * figures are already locked by a different approved invoice.
+     */
+    private function tickedTripsAreFreightUpdateSafe(): bool
+    {
+        if ($this->source != "Trip") {
+            return true;
+        }
+
+        $checks = [];
+        foreach ((array) $this->current_update_trip_freight as $key => $tick) {
+            if ($tick && empty($this->current_is_custom_item[$key])) {
+                $checks['current_update_trip_freight.'.$key] = $this->selectedCurrentTrip[$key] ?? null;
+            }
+        }
+        if (!$this->multi_select) {
+            foreach ($this->update_trip_freight as $key => $tick) {
+                if ($tick && empty($this->is_custom_item[$key])) {
+                    $checks['update_trip_freight.'.$key] = $this->selectedTrip[$key] ?? null;
+                }
+            }
+        }
+
+        $safe = true;
+        foreach ($checks as $field => $tripId) {
+            $trip = $tripId ? Trip::find($tripId) : null;
+            $lockedElsewhere = $trip && $trip->invoice_items()
+                ->where('invoice_id', '!=', $this->invoice_id)
+                ->whereHas('invoice', fn ($q) => $q->where('authorization', 'approved'))
+                ->exists();
+
+            if ($lockedElsewhere) {
+                $this->addError($field, "Trip #{$trip->trip_number} is already part of another approved invoice — its freight cannot be overwritten from this invoice.");
+                $safe = false;
+            }
+        }
+
+        return $safe;
+    }
+
     public function update()
     {
+        if (!$this->tickedTripsAreFreightUpdateSafe()) {
+            return;
+        }
+
         DB::transaction(function () {
             
             if ($this->invoice_id) {
@@ -1344,6 +1396,8 @@ class Edit extends Component
                         if (isset($this->current_is_custom_item[$key])) {
                             $invoice_item->is_custom_item = $this->current_is_custom_item[$key];
                         }
+                        $invoice_item->is_update_trip_freight = $invoice_item->trip_id && empty($invoice_item->is_custom_item)
+                            && !empty($this->current_update_trip_freight[$key]);
                         if (isset($this->selectedCurrentTax[$key])) {
                             $invoice_item->tax_id = $this->selectedCurrentTax[$key];
                         }
@@ -1365,7 +1419,7 @@ class Edit extends Component
                         if (isset($this->current_qty[$key])) {
                             $invoice_item->qty = $this->current_qty[$key];
                         }
-                    
+
                         if (is_numeric($this->current_amount[$key]) && is_numeric($this->current_qty[$key])) {
                             $current_item_subtotal = $this->current_amount[$key]*$this->current_qty[$key];
                             $invoice_item->subtotal = $current_item_subtotal;
@@ -1478,6 +1532,8 @@ class Edit extends Component
                             if (isset($this->is_custom_item[$key])) {
                                 $invoice_item->is_custom_item = $this->is_custom_item[$key];
                             }
+                            $invoice_item->is_update_trip_freight = $invoice_item->trip_id && empty($invoice_item->is_custom_item)
+                                && !empty($this->update_trip_freight[$key]);
                             if (isset($this->qty[$key])) {
                                 $invoice_item->qty = $this->qty[$key];
                             }
@@ -2418,7 +2474,14 @@ class Edit extends Component
                 // Balance = total less payments, customer-supplied fuel,
                 // debtors journal credits and approved credit notes.
                 $invoice->recalculateBalance();
-        
+
+                // A pending invoice pushes ticked lines' amounts to their trips
+                // when it's approved (InvoiceObserver); one that's already
+                // approved won't be approved again, so push them now.
+                if ($invoice->authorization === 'approved') {
+                    app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
+                }
+
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Invoice Updated Successfully!!"

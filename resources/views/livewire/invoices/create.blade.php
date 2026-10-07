@@ -362,10 +362,10 @@
                                                     && abs((float) $rowAmount - (float) $rowTrip->freight) > 0.001;
                                             @endphp
                                             <div class="row" wire:key="invoice-line-0">
-                                                @if ($rowAmountDiffersFromFreight)
+                                                @if ($rowTrip && !($is_custom_item[0] ?? false))
                                                     <div class="col-md-12">
                                                         <input type="checkbox" wire:model.debounce.300ms="update_trip_freight.0"   class="line-style" />
-                                                        <label for="one" class="radio-label">Update Trip Freight ({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})</label>
+                                                        <label for="one" class="radio-label">Update Trip Freight @if ($rowAmountDiffersFromFreight)({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})@else(currently {{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }})@endif</label>
                                                         @error('update_trip_freight.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 @endif
@@ -475,9 +475,9 @@
                                                         <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                         <label for="one" class="radio-label">Add custom item</label>
                                                         @error('is_custom_item.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        @if(!($is_custom_item[$value] ?? false) && $rowAmountDiffersFromFreight)
+                                                        @if(!($is_custom_item[$value] ?? false) && $rowTrip)
                                                             <input type="checkbox" wire:model.debounce.300ms="update_trip_freight.{{ $value }}"   class="line-style" />
-                                                            <label for="one" class="radio-label">Update Trip Freight ({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})</label>
+                                                            <label for="one" class="radio-label">Update Trip Freight @if ($rowAmountDiffersFromFreight)({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})@else(currently {{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }})@endif</label>
                                                             @error('update_trip_freight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         @endif
                                                     </div>

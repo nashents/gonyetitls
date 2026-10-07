@@ -574,6 +574,9 @@ class Index extends Component
                         $lockedInvoice->save();
                     }
 
+                    // Take any per-line split back off its trips
+                    app(\App\Services\Accounting\InvoicePaymentLineService::class)->reverse($invoice_payment);
+
                     // Remove allocation row
                     $invoice_payment->delete();
                 }

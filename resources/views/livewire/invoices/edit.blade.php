@@ -247,12 +247,24 @@
                                             }   
                                         @endphp
                                         @foreach ($invoice_items as $key => $value)
-                                            <div class="row">
+                                            @php
+                                                $rowTrip = !empty($selectedCurrentTrip[$key] ?? null) ? \App\Models\Trip::find($selectedCurrentTrip[$key]) : null;
+                                                $rowAmount = $current_amount[$key] ?? null;
+                                                $rowAmountDiffersFromFreight = $rowTrip
+                                                    && is_numeric($rowAmount)
+                                                    && abs((float) $rowAmount - (float) $rowTrip->freight) > 0.001;
+                                            @endphp
+                                            <div class="row" wire:key="current-trip-line-{{ $value->id }}">
 
                                                 <div class="col-md-12" >
                                                     <input type="checkbox" wire:model.debounce.300ms="current_is_custom_item.{{ $key }}"   class="line-style" />
                                                     <label for="one" class="radio-label">Add custom item</label>
                                                     @error('current_is_custom_item.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    @if(!($current_is_custom_item[$key] ?? false) && $rowTrip)
+                                                        <input type="checkbox" wire:model.debounce.300ms="current_update_trip_freight.{{ $key }}"   class="line-style" />
+                                                        <label for="one" class="radio-label">Update Trip Freight @if ($rowAmountDiffersFromFreight)({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})@else(currently {{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }})@endif</label>
+                                                        @error('current_update_trip_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    @endif
                                                 </div>
                                                 <div class="col-md-5">
                                                     <div class="form-group">
@@ -368,11 +380,23 @@
                                             </div>
                                         @endforeach
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row" >
+                                            @php
+                                                $rowTrip = !empty($selectedTrip[$value] ?? null) ? \App\Models\Trip::find($selectedTrip[$value]) : null;
+                                                $rowAmount = $amount[$value] ?? null;
+                                                $rowAmountDiffersFromFreight = $rowTrip
+                                                    && is_numeric($rowAmount)
+                                                    && abs((float) $rowAmount - (float) $rowTrip->freight) > 0.001;
+                                            @endphp
+                                            <div class="row" wire:key="new-trip-line-{{ $value }}">
                                                 <div class="col-md-12" >
                                                     <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                     <label for="one" class="radio-label">Add custom item</label>
                                                     @error('is_custom_item.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    @if(!($is_custom_item[$value] ?? false) && $rowTrip)
+                                                        <input type="checkbox" wire:model.debounce.300ms="update_trip_freight.{{ $value }}"   class="line-style" />
+                                                        <label for="one" class="radio-label">Update Trip Freight @if ($rowAmountDiffersFromFreight)({{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }} &rarr; {{ number_format((float) $rowAmount, 2) }})@else(currently {{ $rowTrip->currency->symbol ?? '' }}{{ number_format($rowTrip->freight, 2) }})@endif</label>
+                                                        @error('update_trip_freight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    @endif
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">

@@ -27,4 +27,8 @@ class InvoicePayment extends Model implements Auditable
     public function debtor_journal(){
         return $this->belongsTo('App\Models\DebtorJournal');
     }
+
+    public function items(){
+        return $this->hasMany('App\Models\InvoicePaymentItem');
+    }
 }

@@ -44,8 +44,12 @@ class SendDailyReports extends Command
         // Define the reports you want to generate
         $reports = [
             [
-                'export' => new ShiftsDailyExport(),
-                'file'   => "shifts-{$date}.xlsx",
+                'export' => new ShiftsDailyExport(workType: 'Trips'),
+                'file'   => "shifts-trips-{$date}.xlsx",
+            ],
+            [
+                'export' => new ShiftsDailyExport(workType: 'Rehandlings'),
+                'file'   => "shift-rehandle-{$date}.xlsx",
             ],
             [
                 'export' => new BookingsExport(),

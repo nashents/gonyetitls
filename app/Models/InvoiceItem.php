@@ -42,4 +42,7 @@ class InvoiceItem extends Model implements Auditable
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }
+    public function payment_items(){
+        return $this->hasMany('App\Models\InvoicePaymentItem');
+    }
 }

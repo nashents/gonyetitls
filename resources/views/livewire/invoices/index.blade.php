@@ -516,7 +516,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Record a payment for this invoice <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -773,6 +773,43 @@
                             </div>
                         </div>
                     </div>
+                    @if (!empty($payment_lines))
+                    <div class="form-group" wire:key="payment-lines">
+                        <label>Line Items Covered By This Payment</label>
+                        <div class="table-responsive">
+                        <table class="table table-sm table-bordered" style="margin-bottom: 5px">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px"></th>
+                                    <th>Item</th>
+                                    <th class="text-right">Line Total</th>
+                                    <th class="text-right">Paid</th>
+                                    <th class="text-right">Outstanding</th>
+                                    <th style="width: 150px">Amount ({{ $invoice_currency ? $invoice_currency->name : "" }})</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($payment_lines as $line)
+                                <tr wire:key="payment-line-{{ $line['id'] }}">
+                                    <td><input type="checkbox" wire:model="line_checked.{{ $line['id'] }}" {{ $line['outstanding'] <= 0 ? "disabled" : "" }}></td>
+                                    <td>{{ $line['label'] }} @if ($line['trip_id']) <span class="badge badge-info">Trip</span> @endif</td>
+                                    <td class="text-right">{{ number_format($line['total'], 2) }}</td>
+                                    <td class="text-right">{{ number_format($line['paid'], 2) }}</td>
+                                    <td class="text-right">{{ number_format($line['outstanding'], 2) }}</td>
+                                    <td>
+                                        <input type="number" step="any" min="0" max="{{ $line['outstanding'] }}" class="form-control form-control-sm" wire:model.lazy="line_amounts.{{ $line['id'] }}" {{ empty($line_checked[$line['id']]) ? "disabled" : "" }}>
+                                        @if (is_numeric($line_amounts[$line['id']] ?? null) && $line_amounts[$line['id']] > $line['outstanding'] + 0.009)
+                                        <small style="color: red">More than outstanding</small>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        </div>
+                        <small style="color: green">Ticked lines are what this payment covers - their amounts make up the payment amount. Paying a trip line also updates that trip's payment status.</small>
+                    </div>
+                    @endif
                     <div class="form-group">
                         <label for="">Memo / Notes (Optional)</label>
                         <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="5"></textarea>

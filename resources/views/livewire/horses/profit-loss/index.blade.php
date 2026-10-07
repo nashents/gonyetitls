@@ -180,6 +180,7 @@
 
                                         {{-- SUMMARY --}}
                                         @if (($summary === 'summary') && empty($details))
+                                        <div wire:key="pl-summary-{{ $selectedHorse }}-{{ $from }}-{{ $to }}">
 
                                             <div class="col-xs-12 p-n">
                                                 <div class="col-xs-5 p-n"><span style="margin-left:5px">Income</span></div>
@@ -251,8 +252,11 @@
                                                 </div>
                                             </div>
 
+                                        </div>
+
                                         {{-- DETAILS: LINE ITEMS --}}
                                         @elseif (($details === 'details') && empty($summary))
+                                        <div wire:key="pl-details-{{ $selectedHorse }}-{{ $from }}-{{ $to }}">
 
                                             {{-- Income --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
@@ -296,7 +300,7 @@
                                                     </thead>
                                                     <tbody>
                                                         @forelse(($cogs_items ?? []) as $it)
-                                                            <tr>
+                                                            <tr wire:key="pl-cogs-{{ $loop->index }}">
                                                                 <td>{{ $it['date'] ?? '' }}</td>
                                                                 <td>{{ $it['bill_number'] ?? '' }}</td>
                                                                 <td>{{ $it['trip_ref'] ?? '' }}</td>
@@ -348,6 +352,7 @@
                                             <hr style="width:100%;" size="3" color="black">
 
                                             @forelse(($opex_groups ?? []) as $group)
+                                                <div wire:key="pl-opex-group-{{ $loop->index }}">
                                                 <div class="col-xs-12 p-n">
                                                     <strong><span style="margin-left:5px">{{ $group['type_name'] ?? 'Uncategorized' }}</span></strong>
                                                 </div>
@@ -366,7 +371,7 @@
                                                         </thead>
                                                         <tbody>
                                                             @foreach (($group['items'] ?? []) as $it)
-                                                                <tr>
+                                                                <tr wire:key="pl-opex-{{ $loop->parent->index }}-{{ $loop->index }}">
                                                                     <td>{{ $it['date'] ?? '' }}</td>
                                                                     <td>{{ $it['bill_number'] ?? '' }}</td>
                                                                     <td>{{ $it['trip_ref'] ?? '' }}</td>
@@ -384,6 +389,7 @@
                                                             </tr>
                                                         </tfoot>
                                                     </table>
+                                                </div>
                                                 </div>
                                             @empty
                                                 <div class="col-xs-12 p-n">
@@ -414,6 +420,7 @@
                                                 </div>
                                             </div>
 
+                                        </div>
                                         @endif
 
                                     </div>
