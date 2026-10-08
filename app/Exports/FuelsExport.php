@@ -49,151 +49,79 @@ WithCustomStartCell
         if (isset($this->from) && isset($this->to)) {
             if (isset($this->container_id)) {
                 return Fuel::query()->with(['container','horse','source_horse',
-                'horse.horse_make','horse.horse_model'])->where('container_id',$this->container_id)->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc');
+                'horse.horse_make','horse.horse_model','vehicle.vehicle_make','vehicle.vehicle_model','asset.product','trip.horse.horse_make','trip.horse.horse_model','user','currency'])->where('container_id',$this->container_id)->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc');
             }else{
                 return Fuel::query()->with(['container','horse','source_horse',
-                'horse.horse_make','horse.horse_model'])->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc');
+                'horse.horse_make','horse.horse_model','vehicle.vehicle_make','vehicle.vehicle_model','asset.product','trip.horse.horse_make','trip.horse.horse_model','user','currency'])->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc');
             }
 
         }elseif(isset($this->container_id)){
             return Fuel::query()->with(['container','horse','source_horse',
-            'horse.horse_make','horse.horse_model'])->where('container_id',$this->container_id)->whereMonth($this->fuel_filter, date('m'))
+            'horse.horse_make','horse.horse_model','vehicle.vehicle_make','vehicle.vehicle_model','asset.product','trip.horse.horse_make','trip.horse.horse_model','user','currency'])->where('container_id',$this->container_id)->whereMonth($this->fuel_filter, date('m'))
             ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc');
         }else {
             return Fuel::query()->with(['container','horse','source_horse',
-            'horse.horse_make','horse.horse_model'])->whereMonth($this->fuel_filter, date('m'))
+            'horse.horse_make','horse.horse_model','vehicle.vehicle_make','vehicle.vehicle_model','asset.product','trip.horse.horse_make','trip.horse.horse_model','user','currency'])->whereMonth($this->fuel_filter, date('m'))
             ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc');
         }
     }
     public function map($fuel): array{
-                 
-        if ( $fuel->horse) {
-            $horse_make =  $fuel->horse->horse_make ? $fuel->horse->horse_make->name : "";
-            $horse_model = $fuel->horse->horse_model ? $fuel->horse->horse_model->name : "";
-            $horse_registration_number = $fuel->horse->registration_number;
-           
-            }else {
-                $horse_make = "";
-                $horse_model = "";
-                $horse_registration_number = "";
-            }
-        if ( $fuel->vehicle) {
-            $vehicle_make =  $fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : "";
-            $vehicle_model = $fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : "";
-            $vehicle_registration_number = $fuel->vehicle->registration_number;
-           
-            }else {
-                $vehicle_make = "";
-                $vehicle_model = "";
-                $vehicle_registration_number = "";
-            }
-        if ( $fuel->asset) {
-            $product = $fuel->asset->product ? $fuel->asset->product->name : "";
-           
-            }else {
-                $product = "";
-                
-            }
-            $authorized_by_name = User::find($fuel->authorized_by_id) ? User::find($fuel->authorized_by_id)->name : "";
-            $authorized_by_surname = User::find($fuel->authorized_by_id) ? User::find($fuel->authorized_by_id)->surname : "";
-            $created_by_name =  $fuel->user ? $fuel->user->name : "" ;
-            $created_by_surname = $fuel->user ? $fuel->user->name : "" ;
-            $symbol = $fuel->currency ? $fuel->currency->symbol : "";
-            $source_truck = $fuel->source_horse ? $fuel->source_horse->identifier_label : "";
 
-            if ( $fuel->type == "Horse" || $fuel->type == "Trip") {
-                return   [
-                $fuel->order_number,
-                $created_by_name ." ".$created_by_surname,
-                $fuel->authorization,
-                $authorized_by_name ." ".$authorized_by_surname,
-                $fuel->container ? $fuel->container->name : "",
-                $source_truck,
-                $fuel->date,
-                $fuel->type,
-                $fuel->trip ? "Trip#: ".$fuel->trip->trip_number : "" .' '.$horse_registration_number .' '.$horse_make .' '. $horse_model,
-                $fuel->odometer . 'Kms',
-                $fuel->fillup == 1 ? "initial" : "top up",
-                $fuel->container ? $fuel->container->fuel_type : "",
-                $fuel->quantity. 'L',
-                $fuel->currency ? $fuel->currency->name : "",
-                $symbol. $fuel->amount,
-                $fuel->comments,
-                 ];
-                }
-                elseif ($fuel->type == "Vehicle" || $fuel->type == "Trip") {
-                    return   [
-                        $fuel->order_number,
-                        $created_by_name ." ".$created_by_surname,
-                        $fuel->authorization,
-                        $authorized_by_name ." ".$authorized_by_surname,
-                        $fuel->container ? $fuel->container->name : "",
-                $source_truck,
-                        $fuel->date,
-                        $fuel->type,
-                        $fuel->trip ? "Trip#: ".$fuel->trip->trip_number : "" .' '. $vehicle_registration_number . ' ' .$vehicle_make .' '. $vehicle_model ,
-                        $fuel->odometer . 'Kms',
-                        $fuel->fillup == 1 ? "initial" : "top up",
-                        $fuel->container ? $fuel->container->fuel_type : "",
-                        $fuel->quantity. 'L',
-                        $fuel->currency ? $fuel->currency->name : "",
-                        $symbol. $fuel->amount,
-                        $fuel->comments,
-                         ];
-                }elseif ($fuel->type == "Asset") {
-                    return   [
-                        $fuel->order_number,
-                        $created_by_name ." ".$created_by_surname,
-                        $fuel->authorization,
-                        $authorized_by_name ." ".$authorized_by_surname,
-                        $fuel->container ? $fuel->container->name : "",
-                $source_truck,
-                        $fuel->date,
-                        $fuel->type,
-                        $product ,
-                        "",
-                        $fuel->fillup == 1 ? "initial" : "top up",
-                        $fuel->container ? $fuel->container->fuel_type : "",
-                        $fuel->quantity. 'L',
-                        $fuel->currency ? $fuel->currency->name : "",
-                        $symbol. $fuel->amount,
-                        $fuel->comments,
-                         ];
-                }elseif ($fuel->type == "Other") {
-                    return   [
-                        $fuel->order_number,
-                        $created_by_name ." ".$created_by_surname,
-                        $fuel->authorization,
-                        $authorized_by_name ." ".$authorized_by_surname,
-                        $fuel->container ? $fuel->container->name : "",
-                $source_truck,
-                        $fuel->date,
-                        $fuel->type,
-                        "",
-                        "",
-                        $fuel->fillup == 1 ? "initial" : "top up",
-                        $fuel->container ? $fuel->container->fuel_type : "",
-                        $fuel->quantity. 'L',
-                        $fuel->currency ? $fuel->currency->name : "",
-                        $symbol. $fuel->amount,
-                        $fuel->comments,
-                         ];
-                }
+        $horse = $fuel->horse ?? optional($fuel->trip)->horse;
+        $equipment = null;
+        $makeModel = '';
 
+        if (in_array($fuel->type, ['Horse', 'Trip']) && $horse) {
+            $equipment = $horse;
+            $makeModel = trim(optional($horse->horse_make)->name . ' ' . optional($horse->horse_model)->name);
+        } elseif ($fuel->type == "Vehicle" && $fuel->vehicle) {
+            $equipment = $fuel->vehicle;
+            $makeModel = trim(optional($fuel->vehicle->vehicle_make)->name . ' ' . optional($fuel->vehicle->vehicle_model)->name);
+        } elseif ($fuel->type == "Asset" && $fuel->asset) {
+            $makeModel = optional($fuel->asset->product)->name ?? '';
+        }
 
+        $category = trim(($fuel->trip ? "Trip#: " . $fuel->trip->trip_number . ' ' : '') . $makeModel);
+        $authorizedBy = $fuel->authorized_by_id ? User::find($fuel->authorized_by_id) : null;
+        $source = $fuel->source_horse
+            ? $fuel->source_horse->identifier_label
+            : optional($fuel->container)->name;
+
+        return [
+            $fuel->order_number,
+            trim(optional($fuel->user)->name . ' ' . optional($fuel->user)->surname),
+            $fuel->created_at ? $fuel->created_at->format('Y-m-d H:i') : '',
+            $fuel->authorization,
+            $authorizedBy ? trim($authorizedBy->name . ' ' . $authorizedBy->surname) : '',
+            $source ?? '',
+            $fuel->date,
+            $fuel->type,
+            // reg# / fleet# in the order set in Business Settings
+            $equipment ? $equipment->identifier_label : '',
+            $category,
+            in_array($fuel->type, ['Asset', 'Other']) ? '' : $fuel->odometer,
+            $fuel->fillup == 1 ? "initial" : "top up",
+            $fuel->container ? $fuel->container->fuel_type : "",
+            $fuel->quantity. 'L',
+            $fuel->currency ? $fuel->currency->name : "",
+            ($fuel->currency ? $fuel->currency->symbol : "") . $fuel->amount,
+            $fuel->comments,
+        ];
     }
+
     public function headings(): array{
             return[
                 'Order#',
-                'CreatedBy',
+                'Created By',
+                'Created On',
                 'Auth Status',
-                'AuthorizedBy',
-                'Fueling Station',
-                'Source Truck',
-                'Date ',
+                'Authorized By',
+                'Source',
+                'Date',
                 'Fuel Order For',
+                'Equipment',
                 'Category',
-                'Mileage',
+                'Mileage(Kms)',
                 'Fuel Order Type',
                 'Fuel Type',
                 'Quantity',
@@ -208,7 +136,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:P7')->applyFromArray([
+                $event->sheet->getStyle('A7:Q7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
