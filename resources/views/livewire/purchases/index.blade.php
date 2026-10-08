@@ -326,7 +326,7 @@
 
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="purchaseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-70" role="document">
+        <div class="modal-dialog mw-100 w-90" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Create Purchase Order <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -563,22 +563,22 @@
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label for="Product">Qty<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  required>
+                                <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="qty.0"  required>
                                 @error('qty.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label for="Product">Rate<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0.01" class="form-control" wire:model.debounce.300ms="amount.0"   required>
+                                <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="amount.0"   required>
                                 @error('amount.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="subheading">Taxes</label>
                                 <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
-                                        <option value="">Select Tax Category</option>
+                                        <option value="">Select Tax</option>
                                         @foreach ($tax_accounts as $tax)
                                            <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                         @endforeach
@@ -636,22 +636,22 @@
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="Product">Qty<span class="required" style="color: red">*</span></label>
-                                    <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required>
+                                    <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required>
                                     @error('qty.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="Product">Rate<span class="required" style="color: red">*</span></label>
-                                    <input type="number" step="any" min="0.01" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required>
+                                    <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required>
                                     @error('amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="subheading">Taxes</label>
                                     <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
-                                            <option value="">Select Tax Category</option>
+                                            <option value="">Select Tax</option>
                                             @foreach ($tax_accounts as $tax)
                                                <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                             @endforeach
@@ -776,7 +776,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="purchaseEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-70" role="document">
+        <div class="modal-dialog mw-100 w-90" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Purchase Order <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -996,14 +996,14 @@
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="Product">Qty<span class="required" style="color: red">*</span></label>
-                                    <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}"  required>
+                                    <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}"  required>
                                     @error('current_qty.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="Product">Rate<span class="required" style="color: red">*</span></label>
-                                    <input type="number" step="any" min="0.01" class="form-control" wire:model.debounce.300ms="current_amount.{{$key}}"   required>
+                                    <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="current_amount.{{$key}}"   required>
                                     @error('current_amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
@@ -1076,14 +1076,14 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="Product">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required>
+                                        <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required>
                                         @error('qty.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="Product">Rate<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="0.01" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required>
+                                        <input type="text" inputmode="decimal" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required>
                                         @error('amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>

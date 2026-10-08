@@ -62,6 +62,27 @@ class Ticket extends Model implements Auditable
     public function dispatches(){
         return $this->hasMany('App\Models\Dispatch');
     }
+
+    /**
+     * Whether stock has been issued against this job - a live (not reversed)
+     * dispatch with items, an inventory dispatch, or an issued ticket
+     * inventory line. Once it has, the booking/ticket details are fixed.
+     */
+    public function hasDispatchedItems(): bool
+    {
+        if ($this->dispatches()->whereNull('reversed_at')->whereHas('dispatch_items')->exists()) {
+            return true;
+        }
+
+        if ($this->inventory_dispatches()->exists()) {
+            return true;
+        }
+
+        return $this->ticket_inventories()
+            ->where(fn ($q) => $q->whereNull('dispatch_id')
+                ->orWhereHas('dispatch', fn ($d) => $d->whereNull('reversed_at')))
+            ->exists();
+    }
     /** Sage Intacct job-card link (entity_type job_card) for the sync badge. */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')

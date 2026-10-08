@@ -20,6 +20,7 @@ use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\Fleet\BookingCascadeService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -130,8 +131,15 @@ class Edit extends Component
         }
     }
 
+    public const DISPATCHED_LOCK_MESSAGE = "This booking can't be edited - items have already been dispatched against its ticket. Reverse the dispatch first if the booking details are wrong.";
+
     public function mount($id){
         $booking = Booking::find($id);
+
+        if ($booking && $booking->hasDispatchedItems()) {
+            Session::flash('error', self::DISPATCHED_LOCK_MESSAGE);
+            return redirect()->route('bookings.index');
+        }
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
        
         $this->company = Auth::user()->employee->company;
@@ -268,10 +276,21 @@ class Edit extends Component
 
     public function update(){
 
+        // Re-checked on save - items may have been dispatched while the form was open
+        if (Booking::find($this->booking_id)?->hasDispatchedItems()) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>self::DISPATCHED_LOCK_MESSAGE
+            ]);
+            return;
+        }
+
         DB::transaction(function () {
 
         $booking = Booking::find($this->booking_id);
-        
+        $cascade = app(BookingCascadeService::class);
+        $before = $cascade->snapshot($booking);
+
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
         $booking->breakdown_id = $this->breakdown_id;
         $booking->problem_category_id = $this->problem_category_id;
@@ -343,32 +362,10 @@ class Edit extends Component
         }
       
      
-        $mileage =  Mileage::where('booking_id', $booking->id)->first();
+        // Inspection, ticket, the ticket's records, mileage/hours log,
+        // workshop flag and Sage job card follow the edit
+        $cascade->sync($booking, $before);
 
-        if ($mileage) {
-            $mileage->booking_id = $booking->id;
-            $mileage->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
-            $mileage->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
-            $mileage->trailer_id = $this->selectedTrailer ? $this->selectedTrailer : Null;
-            $mileage->mileage = $this->mileage;
-            $mileage->date = $this->in_date;
-            $mileage->category = "Booking";
-            $mileage->update();
-        }
-
-        $hours =  Hour::where('booking_id',$booking->id)->first();
-
-        if ($hours) {
-            $hours->booking_id = $booking->id;
-            $hours->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
-            $hours->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
-            $hours->trailer_id = $this->selectedTrailer ? $this->selectedTrailer : Null;
-            $hours->hours = $this->hours;
-            $hours->date = $this->in_date;
-            $hours->category = "Booking";
-            $hours->update();
-        }
-       
 
         Session::flash('success','Booking Updated Successfully');
         return redirect()->route('bookings.index');

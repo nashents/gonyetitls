@@ -49,6 +49,7 @@ class Index extends Component
     public $taxes;
     public $tax_id;
     public $importFile;
+    public $visible_on_trip_sheet = true;
 
     public $expense_id;
     public $user_id;
@@ -87,6 +88,7 @@ class Index extends Component
         $this->description = '';
         $this->type = '';
         $this->tax_id = '';
+        $this->visible_on_trip_sheet = true;
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -197,6 +199,7 @@ class Index extends Component
         $expense->type = $this->type;
         $expense->tax_id = $this->tax_id;
         $expense->item_type = 'Non Inventory';
+        $expense->visible_on_trip_sheet = (bool) $this->visible_on_trip_sheet;
         $expense->save();
 
         // Every Gonyeti expense is also a non-inventory billable Product — auto-create
@@ -243,6 +246,7 @@ class Index extends Component
     $this->currency_id = $expense->currency_id;
     $this->frequency = $expense->frequency;
     $this->description = $expense->description;
+    $this->visible_on_trip_sheet = (bool) ($expense->visible_on_trip_sheet ?? true);
     $this->account_id = $expense->account_id;
     $this->status = $expense->status;
     $this->expense_id = $expense->id;
@@ -264,6 +268,25 @@ class Index extends Component
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
             'message' => implode(' ', $summary),
+        ]);
+    }
+
+    /**
+     * Flip whether this expense shows on driver trip sheets. Available even when
+     * Sage is active (Edit is hidden then) - it is a Gonyeti-only display flag.
+     */
+    public function toggleTripSheetVisibility($id)
+    {
+        $expense = Expense::find($id);
+        if (!$expense) {
+            return;
+        }
+        $expense->visible_on_trip_sheet = !($expense->visible_on_trip_sheet ?? true);
+        $expense->save();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>$expense->name.($expense->visible_on_trip_sheet ? " will now show on trip sheets." : " is now hidden from trip sheets.")
         ]);
     }
 
@@ -291,6 +314,7 @@ class Index extends Component
             $expense->type = $this->type;
             $expense->tax_id = $this->tax_id;
             $expense->item_type = 'Non Inventory';
+            $expense->visible_on_trip_sheet = (bool) $this->visible_on_trip_sheet;
             $expense->frequency = $this->frequency;
             $expense->description = $this->description;
             $expense->status = $this->status;

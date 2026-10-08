@@ -89,7 +89,7 @@
                     @endif
                 </td>
                 <td>
-                    @if ($trip_expense->visible_on_trip_sheet)
+                    @if ($trip_expense->showsOnTripSheet())
                         <span class="badge badge-success"><i class="fa fa-eye"></i> Visible</span>
                     @else
                         <span class="badge badge-secondary"><i class="fa fa-eye-slash"></i> Hidden</span>
@@ -224,7 +224,7 @@
                     <div class="row">
                         
                         @if (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'expense')
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Expense(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedExpense.0" class="form-control" required>
@@ -241,7 +241,7 @@
                             </div>
                         </div>
                         @elseif (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'allowance')
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Allowance(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedAllowance.0" class="form-control" required>
@@ -259,7 +259,7 @@
                         </div>
                         @endif
                         @if (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'expense')
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Funded By<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model="funded_by.0">
@@ -273,7 +273,7 @@
                             </div>
                         </div>
                         @endif
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Categories<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="category.0"  required>
@@ -285,7 +285,7 @@
                                 @error('category.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="date">Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="date.0" required/>
@@ -355,18 +355,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" wire:model.debounce.300ms="visible_on_trip_sheet.0" value="1"> Visible on Trip Sheet
-                                    </label>
-                                </div>
-                                <small class="text-muted">Uncheck to hide this expense from the driver's trip sheet (e.g. fuel).</small>
-                            </div>
-                        </div>
-                    </div>
 
                 @foreach ($inputs as $key => $value)
                     <div class="form-group" >
@@ -380,7 +368,7 @@
                     </div>
                     <div class="row">
                         @if (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'expense')
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="title">Expense(s)<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedExpense.{{$value}}" class="form-control" required>
@@ -394,7 +382,7 @@
                                 </div>
                             </div>
                         @elseif (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'allowance')
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="title">Allowance(s)<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedAllowance.{{$value}}" class="form-control" required>
@@ -409,7 +397,7 @@
                             </div>
                         @endif
                         @if (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'expense')
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Funded By<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model="funded_by.{{$value}}">
@@ -423,7 +411,7 @@
                             </div>
                         </div>
                         @endif
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Categories<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="category.{{$value}}"  required>
@@ -435,7 +423,7 @@
                                 @error('category.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="date">Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="date.{{$value}}" required/>
@@ -507,18 +495,6 @@
                     </div>
                 </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" wire:model.debounce.300ms="visible_on_trip_sheet.{{$value}}" value="1"> Visible on Trip Sheet
-                                    </label>
-                                </div>
-                                <small class="text-muted">Uncheck to hide this expense from the driver's trip sheet (e.g. fuel).</small>
-                            </div>
-                        </div>
-                    </div>
                 @endforeach
 
                 <div class="row">
@@ -561,7 +537,7 @@
                     <div class="row">
                         
                         @if (isset($trip_expense_type) && $trip_expense_type == "expense")
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Expense(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedExpense" class="form-control" required>
@@ -578,7 +554,7 @@
                             </div>
                         </div>
                         @elseif (isset($trip_expense_type) && $trip_expense_type == "allowance")
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Allowance(s)<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedAllowance" class="form-control" required>
@@ -597,7 +573,7 @@
                         @endif
 
                     @if (isset($trip_expense_type) && $trip_expense_type == 'expense')
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Funded By<span class="required" style="color: red">*</span></label>
                             <select class="form-control" wire:model="funded_by">
@@ -611,7 +587,7 @@
                         </div>
                     </div>
                     @endif
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="title">Categories<span class="required" style="color: red">*</span></label>
                             <select class="form-control" wire:model.debounce.300ms="category"  required>
@@ -623,7 +599,7 @@
                             @error('category') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="date">Date<span class="required" style="color: red">*</span></label>
                             <input type="date" class="form-control" wire:model.debounce.300ms="date" required/>
@@ -698,18 +674,6 @@
 
                         </div>
 
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" wire:model.debounce.300ms="visible_on_trip_sheet" value="1"> Visible on Trip Sheet
-                                    </label>
-                                </div>
-                                <small class="text-muted">Uncheck to hide this expense from the driver's trip sheet (e.g. fuel).</small>
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
                 <div class="modal-footer">

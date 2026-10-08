@@ -61,7 +61,6 @@ class Expenses extends Component
     public $selected_currency;
     public $vendors;
     public $selectedVendor;
-    public $visible_on_trip_sheet;
     public $date;
 
     public $total_customer_expenses;
@@ -78,7 +77,6 @@ class Expenses extends Component
         $i = $i + 1;
         $this->i = $i;
         $this->trip_expense_type[$i] = "expense";
-        $this->visible_on_trip_sheet[$i] = true;
         $this->date[$i] = $this->tripStartDate();
         array_push($this->inputs ,$i);
     }
@@ -87,7 +85,6 @@ class Expenses extends Component
     {
         unset($this->inputs[$i]);
         unset($this->trip_expense_type[$i]);
-        unset($this->visible_on_trip_sheet[$i]);
         unset($this->date[$i]);
     }
 
@@ -96,7 +93,6 @@ class Expenses extends Component
         $index = count($this->inputs); // Get new index
         $this->inputs[] = $index; // Add new input field index
         $this->trip_expense_type[$index] = "expense"; // Default each new entry to 'expense'
-        $this->visible_on_trip_sheet[$index] = true;
         $this->date[$index] = $this->tripStartDate();
     }
 
@@ -119,7 +115,6 @@ class Expenses extends Component
         $this->edit = Null;
         $this->selectedCurrency = Null;
         $this->selectedVendor = Null;
-        $this->visible_on_trip_sheet = Null;
         $this->date = Null;
         $this->funded_by = Null;
         $this->total_customer_expenses = 0;
@@ -133,11 +128,9 @@ class Expenses extends Component
     $this->trip = $trip;
 
     $this->trip_expense_type[0] = "expense";
-    $this->visible_on_trip_sheet[0] = true;
     $this->date[0] = $this->tripStartDate();
     foreach ($this->inputs as $index) {
         $this->trip_expense_type[$index] = $this->trip_expense_type[$index] ?? 'expense';
-        $this->visible_on_trip_sheet[$index] = $this->visible_on_trip_sheet[$index] ?? true;
         $this->date[$index] = $this->date[$index] ?? $this->tripStartDate();
     }
 
@@ -332,7 +325,6 @@ class Expenses extends Component
                     $customerFunded = $type === 'expense' && (string) ($this->funded_by[$key] ?? '0') === '1';
                     $trip_expense->supplied_by_customer = $customerFunded;
                     $trip_expense->customer_id = $customerFunded ? $this->trip->customer_id : null;
-                    $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet[$key] ?? true;
                     $trip_expense->amount = $this->amount[$key] ?? 0;
                     $trip_expense->date = $this->date[$key] ?? $this->tripStartDate();
 
@@ -489,7 +481,6 @@ class Expenses extends Component
         }
         $this->category = $expense->category;
         $this->funded_by = $expense->supplied_by_customer ? '1' : '0';
-        $this->visible_on_trip_sheet = $expense->visible_on_trip_sheet;
         $this->amount = $expense->amount;
         $this->date = $expense->date ?? $this->tripStartDate();
         $this->exchange_rate = $expense->exchange_rate;
@@ -523,7 +514,6 @@ class Expenses extends Component
                 $customerFunded = $this->trip_expense_type == 'expense' && (string) ($this->funded_by ?? '0') === '1';
                 $trip_expense->supplied_by_customer = $customerFunded;
                 $trip_expense->customer_id = $customerFunded ? $this->trip->customer_id : null;
-                $trip_expense->visible_on_trip_sheet = $this->visible_on_trip_sheet;
                 $trip_expense->date = $this->date;
                 $trip_expense->currency_id = $this->selectedCurrency;
                 $trip_expense->vendor_id = $this->selectedVendor;

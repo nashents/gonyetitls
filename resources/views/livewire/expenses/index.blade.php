@@ -85,6 +85,9 @@
                                         @else
                                             <small class="badge bg-secondary">Not synced to product</small>
                                         @endif
+                                        @unless ($expense->visible_on_trip_sheet ?? true)
+                                            <br><small class="badge bg-warning" title="Not shown on driver trip sheets"><i class="fa fa-eye-slash"></i> Hidden on trip sheet</small>
+                                        @endunless
                                         @if ($this->sageEnabled)
                                             @php $sageId = optional($expense->sageMapping)->external_id ?: optional(optional($expense->product)->sageMapping)->external_id; @endphp
                                             <br>
@@ -120,6 +123,7 @@
                                                 <li><a href="#"  wire:click="edit({{$expense->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @endunless
                                                 @endif
+                                                <li><a href="#" wire:click.prevent="toggleTripSheetVisibility({{$expense->id}})"><i class="fa fa-{{ ($expense->visible_on_trip_sheet ?? true) ? 'eye-slash' : 'eye' }} color-primary"></i> {{ ($expense->visible_on_trip_sheet ?? true) ? 'Hide on' : 'Show on' }} Trip Sheet</a></li>
                                                 @unless ($expense->is_locked)
                                                 @unless ($this->sageEnabled)
                                                 <li><a href="#" data-toggle="modal" data-target="#expenseDeleteModal{{ $expense->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
@@ -301,6 +305,17 @@
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Trip Sheet</label>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.defer="visible_on_trip_sheet" value="1"> Visible on Trip Sheet
+                                    </label>
+                                </div>
+                                <small class="text-muted">Applies to every trip sheet. Uncheck to hide this expense from drivers' trip sheets (e.g. fuel).</small>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -438,6 +453,17 @@
                                 <label for="name">Description</label>
                                     <textarea class="form-control" wire:model.debounce.300ms="description"  cols="30" rows="7"></textarea>
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Trip Sheet</label>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.defer="visible_on_trip_sheet" value="1"> Visible on Trip Sheet
+                                    </label>
+                                </div>
+                                <small class="text-muted">Applies to every trip sheet. Uncheck to hide this expense from drivers' trip sheets (e.g. fuel).</small>
                             </div>
                         </div>
                     </div>  

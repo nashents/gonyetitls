@@ -75,9 +75,13 @@
                                             <div class="col-md-6">
                                                 <div class="col-lg-2">
                                                     <div class="btn-group">
-                                                        <button type="button"
-                                                                wire:click.prevent="set_report('summary')"
-                                                                class="btn btn-default {{ ($summary === 'summary') ? 'border-primary' : '' }} btn-wide btn-rounded">
+                                                        {{-- Toggled client-side: a Livewire round trip here made morphdom
+                                                             patch the summary DOM into the details DOM and the opex
+                                                             tables came out blank. wire:ignore.self keeps the toggle
+                                                             state across re-renders (horse/date changes). --}}
+                                                        <button type="button" id="pl-btn-summary" wire:ignore.self
+                                                                onclick="plSetReport('summary')"
+                                                                class="btn btn-default border-primary btn-wide btn-rounded">
                                                             Summary
                                                         </button>
                                                     </div>
@@ -85,9 +89,9 @@
 
                                                 <div class="col-lg-2" style="margin-left: 25px">
                                                     <div class="btn-group">
-                                                        <button type="button"
-                                                                wire:click.prevent="set_report('details')"
-                                                                class="btn btn-default {{ ($details === 'details') ? 'border-primary' : '' }} btn-wide btn-rounded">
+                                                        <button type="button" id="pl-btn-details" wire:ignore.self
+                                                                onclick="plSetReport('details')"
+                                                                class="btn btn-default btn-wide btn-rounded">
                                                             Details
                                                         </button>
                                                     </div>
@@ -148,7 +152,7 @@
                         </div>
 
                         {{-- Body --}}
-                        <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
+                        <div class="panel-body p-20 clearfix" style="overflow-x:auto; width:100%;">
                             <div class="col-md-10 col-md-offset-1">
                                 <div class="panel">
 
@@ -179,8 +183,7 @@
                                     <div class="panel-body">
 
                                         {{-- SUMMARY --}}
-                                        @if (($summary === 'summary') && empty($details))
-                                        <div wire:key="pl-summary-{{ $selectedHorse }}-{{ $from }}-{{ $to }}">
+                                        <div id="pl-summary" wire:ignore.self>
 
                                             <div class="col-xs-12 p-n">
                                                 <div class="col-xs-5 p-n"><span style="margin-left:5px">Income</span></div>
@@ -255,8 +258,7 @@
                                         </div>
 
                                         {{-- DETAILS: LINE ITEMS --}}
-                                        @elseif (($details === 'details') && empty($summary))
-                                        <div wire:key="pl-details-{{ $selectedHorse }}-{{ $from }}-{{ $to }}">
+                                        <div id="pl-details" wire:ignore.self style="display:none">
 
                                             {{-- Income --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
@@ -285,7 +287,7 @@
                                             </div>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            <div class="table-responsive">
+                                            <div class="table-responsive" style="clear:both;">
                                                 <table class="table table-bordered table-striped">
                                                     <thead>
                                                         <tr>
@@ -356,7 +358,7 @@
                                                 <div class="col-xs-12 p-n">
                                                     <strong><span style="margin-left:5px">{{ $group['type_name'] ?? 'Uncategorized' }}</span></strong>
                                                 </div>
-                                                <div class="table-responsive">
+                                                <div class="table-responsive" style="clear:both;">
                                                     <table class="table table-bordered table-striped">
                                                         <thead>
                                                             <tr>
@@ -421,7 +423,6 @@
                                             </div>
 
                                         </div>
-                                        @endif
 
                                     </div>
                                 </div>
@@ -433,4 +434,14 @@
             </div>
         </div>
     </section>
+
+    <script>
+        function plSetReport(type) {
+            var details = type === 'details';
+            document.getElementById('pl-summary').style.display = details ? 'none' : '';
+            document.getElementById('pl-details').style.display = details ? '' : 'none';
+            document.getElementById('pl-btn-summary').classList.toggle('border-primary', !details);
+            document.getElementById('pl-btn-details').classList.toggle('border-primary', details);
+        }
+    </script>
 </div>

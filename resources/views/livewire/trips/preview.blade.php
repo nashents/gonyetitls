@@ -50,7 +50,7 @@
 
   $authorizer     = App\Models\User::find($trip->authorized_by_id);
   $dn             = $trip->delivery_note;
-  $visibleExpenses = $trip->trip_expenses->where('visible_on_trip_sheet', true);
+  $visibleExpenses = $trip->trip_expenses->filter(fn ($e) => $e->showsOnTripSheet());
   $cmrDetail       = $trip->cmr_detail;
   $consignorContact = $trip->customer?->contacts?->first();
   $consigneeContact = $trip->consignee?->contacts?->first();

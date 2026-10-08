@@ -178,7 +178,7 @@
                         </div>
 
                         {{-- Body --}}
-                        <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
+                        <div class="panel-body p-20 clearfix" style="overflow-x:auto; width:100%;">
                             <div class="col-md-10 col-md-offset-1">
                                 <div class="panel">
 
@@ -367,7 +367,7 @@
                                             </div>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            <div class="table-responsive">
+                                            <div class="table-responsive" style="clear:both;">
                                                 <table class="table table-bordered table-striped">
                                                     <thead>
                                                         <tr>
@@ -439,7 +439,7 @@
                                                 <div class="col-xs-12 p-n">
                                                     <strong><span style="margin-left:5px">{{ $group['type_name'] ?? 'Uncategorized' }}</span></strong>
                                                 </div>
-                                                <div class="table-responsive">
+                                                <div class="table-responsive" style="clear:both;">
                                                     <table class="table table-bordered table-striped">
                                                         <thead>
                                                             <tr>

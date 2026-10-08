@@ -214,7 +214,7 @@
                                 </div>
                 
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="name">Serial#</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial# / UniqueID"/>
@@ -244,11 +244,11 @@
                                                 @error('amount.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                         <div class="col-md-3">
+                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="subheading">Taxes</label>
                                                 <select wire:model.debounce.300ms="selectedTax.0"  class="form-control">
-                                                     <option value="">Select Tax Category</option>
+                                                     <option value="">Select Tax</option>
                                                         @foreach ($tax_accounts as $tax)
                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                         @endforeach
@@ -262,6 +262,19 @@
                                                 <label for="name">Additional Cost</label>
                                                 <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="cost.0"/>
                                                 @error('cost.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="store">Store</label>
+                                                <select wire:model.debounce.300ms="selectedStore.0" class="form-control" {{$source == "Transfer" ? "disabled" : ""}}>
+                                                    <option value="">Default</option>
+                                                    @foreach ($stores as $store)
+                                                    <option value="{{$store->id}}">{{$store->name}}</option>
+                                                    @endforeach
+                                                </select>
+                                                <small><a href="#" data-toggle="modal" data-target="#storeModal"><i class="fa fa-plus-square-o"></i> New Store</a></small><a href="#" wire:click.prevent="refresh('stores')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('selectedStore.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                        
@@ -346,7 +359,7 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <div class="form-group">
                                                     <label for="name">Serial#</label>
                                                     <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
@@ -376,11 +389,11 @@
                                                 @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                             </div>
-                                             <div class="col-md-3">
+                                             <div class="col-md-2">
                                                 <div class="form-group">
                                                     <label for="subheading">Taxes</label>
                                                     <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
-                                                            <option value="">Select Tax Category</option>
+                                                            <option value="">Select Tax</option>
                                                             @foreach ($tax_accounts as $tax)
                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                             @endforeach
@@ -396,6 +409,18 @@
                                                 @error('cost.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                             </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="store">Store</label>
+                                                <select wire:model.debounce.300ms="selectedStore.{{$value}}" class="form-control" {{$source == "Transfer" ? "disabled" : ""}}>
+                                                    <option value="">Default</option>
+                                                    @foreach ($stores as $store)
+                                                    <option value="{{$store->id}}">{{$store->name}}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('selectedStore.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
                                            
                                         <div class="col-md-1">
                                             <div class="form-group">
@@ -419,27 +444,14 @@
                                 <br>               
                 
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="purchase_date">Date<span class="required" style="color: red">*</span></label>
                                         <input type="date" class="form-control" wire:model.debounce.300ms="purchase_date" placeholder="Purchase Date" required>
                                             @error('purchase_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label for="country">Stores<span class="required" style="color: red">*</span></label>
-                                               <select wire:model.debounce.300ms="store_id" class="form-control" {{$source == "Transfer" ? "disabled" : ""}} required>
-                                                   <option value="">Select Store</option>
-                                                 @foreach ($stores as $store)
-                                                    <option value="{{$store->id}}">{{$store->name}}</option>
-                                                 @endforeach
-                                               </select>
-                                               <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small><a href="#" wire:click.prevent="refresh('stores')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                                @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="country">Racks</label>
                                                <select wire:model.debounce.300ms="rack_id" class="form-control">
@@ -452,7 +464,7 @@
                                                 @error('rack_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="country">Bins</label>
                                                <select wire:model.debounce.300ms="bin_id" class="form-control">

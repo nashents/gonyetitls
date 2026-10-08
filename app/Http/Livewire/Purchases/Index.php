@@ -155,7 +155,72 @@ class Index extends Component
 
     public function remove($i)
     {
+        // Clear the removed line's data too - otherwise it still gets
+        // validated and saved even though it's gone from the form
+        $line = $this->inputs[$i] ?? null;
         unset($this->inputs[$i]);
+        if (!is_null($line)) {
+            $this->forgetLine($line);
+        }
+    }
+
+    protected function forgetLine($line): void
+    {
+        foreach (['selectedProduct', 'selectedStore', 'qty', 'amount', 'payment_method_id', 'tax_rate', 'selectedTax'] as $field) {
+            if (is_array($this->{$field})) {
+                unset($this->{$field}[$line]);
+            }
+        }
+    }
+
+    /**
+     * Only lines still on the form: row 0 plus the added rows on create,
+     * just the added rows on edit (existing lines are the current_* ones).
+     */
+    protected function pruneRemovedLines(bool $includeFirstRow): void
+    {
+        $live = array_map('strval', array_values($this->inputs));
+        if ($includeFirstRow) {
+            $live[] = '0';
+        }
+
+        foreach (array_keys((array) $this->selectedProduct) as $line) {
+            if (!in_array((string) $line, $live, true)) {
+                $this->forgetLine($line);
+            }
+        }
+    }
+
+    /**
+     * "8,66" -> "8.66", "1,200.50" -> "1200.50", "1 200" -> "1200" - a
+     * decimal comma or thousands separators shouldn't make a value invalid.
+     */
+    public static function normalizeNumber($value)
+    {
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $v = str_replace([' ', "\u{00A0}"], '', trim($value));
+
+        if (preg_match('/^-?\d{1,3}(,\d{3})+(\.\d+)?$/', $v)) {
+            $v = str_replace(',', '', $v);          // thousands separators
+        } elseif (preg_match('/^-?\d+,\d+$/', $v)) {
+            $v = str_replace(',', '.', $v);         // decimal comma
+        }
+
+        return $v;
+    }
+
+    protected function normalizeLineNumbers(): void
+    {
+        foreach (['qty', 'amount', 'current_qty', 'current_amount'] as $field) {
+            if (is_array($this->{$field})) {
+                foreach ($this->{$field} as $key => $value) {
+                    $this->{$field}[$key] = self::normalizeNumber($value);
+                }
+            }
+        }
     }
 
     public $title;
@@ -395,6 +460,10 @@ class Index extends Component
 
 
     public function updated($value){
+        if (preg_match('/^(current_)?(qty|amount)\.(\w+)$/', $value, $m)) {
+            $field = $m[1].$m[2];
+            $this->{$field}[$m[3]] = self::normalizeNumber($this->{$field}[$m[3]] ?? null);
+        }
         $this->validateOnly($value);
     }
     protected $rules = [
@@ -473,6 +542,10 @@ class Index extends Component
      */
     protected function linesAreValid(bool $includeCurrent = false): bool
     {
+        // Create has a fixed first row (key 0); edit's new lines are only the added rows
+        $this->pruneRemovedLines(! $includeCurrent);
+        $this->normalizeLineNumbers();
+
         $sets = [['selectedProduct', 'amount', 'qty']];
         if ($includeCurrent) {
             $sets[] = ['selectedCurrentProduct', 'current_amount', 'current_qty'];
@@ -482,11 +555,11 @@ class Index extends Component
         foreach ($sets as [$products, $amounts, $qtys]) {
             foreach ((array) $this->{$products} as $key => $value) {
                 if (! is_numeric($this->{$amounts}[$key] ?? null)) {
-                    $this->addError("{$amounts}.{$key}", 'Enter a valid amount (numbers only, no commas).');
+                    $this->addError("{$amounts}.{$key}", 'Enter a valid rate, e.g. 8.66.');
                     $valid = false;
                 }
                 if (! is_numeric($this->{$qtys}[$key] ?? null)) {
-                    $this->addError("{$qtys}.{$key}", 'Enter a valid quantity (numbers only).');
+                    $this->addError("{$qtys}.{$key}", 'Enter a valid quantity, e.g. 10.');
                     $valid = false;
                 }
             }
@@ -721,6 +794,11 @@ class Index extends Component
         $this->purchase_id = $this->purchase->id;
         $this->purchase = $this->purchase;
         $this->vendors = Vendor::where('vendor_type_id',$this->selectedVendorType)->orderBy('name','asc')->get();
+        // new lines on the edit form start empty, not with the create form's rows
+        foreach (array_keys((array) $this->selectedProduct) as $line) {
+            $this->forgetLine($line);
+        }
+        $this->inputs = [];
         $this->dispatchBrowserEvent('show-purchaseEditModal');
     }
     public function update(){

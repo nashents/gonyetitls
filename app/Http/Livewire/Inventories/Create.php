@@ -48,6 +48,7 @@ class Create extends Component
 
     public $stores;
     public $store_id;
+    public $selectedStore = [];        // per-line store, prefilled from the PO line or the default store
     public $bins;
     public $bin_id;
     public $racks;
@@ -149,6 +150,7 @@ class Create extends Component
         $i = $i + 1;
         $this->i = $i;
         array_push($this->inputs ,$i);
+        $this->selectedStore[$i] = $this->defaultStoreId();
     }
 
     public function remove($i)
@@ -172,7 +174,26 @@ class Create extends Component
     }
 
 
+    private function defaultStoreId()
+    {
+        return Store::defaultStore()?->id;
+    }
+
+    /** Store for a line: the transfer's destination, else the line's pick, else the default store. */
+    private function lineStoreId($key)
+    {
+        if ($this->source === 'Transfer' && $this->store_id) {
+            return $this->store_id;
+        }
+        $id = $this->selectedStore[$key] ?? null;
+        if (!empty($id) && Store::whereKey($id)->exists()) {
+            return $id;
+        }
+        return $this->defaultStoreId();
+    }
+
     public function mount(){
+        $this->selectedStore[0] = $this->defaultStoreId();
         $this->department = "inventory";
         $this->company = Auth::user()->employee->company;
         $this->stores = Store::orderBy('name','asc')->get();
@@ -502,6 +523,7 @@ class Create extends Component
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
+                $this->selectedStore[$key] = $purchase_product->store_id ?: $this->defaultStoreId();
                 $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
@@ -537,6 +559,7 @@ class Create extends Component
         if (!is_null($id)) {
             $transfer_item = TransferItem::find($id);
             if (isset($transfer_item)) {
+                $this->selectedStore[$key] = $this->store_id;
                 $this->selectedProduct[$key] = $transfer_item->product_id;
                 $this->amount[$key] = $transfer_item->amount;
                 $this->item_description[$key] = $transfer_item->product->description;
@@ -720,7 +743,7 @@ class Create extends Component
                     $inventory->exchange_amount = $this->exchange_amount;
                     $inventory->account_id = $this->selectedAccount;
                     $inventory->residual_value = $this->residual_value;
-                    $inventory->store_id = $this->store_id ?? null;
+                    $inventory->store_id = $this->lineStoreId($key);
                     $inventory->bin_id = $this->bin_id ?? null;
                     $inventory->rack_id = $this->rack_id ?? null;
                     $inventory->depreciation_type = $this->depreciation_type;

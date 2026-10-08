@@ -61,6 +61,10 @@
                                   <tr wire:key="{{ '40e172-57-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($inventory->id ?? '') }}">
                                     <td>
                                         {{$inventory->inventory_number}}
+                                        @if ($inventory->purchase_type === 'Sage Opening Balance')
+                                            <br>
+                                            <small class="badge bg-success" title="Opening balance pulled from Sage Intacct"><i class="fa fa-cloud-download"></i> Sage pulled</small>
+                                        @endif
                                         <br>
                                         <small class="text-muted">
                                             <strong>CreatedBy:</strong> {{$inventory->user ? $inventory->user->name : ""}} {{$inventory->user ? $inventory->user->surname : ""}}<br>

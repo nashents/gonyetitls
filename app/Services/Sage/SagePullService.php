@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\Expense;
+use App\Models\Currency;
 use App\Models\Horse;
 use App\Models\IntegrationLog;
 use App\Models\IntegrationMapping;
@@ -51,6 +52,10 @@ class SagePullService
 
     /** Cache: Sage ITEMID → Gonyeti store_id (built once from ITEMWAREHOUSEINFO). */
     protected ?array $itemWarehouseMap = null;
+
+    /** Cache: Gonyeti currency_id matching Sage's base/functional currency. */
+    protected ?int $sageBaseCurrencyId = null;
+    protected bool $sageBaseCurrencyResolved = false;
 
     public function __construct(SageDriver $driver, CompanyIntegration $integration, int $companyId, int $creatorId)
     {
@@ -1016,6 +1021,44 @@ class SagePullService
         return $s;
     }
 
+    /**
+     * The Gonyeti currency_id matching Sage's base/functional currency — read ONCE
+     * from a Sage document's BASECURR (inventory costs are in the Sage base, which
+     * may differ from the Gonyeti company base). Maps the ISO code (= currencies.name)
+     * to a Gonyeti Currency; falls back to the company base currency if unresolved.
+     */
+    protected function sageBaseCurrencyId(): ?int
+    {
+        if ($this->sageBaseCurrencyResolved) {
+            return $this->sageBaseCurrencyId;
+        }
+        $this->sageBaseCurrencyResolved = true;
+
+        $code = null;
+        foreach (['PODOCUMENT', 'SODOCUMENT'] as $object) {
+            try {
+                $r = $this->driver->readByQuery($object, ['BASECURR'], 'RECORDNO > 0', 1);
+                $code = trim((string) ($r['data'][0]['BASECURR'] ?? ''));
+                if ($code !== '') {
+                    break;
+                }
+            } catch (Throwable $e) {
+                // try the next object
+            }
+        }
+
+        if ($code) {
+            $ccy = Currency::whereRaw('UPPER(name) = ?', [strtoupper($code)])->first();
+            if ($ccy) {
+                return $this->sageBaseCurrencyId = (int) $ccy->id;
+            }
+        }
+
+        // Fall back to the Gonyeti company base currency when Sage's base can't be
+        // resolved or has no matching Gonyeti currency.
+        return $this->sageBaseCurrencyId = optional($this->integration->company)->currency_id;
+    }
+
     // ── Inventory stock (Sage on-hand → Gonyeti opening balances) ──
 
     /**
@@ -1080,8 +1123,16 @@ class SagePullService
                 $inv->user_id          = $this->creatorId;
                 $inv->product_id       = $productId;
                 $inv->store_id         = $storeId;
+                // Opening-balance date + Sage's OWN base/functional currency
+                // (AVERAGE_COST is in Sage base, e.g. ZAR — NOT the Gonyeti company
+                // base), mapped to the matching Gonyeti currency.
+                $inv->purchase_date    = now()->toDateString();
+                $inv->currency_id      = $this->sageBaseCurrencyId();
                 $inv->inventory_number = $this->nextNumber(Inventory::class, 'I');
                 $inv->qty              = $onhand;
+                // Remaining available quantity — dispatches read/decrement `balance`
+                // (only lines with balance > 0 are dispatchable), so seed it = qty.
+                $inv->balance          = $onhand;
                 $inv->amount           = $cost;   // unit cost
                 $inv->subtotal         = $value;
                 $inv->subtotal_incl    = $value;

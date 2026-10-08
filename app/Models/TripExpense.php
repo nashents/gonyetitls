@@ -24,6 +24,12 @@ class TripExpense extends Model implements Auditable
     public function expense(){
         return $this->belongsTo('App\Models\Expense');
     }
+
+    /** Trip sheet visibility is set once on the Expense; allowances always show. */
+    public function showsOnTripSheet(): bool
+    {
+        return $this->expense ? (bool) ($this->expense->visible_on_trip_sheet ?? true) : true;
+    }
     public function allowance(){
         return $this->belongsTo('App\Models\Allowance');
     }

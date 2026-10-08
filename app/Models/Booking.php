@@ -57,6 +57,13 @@ class Booking extends Model implements Auditable
     public function ticket(){
         return $this->hasOne('App\Models\Ticket');
     }
+
+    /** Any of this booking's tickets has had stock issued against it. */
+    public function hasDispatchedItems(): bool
+    {
+        return \App\Models\Ticket::where('booking_id', $this->id)->get()
+            ->contains(fn ($ticket) => $ticket->hasDispatchedItems());
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

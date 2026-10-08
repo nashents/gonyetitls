@@ -123,6 +123,7 @@ class Create extends Component
         $i = $i + 1;
         $this->i = $i;
         array_push($this->inputs ,$i);
+        $this->selectedStore[$i] = $this->defaultStoreId();
     }
 
     public function remove($i)
@@ -156,6 +157,7 @@ class Create extends Component
     public $selectedAccount;
     public $stores;
     public $store_id;
+    public $selectedStore = [];        // per-line store, prefilled from the PO line or the default store
     public $to_bills = False;
 
 
@@ -171,7 +173,26 @@ class Create extends Component
         unset($this->documents_inputs[$p]);
     }
 
+    private function defaultStoreId()
+    {
+        return Store::defaultStore()?->id;
+    }
+
+    /** Store for a line: the transfer's destination, else the line's pick, else the default store. */
+    private function lineStoreId($key)
+    {
+        if ($this->source === 'Transfer' && $this->store_id) {
+            return $this->store_id;
+        }
+        $id = $this->selectedStore[$key] ?? null;
+        if (!empty($id) && Store::whereKey($id)->exists()) {
+            return $id;
+        }
+        return $this->defaultStoreId();
+    }
+
     public function mount(){
+        $this->selectedStore[0] = $this->defaultStoreId();
         $this->department = "tyre";
         $this->company = Auth::user()->employee->company;
         $this->stores = Store::latest()->get();
@@ -304,6 +325,7 @@ class Create extends Component
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
+                $this->selectedStore[$key] = $purchase_product->store_id ?: $this->defaultStoreId();
                 $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
@@ -339,6 +361,7 @@ class Create extends Component
         if (!is_null($id)) {
             $transfer_item = TransferItem::find($id);
             if (isset($transfer_item)) {
+                $this->selectedStore[$key] = $this->store_id;
                 $this->selectedProduct[$key] = $transfer_item->product_id;
                 $this->amount[$key] = $transfer_item->amount;
                 $this->item_description[$key] = $transfer_item->product->description;
@@ -574,7 +597,7 @@ class Create extends Component
 
                 $tyre->tyre_number = $this->tyreNumber();
                 $tyre->currency_id = $this->selectedCurrency;
-                $tyre->store_id = $this->store_id;
+                $tyre->store_id = $this->lineStoreId($key);
                 $tyre->vendor_id = $this->vendor_id;
                 $tyre->condition = $this->condition;
                 $tyre->description = $this->description;

@@ -96,5 +96,10 @@ class Expense extends Model implements Auditable
         'tax_id',
         'status',
         'is_locked',
+        'visible_on_trip_sheet',
+    ];
+
+    protected $casts = [
+        'visible_on_trip_sheet' => 'boolean',
     ];
 }
