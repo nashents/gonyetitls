@@ -29,17 +29,42 @@
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="panel-title">
                                 <h5>Fuel Orders Management</h5>
-                                <div class="row">
+                                <div class="row mb-10">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                Equipment Type
+                                            </span>
+                                            <select wire:model="filter_type" class="form-control" aria-label="...">
+                                                <option value="">All</option>
+                                                <option value="Horse">Horse</option>
+                                                <option value="Vehicle">Vehicle</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                {{ $filter_type === 'Vehicle' ? 'Vehicles' : 'Horses' }}
+                                            </span>
+                                            <select wire:model="filter_equipment_id" class="form-control" aria-label="..." @if (! $filter_type) disabled @endif>
+                                                <option value="">{{ $filter_type ? 'All ' . ($filter_type === 'Vehicle' ? 'Vehicles' : 'Horses') : 'Select Equipment Type first' }}</option>
+                                                @foreach ($this->filterEquipment as $equipment)
+                                                    <option value="{{ $equipment->id }}">{{ $equipment->identifier_label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div class="col-lg-3">
                                         <div class="input-group">
                                             <span class="input-group-addon">
                                         Fueling Station
                                       </span>
-                                      <select wire:model.debounce.300ms="container_id" class="form-control" aria-label="..." >
-                                        <option value="">Select Fueling Station</option>
+                                      <select wire:model="container_id" class="form-control" aria-label="..." >
+                                        <option value="">All Fueling Stations</option>
                                         @foreach ($containers as $container)
                                         <option value="{{ $container->id }}">{{ $container->name }}</option>
-                                        @endforeach 
+                                        @endforeach
                                      </select>
                                         </div>
                                         <!-- /input-group -->
@@ -99,6 +124,9 @@
                                     <!-- /input-group -->
                                 </div>
                                 @endif
+                                <div class="col-lg-2">
+                                    <a href="#" wire:click.prevent="clearFilters()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-refresh"></i>CLEAR FILTERS</a>
+                                </div>
                             </div>
                             <a href="" data-toggle="modal" data-target="#fuelModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Fuel Order</a>
                             <a href="#" wire:click="exportFuelsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>

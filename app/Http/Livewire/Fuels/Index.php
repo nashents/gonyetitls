@@ -153,8 +153,11 @@ class Index extends Component
     public $fuel_filter;
     public $from;
     public $to;
+    // Table filters (container_id is the fueling station filter)
+    public $filter_type;
+    public $filter_equipment_id;
     public $company;
-    
+
     public $role_names;
     public $department_names;
     public $rank_names;
@@ -166,16 +169,87 @@ class Index extends Component
     public $total_customer_expenses = 0;
     public $total_expenses = 0;
 
+    /** Filters the table and the exports share (see FuelsExport::applyFilters). */
+    protected function tableFilters(): array
+    {
+        return [
+            'type' => $this->filter_type,
+            'equipment_id' => $this->filter_equipment_id,
+            'search' => $this->search,
+        ];
+    }
+
+    /** Full horse/vehicle list for the table filter ($horses/$vehicles get narrowed by the order form's search). */
+    public function getFilterEquipmentProperty()
+    {
+        if ($this->filter_type === 'Horse') {
+            return Horse::orderByIdentifier('asc')->get();
+        }
+        if ($this->filter_type === 'Vehicle') {
+            return Vehicle::orderByIdentifier('asc')->get();
+        }
+        return collect();
+    }
+
+    public function updatedFilterType()
+    {
+        // A horse id means nothing once the type switches to Vehicle
+        $this->filter_equipment_id = null;
+    }
+
+    public function updatingFilterType()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilterEquipmentId()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingContainerId()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTo()
+    {
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->search = null;
+        $this->fuel_filter = 'created_at';
+        $this->from = null;
+        $this->to = null;
+        $this->container_id = null;
+        $this->filter_type = null;
+        $this->filter_equipment_id = null;
+
+        $this->resetPage();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Filters Cleared Successfully!!"
+        ]);
+    }
+
     public function exportFuelsCSV(Excel $excel){
 
-        return $excel->download(new FuelsExport($this->from, $this->to, $this->fuel_filter,$this->container_id), 'fuel_orders_' .time().'.csv', Excel::CSV);
+        return $excel->download(new FuelsExport($this->from, $this->to, $this->fuel_filter, $this->container_id, $this->tableFilters()), 'fuel_orders_' .time().'.csv', Excel::CSV);
     }
     public function exportFuelsPDF(Excel $excel){
 
-        return $excel->download(new FuelsExport($this->from, $this->to, $this->fuel_filter,$this->container_id), 'fuel_orders_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new FuelsExport($this->from, $this->to, $this->fuel_filter, $this->container_id, $this->tableFilters()), 'fuel_orders_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportFuelsExcel(Excel $excel){
-        return $excel->download(new FuelsExport($this->from, $this->to, $this->fuel_filter,$this->container_id), 'fuel_orders_' .time().'.xlsx');
+        return $excel->download(new FuelsExport($this->from, $this->to, $this->fuel_filter, $this->container_id, $this->tableFilters()), 'fuel_orders_' .time().'.xlsx');
     }
 
     public function mount(){
@@ -1763,36 +1837,8 @@ class Index extends Component
                 $query->where('container_id', $this->container_id);
             }
 
-            // Search filter
-            if ($this->search) {
-                $search = '%' . $this->search . '%';
-
-                $query->where(function ($q) use ($search) {
-                    $q->where('order_number', 'like', $search)
-                        ->orWhere('quantity', 'like', $search)
-                        ->orWhere('comments', 'like', $search)
-                        ->orWhereHas('horse', function ($q) use ($search) {
-                            $q->where('registration_number', 'like', $search)
-                            ->orWhere('fleet_number', 'like', $search);
-                        })
-                        ->orWhereHas('user', function ($q) use ($search) {
-                            $q->where(DB::raw("concat(name, ' ', surname)"), 'like', $search);
-                        })
-                        ->orWhereHas('vehicle', function ($q) use ($search) {
-                            $q->where('registration_number', 'like', $search);
-                        })
-                        ->orWhereHas('asset.product.brand', function ($q) use ($search) {
-                            $q->where('name', 'like', $search);
-                        })
-                        ->orWhereHas('container', function ($q) use ($search) {
-                            $q->where('name', 'like', $search);
-                        })
-                        ->orWhereHas('trip', function ($q) use ($search) {
-                            $q->where('trip_number', 'like', $search)
-                            ->orWhere('trip_ref', 'like', $search);
-                        });
-                });
-            }
+            // Equipment + search filters (shared with the exports)
+            FuelsExport::applyFilters($query, $this->tableFilters());
 
             return view('livewire.fuels.index', [
                 'fuels' => $query->orderBy('order_number', 'desc')->paginate(10),

@@ -30,6 +30,9 @@ class GoodsReceived extends Model implements Auditable
     public function authorized_by(){
         return $this->belongsTo('App\Models\User', 'authorized_by_id');
     }
+    public function reversed_by(){
+        return $this->belongsTo('App\Models\User', 'reversed_by_id');
+    }
     public function assets(){
         return $this->hasMany('App\Models\Asset');
     }

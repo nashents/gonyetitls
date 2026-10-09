@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\GoodsReceived;
 use App\Models\Purchase;
 use App\Models\Vendor;
+use App\Services\GoodsReceiveds\GoodsReceivedReversalService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
 use Carbon\Carbon;
@@ -202,6 +203,52 @@ class Index extends Component
         ]);
     }
 
+    // Reverse an approved GRV
+    public $reversal_comments;
+    public $reverse_blockers = [];
+
+    public function showReverse($id){
+        $goods_received = GoodsReceived::find($id);
+        if (! $goods_received || $goods_received->authorization !== 'approved') {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Only approved GRVs can be reversed.']);
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->goods_received_id = $id;
+        $this->goods_received_number = $goods_received->goods_received_number;
+        $this->reversal_comments = null;
+        $this->reverse_blockers = app(GoodsReceivedReversalService::class)->blockers($goods_received);
+        $this->dispatchBrowserEvent('show-grvReverseModal');
+    }
+
+    public function reverseGRV(){
+        $this->validate(['reversal_comments' => 'required|string|min:3'], [], ['reversal_comments' => 'reason']);
+
+        $goods_received = GoodsReceived::find($this->goods_received_id);
+        if (! $goods_received) {
+            return;
+        }
+
+        try {
+            app(GoodsReceivedReversalService::class)->reverse($goods_received, $this->reversal_comments, Auth::id());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // something changed since the modal opened - show why
+            $this->reverse_blockers = collect($e->errors())->flatten()->all();
+            return;
+        }
+
+        $syncedToSage = filled(optional($goods_received->sageMapping)->external_id);
+
+        $this->dispatchBrowserEvent('hide-grvReverseModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => $syncedToSage ? 'warning' : 'success',
+            'message' => "GRV {$goods_received->goods_received_number} reversed - items taken out of stock and its supplier bill removed."
+                . ($syncedToSage ? ' It was already sent to Sage: reverse that receipt in Sage manually.' : ''),
+        ]);
+        $this->reset(['reversal_comments', 'reverse_blockers', 'goods_received_id', 'goods_received_number']);
+    }
+
     public function updatedPurchaseId($id){
         if(is_null($id)){
             return;
@@ -291,7 +338,7 @@ class Index extends Component
 
         $query = GoodsReceived::query()
             ->with([
-                'vendor', 'employee', 'user', 'sageMapping',
+                'vendor', 'employee', 'user', 'sageMapping', 'authorized_by', 'reversed_by',
                 // withTrashed here too — an item can be deleted on its own without
                 // its GRV being deleted, and it should still show (as "deleted").
                 'inventories' => fn ($q) => $q->withTrashed()->with('product'),

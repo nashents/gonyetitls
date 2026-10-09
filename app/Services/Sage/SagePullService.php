@@ -9,6 +9,7 @@ use App\Models\CompanyIntegration;
 use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\Employee;
+use App\Models\ExchangeRate;
 use App\Models\Expense;
 use App\Models\Currency;
 use App\Models\Horse;
@@ -181,18 +182,40 @@ class SagePullService
         // A horse's parent transporter lives on its PROJECT (SUB - TRUCKS, PARENTID =
         // the transporter project). Build registration → parent-project map so each
         // pulled horse can be attached to its transporter (created if it doesn't exist).
-        $projType   = (string) config('sageintacct.pull.horse_project_type', 'SUB - TRUCKS');
-        $projects   = $this->readAll('PROJECT', ['PROJECTID', 'NAME', 'PARENTID'], "PROJECTTYPE = '{$projType}'");
-        $parentByReg = [];
+        // Pull EVERY truck project type (subcontractor "SUB - TRUCKS" AND company-owned
+        // "INTERNAL - TRUCKS") so internal units on internal job cards also get a project.
+        $projTypes = (array) config('sageintacct.pull.horse_project_types', [config('sageintacct.pull.horse_project_type', 'SUB - TRUCKS')]);
+        $projTypes = array_values(array_filter(array_map('trim', $projTypes), fn ($t) => $t !== ''));
+        $inList    = implode(',', array_map(fn ($t) => "'" . str_replace("'", '', $t) . "'", $projTypes)) ?: "'SUB - TRUCKS'";
+        $projects  = $this->readAll('PROJECT', ['PROJECTID', 'NAME', 'PARENTID'], "PROJECTTYPE IN ({$inList})");
+        $parentByReg  = [];
+        $projectByReg = [];
         foreach ($projects as $p) {
             $reg = strtoupper(trim((string) ($p['NAME'] ?? '')));
-            if ($reg !== '' && ! empty($p['PARENTID'])) {
+            if ($reg === '') {
+                continue;
+            }
+            // The horse's OWN Sage PROJECT (NAME = registration) — attached to job
+            // cards / fuel so the costs land on the truck's project.
+            if (! empty($p['PROJECTID'])) {
+                $projectByReg[$reg] = $p['PROJECTID'];
+            }
+            // Its PARENTID is the transporter's project (used to attach the horse).
+            if (! empty($p['PARENTID'])) {
                 $parentByReg[$reg] = $p['PARENTID'];
             }
         }
 
-        return $this->upsertFleetClass(Horse::class, 'horse_class', 'H', $rows, function (Horse $horse, array $row) use ($parentByReg) {
+        return $this->upsertFleetClass(Horse::class, 'horse_class', 'H', $rows, function (Horse $horse, array $row) use ($parentByReg, $projectByReg) {
             $reg = strtoupper(trim((string) ($row['NAME'] ?? '')));
+
+            // Map the horse to its own Sage PROJECT so job-card / fuel lines carry it.
+            // The horse pull only wrote horse_class before, leaving the project blank
+            // on every job card except the lone horse pushed via SageProjectService.
+            if ($projectId = ($projectByReg[$reg] ?? null)) {
+                $this->linkMapping('horse_project', $horse, $projectId, $reg);
+            }
+
             $parentProjectId = $parentByReg[$reg] ?? null;
             if (! $parentProjectId) {
                 return;
@@ -1059,6 +1082,54 @@ class SagePullService
         return $this->sageBaseCurrencyId = optional($this->integration->company)->currency_id;
     }
 
+    /**
+     * Rate to convert a Sage-base opening-balance cost into the Gonyeti company
+     * currency for inventory pulls. 1.0 when Sage's base matches the company
+     * currency; otherwise the active exchange rate configured for that currency.
+     * Throws (aborting the whole pull) when the currencies differ and no rate is
+     * set, so the user is told to configure the rate before importing stock.
+     */
+    protected function inventoryExchangeRate(): float
+    {
+        $baseId    = $this->sageBaseCurrencyId();
+        $companyId = optional($this->integration->company)->currency_id;
+
+        if (! $baseId || ! $companyId || (int) $baseId === (int) $companyId) {
+            return 1.0;
+        }
+
+        $rate = ExchangeRate::where('currency_id', $baseId)
+            ->where('status', 1)
+            ->latest('id')
+            ->value('exchange_rate');
+
+        if (! $rate || (float) $rate <= 0) {
+            $name = optional(Currency::find($baseId))->name ?: 'the Sage base currency';
+            throw new \RuntimeException(
+                "Set the {$name} exchange rate before pulling inventory — Sage holds "
+                . "stock in {$name} and it must be converted to the company currency."
+            );
+        }
+
+        return (float) $rate;
+    }
+
+    /**
+     * Pre-flight for an inventory pull: the reason it can't run yet (shown to the
+     * user before anything is queued), or null when it's clear. Current blocker:
+     * Sage's base currency differs from the company's and no exchange rate is set.
+     */
+    public function inventoryPullBlockReason(): ?string
+    {
+        try {
+            $this->inventoryExchangeRate();
+        } catch (Throwable $e) {
+            return $e->getMessage();
+        }
+
+        return null;
+    }
+
     // ── Inventory stock (Sage on-hand → Gonyeti opening balances) ──
 
     /**
@@ -1086,6 +1157,14 @@ class SagePullService
             'company_integration_id' => $this->integration->id,
             'entity_type'            => 'store_warehouse',
         ])->whereNotNull('external_id')->pluck('local_id', 'external_id')->all();
+
+        // Sage holds stock in its own base currency (e.g. ZAR); Gonyeti values it
+        // in the company currency (e.g. USD). When they differ we need a configured
+        // exchange rate to convert the opening-balance cost — without it dispatches
+        // of pulled stock would price at 0. Resolve it once (same base for all rows)
+        // and refuse the whole pull up-front if it's missing, so the user sets the
+        // rate first rather than importing un-priceable stock.
+        $rate = $this->inventoryExchangeRate();
 
         $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
         foreach ($rows as $row) {
@@ -1137,6 +1216,14 @@ class SagePullService
                 $inv->subtotal         = $value;
                 $inv->subtotal_incl    = $value;
                 $inv->total            = $value;
+                // Company-currency value. Dispatches value a non-company-currency
+                // inventory line off `exchange_amount` (see Dispatches/Index.php);
+                // without it the dispatched price comes out 0. $rate converts the
+                // Sage-base cost into the Gonyeti company currency (1.0 when they
+                // match); it's guaranteed set because the pull aborts above when
+                // the currencies differ and no exchange rate is configured.
+                $inv->exchange_rate    = $rate;
+                $inv->exchange_amount  = $rate * $value;
                 $inv->condition        = 'New';
                 $inv->purchase_type    = 'Sage Opening Balance';
                 $inv->status           = 1;

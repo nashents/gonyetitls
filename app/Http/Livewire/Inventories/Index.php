@@ -10,13 +10,16 @@ use Livewire\WithFileUploads;
 use App\Imports\InventoriesImport;
 use Illuminate\Support\Facades\Auth;
 use App\Services\Sage\SageIntegration;
+use App\Services\Sage\SagePullService;
 use App\Http\Livewire\Concerns\PullsFromSage;
+use App\Services\Sage\Concerns\ResolvesSageIntegration;
 
 class Index extends Component
 {
     use WithFileUploads;
     use WithPagination;
     use PullsFromSage;
+    use ResolvesSageIntegration;
 
     /** Sage integration gate — controls the "Pull stock from Sage" button. */
     public function getSageEnabledProperty()
@@ -27,6 +30,25 @@ class Index extends Component
     /** Import current Sage on-hand (ITEMWAREHOUSEINFO) as opening-balance inventory. */
     public function pullFromSage()
     {
+        if (! $this->sageEnabled) {
+            return;
+        }
+
+        $user      = Auth::user();
+        $companyId = optional(optional($user)->employee)->company_id
+            ?? optional($user)->company_id
+            ?? optional(optional($user)->company)->id;
+
+        // Refuse up-front (before queueing) when Sage's stock can't be valued yet —
+        // e.g. Sage base is ZAR, the company is USD, and no exchange rate is set.
+        if ($companyId && ($integration = $this->activeSageIntegration((int) $companyId))) {
+            $service = new SagePullService($this->sageDriverFor($integration), $integration, (int) $companyId, (int) $user->id);
+            if ($reason = $service->inventoryPullBlockReason()) {
+                $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => $reason]);
+                return;
+            }
+        }
+
         $this->dispatchSagePull('inventory', 'inventory stock');
     }
 

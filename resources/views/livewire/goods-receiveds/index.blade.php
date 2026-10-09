@@ -161,6 +161,11 @@
                                         @if ($goods_received->authorization_comments)
                                             <br><strong>Comments:</strong> {{$goods_received->authorization_comments}}
                                         @endif
+                                        @if ($goods_received->reversed_at)
+                                            <br><strong style="color:red">Reversed</strong> {{ \Carbon\Carbon::parse($goods_received->reversed_at)->format('Y-m-d') }}
+                                            @if ($goods_received->reversed_by) by {{$goods_received->reversed_by->name}} {{$goods_received->reversed_by->surname}} @endif
+                                            @if ($goods_received->reversal_comments)<br><strong>Reason:</strong> {{$goods_received->reversal_comments}}@endif
+                                        @endif
                                         </small>
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -175,6 +180,9 @@
                                                 <li><a href="{{ route('goods_receiveds.show', $goods_received->id) }}#documents" ><i class="fa fa-paperclip color-info"></i> Documents</a></li>
                                                 <li><a href="#"  wire:click="edit({{$goods_received->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" wire:click="showClose({{$goods_received->id}})"  ><i class="fas fa-check color-success"></i> Mark as closed</a></li>
+                                                @if ($goods_received->authorization === 'approved')
+                                                    <li><a href="#" wire:click.prevent="showReverse({{$goods_received->id}})" ><i class="fa fa-undo color-danger"></i> Reverse GRV</a></li>
+                                                @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#goods_receivedDeleteModal{{ $goods_received->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
@@ -243,6 +251,45 @@
             </div>
         </div>
 
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="grvReverseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-undo"></i> Reverse GRV {{ $goods_received_number }}<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="reverseGRV()" >
+                <div class="modal-body">
+                    @if (!empty($reverse_blockers))
+                        <div class="alert alert-danger">
+                            <strong>This GRV can't be reversed:</strong>
+                            <ul style="margin-bottom:0">
+                                @foreach ($reverse_blockers as $blocker)
+                                    <li>{{ $blocker }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @else
+                        <p>Reversing takes every item this GRV received back out of stock, removes the supplier bill it raised (reversing its Spares Inventory / Accounts Payable entry) and marks the GRV <strong>rejected</strong>. This can't be undone.</p>
+                        <div class="form-group">
+                            <label for="reversal_comments">Reason<span class="required" style="color: red">*</span></label>
+                            <textarea class="form-control" wire:model.defer="reversal_comments" rows="3" placeholder="Why is this GRV being reversed?" required></textarea>
+                            @error('reversal_comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        @if (empty($reverse_blockers))
+                            <button type="submit" class="btn bg-danger btn-wide btn-rounded"><i class="fa fa-undo"></i>Reverse</button>
+                        @endif
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="goods_receivedModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-50" role="document">

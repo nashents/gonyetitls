@@ -298,6 +298,11 @@ return [
         // Sage PROJECTTYPE of a horse project (its PARENTID = the transporter project),
         // used on the horse pull to attach each horse to its transporter.
         'horse_project_type'       => env('SAGE_INTACCT_TYPE_HORSE_PROJECT', 'SUB - TRUCKS'),
+        // ALL PROJECTTYPEs that are a truck's own project — mapped to horse_project so
+        // job-card / fuel lines carry the horse's project. Subcontractor trucks are
+        // "SUB - TRUCKS"; company-owned trucks (internal job cards) are
+        // "INTERNAL - TRUCKS" — both must be pulled or internal units get no project.
+        'horse_project_types'      => ['SUB - TRUCKS', 'INTERNAL - TRUCKS'],
         // Page size for readByQuery (max 1000). readMore() pages beyond this.
         'page_size'                => 1000,
     ],

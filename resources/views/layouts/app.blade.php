@@ -1272,6 +1272,12 @@
             window.addEventListener('hide-grvCloseModal', event => {
                 $('#grvCloseModal').modal('hide');
             })
+            window.addEventListener('show-grvReverseModal', event => {
+                $('#grvReverseModal').modal('show');
+            });
+            window.addEventListener('hide-grvReverseModal', event => {
+                $('#grvReverseModal').modal('hide');
+            });
     </script>
 
 <script type="text/javascript">

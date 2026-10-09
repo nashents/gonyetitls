@@ -63,6 +63,13 @@ class SageJobCardService
             $mapping->save();
         }
 
+        // Block while any attached dispatch is still pending authorization: its
+        // items haven't decremented stock yet and would be missing from the job
+        // card. The user must approve every dispatch first, then (re)sync.
+        if ($this->hasPendingDispatch($ticket)) {
+            return $this->fail($mapping, $entity, $ticket, 'Approve the associated dispatches to sync this job card.', IntegrationMapping::STATUS_REQUIRES_ATTENTION);
+        }
+
         // Dispatch items not yet placed on the Sage job card.
         $newItems = $this->unsyncedDispatchItems($ticket);
         if (empty($newItems)) {
@@ -257,6 +264,18 @@ class SageJobCardService
         ])->first();
 
         return $m && $m->external_id ? $m->external_id : null;
+    }
+
+    /** True when the ticket has a dispatch still awaiting authorization. */
+    protected function hasPendingDispatch(Ticket $ticket): bool
+    {
+        foreach ($ticket->dispatches as $dispatch) {
+            if (strcasecmp((string) $dispatch->authorization, 'pending') === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** The ticket's dispatch items that aren't yet on the Sage job card. */
