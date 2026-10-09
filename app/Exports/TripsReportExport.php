@@ -617,15 +617,9 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         }
 
         $start_date = $this->formatDateTimeValue($trip->start_date ?? null);
-        $formatDate = function (?string $date): string {
-            if (!$date) {
-                return '';
-            }
-
-            return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $date)
-                ? Carbon::parse($date)->format('d M Y g:i A')
-                : Carbon::parse($date)->format('d M Y g:i A');
-        };
+        // A mistyped date (e.g. "202608-02-13T08:00") shows as typed instead
+        // of failing the whole export
+        $formatDate = fn (?string $date): string => $this->formatDateTimeValue($date);
 
         /*
         |--------------------------------------------------------------------------

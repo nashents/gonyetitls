@@ -47,7 +47,7 @@ WithCustomStartCell
     public function map($tyre_assignment): array{
            
             $product_name = $tyre_assignment->tyre->product ? $tyre_assignment->tyre->product->name : "";
-            $brand_name = $tyre_assignment->tyre->product->brand ? $tyre_assignment->tyre->product->brand->name : "";
+            $brand_name = optional(optional(optional($tyre_assignment->tyre)->product)->brand)->name ?? "";
              $width = $tyre_assignment->tyre ? $tyre_assignment->tyre->width : "";
              $ratio = $tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : "";
              $diameter = $tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : "";                             

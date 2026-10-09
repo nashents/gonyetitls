@@ -452,9 +452,9 @@ class Create extends Component
                 // Calculate Gross Salary
                 $gross = $this->basic + $this->total_allowances ;
                 
-                // Process PAYE & AIDS Levy
+                // Process PAYE & AIDS Levy - on gross less non-taxable allowances
                 if ($this->paye) {
-                    $this->processPayeAndAidsLevy($gross);
+                    $this->processPayeAndAidsLevy(max(0, $gross - $this->nonTaxableAllowances()));
                 }
 
                 // Process NSSA, NEC and Pension statutory contributions
@@ -522,6 +522,19 @@ class Create extends Component
             return $total;
         }
     
+        /**
+         * This salary's allowances marked not PAYE-taxable, valued the same
+         * way total_allowances is (company currency).
+         */
+        private function nonTaxableAllowances(): float {
+            return (float) SalaryItem::where('salary_id', $this->salary_id)
+                ->whereHas('allowance', fn ($q) => $q->where('taxable', false))
+                ->get()
+                ->sum(fn ($item) => $item->currency_id && $item->currency_id != $this->company->currency_id
+                    ? (float) $item->exchange_amount
+                    : (float) $item->amount);
+        }
+
         // Helper function to process PAYE and AIDS Levy
         private function processPayeAndAidsLevy($gross) {
          

@@ -26,6 +26,8 @@ class Index extends Component
     public $taxes;
     public $tax_id;
     public $type;
+    // counts towards PAYE (non-taxable allowances are still part of gross)
+    public $taxable = 1;
     public $accounts;
     public $account_id;
 
@@ -59,6 +61,7 @@ class Index extends Component
         $this->description = '';
         $this->tax_id = '';
         $this->type = '';
+        $this->taxable = 1;
         $this->account_id = '';
     }
 
@@ -81,6 +84,7 @@ class Index extends Component
         $allowance->description = $this->description;
         $allowance->tax_id = $this->tax_id;
         $allowance->type = $this->type;
+        $allowance->taxable = (bool) $this->taxable;
         $allowance->account_id = $this->account_id;
         $allowance->status =1;
         $allowance->save();
@@ -115,6 +119,7 @@ class Index extends Component
     $this->description = $allowance->description;
     $this->tax_id = $allowance->tax_id;
     $this->type = $allowance->type;
+    $this->taxable = $allowance->taxable ? 1 : 0;
     $this->account_id = $allowance->account_id;
     $this->allowance_id = $allowance->id;
     $this->status = $allowance->status;
@@ -143,6 +148,7 @@ class Index extends Component
             $allowance->description = $this->description;
             $allowance->tax_id = $this->tax_id;
             $allowance->type = $this->type;
+            $allowance->taxable = (bool) $this->taxable;
             $allowance->account_id = $this->account_id;
             $allowance->status = $this->status;
             $allowance->update();

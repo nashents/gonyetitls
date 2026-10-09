@@ -176,7 +176,8 @@ WithCustomStartCell
 
                 if ($purchase->purchase_products) {
                     foreach ($purchase->purchase_products as $purchase_product) {
-                            $brand = $purchase_product->product->brand ? $purchase_product->product->brand->name : "";
+                            // product may since have been deleted
+                            $brand = optional(optional($purchase_product->product)->brand)->name ?? "";
                             $name = $purchase_product->product ? $purchase_product->product->name : "";
                             $items[] = $name." ".$brand;
                     }

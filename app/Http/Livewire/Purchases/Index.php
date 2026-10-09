@@ -79,7 +79,9 @@ class Index extends Component
 
     public $payment_methods;
     public $vendor_id;
-    public $vendors;
+    // Built fresh in render() - kept out of public state so Livewire does not
+    // serialise and re-query thousands of rows on every round trip
+    protected $vendors;
     public $vendor_types;
     public $selectedVendorType;
 
@@ -109,7 +111,7 @@ class Index extends Component
     public $current_tax_rate = [];
     public $tax_amount;
 
-    public $products;
+    protected $products;
     public $selectedProduct = [];
     public $stores;
     public $selectedStore = [];        // per-line store (new lines, create + edit)
@@ -361,6 +363,7 @@ class Index extends Component
             $this->requisitions = Requisition::where('authorization','approved')->where('is_completed', False)->whereYear('date',date('Y'))->latest()->get();
             $this->department = $category;
             $this->products = Product::query()
+            ->with('brand:id,name')
             ->where('status', true)
             ->when(!$this->all_products, function ($query) {
                 $query->where('buy', true)->where('department', $this->department);
@@ -1067,6 +1070,7 @@ class Index extends Component
         }
         elseif($category == "products"){
             $this->products = Product::query()
+            ->with('brand:id,name')
             ->where('status', true)
             ->when(!$this->all_products, function ($query) {
                 $query->where('buy', true)->where('department', $this->department);
@@ -1143,6 +1147,7 @@ class Index extends Component
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
         $this->products = Product::query()
+            ->with('brand:id,name')
             ->where('status', true)
             ->when(!$this->all_products, function ($query) {
                 $query->where('buy', true)->where('department', $this->department);
@@ -1191,7 +1196,11 @@ class Index extends Component
             ->orderBy($this->purchase_filter, 'desc')
             ->paginate(10);
 
-        return view('livewire.purchases.index', compact('purchases'));
+        return view('livewire.purchases.index', [
+            'purchases' => $purchases,
+            'products'  => $this->products,
+            'vendors'   => $this->vendors,
+        ]);
  
     }
 }

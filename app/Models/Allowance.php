@@ -45,5 +45,6 @@ class Allowance extends Model implements Auditable
 
     protected $casts = [
         'default' => 'boolean',
+        'taxable' => 'boolean',
     ];
 }

@@ -257,9 +257,12 @@ class Edit extends Component
                 // Calculate Gross Salary
                 $gross = $this->basic + $this->total_allowances;
 
-                // Process PAYE & AIDS Levy
+                // Process PAYE & AIDS Levy - on gross less non-taxable allowances
                 if ($this->paye) {
-                    $this->processPayeAndAidsLevy($gross);
+                    $nonTaxable = (float) SalaryItem::where('salary_id', $this->salary_id)
+                        ->whereHas('allowance', fn ($q) => $q->where('taxable', false))
+                        ->sum('amount');
+                    $this->processPayeAndAidsLevy(max(0, $gross - $nonTaxable));
                 }
 
                 // Final Salary Calculation
