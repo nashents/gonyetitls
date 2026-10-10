@@ -292,6 +292,13 @@ class DispatchesImport implements ToCollection, WithHeadingRow, WithValidation, 
         $vehicle_id = $ticket?->vehicle_id;
         $trailer_id = $ticket?->trailer_id;
 
+        if ($active = TyreAssignment::activeForTyre($dispatch_item->tyre_id)) {
+            $tyre = $dispatch_item->tyre;
+            throw new \Exception(
+                TyreAssignment::alreadyAssignedMessage($active, $tyre ? ($tyre->serial_number ?: $tyre->tyre_number) : null)
+            );
+        }
+
         $assignment          = new TyreAssignment;
         $assignment->user_id = Auth::id();
         $assignment->tyre_id = $dispatch_item->tyre_id;

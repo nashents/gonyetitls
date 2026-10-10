@@ -482,6 +482,7 @@ class Create extends Component
       $this->updateLeaveDays($employee->id);
 
       $employee->departments()->sync($this->selectedDepartment);
+      $employee->ensureDefaultDepartment();
       $employee->ranks()->sync($this->rank_id);
 
         $employee_position  = new EmployeePosition;

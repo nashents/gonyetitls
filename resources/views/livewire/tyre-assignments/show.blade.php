@@ -95,6 +95,16 @@
                                 <th class="w-10 text-center line-height-35">Ending Odometer</th>
                                 <td class="w-20 line-height-35">{{$tyre_assignment->ending_odometer ? $tyre_assignment->ending_odometer."Kms" : ""}}</td>
                             </tr>
+                            @if ($tyre_assignment->unassigned_date)
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Unassigned On</th>
+                                <td class="w-20 line-height-35">{{$tyre_assignment->unassigned_date}} {{$tyre_assignment->unassignedBy ? "by ".$tyre_assignment->unassignedBy->name." ".$tyre_assignment->unassignedBy->surname : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Unassignment Reason</th>
+                                <td class="w-20 line-height-35">{{$tyre_assignment->unassignment_reason}}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <th class="w-10 text-center line-height-35">Axle</th>
                                 <td class="w-20 line-height-35">{{$tyre_assignment->axle}} </td>

@@ -72,33 +72,39 @@ class SageJobCardService
 
         // Dispatch items not yet placed on the Sage job card.
         $newItems = $this->unsyncedDispatchItems($ticket);
-        if (empty($newItems)) {
-            return $this->result(true, 'skipped', $mapping->external_id, null, $entity, $ticket);
-        }
 
-        $isIncome   = strcasecmp((string) optional($ticket->booking)->transaction_type, 'income') === 0;
-        $customerId = $this->resolveCustomer($ticket, $isIncome);
-        if (! $customerId) {
-            return $this->fail($mapping, $entity, $ticket, 'No Sage customer could be resolved for the job card.', IntegrationMapping::STATUS_REQUIRES_ATTENTION);
-        }
+        $isIncome = strcasecmp((string) optional($ticket->booking)->transaction_type, 'income') === 0;
 
-        // Attach the serviced unit's Sage PROJECT + CLASS to every line.
+        // Attach the serviced unit's Sage PROJECT + CLASS to every line (and the header).
         $projectContext = $this->projectContext($ticket);
+        $headerProject  = $projectContext['projectid'] ?? null;
 
         $lines = $this->dispatchLines($newItems, $projectContext);
-        if (empty($lines)) {
-            return $this->result(true, 'skipped', $mapping->external_id, null, $entity, $ticket);
-        }
 
         if ($mapping->exists && $mapping->external_id) {
-            // Append the newly dispatched lines to the existing job card.
+            // RE-SYNC of an already-created job card: append any newly dispatched
+            // lines AND (re)set the header project on the existing document — so a
+            // manual re-sync updates the project on the job card, not only on fresh
+            // creates. Nothing new + no project to set → genuinely nothing to do.
+            if (empty($lines) && ! $headerProject) {
+                return $this->result(true, 'skipped', $mapping->external_id, null, $entity, $ticket);
+            }
+
             $key = $this->docRecordNo($mapping->external_id);
             if (! $key) {
-                return $this->fail($mapping, $entity, $ticket, 'Could not resolve the Sage job card record to append dispatch lines.', IntegrationMapping::STATUS_FAILED);
+                return $this->fail($mapping, $entity, $ticket, 'Could not resolve the Sage job card record to update.', IntegrationMapping::STATUS_FAILED);
             }
-            $res    = $this->driver->appendSalesTransactionLines($key, $lines, config('sageintacct.purchasing.entity_id') ?: null);
+            $res    = $this->driver->appendSalesTransactionLines($key, $lines, config('sageintacct.purchasing.entity_id') ?: null, $headerProject);
             $result = $this->finishSync($mapping, $res, $mapping->external_id, 'update', $entity, $ticket);
         } else {
+            // CREATE needs at least one line and a resolvable customer.
+            if (empty($lines)) {
+                return $this->result(true, 'skipped', $mapping->external_id, null, $entity, $ticket);
+            }
+            $customerId = $this->resolveCustomer($ticket, $isIncome);
+            if (! $customerId) {
+                return $this->fail($mapping, $entity, $ticket, 'No Sage customer could be resolved for the job card.', IntegrationMapping::STATUS_REQUIRES_ATTENTION);
+            }
             // Create the job card. Booking transaction_type picks the definition:
             //   income  → the standard "Job-Card"  (Order class)
             //   expense → "Internal Job Card"       (Order class)
@@ -121,6 +127,10 @@ class SageJobCardService
                 'currency'        => $currency,
                 'exchratetype'    => $currency ? (config('sageintacct.purchasing.exchange_rate_type') ?: null) : null,
                 'entityid'        => config('sageintacct.purchasing.entity_id') ?: null,
+                // Attach the horse's project to the job-card HEADER too (not only the
+                // lines) — matches a manually-created Sage job card. One ticket = one
+                // serviced unit, so every line shares this project.
+                'projectid'       => $projectContext['projectid'] ?? null,
             ];
 
             // The standard "Job-Card" definition requires the mileage custom field.

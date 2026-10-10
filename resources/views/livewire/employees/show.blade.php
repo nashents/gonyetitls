@@ -189,8 +189,8 @@
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Department(s)</th>
-                                    <td class="w-20 line-height-35">@foreach ($employee->departments as $department)
-                                        {{$department->name ? $department->name." " : ""}} 
+                                    <td class="w-20 line-height-35">@foreach ($employee_departments as $department)
+                                        {{$department->name ? $department->name." " : ""}}@if ($department->pivot->is_default)<span class="label label-success" title="Payroll costs are reported against this department">Default</span>@endif
                                     @endforeach
                                 </td>
 
@@ -555,7 +555,11 @@
                             <tbody>
                                 @foreach ($employee_departments as $department)
                                     <tr wire:key="{{ '294b34-556-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($department->id ?? '') }}">
-                                        <td>{{$department->name}}</td>
+                                        <td>{{$department->name}}
+                                            @if ($department->pivot->is_default)
+                                                <span class="label label-success" title="Payroll costs are reported against this department">Default</span>
+                                            @endif
+                                        </td>
                                         <td>{{$department->department_code}}</td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -565,6 +569,9 @@
                                                 </button>
 
                                                 <ul class="dropdown-menu">
+                                                    @unless ($department->pivot->is_default)
+                                                        <li><a href="#" wire:click.prevent="setDefaultDepartment({{ $department->id }})"><i class="fa fa-star color-success"></i>Set as Default</a></li>
+                                                    @endunless
                                                     <li><a href="#" wire:click="showRemove({{ $department->id }})"><i class="fa fa-remove color-danger"></i>Remove</a></li>
                                                 </ul>
                                             </div>

@@ -156,6 +156,7 @@ class Signup extends Component
             $employee->branch_id = $this->branch_id;
             $employee->save();
             $employee->departments()->sync($this->department_id);
+            $employee->ensureDefaultDepartment();
             $employee->ranks()->sync($this->rank_id);
 
             if(Auth::user()->is_admin()){

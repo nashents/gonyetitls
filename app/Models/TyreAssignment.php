@@ -62,7 +62,39 @@ class TyreAssignment extends Model implements Auditable
         'position',
         'axle',
         'status',
+        'unassigned_date',
+        'unassignment_reason',
+        'unassigned_by',
     ];
+
+    public function unassignedBy(){
+        return $this->belongsTo('App\Models\User', 'unassigned_by');
+    }
+
+    // A tyre can only sit on one vehicle at a time.
+    public static function activeForTyre($tyreId, $exceptId = null)
+    {
+        return static::where('tyre_id', $tyreId)
+            ->where('status', 1)
+            ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))
+            ->first();
+    }
+
+    public function locationLabel()
+    {
+        return optional($this->horse)->identifier_label
+            ?? optional($this->trailer)->identifier_label
+            ?? optional($this->vehicle)->identifier_label;
+    }
+
+    public static function alreadyAssignedMessage(TyreAssignment $active, $tyreLabel = null)
+    {
+        $location = $active->locationLabel();
+
+        return ($tyreLabel ? "Tyre {$tyreLabel} is" : "This tyre is")." already assigned"
+            .($location ? " to {$location}" : "")
+            .". Unassign it first before re-assigning.";
+    }
 
       public function getTravelledKmAttribute()
     {

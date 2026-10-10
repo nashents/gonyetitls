@@ -48,6 +48,9 @@
                                         <i class="fa fa-undo"></i> Reverse
                                     </button>
                                 @endif
+                                <a href="{{ route('payroll-runs.department-costs', ['payrollRunId' => $run->id, 'includeDrafts' => $run->isDraft() ? 1 : null]) }}" class="btn btn-default btn-sm">
+                                    <i class="fa fa-sitemap"></i> Department Costs
+                                </a>
                                 <a href="{{ route('payroll-runs.index') }}" class="btn btn-default btn-sm">
                                     <i class="fa fa-arrow-left"></i> Back
                                 </a>

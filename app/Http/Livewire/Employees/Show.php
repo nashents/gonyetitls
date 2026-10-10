@@ -131,6 +131,7 @@ class Show extends Component
         }
 
         $this->employee->departments()->detach($this->department_id);
+        $this->employee->ensureDefaultDepartment();
 
         // Clear cached relationship and reload cleanly
         $this->employee->unsetRelation('departments');
@@ -144,6 +145,24 @@ class Show extends Component
         ]);
     }
 
+
+    public function setDefaultDepartment($id)
+    {
+        if (! $this->employee->departments()->where('departments.id', $id)->exists()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'warning',
+                'message' => 'Department is not assigned to this employee.'
+            ]);
+            return;
+        }
+
+        $this->employee->setDefaultDepartment((int) $id);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Default Department Updated Successfully!!'
+        ]);
+    }
 
     public function addDepartments()
     {
@@ -166,6 +185,7 @@ class Show extends Component
 
         // avoids duplicates in pivot
         $this->employee->departments()->syncWithoutDetaching($ids);
+        $this->employee->ensureDefaultDepartment();
 
         // refresh for UI
         $this->employee->unsetRelation('departments');
@@ -190,14 +210,14 @@ class Show extends Component
         if (isset($this->driver)) {
             return view('livewire.employees.show',[
                 'all_departments' => $this->all_departments,
-                'employee_departments' =>  $this->employee->departments()->get(),
+                'employee_departments' =>  $this->employee->departments()->orderBy('department_employee.id')->get(),
                 'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10),
                 'recoveries' => Recovery::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10)
             ]);
         }else{
             return view('livewire.employees.show',[
                 'all_departments' => $this->all_departments,
-                'employee_departments' =>  $this->employee->departments()->get(),
+                'employee_departments' =>  $this->employee->departments()->orderBy('department_employee.id')->get(),
             ]);
         }
        

@@ -359,8 +359,9 @@ class Edit extends Component
           $employee->branch_id = $this->branch_id;
           
           $employee->update();
-          $employee->departments()->detach();
+          // sync() alone keeps existing pivot rows (and their is_default flag)
           $employee->departments()->sync($this->selectedDepartment);
+          $employee->ensureDefaultDepartment();
           $employee->ranks()->detach();
           $employee->ranks()->sync($this->rank_id);
 

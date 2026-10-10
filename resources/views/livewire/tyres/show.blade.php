@@ -165,6 +165,8 @@
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
+                                    <th class="th-sm">
+                                    </th>
                                   </tr>
                                 </thead>
                                 @if (isset($tyre_assignments))
@@ -189,8 +191,18 @@
                                         @endif
                                     </td>
                                     <td>
-                                         <span class="badge bg-{{$tyre_assignment->status == 1 ? "success" : "warning"}}">{{$tyre_assignment->status == 1 ? "Current" : "Past"}}</span>      
+                                         <span class="badge bg-{{$tyre_assignment->status == 1 ? "success" : "warning"}}">{{$tyre_assignment->status == 1 ? "Active" : "Unassigned"}}</span>
+                                         @if ($tyre_assignment->date_fitted)
+                                            <br><small>Fitted: {{$tyre_assignment->date_fitted}}</small>
+                                         @endif
+                                         @if ($tyre_assignment->status != 1 && $tyre_assignment->unassigned_date)
+                                            <br><small>Removed: {{$tyre_assignment->unassigned_date}}{{$tyre_assignment->unassignedBy ? " by ".$tyre_assignment->unassignedBy->name." ".$tyre_assignment->unassignedBy->surname : ""}}</small>
+                                         @endif
+                                         @if ($tyre_assignment->status != 1 && $tyre_assignment->unassignment_reason)
+                                            <br><small><em>{{$tyre_assignment->unassignment_reason}}</em></small>
+                                         @endif
                                     </td>
+                                    <td><a href="{{route('tyre_assignments.show',$tyre_assignment->id)}}"><i class="fa fa-eye"></i></a></td>
                                   </tr>
                                   @empty
                                   <tr>

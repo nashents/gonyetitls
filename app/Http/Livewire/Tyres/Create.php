@@ -667,7 +667,7 @@ class Create extends Component
 
                     }
 
-                if ($this->tyre_assignment == True) {
+                if ($this->tyre_assignment == True && !TyreAssignment::activeForTyre($tyre->id)) {
 
                 $assignment = new TyreAssignment;
                 $assignment->user_id = Auth::user()->id;

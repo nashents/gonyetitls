@@ -24,7 +24,8 @@ class Index extends Component
 
     public $search;
     public $searchTyres;
-    protected $queryString = ['search', 'searchTyres'];
+    public $statusFilter = '';
+    protected $queryString = ['search', 'searchTyres', 'statusFilter' => ['except' => '']];
 
     private $tyre_assignments;
     public $tyre_assignment_id;
@@ -46,6 +47,10 @@ class Index extends Component
     public $description;
     public $status;
     public $user_id;
+    public $unassigned_date;
+    public $unassignment_reason;
+    public $unassign_tyre_label;
+    public $unassign_starting_odometer;
 
     public function mount(){
         $this->resetPage();
@@ -84,6 +89,10 @@ class Index extends Component
     ];
 
     public function store(){
+
+        if ($this->tyreAlreadyAssigned($this->tyre_id)) {
+            return;
+        }
 
         $assignment = new TyreAssignment;
         $assignment->user_id = Auth::user()->id;
@@ -181,6 +190,10 @@ class Index extends Component
         {
             if ($this->tyre_assignment_id) {
 
+                if ($this->tyreAlreadyAssigned($this->tyre_id, $this->tyre_assignment_id)) {
+                    return;
+                }
+
                 $assignment = TyreAssignment::find($this->tyre_assignment_id);
                 $assignment->user_id = Auth::user()->id;
 
@@ -264,29 +277,116 @@ class Index extends Component
             }
         }
 
+        private function tyreAlreadyAssigned($tyreId, $exceptId = null){
+            if (!$tyreId) {
+                return false;
+            }
+
+            $active = TyreAssignment::activeForTyre($tyreId, $exceptId);
+            if (!$active) {
+                return false;
+            }
+
+            $message = TyreAssignment::alreadyAssignedMessage($active);
+            $this->addError('tyre_id', $message);
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$message
+            ]);
+
+            return true;
+        }
+
         public function unAssignment($id){
-            $tyre_assignment = TyreAssignment::find($id);
-            $this->tyre_assignment_id = $tyre_assignment->id;
+            $assignment = TyreAssignment::with('tyre.product','horse','trailer','vehicle')->find($id);
+            if (!$assignment || $assignment->status != 1) {
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"Active Tyre Assignment Not Found!!"
+                ]);
+                return;
+            }
+
+            $this->resetErrorBag();
+            $this->tyre_assignment_id = $assignment->id;
+            $this->unassign_starting_odometer = $assignment->starting_odometer;
+            $this->unassign_tyre_label = trim(
+                optional(optional($assignment->tyre)->product)->name.' '.
+                (optional($assignment->tyre)->serial_number ? 'SN#: '.$assignment->tyre->serial_number : '')
+            );
+
+            $asset = $assignment->horse ?? $assignment->trailer ?? $assignment->vehicle;
+            $this->ending_odometer = optional($asset)->mileage;
+            $this->unassigned_date = date('Y-m-d');
+            $this->unassignment_reason = '';
             $this->dispatchBrowserEvent('show-unAssignmentModal');
         }
 
         public function updateAssignment(){
-           $tyre_assignment = TyreAssignment::find($this->tyre_assignment_id);
-           $tyre_assignment->ending_odometer = $this->ending_odometer;
-           $tyre_assignment->end_date = $this->end_date;
-           $tyre_assignment->status = 0;
-           $tyre_assignment->update();
-           Session::flash('success','Driver horse Unassignment Successful');
+            $assignment = TyreAssignment::find($this->tyre_assignment_id);
+            if (!$assignment || $assignment->status != 1) {
+                $this->dispatchBrowserEvent('hide-unAssignmentModal');
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'error',
+                    'message'=>"Active Tyre Assignment Not Found!!"
+                ]);
+                return;
+            }
+
+            $odometerRule = ['required', 'numeric', 'min:0'];
+            if (is_numeric($assignment->starting_odometer)) {
+                $odometerRule[] = 'gte:unassign_starting_odometer';
+            }
+
+            $this->validate([
+                'ending_odometer' => $odometerRule,
+                'unassigned_date' => 'required|date|before_or_equal:today',
+                'unassignment_reason' => 'required|string|max:1000',
+            ], [
+                'ending_odometer.gte' => 'Unassignment mileage cannot be less than the fitting mileage ('.$assignment->starting_odometer.').',
+            ]);
+
+            $assignment->ending_odometer = $this->ending_odometer;
+            $assignment->unassigned_date = $this->unassigned_date;
+            $assignment->unassignment_reason = $this->unassignment_reason;
+            $assignment->unassigned_by = Auth::user()->id;
+            $assignment->status = 0;
+            $assignment->update();
+
+            // Add the distance covered on this fitting to the tyre's running total.
+            $distance = is_numeric($assignment->starting_odometer)
+                ? max(0, (float) $this->ending_odometer - (float) $assignment->starting_odometer)
+                : 0;
+
+            $tyre = Tyre::find($assignment->tyre_id);
+            if ($tyre) {
+                $tyre->mileage = (float) $tyre->mileage + $distance;
+                $tyre->status = 1;
+                $tyre->update();
+            }
+
             $this->dispatchBrowserEvent('hide-unAssignmentModal');
-            return redirect()->route('assignments.index');
+            Session::flash('success','Tyre Unassigned Successfully!! '.number_format($distance)."Kms added to the tyre's distance.");
+            return redirect(request()->header('Referer'));
         }
 
         public function updatingSearch()
         {
             $this->resetPage();
         }
+
+        public function updatingStatusFilter()
+        {
+            $this->resetPage();
+        }
     public function render()
     {
+
+        // Tyres already on an asset are hidden; when editing, keep the assignment's own tyre listed.
+        $availableTyres = function ($q) {
+            $q->whereDoesntHave('tyre_assignments', fn ($a) => $a->where('status', 1))
+              ->when($this->tyre_assignment_id && $this->tyre_id, fn ($q) => $q->orWhere('id', $this->tyre_id));
+        };
 
          if (filled($this->searchTyres)) {
             $term = $this->searchTyres;
@@ -297,7 +397,7 @@ class Index extends Component
                 ])
                 ->where('disposed', 0)
                 ->where('retread', 0)
-                ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
+                ->where($availableTyres)
                 ->when($term !== '', function ($q) use ($term) {
                     $like = "%{$term}%";
                     $q->where(function ($q) use ($like) {
@@ -313,47 +413,33 @@ class Index extends Component
         }else{
              $this->tyres = Tyre::query()
                     ->where('disposed', 0)
-                    ->where('retread', 0)->get();
+                    ->where('retread', 0)
+                    ->where($availableTyres)
+                    ->get();
         }
 
-        if (filled($this->search)) {
-            return view('livewire.tyre-assignments.index',[
-                'tyre_assignments' => TyreAssignment::query()->with('horse','vehicle','trailer','tyre','tyre.product','tyre.product.brand')
-                ->where('status',1)
-                ->whereHas('tyre', function ($query) {
-                    return $query->where('tyre_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre.product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre.product.brand', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre', function ($query) {
-                    return $query->where('serial_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trailer', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-               
-                ->orderBy('created_at','desc')->paginate(10),
-        
-            ]);
-        }
-        else {
-           
-            return view('livewire.tyre-assignments.index',[
-                'tyre_assignments' => TyreAssignment::query()->with('horse','vehicle','trailer','tyre')->where('status',1)->orderBy('created_at','desc')->paginate(10),
-            ]);
-          
-        }
-      
-      
+        $term = $this->search;
+
+        $tyre_assignments = TyreAssignment::query()
+            ->with('horse','vehicle','trailer','tyre','tyre.product','tyre.product.brand','unassignedBy')
+            ->when($this->statusFilter === 'active', fn ($q) => $q->where('status', 1))
+            ->when($this->statusFilter === 'inactive', fn ($q) => $q->where(fn ($q) => $q->where('status', '!=', 1)->orWhereNull('status')))
+            ->when(filled($term), function ($q) use ($term) {
+                $like = '%'.$term.'%';
+                $q->where(function ($q) use ($like) {
+                    $q->whereHas('tyre', fn ($t) => $t->where('tyre_number', 'like', $like)->orWhere('serial_number', 'like', $like))
+                      ->orWhereHas('tyre.product', fn ($p) => $p->where('name', 'like', $like))
+                      ->orWhereHas('tyre.product.brand', fn ($b) => $b->where('name', 'like', $like))
+                      ->orWhereHas('horse', fn ($h) => $h->where('registration_number', 'like', $like))
+                      ->orWhereHas('vehicle', fn ($v) => $v->where('registration_number', 'like', $like))
+                      ->orWhereHas('trailer', fn ($t) => $t->where('registration_number', 'like', $like));
+                });
+            })
+            ->orderBy('created_at','desc')
+            ->paginate(10);
+
+        return view('livewire.tyre-assignments.index',[
+            'tyre_assignments' => $tyre_assignments,
+        ]);
     }
 }

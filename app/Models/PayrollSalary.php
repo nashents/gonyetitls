@@ -14,7 +14,7 @@ class PayrollSalary extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
-        'user_id', 'salary_id', 'payroll_id', 'employee_id', 'currency_id',
+        'user_id', 'salary_id', 'payroll_id', 'employee_id', 'department_id', 'currency_id',
         'basic', 'total_deductions', 'total_allowances', 'exchange_rate', 'net', 'gross',
     ];
 
@@ -29,5 +29,8 @@ class PayrollSalary extends Model implements Auditable
     }
     public function employee(){
     return $this->belongsTo('App\Models\Employee');
+    }
+    public function department(){
+    return $this->belongsTo('App\Models\Department');
     }
 }

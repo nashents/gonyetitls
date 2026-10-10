@@ -19,6 +19,15 @@
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search assignments...">
                                 </div>
                             </div>
+                            <div class="col-md-2" style="float: right">
+                                <div class="form-group">
+                                    <select wire:model="statusFilter" class="form-control">
+                                        <option value="">All Assignments</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Unassigned</option>
+                                    </select>
+                                </div>
+                            </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
@@ -33,6 +42,8 @@
                                     <th class="th-sm">Current Mileage
                                     </th>
                                     <th class="th-sm">Tyre Life(Kms)
+                                    </th>
+                                    <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -65,7 +76,10 @@
                                     </td>
                                     <td>{{$tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer."Kms" : ""}}</td>
                                     <td>
-                                        @if ($tyre_assignment->horse)
+                                        @if ($tyre_assignment->status != 1)
+                                            {{$tyre_assignment->ending_odometer ? $tyre_assignment->ending_odometer."Kms" : ""}}
+                                            <br><small class="text-muted">at removal</small>
+                                        @elseif ($tyre_assignment->horse)
                                             {{$tyre_assignment->horse->mileage ? $tyre_assignment->horse->mileage."Kms" : ""}}
                                             @elseif ($tyre_assignment->vehicle)
                                             {{$tyre_assignment->vehicle->mileage ? $tyre_assignment->vehicle->mileage."Kms" : ""}}
@@ -78,6 +92,22 @@
                                             {{$tyre_assignment->tyre->mileage ? $tyre_assignment->tyre->mileage."Kms" : ""}}
                                         @endif
                                     </td>
+                                    <td>
+                                        @if ($tyre_assignment->status == 1)
+                                            <span class="badge bg-success">Active</span>
+                                            @if ($tyre_assignment->date_fitted)
+                                                <br><small>Fitted: {{$tyre_assignment->date_fitted}}</small>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-warning">Unassigned</span>
+                                            @if ($tyre_assignment->unassigned_date)
+                                                <br><small>{{$tyre_assignment->unassigned_date}}{{$tyre_assignment->unassignedBy ? " by ".$tyre_assignment->unassignedBy->name." ".$tyre_assignment->unassignedBy->surname : ""}}</small>
+                                            @endif
+                                            @if ($tyre_assignment->unassignment_reason)
+                                                <br><small><em>{{\Illuminate\Support\Str::limit($tyre_assignment->unassignment_reason, 60)}}</em></small>
+                                            @endif
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -86,7 +116,10 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('tyre_assignments.show',$tyre_assignment->id)}}" ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                @if ($tyre_assignment->status == 1)
                                                 <li><a href="#"  wire:click="edit({{$tyre_assignment->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                <li><a href="#"  wire:click="unAssignment({{$tyre_assignment->id}})" ><i class="fa fa-unlink color-warning"></i> Unassign</a></li>
+                                                @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#tyre_assignmentDeleteModal{{ $tyre_assignment->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
@@ -399,6 +432,53 @@
         </div>
     </div>
 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="unAssignmentModal" tabindex="-1" role="dialog" aria-labelledby="unAssignmentModalLabel" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="unAssignmentModalLabel"><i class="fa fa-unlink"></i> Unassign Tyre <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateAssignment()" >
+                <div class="modal-body">
+                    @if ($unassign_tyre_label)
+                        <p><strong>{{$unassign_tyre_label}}</strong>
+                        @if ($unassign_starting_odometer)
+                            <br><small>Fitting Mileage: {{$unassign_starting_odometer}}Kms</small>
+                        @endif
+                        </p>
+                    @endif
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ending_odometer">Unassignment Mileage<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.defer="ending_odometer" placeholder="Enter Mileage" required>
+                                @error('ending_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="unassigned_date">Unassignment Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" max="{{date('Y-m-d')}}" class="form-control" wire:model.defer="unassigned_date" required>
+                                @error('unassigned_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="unassignment_reason">Reason<span class="required" style="color: red">*</span></label>
+                        <textarea wire:model.defer="unassignment_reason" class="form-control" cols="30" rows="4" placeholder="e.g. Worn out, puncture, rotation, sent for retread..." required></textarea>
+                        @error('unassignment_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-warning btn-wide btn-rounded"><i class="fa fa-unlink"></i>Unassign</button>
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
 </div>
 

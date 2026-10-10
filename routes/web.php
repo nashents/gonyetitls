@@ -658,6 +658,7 @@ Route::resource('salaries','SalaryController');
 
 // ── New Payroll Module Routes ───────────────────────────────────────────────
 Route::get('payroll-runs', 'PayrollRunController@index')->name('payroll-runs.index');
+Route::get('payroll-runs/department-costs', 'PayrollRunController@departmentCosts')->name('payroll-runs.department-costs');
 Route::get('payroll-runs/{payrollRun}', 'PayrollRunController@show')->name('payroll-runs.show');
 Route::get('payroll-config', 'PayrollConfigController@index')->name('payroll-config.index');
 Route::get('salary-advances', 'SalaryAdvanceController@index')->name('salary-advances.index');

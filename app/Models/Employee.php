@@ -7,6 +7,7 @@ use App\Models\JournalEntryLine;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Employee extends Model implements Auditable
@@ -158,7 +159,48 @@ class Employee extends Model implements Auditable
         return $this->belongsToMany('App\Models\Rank');
     }
     public function departments(){
-        return $this->belongsToMany('App\Models\Department');
+        return $this->belongsToMany('App\Models\Department')->withPivot('is_default')->withTimestamps();
+    }
+
+    /**
+     * The department payroll costs are reported against. Falls back to the
+     * earliest assignment when none is flagged.
+     */
+    public function defaultDepartment(): ?Department
+    {
+        $departments = $this->departments()->orderBy('department_employee.id')->get();
+
+        return $departments->firstWhere('pivot.is_default', true) ?? $departments->first();
+    }
+
+    public function setDefaultDepartment(int $departmentId): void
+    {
+        DB::transaction(function () use ($departmentId) {
+            DB::table('department_employee')->where('employee_id', $this->id)->update(['is_default' => false]);
+            DB::table('department_employee')->where('employee_id', $this->id)
+                ->where('department_id', $departmentId)->update(['is_default' => true]);
+        });
+
+        $this->unsetRelation('departments');
+    }
+
+    /**
+     * Keeps exactly one default when departments are added/removed/synced:
+     * promotes the earliest assignment if the default went away.
+     */
+    public function ensureDefaultDepartment(): void
+    {
+        $rows = DB::table('department_employee')->where('employee_id', $this->id)->orderBy('id')->get(['id', 'is_default']);
+
+        if ($rows->isEmpty() || $rows->where('is_default', true)->count() === 1) {
+            return;
+        }
+
+        $keep = $rows->firstWhere('is_default', true) ?? $rows->first();
+        DB::table('department_employee')->where('employee_id', $this->id)->update(['is_default' => false]);
+        DB::table('department_employee')->where('id', $keep->id)->update(['is_default' => true]);
+
+        $this->unsetRelation('departments');
     }
     public function branch(){
         return $this->belongsTo('App\Models\Branch');

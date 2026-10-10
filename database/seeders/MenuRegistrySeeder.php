@@ -655,6 +655,7 @@ class MenuRegistrySeeder extends Seeder
             ]),
         ]);
         $upsertSub($m, ['name'=>'All Runs','slug'=>'all-payroll-runs','icon'=>'fas fa-list','route_name'=>'payroll-runs.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Department Costs','slug'=>'payroll-department-costs','icon'=>'fas fa-sitemap','route_name'=>'payroll-runs.department-costs','sort_order'=>20]);
 
         // Salary Advances (public — employees see own, HR/Finance see all)
         $m = $upsertModule($g, [

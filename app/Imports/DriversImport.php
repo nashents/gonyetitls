@@ -434,6 +434,7 @@ WithBatchInserts
                 if (!empty($departmentNames)) {
                     $departmentIds = Department::whereIn('name', $departmentNames)->pluck('id')->toArray();
                     $employee->departments()->sync($departmentIds);
+                    $employee->ensureDefaultDepartment();
                 }
             }
 

@@ -54,12 +54,15 @@ class PayrollBatchService
                 ]);
             }
 
+            $departments = $this->defaultDepartments($salaries->pluck('employee_id')->filter()->unique()->all());
+
             foreach ($salaries as $salary) {
                 $payrollSalary = PayrollSalary::create([
                     'payroll_id'        => $payroll->id,
                     'salary_id'         => $salary->id,
                     'currency_id'       => $salary->currency_id,
                     'employee_id'       => $salary->employee_id,
+                    'department_id'     => $departments[$salary->employee_id] ?? null,
                     'basic'             => $salary->basic,
                     'gross'             => $salary->gross,
                     'net'               => $salary->net,
@@ -137,6 +140,27 @@ class PayrollBatchService
                 'status'  => $newBalance <= 0 ? 'Paid' : ($newBalance < (float) $advance->amount ? 'Partially Paid' : 'Unpaid'),
             ]);
         }
+    }
+
+    /**
+     * employee_id => default department_id (falls back to the earliest
+     * assignment when none is flagged), resolved in one query.
+     */
+    private function defaultDepartments(array $employeeIds): array
+    {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        return DB::table('department_employee')
+            ->whereIn('employee_id', $employeeIds)
+            ->whereNotNull('department_id')
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->get(['employee_id', 'department_id'])
+            ->unique('employee_id')
+            ->pluck('department_id', 'employee_id')
+            ->all();
     }
 
     private function nextPayrollNumber(): string

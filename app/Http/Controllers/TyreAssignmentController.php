@@ -84,7 +84,8 @@ class TyreAssignmentController extends Controller
     {
        
         $tyre = $tyreAssignment->tyre;
-        if (isset($tyre)) {
+        // Deleting a past (unassigned) record must not free a tyre that is fitted elsewhere now.
+        if (isset($tyre) && $tyreAssignment->status == 1) {
             $tyre->status = 1;
             $tyre->update();
         }

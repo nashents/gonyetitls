@@ -91,6 +91,26 @@ class Pending extends Component
 
     }
 
+    private function tyreAssignmentConflict(){
+        $dispatch = Dispatch::with('dispatch_items.tyre')->find($this->dispatch_id);
+        if (!$dispatch || $dispatch->department != "tyre") {
+            return null;
+        }
+
+        foreach ($dispatch->dispatch_items as $dispatch_item) {
+            if (!$dispatch_item->tyre_id) {
+                continue;
+            }
+            $active = TyreAssignment::activeForTyre($dispatch_item->tyre_id);
+            if ($active) {
+                $tyre = $dispatch_item->tyre;
+                return TyreAssignment::alreadyAssignedMessage($active, $tyre ? ($tyre->serial_number ?: $tyre->tyre_number) : null);
+            }
+        }
+
+        return null;
+    }
+
     public function tyreAssignment($dispatch_item){
 
         $dispatch = $dispatch_item->dispatch;
@@ -193,6 +213,15 @@ class Pending extends Component
 
     public function update()
     {
+        // Checked up front: approval sends mail and posts a bill, so fail before any of that.
+        if ($this->authorize == "approved" && ($message = $this->tyreAssignmentConflict())) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => $message
+            ]);
+            return;
+        }
+
         return DB::transaction(function () {
 
             $dispatch = Dispatch::find($this->dispatch_id);

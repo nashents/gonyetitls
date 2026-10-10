@@ -175,10 +175,24 @@ WithBatchInserts
             return;
         }
 
-        $tyreAssignment = $tyre->tyre_assignment;
-        $assignment = $tyreAssignment
-            ? TyreAssignment::find($tyreAssignment->id)
-            : new TyreAssignment;
+        // Re-importing a tyre refreshes its active assignment on the same asset;
+        // a tyre already fitted to a different asset must be unassigned first.
+        $tyreAssignment = TyreAssignment::activeForTyre($tyre->id);
+
+        if ($tyreAssignment) {
+            $sameAsset = ($row->get('horse_reg_number') && $horse && $tyreAssignment->horse_id == $horse->id)
+                || ($row->get('vehicle_reg_number') && $vehicle && $tyreAssignment->vehicle_id == $vehicle->id)
+                || ($row->get('trailer_reg_number') && $trailer && $tyreAssignment->trailer_id == $trailer->id);
+
+            if (!$sameAsset) {
+                Log::warning('Skipped tyre assignment: '.TyreAssignment::alreadyAssignedMessage($tyreAssignment, $tyre->serial_number), $row->toArray());
+                $tyre->status = 0;
+                $tyre->save();
+                return;
+            }
+        }
+
+        $assignment = $tyreAssignment ?: new TyreAssignment;
 
         if (!$tyreAssignment) {
             $assignment->user_id = Auth::id();
@@ -206,6 +220,10 @@ WithBatchInserts
         $assignment->status = 1;
 
         $assignment->save();
+
+        // The tyre row above was saved as available; it is now fitted.
+        $tyre->status = 0;
+        $tyre->save();
 
         // Record movement
         $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);

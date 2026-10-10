@@ -227,15 +227,23 @@ class SageXmlDriver implements SageDriver
      * to a Job Card). $key = the document RECORDNO. Uses update_sotransaction with
      * <updatesotransitems> so existing lines are kept.
      */
-    public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null): array
+    public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null, ?string $projectId = null): array
     {
+        // Header-level PROJECT update (re-sync of an already-created job card):
+        // emitted before <updatesotransitems> per the schema order. Attaches /
+        // corrects the project on the document header itself.
+        $hdr = ($projectId !== null && $projectId !== '') ? $this->el('projectid', $projectId) : '';
+
         $items = '';
         foreach ($lines as $l) {
             $items .= $this->soLine($l);
         }
+        // Only emit the line block when there are lines to append — otherwise this
+        // is a header-only update (e.g. just setting the project on re-sync).
+        $body = $hdr . ($items !== '' ? '<updatesotransitems>' . $items . '</updatesotransitems>' : '');
 
         $fn = '<update_sotransaction key="' . htmlspecialchars($key, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '">'
-            . '<updatesotransitems>' . $items . '</updatesotransitems>'
+            . $body
             . '</update_sotransaction>';
 
         return $this->send($fn, 'update', 'SOTRANSACTION', $entityId);
@@ -537,6 +545,12 @@ class SageXmlDriver implements SageDriver
             }
             $hdr .= '<customfields>' . $cf . '</customfields>';
         }
+
+        // Header-level PROJECT — attaches the horse's project to the job card itself
+        // (shown as PROJECTKEY on SODOCUMENT), matching a manually-created Sage job
+        // card where the project sits on both the header and the lines. Same schema
+        // position as create_potransaction (after customfields, before line items).
+        $hdr .= $this->elIf('projectid', $h['projectid'] ?? null);
 
         return '<create_sotransaction>' . $hdr . '<sotransitems>' . $items . '</sotransitems></create_sotransaction>';
     }

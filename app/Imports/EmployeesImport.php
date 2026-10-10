@@ -363,6 +363,7 @@ WithBatchInserts
                             })->toArray();
 
                             $employee->departments()->sync($departmentIds);
+                            $employee->ensureDefaultDepartment();
                         }
                     }
 

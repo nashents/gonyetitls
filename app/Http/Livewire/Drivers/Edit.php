@@ -396,8 +396,8 @@ class Edit extends Component
           $employee->accrual_rate = $this->accrual_rate;
           $employee->branch_id = $this->branch_id;
           $employee->update();
-          $employee->departments()->detach();
           $employee->departments()->sync($this->selectedDepartment);
+          $employee->ensureDefaultDepartment();
           $employee->ranks()->detach();
           $employee->ranks()->sync($this->rank_id);
 

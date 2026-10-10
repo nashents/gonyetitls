@@ -207,8 +207,8 @@ class Index extends Component
         $employee->update();
         $employee->ranks()->detach();
         $employee->ranks()->sync($this->rank_id);
-        $employee->departments()->detach();
         $employee->departments()->sync($this->department_id);
+        $employee->ensureDefaultDepartment();
 
         $this->dispatchBrowserEvent('hide-changePositionModal');
         $this->resetInputFields();
