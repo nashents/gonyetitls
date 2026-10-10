@@ -12,6 +12,7 @@ use App\Models\Movement;
 use App\Models\TyreDispatch;
 use Livewire\WithPagination;
 use App\Models\TyreAssignment;
+use App\Services\Fleet\TyreAssignmentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -25,7 +26,7 @@ class Index extends Component
     public $search;
     public $searchTyres;
     public $statusFilter = '';
-    protected $queryString = ['search', 'searchTyres', 'statusFilter' => ['except' => '']];
+    protected $queryString = ['statusFilter' => ['except' => '']];
 
     private $tyre_assignments;
     public $tyre_assignment_id;
@@ -90,7 +91,7 @@ class Index extends Component
 
     public function store(){
 
-        if ($this->tyreAlreadyAssigned($this->tyre_id)) {
+        if ($this->tyreAlreadyAssigned($this->tyre_id) || $this->positionTaken()) {
             return;
         }
 
@@ -181,6 +182,7 @@ class Index extends Component
         $this->description = $assignment->description;
         $this->status = $assignment->status;
         $this->tyre_assignment_id = $assignment->id;
+        $this->searchTyres = '';
         $this->dispatchBrowserEvent('show-tyre_assignmentEditModal');
 
         }
@@ -190,7 +192,7 @@ class Index extends Component
         {
             if ($this->tyre_assignment_id) {
 
-                if ($this->tyreAlreadyAssigned($this->tyre_id, $this->tyre_assignment_id)) {
+                if ($this->tyreAlreadyAssigned($this->tyre_id, $this->tyre_assignment_id) || $this->positionTaken($this->tyre_assignment_id)) {
                     return;
                 }
 
@@ -297,6 +299,28 @@ class Index extends Component
             return true;
         }
 
+        private function positionTaken($exceptId = null){
+            $assetIds = ['Horse' => ['horse_id', $this->horse_id], 'Trailer' => ['trailer_id', $this->trailer_id], 'Vehicle' => ['vehicle_id', $this->vehicle_id]];
+            if (!isset($assetIds[$this->type])) {
+                return false;
+            }
+            [$column, $assetId] = $assetIds[$this->type];
+
+            $taken = TyreAssignment::activeAtPosition($column, $assetId, $this->axle, $this->position, $exceptId);
+            if (!$taken) {
+                return false;
+            }
+
+            $message = TyreAssignment::positionTakenMessage($taken);
+            $this->addError('position', $message);
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$message
+            ]);
+
+            return true;
+        }
+
         public function unAssignment($id){
             $assignment = TyreAssignment::with('tyre.product','horse','trailer','vehicle')->find($id);
             if (!$assignment || $assignment->status != 1) {
@@ -346,24 +370,9 @@ class Index extends Component
                 'ending_odometer.gte' => 'Unassignment mileage cannot be less than the fitting mileage ('.$assignment->starting_odometer.').',
             ]);
 
-            $assignment->ending_odometer = $this->ending_odometer;
-            $assignment->unassigned_date = $this->unassigned_date;
-            $assignment->unassignment_reason = $this->unassignment_reason;
-            $assignment->unassigned_by = Auth::user()->id;
-            $assignment->status = 0;
-            $assignment->update();
-
-            // Add the distance covered on this fitting to the tyre's running total.
-            $distance = is_numeric($assignment->starting_odometer)
-                ? max(0, (float) $this->ending_odometer - (float) $assignment->starting_odometer)
-                : 0;
-
-            $tyre = Tyre::find($assignment->tyre_id);
-            if ($tyre) {
-                $tyre->mileage = (float) $tyre->mileage + $distance;
-                $tyre->status = 1;
-                $tyre->update();
-            }
+            $distance = app(TyreAssignmentService::class)->unassign(
+                $assignment, $this->ending_odometer, $this->unassigned_date, $this->unassignment_reason
+            );
 
             $this->dispatchBrowserEvent('hide-unAssignmentModal');
             Session::flash('success','Tyre Unassigned Successfully!! '.number_format($distance)."Kms added to the tyre's distance.");

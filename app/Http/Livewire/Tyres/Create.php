@@ -493,6 +493,26 @@ class Create extends Component
               'selectedCurrency' => 'required',
           ]);
 
+          // Every tyre created here goes to the same axle + position, so a non-spare slot can only take one.
+          if ($this->tyre_assignment == True && !TyreAssignment::isSpareSlot($this->axle, $this->position)) {
+              $column = ['Horse' => 'horse_id', 'Trailer' => 'trailer_id', 'Vehicle' => 'vehicle_id'][$this->assignment_type] ?? null;
+              $assetId = $column ? $this->{$column} : null;
+              $total = collect($this->qty ?? [])->sum(fn ($q) => max(0, (int) $q));
+
+              $message = null;
+              if ($column && ($taken = TyreAssignment::activeAtPosition($column, $assetId, $this->axle, $this->position))) {
+                  $message = TyreAssignment::positionTakenMessage($taken);
+              } elseif ($total > 1) {
+                  $message = "Only one tyre can be fitted to {$this->axle} ".(TyreAssignment::POSITIONS[$this->position] ?? $this->position).". Assign the rest from the asset's Tyres tab.";
+              }
+
+              if ($message) {
+                  $this->addError('position', $message);
+                  $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $message]);
+                  return;
+              }
+          }
+
           DB::transaction(function () {
 
           if (isset($this->selectedProduct)) {

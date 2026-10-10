@@ -14,6 +14,29 @@ class TyreAssignment extends Model implements Auditable
 
     protected $appends = ['travelled_km', 'remaining_km', 'remaining_pct'];
 
+    const AXLES = [
+        'Steering Axle', 'Drive Axle', 'Front Axle', 'Middle Axle', 'Rear Axle', 'Diff Axle', 'Spare Wheel',
+    ];
+
+    // value => label ("Front" is stored for Front Left on older records).
+    const POSITIONS = [
+        'Front' => 'Front Left',
+        'Front Right' => 'Front Right',
+        'Front Left Inside' => 'Front Left Inside',
+        'Front Left Outside' => 'Front Left Outside',
+        'Front Right Inside' => 'Front Right Inside',
+        'Front Right Outside' => 'Front Right Outside',
+        'Middle Left Inside' => 'Middle Left Inside',
+        'Middle Left Outside' => 'Middle Left Outside',
+        'Middle Right Inside' => 'Middle Right Inside',
+        'Middle Right Outside' => 'Middle Right Outside',
+        'Rear Left Inside' => 'Rear Left Inside',
+        'Rear Left Outside' => 'Rear Left Outside',
+        'Rear Right Inside' => 'Rear Right Inside',
+        'Rear Right Outside' => 'Rear Right Outside',
+        'Spare Wheel' => 'Spare Wheel',
+    ];
+
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }
@@ -78,6 +101,38 @@ class TyreAssignment extends Model implements Auditable
             ->where('status', 1)
             ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))
             ->first();
+    }
+
+    // Spares can be carried more than one at a time; every other wheel slot takes one tyre.
+    public static function isSpareSlot($axle, $position)
+    {
+        return $axle === 'Spare Wheel' || $position === 'Spare Wheel';
+    }
+
+    // The active assignment occupying an axle + position on an asset, if any.
+    public static function activeAtPosition($column, $assetId, $axle, $position, $exceptId = null)
+    {
+        if (!$assetId || blank($axle) || blank($position) || static::isSpareSlot($axle, $position)) {
+            return null;
+        }
+
+        return static::with('tyre')
+            ->where($column, $assetId)
+            ->where('axle', $axle)
+            ->where('position', $position)
+            ->where('status', 1)
+            ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))
+            ->first();
+    }
+
+    public static function positionTakenMessage(TyreAssignment $active)
+    {
+        $label = static::POSITIONS[$active->position] ?? $active->position;
+        $serial = optional($active->tyre)->serial_number;
+
+        return "{$active->axle} {$label} already has an active assignment"
+            .($serial ? " (SN# {$serial})" : "")
+            .". Unassign that tyre first.";
     }
 
     public function locationLabel()

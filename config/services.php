@@ -47,4 +47,13 @@ return [
         'token' => env('EZYTRACK_WEBHOOK_TOKEN'),
     ],
 
+    // Live odometer → horses/trailers/vehicles.mileage, triggered by web traffic
+    // (no cron). See App\Services\Fleet\FleetMileageSyncService.
+    'fleet_mileage_sync' => [
+        'enabled'          => env('FLEET_MILEAGE_SYNC_ENABLED', true),
+        'interval_minutes' => env('FLEET_MILEAGE_SYNC_MINUTES', 10),
+        // PHP CLI used to launch the background sync under Apache mod_php; auto-detected when empty.
+        'php_binary'       => env('FLEET_MILEAGE_SYNC_PHP'),
+    ],
+
 ];

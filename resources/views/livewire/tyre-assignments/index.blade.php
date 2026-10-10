@@ -10,13 +10,13 @@
                                 @include('includes.messages')
                             </div>
                             <div class="panel-title">
-                                <a href="" data-toggle="modal" data-target="#tyre_assignmentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Assignment</a>
+                                <a href="" data-toggle="modal" data-target="#tyre_assignmentModal" wire:click="$set('searchTyres', '')" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Assignment</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
-                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search assignments...">
+                                    <input type="text" autocomplete="off" wire:model.debounce.300ms="search" class="form-control" placeholder="Search assignments...">
                                 </div>
                             </div>
                             <div class="col-md-2" style="float: right">
@@ -181,7 +181,7 @@
                   
                     <div class="form-group">
                         <label for="name">Tyres<span class="required" style="color: red">*</span></label>
-                         <input type="text" wire:model.debounce.300ms="searchTyres" placeholder="Search tyres..." class="form-control">
+                         <input type="text" autocomplete="off" wire:model.debounce.300ms="searchTyres" placeholder="Search tyres..." class="form-control">
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
@@ -316,7 +316,7 @@
                   
                     <div class="form-group">
                         <label for="name">Tyres<span class="required" style="color: red">*</span></label>
-                         <input type="text" wire:model.debounce.300ms="searchTyres" placeholder="Search tyres..." class="form-control">
+                         <input type="text" autocomplete="off" wire:model.debounce.300ms="searchTyres" placeholder="Search tyres..." class="form-control">
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
