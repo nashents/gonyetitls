@@ -59,6 +59,9 @@
                 <td>
                     @if ($trip_expense->expense)
                         {{$trip_expense->expense ? $trip_expense->expense->name : ""}}
+                        @if (!$trip_expense->fuel_id && !$trip_expense->transporter_id && !($trip_expense->expense->billable ?? true))
+                            <small class="badge bg-secondary" title="Non-billable expense - trip cost only, no bill created">Not billed</small>
+                        @endif
                         @if ($trip_expense->fuel)
                             <br>
                             <small><strong>Fuel Order: </strong><a href="{{route('fuels.show',$trip_expense->fuel?->id)}}" style="color: blue" target="_blank">{{$trip_expense->fuel ? $trip_expense->fuel->order_number : ""}}</a></small>
@@ -230,7 +233,7 @@
                                <select wire:model.debounce.300ms="selectedExpense.0" class="form-control" required>
                                    <option value="">Select Expense</option>
                                    @foreach ($expenses as $expense)
-                                       <option value="{{$expense->id}}">{{$expense->name}}</option>
+                                       <option value="{{$expense->id}}">{{$expense->name}}{{ ($expense->billable ?? true) ? '' : ' (non-billable)' }}</option>
                                    @endforeach
                                </select>
                                 @error('selectedExpense.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -374,7 +377,7 @@
                                     <select wire:model.debounce.300ms="selectedExpense.{{$value}}" class="form-control" required>
                                         <option value="">Select Expense</option>
                                         @foreach ($expenses as $expense)
-                                            <option value="{{$expense->id}}">{{$expense->name}}</option>
+                                            <option value="{{$expense->id}}">{{$expense->name}}{{ ($expense->billable ?? true) ? '' : ' (non-billable)' }}</option>
                                         @endforeach
                                     </select>
                                     @error('selectedExpense.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -543,7 +546,7 @@
                                <select wire:model.debounce.300ms="selectedExpense" class="form-control" required>
                                    <option value="">Select Expense</option>
                                    @foreach ($expenses as $expense)
-                                       <option value="{{$expense->id}}">{{$expense->name}}</option>
+                                       <option value="{{$expense->id}}">{{$expense->name}}{{ ($expense->billable ?? true) ? '' : ' (non-billable)' }}</option>
                                    @endforeach
                                </select>
                                 @error('selectedExpense') <span class="error" style="color:red">{{ $message }}</span> @enderror

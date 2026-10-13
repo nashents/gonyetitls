@@ -63,6 +63,22 @@ class TripExpenseJournalService
         // Switched back to company funded - undo the customer supply first.
         $this->customerFuel->voidForTripExpense($tripExpense);
 
+        // Non-billable expense (Expenses > Billable unchecked): it stays a
+        // cost on the trip only - no supplier Bill, so a share of fuel that
+        // the truck's fuel order already billed isn't billed a second time.
+        if (! $this->isBillable($tripExpense)) {
+            DB::transaction(function () use ($tripExpense) {
+                foreach (Bill::where('trip_expense_id', $tripExpense->id)->get() as $bill) {
+                    // A paid bill is left alone - its payments must be reversed first.
+                    if (! $bill->bill_payments()->exists()) {
+                        $this->customerFuel->removeBill($bill, "Trip expense #{$tripExpense->id} is non-billable");
+                    }
+                }
+            });
+
+            return null;
+        }
+
         return DB::transaction(function () use ($tripExpense) {
             $account = Account::where('name', 'Trip Expense')->firstOrFail();
             $trip = $tripExpense->trip;
@@ -134,6 +150,14 @@ class TripExpenseJournalService
                 $dateChanged
             );
         });
+    }
+
+    public function isBillable(TripExpense $tripExpense): bool
+    {
+        $expense = $tripExpense->expense;
+
+        // Seeded core expenses are always billable (see Expense::booted).
+        return ! $expense || $expense->is_locked || ($expense->billable ?? true);
     }
 
     private function billNumber(): string

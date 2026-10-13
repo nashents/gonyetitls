@@ -81,7 +81,12 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Incoterm</label>
-                                            <input type="text" class="form-control" wire:model="incoterm" placeholder="e.g. FOB, CIF, EXW">
+                                            <select class="form-control" wire:model="incoterm">
+                                                <option value="">Select</option>
+                                                @foreach ($incoterms as $code => $label)
+                                                    <option value="{{ $code }}">{{ $label }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -90,7 +95,7 @@
                                             <select class="form-control" wire:model="currency_id">
                                                 <option value="">Select Currency</option>
                                                 @foreach ($currencies as $currency)
-                                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                                 @endforeach
                                             </select>
                                             <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small>
@@ -112,42 +117,30 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Origin</label>
-                                            <input type="text" class="form-control" wire:model="origin">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Origin Country</label>
-                                            <select class="form-control" wire:model="origin_country_id">
-                                                <option value="">Select Country</option>
-                                                @foreach ($countries as $country)
-                                                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                            <select class="form-control" wire:model="from">
+                                                <option value="">Select Origin</option>
+                                                @foreach ($destinations as $destination)
+                                                    <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small>
-                                            <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small>
+                                            <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Destination</label>
-                                            <input type="text" class="form-control" wire:model="destination">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Destination Country</label>
-                                            <select class="form-control" wire:model="destination_country_id">
-                                                <option value="">Select Country</option>
-                                                @foreach ($countries as $country)
-                                                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                            <select class="form-control" wire:model="to">
+                                                <option value="">Select Destination</option>
+                                                @foreach ($destinations as $destination)
+                                                    <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small>
-                                            <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small>
+                                            <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -158,7 +151,7 @@
                                             <select class="form-control" wire:model="salesperson_id">
                                                 <option value="">None</option>
                                                 @foreach ($officers as $officer)
-                                                    <option value="{{ $officer->id }}">{{ $officer->name }} {{ $officer->surname }}</option>
+                                                    <option value="{{ $officer->user_id }}">{{ $officer->name }} {{ $officer->surname }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -169,7 +162,7 @@
                                             <select class="form-control" wire:model="operations_officer_id">
                                                 <option value="">None</option>
                                                 @foreach ($officers as $officer)
-                                                    <option value="{{ $officer->id }}">{{ $officer->name }} {{ $officer->surname }}</option>
+                                                    <option value="{{ $officer->user_id }}">{{ $officer->name }} {{ $officer->surname }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -180,7 +173,7 @@
                                             <select class="form-control" wire:model="clearing_officer_id">
                                                 <option value="">None</option>
                                                 @foreach ($officers as $officer)
-                                                    <option value="{{ $officer->id }}">{{ $officer->name }} {{ $officer->surname }}</option>
+                                                    <option value="{{ $officer->user_id }}">{{ $officer->name }} {{ $officer->surname }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -189,22 +182,7 @@
 
                                 <h6 class="underline mt-20 mb-20"><strong>Shipment Details</strong></h6>
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Mode <span class="required text-danger">*</span></label>
-                                            <select class="form-control" wire:model="mode">
-                                                <option value="">Select Mode</option>
-                                                <option value="sea">Sea</option>
-                                                <option value="air">Air</option>
-                                                <option value="road">Road</option>
-                                                <option value="rail">Rail</option>
-                                                <option value="courier">Courier</option>
-                                                <option value="multimodal">Multimodal</option>
-                                            </select>
-                                            @error('mode') <span class="text-danger error">{{ $message }}</span> @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Shipment Type</label>
                                             <select class="form-control" wire:model="shipment_type">
@@ -218,13 +196,13 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Booking Reference</label>
                                             <input type="text" class="form-control" wire:model="booking_reference">
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Freight Terms</label>
                                             <select class="form-control" wire:model="freight_terms">
@@ -236,56 +214,30 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>Port/Place of Loading</label>
-                                            <select class="form-control" wire:model="port_of_loading_id">
-                                                <option value="">Select Location</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                            <label>Loading Point</label>
+                                            <select class="form-control" wire:model="loading_point_id">
+                                                <option value="">Select Loading Point</option>
+                                                @foreach ($loading_points as $loading_point)
+                                                    <option value="{{ $loading_point->id }}">{{ $loading_point->name }}</option>
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small>
+                                            <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>Port/Place of Discharge</label>
-                                            <select class="form-control" wire:model="port_of_discharge_id">
-                                                <option value="">Select Location</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                            <label>Offloading Point</label>
+                                            <select class="form-control" wire:model="offloading_point_id">
+                                                <option value="">Select Offloading Point</option>
+                                                @foreach ($offloading_points as $offloading_point)
+                                                    <option value="{{ $offloading_point->id }}">{{ $offloading_point->name }}</option>
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Place of Receipt</label>
-                                            <select class="form-control" wire:model="place_of_receipt_id">
-                                                <option value="">Select Location</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Place of Delivery</label>
-                                            <select class="form-control" wire:model="place_of_delivery_id">
-                                                <option value="">Select Location</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small>
+                                            <a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -393,7 +345,7 @@
                                                     <option value="">Select</option>
                                                     @if (!empty($row['party_type']) && isset($partyModels[$row['party_type']]))
                                                         @foreach ($partyModels[$row['party_type']] as $partyRecord)
-                                                            <option value="{{ $partyRecord->id }}">{{ $partyRecord->name }}</option>
+                                                            <option value="{{ $partyRecord['id'] }}">{{ $partyRecord['name'] }}</option>
                                                         @endforeach
                                                     @endif
                                                 </select>

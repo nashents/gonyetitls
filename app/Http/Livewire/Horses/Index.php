@@ -85,6 +85,17 @@ class Index extends Component
         return redirect(route('horses.index'));
     }
 
+    /** Set the fuel balance of every horse's tank to 0 in one go. */
+    public function resetAllFuelTanks()
+    {
+        $count = Horse::query()->update(['fuel_balance' => 0]);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => $count . ' horse fuel tank(s) initialized to 0.',
+        ]);
+    }
+
     public function getKpisProperty(): array
     {
         $horses = Horse::all();

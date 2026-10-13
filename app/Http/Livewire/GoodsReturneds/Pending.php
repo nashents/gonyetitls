@@ -76,7 +76,9 @@ class Pending extends Component
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
             'message' => $this->authorize === 'approved'
-                ? 'Return Approved, Stock Adjusted & Debit Note Posted Successfully'
+                ? ($goodsReturned->debit_note_id
+                    ? 'Return Approved, Stock Adjusted & Debit Note Posted Successfully'
+                    : 'Return Approved & Stock Adjusted Successfully (GRV had no bill, so no debit note)')
                 : 'Return Rejected Successfully',
         ]);
 

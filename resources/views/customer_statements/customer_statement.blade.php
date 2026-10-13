@@ -124,7 +124,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($invoices as $invoice)
+                                    @foreach ($invoices->where('currency_id', $currency->id) as $invoice)
                                     @php
                                     $expiry = $invoice->expiry;
                                     $now = new DateTime();
@@ -248,9 +248,8 @@
                                 </thead>
                                 <tbody>
                                     @if (isset($results))
-                                        @foreach ($results->sortBy('created_at')->sortBy('transaction_date') as $result)
+                                        @foreach ($results->where('currency_id', $currency->id)->sortBy('created_at')->sortBy('transaction_date') as $result)
                                             @php
-                                                $currency = App\Models\Currency::find($result->currency_id);
                                                 
                                             @endphp
                                             <tr>

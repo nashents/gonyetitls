@@ -11,7 +11,11 @@ Customer Statement | {{$company->name}}
 			
 							<tr>
 								<td align="center" style="padding:40px 0 30px 0;background:{{$company->color}};">
-									<img src="#" alt="" width="300" style="height:auto;display:block;" />
+									@if ($company->logo && is_file(public_path('images/uploads/'.$company->logo)))
+										<img src="{{ $message->embed(public_path('images/uploads/'.$company->logo)) }}" alt="{{ $company->name }}" width="200" style="height:auto;display:block;background:#ffffff;padding:8px;" />
+									@else
+										<h2 style="margin:0;color:#ffffff;font-family:Arial,sans-serif;">{{ $company->name }}</h2>
+									@endif
 								</td>
 							</tr>
 							<tr>
@@ -21,6 +25,22 @@ Customer Statement | {{$company->name}}
 											<td style="padding:0 0 15px 0;color:#153643;">
 												<h3 style="font-size:16px; margin:0 0 20px 0;font-family:Arial,sans-serif;">Dear {{$customer->name}}</h3>
 												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Please find attached your statement. Kindly ensure all arrears are settled in due time.</p>
+												<table role="presentation" style="width:100%;border-collapse:collapse;margin:8px 0 12px 0;font-family:Arial,sans-serif;font-size:14px;background:#f5f7fa;">
+													<tr>
+														<td style="padding:8px 12px;color:#555555;">Statement</td>
+														<td style="padding:8px 12px;font-weight:bold;">{{ $type }}</td>
+													</tr>
+													<tr>
+														<td style="padding:8px 12px;color:#555555;">Period</td>
+														<td style="padding:8px 12px;font-weight:bold;">
+															@if ($periodFrom && $periodTo)
+																{{ date('j F Y', strtotime($periodFrom)) }} &ndash; {{ date('j F Y', strtotime($periodTo)) }}
+															@else
+																As of {{ date('j F Y') }}
+															@endif
+														</td>
+													</tr>
+												</table>
 											</td>
 										</tr>
 										<tr>

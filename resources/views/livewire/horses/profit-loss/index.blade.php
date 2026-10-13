@@ -22,6 +22,33 @@
 
                                     <div class="panel-body">
 
+                                        {{-- Horse picker filters --}}
+                                        <div class="row" style="margin-bottom: 10px">
+                                            <div class="col-lg-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">Transporter</span>
+                                                    <select wire:model="horseTransporter" class="form-control">
+                                                        <option value="">All Transporters</option>
+                                                        @foreach ($transporters as $transporter)
+                                                            <option value="{{ $transporter->id }}">
+                                                                {{ $transporter->name }}
+                                                                {{ $transporter->transporter_number ? '(' . $transporter->transporter_number . ')' : '' }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                                    <input type="text" wire:model.debounce.400ms="horseSearch" class="form-control" placeholder="Search horse by Reg # or Fleet #">
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-2" style="padding-top: 7px">
+                                                <small class="text-muted">{{ $horses->count() }} {{ \Illuminate\Support\Str::plural('horse', $horses->count()) }}</small>
+                                            </div>
+                                        </div>
+
                                         {{-- Filters --}}
                                         <div class="row">
                                             <form wire:submit.prevent="generateStatement()">

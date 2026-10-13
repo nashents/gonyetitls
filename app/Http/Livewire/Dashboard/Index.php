@@ -12,6 +12,7 @@ use App\Models\Branch;
 use App\Models\Breakdown;
 use App\Models\Checklist;
 use App\Models\Container;
+use App\Models\ContainerChargeExposure;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\DeliveryNote;
@@ -37,6 +38,7 @@ use App\Models\Recovery;
 use App\Models\Requisition;
 use App\Models\Service;
 use App\Models\Shift;
+use App\Models\Shipment;
 use App\Models\Ticket;
 use App\Models\Trailer;
 use App\Models\Transporter;
@@ -69,6 +71,9 @@ class Index extends Component
     public $year;
     public $chartData;
     public $chartVolumeData;
+
+    // ── Freight Forwarding ─────────────────────────────────────────────────
+    public $freight_total_shipments, $freight_arriving, $freight_at_port, $freight_out_of_port;
 
     // ── Legacy monthly series (kept for existing Highcharts) ─────────────
     public $jan_litreage_loss, $feb_litreage_loss, $mar_litreage_loss, $apr_litreage_loss, $may_litreage_loss, $jun_litreage_loss, $jul_litreage_loss, $aug_litreage_loss, $sep_litreage_loss, $oct_litreage_loss, $nov_litreage_loss, $dec_litreage_loss;
@@ -268,6 +273,7 @@ class Index extends Component
         $this->loadAggregates();
         $this->loadCounts();
         $this->loadLists();
+        $this->loadFreightKpis();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -806,6 +812,31 @@ class Index extends Component
             $this->driver_trips       = Trip::whereYear('start_date',$year)->whereNull('deleted_at')->where('driver_id',$did)->count();
             $this->driver_recoveries  = Recovery::whereYear('date',$year)->whereNull('deleted_at')->where('driver_id',$did)->count();
         }
+    }
+
+    private function loadFreightKpis(): void
+    {
+        $companyId = $this->company->id ?? null;
+
+        if (!$companyId || !$this->company->hasCompanyType('Freight Forwarding & Clearing')) {
+            return;
+        }
+
+        $this->freight_total_shipments = Shipment::whereHas('freight_job', fn ($q) => $q->where('company_id', $companyId))->count();
+
+        $atPortIds = ContainerChargeExposure::where('charge_type', 'port_storage')
+            ->whereNull('stop_date')
+            ->whereHas('shipment.freight_job', fn ($q) => $q->where('company_id', $companyId))
+            ->distinct()->pluck('shipment_id');
+        $this->freight_at_port = $atPortIds->count();
+
+        $this->freight_out_of_port = ContainerChargeExposure::where('charge_type', 'port_storage')
+            ->whereNotNull('stop_date')
+            ->whereHas('shipment.freight_job', fn ($q) => $q->where('company_id', $companyId))
+            ->whereNotIn('shipment_id', $atPortIds)
+            ->distinct('shipment_id')->count('shipment_id');
+
+        $this->freight_arriving = max(0, $this->freight_total_shipments - $this->freight_at_port - $this->freight_out_of_port);
     }
 
     private function loadLists(): void

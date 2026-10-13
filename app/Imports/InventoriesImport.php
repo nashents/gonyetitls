@@ -11,35 +11,47 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Inventory;
+use App\Models\ExchangeRate;
 use App\Models\CategoryValue;
 use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
 
+/**
+ * Opening stock for a new system user - stock already on hand whose vendors
+ * aren't known any more. Rows are tagged purchase_type 'Opening Balance' (no
+ * GRV, vendor or bill); the caller runs it inside a transaction and posts the
+ * value via OpeningStockJournalService, so a bad row (unknown currency,
+ * missing exchange rate) throws and nothing is imported.
+ */
 class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
-    WithHeadingRow, SkipsOnError, WithValidation, WithChunkReading, WithBatchInserts
+    WithHeadingRow, WithValidation, WithChunkReading
 {
-    use Importable, SkipsErrors;
+    use Importable;
+
+    public const PURCHASE_TYPE = 'Opening Balance';
 
     protected $company;
     protected $initialInventoryId;
     protected $initialProductId;
+    protected $purchaseDate;
+    protected $rowNumber = 1; // heading row
 
-    public function __construct()
+    public function __construct(?string $purchaseDate = null)
     {
         $this->company = Auth::user()->employee->company;
         $this->initialInventoryId = Inventory::max('id') ?? 0;
         $this->initialProductId = Product::max('id') ?? 0;
+        $this->purchaseDate = $purchaseDate ?: now()->toDateString();
     }
 
     public function limit(): int
@@ -73,34 +85,127 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
         return null;
     }
 
+    /** Existing record by case-insensitive trimmed name, else a new one; null when blank. */
+    private function findOrCreate(string $model, string $column, $value)
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $existing = $model::whereRaw("LOWER(TRIM({$column})) = ?", [mb_strtolower($value)])->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $record = new $model;
+        $attributes = [$column => $value];
+        if (Schema::hasColumn($record->getTable(), 'status')) {
+            $attributes['status'] = 1;
+        }
+        $record->forceFill($attributes)->save();
+
+        return $record;
+    }
+
+    /** Must already exist (by name, symbol or full name) - blank means the company currency. */
+    private function currency($value, string $label): Currency
+    {
+        $typed = trim((string) $value);
+        $value = mb_strtolower($typed);
+
+        if ($value === '') {
+            $currency = Currency::find($this->company->currency_id);
+        } else {
+            $currency = Currency::where(function ($q) use ($value) {
+                $q->whereRaw('LOWER(TRIM(name)) = ?', [$value])
+                    ->orWhereRaw('LOWER(TRIM(symbol)) = ?', [$value])
+                    ->orWhereRaw('LOWER(TRIM(fullname)) = ?', [$value]);
+            })->first();
+        }
+
+        if (!$currency) {
+            $this->fail($label, $value === ''
+                ? 'no currency given and the company has no default currency.'
+                : "currency \"{$typed}\" doesn't exist - add it under Currencies or use an existing name/symbol.");
+        }
+
+        return $currency;
+    }
+
+    /** Multiplier into company currency: the sheet's exchange_rate, else the configured rate. */
+    private function exchangeRate(Currency $currency, $sheetRate, string $label): float
+    {
+        if ((int) $currency->id === (int) $this->company->currency_id) {
+            return 1.0;
+        }
+
+        if (is_numeric($sheetRate) && (float) $sheetRate > 0) {
+            return (float) $sheetRate;
+        }
+
+        $rate = ExchangeRate::where('currency_id', $currency->id)
+            ->where('status', 1)
+            ->where('expiry', '>', Carbon::today())
+            ->latest('id')
+            ->value('exchange_rate');
+
+        if (!is_numeric($rate) || (float) $rate <= 0) {
+            $this->fail($label, "no active {$currency->name} exchange rate - set one under Exchange Rates or fill the exchange_rate column.");
+        }
+
+        return (float) $rate;
+    }
+
+    private function fail(string $label, string $message): void
+    {
+        throw ValidationException::withMessages(['importFile' => "{$label}: {$message} Nothing was imported."]);
+    }
+
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
+            $this->rowNumber++;
             if ($row->filter()->isEmpty()) continue;
 
-            $store = Store::firstOrCreate(['name' => trim($row->get('store_name'))], ['status' => 1]);
-            $category = Category::firstOrCreate(['name' => trim($row->get('category'))], ['status' => 1]);
-            $subCategory = CategoryValue::firstOrCreate(['name' => trim($row->get('sub_category'))], ['status' => 1]);
-            $brand = Brand::firstOrCreate(['name' => trim($row->get('brand_name'))], ['status' => 1]);
-            $rack = Rack::firstOrCreate(['rack_number' => trim($row->get('rack_number'))], ['status' => 1]);
-            $bin = Bin::firstOrCreate(['bin_number' => trim($row->get('bin_number'))], ['status' => 1]);
-            $currency = Currency::firstOrCreate(['name' => trim($row->get('currency'))], ['status' => 1]);
-            $name = ucfirst(strtolower(trim($row->get('unit_of_measure'))));
-            $uom = UnitsOfMeasure::firstOrCreate(
-                ['name' => $name],
-                ['status' => 1]
-            );
+            $productName = trim((string) $row->get('product_name'));
+            $label = "Row {$this->rowNumber}" . ($productName !== '' ? " ({$productName})" : '');
+
+            if ($productName === '') {
+                $this->fail($label, 'product_name is empty.');
+            }
+
+            $quantity = $row->get('quantity');
+            if (!is_numeric($quantity) || (float) $quantity <= 0) {
+                $this->fail($label, 'quantity must be a number greater than 0.');
+            }
+            $quantity = (float) $quantity;
+
             $unitPrice = $row->get('unit_price');
+            $unitPrice = is_numeric($unitPrice) ? (float) $unitPrice : 0;
 
-            $product = Product::firstOrNew(['name' => $row->get('product_name')]);
+            $currency = $this->currency($row->get('currency'), $label);
+            $rate = $this->exchangeRate($currency, $row->get('exchange_rate'), $label);
 
-            if (!$product->exists) {
-                $product->fill([
+            $store = $this->findOrCreate(Store::class, 'name', $row->get('store_name'));
+            $category = $this->findOrCreate(Category::class, 'name', $row->get('category'));
+            $subCategory = $this->findOrCreate(CategoryValue::class, 'name', $row->get('sub_category'));
+            $brand = $this->findOrCreate(Brand::class, 'name', $row->get('brand_name'));
+            $rack = $this->findOrCreate(Rack::class, 'rack_number', $row->get('rack_number'));
+            $bin = $this->findOrCreate(Bin::class, 'bin_number', $row->get('bin_number'));
+            $uom = $this->findOrCreate(UnitsOfMeasure::class, 'name', ucfirst(strtolower(trim((string) $row->get('unit_of_measure')))));
+
+            $product = Product::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($productName)])->first();
+
+            if (!$product) {
+                $product = new Product;
+                $product->forceFill([
+                    'name' => $productName,
                     'user_id' => Auth::id(),
-                    'unit_of_measure' => $uom->name,
-                    'category_id' => $category->id,
-                    'category_value_id' => $subCategory->id,
-                    'brand_id' => $brand->id,
+                    'unit_of_measure' => $uom?->name,
+                    'category_id' => $category?->id,
+                    'category_value_id' => $subCategory?->id,
+                    'brand_id' => $brand?->id,
                     'price' => $unitPrice,
                     'status' => 1,
                     'buy' => 1,
@@ -110,45 +215,40 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
                 ])->save();
             }
 
-            $quantity = (int) $row->get('quantity');
-            $unitPrice = $row->get('unit_price');
-            $subtotal = 0;
-            if (is_numeric($unitPrice) && is_numeric($quantity)) {
-                $subtotal = $unitPrice * $quantity;
-            }
-        
-            
-                $inventory = new Inventory;
-                $inventory->fill([
-                    'user_id' => Auth::id(),
-                    'inventory_number' => $this->generateNumber('I', ++$this->initialInventoryId),
-                    'product_id' => $product->id,
-                    'amount' => $unitPrice,
-                    'subtotal' => $subtotal,
-                    'qty' => $quantity,
-                    'subtotal_incl' => $subtotal,
-                    'total' => $subtotal,
-                    'currency_id' => $currency->id,
-                    'rack_id' => $rack->id,
-                    'bin_id' => $bin->id,
-                    'store_id' => $store->id,
-                    'purchase_date' => $this->parseExcelDate($row->get('purchase_date')),
-                    'weight' => $row->get('item_contents') ?: 1,
-                    'balance' => $row->get('balance') ?: $quantity,
-                    'status' => 1,
-                ])->save();
-           
+            $subtotal = $unitPrice * $quantity;
+            $balance = $row->get('balance');
+
+            $inventory = new Inventory;
+            $inventory->forceFill([
+                'user_id' => Auth::id(),
+                'inventory_number' => $this->generateNumber('I', ++$this->initialInventoryId),
+                'product_id' => $product->id,
+                'amount' => $unitPrice,
+                'subtotal' => $subtotal,
+                'qty' => $quantity,
+                'subtotal_incl' => $subtotal,
+                'total' => $subtotal,
+                'currency_id' => $currency->id,
+                // Dispatches price foreign-currency rows off exchange_amount.
+                'exchange_rate' => $rate,
+                'exchange_amount' => $rate * $subtotal,
+                'rack_id' => $rack?->id,
+                'bin_id' => $bin?->id,
+                'store_id' => $store?->id,
+                'purchase_date' => optional($this->parseExcelDate($row->get('purchase_date')))->toDateString() ?? $this->purchaseDate,
+                'purchase_type' => self::PURCHASE_TYPE,
+                'condition' => 'New',
+                'weight' => $row->get('item_contents') ?: 1,
+                'balance' => is_numeric($balance) ? (float) $balance : $quantity,
+                'status' => 1,
+                'disposed' => 0,
+            ])->save();
         }
     }
 
     public function rules(): array
     {
         return [];
-    }
-
-    public function batchSize(): int
-    {
-        return 150;
     }
 
     public function chunkSize(): int

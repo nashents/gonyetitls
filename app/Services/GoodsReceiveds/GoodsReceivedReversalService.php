@@ -48,24 +48,20 @@ class GoodsReceivedReversalService
         foreach ($items as [$column, $model]) {
             $label = $this->label($model);
 
+            $dispatches = $this->liveDispatches($column, $model->id);
+            $onDispatches = $dispatches ? ' Reverse dispatch ' . implode(', ', $dispatches) . ' first.' : '';
+
             if ($column === 'inventory_id') {
                 $received = (float) $model->qty * (is_numeric($model->weight) ? (float) $model->weight : 1);
                 if (is_numeric($model->balance) && (float) $model->balance < $received - 0.0001) {
-                    $reasons[] = "{$label} has been partly or fully used (on hand " . (float) $model->balance . " of {$received}).";
+                    $reasons[] = "{$label} has been partly or fully used (on hand " . (float) $model->balance . " of {$received})."
+                        . ($onDispatches ?: $this->otherUsage($column, $model->id));
                     continue;
                 }
             }
 
-            $liveDispatch = DB::table('dispatch_items')
-                ->join('dispatches', 'dispatches.id', '=', 'dispatch_items.dispatch_id')
-                ->where("dispatch_items.{$column}", $model->id)
-                ->whereNull('dispatch_items.deleted_at')
-                ->whereNull('dispatches.deleted_at')
-                ->whereNull('dispatches.reversed_at')
-                ->where(fn ($q) => $q->whereNull('dispatches.authorization')->orWhere('dispatches.authorization', '!=', 'rejected'))
-                ->exists();
-            if ($liveDispatch) {
-                $reasons[] = "{$label} is on a dispatch.";
+            if ($dispatches) {
+                $reasons[] = "{$label} is on a dispatch.{$onDispatches}";
                 continue;
             }
 
@@ -152,6 +148,50 @@ class GoodsReceivedReversalService
         }
 
         return $items;
+    }
+
+    /** "ALD00123 (approved, qty 3)" for each live dispatch holding this item. */
+    protected function liveDispatches(string $column, int $id): array
+    {
+        return DB::table('dispatch_items')
+            ->join('dispatches', 'dispatches.id', '=', 'dispatch_items.dispatch_id')
+            ->where("dispatch_items.{$column}", $id)
+            ->whereNull('dispatch_items.deleted_at')
+            ->whereNull('dispatches.deleted_at')
+            ->whereNull('dispatches.reversed_at')
+            ->where(fn ($q) => $q->whereNull('dispatches.authorization')->orWhere('dispatches.authorization', '!=', 'rejected'))
+            ->orderBy('dispatches.id')
+            ->get(['dispatches.id', 'dispatches.dispatch_number', 'dispatches.authorization', 'dispatch_items.qty'])
+            ->groupBy('id')
+            ->map(function ($rows) {
+                $first = $rows->first();
+                $qty = $rows->sum(fn ($row) => (float) $row->qty);
+
+                return ($first->dispatch_number ?: "#{$first->id}")
+                    . ' (' . ($first->authorization ?: 'pending') . ($qty > 0 ? ", qty {$qty}" : '') . ')';
+            })
+            ->values()
+            ->all();
+    }
+
+    /** " Used on: transfer items, sale items." when the stock went somewhere other than a dispatch. */
+    protected function otherUsage(string $column, int $id): string
+    {
+        $used = [];
+        foreach (self::USAGE_TABLES as $table) {
+            if (!Schema::hasColumn($table, $column)) {
+                continue;
+            }
+            $query = DB::table($table)->where($column, $id);
+            if (Schema::hasColumn($table, 'deleted_at')) {
+                $query->whereNull('deleted_at');
+            }
+            if ($query->exists()) {
+                $used[] = str_replace('_', ' ', $table);
+            }
+        }
+
+        return $used ? ' Used on: ' . implode(', ', $used) . '.' : '';
     }
 
     protected function bill(GoodsReceived $goodsReceived): ?Bill

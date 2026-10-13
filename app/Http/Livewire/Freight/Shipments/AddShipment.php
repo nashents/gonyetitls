@@ -10,6 +10,8 @@ use App\Models\Consignee;
 use App\Models\Customer;
 use App\Models\FreightJob;
 use App\Models\Location;
+use App\Models\LoadingPoint;
+use App\Models\OffloadingPoint;
 use App\Models\ShipmentParty;
 use App\Models\Transporter;
 use App\Models\Vendor;
@@ -20,14 +22,16 @@ class AddShipment extends Component
 {
     public $job;
     public $locations;
+    public $loading_points;
+    public $offloading_points;
     public $cargos;
     public $partyOptions = [];
     public $partyModels = [];
 
     public $mode;
     public $shipment_type;
-    public $port_of_loading_id;
-    public $port_of_discharge_id;
+    public $loading_point_id;
+    public $offloading_point_id;
     public $booking_reference;
     public $freight_terms;
     public $etd;
@@ -40,17 +44,19 @@ class AddShipment extends Component
     {
         $this->job = FreightJob::findOrFail($jobId);
         $this->locations = Location::orderBy('name', 'asc')->get();
+        $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
+        $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
         $this->cargos = Cargo::orderBy('name', 'asc')->get();
 
         $this->partyOptions = ShipmentParty::partyTypeOptions();
         $this->partyModels = [
-            'customer' => Customer::orderBy('name')->get(['id', 'name']),
-            'vendor' => Vendor::orderBy('name')->get(['id', 'name']),
-            'consignee' => Consignee::orderBy('name')->get(['id', 'name']),
-            'broker' => Broker::orderBy('name')->get(['id', 'name']),
-            'agent' => Agent::orderBy('name')->get(['id', 'name']),
-            'transporter' => Transporter::orderBy('name')->get(['id', 'name']),
-            'clearing_agent' => ClearingAgent::orderBy('name')->get(['id', 'name']),
+            'customer' => Customer::orderBy('name')->get(['id', 'name'])->toArray(),
+            'vendor' => Vendor::orderBy('name')->get(['id', 'name'])->toArray(),
+            'consignee' => Consignee::orderBy('name')->get(['id', 'name'])->toArray(),
+            'broker' => Broker::orderBy('name')->get(['id', 'name'])->toArray(),
+            'agent' => Agent::orderBy('name')->get(['id', 'name'])->toArray(),
+            'transporter' => Transporter::orderBy('name')->get(['id', 'name'])->toArray(),
+            'clearing_agent' => ClearingAgent::orderBy('name')->get(['id', 'name'])->toArray(),
         ];
 
         $this->addCargoRow();
@@ -87,6 +93,12 @@ class AddShipment extends Component
         } elseif ($category === 'cargos') {
             $this->cargos = Cargo::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
+        } elseif ($category === 'loading_points') {
+            $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Loading Points Refreshed Successfully!!.']);
+        } elseif ($category === 'offloading_points') {
+            $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Offloading Points Refreshed Successfully!!.']);
         }
     }
 
@@ -108,7 +120,7 @@ class AddShipment extends Component
             'clearing_agent' => ClearingAgent::class,
         ][$type];
 
-        $this->partyModels[$type] = $modelClass::orderBy('name')->get(['id', 'name']);
+        $this->partyModels[$type] = $modelClass::orderBy('name')->get(['id', 'name'])->toArray();
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
@@ -140,15 +152,15 @@ class AddShipment extends Component
         $service->addShipment($this->job, [
             'mode' => $this->mode,
             'shipment_type' => $this->shipment_type,
-            'port_of_loading_id' => $this->port_of_loading_id ?: null,
-            'port_of_discharge_id' => $this->port_of_discharge_id ?: null,
+            'loading_point_id' => $this->loading_point_id ?: null,
+            'offloading_point_id' => $this->offloading_point_id ?: null,
             'booking_reference' => $this->booking_reference,
             'freight_terms' => $this->freight_terms,
             'etd' => $this->etd ?: null,
             'eta' => $this->eta ?: null,
         ], $cargoRows, $partyRows);
 
-        $this->reset(['mode', 'shipment_type', 'port_of_loading_id', 'port_of_discharge_id', 'booking_reference', 'freight_terms', 'etd', 'eta', 'cargo_rows', 'party_rows']);
+        $this->reset(['mode', 'shipment_type', 'loading_point_id', 'offloading_point_id', 'booking_reference', 'freight_terms', 'etd', 'eta', 'cargo_rows', 'party_rows']);
         $this->addCargoRow();
         $this->addPartyRow();
 

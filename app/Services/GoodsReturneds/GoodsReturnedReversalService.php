@@ -28,18 +28,17 @@ class GoodsReturnedReversalService
     {
     }
 
-    public function reverse(GoodsReturned $goodsReturned): DebitNote
+    /**
+     * Returns null when the GRV never raised a bill (e.g. a zero-value
+     * stock-surplus GRV with no vendor) - nothing was posted on receipt,
+     * so the return only takes the stock out.
+     */
+    public function reverse(GoodsReturned $goodsReturned): ?DebitNote
     {
         return DB::transaction(function () use ($goodsReturned) {
             $goodsReturned->loadMissing(['goods_returned_items', 'vendor', 'goods_received']);
 
             $bill = Bill::where('goods_received_id', $goodsReturned->goods_received_id)->first();
-
-            if (! $bill) {
-                throw ValidationException::withMessages([
-                    'goods_returned' => 'The original GRV has no posted bill to reverse against.',
-                ]);
-            }
 
             foreach ($goodsReturned->goods_returned_items as $item) {
                 $line = $this->lockLine($item);
@@ -62,6 +61,10 @@ class GoodsReturnedReversalService
 
                 $line->balance = max(0, (float) $line->balance - (float) $item->qty_returned);
                 $line->save();
+            }
+
+            if (! $bill) {
+                return null;
             }
 
             $total = (float) $goodsReturned->goods_returned_items->sum('total_value');

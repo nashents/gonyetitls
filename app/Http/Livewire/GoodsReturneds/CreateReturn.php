@@ -158,7 +158,7 @@ class CreateReturn extends Component
     {
         $this->validate([
             'goods_received_id' => 'required',
-            'vendor_id' => 'required',
+            'vendor_id' => 'nullable',
             'employee_id' => 'required',
             'return_date' => 'required|date',
             'reason' => 'nullable|string',
@@ -190,7 +190,7 @@ class CreateReturn extends Component
                 $goodsReturned->user_id = $goodsReturned->user_id ?: Auth::id();
                 $goodsReturned->goods_returned_number = $goodsReturned->goods_returned_number ?: $this->goodsReturnedNumber();
                 $goodsReturned->return_reference = $goodsReturned->return_reference ?: $this->generateReturnReference();
-                $goodsReturned->vendor_id = $this->vendor_id;
+                $goodsReturned->vendor_id = $this->vendor_id ?: null;
                 $goodsReturned->goods_received_id = $this->goods_received_id;
                 $goodsReturned->employee_id = $this->employee_id;
                 $goodsReturned->department = $this->department;

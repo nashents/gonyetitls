@@ -23,6 +23,14 @@ class Expense extends Model implements Auditable
     /** Keep the linked Product's name in step when an expense is renamed. */
     protected static function booted()
     {
+        // Seeded core expenses (is_locked) drive the fuel/trip billing flows
+        // and must always stay billable - whatever path tries to save them.
+        static::saving(function ($expense) {
+            if ($expense->is_locked) {
+                $expense->billable = true;
+            }
+        });
+
         static::updated(function ($expense) {
             if ($expense->wasChanged('name') && $expense->product_id) {
                 $product = \App\Models\Product::find($expense->product_id);
@@ -97,9 +105,11 @@ class Expense extends Model implements Auditable
         'status',
         'is_locked',
         'visible_on_trip_sheet',
+        'billable',
     ];
 
     protected $casts = [
         'visible_on_trip_sheet' => 'boolean',
+        'billable' => 'boolean',
     ];
 }

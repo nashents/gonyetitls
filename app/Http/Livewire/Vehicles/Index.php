@@ -65,6 +65,17 @@ class Index extends Component
         return redirect(route('vehicles.index'));
     }
 
+    /** Set the fuel balance of every vehicle's tank to 0 in one go. */
+    public function resetAllFuelTanks()
+    {
+        $count = Vehicle::query()->update(['fuel_balance' => 0]);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => $count . ' vehicle fuel tank(s) initialized to 0.',
+        ]);
+    }
+
      public function calculateCPK($id){
 
             $cpk = Null;

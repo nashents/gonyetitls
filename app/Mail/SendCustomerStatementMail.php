@@ -15,12 +15,16 @@ class SendCustomerStatementMail extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      *
+     * Note: $from / $to are Mailable's own sender/recipient arrays, so the
+     * statement period lives in $periodFrom / $periodTo. Assigning a date
+     * string to $to caused "[] operator not supported for strings".
+     *
      * @return void
      */
     public $filePath;
     public $type;
-    public $from;
-    public $to;
+    public $periodFrom;
+    public $periodTo;
     public $company;
     public $customer;
 
@@ -29,8 +33,8 @@ class SendCustomerStatementMail extends Mailable implements ShouldQueue
         $this->filePath = $filePath;
         $this->customer = $data['customer'];
         $this->company = $data['company'];
-        $this->from = $data['from'];
-        $this->to = $data['to'];
+        $this->periodFrom = $data['from'] ?? null;
+        $this->periodTo = $data['to'] ?? null;
         $this->type = $data['selectedType'];
     }
 
@@ -42,8 +46,11 @@ class SendCustomerStatementMail extends Mailable implements ShouldQueue
     public function build()
     {
        return $this->view('emails.customer_statement')
-                    ->from($this->company->noreply)
+                    ->from($this->company->noreply ?: config('mail.from.address'), $this->company->name)
                     ->subject($this->company->name.' '.date('M Y').' Statement for '. $this->customer->name)
-                    ->attach(Storage::path($this->filePath));
+                    ->attach(Storage::path($this->filePath), [
+                        'as' => 'Statement - '.$this->customer->name.'.pdf',
+                        'mime' => 'application/pdf',
+                    ]);
     }
 }

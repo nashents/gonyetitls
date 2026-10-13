@@ -85,6 +85,11 @@
                                         @else
                                             <small class="badge bg-secondary">Not synced to product</small>
                                         @endif
+                                        @if ($expense->billable ?? true)
+                                            <br><small class="badge bg-success" title="Trip expenses raise a supplier bill"><i class="fa fa-file-text-o"></i> Billable</small>
+                                        @else
+                                            <br><small class="badge bg-secondary" title="Trip cost only - no bill is created"><i class="fa fa-ban"></i> Non-billable</small>
+                                        @endif
                                         @unless ($expense->visible_on_trip_sheet ?? true)
                                             <br><small class="badge bg-warning" title="Not shown on driver trip sheets"><i class="fa fa-eye-slash"></i> Hidden on trip sheet</small>
                                         @endunless
@@ -124,6 +129,9 @@
                                                 @endunless
                                                 @endif
                                                 <li><a href="#" wire:click.prevent="toggleTripSheetVisibility({{$expense->id}})"><i class="fa fa-{{ ($expense->visible_on_trip_sheet ?? true) ? 'eye-slash' : 'eye' }} color-primary"></i> {{ ($expense->visible_on_trip_sheet ?? true) ? 'Hide on' : 'Show on' }} Trip Sheet</a></li>
+                                                @unless ($expense->is_locked)
+                                                <li><a href="#" wire:click.prevent="toggleBillable({{$expense->id}})"><i class="fa fa-{{ ($expense->billable ?? true) ? 'ban' : 'file-text-o' }} color-primary"></i> Mark as {{ ($expense->billable ?? true) ? 'Non-billable' : 'Billable' }}</a></li>
+                                                @endunless
                                                 @unless ($expense->is_locked)
                                                 @unless ($this->sageEnabled)
                                                 <li><a href="#" data-toggle="modal" data-target="#expenseDeleteModal{{ $expense->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
@@ -315,6 +323,15 @@
                                 </div>
                                 <small class="text-muted">Applies to every trip sheet. Uncheck to hide this expense from drivers' trip sheets (e.g. fuel).</small>
                             </div>
+                            <div class="form-group">
+                                <label>Billing</label>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.defer="billable" value="1"> Billable
+                                    </label>
+                                </div>
+                                <small class="text-muted">Uncheck to keep this expense as a trip cost only - no bill is created at trip authorization or on the Trip Expenses tab (e.g. a share of fuel already billed by the truck's fuel order).</small>
+                            </div>
                         </div>
                     </div>
 
@@ -465,6 +482,17 @@
                                 </div>
                                 <small class="text-muted">Applies to every trip sheet. Uncheck to hide this expense from drivers' trip sheets (e.g. fuel).</small>
                             </div>
+                            @unless ($is_locked)
+                            <div class="form-group">
+                                <label>Billing</label>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" wire:model.defer="billable" value="1"> Billable
+                                    </label>
+                                </div>
+                                <small class="text-muted">Uncheck to keep this expense as a trip cost only - no bill is created at trip authorization or on the Trip Expenses tab (e.g. a share of fuel already billed by the truck's fuel order).</small>
+                            </div>
+                            @endunless
                         </div>
                     </div>  
                 </div>

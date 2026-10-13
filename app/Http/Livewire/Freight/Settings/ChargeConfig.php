@@ -35,11 +35,38 @@ class ChargeConfig extends Component
         $this->currencies = Currency::orderBy('name', 'asc')->get();
     }
 
+    /**
+     * Port storage is levied by the port/terminal authority, not the
+     * shipping line - it doesn't vary by carrier, so a line-specific policy
+     * for it doesn't reflect how the charge actually works. Demurrage and
+     * detention are genuinely carrier-specific (the line's own container),
+     * so those are the only charge types a Shipping Line should ever be
+     * attached to.
+     */
+    private function chargeTypeAllowsShippingLine($chargeType): bool
+    {
+        return $chargeType !== 'port_storage';
+    }
+
     protected function rules()
     {
         return [
             'policy_charge_type' => 'required_with:policy_free_days|string',
         ];
+    }
+
+    public function updatedPolicyChargeType($value)
+    {
+        if (!$this->chargeTypeAllowsShippingLine($value)) {
+            $this->policy_shipping_line_id = null;
+        }
+    }
+
+    public function updatedTierChargeType($value)
+    {
+        if (!$this->chargeTypeAllowsShippingLine($value)) {
+            $this->tier_shipping_line_id = null;
+        }
     }
 
     public function editPolicy($id)
@@ -58,8 +85,12 @@ class ChargeConfig extends Component
             'policy_free_days' => 'required|integer|min:0',
         ]);
 
+        $shippingLineId = $this->chargeTypeAllowsShippingLine($this->policy_charge_type)
+            ? ($this->policy_shipping_line_id ?: null)
+            : null;
+
         $duplicate = ChargeFreeDayPolicy::where('charge_type', $this->policy_charge_type)
-            ->where('shipping_line_id', $this->policy_shipping_line_id ?: null)
+            ->where('shipping_line_id', $shippingLineId)
             ->when($this->policy_id, fn ($q) => $q->where('id', '!=', $this->policy_id))
             ->exists();
 
@@ -72,7 +103,7 @@ class ChargeConfig extends Component
             ['id' => $this->policy_id],
             [
                 'charge_type' => $this->policy_charge_type,
-                'shipping_line_id' => $this->policy_shipping_line_id ?: null,
+                'shipping_line_id' => $shippingLineId,
                 'free_days' => $this->policy_free_days,
             ]
         );
@@ -117,7 +148,9 @@ class ChargeConfig extends Component
             ['id' => $this->tier_id],
             [
                 'charge_type' => $this->tier_charge_type,
-                'shipping_line_id' => $this->tier_shipping_line_id ?: null,
+                'shipping_line_id' => $this->chargeTypeAllowsShippingLine($this->tier_charge_type)
+                    ? ($this->tier_shipping_line_id ?: null)
+                    : null,
                 'day_from' => $this->tier_day_from,
                 'day_to' => $this->tier_day_to ?: null,
                 'rate' => $this->tier_rate,

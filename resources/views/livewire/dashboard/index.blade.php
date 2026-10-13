@@ -16,6 +16,8 @@
                 $isWorkshopAdmin  = $isSuper || ($isWorkshopUser && $isAdmin);
                 $isWorkshopWorker = $isWorkshopUser && !$isWorkshopAdmin;
 
+                $companyIsFreightForwarder = $company?->hasCompanyType('Freight Forwarding & Clearing') ?? false;
+
                 // Department KPI blocks are for admin/managerial users only.
                 // Drivers and non-admin workshop employees get their own restricted dashboard below.
                 $canSee = function(array $departments) use ($department_names, $isSuper, $isDriver, $isWorkshopWorker) {
@@ -397,6 +399,18 @@
                             <a class="gd-kpi {{ ($pending_leave_requests ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('leaves.pending') }}"><span class="icon"><i class="fa fa-hourglass-half"></i></span><div class="value">{{ $pending_leave_requests ?? 0 }}</div><span class="name">Pending Leave</span></a>
                             <a class="gd-kpi warn" href="#"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($payroll_cost_mtd ?? 0) }}</div><span class="name">Payroll Cost MTD</span></a>
                             <a class="gd-kpi {{ ($outstanding_loans ?? 0) > 0 ? 'warn' : 'good' }}" href="#"><span class="icon"><i class="fa fa-credit-card"></i></span><div class="value">{{ $money($outstanding_loans ?? 0) }}</div><span class="name">Outstanding Loans</span></a>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($companyIsFreightForwarder && ($isSuper || in_array('Freight Forwarding & Clearing', $department_names)))
+                    <div class="gd-panel">
+                        <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-ship"></i> Freight Forwarding</h5><span class="gd-panel-note">Shipments in motion</span></div>
+                        <div class="gd-kpi-grid">
+                            <a class="gd-kpi" href="{{ route('freight.jobs.index') }}"><span class="icon"><i class="fa fa-ship"></i></span><div class="value">{{ $freight_total_shipments ?? 0 }}</div><span class="name">Total Shipments</span></a>
+                            <a class="gd-kpi" href="{{ route('freight.jobs.index') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $freight_arriving ?? 0 }}</div><span class="name">Arriving</span></a>
+                            <a class="gd-kpi warn" href="{{ route('freight.reports.port_exposure') }}"><span class="icon"><i class="fa fa-anchor"></i></span><div class="value">{{ $freight_at_port ?? 0 }}</div><span class="name">At Port</span></a>
+                            <a class="gd-kpi good" href="{{ route('freight.jobs.index') }}"><span class="icon"><i class="fa fa-check"></i></span><div class="value">{{ $freight_out_of_port ?? 0 }}</div><span class="name">Out of Port</span></a>
                         </div>
                     </div>
                 @endif

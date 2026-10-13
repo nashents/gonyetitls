@@ -50,6 +50,8 @@ class Index extends Component
     public $tax_id;
     public $importFile;
     public $visible_on_trip_sheet = true;
+    public $billable = true;
+    public $is_locked = false;
 
     public $expense_id;
     public $user_id;
@@ -89,6 +91,8 @@ class Index extends Component
         $this->type = '';
         $this->tax_id = '';
         $this->visible_on_trip_sheet = true;
+        $this->billable = true;
+        $this->is_locked = false;
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -200,6 +204,7 @@ class Index extends Component
         $expense->tax_id = $this->tax_id;
         $expense->item_type = 'Non Inventory';
         $expense->visible_on_trip_sheet = (bool) $this->visible_on_trip_sheet;
+        $expense->billable = (bool) $this->billable;
         $expense->save();
 
         // Every Gonyeti expense is also a non-inventory billable Product — auto-create
@@ -247,6 +252,8 @@ class Index extends Component
     $this->frequency = $expense->frequency;
     $this->description = $expense->description;
     $this->visible_on_trip_sheet = (bool) ($expense->visible_on_trip_sheet ?? true);
+    $this->billable = (bool) ($expense->billable ?? true);
+    $this->is_locked = (bool) $expense->is_locked;
     $this->account_id = $expense->account_id;
     $this->status = $expense->status;
     $this->expense_id = $expense->id;
@@ -290,6 +297,34 @@ class Index extends Component
         ]);
     }
 
+    /**
+     * Flip whether trip expenses using this expense raise a supplier Bill.
+     * Non-billable ones stay a trip cost only (see TripExpenseJournalService).
+     * Available even when Sage is active or the expense is locked - it is a
+     * Gonyeti-only posting flag.
+     */
+    public function toggleBillable($id)
+    {
+        $expense = Expense::find($id);
+        if (!$expense) {
+            return;
+        }
+        if ($expense->is_locked) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$expense->name." is a core system expense and always stays billable."
+            ]);
+            return;
+        }
+        $expense->billable = !($expense->billable ?? true);
+        $expense->save();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>$expense->name.($expense->billable ? " is now billable - trip expenses will raise a bill." : " is now non-billable - trip expenses stay a trip cost, no bill.")
+        ]);
+    }
+
     public function update()
     {
         if ($this->expense_id) {
@@ -315,6 +350,7 @@ class Index extends Component
             $expense->tax_id = $this->tax_id;
             $expense->item_type = 'Non Inventory';
             $expense->visible_on_trip_sheet = (bool) $this->visible_on_trip_sheet;
+            $expense->billable = (bool) $this->billable;
             $expense->frequency = $this->frequency;
             $expense->description = $this->description;
             $expense->status = $this->status;

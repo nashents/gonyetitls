@@ -7,15 +7,17 @@ use App\Models\Broker;
 use App\Models\Cargo;
 use App\Models\ClearingAgent;
 use App\Models\Consignee;
-use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Destination;
+use App\Models\Employee;
+use App\Models\FreightJob;
 use App\Models\FreightServiceType;
-use App\Models\Location;
+use App\Models\LoadingPoint;
+use App\Models\OffloadingPoint;
 use App\Models\Quotation;
 use App\Models\ShipmentParty;
 use App\Models\Transporter;
-use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Freight\FreightJobService;
 use Illuminate\Support\Facades\Auth;
@@ -31,10 +33,11 @@ class Create extends Component
     public $customers;
     public $freight_service_types;
     public $currencies;
-    public $countries;
+    public $destinations;
     public $officers;
     public $quotations;
-    public $locations;
+    public $loading_points;
+    public $offloading_points;
     public $cargos;
     public $partyOptions = [];
     public $partyModels = [];
@@ -51,19 +54,14 @@ class Create extends Component
     public $currency_id;
     public $import_export_type;
     public $primary_transport_mode;
-    public $origin;
-    public $destination;
-    public $origin_country_id;
-    public $destination_country_id;
+    public $from;
+    public $to;
     public $notes;
 
     // Shipment Details
-    public $mode;
     public $shipment_type;
-    public $port_of_loading_id;
-    public $port_of_discharge_id;
-    public $place_of_receipt_id;
-    public $place_of_delivery_id;
+    public $loading_point_id;
+    public $offloading_point_id;
     public $etd;
     public $eta;
     public $booking_reference;
@@ -90,24 +88,31 @@ class Create extends Component
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
-        $this->countries = Country::orderBy('name', 'asc')->get();
-        $this->officers = User::orderBy('name', 'asc')->get();
+        $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
+        $this->officers = Employee::where('company_id', $this->employee->company_id)
+            ->where('status', 1)
+            ->where('archive', 0)
+            ->whereNotNull('user_id')
+            ->orderBy('name', 'asc')
+            ->orderBy('surname', 'asc')
+            ->get();
         $this->quotations = Quotation::with('customer')
             ->whereYear('date', date('Y'))
             ->latest()
             ->get();
-        $this->locations = Location::orderBy('name', 'asc')->get();
+        $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
+        $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
         $this->cargos = Cargo::orderBy('name', 'asc')->get();
 
         $this->partyOptions = ShipmentParty::partyTypeOptions();
         $this->partyModels = [
-            'customer' => Customer::orderBy('name')->get(['id', 'name']),
-            'vendor' => Vendor::orderBy('name')->get(['id', 'name']),
-            'consignee' => Consignee::orderBy('name')->get(['id', 'name']),
-            'broker' => Broker::orderBy('name')->get(['id', 'name']),
-            'agent' => Agent::orderBy('name')->get(['id', 'name']),
-            'transporter' => Transporter::orderBy('name')->get(['id', 'name']),
-            'clearing_agent' => ClearingAgent::orderBy('name')->get(['id', 'name']),
+            'customer' => Customer::orderBy('name')->get(['id', 'name'])->toArray(),
+            'vendor' => Vendor::orderBy('name')->get(['id', 'name'])->toArray(),
+            'consignee' => Consignee::orderBy('name')->get(['id', 'name'])->toArray(),
+            'broker' => Broker::orderBy('name')->get(['id', 'name'])->toArray(),
+            'agent' => Agent::orderBy('name')->get(['id', 'name'])->toArray(),
+            'transporter' => Transporter::orderBy('name')->get(['id', 'name'])->toArray(),
+            'clearing_agent' => ClearingAgent::orderBy('name')->get(['id', 'name'])->toArray(),
         ];
 
         $this->addCargoRow();
@@ -163,15 +168,18 @@ class Create extends Component
         } elseif ($category === 'quotations') {
             $this->quotations = Quotation::with('customer')->whereYear('date', date('Y'))->latest()->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Quotations Refreshed Successfully!!.']);
-        } elseif ($category === 'countries') {
-            $this->countries = Country::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Countries Refreshed Successfully!!.']);
+        } elseif ($category === 'destinations') {
+            $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Destinations Refreshed Successfully!!.']);
         } elseif ($category === 'cargos') {
             $this->cargos = Cargo::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
-        } elseif ($category === 'locations') {
-            $this->locations = Location::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
+        } elseif ($category === 'loading_points') {
+            $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Loading Points Refreshed Successfully!!.']);
+        } elseif ($category === 'offloading_points') {
+            $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Offloading Points Refreshed Successfully!!.']);
         }
     }
 
@@ -193,7 +201,7 @@ class Create extends Component
             'clearing_agent' => ClearingAgent::class,
         ][$type];
 
-        $this->partyModels[$type] = $modelClass::orderBy('name')->get(['id', 'name']);
+        $this->partyModels[$type] = $modelClass::orderBy('name')->get(['id', 'name'])->toArray();
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
@@ -208,7 +216,6 @@ class Create extends Component
             'freight_service_type_id' => 'nullable|integer|exists:freight_service_types,id',
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
-            'mode' => 'required|string',
             'cargo_rows.*.commodity' => 'nullable|string',
             'party_rows.*.role' => 'nullable|string',
         ];
@@ -232,21 +239,17 @@ class Create extends Component
             'currency_id' => $this->currency_id,
             'import_export_type' => $this->import_export_type,
             'primary_transport_mode' => $this->primary_transport_mode,
-            'origin' => $this->origin,
-            'destination' => $this->destination,
-            'origin_country_id' => $this->origin_country_id,
-            'destination_country_id' => $this->destination_country_id,
+            'from' => $this->from,
+            'to' => $this->to,
             'notes' => $this->notes,
         ];
 
         $shipmentData = [
             'user_id' => Auth::id(),
-            'mode' => $this->mode,
+            'mode' => $this->primary_transport_mode,
             'shipment_type' => $this->shipment_type,
-            'port_of_loading_id' => $this->port_of_loading_id,
-            'port_of_discharge_id' => $this->port_of_discharge_id,
-            'place_of_receipt_id' => $this->place_of_receipt_id,
-            'place_of_delivery_id' => $this->place_of_delivery_id,
+            'loading_point_id' => $this->loading_point_id,
+            'offloading_point_id' => $this->offloading_point_id,
             'etd' => $this->etd ?: null,
             'eta' => $this->eta ?: null,
             'booking_reference' => $this->booking_reference,
@@ -276,6 +279,8 @@ class Create extends Component
 
     public function render()
     {
-        return view('livewire.freight.jobs.create');
+        return view('livewire.freight.jobs.create', [
+            'incoterms' => FreightJob::INCOTERMS,
+        ]);
     }
 }

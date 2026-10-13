@@ -393,6 +393,7 @@ class AccountSeeder extends Seeder
 
             //equity
             [ 'currency_id' => Null, 'account_type_group_id' =>  $business_owner_contribution_and_drawing->account_type_group->id,'account_type_id' => $business_owner_contribution_and_drawing ? $business_owner_contribution_and_drawing->id : "", 'name' => 'Common Shares', 'abbreviation' => '', 'rate' => '', 'description' => "Common shares of a corporation can be issued to business owners, investors, and employees.", 'hs_code' => ''],
+            [ 'currency_id' => Null, 'account_type_group_id' =>  $business_owner_contribution_and_drawing->account_type_group->id,'account_type_id' => $business_owner_contribution_and_drawing ? $business_owner_contribution_and_drawing->id : "", 'name' => 'Opening Balance Equity', 'abbreviation' => '', 'rate' => '', 'description' => "Balancing entry for opening balances (e.g. stock on hand) brought in when the business started using the system.", 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $retained_earnings_profit->account_type_group->id,'account_type_id' => $retained_earnings_profit ? $retained_earnings_profit->id : "",'name' => 'Retained Earnings/Deficit','abbreviation' => '','rate' => '', 'description' => "Retained earnings are the total net income your business has earned from its first day to the current date, minus any dividends you've already distributed. If the amount of retained earnings is negative, report it as a deficit.", 'hs_code' => ''],
         
             //Income

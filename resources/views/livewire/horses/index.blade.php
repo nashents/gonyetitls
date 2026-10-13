@@ -42,6 +42,7 @@
                                     <a href="#" wire:click="exportHorsesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportHorsesCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportHorsesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    <a href="#" wire:click.prevent="resetAllFuelTanks()" wire:loading.attr="disabled" onclick="return confirm('Initialize the fuel tanks of ALL horses to 0? This overwrites every horse\'s current fuel balance.')" class="btn btn-default border-danger btn-rounded btn-wide" title="Set every horse's fuel balance to 0"><i class="fa fa-tint"></i>Reset Fuel Tanks</a>
                                     @if ($this->sageEnabled)
                                     <button wire:click="bulkSyncToSage" wire:loading.attr="disabled" class="btn btn-default border-success btn-rounded btn-wide"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</button>
                                     <button wire:click="pullFromSage" wire:loading.attr="disabled" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-cloud-download"></i>Pull from Sage</button>

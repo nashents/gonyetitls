@@ -125,10 +125,13 @@
                                                     </small>
                                                 </td>
                                                 <td>
-                                                    <strong>Deparments:</strong>
-                                                    @foreach ($employee->departments as $department)
-                                                        {{$department->name}} @if (!$loop->last),@endif
-                                                    @endforeach
+                                                    @php
+                                                        $defaultDepartment = $employee->departments->firstWhere('pivot.is_default', true) ?? $employee->departments->first();
+                                                    @endphp
+                                                    <strong>Department:</strong>
+                                                    @if ($defaultDepartment)
+                                                        <span class="label label-success" title="Default department">{{ $defaultDepartment->name }}</span>
+                                                    @endif
                                                     <br>
                                                     <strong>Post: </strong>{{$employee->post}} <br>
                                                     @if ($employee->department_head)

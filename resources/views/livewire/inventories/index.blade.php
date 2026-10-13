@@ -267,6 +267,17 @@
                         <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Loading Points File" >
                         @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <div class="form-group">
+                        <label for="opening_date">Opening Balance Date</label>
+                        <input type="date" class="form-control" wire:model.defer="opening_date">
+                        <small class="text-muted">Defaults to today. Used for rows without a purchase_date and for the ledger entry.</small>
+                        @error('opening_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="alert alert-info" style="margin-bottom:0">
+                        For stock already on hand (opening stock) - no GRV or vendor needed. The total value is posted
+                        DR Spares Inventory / CR Opening Balance Equity. Currency must match an existing currency (blank = company currency);
+                        foreign-currency rows need an active exchange rate or an <code>exchange_rate</code> column. Any bad row stops the whole import.
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

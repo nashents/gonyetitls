@@ -1,0 +1,432 @@
+<div>
+    <section class="section">
+        <div>
+    <div wire:loading.delay.longest>
+        <div style="display: flex; justify-content : center; align-items: center; background-color:black; position:fixed; top:0px; left:0px; z-index: 9999; width:100%; height:100%; opacity: .75;">
+            <div class="la-ball-spin-clockwise-fade la-dark la-3x" style="color:white">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel">
+                        <div class="panel-heading">
+                            <div class="panel-title">
+                                <h5>Freight Jobs</h5>
+                            </div>
+                            <div>
+                                                            </div>
+                        </div>
+                        <div class="panel-body p-20">
+                            <div class="row mb-20">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="search" placeholder="Search job #, customer ref, customer, origin, destination">
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-control" wire:model="filter_customer_id">
+                                        <option value="">All Customers</option>
+                                                                                    <option value="126">A-THERMAL RETORT TECHNOLOGIES (PTY) LTD</option>
+                                                                                    <option value="87">ABCA LOGISTICS (PTY) LTD</option>
+                                                                                    <option value="24">ABN LOGISTICS</option>
+                                                                                    <option value="103">ABNORMAL</option>
+                                                                                    <option value="154">ACCESS WORLD SOUTH AFRICA</option>
+                                                                                    <option value="21">AFC</option>
+                                                                                    <option value="148">AFRIT</option>
+                                                                                    <option value="89">AISLE LOGISTICS (PRIVATE) LIMITED</option>
+                                                                                    <option value="164">Alvat Ncube</option>
+                                                                                    <option value="25">ASSURED FREIGHT SERVICES</option>
+                                                                                    <option value="26">Avio Clearing &amp; Forwarding (Pty) Ltd</option>
+                                                                                    <option value="27">AVIOCEAN</option>
+                                                                                    <option value="28">AVIOCEAN NATAL</option>
+                                                                                    <option value="29">AVIOCEAN NATAL SUB</option>
+                                                                                    <option value="30">AXIS HOUSE P/L</option>
+                                                                                    <option value="31">AXIS HOUSE P/L.</option>
+                                                                                    <option value="104">BH SQUARED LOGISTICS (PTY) LTD</option>
+                                                                                    <option value="98">BJ FREIGHT</option>
+                                                                                    <option value="32">BRIDGE SHIPPING</option>
+                                                                                    <option value="33">BRIDGE SHIPPING ADO C. STEINWEG BRIDGE</option>
+                                                                                    <option value="17">Bridgeshipping</option>
+                                                                                    <option value="92">BRIGHT TRUCKING</option>
+                                                                                    <option value="94">BRISK FAST</option>
+                                                                                    <option value="127">BRISK FAST LOGISTICS PTE LTD</option>
+                                                                                    <option value="34">Brisk Fast Trading Pty Ltd rand</option>
+                                                                                    <option value="35">Brisk Fregiht Africa - Tom</option>
+                                                                                    <option value="36">Brisk Fregiht Africa - Tom Rand.</option>
+                                                                                    <option value="99">BRITAH TRUCKING</option>
+                                                                                    <option value="128">BSI STEEL EXPORTS</option>
+                                                                                    <option value="141">C. STEINWEG BRIDGE (PTY) LTD</option>
+                                                                                    <option value="37">Car and Truck Newlands (Pty) Ltd</option>
+                                                                                    <option value="140">CEVA LOGISTICS SOUTH AFRICA (PTY) LTD</option>
+                                                                                    <option value="96">CHRIS TRUCK</option>
+                                                                                    <option value="18">Cleonash Logistics</option>
+                                                                                    <option value="38">CML WAREHOUSE SOUTH AFRICA (PTY) LTD</option>
+                                                                                    <option value="95">CONDUIT ELECTRICAL (PTY)</option>
+                                                                                    <option value="150">CONDUIT ELECTRICAL (PTY) LTD</option>
+                                                                                    <option value="39">Congo Dongfang International Mining</option>
+                                                                                    <option value="40">CORFIELD LOGISTICS</option>
+                                                                                    <option value="22">Cottco</option>
+                                                                                    <option value="3">Delta Beverages</option>
+                                                                                    <option value="41">DRC PURCHASER</option>
+                                                                                    <option value="123">ETHEL YOUNG</option>
+                                                                                    <option value="115">FAMX Freight (Pty) Ltd</option>
+                                                                                    <option value="11">FBM HAULAGE PVT LTD</option>
+                                                                                    <option value="106">FIRST CHOICE AUTO SUPPLY</option>
+                                                                                    <option value="100">FNBC LOGISTICS</option>
+                                                                                    <option value="151">FNBC LOGISTICS.</option>
+                                                                                    <option value="161">Gash Transport</option>
+                                                                                    <option value="144">GOLD MOUNTAINS (H.K) INTERNATIONAL MINING COMPANY LIMITED</option>
+                                                                                    <option value="129">GOLD VALE TRADING AND LOGISTICS (PTY) LTD</option>
+                                                                                    <option value="42">Haraka Logistics (Ascona Trading).</option>
+                                                                                    <option value="93">HARU LOGISTICS</option>
+                                                                                    <option value="152">HF LOGISTICS</option>
+                                                                                    <option value="102">HONO FREIGHT LOGISTICS</option>
+                                                                                    <option value="43">HONO TRANSPORT LOGISTICS (PVT) LTD</option>
+                                                                                    <option value="44">HUAYOU (HONG KONG) CO LIMITED STL</option>
+                                                                                    <option value="45">HUAYOU (HONG KONG) CO., LIMITED</option>
+                                                                                    <option value="46">IMPALA TERMINALS SOUTH AFRICA (PTY) LTD</option>
+                                                                                    <option value="146">IMPALA TERMINALS SWITZERLAND SARL</option>
+                                                                                    <option value="47">INTO AFRICA PROJECT LOGISTICS</option>
+                                                                                    <option value="48">INTO AFRICA PROJECT LOGISTICS.</option>
+                                                                                    <option value="130">JBN INTERNATIONAL</option>
+                                                                                    <option value="142">JINSHENG (SINGAPORE) MINING PTE. LTD</option>
+                                                                                    <option value="49">JMR TRANSPORT</option>
+                                                                                    <option value="109">JOSH JUDE LOGISTICS</option>
+                                                                                    <option value="50">KING DAVID MANORS</option>
+                                                                                    <option value="51">LA COMPAGNIE MINIERE DE LUISHA SAS</option>
+                                                                                    <option value="52">LA MINIERE DE KASOMBO SAS (MIKAS)</option>
+                                                                                    <option value="53">LATTE INTERNATIONAL HOLDING LIMITED</option>
+                                                                                    <option value="54">LEADER TRAILER BODIES</option>
+                                                                                    <option value="131">LOGISTIC MANAGEMENT SERVICES</option>
+                                                                                    <option value="132">LOGISTIC MANAGEMENT SERVICES (LMS)</option>
+                                                                                    <option value="55">MAGNESIA SOLUTIONS</option>
+                                                                                    <option value="56">MANMAR HEAVY</option>
+                                                                                    <option value="57">MASS MEASURING SYSTEMS</option>
+                                                                                    <option value="90">MATACORE (PTY) LTD</option>
+                                                                                    <option value="58">MEDSURE HEALTHCARE</option>
+                                                                                    <option value="9">MIKELEDI</option>
+                                                                                    <option value="13">Millpal</option>
+                                                                                    <option value="91">MONARCH LOGISTICS AND SERVICES</option>
+                                                                                    <option value="14">Morres Cargo</option>
+                                                                                    <option value="59">Mutual &amp; Federal Risk Financing Ltd - One</option>
+                                                                                    <option value="60">NATRANS NATAL TRANSPORT CC</option>
+                                                                                    <option value="138">OK LOGISTICS AND TRADING</option>
+                                                                                    <option value="133">OK SUPPLY CHAIN MANAGEMENT (PTY) LTD</option>
+                                                                                    <option value="134">OK SUPPLY CHAIN MANAGEMENT PTY LTD</option>
+                                                                                    <option value="135">OPO AFRICA HOLDING PTE LTD</option>
+                                                                                    <option value="136">OPO AFRICA HOLDING PTE LTD.</option>
+                                                                                    <option value="61">OPO Group Africa (Pty) Ltd</option>
+                                                                                    <option value="62">OPO Group Africa (Pty) Ltd.</option>
+                                                                                    <option value="63">ORIENT INTERNATIONAL MINERALS &amp; RESOURCE</option>
+                                                                                    <option value="64">ORIENT INTERNATIONAL MINERALS &amp; RESOURCE.</option>
+                                                                                    <option value="65">Other Building</option>
+                                                                                    <option value="162">Panashe Ngorima</option>
+                                                                                    <option value="107">PAULINE HONORATH</option>
+                                                                                    <option value="156">Paycity Business</option>
+                                                                                    <option value="88">PEMILELI INVESTMENT ONE LIMITED S.A.S</option>
+                                                                                    <option value="145">PERFEK FREIGHT SERVICES CO LLC</option>
+                                                                                    <option value="8">Petromoc-Fugra</option>
+                                                                                    <option value="66">PFG BUILDING GLASS A DIV OF PG GROUP (PTY) LTD</option>
+                                                                                    <option value="137">PLATYNUM PTE LTD</option>
+                                                                                    <option value="112">Platynum T21</option>
+                                                                                    <option value="121">Platynum T22</option>
+                                                                                    <option value="67">Polytra Africa SSC</option>
+                                                                                    <option value="163">Postman Test Customer</option>
+                                                                                    <option value="68">PREMIER SCALE</option>
+                                                                                    <option value="69">PROSPECT LITHIUM ZIMBABWE (PRIVATE) LIMITED</option>
+                                                                                    <option value="149">PROSPECT LITHIUM ZIMBABWE (PVT) LTD</option>
+                                                                                    <option value="2">PUMA ENERGY</option>
+                                                                                    <option value="70">PXL</option>
+                                                                                    <option value="71">PXL FREIGHT &amp; LOGISTICS</option>
+                                                                                    <option value="72">R&amp;P Truck Parts t/a Truck Busters</option>
+                                                                                    <option value="4">RAM Petroleum</option>
+                                                                                    <option value="159">RDM ROAD SOLUTIONS (PTY) LTD</option>
+                                                                                    <option value="73">RELOAD AQUARIUS SHIPPING INTERNATIONAL (PTY) LTD</option>
+                                                                                    <option value="74">RELOAD AQUARIUS SHIPPING INTERNATIONAL (PTY) LTD.</option>
+                                                                                    <option value="125">RELOAD LOGISTICS FZCO</option>
+                                                                                    <option value="23">Rexin</option>
+                                                                                    <option value="108">RINO</option>
+                                                                                    <option value="75">RMS</option>
+                                                                                    <option value="76">ROAD ANGELS</option>
+                                                                                    <option value="122">ROBSON</option>
+                                                                                    <option value="139">ROCKS LOGISTICS AND WAREHOUSING (PTY) LTD</option>
+                                                                                    <option value="77">SELL LINK</option>
+                                                                                    <option value="78">SELL LINK.</option>
+                                                                                    <option value="143">SHENZHEN CSC CARGO SUPPLY CHAIN CO.LTD</option>
+                                                                                    <option value="16">Shereni Transport</option>
+                                                                                    <option value="20">Shito Trading</option>
+                                                                                    <option value="105">SHREE ENTERPRISE</option>
+                                                                                    <option value="153">SHREE ENTERPRISE (PTY) LTD</option>
+                                                                                    <option value="160">SIGNCRAFT AFRICA (PTY) LTD</option>
+                                                                                    <option value="110">SIXTY3</option>
+                                                                                    <option value="79">SOUTH NORTH EXPORTS (PTY) LTD</option>
+                                                                                    <option value="80">STANLEY HONORATH</option>
+                                                                                    <option value="15">Star International</option>
+                                                                                    <option value="157">SUNLINE SUPPLY CHAIN SOUTH AFRICA (PTY) LTD</option>
+                                                                                    <option value="117">T10 - USD</option>
+                                                                                    <option value="118">T10 - ZAR</option>
+                                                                                    <option value="119">T11 - USD</option>
+                                                                                    <option value="120">T11 - ZAR</option>
+                                                                                    <option value="116">T12 - USD</option>
+                                                                                    <option value="111">T12 - ZAR</option>
+                                                                                    <option value="113">TALENT</option>
+                                                                                    <option value="81">TARGET TRUCK AND CARGO (PTY) LTD</option>
+                                                                                    <option value="101">TASHY TRANS (PTY) LTD</option>
+                                                                                    <option value="155">The Capitol</option>
+                                                                                    <option value="158">THE ENERGY COMPANY (PTY) LTD</option>
+                                                                                    <option value="1">TOTAL ZIMBABWE</option>
+                                                                                    <option value="10">TRAFIGURA</option>
+                                                                                    <option value="124">Training Customer</option>
+                                                                                    <option value="82">TRANSCANOS INTERNATIONAL Co.Ltd</option>
+                                                                                    <option value="5">Trek-Apex</option>
+                                                                                    <option value="12">Ukhozi</option>
+                                                                                    <option value="83">UNCATEGORISED - ZAR</option>
+                                                                                    <option value="84">Uncategorised USD</option>
+                                                                                    <option value="6">VALLEY SEEDS</option>
+                                                                                    <option value="147">VISION LOGISTICS AND TRADING</option>
+                                                                                    <option value="19">VR Trading</option>
+                                                                                    <option value="114">WINDSOR</option>
+                                                                                    <option value="85">WORLDCO LOGISTICS (PTY) LTD</option>
+                                                                                    <option value="86">WORLDCO LOGISTICS (PTY) LTD.</option>
+                                                                                    <option value="97">ZERAMIRA</option>
+                                                                            </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-control" wire:model="filter_freight_service_type_id">
+                                        <option value="">All Service Types</option>
+                                                                                    <option value="6">Consolidation (LCL/Groupage)</option>
+                                                                                    <option value="11">Courier / Express Parcel</option>
+                                                                                    <option value="9">Cross-Border Transport</option>
+                                                                                    <option value="2">Customs Clearing</option>
+                                                                                    <option value="4">Door-to-Door</option>
+                                                                                    <option value="10">Freight Brokerage</option>
+                                                                                    <option value="1">Freight Forwarding</option>
+                                                                                    <option value="3">Freight Forwarding &amp; Customs Clearing</option>
+                                                                                    <option value="5">Port-to-Port</option>
+                                                                                    <option value="7">Project Cargo / Breakbulk</option>
+                                                                                    <option value="8">Warehousing &amp; Distribution</option>
+                                                                            </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-control" wire:model="filter_status">
+                                        <option value="">All Statuses</option>
+                                                                                    <option value="draft">Draft</option>
+                                                                                    <option value="confirmed">Confirmed</option>
+                                                                                    <option value="in_progress">In Progress</option>
+                                                                                    <option value="customs_clearance">Customs Clearance</option>
+                                                                                    <option value="port_storage">Port Storage</option>
+                                                                                    <option value="transport_arranged">Transport Arranged</option>
+                                                                                    <option value="delivered">Delivered</option>
+                                                                                    <option value="invoiced">Invoiced</option>
+                                                                                    <option value="closed">Closed</option>
+                                                                                    <option value="cancelled">Cancelled</option>
+                                                                            </select>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    <a href="http://localhost/freight/jobs/create" class="btn btn-primary btn-rounded"><i class="fa fa-plus"></i> New Freight Job</a>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Job #</th>
+                                            <th>Customer</th>
+                                            <th>Service Type</th>
+                                            <th>Mode</th>
+                                            <th>Master BL</th>
+                                            <th>Declaration</th>
+                                            <th>Line</th>
+                                            <th>Consignee</th>
+                                            <th>Container Type</th>
+                                            <th>Container</th>
+                                            <th>Origin &rarr; Destination</th>
+                                            <th>Storage Days</th>
+                                            <th>Demurrage Days</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                                                                                                                                                        <tr>
+                                                <td>FF-2026-000017</td>
+                                                <td>TOTAL ZIMBABWE</td>
+                                                <td>Freight Forwarding &amp; Customs Clearing</td>
+                                                <td>Sea</td>
+                                                <td>MBL-DEMO-A1</td>
+                                                <td>CD-2026-000001</td>
+                                                <td>Maersk Line</td>
+                                                <td>Delta Lagers - Byo</td>
+                                                <td>40ft</td>
+                                                <td>MSKU1000001</td>
+                                                <td>
+                                                                                                            Mozambique Beira
+                                                        &rarr;
+                                                        Zambia Chirundu
+                                                                                                    </td>
+                                                <td class="text-center">0</td>
+                                                <td class="text-center">0</td>
+                                                <td>
+                                                    <span class="label label-warning label-wide">Port Storage</span>
+                                                                                                            <br><small class="text-muted">2 days overdue</small>
+                                                                                                    </td>
+                                                <td>11 Oct 2026</td>
+                                                <td>
+                                                    <a href="http://localhost/freight/jobs/17" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> View</a>
+                                                </td>
+                                            </tr>
+                                                                                                                                <tr>
+                                                <td>FF-2026-000018</td>
+                                                <td>PUMA ENERGY</td>
+                                                <td>Freight Forwarding &amp; Customs Clearing</td>
+                                                <td>Sea</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>
+                                                                                                            Mozambique Beira
+                                                        &rarr;
+                                                        Zambia Kafue
+                                                                                                    </td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                                <td>
+                                                    <span class="label label-success label-wide">Delivered</span>
+                                                                                                    </td>
+                                                <td>11 Oct 2026</td>
+                                                <td>
+                                                    <a href="http://localhost/freight/jobs/18" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> View</a>
+                                                </td>
+                                            </tr>
+                                                                                                                                <tr>
+                                                <td>FF-2026-000019</td>
+                                                <td>Delta Beverages</td>
+                                                <td>Consolidation (LCL/Groupage)</td>
+                                                <td>Sea</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>
+                                                                                                            Zambia Lusaka
+                                                        &rarr;
+                                                        Mozambique Beira
+                                                                                                    </td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                                <td>
+                                                    <span class="label label-info label-wide">In Progress</span>
+                                                                                                    </td>
+                                                <td>11 Oct 2026</td>
+                                                <td>
+                                                    <a href="http://localhost/freight/jobs/19" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> View</a>
+                                                </td>
+                                            </tr>
+                                                                                                                                <tr>
+                                                <td>FF-2026-000020</td>
+                                                <td>TOTAL ZIMBABWE</td>
+                                                <td>Freight Forwarding</td>
+                                                <td>Air</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>
+                                                                                                            Mozambique Matola
+                                                        &rarr;
+                                                        Mozambique Beira
+                                                                                                    </td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                                <td>
+                                                    <span class="label label-primary label-wide">Confirmed</span>
+                                                                                                    </td>
+                                                <td>11 Oct 2026</td>
+                                                <td>
+                                                    <a href="http://localhost/freight/jobs/20" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> View</a>
+                                                </td>
+                                            </tr>
+                                                                                                                                <tr>
+                                                <td>FF-2026-000021</td>
+                                                <td>PUMA ENERGY</td>
+                                                <td>Cross-Border Transport</td>
+                                                <td>Road</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>
+                                                                                                            Mozambique Beira
+                                                        &rarr;
+                                                        Zambia Chirundu
+                                                                                                    </td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                                <td>
+                                                    <span class="label label-info label-wide">Transport Arranged</span>
+                                                                                                    </td>
+                                                <td>11 Oct 2026</td>
+                                                <td>
+                                                    <a href="http://localhost/freight/jobs/21" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> View</a>
+                                                </td>
+                                            </tr>
+                                                                                                                                <tr>
+                                                <td>FF-2026-000022</td>
+                                                <td>Delta Beverages</td>
+                                                <td>Consolidation (LCL/Groupage)</td>
+                                                <td>Sea</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>—</td>
+                                                <td>
+                                                                                                            Zambia Lusaka
+                                                        &rarr;
+                                                        Mozambique Beira
+                                                                                                    </td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                                <td>
+                                                    <span class="label label-info label-wide">In Progress</span>
+                                                                                                    </td>
+                                                <td>11 Oct 2026</td>
+                                                <td>
+                                                    <a href="http://localhost/freight/jobs/22" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> View</a>
+                                                </td>
+                                            </tr>
+                                                                            </tbody>
+                                </table>
+                            </div>
+
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

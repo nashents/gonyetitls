@@ -45,7 +45,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-       
+        // Load PDF images from disk instead of over HTTP (see LocalAssetPdf).
+        $this->app->bind('dompdf.wrapper', function ($app) {
+            return new \App\Support\Pdf\LocalAssetPdf($app['dompdf'], $app['config'], $app['files'], $app['view']);
+        });
     }
 
     /**

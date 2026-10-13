@@ -8,7 +8,10 @@ use App\Models\Inventory;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use App\Imports\InventoriesImport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use App\Services\Accounting\OpeningStockJournalService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SagePullService;
 use App\Http\Livewire\Concerns\PullsFromSage;
@@ -63,6 +66,7 @@ class Index extends Component
     public $comments;
     public $date;
     public $importFile;
+    public $opening_date;
 
     public function mount(){
         $this->resetPage();
@@ -119,16 +123,44 @@ class Index extends Component
         $this->resetPage();
     }
 
+    /**
+     * Opening stock import: rows + their DR Spares Inventory / CR Opening
+     * Balance Equity journal go in together or not at all.
+     */
     public function importInventory(){
-        
-        $file = $this->importFile;
-        $import = new InventoriesImport;
-        $import->import($file);
+
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls,csv',
+            'opening_date' => 'nullable|date',
+        ]);
+
+        $date = $this->opening_date ?: now()->toDateString();
+        $reference = 'OB-STOCK-' . now()->format('YmdHis');
+
+        try {
+            [$count, $entry] = DB::transaction(function () use ($date, $reference) {
+                $lastId = Inventory::withTrashed()->max('id') ?? 0;
+
+                (new InventoriesImport($date))->import($this->importFile);
+
+                $imported = Inventory::where('id', '>', $lastId)
+                    ->where('user_id', Auth::id())
+                    ->where('purchase_type', InventoriesImport::PURCHASE_TYPE)
+                    ->get();
+
+                return [$imported->count(), app(OpeningStockJournalService::class)->post($imported, $date, $reference)];
+            });
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->addError('importFile', 'Import failed, nothing was imported: ' . $e->getMessage());
+            return;
+        }
 
         $this->dispatchBrowserEvent('hide-inventoryImportModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Inventory Items(s) Imported Successfully!!"
+            'message'=>"{$count} opening stock item(s) imported" . ($entry ? " - posted to Spares Inventory / Opening Balance Equity ({$entry->journal_number})" : ' (no value to post)')
         ]);
 
         return redirect(request()->header('Referer'));

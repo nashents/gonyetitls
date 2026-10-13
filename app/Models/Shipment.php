@@ -62,6 +62,12 @@ class Shipment extends Model implements Auditable
     public function port_of_discharge(){
         return $this->belongsTo('App\Models\Location', 'port_of_discharge_id');
     }
+    public function loading_point(){
+        return $this->belongsTo('App\Models\LoadingPoint', 'loading_point_id');
+    }
+    public function offloading_point(){
+        return $this->belongsTo('App\Models\OffloadingPoint', 'offloading_point_id');
+    }
     public function place_of_receipt(){
         return $this->belongsTo('App\Models\Location', 'place_of_receipt_id');
     }
@@ -84,6 +90,8 @@ class Shipment extends Model implements Auditable
         'shipment_type',
         'port_of_loading_id',
         'port_of_discharge_id',
+        'loading_point_id',
+        'offloading_point_id',
         'place_of_receipt_id',
         'place_of_delivery_id',
         'etd',

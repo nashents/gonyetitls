@@ -12,6 +12,20 @@ class FreightJob extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public const INCOTERMS = [
+        'EXW' => 'EXW - Ex Works',
+        'FCA' => 'FCA - Free Carrier',
+        'CPT' => 'CPT - Carriage Paid To',
+        'CIP' => 'CIP - Carriage and Insurance Paid To',
+        'DAP' => 'DAP - Delivered At Place',
+        'DPU' => 'DPU - Delivered At Place Unloaded',
+        'DDP' => 'DDP - Delivered Duty Paid',
+        'FAS' => 'FAS - Free Alongside Ship',
+        'FOB' => 'FOB - Free On Board',
+        'CFR' => 'CFR - Cost and Freight',
+        'CIF' => 'CIF - Cost, Insurance and Freight',
+    ];
+
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
@@ -38,6 +52,12 @@ class FreightJob extends Model implements Auditable
     }
     public function destination_country(){
         return $this->belongsTo('App\Models\Country', 'destination_country_id');
+    }
+    public function fromDestination(){
+        return $this->belongsTo('App\Models\Destination', 'from');
+    }
+    public function toDestination(){
+        return $this->belongsTo('App\Models\Destination', 'to');
     }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
@@ -87,6 +107,8 @@ class FreightJob extends Model implements Auditable
         'destination',
         'origin_country_id',
         'destination_country_id',
+        'from',
+        'to',
         'incoterm',
         'currency_id',
         'quotation_id',

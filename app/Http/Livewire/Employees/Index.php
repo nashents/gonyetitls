@@ -337,6 +337,7 @@ class Index extends Component
         $search = trim((string) $this->search);
 
         $query = Employee::query()
+            ->with('departments')
             ->doesntHave('driver')
             ->where('archive', '0');
 

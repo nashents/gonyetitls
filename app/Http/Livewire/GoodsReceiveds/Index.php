@@ -117,6 +117,8 @@ class Index extends Component
 
     public function store(){
 
+        $this->validate();
+
         DB::transaction(function () {
             $goods_received = new GoodsReceived;
             $goods_received->goods_received_number = $this->goodsReceivedNumber();
@@ -161,6 +163,8 @@ class Index extends Component
     }
 
     public function update(){
+
+        $this->validate();
 
         DB::transaction(function () {
             $goods_received = GoodsReceived::find($this->goods_received_id);

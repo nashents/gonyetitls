@@ -29,14 +29,21 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Shipping Line</label>
-                                            <select class="form-control" wire:model="policy_shipping_line_id">
-                                                <option value="">Generic Default</option>
-                                                @foreach ($shippingLines as $line)
-                                                    <option value="{{ $line->id }}">{{ $line->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
-                                            <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            @if ($policy_charge_type === 'port_storage')
+                                                <select class="form-control" disabled>
+                                                    <option>Generic Default (port authority charge)</option>
+                                                </select>
+                                                <small style="color: #c77a00">Port Storage is levied by the port/terminal, not the shipping line.</small>
+                                            @else
+                                                <select class="form-control" wire:model="policy_shipping_line_id">
+                                                    <option value="">Generic Default</option>
+                                                    @foreach ($shippingLines as $line)
+                                                        <option value="{{ $line->id }}">{{ $line->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                                <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -103,14 +110,21 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Shipping Line</label>
-                                            <select class="form-control" wire:model="tier_shipping_line_id">
-                                                <option value="">Generic Default</option>
-                                                @foreach ($shippingLines as $line)
-                                                    <option value="{{ $line->id }}">{{ $line->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
-                                            <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            @if ($tier_charge_type === 'port_storage')
+                                                <select class="form-control" disabled>
+                                                    <option>Generic Default (port authority charge)</option>
+                                                </select>
+                                                <small style="color: #c77a00">Port Storage is levied by the port/terminal, not the shipping line.</small>
+                                            @else
+                                                <select class="form-control" wire:model="tier_shipping_line_id">
+                                                    <option value="">Generic Default</option>
+                                                    @foreach ($shippingLines as $line)
+                                                        <option value="{{ $line->id }}">{{ $line->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                                <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

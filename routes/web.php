@@ -808,6 +808,8 @@ Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'j
     'update' => 'freight.jobs.update',
     'destroy' => 'freight.jobs.destroy',
 ]);
+Route::get('freight/jobs/{job}/sheet', 'FreightJobController@sheet')->name('freight.jobs.sheet');
+Route::get('freight/jobs/{job}/bill-of-lading', 'FreightJobController@billOfLading')->name('freight.jobs.bill_of_lading');
 Route::resource('freight/consolidations','ConsolidationController')->parameters(['consolidations' => 'consolidation'])->names([
     'index' => 'freight.consolidations.index',
     'create' => 'freight.consolidations.create',

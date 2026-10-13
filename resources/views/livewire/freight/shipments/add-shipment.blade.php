@@ -45,28 +45,28 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Port of Loading</label>
-                                    <select class="form-control" wire:model="port_of_loading_id">
+                                    <label>Loading Point</label>
+                                    <select class="form-control" wire:model="loading_point_id">
                                         <option value="">Select</option>
-                                        @foreach ($locations as $location)
-                                            <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                        @foreach ($loading_points as $loading_point)
+                                            <option value="{{ $loading_point->id }}">{{ $loading_point->name }}</option>
                                         @endforeach
                                     </select>
-                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    <small><a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small>
+                                    <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Port of Discharge</label>
-                                    <select class="form-control" wire:model="port_of_discharge_id">
+                                    <label>Offloading Point</label>
+                                    <select class="form-control" wire:model="offloading_point_id">
                                         <option value="">Select</option>
-                                        @foreach ($locations as $location)
-                                            <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                        @foreach ($offloading_points as $offloading_point)
+                                            <option value="{{ $offloading_point->id }}">{{ $offloading_point->name }}</option>
                                         @endforeach
                                     </select>
-                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    <small><a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small>
+                                    <a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -148,7 +148,7 @@
                                         <option value="">Select Party</option>
                                         @if (!empty($row['party_type']) && isset($partyModels[$row['party_type']]))
                                             @foreach ($partyModels[$row['party_type']] as $partyRecord)
-                                                <option value="{{ $partyRecord->id }}">{{ $partyRecord->name }}</option>
+                                                <option value="{{ $partyRecord['id'] }}">{{ $partyRecord['name'] }}</option>
                                             @endforeach
                                         @endif
                                     </select>

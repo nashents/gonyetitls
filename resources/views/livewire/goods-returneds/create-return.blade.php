@@ -35,9 +35,9 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Vendor <span class="required" style="color:red">*</span></label>
+                                        <label>Vendor</label>
                                         <select class="form-control" wire:model="vendor_id">
-                                            <option value="">Select Vendor</option>
+                                            <option value="">No vendor (e.g. stock surplus)</option>
                                             @foreach ($vendors as $vendor)
                                                 <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                                             @endforeach

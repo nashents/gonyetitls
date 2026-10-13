@@ -23,7 +23,7 @@
                                     </div>
                                     <div class="col-md-5">
                                         <div class="form-group">
-                                            <label>Vendor <small style="color:green">(optional — for billing/accounting)</small></label>
+                                            <label>Vendor <small style="color:green">(leave blank to link/create one with the same name)</small></label>
                                             <select class="form-control" wire:model="vendor_id">
                                                 <option value="">Select Vendor</option>
                                                 @foreach ($vendors as $vendor)
@@ -31,6 +31,8 @@
                                                 @endforeach
                                             </select>
                                             @error('vendor_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                            <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-1">

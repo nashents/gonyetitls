@@ -632,6 +632,11 @@ WithBatchInserts
             return null;
         }
 
+        // Non-billable expenses stay a trip cost only - no Bill.
+        if ($trip_expense->expense && ! $trip_expense->expense->is_locked && ! ($trip_expense->expense->billable ?? true)) {
+            return null;
+        }
+
         $account = $this->payment_account;
 
         $bill = new Bill;

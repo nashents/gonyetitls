@@ -6,6 +6,11 @@
                     <div class="panel-title">
                         <h5>{{ $job->job_number }}</h5>
                     </div>
+                    <div class="mt-10">
+                        <a href="{{ route('freight.jobs.edit', $job->id) }}" class="btn btn-xs btn-default"><i class="fa fa-edit"></i> Edit</a>
+                        <a href="{{ route('freight.jobs.sheet', $job->id) }}" target="_blank" class="btn btn-xs btn-default"><i class="fa fa-file-text"></i> Job Sheet</a>
+                        <a href="{{ route('freight.jobs.bill_of_lading', $job->id) }}" target="_blank" class="btn btn-xs btn-default"><i class="fa fa-file-text-o"></i> Bill of Lading</a>
+                    </div>
                 </div>
                 <div class="panel-body">
                     <table class="table table-striped">
@@ -28,7 +33,15 @@
                             </tr>
                             <tr>
                                 <th>Route</th>
-                                <td>{{ $job->origin }} &rarr; {{ $job->destination }}</td>
+                                <td>
+                                    @if ($job->fromDestination || $job->toDestination)
+                                        {{ $job->fromDestination ? trim(($job->fromDestination->country->name ?? '') . ' ' . $job->fromDestination->city) : '—' }}
+                                        &rarr;
+                                        {{ $job->toDestination ? trim(($job->toDestination->country->name ?? '') . ' ' . $job->toDestination->city) : '—' }}
+                                    @else
+                                        {{ $job->origin }} &rarr; {{ $job->destination }}
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>Opened</th>
@@ -66,7 +79,7 @@
                             </tr>
                             <tr>
                                 <th>Incoterm</th>
-                                <td>{{ $job->incoterm }}</td>
+                                <td>{{ \App\Models\FreightJob::INCOTERMS[$job->incoterm] ?? $job->incoterm }}</td>
                             </tr>
                             <tr>
                                 <th>Currency</th>
@@ -78,11 +91,11 @@
                             </tr>
                             <tr>
                                 <th>Origin Country</th>
-                                <td>{{ $job->origin_country?->name }}</td>
+                                <td>{{ $job->fromDestination?->country?->name ?? $job->origin_country?->name }}</td>
                             </tr>
                             <tr>
                                 <th>Destination Country</th>
-                                <td>{{ $job->destination_country?->name }}</td>
+                                <td>{{ $job->toDestination?->country?->name ?? $job->destination_country?->name }}</td>
                             </tr>
                             <tr>
                                 <th>Salesperson</th>
@@ -131,12 +144,12 @@
                                 <table class="table table-striped">
                                     <tbody>
                                         <tr>
-                                            <th class="w-20">Port/Place of Loading</th>
-                                            <td>{{ $shipment->port_of_loading?->name }}</td>
+                                            <th class="w-20">Loading Point</th>
+                                            <td>{{ $shipment->loading_point?->name ?? $shipment->port_of_loading?->name }}</td>
                                         </tr>
                                         <tr>
-                                            <th>Port/Place of Discharge</th>
-                                            <td>{{ $shipment->port_of_discharge?->name }}</td>
+                                            <th>Offloading Point</th>
+                                            <td>{{ $shipment->offloading_point?->name ?? $shipment->port_of_discharge?->name }}</td>
                                         </tr>
                                         <tr>
                                             <th>ETD</th>

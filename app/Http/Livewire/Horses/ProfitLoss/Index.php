@@ -9,13 +9,17 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Trip;
 use App\Models\Fuel;
 use App\Models\Horse;
+use App\Models\Transporter;
 use App\Models\AccountType;
 use App\Models\AccountTypeGroup;
 use App\Models\BillExpense;
 
 class Index extends Component
 {
-    public $horses;
+    // Horse picker filters: owning transporter and a reg#/fleet# search.
+    public $transporters;
+    public $horseTransporter;
+    public $horseSearch;
 
     public $selectedHorse;
     public $selected_horse;
@@ -82,7 +86,7 @@ class Index extends Component
         $this->default_currency    = $this->company->currency;
         $this->default_currency_id = $this->company->currency_id;
 
-        $this->horses = Horse::orderByIdentifier('asc')->get();
+        $this->transporters = Transporter::whereHas('horses')->orderBy('name')->get(['id', 'name', 'transporter_number']);
 
         $cogsType     = AccountType::where('name', 'Cost Of Goods Sold')->first();
         $expensesGroup = AccountTypeGroup::where('name', 'Expenses')->first();
@@ -113,6 +117,32 @@ class Index extends Component
     }
 
     public function updatedSelectedHorse() { $this->recalculate(); }
+
+    // Jump straight to the horse when the search narrows to a single match.
+    public function updatedHorseSearch()
+    {
+        $matches = $this->filteredHorses();
+        if (trim((string) $this->horseSearch) !== '' && $matches->count() === 1 && $matches->first()->id != $this->selectedHorse) {
+            $this->selectedHorse = $matches->first()->id;
+            $this->recalculate();
+        }
+    }
+
+    protected function filteredHorses()
+    {
+        $search = trim((string) $this->horseSearch);
+
+        return Horse::with(['horse_make', 'horse_model'])
+            ->when($this->horseTransporter, fn ($q) => $q->where('transporter_id', $this->horseTransporter))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('registration_number', 'like', '%' . $search . '%')
+                      ->orWhere('fleet_number', 'like', '%' . $search . '%');
+                });
+            })
+            ->orderByIdentifier('asc')
+            ->get();
+    }
     public function updatedFrom()         { $this->recalculate(); }
     public function updatedTo()           { $this->recalculate(); }
 
@@ -368,6 +398,16 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.horses.profit-loss.index');
+        $horses = $this->filteredHorses();
+
+        // Keep the selected horse in the dropdown even when the filters exclude it.
+        if ($this->selectedHorse && ! $horses->contains('id', (int) $this->selectedHorse)) {
+            $selected = Horse::find($this->selectedHorse);
+            if ($selected) {
+                $horses->prepend($selected);
+            }
+        }
+
+        return view('livewire.horses.profit-loss.index', ['horses' => $horses]);
     }
 }

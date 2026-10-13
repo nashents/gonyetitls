@@ -18,7 +18,7 @@ use App\Models\BillExpense;
 
 class Index extends Component
 {
-    public $transporters;
+    public $transporterSearch;
 
     public $selectedTransporter;
     public $selected_transporter;
@@ -111,7 +111,6 @@ class Index extends Component
         $this->default_currency    = $this->company->currency;
         $this->default_currency_id = $this->company->currency_id;
 
-        $this->transporters = Transporter::orderBy('name', 'asc')->get();
 
         $cogsType     = AccountType::where('name', 'Cost Of Goods Sold')->first();
         $expensesGroup = AccountTypeGroup::where('name', 'Expenses')->first();
@@ -142,6 +141,30 @@ class Index extends Component
     }
 
     public function updatedSelectedTransporter() { $this->recalculate(); }
+
+    // Jump straight to the transporter when the search narrows to a single match.
+    public function updatedTransporterSearch()
+    {
+        $matches = $this->filteredTransporters();
+        if (trim((string) $this->transporterSearch) !== '' && $matches->count() === 1 && $matches->first()->id != $this->selectedTransporter) {
+            $this->selectedTransporter = $matches->first()->id;
+            $this->recalculate();
+        }
+    }
+
+    protected function filteredTransporters()
+    {
+        $search = trim((string) $this->transporterSearch);
+
+        return Transporter::when($search !== '', function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('transporter_number', 'like', '%' . $search . '%');
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+    }
     public function updatedFrom()                { $this->recalculate(); }
     public function updatedTo()                  { $this->recalculate(); }
     public function updatedBasis()                { $this->recalculate(); }
@@ -528,6 +551,16 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.transporters.profit-loss.index');
+        $transporters = $this->filteredTransporters();
+
+        // Keep the selected transporter in the dropdown even when the search excludes it.
+        if ($this->selectedTransporter && ! $transporters->contains('id', (int) $this->selectedTransporter)) {
+            $selected = Transporter::find($this->selectedTransporter);
+            if ($selected) {
+                $transporters->prepend($selected);
+            }
+        }
+
+        return view('livewire.transporters.profit-loss.index', ['transporters' => $transporters]);
     }
 }

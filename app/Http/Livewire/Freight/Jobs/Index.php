@@ -55,11 +55,52 @@ class Index extends Component
         $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
     }
 
+    /**
+     * Only draft jobs with no recorded costs/charges can be deleted - once a
+     * job has moved past draft or has financial lines attached, cancel/close
+     * it via Edit instead of deleting it.
+     */
+    public function delete($id)
+    {
+        $job = FreightJob::findOrFail($id);
+
+        if ($job->status !== 'draft') {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Only draft freight jobs can be deleted. Cancel or close this job instead.']);
+            return;
+        }
+
+        if ($job->costs()->exists() || $job->charges()->exists()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This freight job has costs or charges recorded and cannot be deleted.']);
+            return;
+        }
+
+        foreach ($job->shipments as $shipment) {
+            $shipment->cargo_items()->delete();
+            $shipment->parties()->delete();
+            $shipment->delete();
+        }
+        $job->delete();
+
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight job deleted.']);
+    }
+
     public function render()
     {
+        // NOTE: deliberately NOT using ->latest()->limit(1) inside this eager
+        // load - in this Laravel version that limit applies once across the
+        // whole combined query, not per parent job, so every job after the
+        // first ends up with zero shipments loaded. Loading the full (small,
+        // 1-2 rows per job in practice) collection and taking the latest in
+        // PHP avoids that.
         $jobs = FreightJob::query()
-            ->with(['customer:id,name', 'freight_service_type:id,name', 'shipments' => function ($q) {
-                $q->latest()->limit(1);
+            ->with(['customer:id,name', 'freight_service_type:id,name', 'fromDestination.country', 'toDestination.country', 'documents', 'shipments' => function ($q) {
+                $q->with([
+                    'transport_documents',
+                    'customs_declarations',
+                    'containers.shipping_line',
+                    'containers.exposures',
+                    'parties',
+                ]);
             }]);
 
         if (filled($this->search)) {
@@ -69,7 +110,9 @@ class Index extends Component
                     ->orWhere('customer_reference', 'like', "%{$search}%")
                     ->orWhere('origin', 'like', "%{$search}%")
                     ->orWhere('destination', 'like', "%{$search}%")
-                    ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('fromDestination', fn ($q2) => $q2->where('city', 'like', "%{$search}%"))
+                    ->orWhereHas('toDestination', fn ($q2) => $q2->where('city', 'like', "%{$search}%"));
             });
         }
 

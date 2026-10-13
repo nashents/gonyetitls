@@ -80,7 +80,7 @@ return array(
         /**
          * Whether to enable font subsetting or not.
          */
-        "enable_font_subsetting" => false,
+        "enable_font_subsetting" => true, // full DejaVu embedding garbled glyphs in multi-font PDFs (and made them 1.5MB+)
 
         /**
          * The PDF rendering backend to use

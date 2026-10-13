@@ -22,6 +22,19 @@
 
                                     <div class="panel-body">
 
+                                        {{-- Transporter search --}}
+                                        <div class="row" style="margin-bottom: 10px">
+                                            <div class="col-lg-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                                    <input type="text" wire:model.debounce.400ms="transporterSearch" class="form-control" placeholder="Search transporter by name or number">
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-2" style="padding-top: 7px">
+                                                <small class="text-muted">{{ $transporters->count() }} {{ \Illuminate\Support\Str::plural('transporter', $transporters->count()) }}</small>
+                                            </div>
+                                        </div>
+
                                         {{-- Filters --}}
                                         <div class="row">
                                             <form wire:submit.prevent="generateStatement()">
@@ -33,7 +46,7 @@
                                                             @foreach ($transporters as $transporter)
                                                                 <option value="{{ $transporter->id }}">
                                                                     {{ $transporter->name }}
-                                                                    {{ $transporter->transport_number ? '(' . $transporter->transport_number . ')' : '' }}
+                                                                    {{ $transporter->transporter_number ? '(' . $transporter->transporter_number . ')' : '' }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
@@ -188,7 +201,7 @@
                                                 @if (!empty($selected_transporter))
                                                     <strong>
                                                         {{ $selected_transporter->name }}
-                                                        {{ $selected_transporter->transport_number ? '('.$selected_transporter->transport_number.')' : '' }}
+                                                        {{ $selected_transporter->transporter_number ? '('.$selected_transporter->transporter_number.')' : '' }}
                                                     </strong>
                                                 @endif
                                             </div>
