@@ -6,13 +6,13 @@
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
                 {{-- <a href="#" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
                 @if (isset($selectedVendor) && (isset($selectedType) && $selectedType == "Outstanding Bills"))
-                <a href="{{route('vendor_statements.print.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
-                <a href="{{route('vendor_statements.pdf.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
-                <a href="{{route('vendor_statements.email.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
+                <a href="{{route('vendor_statements.print.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+                <a href="{{route('vendor_statements.pdf.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
+                <a href="{{route('vendor_statements.email.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
                 @elseif(isset($selectedVendor) && (isset($selectedType) && $selectedType == "Account Activity") && isset($from) && isset($to))  
-                <a href="{{route('vendor_statements.print.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
-                <a href="{{route('vendor_statements.pdf.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
-                <a href="{{route('vendor_statements.email.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
+                <a href="{{route('vendor_statements.print.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+                <a href="{{route('vendor_statements.pdf.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
+                <a href="{{route('vendor_statements.email.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
                 @endif
             </div>
             <hr>
@@ -71,7 +71,7 @@
                 </header>
                 @php
                     $currencies = App\Models\Currency::all();
-                    $billed_currencies = App\Models\Bill::where('vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
+                    $billed_currencies = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
                 @endphp
                 @foreach ($currencies as $currency)
                     @if (isset($billed_currencies))
@@ -98,10 +98,10 @@
                             <div class="date" style="padding-bottom: 3px"> <strong>As of {{date('F j, Y')}}</strong> </div>
                           
                             @php
-                                $balance = App\Models\Bill::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                $balance = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                 ->where('authorization','approved')
                                 ->where('status', 'Unpaid')
-                                ->orWhere('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                ->orWhere($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                 ->where('authorization','approved')
                                 ->where('status', 'Partial')
                                 ->get()->sum('balance');
@@ -125,17 +125,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($bills as $bill)
+                            @foreach ($bills->where('currency_id', $currency->id) as $bill)
                             @php
-                            $expiry = $bill->expiry;
+                            $expiry = $bill->due_date;
                             $now = new DateTime();
                             $expiry_date = new DateTime($expiry);
                             @endphp
                                  <tr>
                                     <td class="text-center"> <a href="{{ route('bills.show',$bill->id) }}">{{ $bill->bill_number}}</a> </td>
-                                    <td class="text-center">{{ date('F j, Y', strtotime($bill->date)) }} </td>
-                                    <td class="text-center">{{ date('F j, Y', strtotime($bill->expiry)) }}
-                                         @if ($now >= $expiry_date)
+                                    <td class="text-center">{{ $bill->bill_date ? date('F j, Y', strtotime($bill->bill_date)) : '' }} </td>
+                                    <td class="text-center">{{ $bill->due_date ? date('F j, Y', strtotime($bill->due_date)) : '' }}
+                                         @if ($bill->due_date && $now >= $expiry_date)
                                         Overdue
                                     @endif
                                     </td>
@@ -162,10 +162,10 @@
                         </tbody>
                         <tfoot>
                             @php
-                                $balance = App\Models\Bill::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                $balance = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                 ->where('status', 'Unpaid')
                                 ->where('authorization','approved')
-                                ->orWhere('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                ->orWhere($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                 ->where('authorization','approved')
                                 ->where('status', 'Partial')
                                 ->get()->sum('balance');
@@ -258,7 +258,7 @@
                                                     @include('vendor_statements._supplier_journal_row', ['result' => $result])
                                                 @elseif ($result->transaction_type === 'bill')
                                                     <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
-                                                    Due {{ $bill->expiry }}
+                                                    Due {{ $bill->due_date }}
                                                 @elseif ($result->transaction_type === 'debit_note' && isset($debit_note))
                                                     Debit Note# {{ $result->number }}
                                                     @if ($debit_note->bill)

@@ -12,6 +12,11 @@ use Illuminate\Support\Collection;
  * never stored on bills/payments — it is always derived by replaying the
  * vendor's transaction history (approved bills increase the balance,
  * payments and approved debit notes reduce it) in chronological order.
+ *
+ * $party switches the counterparty: "vendor" (default) keys bills/payments
+ * on vendor_id; "transporter" keys them on transporter_id (subcontracted
+ * transporter bills/payments). Debit notes and supplier journals carry no
+ * transporter_id, so they only apply to vendors.
  */
 class VendorLedgerService
 {
@@ -20,8 +25,18 @@ class VendorLedgerService
      * chronologically. Each row carries enough detail to render a statement
      * line plus a running `accrual_balance`.
      */
-    public function ledger(int $vendorId, int $currencyId): Collection
+    public const PARTY_VENDOR = 'vendor';
+    public const PARTY_TRANSPORTER = 'transporter';
+
+    public static function partyColumn(?string $party): string
     {
+        return $party === self::PARTY_TRANSPORTER ? 'transporter_id' : 'vendor_id';
+    }
+
+    public function ledger(int $vendorId, int $currencyId, string $party = self::PARTY_VENDOR): Collection
+    {
+        $column = self::partyColumn($party);
+
         $bills = DB::table('bills')
             ->select([
                 'id',
@@ -36,7 +51,7 @@ class VendorLedgerService
                 DB::raw('CAST(total AS DECIMAL(20,2)) as signed_amount'),
                 DB::raw('0 as type_priority'),
             ])
-            ->where('vendor_id', $vendorId)
+            ->where($column, $vendorId)
             ->where('currency_id', $currencyId)
             ->where('authorization', 'approved')
             ->whereNull('deleted_at');
@@ -55,7 +70,7 @@ class VendorLedgerService
                 DB::raw('CAST(amount AS DECIMAL(20,2)) * -1 as signed_amount'),
                 DB::raw('1 as type_priority'),
             ])
-            ->where('vendor_id', $vendorId)
+            ->where($column, $vendorId)
             ->where('currency_id', $currencyId)
             ->whereNull('deleted_at');
 
@@ -100,8 +115,13 @@ class VendorLedgerService
             ->where('status', 'posted')
             ->whereNull('deleted_at');
 
+        $union = $bills->unionAll($payments);
+        if ($party !== self::PARTY_TRANSPORTER) {
+            $union = $union->unionAll($debitNotes)->unionAll($supplierJournals);
+        }
+
         $rows = DB::query()
-            ->fromSub($bills->unionAll($payments)->unionAll($debitNotes)->unionAll($supplierJournals), 'ledger')
+            ->fromSub($union, 'ledger')
             ->orderBy('date')
             ->orderBy('created_at')
             ->orderBy('type_priority') // bills settle before payments/debit notes on an exact tie
@@ -121,9 +141,9 @@ class VendorLedgerService
     /**
      * Running balance as of the last transaction strictly before $date.
      */
-    public function openingBalance(int $vendorId, int $currencyId, string $date): float
+    public function openingBalance(int $vendorId, int $currencyId, string $date, string $party = self::PARTY_VENDOR): float
     {
-        $last = $this->ledger($vendorId, $currencyId)
+        $last = $this->ledger($vendorId, $currencyId, $party)
             ->filter(fn ($row) => $row->date < $date)
             ->last();
 
@@ -133,9 +153,9 @@ class VendorLedgerService
     /**
      * Running balance as of the last transaction on or before $date.
      */
-    public function closingBalance(int $vendorId, int $currencyId, string $date): float
+    public function closingBalance(int $vendorId, int $currencyId, string $date, string $party = self::PARTY_VENDOR): float
     {
-        $last = $this->ledger($vendorId, $currencyId)
+        $last = $this->ledger($vendorId, $currencyId, $party)
             ->filter(fn ($row) => $row->date <= $date)
             ->last();
 
@@ -147,9 +167,9 @@ class VendorLedgerService
      * carrying the running accrual_balance computed over the full history
      * (so it continues seamlessly from the opening balance).
      */
-    public function activity(int $vendorId, int $currencyId, string $from, string $to): Collection
+    public function activity(int $vendorId, int $currencyId, string $from, string $to, string $party = self::PARTY_VENDOR): Collection
     {
-        return $this->ledger($vendorId, $currencyId)
+        return $this->ledger($vendorId, $currencyId, $party)
             ->filter(fn ($row) => $row->date >= $from && $row->date <= $to)
             ->values();
     }

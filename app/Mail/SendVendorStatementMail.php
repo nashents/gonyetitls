@@ -15,12 +15,16 @@ class SendVendorStatementMail extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      *
+     * $vendor is the statement's counterparty - a Vendor or a Transporter.
+     * The period lives in $periodFrom / $periodTo because $from / $to are
+     * Mailable's own sender/recipient arrays.
+     *
      * @return void
      */
     public $filePath;
     public $type;
-    public $from;
-    public $to;
+    public $periodFrom;
+    public $periodTo;
     public $company;
     public $vendor;
 
@@ -29,8 +33,8 @@ class SendVendorStatementMail extends Mailable implements ShouldQueue
         $this->filePath = $filePath;
         $this->vendor = $data['vendor'];
         $this->company = $data['company'];
-        $this->from = $data['from'];
-        $this->to = $data['to'];
+        $this->periodFrom = $data['from'] ?? null;
+        $this->periodTo = $data['to'] ?? null;
         $this->type = $data['selectedType'];
     }
 
@@ -42,8 +46,11 @@ class SendVendorStatementMail extends Mailable implements ShouldQueue
     public function build()
     {
        return $this->view('emails.vendor_statement')
-                    ->from($this->company->noreply)
+                    ->from($this->company->noreply ?: config('mail.from.address'), $this->company->name)
                     ->subject($this->company->name.' '.date('M Y').' Statement for '. $this->vendor->name)
-                    ->attach(Storage::path($this->filePath));
+                    ->attach(Storage::path($this->filePath), [
+                        'as' => 'Statement - '.$this->vendor->name.'.pdf',
+                        'mime' => 'application/pdf',
+                    ]);
     }
 }

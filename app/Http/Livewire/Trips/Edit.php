@@ -34,6 +34,7 @@ use App\Models\Quotation;
 use App\Models\Rate;
 use App\Models\Route;
 use App\Services\Accounting\TripExpenseRepairService;
+use App\Services\Accounting\TransporterPaymentBillService;
 use App\Services\Sage\Concerns\ResolvesSageIntegration;
 use App\Services\TripCompletionCascadeService;
 use App\Models\Shift;
@@ -2638,8 +2639,10 @@ class Edit extends Component
             $trip->quotation_id = $this->selectedQuotation ?: null;
             if (!$financiallyLocked) {
                 $trip->with_customer_rates = $this->with_customer_rates;
-                $trip->with_transporter_rates = $this->with_transporter_rates;
             }
+            // Transporter (subcontractor) figures never touch the customer
+            // invoice, so they stay editable on an invoiced trip.
+            $trip->with_transporter_rates = $this->with_transporter_rates;
 
             $trip->broker_id = $this->selectedBroker ?: null;
             $trip->customer_id = $this->customer_id ?: null;
@@ -2654,8 +2657,8 @@ class Edit extends Component
             $trip->haulage_type = $this->haulage_type;
             if (!$financiallyLocked) {
                 $trip->defined_customer_rate_id = $this->selectedDefinedCustomerRate;
-                $trip->defined_transporter_rate_id = $this->selectedDefinedTransporterRate;
             }
+            $trip->defined_transporter_rate_id = $this->selectedDefinedTransporterRate;
             $trip->from = $this->selectedFrom;
             $trip->to = $this->selectedTo;
             $trip->offloading_point_id = $this->offloading_point_id;
@@ -2668,26 +2671,24 @@ class Edit extends Component
                 $trip->rate = $this->rate;
             }
             $trip->multiple_destinations = $this->multiple_destinations;
-            if (!$financiallyLocked) {
-                $trip->transporter_rate = $this->transporter_rate;
-            }
+            $trip->transporter_rate = $this->transporter_rate;
             $trip->quantity = $this->quantity;
             $trip->units_of_measure_id = $this->validUnitsOfMeasureId($this->units_of_measure_id);
             $trip->litreage = $this->litreage;
             $trip->litreage_at_20 = $this->litreage_at_20;
             $trip->weight = $this->weight;
 
+            // Safety net: ensure the FX amounts reflect the final freight/rate values
+            // regardless of which field-update order the user triggered them in.
+            $this->calculateForeignExchange();
+
+            $trip->transporter_freight = $this->transporter_freight;
+            $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
+
             if (!$financiallyLocked) {
                 $trip->freight = $this->freight;
-                $trip->transporter_freight = $this->transporter_freight;
-
-                // Safety net: ensure the FX amounts reflect the final freight/rate values
-                // regardless of which field-update order the user triggered them in.
-                $this->calculateForeignExchange();
-
                 $trip->exchange_rate = $this->exchange_rate;
                 $trip->exchange_customer_freight = $this->exchange_customer_freight;
-                $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
                 $this->turnover = $this->company->currency_id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
                 $trip->turnover = $this->turnover;
             }
@@ -3542,136 +3543,38 @@ class Edit extends Component
 
         }
 
-            if ($this->transporter_agreement) {
+            if ($this->transporter_agreement && $trip->transporter_id) {
 
             $expense = Expense::where('name', 'Transporter Payment')->first();
-            $trip_expense = TripExpense::where('trip_id',$trip->id)->where('transporter_id',$trip->transporter_id)->first();
+            // The trip's one transporter expense, whichever transporter it was
+            // raised for - so changing the transporter updates it (and its bill)
+            // instead of leaving the old one behind and adding a second.
+            $trip_expense = TripExpense::where('trip_id',$trip->id)->whereNotNull('transporter_id')->first() ?: new TripExpense;
 
-            if( $trip_expense){
-               
-                $trip_expense->user_id = $this->user->id;
-                $trip_expense->trip_id = $trip->id;
-                $trip_expense->transporter_id = $trip->transporter->id ?? null;
-                $trip_expense->expense_id = $expense->id ?? null;
-                $trip_expense->currency_id = $trip->currency_id;
-                $trip_expense->category = 'Self';
-                $trip_expense->amount = $this->transporter_freight ?? 0;
-                $trip_expense->exchange_rate = $this->exchange_rate ?? 1;
-                $trip_expense->exchange_amount = $this->exchange_transporter_freight ?? 0;
-            
-                // Update total expenses
-            
-    
-                $freight_amount = $this->getBaseAmount($this->transporter_freight, $this->exchange_transporter_freight, $this->selectedCurrency);
-            
-                if (is_numeric($freight_amount) && is_numeric($this->total_transporter_expenses)) {
-                    $this->total_expenses += ($freight_amount - $this->total_transporter_expenses);
-                }
-            
-                $trip_expense->update();
+            $trip_expense->user_id = $this->user->id;
+            $trip_expense->trip_id = $trip->id;
+            $trip_expense->transporter_id = $trip->transporter_id;
+            $trip_expense->expense_id = $expense->id ?? null;
+            $trip_expense->currency_id = $trip->currency_id;
+            $trip_expense->category = 'Self';
+            $trip_expense->amount = $this->transporter_freight ?? 0;
+            $trip_expense->exchange_rate = $this->exchange_rate ?? 1;
+            $trip_expense->exchange_amount = $this->exchange_transporter_freight ?? 0;
 
-                $bill = Bill::where('transporter_id',$trip->transporter_id)->where('trip_id',$trip->id)->first();
+            // Update total expenses
+            $freight_amount = $this->getBaseAmount($this->transporter_freight, $this->exchange_transporter_freight, $this->selectedCurrency);
 
-            if($bill){
-                $bill->trip_id = $trip->id;
-                $bill->category = "Transporter";
-                $bill->transporter_id = $trip->transporter_id;
-                $bill->bill_date = $trip->start_date;
-                $bill->currency_id = $trip->currency_id;
-                $bill->vendor_id = $trip_expense->vendor_id;
-                $bill->total = $freight_amount;
-                $bill->balance =  $freight_amount;
-                $bill->authorized_by_id = $trip->authorized_by_id;
-                $bill->authorization = $trip->authorization;
-                $bill->comments = $trip->reason;
-                $bill->update();
-    
-                $bill_expense = $bill->bill_expenses->first();
-                if (isset($bill_expense)) {
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-                    $bill_expense->qty = 1;
-                    $bill_expense->amount =  $freight_amount;
-                    $bill_expense->subtotal =  $freight_amount;
-                    $bill_expense->update();
-        
-                }
+            if (is_numeric($freight_amount) && is_numeric($this->total_transporter_expenses)) {
+                $this->total_expenses += ($freight_amount - $this->total_transporter_expenses);
             }
 
-            }else{
-                $trip_expense = new TripExpense;
-                $trip_expense->user_id = $this->user->id;
-                $trip_expense->trip_id = $trip->id;
-                $trip_expense->transporter_id = $trip->transporter->id ?? null;
-                $trip_expense->expense_id = $expense->id ?? null;
-                $trip_expense->currency_id = $trip->currency_id;
-                $trip_expense->category = 'Self';
-                $trip_expense->amount = $this->transporter_freight ?? 0;
-                $trip_expense->exchange_rate = $this->exchange_rate ?? 1;
-                $trip_expense->exchange_amount = $this->exchange_transporter_freight ?? 0;
-            
-                // Update total expenses
-            
-    
-                $freight_amount = $this->getBaseAmount($this->transporter_freight, $this->exchange_transporter_freight, $this->selectedCurrency);
-            
-                if (is_numeric($freight_amount) && is_numeric($this->total_transporter_expenses)) {
-                    $this->total_expenses += ($freight_amount - $this->total_transporter_expenses);
-                }
-            
-                $trip_expense->save();
+            $trip_expense->save();
 
-                if ($trip->authorization === "approved") {
+            // Approved trip: create/update the Transporter Payment bill and
+            // post it (DR Creditor Payment / CR Accounts Payable). Pending trips
+            // get theirs at authorization.
+            app(TransporterPaymentBillService::class)->sync($trip_expense->fresh(), $transporterBillWarning);
 
-                    $expense = Expense::where('name','Transporter Payment')->get()->first();
-                    $account = Account::where('name','Trip Expense')->get()->first();
-
-                    $bill = new Bill;
-                    $bill->user_id = Auth::user()->id;
-                    $bill->bill_number = $this->billNumber();
-                    $bill->trip_id = $trip->id;
-                    $bill->category = "Trip Expense - Transporter Payment";
-                    $bill->transporter_id = $trip_expense->transporter_id;
-                    $bill->trip_expense_id = $trip_expense->id;
-                    $bill->bill_date = $trip->start_date;
-                    if (isset($account)) {
-                        $bill->account_id = $account->id;
-                        $bill->account_type_id = $account->account_type->id;
-                    }
-                    $bill->currency_id = $trip_expense->currency_id;
-                    $bill->vendor_id = $trip_expense->vendor_id;
-                    $bill->subtotal = $trip_expense->amount;
-                    $bill->total = $trip_expense->amount;
-                    $bill->balance = $trip_expense->amount;
-
-                    $bill->authorized_by_id = $trip->authorized_by_id;
-                    $bill->authorization = $trip->authorization;
-                    $bill->comments = $trip->reason;
-                    $bill->save();
-
-                   
-
-                    $bill_expense = new BillExpense;
-                    $bill_expense->user_id = Auth::user()->id;
-                    $bill_expense->bill_id = $bill->id;
-                    $bill_expense->currency_id = $bill->currency_id;
-                    if (isset($expense)) {
-                        $bill_expense->expense_id = $expense->id;
-                    }
-                    if (isset($account)) {
-                        $bill_expense->account_id = $account->id;
-                        $bill_expense->account_type_id = $account->account_type->id;
-                    }
-                    $bill_expense->qty = 1;
-                    $bill_expense->amount = $trip_expense->amount;
-                    $bill_expense->subtotal = $trip_expense->amount;
-                    $bill_expense->subtotal_incl = $trip_expense->amount;
-                    $bill_expense->save();
-                }
-            }
-
-            
-        
         }
 
         $this->recalculateExpenses($trip->id);
@@ -3682,6 +3585,10 @@ class Edit extends Component
             'type'=>'success',
             'message'=>"Trip Updated Successfully!!"
         ]);
+
+        if (!empty($transporterBillWarning)) {
+            session()->flash('error', $transporterBillWarning);
+        }
 
         return redirect()->route('trips.index');
 

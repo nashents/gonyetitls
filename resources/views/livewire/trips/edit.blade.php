@@ -42,7 +42,7 @@
                             @if ($isFinanciallyLocked)
                                 <div class="alert alert-warning">
                                     <strong><i class="fa fa-lock"></i> Financial figures are locked.</strong>
-                                    This trip is part of an approved invoice, so its rate/freight/currency figures cannot be changed here. Operational fields (status, dates, driver, cargo, etc.) can still be updated freely. Changing weight/quantity will not recalculate or save a new freight amount.
+                                    This trip is part of an approved invoice, so its customer rate/freight/currency figures cannot be changed here. Transporter (subcontractor) rate and freight stay editable - saving them updates the transporter payment bill. Operational fields (status, dates, driver, cargo, etc.) can still be updated freely. Changing weight/quantity will not recalculate or save a new freight amount.
                                 </div>
                             @endif
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
@@ -753,10 +753,10 @@
                                     <div class="form-group" >
                                           <label for="name">Trip Rates (Transporter)</label>
                                         <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" {{ $isFinanciallyLocked ? 'disabled' : '' }} >Predefined Rates
+                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
                                           </label>
                                           <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="custom" name="optradio_transporter" {{ $isFinanciallyLocked ? 'disabled' : '' }}>Custom Rate
+                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="custom" name="optradio_transporter">Custom Rate
                                           </label>
                                     </div>
                                     <div class="row">
@@ -778,7 +778,7 @@
                                                 @elseif($with_transporter_rates == "custom")
                                                 <div class="form-group">
                                                     <label for="weight">Rate</label>
-                                                    <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.300ms="transporter_rate" placeholder="Enter Transporter Rate" {{ $isFinanciallyLocked ? 'disabled' : '' }}>
+                                                    <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.300ms="transporter_rate" placeholder="Enter Transporter Rate">
                                                     @error('transporter_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     @if ($transporter_rate > $rate)
                                                     <small style="color: red"> Transporter agreed rate cannot be greater than customer agreed rate.</small>
@@ -790,7 +790,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" {{ $isFinanciallyLocked ? 'disabled' : '' }} />
+                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" />
                                                 @error('transporter_freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 @if ($transporter_freight > $freight)
                                                     <small style="color: red"> Transporter agreed freight cannot be greater than customer agreed freight.</small>

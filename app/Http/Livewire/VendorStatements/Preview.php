@@ -5,6 +5,7 @@ namespace App\Http\Livewire\VendorStatements;
 use App\Models\Bill;
 use App\Models\Currency;
 use App\Models\Vendor;
+use App\Models\Transporter;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Services\VendorLedgerService;
@@ -12,6 +13,8 @@ use Carbon\Carbon;
 
 class Preview extends Component
 {
+    public $party = VendorLedgerService::PARTY_VENDOR;
+    public $partyColumn = 'vendor_id';
     public $selectedVendor;
     public $selectedType;
     public $from;
@@ -24,14 +27,18 @@ class Preview extends Component
     public $results             = null;
     public $statementByCurrency = [];
 
-    public function mount($selectedVendor, $selectedType, $from = null, $to = null)
+    public function mount($selectedVendor, $selectedType, $from = null, $to = null, $party = VendorLedgerService::PARTY_VENDOR)
     {
+        $this->party          = $party === VendorLedgerService::PARTY_TRANSPORTER ? $party : VendorLedgerService::PARTY_VENDOR;
+        $this->partyColumn    = VendorLedgerService::partyColumn($this->party);
         $this->selectedVendor = $selectedVendor;
         $this->selectedType   = $selectedType;
         $this->from           = $from;
         $this->to             = $to;
 
-        $this->vendor  = Vendor::findOrFail($selectedVendor);
+        $this->vendor  = $this->party === VendorLedgerService::PARTY_TRANSPORTER
+            ? Transporter::findOrFail($selectedVendor)
+            : Vendor::findOrFail($selectedVendor);
         $this->company = Auth::user()->employee->company;
 
         $this->loadStatement();
@@ -48,8 +55,8 @@ class Preview extends Component
 
     private function loadOutstandingBills()
     {
-        $this->bills = Bill::with(['vendor', 'currency', 'payments'])
-            ->where('vendor_id', $this->selectedVendor)
+        $this->bills = Bill::with(['vendor', 'transporter', 'currency', 'payments'])
+            ->where($this->partyColumn, $this->selectedVendor)
             ->where('authorization', 'approved')
             ->where(function ($q) {
                 $q->where('status', 'Unpaid')
@@ -72,7 +79,7 @@ class Preview extends Component
         $this->statementByCurrency = [];
 
         foreach ($currencyIds as $currencyId) {
-            $activity = $service->activity((int) $this->selectedVendor, $currencyId, $from, $to);
+            $activity = $service->activity((int) $this->selectedVendor, $currencyId, $from, $to, $this->party);
 
             if ($activity->isEmpty()) {
                 continue;
@@ -85,8 +92,8 @@ class Preview extends Component
 
             $this->statementByCurrency[$currencyId] = [
                 'currency'        => Currency::find($currencyId),
-                'opening_balance' => $service->openingBalance((int) $this->selectedVendor, $currencyId, $from),
-                'closing_balance' => $service->closingBalance((int) $this->selectedVendor, $currencyId, $to),
+                'opening_balance' => $service->openingBalance((int) $this->selectedVendor, $currencyId, $from, $this->party),
+                'closing_balance' => $service->closingBalance((int) $this->selectedVendor, $currencyId, $to, $this->party),
                 'total_billed'    => $totalBilled,
                 'total_paid'      => $totalPaid,
                 'results'         => $activity,

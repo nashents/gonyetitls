@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\Vendor;
+use App\Models\Transporter;
 use App\Models\Currency;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -44,15 +45,24 @@ class BillController extends Controller
             'selectedType' => $selectedType,
             'from' => $from,
             'to' => $to,
+            'party' => $this->statementParty(),
             ]);
+    }
+
+    /** 'vendor' (default) or 'transporter', from the ?party= query string. */
+    private function statementParty(): string
+    {
+        return request()->query('party') === VendorLedgerService::PARTY_TRANSPORTER
+            ? VendorLedgerService::PARTY_TRANSPORTER
+            : VendorLedgerService::PARTY_VENDOR;
     }
 
     /**
      * Account Activity figures derived live from the transaction ledger
-     * (approved bills, payments) for every currency the vendor has been
-     * billed in. Never reads a stored balance column.
+     * (approved bills, payments) for every currency the vendor/transporter
+     * has been billed in. Never reads a stored balance column.
      */
-    private function accountActivityData($selectedVendor, $from, $to): array
+    private function accountActivityData($selectedVendor, $from, $to, string $party = VendorLedgerService::PARTY_VENDOR): array
     {
         $service = app(VendorLedgerService::class);
         $currencies = Currency::all();
@@ -62,9 +72,9 @@ class BillController extends Controller
         $results = collect();
 
         foreach ($currencies as $currency) {
-            $openingBalances[$currency->id] = $service->openingBalance((int) $selectedVendor, $currency->id, $from);
-            $closingBalances[$currency->id] = $service->closingBalance((int) $selectedVendor, $currency->id, $to);
-            $results = $results->merge($service->activity((int) $selectedVendor, $currency->id, $from, $to));
+            $openingBalances[$currency->id] = $service->openingBalance((int) $selectedVendor, $currency->id, $from, $party);
+            $closingBalances[$currency->id] = $service->closingBalance((int) $selectedVendor, $currency->id, $to, $party);
+            $results = $results->merge($service->activity((int) $selectedVendor, $currency->id, $from, $to, $party));
         }
 
         return [
@@ -74,98 +84,63 @@ class BillController extends Controller
         ];
     }
 
-    public function vendorStatementsPrint($selectedVendor = null, $selectedType = null, $from = null, $to = null){
-        $company = Auth::user()->employee->company;
-        $vendor = Vendor::find($selectedVendor);
-        if ( isset($selectedVendor) && $selectedType == "Outstanding Bills") {
+    /**
+     * View data shared by the statement print, PDF and email. $vendor holds
+     * the counterparty model (Vendor or Transporter) and $partyColumn the
+     * bills/payments column it is keyed on, so the templates serve both.
+     */
+    private function statementData($selectedVendor, $selectedType, $from, $to): array
+    {
+        $party = $this->statementParty();
+        $partyColumn = VendorLedgerService::partyColumn($party);
+        $vendor = $party === VendorLedgerService::PARTY_TRANSPORTER
+            ? Transporter::find($selectedVendor)
+            : Vendor::find($selectedVendor);
 
-            $bills = Bill::where('vendor_id', $selectedVendor)
-            ->where('authorization', 'approved')
-            ->where('status', 'Unpaid')
-            ->orWhere('vendor_id', $selectedVendor)
-            ->where('authorization','approved')
-            ->where('status', 'Partial')->get();
+        $data = [
+            'selectedVendor' => $selectedVendor,
+            'selectedType' => $selectedType,
+            'from' => $from,
+            'to' => $to,
+            'company' => Auth::user()->employee->company,
+            'vendor' => $vendor,
+            'party' => $party,
+            'partyColumn' => $partyColumn,
+        ];
 
-            return view('vendor_statements.print')->with([
-                'selectedVendor' => $selectedVendor,
-                'selectedType' => $selectedType,
-                'from' => $from,
-                'to' => $to,
-                'bills' => $bills,
-                'company' => $company,
-                'vendor' => $vendor,
-                ]);
-    
-        }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
+        if (isset($selectedVendor) && $selectedType == "Outstanding Bills") {
+            $data['bills'] = Bill::where($partyColumn, $selectedVendor)
+                ->where('authorization', 'approved')
+                ->whereIn('status', ['Unpaid', 'Partial'])
+                ->get();
+        } elseif (isset($selectedVendor) && $selectedType == "Account Activity") {
             $activity = [];
             if (isset($from) && isset($to)) {
-                $activity = $this->accountActivityData($selectedVendor, $from, $to);
+                $activity = $this->accountActivityData($selectedVendor, $from, $to, $party);
             }
-            return view('vendor_statements.print')->with([
-                'selectedVendor' => $selectedVendor,
-                'selectedType' => $selectedType,
-                'from' => $from,
-                'to' => $to,
-                'bills' => $activity['results'] ?? null,
-                'results' => $activity['results'] ?? null,
-                'openingBalances' => $activity['openingBalances'] ?? [],
-                'closingBalances' => $activity['closingBalances'] ?? [],
-                'company' => $company,
-                'vendor' => $vendor,
-                ]);
+            $data['bills'] = $activity['results'] ?? null;
+            $data['results'] = $activity['results'] ?? null;
+            $data['openingBalances'] = $activity['openingBalances'] ?? [];
+            $data['closingBalances'] = $activity['closingBalances'] ?? [];
         }
 
+        return $data;
+    }
 
+    public function vendorStatementsPrint($selectedVendor = null, $selectedType = null, $from = null, $to = null){
+        return view('vendor_statements.print')->with($this->statementData($selectedVendor, $selectedType, $from, $to));
     }
 
     public function vendorStatementsPDF($selectedVendor = null, $selectedType = null, $from = null, $to = null){
-        $company = Auth::user()->employee->company;
-        $vendor = Vendor::find($selectedVendor);
-        if ( isset($selectedVendor) && $selectedType == "Outstanding Bills") {
-            $bills = Bill::where('vendor_id', $selectedVendor)
-            ->where('authorization', 'approved')
-            ->where('status', 'Unpaid')
-            ->orWhere('vendor_id', $selectedVendor)
-            ->where('authorization','approved')
-            ->where('status', 'Partial')->get();
-            
-            $data = [
-                'selectedVendor' => $selectedVendor,
-                'selectedType' => $selectedType,
-                'from' => $from,
-                'to' => $to,
-                'bills' => $bills,
-                'company' => $company,
-                'vendor' => $vendor,
-            ];
-    
-        }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
-            $activity = [];
-            if (isset($from) && isset($to)) {
-                $activity = $this->accountActivityData($selectedVendor, $from, $to);
-            }
-            $data = [
-                'selectedVendor' => $selectedVendor,
-                'selectedType' => $selectedType,
-                'from' => $from,
-                'to' => $to,
-                'bills' => $activity['results'] ?? null,
-                'results' => $activity['results'] ?? null,
-                'openingBalances' => $activity['openingBalances'] ?? [],
-                'closingBalances' => $activity['closingBalances'] ?? [],
-                'company' => $company,
-                'vendor' => $vendor,
-            ];
-
-        }
+        $data = $this->statementData($selectedVendor, $selectedType, $from, $to);
 
         $pdf = PDF::loadView('vendor_statements.vendor_statement', $data);
 
-        $fileName = 'vendor_statement_' . time() . '.pdf';
+        $fileName = $data['party'] . '_statement_' . time() . '.pdf';
         $filePath = 'myfiles/documents/' . $fileName;
         Storage::disk('local')->put($filePath, $pdf->output());
 
-        return $pdf->download('vendor_statement.pdf');
+        return $pdf->download($data['party'] . '_statement.pdf');
 
     }
 
@@ -180,55 +155,22 @@ class BillController extends Controller
     }
 
     public function vendorStatementsEmail($selectedVendor = null, $selectedType = null, $from = null, $to = null){
-        $company = Auth::user()->employee->company;
-        $vendor = Vendor::find($selectedVendor);
-        if ( isset($selectedVendor) && $selectedType == "Outstanding Bills") {
-            $bills = Bill::where('vendor_id', $selectedVendor)
-            ->where('authorization', 'approved')
-            ->where('status', 'Unpaid')
-            ->orWhere('vendor_id', $selectedVendor)
-            ->where('authorization','approved')
-            ->where('status', 'Partial')->get();
-            
-            $data = [
-                'selectedVendor' => $selectedVendor,
-                'selectedType' => $selectedType,
-                'from' => $from,
-                'to' => $to,
-                'bills' => $bills,
-                'company' => $company,
-                'vendor' => $vendor,
-            ];
-    
-        }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
-            $activity = [];
-            if (isset($from) && isset($to)) {
-                $activity = $this->accountActivityData($selectedVendor, $from, $to);
-            }
-            $data = [
-                'selectedVendor' => $selectedVendor,
-                'selectedType' => $selectedType,
-                'from' => $from,
-                'to' => $to,
-                'bills' => $activity['results'] ?? null,
-                'results' => $activity['results'] ?? null,
-                'openingBalances' => $activity['openingBalances'] ?? [],
-                'closingBalances' => $activity['closingBalances'] ?? [],
-                'company' => $company,
-                'vendor' => $vendor,
-            ];
+        $data = $this->statementData($selectedVendor, $selectedType, $from, $to);
 
+        if (! optional($data['vendor'])->email) {
+            Session::flash('error', ucfirst($data['party']).' has no email address - add one before sending a statement.');
+            return redirect()->back();
         }
 
         $pdf = PDF::loadView('vendor_statements.vendor_statement', $data);
 
-        $fileName = 'vendor_statement_' . time() . '.pdf';
+        $fileName = $data['party'] . '_statement_' . time() . '.pdf';
         $filePath = 'myfiles/documents/' . $fileName;
         Storage::disk('local')->put($filePath, $pdf->output());
 
         $this->sendEmailWithAttachment($data, $filePath);
 
-        Session::flash('success','Vendor Statement Send Successfully');
+        Session::flash('success', ucfirst($data['party']).' Statement Sent Successfully');
         return redirect()->back();
         // return response()->json(['message' => 'PDF generated and email sent.']);
 

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\VendorStatements;
 use App\Models\Bill;
 use App\Models\Currency;
 use App\Models\Vendor;
+use App\Models\Transporter;
 use App\Exports\VendorStatementExport;
 use Livewire\Component;
 use Maatwebsite\Excel\Excel;
@@ -14,11 +15,15 @@ class Index extends Component
 {
     public $from;
     public $to;
+    // 'vendor' or 'transporter' - which counterparty list the statement is for.
+    // selectedVendor/$vendor then hold that party's id/model.
+    public $party = VendorLedgerService::PARTY_VENDOR;
     public $selectedVendor;
     public $selectedType;
 
     public $vendor;
     public $vendors;
+    public $transporters;
 
     public $bills               = null;
     public $results             = null;
@@ -27,13 +32,21 @@ class Index extends Component
     public function mount()
     {
         $this->vendors = Vendor::where('status', true)->orderBy('name')->get();
+        $this->transporters = Transporter::orderBy('name')->get();
     }
 
     // ─── Watchers ─────────────────────────────────────────────────────────────
 
+    public function updatedParty()
+    {
+        $this->selectedVendor = null;
+        $this->vendor = null;
+        $this->resetStatement();
+    }
+
     public function updatedSelectedVendor($id)
     {
-        $this->vendor = $id ? Vendor::find($id) : null;
+        $this->vendor = $id ? $this->partyModel()::find($id) : null;
         $this->resetStatement();
         $this->generateStatement();
     }
@@ -73,8 +86,8 @@ class Index extends Component
 
     private function loadOutstandingBills()
     {
-        $this->bills = Bill::with(['vendor', 'currency', 'payments'])
-            ->where('vendor_id', $this->selectedVendor)
+        $this->bills = Bill::with(['vendor', 'transporter', 'currency', 'payments'])
+            ->where(VendorLedgerService::partyColumn($this->party), $this->selectedVendor)
             ->where('authorization', 'approved')
             ->where(function ($q) {
                 $q->where('status', 'Unpaid')
@@ -95,7 +108,7 @@ class Index extends Component
         $this->statementByCurrency = [];
 
         foreach ($currencyIds as $currencyId) {
-            $activity = $service->activity((int) $this->selectedVendor, $currencyId, $this->from, $this->to);
+            $activity = $service->activity((int) $this->selectedVendor, $currencyId, $this->from, $this->to, $this->party);
 
             if ($activity->isEmpty()) {
                 continue;
@@ -105,8 +118,8 @@ class Index extends Component
 
             $this->statementByCurrency[$currencyId] = [
                 'currency'        => Currency::find($currencyId),
-                'opening_balance' => $service->openingBalance((int) $this->selectedVendor, $currencyId, $this->from),
-                'closing_balance' => $service->closingBalance((int) $this->selectedVendor, $currencyId, $this->to),
+                'opening_balance' => $service->openingBalance((int) $this->selectedVendor, $currencyId, $this->from, $this->party),
+                'closing_balance' => $service->closingBalance((int) $this->selectedVendor, $currencyId, $this->to, $this->party),
                 'results'         => $activity,
             ];
         }
@@ -120,12 +133,17 @@ class Index extends Component
     public function exportVendorStatementExcel(Excel $excel)
     {
         return $excel->download(
-            new VendorStatementExport($this->selectedType, $this->selectedVendor, $this->from, $this->to),
-            'vendor_statement.xlsx'
+            new VendorStatementExport($this->selectedType, $this->selectedVendor, $this->from, $this->to, $this->party),
+            $this->party.'_statement.xlsx'
         );
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private function partyModel(): string
+    {
+        return $this->party === VendorLedgerService::PARTY_TRANSPORTER ? Transporter::class : Vendor::class;
+    }
 
     private function resetStatement()
     {

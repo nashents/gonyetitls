@@ -8,7 +8,7 @@
 @endif
 @endsection
 @section('title')
-Vendor Statement Preview |@if (Auth::user()->employee->company)
+{{ ucfirst($party ?? 'vendor') }} Statement Preview |@if (Auth::user()->employee->company)
 {{Auth::user()->employee->company->name}}
 @elseif (Auth::user()->company)
 {{Auth::user()->company->name}}
@@ -24,6 +24,7 @@ Vendor Statement Preview |@if (Auth::user()->employee->company)
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
+                'party' => $party ?? 'vendor',
                 ])
         </div>
     </div>

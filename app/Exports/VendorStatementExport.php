@@ -34,9 +34,11 @@ WithCustomStartCell
     public $bills;
     public $to;
     public $from;
+    public $party;
 
-    public function __construct($selectedType, $selectedVendor, $from, $to)
+    public function __construct($selectedType, $selectedVendor, $from, $to, $party = 'vendor')
     {
+            $this->party = $party === 'transporter' ? 'transporter' : 'vendor';
       
             $this->selectedType = $selectedType;
             $this->selectedVendor = $selectedVendor;
@@ -48,14 +50,15 @@ WithCustomStartCell
     public function query()
     {
         if ( isset($this->selectedVendor) && $this->selectedType == "Outstanding Bills") {
-            return Bill::where('vendor_id', $this->selectedVendor)
-                ->where('status', 'Unpaid')
-                ->orWhere('vendor_id', $this->selectedVendor)
-                ->where('status', 'Partial');
+            // Same rows as the on-screen Outstanding Bills list.
+            return Bill::where($this->partyColumn(), $this->selectedVendor)
+                ->where('authorization', 'approved')
+                ->whereIn('status', ['Unpaid', 'Partial'])
+                ->orderBy('due_date');
     
         }elseif ( isset($this->selectedVendor) && $this->selectedType == "Account Activity") {
             if (isset($this->from) && isset($this->to)) {
-                return Bill::query()->where('vendor_id', $this->selectedVendor)->orderBy('created_at','desc')
+                return Bill::query()->where($this->partyColumn(), $this->selectedVendor)->orderBy('created_at','desc')
                 ->whereBetween('created_at',[$this->from, $this->to] );
             }
           
@@ -64,13 +67,18 @@ WithCustomStartCell
       
     }
 
+    private function partyColumn(): string
+    {
+        return \App\Services\VendorLedgerService::partyColumn($this->party);
+    }
+
     public function map($bill): array{             
 
                 $symbol = $bill->currency ? $bill->currency->symbol : "";
 
                 return   [
                     $bill->bill_number ,
-                    $bill->vendor ? $bill->vendor->name : "" ,
+                    $this->party === 'transporter' ? optional($bill->transporter)->name : optional($bill->vendor)->name,
                     $bill->bill_date,
                     $bill->due_date,
                     $bill->currency ? $bill->currency->name : "",
@@ -84,8 +92,8 @@ WithCustomStartCell
 
     public function headings(): array{
             return[
-                'Inoice#',
-                'Vendor',
+                'Bill#',
+                $this->party === 'transporter' ? 'Transporter' : 'Vendor',
                 'Bill Date',
                 'Due Date',
                 'Currency',

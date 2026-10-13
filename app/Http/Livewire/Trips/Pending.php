@@ -532,59 +532,13 @@ class Pending extends Component
                         }
                    
                     }elseif(isset($trip_expense->transporter_id)){
-                                
-                        $expense = Expense::where('name','Transporter Payment')->get()->first();
-                        $account = Account::where('name','Trip Expense')->get()->first();
-    
-                        $bill = new Bill;
-                        $bill->user_id = Auth::user()->id;
-                        $bill->bill_number = $this->billNumber();
-                        $bill->trip_id = $trip->id  ?: Null;
-                        $bill->horse_id = $trip->horse_id  ?: Null; 
-                        $bill->category = "Trip Expense - Transporter Payment";
-                        $bill->transporter_id = $trip_expense->transporter_id  ?: Null;
-                        $bill->trip_expense_id = $trip_expense->id  ?: Null;
-                        $bill->bill_date = $trip->start_date;
-                        if (isset($account)) {
-                            $bill->account_id = $account->id  ?: Null;
-                            $bill->account_type_id = $account->account_type->id  ?: Null;
-                        }
-                        $bill->currency_id = $trip_expense->currency_id  ?: Null;
-                        $bill->vendor_id = $trip_expense->vendor_id  ?: Null;
-                        $bill->subtotal = $trip_expense->amount;
-                        $bill->total = $trip_expense->amount;
-                        $bill->balance = $trip_expense->amount;
 
-                        $bill->authorized_by_id = Auth::user()->id;
-                        $bill->authorization = $this->authorize;
-                        $bill->comments = $this->comments;
-                        $bill->save();
-    
-                       
+                        // Create/update the Transporter Payment bill (one per transporter
+                        // expense - re-approval updates rather than duplicates) and post it
+                        // to the ledger. See TransporterPaymentBillService.
+                        app(\App\Services\Accounting\TransporterPaymentBillService::class)->sync($trip_expense->fresh());
 
-                        $bill_expense = new BillExpense;
-                        $bill_expense->user_id = Auth::user()->id  ?: Null;
-                        $bill_expense->bill_id = $bill->id  ?: Null;
-                        $bill_expense->currency_id = $bill->currency_id  ?: Null;
-                        if (isset($expense)) {
-                            $bill_expense->expense_id = $expense->id  ?: Null;
-                        }
-                        if (isset($account)) {
-                            $bill_expense->account_id = $account->id  ?: Null;
-                            $bill_expense->account_type_id = $account->account_type->id  ?: Null;
-                        }
-                        $bill_expense->qty = 1;
-                        if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
-                            $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
-                            $bill_expense->exchange_amount = $trip_expense->exchange_amount;
-                        }
-                        $bill_expense->amount = $trip_expense->amount;
-                        $bill_expense->subtotal = $trip_expense->amount;
-                        $bill_expense->subtotal_incl = $trip_expense->amount;
-                        $bill_expense->save();
-
-                 
-                }else{
+                    }else{
 
                         app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());
                     }
@@ -1011,53 +965,12 @@ class Pending extends Component
                                     }
 
                                 }elseif(isset($trip_expense->transporter_id)){
-                                
-                                        $expense = Expense::where('name','Transporter Payment')->get()->first();
-                                        $account = Account::where('name','Trip Expense')->get()->first();
-                    
-                                        $bill = new Bill;
-                                        $bill->user_id = Auth::user()->id;
-                                        $bill->bill_number = $this->billNumber();
-                                        $bill->trip_id = $trip->id;
-                                        $bill->category = "Trip Expense - Transporter Payment";
-                                        $bill->transporter_id = $trip_expense->transporter_id;
-                                        $bill->trip_expense_id = $trip_expense->id;
-                                        $bill->bill_date = $trip->start_date;
-                                        if (isset($account)) {
-                                            $bill->account_id = $account->id;
-                                            $bill->account_type_id = $account->account_type->id;
-                                        }
-                                        $bill->currency_id = $trip_expense->currency_id;
-                                        $bill->vendor_id = $trip_expense->vendor_id;
-                                        $bill->subtotal = $trip_expense->amount;
-                                        $bill->total = $trip_expense->amount;
-                                        $bill->balance = $trip_expense->amount;
-            
-                                        $bill->authorized_by_id = Auth::user()->id;
-                                        $bill->authorization = $this->authorize;
-                                        $bill->comments = $this->comments;
-                                        $bill->save();
-                    
-                                       
-            
-                                        $bill_expense = new BillExpense;
-                                        $bill_expense->user_id = Auth::user()->id;
-                                        $bill_expense->bill_id = $bill->id;
-                                        $bill_expense->currency_id = $bill->currency_id;
-                                        if (isset($expense)) {
-                                            $bill_expense->expense_id = $expense->id;
-                                        }
-                                        if (isset($account)) {
-                                            $bill_expense->account_id = $account->id;
-                                            $bill_expense->account_type_id = $account->account_type->id;
-                                        }
-                                        $bill_expense->qty = 1;
-                                        $bill_expense->amount = $trip_expense->amount;
-                                        $bill_expense->subtotal = $trip_expense->amount;
-                                        $bill_expense->subtotal_incl = $trip_expense->amount;
-                                        $bill_expense->save();
-            
-                                 
+
+                                    // Create/update the Transporter Payment bill (one per transporter
+                                    // expense - re-approval updates rather than duplicates) and post it
+                                    // to the ledger. See TransporterPaymentBillService.
+                                    app(\App\Services\Accounting\TransporterPaymentBillService::class)->sync($trip_expense->fresh());
+
                                 }else{
 
                                     app(TripExpenseJournalService::class)->postExpense($trip_expense->fresh());

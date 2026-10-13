@@ -15,22 +15,42 @@
                                 <div class="panel">
                                     <div class="panel-heading">
                                         <div class="panel-title">
-                                            <h5>Vendor Statements</h5>
+                                            <h5>Vendor &amp; Transporter Statements</h5>
                                         </div>
                                     </div>
                                     <div class="panel-body">
 
                                         {{-- Filters --}}
                                         <div class="row">
+                                            <div class="col-lg-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">Statement For</span>
+                                                    <select wire:model="party" class="form-control">
+                                                        <option value="vendor">Vendor</option>
+                                                        <option value="transporter">Transporter</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
                                             <div class="col-lg-3">
                                                 <div class="input-group">
-                                                    <span class="input-group-addon">Vendors</span>
-                                                    <select wire:model="selectedVendor" class="form-control">
-                                                        <option value="">Select Vendor</option>
-                                                        @foreach ($vendors as $v)
-                                                            <option value="{{ $v->id }}">{{ $v->name }}</option>
-                                                        @endforeach
-                                                    </select>
+                                                    @if ($party === 'transporter')
+                                                        <span class="input-group-addon">Transporters</span>
+                                                        <select wire:model="selectedVendor" class="form-control" wire:key="party-transporter">
+                                                            <option value="">Select Transporter</option>
+                                                            @foreach ($transporters as $t)
+                                                                <option value="{{ $t->id }}">{{ $t->name }}{{ $t->transporter_number ? ' ('.$t->transporter_number.')' : '' }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @else
+                                                        <span class="input-group-addon">Vendors</span>
+                                                        <select wire:model="selectedVendor" class="form-control" wire:key="party-vendor">
+                                                            <option value="">Select Vendor</option>
+                                                            @foreach ($vendors as $v)
+                                                                <option value="{{ $v->id }}">{{ $v->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @endif
                                                 </div>
                                             </div>
 
@@ -71,12 +91,12 @@
                                                     <div class="col-lg-2">
                                                         <div class="btn-group">
                                                             @if ($selectedVendor && $selectedType === 'Outstanding Bills')
-                                                                <a href="{{ route('vendor_statements.preview.outstanding', ['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType]) }}"
+                                                                <a href="{{ route('vendor_statements.preview.outstanding', ['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party]) }}"
                                                                    class="btn btn-default border-primary btn-wide btn-rounded">
                                                                     <i class="fas fa-file-invoice"></i> Preview
                                                                 </a>
                                                             @elseif ($selectedVendor && $selectedType === 'Account Activity' && $from && $to)
-                                                                <a href="{{ route('vendor_statements.preview.account', ['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to]) }}"
+                                                                <a href="{{ route('vendor_statements.preview.account', ['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party]) }}"
                                                                    class="btn btn-default border-primary btn-wide btn-rounded">
                                                                     <i class="fas fa-file-invoice"></i> Preview
                                                                 </a>
@@ -116,7 +136,7 @@
                                     <thead>
                                         <tr>
                                             <th>Bill#</th>
-                                            <th>Vendor</th>
+                                            <th>{{ $party === 'transporter' ? 'Transporter' : 'Vendor' }}</th>
                                             <th>Bill Date</th>
                                             <th>Due Date</th>
                                             <th>Currency</th>
@@ -134,7 +154,7 @@
                                                         {{ $bill->bill_number }}
                                                     </a>
                                                 </td>
-                                                <td>{{ $bill->vendor?->name }}</td>
+                                                <td>{{ $party === 'transporter' ? $bill->transporter?->name : $bill->vendor?->name }}</td>
                                                 <td>{{ $bill->bill_date }}</td>
                                                 <td>{{ $bill->due_date }}</td>
                                                 <td>{{ $bill->currency?->name }}</td>
@@ -207,7 +227,7 @@
                                                             <a href="{{ route('bills.show', $bill->id) }}" target="_blank" style="color:blue">
                                                                 Bill# {{ $result->number }}
                                                             </a><br>
-                                                            Due {{ $bill->expiry }}
+                                                            Due {{ $bill->due_date }}
                                                         @elseif ($payment)
                                                             <a href="{{ route('payments.show', $payment->id) }}" target="_blank" style="color:blue">
                                                                 {{ $result->number }}

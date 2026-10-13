@@ -75,7 +75,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                         </header>
                         @php
                             $currencies = App\Models\Currency::all();
-                            $billed_currencies = App\Models\Bill::where('vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
+                            $billed_currencies = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
                         @endphp
                         @foreach ($currencies as $currency)
                             @if (isset($billed_currencies))
@@ -102,10 +102,10 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                     <div class="date" style="padding-bottom: 3px"> <strong>As of {{date('F j, Y')}}</strong> </div>
                                   
                                     @php
-                                        $balance = App\Models\Bill::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                        $balance = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('authorization','approved')
                                         ->where('status', 'Unpaid')
-                                        ->orWhere('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                        ->orWhere($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('authorization','approved')
                                         ->where('status', 'Partial')
                                         ->get()->sum('balance');
@@ -129,17 +129,17 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($bills as $bill)
+                                    @foreach ($bills->where('currency_id', $currency->id) as $bill)
                                     @php
-                                    $expiry = $bill->expiry;
+                                    $expiry = $bill->due_date;
                                     $now = new DateTime();
                                     $expiry_date = new DateTime($expiry);
                                     @endphp
                                          <tr>
                                             <td class="text-center"> <a href="{{ route('bills.show',$bill->id) }}">{{ $bill->bill_number}}</a> </td>
-                                            <td class="text-center">{{ date('F j, Y', strtotime($bill->date)) }} </td>
-                                            <td class="text-center">{{ date('F j, Y', strtotime($bill->expiry)) }}
-                                                 @if ($now >= $expiry_date)
+                                            <td class="text-center">{{ $bill->bill_date ? date('F j, Y', strtotime($bill->bill_date)) : '' }} </td>
+                                            <td class="text-center">{{ $bill->due_date ? date('F j, Y', strtotime($bill->due_date)) : '' }}
+                                                 @if ($bill->due_date && $now >= $expiry_date)
                                                 Overdue
                                             @endif
                                             </td>
@@ -166,10 +166,10 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                 </tbody>
                                 <tfoot>
                                     @php
-                                        $balance = App\Models\Bill::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                        $balance = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('status', 'Unpaid')
                                         ->where('authorization','approved')
-                                        ->orWhere('vendor_id',$vendor->id)->where('currency_id',$currency->id)
+                                        ->orWhere($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('authorization','approved')
                                         ->where('status', 'Partial')
                                         ->get()->sum('balance');
@@ -215,8 +215,8 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                         $opening_balance = $openingBalances[$currency->id] ?? 0.00;
                                         $closing_balance = $closingBalances[$currency->id] ?? 0.00;
 
-                                $billed = App\Models\Bill::where('vendor_id',$vendor->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('bill_date','>=',$from)->where('bill_date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('total');
-                                $paid = App\Models\Payment::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('amount');
+                                $billed = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('bill_date','>=',$from)->where('bill_date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('total');
+                                $paid = App\Models\Payment::where($partyColumn ?? 'vendor_id',$vendor->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('amount');
                             @endphp
 
                                                 <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance,2) }}</div>
@@ -249,9 +249,8 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                 </thead>
                                 <tbody>
                                     @if (isset($results))
-                                        @foreach ($results->sortBy('created_at')->sortBy('transaction_date') as $result)
+                                        @foreach ($results->where('currency_id', $currency->id)->sortBy('created_at')->sortBy('transaction_date') as $result)
                                             @php
-                                                $currency = App\Models\Currency::find($result->currency_id);
                                                 
                                             @endphp
                                             <tr>
@@ -273,7 +272,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                             @include('vendor_statements._supplier_journal_row', ['result' => $result])
                                                         @elseif ($result->transaction_type === 'bill')
                                                             <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
-                                                            Due {{ $bill->expiry }}
+                                                            Due {{ $bill->due_date }}
                                                         @elseif ($result->transaction_type === 'payment')
                                                         <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment 
                                                         @if (isset($payment->bill))
@@ -305,7 +304,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                     
                                       
                                         <tr>
-                                            <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($from)) }}</strong></td>
+                                            <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($to)) }}</strong></td>
                                             <td colspan="3" class="text-center"><strong>Closing Balance {{ $currency->name }}</strong></td>
                                             <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($closing_balance ? $closing_balance : 0,2) }}</strong></td>
                                         </tr>
