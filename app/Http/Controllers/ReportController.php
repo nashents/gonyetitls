@@ -12,6 +12,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\CashFlowCalculator;
 use Illuminate\Support\Facades\Auth;
 use App\Services\SalesTaxCalculator;
+use App\Services\ZimraScheduleCalculator;
+use App\Exports\ZimraScheduleExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Services\AgedPayablesCalculator;
 use App\Services\BalanceSheetCalculator;
 use App\Services\CustomerIncomeCalculator;
@@ -309,6 +312,48 @@ class ReportController extends Controller
             'total_taxable_purchases' => $totalTaxablePurchases,
             'total_tax_paid' => $totalTaxPaid,
             'net_tax_payable' => $totalTaxCollected - $totalTaxPaid,
+        ];
+    }
+
+    public function zimraSchedule(){
+        return view('reports.zimra_schedule.index');
+    }
+
+    public function zimraSchedulePrint(Request $request)
+    {
+        return view('reports.zimra_schedule.print', $this->buildZimraScheduleData($request));
+    }
+
+    public function zimraScheduleExcel(Request $request)
+    {
+        $data = $this->buildZimraScheduleData($request);
+
+        return Excel::download(
+            new ZimraScheduleExport($data['groups'], $data['company']?->name ?? '', $data['periodLabel']),
+            'zimra-sales-purchases-schedule-' . $data['from'] . '-to-' . $data['to'] . '.xlsx'
+        );
+    }
+
+    /**
+     * Data shared by the ZIMRA schedule print view and Excel export, so
+     * they never differ from the live Livewire preview.
+     */
+    private function buildZimraScheduleData(Request $request): array
+    {
+        $user = Auth::user();
+        $company = $user->employee?->company ?? $user->company ?? null;
+
+        $from = $request->query('from', Carbon::now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'));
+        $to = $request->query('to', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $groups = (new ZimraScheduleCalculator($from, $to, $request->query('currency_id') ?: null, $company?->currency_id))->build();
+
+        return [
+            'company' => $company,
+            'from' => $from,
+            'to' => $to,
+            'groups' => $groups,
+            'periodLabel' => ZimraScheduleCalculator::periodLabel($from, $to),
         ];
     }
 

@@ -447,6 +447,9 @@ Route::get('reports/fleet-subledger','ReportController@fleetSubledger')->name('r
 Route::get('reports/sales-tax','ReportController@salesTax')->name('reports.sales_tax');
 Route::get('reports/sales-tax/pdf','ReportController@salesTaxPdf')->name('reports.sales_tax.pdf');
 Route::get('reports/sales-tax/print','ReportController@salesTaxPrint')->name('reports.sales_tax.print');
+Route::get('reports/zimra-schedule','ReportController@zimraSchedule')->name('reports.zimra_schedule');
+Route::get('reports/zimra-schedule/print','ReportController@zimraSchedulePrint')->name('reports.zimra_schedule.print');
+Route::get('reports/zimra-schedule/excel','ReportController@zimraScheduleExcel')->name('reports.zimra_schedule.excel');
 Route::get('reports/income-by-customer','ReportController@incomeByCustomer')->name('reports.income_by_customer');
 Route::get('reports/income-by-customer/pdf','ReportController@incomeByCustomerPdf')->name('reports.income_by_customer.pdf');
 Route::get('reports/income-by-customer/print','ReportController@incomeByCustomerPrint')->name('reports.income_by_customer.print');

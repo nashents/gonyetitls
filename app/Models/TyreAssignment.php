@@ -135,6 +135,13 @@ class TyreAssignment extends Model implements Auditable
             .". Unassign that tyre first.";
     }
 
+    // A fitted tyre is not in stores. Used where tyres are created straight onto a unit
+    // (Tyres > Create with assign, tyre import); no journal, the movement records the fitting.
+    public function markTyreOutOfStore()
+    {
+        Tyre::whereKey($this->tyre_id)->update(['balance' => 0, 'status' => 0]);
+    }
+
     public function locationLabel()
     {
         return optional($this->horse)->identifier_label

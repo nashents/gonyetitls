@@ -11,16 +11,19 @@ class ResetCompanyData extends Command
      * php artisan company:reset-data              (dry run, shows what would be wiped)
      * php artisan company:reset-data --force       (actually wipes, asks for typed confirmation)
      * php artisan company:reset-data --force --yes (wipes without the confirmation prompt, for scripted use)
+     * php artisan company:reset-data --employees-only  (initial-deployment state + existing employees/logins)
      */
     protected $signature = 'company:reset-data
         {--force : Actually perform the wipe. Without this flag the command only reports what it would do.}
-        {--yes : Skip the typed confirmation prompt (still requires --force). Use with care.}';
+        {--yes : Skip the typed confirmation prompt (still requires --force). Use with care.}
+        {--employees-only : Return to the initial-deployment (seeded) state, keeping only employees + their logins, so master data can be re-pulled from Sage.}';
 
     protected $description = 'Wipe all transactional/captured data (trips, invoices, accounting, HR, SHEQ, logistics, etc.) while leaving base modules (vehicles, drivers, employees, customers, vendors, consignees, locations, config/lookups) untouched.';
 
     public function handle(CompanyDataResetService $service): int
     {
-        $preview = $service->preview();
+        $employeesOnly = (bool) $this->option('employees-only');
+        $preview = $service->preview($employeesOnly);
 
         $this->info('=== company:reset-data — DRY RUN report ===');
         foreach ($preview['groups'] as $group => $data) {
@@ -48,6 +51,16 @@ class ResetCompanyData extends Command
             }
         }
 
+        foreach (['partial' => 'Partly cleared (employee rows kept)', 'links' => 'Kept rows unlinked from wiped records'] as $key => $label) {
+            if (! empty($preview[$key])) {
+                $this->newLine();
+                $this->line("<fg=yellow>{$label}</>:");
+                foreach ($preview[$key] as $name => $count) {
+                    $this->line("  - {$name}: {$count} row(s)");
+                }
+            }
+        }
+
         if (! $this->option('force')) {
             $this->newLine();
             $this->comment('This was a dry run — no data was touched. Re-run with --force to actually wipe the data above.');
@@ -55,7 +68,7 @@ class ResetCompanyData extends Command
             return self::SUCCESS;
         }
 
-        if ($preview['total'] === 0 && empty($preview['balances'])) {
+        if ($preview['total'] === 0 && empty($preview['balances']) && empty($preview['links'])) {
             $this->info('Nothing to wipe.');
 
             return self::SUCCESS;
@@ -73,7 +86,7 @@ class ResetCompanyData extends Command
             }
         }
 
-        $results = $service->execute();
+        $results = $service->execute($employeesOnly);
 
         $this->newLine();
         $this->info('Reset complete. Summary logged to storage/logs/laravel.log.');

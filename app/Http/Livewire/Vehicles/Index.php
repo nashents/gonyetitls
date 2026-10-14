@@ -68,6 +68,10 @@ class Index extends Component
     /** Set the fuel balance of every vehicle's tank to 0 in one go. */
     public function resetAllFuelTanks()
     {
+        if (! Auth::user()->is_admin()) {
+            abort(403);
+        }
+
         $count = Vehicle::query()->update(['fuel_balance' => 0]);
 
         $this->dispatchBrowserEvent('alert', [

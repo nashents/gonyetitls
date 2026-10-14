@@ -248,6 +248,9 @@
                                         {{$bill->bill_number}}
                                         <br>
                                         <small>
+                                            @if ($bill->invoice_number)
+                                            <strong>Invoice#:</strong> {{$bill->invoice_number}} <br>
+                                            @endif
                                             <strong>CreatedBy:</strong> {{$bill->user ? $bill->user->name : ""}} {{$bill->user ? $bill->user->surname : ""}} <br>
                                             <strong>CreatedOn:</strong> {{$bill->created_at}}
                                         </small>

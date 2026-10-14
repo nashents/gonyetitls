@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\Concerns\HasVatTin;
 use App\Models\Concerns\SyncsToSageIntacct;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Vendor extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, SyncsToSageIntacct;
+    use HasFactory, SoftDeletes, SyncsToSageIntacct, HasVatTin;
     use \OwenIt\Auditing\Auditable;
 
     public function dispatches(){

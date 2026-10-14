@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\Concerns\HasVatTin;
 use App\Models\Concerns\SyncsToSageIntacct;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Notifications\Notifiable;
  */
 class Customer extends Authenticatable implements Auditable
 {
-    use HasFactory, SoftDeletes, SyncsToSageIntacct, Notifiable;
+    use HasFactory, SoftDeletes, SyncsToSageIntacct, HasVatTin, Notifiable;
 
     use \OwenIt\Auditing\Auditable;
 

@@ -225,7 +225,7 @@
     </section>
 
      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="authorizationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-gavel"></i> Authorize Dispatch <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -246,6 +246,51 @@
                         <textarea class="form-control" wire:model.debounce.300ms="comments" cols="30" rows="3"></textarea>
                         @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+
+                    @if (!empty($fitments) && $authorize == "approved")
+                        <h6>Tyre Fitment <small>(optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest leave stores unfitted, to be fitted in Tyre Assignments)</small></h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr><th>Tyre</th><th>Fit To</th><th>Axle</th><th>Position</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($fitments as $itemId => $fitment)
+                                        <tr wire:key="fitment-{{ $itemId }}">
+                                            <td>{{ $fitment['tyre'] }}</td>
+                                            <td>
+                                                <select class="form-control" wire:model="fitments.{{ $itemId }}.fit_type">
+                                                    <option value="">Select Unit</option>
+                                                    @foreach ($fitUnitOptions as $type => $label)
+                                                        <option value="{{ $type }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="form-control" wire:model="fitments.{{ $itemId }}.axle">
+                                                    <option value="">Select Axle</option>
+                                                    @foreach (\App\Models\TyreAssignment::AXLES as $axle)
+                                                        <option value="{{ $axle }}">{{ $axle }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="form-control" wire:model="fitments.{{ $itemId }}.position">
+                                                    <option value="">Select Position</option>
+                                                    @foreach (\App\Models\TyreAssignment::POSITIONS as $value => $label)
+                                                        <option value="{{ $value }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @if (empty($fitUnitOptions))
+                            <p style="color: #a94442">This dispatch has no horse, trailer or vehicle, so its tyres can only be approved unfitted.</p>
+                        @endif
+                    @endif
 
                     <div class="form-group">
                         <input type="checkbox" wire:model.debounce.300ms="stay_on_page" class="line-style" id="stay_on_page" />

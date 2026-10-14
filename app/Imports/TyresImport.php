@@ -188,6 +188,7 @@ WithBatchInserts
                 Log::warning('Skipped tyre assignment: '.TyreAssignment::alreadyAssignedMessage($tyreAssignment, $tyre->serial_number), $row->toArray());
                 $tyre->status = 0;
                 $tyre->save();
+                $tyreAssignment->markTyreOutOfStore();
                 return;
             }
         }
@@ -274,6 +275,9 @@ WithBatchInserts
         $tyre->status = 0;
         $tyre->disposed = 0;
         $tyre->save();
+
+        // Fitted tyres are not in stores.
+        $assignment->markTyreOutOfStore();
     }
 
 
@@ -343,9 +347,17 @@ WithBatchInserts
                     }
 
                     $unitPrice = (float) $row->get('unit_price', 0);
-                    $quantity = (int) $row->get('quantity');
+                    if (!is_numeric($row->get('quantity'))) {
+                        Log::warning('Skipped tyre row due to missing quantity:', $row->toArray());
+                        continue;
+                    }
 
-                    for ($i = 0; $i < $quantity; $i++) {
+                    // Quantity 0: the tyre is already out of stores (e.g. on a unit before the system) —
+                    // add it out of stock; it is fitted here if a reg is given, otherwise later in Tyre Assignments.
+                    $quantity = (int) $row->get('quantity');
+                    $inStock = $quantity > 0;
+
+                    for ($i = 0; $i < max(1, $quantity); $i++) {
 
                     $tyre = Tyre::firstOrNew([
                         'serial_number' => $serial_number
@@ -369,13 +381,15 @@ WithBatchInserts
                         'width'                    => $row->get('width'),
                         'aspect_ratio'             => $row->get('aspect_ratio'),
                         'diameter'                 => $row->get('diameter'),
-                        'qty'                      => 1,
+                        'qty'                      => $inStock ? 1 : 0,
                         'weight'                      => 1,
-                        'balance'                      => 1,
+                        'balance'                      => $inStock ? 1 : 0,
                         'purchase_date'            => $this->parseExcelDate($row->get('purchase_date')),
-                        'status'                   => 1,
+                        'status'                   => $inStock ? 1 : 0,
                         'disposed'                 => 0,
                     ]);
+                    // balance is not fillable on Tyre, so set it directly.
+                    $tyre->balance = $inStock ? 1 : 0;
                     $tyre->save();
 
                     // Assign the tyre

@@ -43,6 +43,8 @@
                                     </th>
                                     <th class="th-sm">Tyre Life(Kms)
                                     </th>
+                                    <th class="th-sm">Assigned By / On
+                                    </th>
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
@@ -90,6 +92,12 @@
                                     <td>
                                         @if ($tyre_assignment->tyre)
                                             {{$tyre_assignment->tyre->mileage ? $tyre_assignment->tyre->mileage."Kms" : ""}}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        {{$tyre_assignment->user ? $tyre_assignment->user->name." ".$tyre_assignment->user->surname : ""}}
+                                        @if ($tyre_assignment->created_at)
+                                            <br><small>{{$tyre_assignment->created_at->format('Y-m-d H:i')}}</small>
                                         @endif
                                     </td>
                                     <td>
@@ -185,7 +193,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}"> {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -320,7 +328,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}"> {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -467,6 +475,11 @@
                         <label for="unassignment_reason">Reason<span class="required" style="color: red">*</span></label>
                         <textarea wire:model.defer="unassignment_reason" class="form-control" cols="30" rows="4" placeholder="e.g. Worn out, puncture, rotation, sent for retread..." required></textarea>
                         @error('unassignment_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" wire:model.defer="dispose_tyre" class="line-style" id="dispose_tyre" />
+                        <label for="dispose_tyre" class="radio-label">Unassign and mark the tyre(s) as disposed</label>
+                        <br><small class="text-muted">Otherwise the tyre stays out of stores, unassigned, ready to be fitted to another unit. It never goes back into stock.</small>
                     </div>
                 </div>
                 <div class="modal-footer">

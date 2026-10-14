@@ -43,6 +43,8 @@
                                     </th>
                                     <th class="th-sm">Phonenumber
                                     </th>
+                                    <th class="th-sm">VAT/TIN#
+                                    </th>
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
@@ -63,6 +65,7 @@
                                     <td>{{ucfirst($vendor->name)}}</td>
                                     <td>{{$vendor->email}}</td>
                                     <td>{{$vendor->phonenumber}}</td>
+                                    <td>{{$vendor->vat_tin}}</td>
                                     <td>
                                         <span class="badge bg-{{$vendor->status == 1 ? "success" : "danger"}}">{{$vendor->status == 1 ? "Active" : "Inactive"}}</span>
                                         @if ($this->sageEnabled && $vendor->sage_sync_status)

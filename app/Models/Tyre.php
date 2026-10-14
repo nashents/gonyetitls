@@ -99,6 +99,75 @@ class Tyre extends Model implements Auditable
             ->latestOfMany();
     }
 
+    // Dispatchable: available, has stock left and not sitting on a truck.
+    public function scopeInStock($query)
+    {
+        return $query->where('status', 1)
+            ->where('balance', '>', 0)
+            ->where(fn ($q) => $q->whereNull('disposed')->orWhere('disposed', 0))
+            ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1));
+    }
+
+    /**
+     * Can be fitted in Tyre Assignments: out of stores and not on a unit, and it left stores
+     * properly — an approved dispatch, an earlier fitting (taken off a unit), or imported with qty 0.
+     */
+    public function scopeAssignable($query)
+    {
+        return $query->where(fn ($q) => $q->whereNull('balance')->orWhere('balance', '<=', 0))
+            ->where(fn ($q) => $q->whereNull('disposed')->orWhere('disposed', 0))
+            ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
+            ->where(function ($q) {
+                $q->whereHas('dispatch_items.dispatch', fn ($d) => $d->where('authorization', 'approved'))
+                    ->orWhereHas('tyre_assignments')
+                    ->orWhere('qty', 0);
+            });
+    }
+
+    // Why this tyre can't be fitted right now, or null when it can.
+    public function assignmentBlocker(): ?string
+    {
+        $label = $this->serial_number ?: $this->tyre_number;
+
+        if ($this->disposed) {
+            return "Tyre {$label} is disposed.";
+        }
+        if ($active = TyreAssignment::activeForTyre($this->id)) {
+            return TyreAssignment::alreadyAssignedMessage($active, $label);
+        }
+        if (!static::assignable()->whereKey($this->id)->exists()) {
+            return "Tyre {$label} is still in stores. Dispatch it first, then fit it here.";
+        }
+
+        return null;
+    }
+
+    // Latest approved dispatch line that took this tyre out of stores.
+    public function lastDispatchItem()
+    {
+        return $this->dispatch_items()
+            ->whereHas('dispatch', fn ($d) => $d->where('authorization', 'approved'))
+            ->with('dispatch.horse', 'dispatch.trailer', 'dispatch.vehicle')
+            ->latest('id')
+            ->first();
+    }
+
+    // For lists: where an unfitted, out-of-store tyre went.
+    public function awaitingFitmentLabel(): ?string
+    {
+        $item = $this->lastDispatchItem();
+        if (!$item || !$item->dispatch) {
+            return null;
+        }
+
+        $dispatch = $item->dispatch;
+        $unit = optional($dispatch->horse)->identifier_label
+            ?? optional($dispatch->trailer)->identifier_label
+            ?? optional($dispatch->vehicle)->identifier_label;
+
+        return trim(($unit ? "On {$unit}" : 'Dispatched')." · {$dispatch->dispatch_number}");
+    }
+
      public function checklistResults()
     {
         return $this->hasMany(ChecklistResult::class, 'tyre_id');

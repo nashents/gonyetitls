@@ -439,6 +439,53 @@
                             </div>
                         </div>
                     @endif
+                    @if ($department == "tyre" && $dispatch_for == "inventory")
+                        <h6 class="mt-10">Fitting Unit<span class="required" style="color: red">*</span> <small>(the unit the tyres are going to)</small></h6>
+                        @if ($attach)
+                            @if (!empty($fitUnitOptions))
+                                <p style="color: green">{{ implode(', ', $fitUnitOptions) }}</p>
+                            @else
+                                <p style="color: #a94442">Select a ticket with a horse, trailer or vehicle.</p>
+                            @endif
+                        @else
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Horse</label>
+                                        <select class="form-control" wire:model="horse_id">
+                                            <option value="">Select Horse</option>
+                                            @foreach ($horses as $horse)
+                                                <option value="{{$horse->id}}">{{$horse->identifier_label}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Trailer</label>
+                                        <select class="form-control" wire:model="trailer_id">
+                                            <option value="">Select Trailer</option>
+                                            @foreach ($trailers as $trailer)
+                                                <option value="{{$trailer->id}}">{{$trailer->identifier_label}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Vehicle</label>
+                                        <select class="form-control" wire:model="vehicle_id">
+                                            <option value="">Select Vehicle</option>
+                                            @foreach ($vehicles as $vehicle)
+                                                <option value="{{$vehicle->id}}">{{$vehicle->identifier_label}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                        @error('fit_unit') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    @endif
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group" >
@@ -466,7 +513,6 @@
                 </div>
 
                 @if (!empty($dispatch_for) && $dispatch_for == "inventory")
-                  
                     <div class="mb-10">
                         <input type="checkbox" wire:model.debounce.300ms="expand"   class="line-style"  @if(count($inputs) > 0) disabled @endif />
                         <label for="one" class="radio-label">Select specific items to dispatch </label>
@@ -939,17 +985,8 @@
                                             <label for="horse">Tyres<span class="required" style="color: red">*</span></label>
                                             <select wire:model.debounce.300ms="selectedTyre.0" class="form-control" required size = "4">
                                                     <option value="" selected>Select Item</option>
-                                                    @foreach ($tyres as $tyre)
-                                                        <option value="{{$tyre->id}}"
-                                                            @if(in_array($tyre->id, $selectedTyre ?? []) && ($selectedTyre[0] ?? null) != $tyre->id) 
-                                                                disabled 
-                                                            @endif
-                                                            >
-                                                            {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
-                                                            @if ($tyre->total)
-                                                                {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{ number_format((float)($tyre->balance ?? 0) * (float)($tyre->amount ?? 0),2)}} 
-                                                            @endif
-                                                        </option>
+                                                    @foreach ($tyreOptions[0] ?? [] as $option)
+                                                        <option value="{{$option['id']}}" @if(in_array($option['id'], $selectedTyre ?? []) && ($selectedTyre[0] ?? null) != $option['id']) disabled @endif>{{$option['label']}}</option>
                                                     @endforeach
                                             </select>
                                             @error('selectedTyre.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -970,10 +1007,13 @@
                                 </div>
                             
                             </div>
+                            @if ($department == "tyre")
+                                @include('livewire.dispatches.partials.tyre-fitment', ['row' => 0])
+                            @endif
                         </div>
                         <br>
                         @foreach ($inputs as $key => $value)
-                            <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                            <div wire:key="dispatch-item-row-{{$value}}" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="form-group">
@@ -1097,17 +1137,8 @@
                                                 <label for="horse">Tyres<span class="required" style="color: red">*</span></label>
                                                 <select wire:model.debounce.300ms="selectedTyre.{{$value}}" class="form-control" required size = "4">
                                                     <option value="" selected>Select Tyre</option>
-                                                        @foreach ($tyres as $tyre)
-                                                            <option value="{{$tyre->id}}"
-                                                                @if(in_array($tyre->id, $selectedTyre ?? []) && ($selectedTyre[$value] ?? null) != $tyre->id) 
-                                                                    disabled 
-                                                                @endif
-                                                                >
-                                                                {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
-                                                                @if ($tyre->total)
-                                                                    {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{ number_format((float)($tyre->balance ?? 0) * (float)($tyre->amount ?? 0),2)}}
-                                                                @endif
-                                                            </option>
+                                                        @foreach ($tyreOptions[$value] ?? [] as $option)
+                                                            <option value="{{$option['id']}}" @if(in_array($option['id'], $selectedTyre ?? []) && ($selectedTyre[$value] ?? null) != $option['id']) disabled @endif>{{$option['label']}}</option>
                                                         @endforeach
                                                 </select>
                                                 @error('selectedTyre.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1132,11 +1163,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @if ($department == "tyre")
+                                        @include('livewire.dispatches.partials.tyre-fitment', ['row' => $value])
+                                    @endif
                                 </div>
                             <br>
                         @endforeach
                         
-                        @if ($expand == False)
+                        @if ($expand == False || $department == "tyre")
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group mt-20">

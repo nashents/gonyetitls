@@ -23,6 +23,11 @@ use App\Models\Tax;
 use App\Models\Ticket;
 use App\Models\Tyre;
 use App\Models\Vendor;
+use App\Models\Horse;
+use App\Models\Trailer;
+use App\Models\Vehicle;
+use App\Models\TyreAssignment;
+use App\Services\Dispatches\TyreDispatchFitmentService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -144,8 +149,98 @@ class Index extends Component
         unset($this->requestedItem[$index]);
         unset($this->fitment[$index]);
         unset($this->fitment_rows[$index]);
+        unset($this->selectedTyre[$index]);
+        unset($this->selectedInventory[$index]);
+        unset($this->selectedAsset[$index]);
+        unset($this->tyreOptions[$index]);
+        unset($this->fit_type[$index]);
+        unset($this->fit_axle[$index]);
+        unset($this->fit_position[$index]);
     }
-  
+
+    // Tyre dispatches: each tyre row says where it is fitted (unit + axle + position).
+    public array $fit_type = [];
+    public array $fit_axle = [];
+    public array $fit_position = [];
+    public array $tyreOptions = [];   // [rowKey => [['id' => .., 'label' => ..], ...]]
+    public $horses;
+    public $trailers;
+    public $vehicles;
+
+    private function isTyreDispatch(): bool
+    {
+        return $this->department === 'tyre' && $this->dispatch_for === 'inventory';
+    }
+
+    private function fitmentService(): TyreDispatchFitmentService
+    {
+        return app(TyreDispatchFitmentService::class);
+    }
+
+    private function fitUnits(): array
+    {
+        return $this->fitmentService()->units($this->horse_id, $this->trailer_id, $this->vehicle_id);
+    }
+
+    // One unit on the dispatch: every tyre goes to it, no need to pick.
+    private function defaultFitTypes(): void
+    {
+        $units = $this->fitUnits();
+
+        foreach (array_keys($this->selectedTyre) as $key) {
+            if (count($units) === 1) {
+                $this->fit_type[$key] = array_key_first($units);
+            } elseif (isset($this->fit_type[$key]) && !isset($units[$this->fit_type[$key]])) {
+                $this->fit_type[$key] = null;
+            }
+        }
+    }
+
+    public function updatedHorseId()
+    {
+        $this->defaultFitTypes();
+    }
+
+    public function updatedTrailerId()
+    {
+        $this->defaultFitTypes();
+    }
+
+    public function updatedVehicleId()
+    {
+        $this->defaultFitTypes();
+    }
+
+    private function tyreFitmentRows(): array
+    {
+        $rows = [];
+        foreach ($this->selectedTyre as $key => $tyreId) {
+            if (blank($tyreId)) {
+                continue;
+            }
+            $rows[$key] = [
+                'tyre_id' => $tyreId,
+                'fit_type' => $this->fit_type[$key] ?? null,
+                'axle' => $this->fit_axle[$key] ?? null,
+                'position' => $this->fit_position[$key] ?? null,
+            ];
+        }
+
+        return $rows;
+    }
+
+    // Applies the fitment of row $key to a tyre dispatch item before it is saved.
+    private function applyFitment(DispatchItem $dispatch_item, $key): void
+    {
+        if ($this->department !== 'tyre') {
+            return;
+        }
+
+        $dispatch_item->fit_type = $this->fit_type[$key] ?? null;
+        $dispatch_item->axle = $this->fit_axle[$key] ?? null;
+        $dispatch_item->position = $this->fit_position[$key] ?? null;
+    }
+
 
     public $expenses_inputs = [];
     public $e = 1;
@@ -225,9 +320,7 @@ class Index extends Component
                 ? 'assets'
                 : 'inventories');
 
-        $stockCheck = function ($q) {
-            $q->where('status', 1)->where('balance', '>', 0);
-        };
+        $stockCheck = fn ($relation) => $this->stockConstraint($relation);
 
         // Base query
         $query = Product::with([
@@ -242,12 +335,12 @@ class Index extends Component
             ->when($this->all_products, function ($q) use ($stockCheck) {
                 // Extended search: match stock in ANY department's table, not just the current one.
                 $q->where(function ($qq) use ($stockCheck) {
-                    $qq->whereHas('inventories', $stockCheck)
-                        ->orWhereHas('tyres', $stockCheck)
-                        ->orWhereHas('assets', $stockCheck);
+                    $qq->whereHas('inventories', $stockCheck('inventories'))
+                        ->orWhereHas('tyres', $stockCheck('tyres'))
+                        ->orWhereHas('assets', $stockCheck('assets'));
                 });
             }, function ($q) use ($relation, $stockCheck) {
-                $q->whereHas($relation, $stockCheck);
+                $q->whereHas($relation, $stockCheck($relation));
             });
 
         // If search term exists
@@ -320,6 +413,17 @@ class Index extends Component
             ->get();
     }
 
+    // Stock rows that can still be dispatched. Tyres fitted to a unit are never in stock.
+    private function stockConstraint(string $relation, $store_id = null): \Closure
+    {
+        return function ($q) use ($relation, $store_id) {
+            $q->where('status', 1)
+                ->where('balance', '>', 0)
+                ->when($store_id, fn ($qq) => $qq->where('store_id', $store_id))
+                ->when($relation === 'tyres', fn ($qq) => $qq->whereDoesntHave('tyre_assignments', fn ($a) => $a->where('status', 1)));
+        };
+    }
+
     public function loadProducts($store_id = null)
     {
 
@@ -342,23 +446,17 @@ class Index extends Component
             $query->where('department', $this->department);
         })
         ->when($this->dispatch_for === 'inventory', function ($query) use ($relation, $store_id) {
-            $stockCheck = function ($q) use ($store_id) {
-                $q->where('status', 1)
-                ->where('balance', '>', 0)
-                ->when($store_id, function ($qq) use ($store_id) {
-                    $qq->where('store_id', $store_id);
-                });
-            };
+            $stockCheck = fn ($relation) => $this->stockConstraint($relation, $store_id);
 
             $query->when($this->all_products, function ($q) use ($stockCheck) {
                 // Extended search: match stock in ANY department's table, not just the current one.
                 $q->where(function ($qq) use ($stockCheck) {
-                    $qq->whereHas('inventories', $stockCheck)
-                        ->orWhereHas('tyres', $stockCheck)
-                        ->orWhereHas('assets', $stockCheck);
+                    $qq->whereHas('inventories', $stockCheck('inventories'))
+                        ->orWhereHas('tyres', $stockCheck('tyres'))
+                        ->orWhereHas('assets', $stockCheck('assets'));
                 });
             }, function ($q) use ($relation, $stockCheck) {
-                $q->whereHas($relation, $stockCheck);
+                $q->whereHas($relation, $stockCheck($relation));
             });
         })
         ->orderBy('name', 'asc')
@@ -385,6 +483,15 @@ class Index extends Component
        
         $this->reset(['searchProduct', 'searchTicket']);
         $this->loadProducts();
+
+        $this->horses = collect();
+        $this->trailers = collect();
+        $this->vehicles = collect();
+        if ($department === 'tyre') {
+            $this->horses = Horse::where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
+            $this->trailers = Trailer::where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
+            $this->vehicles = Vehicle::where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
+        }
       
        
        
@@ -558,7 +665,7 @@ class Index extends Component
             $this->horse_id = $this->ticket?->horse_id;
             $this->vehicle_id = $this->ticket?->vehicle_id;
             $this->trailer_id = $this->ticket?->trailer_id;
-           
+            $this->defaultFitTypes();
         }
     }
 
@@ -617,17 +724,33 @@ class Index extends Component
             if ($tyre && $this->expand == True) {
                 $this->weight[$key] = $tyre->balance;
                 $this->max[$key] = $tyre->balance;
+                if ($this->department === 'tyre') {
+                    $this->qty[$key] = $tyre->balance;
+                    $this->defaultFitTypes();
+                }
             }
         }
     }
-  
+
     public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
             if ($this->expand == False) {
                   $this->qty[$key] = 1;
             }
             $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
-            $this->tyres = Tyre::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+            $this->tyres = Tyre::inStock()->where('product_id',$id)->orderBy('created_at','asc')->get();
+
+            // Each tyre row keeps its own list, so picking a product on another row doesn't blank this one.
+            if ($this->department === 'tyre') {
+                $this->tyreOptions[$key] = $this->tyres->map(fn ($tyre) => [
+                    'id' => $tyre->id,
+                    'label' => trim(($tyre->tyre_number ?? '').($tyre->serial_number ? ' SN#: '.$tyre->serial_number : '')
+                        .($tyre->balance ? ' Bal: '.$tyre->balance : '')),
+                ])->all();
+                if (!in_array($this->selectedTyre[$key] ?? null, array_column($this->tyreOptions[$key], 'id'))) {
+                    $this->selectedTyre[$key] = null;
+                }
+            }
             $this->assets = Asset::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
             
             $product = Product::find($id);
@@ -635,7 +758,7 @@ class Index extends Component
             if ($product && $this->department == "inventory") {
                 $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
             }elseif ($product && $this->department == "tyre") {
-                $this->max[$key] = $product->tyres->where('status',1)->sum('balance');
+                $this->max[$key] = Tyre::inStock()->where('product_id', $product->id)->sum('balance');
             }elseif ($product && $this->department == "asset") {
                 $this->max[$key] = $product->assets->where('status',1)->where('balance','>',0)->sum('balance');
             }
@@ -740,6 +863,16 @@ class Index extends Component
         $this->selectedTax = [];
         $this->tax_rate = [];
         $this->selectedInventory = [];
+        $this->selectedTyre = [];
+        $this->selectedAsset = [];
+        $this->inputs = [];
+        $this->tyreOptions = [];
+        $this->fit_type = [];
+        $this->fit_axle = [];
+        $this->fit_position = [];
+        $this->horse_id = Null;
+        $this->trailer_id = Null;
+        $this->vehicle_id = Null;
         $this->selectedTicket = Null;
         $this->searchTicket = [] ;
         $this->searchProduct = [] ;
@@ -826,6 +959,7 @@ class Index extends Component
 
             if ($this->department === 'tyre') {
                 $dispatch_item->tyre_id = $model->id;
+                $this->applyFitment($dispatch_item, $key);
             } elseif ($this->department === 'asset') {
                 $dispatch_item->asset_id = $model->id;
             } else {
@@ -980,6 +1114,7 @@ class Index extends Component
 
             if ($this->department === 'tyre') {
                 $dispatch_item->tyre_id = $model->id;
+                $this->applyFitment($dispatch_item, $key);
             } elseif ($this->department === 'asset') {
                 $dispatch_item->asset_id = $model->id;
             } else {
@@ -1037,9 +1172,8 @@ class Index extends Component
                     break;
 
                 case 'tyre':
-                    $items = Tyre::where('product_id', $product->id)
-                        ->where('status', 1)
-                        ->where('balance', '>', 0)
+                    $items = Tyre::inStock()
+                        ->where('product_id', $product->id)
                         ->orderBy('created_at', 'asc')
                         ->get();
                     break;
@@ -1183,9 +1317,8 @@ class Index extends Component
                     break;
 
                 case 'tyre':
-                    $items = Tyre::where('product_id', $product->id)
-                        ->where('status', 1)
-                        ->where('balance', '>', 0) // fixed: was missing
+                    $items = Tyre::inStock()
+                        ->where('product_id', $product->id)
                         ->orderBy('created_at', 'asc')
                         ->get();
                     break;
@@ -1306,6 +1439,23 @@ class Index extends Component
     }
 
     public function store(){
+
+        if ($this->isTyreDispatch()) {
+            $this->defaultFitTypes();
+            $this->resetErrorBag();
+
+            $errors = $this->fitmentService()->validate($this->expand ? $this->tyreFitmentRows() : [], $this->fitUnits());
+            if ($errors) {
+                foreach ($errors as $field => $message) {
+                    $this->addError($field, $message);
+                }
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'error',
+                    'message' => reset($errors),
+                ]);
+                return;
+            }
+        }
 
         DB::transaction(function () {
 
@@ -1526,23 +1676,17 @@ class Index extends Component
                 $query->where('department', $this->department);
             })
             ->when($this->dispatch_for === 'inventory', function ($query) use ($relation, $store_id) {
-                $stockCheck = function ($q) use ($store_id) {
-                    $q->where('status', 1)
-                    ->where('balance', '>', 0)
-                    ->when($store_id, function ($qq) use ($store_id) {
-                        $qq->where('store_id', $store_id);
-                    });
-                };
+                $stockCheck = fn ($relation) => $this->stockConstraint($relation, $store_id);
 
                 $query->when($this->all_products, function ($q) use ($stockCheck) {
                     // Extended search: match stock in ANY department's table, not just the current one.
                     $q->where(function ($qq) use ($stockCheck) {
-                        $qq->whereHas('inventories', $stockCheck)
-                            ->orWhereHas('tyres', $stockCheck)
-                            ->orWhereHas('assets', $stockCheck);
+                        $qq->whereHas('inventories', $stockCheck('inventories'))
+                            ->orWhereHas('tyres', $stockCheck('tyres'))
+                            ->orWhereHas('assets', $stockCheck('assets'));
                     });
                 }, function ($q) use ($relation, $stockCheck) {
-                    $q->whereHas($relation, $stockCheck);
+                    $q->whereHas($relation, $stockCheck($relation));
                 });
             })
             ->orderBy('name', 'asc')
@@ -1624,8 +1768,8 @@ class Index extends Component
     public function edit($id){
         $dispatch = Dispatch::find($id);
         $this->horse_id = $dispatch->horse_id;
-        $this->horse_id = $dispatch->trailer_id;
-        $this->horse_id = $dispatch->vehicle_id;
+        $this->trailer_id = $dispatch->trailer_id;
+        $this->vehicle_id = $dispatch->vehicle_id;
         $this->expand = $dispatch->expand;
         $this->selectedTicket = $dispatch->ticket_id;
         if($dispatch->ticket_id){
@@ -1770,8 +1914,27 @@ class Index extends Component
 
 
 
+        $fitUnitOptions = [];
+        $fitWarnings = [];
+        if ($this->department === 'tyre') {
+            $service = $this->fitmentService();
+            $units = $this->fitUnits();
+            foreach ($units as $type => $id) {
+                $fitUnitOptions[$type] = $service->unitLabel($type, $id) ?? $type;
+            }
+            foreach ($this->tyreFitmentRows() as $key => $row) {
+                $occupant = $service->occupant($units, $row['fit_type'], $row['axle'], $row['position']);
+                if ($occupant) {
+                    $serial = optional($occupant->tyre)->serial_number ?: optional($occupant->tyre)->tyre_number;
+                    $fitWarnings[$key] = "Tyre {$serial} is fitted here now; it will be taken off when this dispatch is approved.";
+                }
+            }
+        }
+
         return view('livewire.dispatches.index',[
-            'dispatches' => $dispatches
+            'dispatches' => $dispatches,
+            'fitUnitOptions' => $fitUnitOptions,
+            'fitWarnings' => $fitWarnings,
         ]);
     }
 }

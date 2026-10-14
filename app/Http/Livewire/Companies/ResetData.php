@@ -12,6 +12,13 @@ class ResetData extends Component
     public int $total = 0;
     public array $unclassified = [];
     public array $balances = [];
+    public array $partial = [];
+    public array $links = [];
+    public array $keepGroups = [];
+
+    // "Truncate everything except employees" — also wipes master data so it
+    // can be re-pulled from Sage. See CompanyDataResetService::$employeeOnlyKeep.
+    public bool $employeesOnly = false;
 
     public string $confirmText = '';
     public bool $done = false;
@@ -21,6 +28,7 @@ class ResetData extends Component
     {
         abort_unless(Auth::user()->is_admin(), 403);
 
+        $this->keepGroups = app(CompanyDataResetService::class)->employeeOnlyKeepGroups();
         $this->loadPreview();
     }
 
@@ -32,37 +40,54 @@ class ResetData extends Component
         $this->confirmText = '';
     }
 
+    public function updatedEmployeesOnly()
+    {
+        abort_unless(Auth::user()->is_admin(), 403);
+
+        $this->resetErrorBag();
+        $this->loadPreview();
+    }
+
+    public function getConfirmWordProperty(): string
+    {
+        return $this->employeesOnly ? 'RESET ALL' : 'RESET';
+    }
+
     protected function refreshPreview()
     {
-        $report = app(CompanyDataResetService::class)->preview();
+        $report = app(CompanyDataResetService::class)->preview($this->employeesOnly);
 
         $this->preview = $report['groups'];
         $this->total = $report['total'];
         $this->unclassified = $report['unclassified'];
         $this->balances = $report['balances'];
+        $this->partial = $report['partial'];
+        $this->links = $report['links'];
     }
 
     public function runReset(CompanyDataResetService $service)
     {
         abort_unless(Auth::user()->is_admin(), 403);
 
-        if ($this->confirmText !== 'RESET') {
-            $this->addError('confirmText', 'Type RESET (all caps) to confirm.');
+        if ($this->confirmText !== $this->confirmWord) {
+            $this->addError('confirmText', "Type {$this->confirmWord} (all caps) to confirm.");
 
             return;
         }
 
-        if ($this->total === 0 && empty($this->balances)) {
+        if ($this->total === 0 && empty($this->balances) && empty($this->links)) {
             return;
         }
 
-        $this->results = $service->execute();
+        $this->results = $service->execute($this->employeesOnly);
         $this->done = true;
         $this->confirmText = '';
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => 'Data reset complete. All captured transactional data has been wiped.',
+            'message' => $this->employeesOnly
+                ? 'Reset complete. Everything except employees (and their logins) has been wiped — pull master data from Sage next.'
+                : 'Data reset complete. All captured transactional data has been wiped.',
         ]);
 
         $this->refreshPreview();

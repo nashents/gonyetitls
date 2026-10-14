@@ -188,7 +188,14 @@
                                         @error('due_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="invoice_number">Invoice#</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="invoice_number" placeholder="Vendor Invoice#" >
+                                        @error('invoice_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="subheading">Notes</label>
                                         <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="3"></textarea>

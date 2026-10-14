@@ -757,10 +757,8 @@ class Create extends Component
                 $dispatch->vehicle_id = $this->vehicle_id;
                 $dispatch->trailer_id = $this->trailer_id;
                 $dispatch->save();
-        
-                $tyre = Tyre::find($tyre->id);
-                $tyre->status = 0;
-                $tyre->update();
+
+                $assignment->markTyreOutOfStore();
                 }
 
                 }

@@ -20,7 +20,9 @@
                                     <a href="#" wire:click="exportVehiclesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportVehiclesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportVehiclesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    @if (Auth::user()->is_admin())
                                     <a href="#" wire:click.prevent="resetAllFuelTanks()" wire:loading.attr="disabled" onclick="return confirm('Initialize the fuel tanks of ALL vehicles to 0? This overwrites every vehicle\'s current fuel balance.')" class="btn btn-default border-danger btn-rounded btn-wide" title="Set every vehicle's fuel balance to 0"><i class="fa fa-tint"></i>Reset Fuel Tanks</a>
+                                    @endif
                                 </div>
                              
 

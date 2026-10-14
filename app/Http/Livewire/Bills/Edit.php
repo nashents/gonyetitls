@@ -75,6 +75,7 @@ class Edit extends Component
     public $selected_currency;
     public $bill_date;
     public $due_date;
+    public $invoice_number;
     public $notes;
     public $accounts;
     public $company;
@@ -353,6 +354,7 @@ class Edit extends Component
         $this->bill_date = $this->bill->bill_date;
         $this->bill_number = $this->bill->bill_number;
         $this->due_date = $this->bill->due_date;
+        $this->invoice_number = $this->bill->invoice_number;
         $this->notes = $this->bill->notes;
 
         $this->isLocked = $this->bill->authorization === 'approved';
@@ -406,6 +408,7 @@ class Edit extends Component
         'selectedCurrency' => 'required',
         'bill_date' => 'required',
         'due_date' => 'required',
+        'invoice_number' => 'nullable|string|max:255',
         'bill_date' => 'required',
     ];
 
@@ -542,6 +545,7 @@ class Edit extends Component
         $bill->bill_number = $this->bill_number;
         $bill->bill_date = $this->bill_date;
         $bill->due_date = $this->due_date;
+        $bill->invoice_number = $this->invoice_number;
         $bill->notes = $this->notes;
         $bill->update();
 

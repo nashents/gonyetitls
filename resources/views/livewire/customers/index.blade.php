@@ -69,7 +69,7 @@
                                     </td>
                                     <td>{{$customer->email}}</td>
                                     <td>{{$customer->phonenumber}}</td>
-                                    <td>{{$customer->vat_number}}{{$customer->tin_number ? " / ".$customer->tin_number : ""}}</td>
+                                    <td>{{$customer->vat_tin}}</td>
                                     <td>{{$customer->street_address}} {{$customer->suburb}} {{$customer->city}} {{$customer->country}}</td>
                                     <td>
                                         @foreach ($currencies as $currency)

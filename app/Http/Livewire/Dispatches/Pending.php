@@ -9,14 +9,13 @@ use App\Models\Asset;
 use App\Models\Account;
 use Livewire\Component;
 use App\Models\Dispatch;
-use App\Models\Movement;
 use App\Models\Inventory;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
 use App\Models\TicketExpense;
-use App\Models\TyreAssignment;
 use App\Models\TicketInventory;
 use App\Services\Accounting\InventoryJournalService;
+use App\Services\Dispatches\TyreDispatchFitmentService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -41,6 +40,8 @@ class Pending extends Component
     public $department;
     public $authorize;
     public $comments;
+    public array $fitments = [];      // tyre dispatches: [dispatch_item_id => [fit_type, axle, position]]
+    public array $fitUnitOptions = [];
 
 
     public function mount($department){
@@ -54,6 +55,7 @@ class Pending extends Component
         $dispatch = Dispatch::find($id);
         $this->dispatch_id = $dispatch->id;
         $this->dispatch = $dispatch;
+        $this->loadFitments($dispatch);
         $this->dispatchBrowserEvent('show-authorizationModal');
     }
 
@@ -91,84 +93,87 @@ class Pending extends Component
 
     }
 
-    private function tyreAssignmentConflict(){
-        $dispatch = Dispatch::with('dispatch_items.tyre')->find($this->dispatch_id);
+    private function fitmentService(): TyreDispatchFitmentService
+    {
+        return app(TyreDispatchFitmentService::class);
+    }
+
+    // Tyre dispatches are approved with a fitting position per tyre; older dispatches
+    // without one get it filled in here.
+    private function loadFitments(?Dispatch $dispatch): void
+    {
+        $this->fitments = [];
+        $this->fitUnitOptions = [];
+
+        if (!$dispatch || $dispatch->department != "tyre") {
+            return;
+        }
+
+        $service = $this->fitmentService();
+        $units = $service->unitsFor($dispatch);
+        foreach ($units as $type => $id) {
+            $this->fitUnitOptions[$type] = $service->unitLabel($type, $id) ?? $type;
+        }
+
+        foreach ($dispatch->dispatch_items()->with('tyre')->whereNotNull('tyre_id')->get() as $item) {
+            $tyre = $item->tyre;
+            $this->fitments[$item->id] = [
+                'tyre' => $tyre ? trim(($tyre->tyre_number ?? '').($tyre->serial_number ? ' SN#: '.$tyre->serial_number : '')) : '',
+                'fit_type' => $item->fit_type ?: (count($units) === 1 ? array_key_first($units) : null),
+                'axle' => $item->axle,
+                'position' => $item->position,
+            ];
+        }
+    }
+
+    private function tyreFitmentProblem(): ?string
+    {
+        $dispatch = Dispatch::find($this->dispatch_id);
         if (!$dispatch || $dispatch->department != "tyre") {
             return null;
         }
 
-        foreach ($dispatch->dispatch_items as $dispatch_item) {
-            if (!$dispatch_item->tyre_id) {
-                continue;
-            }
-            $active = TyreAssignment::activeForTyre($dispatch_item->tyre_id);
-            if ($active) {
-                $tyre = $dispatch_item->tyre;
-                return TyreAssignment::alreadyAssignedMessage($active, $tyre ? ($tyre->serial_number ?: $tyre->tyre_number) : null);
-            }
+        $rows = [];
+        foreach ($dispatch->dispatch_items()->whereNotNull('tyre_id')->get() as $item) {
+            $fitment = $this->fitments[$item->id] ?? [];
+            $rows[$item->id] = [
+                'tyre_id' => $item->tyre_id,
+                'fit_type' => $fitment['fit_type'] ?? null,
+                'axle' => $fitment['axle'] ?? null,
+                'position' => $fitment['position'] ?? null,
+            ];
         }
 
-        return null;
+        $errors = $this->fitmentService()->validate($rows, $this->fitmentService()->unitsFor($dispatch));
+        // A unit is only needed when tyres are being fitted on approval.
+        $fitting = collect($rows)->contains(fn ($row) => filled($row['axle']) || filled($row['position']));
+        if (isset($errors['fit_unit'])) {
+            if ($fitting) {
+                return "This dispatch has no horse, trailer or vehicle to fit the tyres to. Clear the positions to approve without fitting.";
+            }
+            unset($errors['fit_unit']);
+        }
+
+        return $errors ? reset($errors) : null;
     }
 
-    public function tyreAssignment($dispatch_item){
+    private function fitTyres(Dispatch $dispatch): void
+    {
+        $service = $this->fitmentService();
 
-        $dispatch = $dispatch_item->dispatch;
-        $ticket = $dispatch?->ticket;
-        $horse_id = $ticket?->horse_id;
-        $vehicle_id = $ticket?->vehicle_id;
-        $trailer_id = $ticket?->trailer_id;
+        foreach ($dispatch->dispatch_items()->with('tyre')->whereNotNull('tyre_id')->get() as $item) {
+            $fitment = $this->fitments[$item->id] ?? [];
+            $item->fit_type = ($fitment['fit_type'] ?? null) ?: null;
+            $item->axle = ($fitment['axle'] ?? null) ?: null;
+            $item->position = ($fitment['position'] ?? null) ?: null;
+            $item->save();
 
-        $assignment = new TyreAssignment;
-        $assignment->user_id = Auth::user()->id;
-        $assignment->tyre_id = $dispatch_item->tyre_id;
-      
-        if (isset($horse_id)) {
-            $assignment->type = "Horse";
-            $assignment->horse_id = $horse_id;
-            $assignment->vehicle_id = null;
-            $assignment->trailer_id = null;
-        }elseif (isset($trailer_id)) {
-            $assignment->type = "Trailer";
-            $assignment->trailer_id = $trailer_id;
-            $assignment->horse_id = null;
-            $assignment->vehicle_id = null;
-        }elseif (isset($vehicle_id)) {
-            $assignment->type = "Vehicle";
-            $assignment->vehicle_id = $vehicle_id;
-            $assignment->horse_id = null;
-            $assignment->trailer_id = null;
+            // No position: the tyre leaves stores unfitted and is fitted later in Tyre Assignments.
+            if ($item->axle && $item->position) {
+                $service->fit($dispatch, $item);
+            }
         }
-        $assignment->starting_odometer = $ticket?->odometer;
-        $assignment->date_fitted = date('Y-m-d');
-        $assignment->current_mileage = $ticket?->odometer;
-        $assignment->status = 1;
-        $assignment->save();
-
-        $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
-        $movement->dispatch_id = $dispatch->id;
-        $movement->dispatch_item_id = $dispatch_item->id;
-        $movement->user_id = $assignment->user_id;
-        $movement->tyre_id = $assignment->tyre_id;
-        
-        if ($assignment->horse_id) {
-            $movement->location = 'Horse';
-            $movement->horse_id = $assignment->horse_id;
-        } elseif ($assignment->vehicle_id) {
-            $movement->location = 'Vehicle';
-            $movement->vehicle_id = $assignment->vehicle_id;
-        } elseif ($assignment->trailer_id) {
-            $movement->location = 'Trailer';
-            $movement->trailer_id = $assignment->vehicle_id;
-        }
-        
-        $movement->current_mileage = $assignment->current_mileage;
-        $movement->mileage_moved = $assignment->starting_odometer;
-        $movement->date =   $assignment->date_fitted;
-        $movement->save();
-
     }
-
 
     public function createTicketInventory($dispatch_item){
         $dispatch = $dispatch_item->dispatch;
@@ -214,7 +219,7 @@ class Pending extends Component
     public function update()
     {
         // Checked up front: approval sends mail and posts a bill, so fail before any of that.
-        if ($this->authorize == "approved" && ($message = $this->tyreAssignmentConflict())) {
+        if ($this->authorize == "approved" && ($message = $this->tyreFitmentProblem())) {
             $this->dispatchBrowserEvent('alert', [
                 'type' => 'error',
                 'message' => $message
@@ -278,10 +283,6 @@ class Pending extends Component
 
 
                     foreach ($dispatch->dispatch_items as $dispatch_item) {
-
-                        if ($dispatch_item->dispatch->department == "tyre") {
-                           $this->tyreAssignment($dispatch_item);
-                        }
                         if ($dispatch->dispatch_for == "inventory") {
                             $this->createTicketInventory($dispatch_item);
                         }elseif($dispatch->dispatch_for == "expenses"){
@@ -337,6 +338,13 @@ class Pending extends Component
                             $item->save();
 
                     }
+
+                    if ($dispatch->department == "tyre") {
+
+                        $this->fitTyres($dispatch);
+
+                    }
+
 
                     app(InventoryJournalService::class)->postDispatchBill($bill);
 

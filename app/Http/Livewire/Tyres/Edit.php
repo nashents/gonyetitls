@@ -194,7 +194,7 @@ class Edit extends Component
         $this->selectedPurchaseProduct = $tyre->purchase_product_id;
       
         $this->amount = $tyre->amount;
-        $this->qty = $tyre->qty;
+        $this->qty = 1; // one record is one tyre
         $this->cost = $tyre->cost;
         $this->purchase_date = $tyre->purchase_date ? Carbon::parse($tyre->purchase_date)->format('Y-m-d') : Null;
         $this->tyre_number = $tyre->tyre_number;
@@ -508,9 +508,8 @@ public function updatedSelectedTax($id){
               $tyre->purchase_product_id = $this->selectedPurchaseProduct;
               $tyre->serial_number = $this->serial_number;
               $tyre->type = $this->type;
-              $tyre->qty = $this->qty;
-              $tyre->weight = $this->qty;
-              $tyre->balance = $this->qty;
+              // qty/balance are not edited here: one record is one tyre, and balance moves only through
+              // dispatches, so re-saving must not put a dispatched tyre back in stock.
               $tyre->amount = $this->amount;
               $tyre->cost = $this->cost;
               $tyre->measurement = $this->measurement;

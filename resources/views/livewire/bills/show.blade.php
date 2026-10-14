@@ -133,6 +133,12 @@
                                     <td class="w-20 line-height-35">{{$bill->due_date}}</td>
                                 </tr>
                             @endif
+                            @if ($bill->invoice_number)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Invoice#</th>
+                                    <td class="w-20 line-height-35">{{$bill->invoice_number}}</td>
+                                </tr>
+                            @endif
                             <tr>
                                 <th class="w-10 text-center line-height-35">Currency</th>
                                 <td class="w-20 line-height-35">{{$bill->currency ? $bill->currency->name : ""}}</td>

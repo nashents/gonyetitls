@@ -1,0 +1,189 @@
+<?php
+
+namespace App\Services\Dispatches;
+
+use App\Models\Dispatch;
+use App\Models\DispatchItem;
+use App\Models\Horse;
+use App\Models\Trailer;
+use App\Models\Tyre;
+use App\Models\TyreAssignment;
+use App\Models\Vehicle;
+use App\Services\Fleet\TyreAssignmentService;
+
+/**
+ * Tyre dispatches take tyres out of stores to a unit (horse / trailer / vehicle on the dispatch).
+ * Stores may also say where each tyre goes (axle + position); then approval fits it there and
+ * takes off whatever tyre is in that position. Without a position the tyre is out of stores but
+ * not fitted, and is fitted later in Tyre Assignments.
+ */
+class TyreDispatchFitmentService
+{
+    public function __construct(private TyreAssignmentService $assignments)
+    {
+    }
+
+    /**
+     * Units a tyre on this dispatch can be fitted to: ['Horse' => id, 'Trailer' => id, ...].
+     */
+    public function units($horseId, $trailerId, $vehicleId): array
+    {
+        return array_filter([
+            'Horse' => $horseId ?: null,
+            'Trailer' => $trailerId ?: null,
+            'Vehicle' => $vehicleId ?: null,
+        ]);
+    }
+
+    public function unitsFor(Dispatch $dispatch): array
+    {
+        return $this->units($dispatch->horse_id, $dispatch->trailer_id, $dispatch->vehicle_id);
+    }
+
+    public function unitLabel(string $type, $id): ?string
+    {
+        $model = match ($type) {
+            'Horse' => Horse::find($id),
+            'Trailer' => Trailer::find($id),
+            'Vehicle' => Vehicle::find($id),
+            default => null,
+        };
+
+        return $model ? "{$type}: {$model->identifier_label}" : null;
+    }
+
+    /**
+     * @param array $rows  [key => ['tyre_id', 'fit_type', 'axle', 'position']]
+     * @param array $units from units()
+     * @return array       [errorKey => message], errorKey = "{field}.{key}"
+     */
+    public function validate(array $rows, array $units): array
+    {
+        $errors = [];
+
+        if (empty($units)) {
+            $errors['fit_unit'] = 'Select the horse, trailer or vehicle the tyres are being fitted to.';
+        }
+
+        $slots = [];
+
+        foreach ($rows as $key => $row) {
+            $tyre = Tyre::find($row['tyre_id'] ?? null);
+
+            if (!$tyre) {
+                $errors["selectedTyre.{$key}"] = 'Select a tyre.';
+                continue;
+            }
+
+            $label = $tyre->serial_number ?: $tyre->tyre_number;
+
+            if ($active = TyreAssignment::activeForTyre($tyre->id)) {
+                $location = $active->locationLabel();
+                $errors["selectedTyre.{$key}"] = "Tyre {$label} is already fitted"
+                    .($location ? " to {$location}" : '')
+                    .', so it is not in stock. Reject this dispatch and dispatch an in-stock tyre instead.';
+                continue;
+            }
+
+            if (!Tyre::inStock()->whereKey($tyre->id)->exists()) {
+                $errors["selectedTyre.{$key}"] = "Tyre {$label} is not in stock.";
+                continue;
+            }
+
+            $type = $row['fit_type'] ?? null;
+            $axle = $row['axle'] ?? null;
+            $position = $row['position'] ?? null;
+
+            // Fitment is optional: no axle and no position means "fit later in Tyre Assignments".
+            if (blank($axle) && blank($position)) {
+                continue;
+            }
+
+            if (!$type || !isset($units[$type])) {
+                $errors["fit_type.{$key}"] = "Select the unit tyre {$label} is fitted to.";
+            }
+            if (!in_array($axle, TyreAssignment::AXLES, true)) {
+                $errors["fit_axle.{$key}"] = "Select the axle for tyre {$label}.";
+            }
+            if (!array_key_exists((string) $position, TyreAssignment::POSITIONS)) {
+                $errors["fit_position.{$key}"] = "Select the position for tyre {$label}.";
+            }
+
+            if ($type && $axle && $position && !TyreAssignment::isSpareSlot($axle, $position)) {
+                $slot = "{$type}|{$axle}|{$position}";
+                if (isset($slots[$slot])) {
+                    $errors["fit_position.{$key}"] = "Two tyres on this dispatch are going to {$type} {$axle} "
+                        .(TyreAssignment::POSITIONS[$position] ?? $position).'.';
+                }
+                $slots[$slot] = true;
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * The tyre currently in the slot, which approval will take off.
+     */
+    public function occupant(array $units, $type, $axle, $position): ?TyreAssignment
+    {
+        if (!$type || !isset($units[$type])) {
+            return null;
+        }
+
+        return TyreAssignment::activeAtPosition($this->assignments->assetColumn($type), $units[$type], $axle, $position);
+    }
+
+    /**
+     * Fits an approved dispatch item. Call after the dispatch has taken the tyre's balance,
+     * so the assignment records nothing to give back to stores on unassign.
+     */
+    public function fit(Dispatch $dispatch, DispatchItem $item): TyreAssignment
+    {
+        $units = $this->unitsFor($dispatch);
+        $type = $item->fit_type;
+        $assetId = $units[$type] ?? null;
+
+        if (!$assetId || blank($item->axle) || blank($item->position)) {
+            throw new \RuntimeException('Every tyre on a tyre dispatch needs a unit, axle and position.');
+        }
+
+        $odometer = $this->fittingOdometer($dispatch, $type, $assetId);
+        $date = $dispatch->date ?: date('Y-m-d');
+        $tyre = $item->tyre;
+        $label = $tyre ? ($tyre->serial_number ?: $tyre->tyre_number) : $item->tyre_id;
+
+        if ($occupant = $this->occupant($units, $type, $item->axle, $item->position)) {
+            $ending = max((float) $odometer, (float) $occupant->starting_odometer);
+            $this->assignments->unassign($occupant, $ending, $date, "Replaced by tyre {$label} on dispatch {$dispatch->dispatch_number}");
+        }
+
+        return $this->assignments->assign($type, $assetId, [
+            'tyre_id' => $item->tyre_id,
+            'axle' => $item->axle,
+            'position' => $item->position,
+            'starting_odometer' => $odometer,
+            'date_fitted' => $date,
+            'description' => "Fitted from dispatch {$dispatch->dispatch_number}",
+            'ticket_id' => $dispatch->ticket_id,
+            'dispatch_id' => $dispatch->id,
+            'dispatch_item_id' => $item->id,
+        ]);
+    }
+
+    private function fittingOdometer(Dispatch $dispatch, string $type, $assetId)
+    {
+        $ticket = $dispatch->ticket;
+        if ($ticket && filled($ticket->odometer)) {
+            return $ticket->odometer;
+        }
+
+        $asset = match ($type) {
+            'Horse' => Horse::find($assetId),
+            'Trailer' => Trailer::find($assetId),
+            'Vehicle' => Vehicle::find($assetId),
+        };
+
+        return $asset?->mileage;
+    }
+}

@@ -91,7 +91,7 @@ class Index extends Component
 
     public function store(){
 
-        if ($this->tyreAlreadyAssigned($this->tyre_id) || $this->positionTaken()) {
+        if ($this->tyreAlreadyAssigned($this->tyre_id) || $this->tyreNotAssignable($this->tyre_id) || $this->positionTaken()) {
             return;
         }
 
@@ -152,9 +152,7 @@ class Index extends Component
         $mileage->category = "Tyre Assignment";
         $mileage->save();
 
-        $tyre = Tyre::find($this->tyre_id);
-        $tyre->status = 0;
-        $tyre->update();
+        $assignment->markTyreOutOfStore();
 
         $this->dispatchBrowserEvent('hide-tyre_assignmentModal');
         $this->resetInputFields();
@@ -192,12 +190,12 @@ class Index extends Component
         {
             if ($this->tyre_assignment_id) {
 
-                if ($this->tyreAlreadyAssigned($this->tyre_id, $this->tyre_assignment_id) || $this->positionTaken($this->tyre_assignment_id)) {
+                if ($this->tyreAlreadyAssigned($this->tyre_id, $this->tyre_assignment_id) || $this->tyreNotAssignable($this->tyre_id, $this->tyre_assignment_id) || $this->positionTaken($this->tyre_assignment_id)) {
                     return;
                 }
 
                 $assignment = TyreAssignment::find($this->tyre_assignment_id);
-                $assignment->user_id = Auth::user()->id;
+                // user_id is who assigned it; editing must not change it.
 
                 if ($this->type == "Horse") {
                     $assignment->horse_id = $this->horse_id;
@@ -221,12 +219,13 @@ class Index extends Component
                 $assignment->description = $this->description;
                 if ($this->ending_odometer) {
                     $assignment->status = 0;
-                    $tyre = Tyre::find($this->tyre_id);
-                    $tyre->status = 1;
-                    $tyre->update();
                 }
-               
+
                 $assignment->update();
+
+                if ($assignment->status == 1) {
+                    $assignment->markTyreOutOfStore();
+                }
 
                 $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
                 $movement->user_id = $assignment->user_id;
@@ -299,6 +298,30 @@ class Index extends Component
             return true;
         }
 
+        // Only tyres that left stores (approved dispatch, taken off a unit, imported with qty 0) can be fitted.
+        private function tyreNotAssignable($tyreId, $exceptAssignmentId = null){
+            if (!$tyreId) {
+                return false;
+            }
+            if ($exceptAssignmentId && optional(TyreAssignment::find($exceptAssignmentId))->tyre_id == $tyreId) {
+                return false;
+            }
+
+            $tyre = Tyre::find($tyreId);
+            $message = $tyre ? $tyre->assignmentBlocker() : 'Select a tyre.';
+            if (!$message) {
+                return false;
+            }
+
+            $this->addError('tyre_id', $message);
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$message
+            ]);
+
+            return true;
+        }
+
         private function positionTaken($exceptId = null){
             $assetIds = ['Horse' => ['horse_id', $this->horse_id], 'Trailer' => ['trailer_id', $this->trailer_id], 'Vehicle' => ['vehicle_id', $this->vehicle_id]];
             if (!isset($assetIds[$this->type])) {
@@ -320,6 +343,8 @@ class Index extends Component
 
             return true;
         }
+
+        public $dispose_tyre = false;
 
         public function unAssignment($id){
             $assignment = TyreAssignment::with('tyre.product','horse','trailer','vehicle')->find($id);
@@ -371,8 +396,9 @@ class Index extends Component
             ]);
 
             $distance = app(TyreAssignmentService::class)->unassign(
-                $assignment, $this->ending_odometer, $this->unassigned_date, $this->unassignment_reason
+                $assignment, $this->ending_odometer, $this->unassigned_date, $this->unassignment_reason, (bool) $this->dispose_tyre
             );
+            $this->dispose_tyre = false;
 
             $this->dispatchBrowserEvent('hide-unAssignmentModal');
             Session::flash('success','Tyre Unassigned Successfully!! '.number_format($distance)."Kms added to the tyre's distance.");
@@ -392,8 +418,9 @@ class Index extends Component
     {
 
         // Tyres already on an asset are hidden; when editing, keep the assignment's own tyre listed.
+        // Only tyres out of stores and not on a unit (dispatched / taken off / imported qty 0).
         $availableTyres = function ($q) {
-            $q->whereDoesntHave('tyre_assignments', fn ($a) => $a->where('status', 1))
+            $q->whereIn('id', Tyre::assignable()->select('id'))
               ->when($this->tyre_assignment_id && $this->tyre_id, fn ($q) => $q->orWhere('id', $this->tyre_id));
         };
 
@@ -411,6 +438,7 @@ class Index extends Component
                     $like = "%{$term}%";
                     $q->where(function ($q) use ($like) {
                         $q->where('serial_number', 'like', $like)
+                        ->orWhere('tyre_number', 'like', $like)
                         ->orWhereHas('product', function ($q) use ($like) {
                             $q->where('name', 'like', $like)
                                 ->orWhere('identification_number', 'like', $like)
@@ -430,7 +458,7 @@ class Index extends Component
         $term = $this->search;
 
         $tyre_assignments = TyreAssignment::query()
-            ->with('horse','vehicle','trailer','tyre','tyre.product','tyre.product.brand','unassignedBy')
+            ->with('horse','vehicle','trailer','tyre','tyre.product','tyre.product.brand','unassignedBy','user')
             ->when($this->statusFilter === 'active', fn ($q) => $q->where('status', 1))
             ->when($this->statusFilter === 'inactive', fn ($q) => $q->where(fn ($q) => $q->where('status', '!=', 1)->orWhereNull('status')))
             ->when(filled($term), function ($q) use ($term) {

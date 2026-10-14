@@ -28,6 +28,8 @@
             </th>
             <th class="th-sm">Position
             </th>
+            <th class="th-sm">Assigned By / On
+            </th>
             <th class="th-sm">Usage
             </th>
             <th class="th-sm">Health Status
@@ -51,6 +53,12 @@
                     <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->width : ""}} / {{$tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : ""}} R {{$tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : ""}}</td>
                     <td>{{$tyre_assignment->axle}}</td>
                     <td>{{ \App\Models\TyreAssignment::POSITIONS[$tyre_assignment->position] ?? $tyre_assignment->position }}</td>
+                    <td>
+                        {{$tyre_assignment->user ? $tyre_assignment->user->name." ".$tyre_assignment->user->surname : ""}}
+                        @if ($tyre_assignment->created_at)
+                            <br><small>{{$tyre_assignment->created_at->format('Y-m-d H:i')}}</small>
+                        @endif
+                    </td>
                     <td>
                         <small><strong>Acquisition: </strong> {{Carbon\Carbon::parse($tyre_assignment->tyre->purchase_date)->format('d M Y')}}</small><br>
                         <small><strong>Age: </strong> {{ $tyre_assignment->tyre->age ?? '-' }}</small><br>
@@ -106,7 +114,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="11">
+                <td colspan="12">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No tyres assigned to this {{ strtolower($type) }} found ....
                     </div>
@@ -174,7 +182,7 @@
                                     <select class="form-control" wire:model.defer="assignRows.{{ $i }}.tyre_id">
                                         <option value="">Select Tyre</option>
                                         @foreach ($availableTyres as $availableTyre)
-                                            <option value="{{ $availableTyre->id }}">{{ $availableTyre->product && $availableTyre->product->brand ? $availableTyre->product->brand->name : "" }} {{ $availableTyre->product ? $availableTyre->product->name : "" }} {{ $availableTyre->serial_number ? "SN#: ".$availableTyre->serial_number : "" }} - {{ $availableTyre->width }}/{{ $availableTyre->aspect_ratio }} R {{ $availableTyre->diameter }}</option>
+                                            <option value="{{ $availableTyre->id }}">{{ $availableTyre->tyre_number }} {{ $availableTyre->product && $availableTyre->product->brand ? $availableTyre->product->brand->name : "" }} {{ $availableTyre->product ? $availableTyre->product->name : "" }} {{ $availableTyre->serial_number ? "SN#: ".$availableTyre->serial_number : "" }} - {{ $availableTyre->width }}/{{ $availableTyre->aspect_ratio }} R {{ $availableTyre->diameter }}</option>
                                         @endforeach
                                     </select>
                                     @error('assignRows.'.$i.'.tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -251,6 +259,11 @@
                         <label>Reason<span class="required" style="color: red">*</span></label>
                         <textarea wire:model.defer="unassignment_reason" class="form-control" rows="4" placeholder="e.g. Worn out, puncture, rotation, sent for retread..." required></textarea>
                         @error('unassignment_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" wire:model.defer="dispose_tyre" class="line-style" id="dispose_tyre" />
+                        <label for="dispose_tyre" class="radio-label">Unassign and mark the tyre(s) as disposed</label>
+                        <br><small class="text-muted">Otherwise the tyre stays out of stores, unassigned, ready to be fitted to another unit. It never goes back into stock.</small>
                     </div>
                 </div>
                 <div class="modal-footer">

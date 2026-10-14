@@ -23,6 +23,42 @@
         <p class="mb-0 mt-5"><strong>This action cannot be undone. Take a database backup before proceeding.</strong></p>
     </div>
 
+    <div class="checkbox" style="margin-bottom:15px;">
+        <label>
+            <input type="checkbox" wire:model="employeesOnly">
+            <strong>Truncate everything except employees</strong>
+            <span class="text-muted">— return the system to its initial-deployment (seeded) state, keeping only the existing employees and their logins, so master data can be pulled fresh from Sage</span>
+        </label>
+    </div>
+
+    @if ($employeesOnly)
+        <div class="alert alert-danger">
+            <strong><i class="fa fa-exclamation-triangle"></i> Keep Employees Only</strong>
+            <p class="mb-0 mt-5">
+                The system goes back to how it was <strong>straight after initial deployment</strong>: on top of the
+                captured data above, <strong>all master data is wiped</strong> — fleet, customers, vendors, transporters,
+                consignees, brokers, products, stores, inventory, routes and locations. Pull them again from Sage
+                (Integrations) afterwards.
+            </p>
+            <p class="mb-0 mt-5">
+                Seeded reference data (chart of accounts, expenses, taxes, vehicle/trailer/horse types, cargos,
+                checklists, payment methods, ...) is <strong>wiped and re-seeded</strong>, so anything added to those
+                lists after deployment is removed and the deployment defaults come back.
+            </p>
+            <p class="mb-0 mt-5">
+                Employees, their driver profiles and <strong>all user logins/roles are kept</strong>, together with the
+                setup listed below. HR documents are kept; all other uploaded documents are removed. Sage links are
+                cleared except the employee links, so the Sage pull creates fresh records.
+            </p>
+            <details class="mt-5">
+                <summary><strong>What is kept</strong></summary>
+                @foreach ($keepGroups as $group => $tables)
+                    <div class="mt-5"><strong>{{ $group }}:</strong> <span class="text-muted">{{ implode(', ', $tables) }}</span></div>
+                @endforeach
+            </details>
+        </div>
+    @endif
+
     @if ($done)
         <div class="alert alert-success">
             <strong><i class="fa fa-check"></i> Reset complete.</strong> Summary below and in storage/logs/laravel.log.
@@ -56,7 +92,7 @@
         </div>
     @endif
 
-    @if ($total === 0 && empty($balances))
+    @if ($total === 0 && empty($balances) && empty($links))
         <div class="alert alert-info">There is currently no captured data or non-zero balances to reset.</div>
     @else
         @if ($total > 0)
@@ -79,6 +115,36 @@
             </div>
         @endif
 
+        @if (!empty($partial))
+            <div class="panel-heading" style="padding-left:0;">
+                These shared tables are only partly cleared (employee rows are kept):
+            </div>
+            <div class="panel-body p-0">
+                <table class="table table-striped table-bordered table-sm">
+                    <tbody>
+                        @foreach ($partial as $table => $count)
+                            <tr><td>{{ $table }}</td><td class="w-10">{{ $count }} row(s) deleted</td></tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        @if (!empty($links))
+            <div class="panel-heading" style="padding-left:0;">
+                These kept rows point at wiped records and will be unlinked (set to empty):
+            </div>
+            <div class="panel-body p-0">
+                <table class="table table-striped table-bordered table-sm">
+                    <tbody>
+                        @foreach ($links as $column => $count)
+                            <tr><td>{{ $column }}</td><td class="w-10">{{ $count }} row(s)</td></tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
         @if (!empty($balances))
             <div class="panel-heading" style="padding-left:0;">
                 These stored balances will be reset to 0 (rows are kept, only the balance changes):
@@ -98,7 +164,7 @@
 
         <form wire:submit.prevent="runReset">
             <div class="form-group">
-                <label for="confirmText">Type <strong>RESET</strong> to confirm you want to permanently delete the data (and zero the balances) above</label>
+                <label for="confirmText">Type <strong>{{ $this->confirmWord }}</strong> to confirm you want to permanently delete the data (and zero the balances) above</label>
                 <input type="text" id="confirmText" class="form-control" wire:model.defer="confirmText" autocomplete="off">
                 @error('confirmText') <span class="text-danger error">{{ $message }}</span> @enderror
             </div>
@@ -107,7 +173,7 @@
                     <i class="fa fa-refresh"></i> Refresh
                 </button>
                 <button type="submit" class="btn btn-danger btn-wide btn-rounded">
-                    <i class="fa fa-trash"></i> Permanently Wipe Data
+                    <i class="fa fa-trash"></i> {{ $employeesOnly ? 'Wipe Everything Except Employees' : 'Permanently Wipe Data' }}
                 </button>
             </div>
             <br><br>

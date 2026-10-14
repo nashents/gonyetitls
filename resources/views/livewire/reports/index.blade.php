@@ -70,6 +70,15 @@
                         <div class="panel-body">
                             A breakdown of taxes collected from sales and paid on purchases. You can use this information to prepare sales tax returns and calculate your balance or refund.
                         </div>
+                        <hr>
+                        <div class="panel-heading">
+                            <div class="panel-title">
+                                <h5><a href="{{route('reports.zimra_schedule')}}" style="color:blue">ZIMRA Sales & Purchases Schedule</a></h5>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            Every approved sales invoice, credit note and bill for the period, split into with-VAT and without-VAT schedules per currency, ready for the ZIMRA VAT return. Exports to Excel.
+                        </div>
                     </section>
                     <h3>CUSTOMERS</h3>
                     <section>

@@ -59,6 +59,7 @@ class Create extends Component
     public $selected_currency;
     public $bill_date;
     public $due_date;
+    public $invoice_number;
     public $notes;
     public $accounts;
     public $selectedAccount = [];
@@ -290,6 +291,7 @@ class Create extends Component
         'selectedCurrency' => 'required',
         'bill_date' => 'required',
         'due_date' => 'required',
+        'invoice_number' => 'nullable|string|max:255',
         'selectedProduct.0' => 'required',
         'selectedAccount.0' => 'required',
         'description.0' => 'required',
@@ -394,6 +396,7 @@ class Create extends Component
         $bill->bill_number = $this->bill_number;
         $bill->bill_date = $this->bill_date;
         $bill->due_date = $this->due_date;
+        $bill->invoice_number = $this->invoice_number;
         $bill->notes = $this->notes;
         $bill->save();
 

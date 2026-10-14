@@ -52,6 +52,23 @@ class DispatchReversalService
                 ]);
             }
 
+            // A tyre fitted after the dispatch (in Tyre Assignments) must come off before it can go back to stores.
+            foreach ($dispatch->dispatch_items as $dispatch_item) {
+                if (!$dispatch_item->tyre_id || !($active = TyreAssignment::activeForTyre($dispatch_item->tyre_id))) {
+                    continue;
+                }
+                $fittedByThisDispatch = Movement::where('dispatch_item_id', $dispatch_item->id)
+                    ->where('tyre_assignment_id', $active->id)
+                    ->exists();
+                if (!$fittedByThisDispatch) {
+                    $tyre = $dispatch_item->tyre;
+                    throw ValidationException::withMessages([
+                        'dispatch' => 'Tyre '.($tyre ? ($tyre->serial_number ?: $tyre->tyre_number) : '')
+                            .' is fitted to '.$active->locationLabel().'. Unassign it before reversing this dispatch.',
+                    ]);
+                }
+            }
+
             foreach ($dispatch->dispatch_items as $dispatch_item) {
 
                 if ($dispatch_item->inventory_id) {

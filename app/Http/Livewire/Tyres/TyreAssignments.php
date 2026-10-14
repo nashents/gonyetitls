@@ -45,6 +45,7 @@ class TyreAssignments extends Component
     public $ending_odometer;
     public $unassigned_date;
     public $unassignment_reason;
+    public $dispose_tyre = false;
 
     public function mount($id, $type){
         $this->type = $type;
@@ -201,7 +202,7 @@ class TyreAssignments extends Component
         $distance = DB::transaction(function () use ($assignments, $service) {
             $total = 0;
             foreach ($assignments as $assignment) {
-                $total += $service->unassign($assignment, $this->ending_odometer, $this->unassigned_date, $this->unassignment_reason);
+                $total += $service->unassign($assignment, $this->ending_odometer, $this->unassigned_date, $this->unassignment_reason, (bool) $this->dispose_tyre);
             }
             return $total;
         });
@@ -267,7 +268,7 @@ class TyreAssignments extends Component
     
     public function render()
     {
-        $this->tyre_assignments = TyreAssignment::with('tyre.product.brand','horse','trailer','vehicle')
+        $this->tyre_assignments = TyreAssignment::with('tyre.product.brand','horse','trailer','vehicle','user')
             ->where($this->assetColumn(), $this->equipmentId)
             ->where('status',1)
             ->orderBy('axle')
@@ -281,9 +282,8 @@ class TyreAssignments extends Component
             $picked = collect($this->assignRows)->pluck('tyre_id')->filter()->all();
             $availableTyres = Tyre::query()
                 ->with('product.brand')
-                ->where('disposed', 0)
+                ->assignable()
                 ->where('retread', 0)
-                ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
                 ->when($term !== '', function ($q) use ($term, $picked) {
                     $like = "%{$term}%";
                     $q->where(function ($q) use ($like, $picked) {
@@ -294,6 +294,13 @@ class TyreAssignments extends Component
                           ->orWhereIn('id', $picked);
                     });
                 })
+                // Tyres dispatched to this unit first.
+                ->orderByRaw(
+                    "exists(select 1 from dispatch_items di join dispatches d on d.id = di.dispatch_id"
+                    ." where di.tyre_id = tyres.id and di.deleted_at is null and d.authorization = 'approved'"
+                    ." and d.".$this->assetColumn()." = ?) desc",
+                    [$this->equipmentId]
+                )
                 ->orderBy('serial_number')
                 ->get();
         }

@@ -122,14 +122,18 @@
                                             </a>
                                             <br>
                                             <small><strong>{{$assignment->axle}} {{$assignment->position}}</strong></small>
+                                        @elseif ($tyre->disposed)
+                                        @elseif ($tyre->retread != 0)
+                                            <span class="badge bg-warning">Retread</span>
+                                        @elseif ((float) $tyre->balance <= 0)
+                                            <span class="badge bg-info">Out of store &middot; not fitted</span>
+                                            @if ($awaiting = $tyre->awaitingFitmentLabel())
+                                                <br><small>{{ $awaiting }}</small>
+                                            @endif
                                         @else
-                                            @if ($tyre->retread == 0)
-                                                <span class="badge bg-success">Instore</span>
-                                                <br>
-                                                {{$tyre->store ? $tyre->store->name : ""}}
-                                            @else
-                                                <span class="badge bg-warning">Retread</span>
-                                            @endif  
+                                            <span class="badge bg-success">Instore</span>
+                                            <br>
+                                            {{$tyre->store ? $tyre->store->name : ""}}
                                         @endif
                                     </td>
                                     <td>
