@@ -80,7 +80,7 @@ class TripExpenseJournalService
         }
 
         return DB::transaction(function () use ($tripExpense) {
-            $account = Account::where('name', 'Trip Expense')->firstOrFail();
+            $account = $this->accountFor($tripExpense);
             $trip = $tripExpense->trip;
 
             $bill = Bill::where('trip_expense_id', $tripExpense->id)->first() ?: new Bill;
@@ -111,6 +111,9 @@ class TripExpenseJournalService
             $bill->save();
 
             $billExpense = $bill->bill_expenses()->first() ?? new BillExpense;
+            // isUnchanged() only compares the AP leg, so a re-pointed debit
+            // account must force the reverse+repost too.
+            $accountChanged = $billExpense->exists && (int) $billExpense->account_id !== (int) $account->id;
             $billExpense->user_id = $billExpense->user_id ?? Auth::id();
             $billExpense->bill_id = $bill->id;
             $billExpense->currency_id = $bill->currency_id;
@@ -147,9 +150,21 @@ class TripExpenseJournalService
             return $this->ledgerResync->resyncBill(
                 $bill,
                 "Trip expense #{$tripExpense->id} added/updated",
-                $dateChanged
+                $dateChanged || $accountChanged
             );
         });
+    }
+
+    /**
+     * The debit account the user configured on the expense (Expenses >
+     * Account) or allowance; the generic "Trip Expense" account only when
+     * neither has one.
+     */
+    public function accountFor(TripExpense $tripExpense): Account
+    {
+        return optional($tripExpense->expense)->account
+            ?: optional($tripExpense->allowance)->account
+            ?: Account::where('name', 'Trip Expense')->firstOrFail();
     }
 
     public function isBillable(TripExpense $tripExpense): bool

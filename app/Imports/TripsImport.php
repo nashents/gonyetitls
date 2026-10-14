@@ -637,7 +637,10 @@ WithBatchInserts
             return null;
         }
 
-        $account = $this->payment_account;
+        // The expense's/allowance's own account; "Trip Expense" only as a fallback.
+        $account = optional($trip_expense->expense)->account
+            ?: optional($trip_expense->allowance)->account
+            ?: $this->payment_account;
 
         $bill = new Bill;
         $bill->user_id = Auth::user()->id;
