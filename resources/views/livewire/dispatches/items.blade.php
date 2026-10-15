@@ -16,7 +16,7 @@
                 @foreach ($items as $item)
               <tr>
                 <td>
-                   
+                    @if ($item->stock_number)<strong>{{ $item->stock_number }}</strong> @endif
                     {{$item->product ? $item->product->product_number : ""}} {{$item->product ? $item->product->name : ""}} {{$item->product?->brand ? $item->product?->brand?->name : ""}}
                     @if ($item->inventory)
                         {{$item->inventory ? $item->inventory->serial_number : ""}}

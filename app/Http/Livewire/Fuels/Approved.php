@@ -99,49 +99,11 @@ class Approved extends Component
                 }
                 $container->update();
             }
-            if (app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
-                // Customer supplied - no supplier Bill; settles against the customer.
-                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
-            }elseif($fuel->container->purchase_type == "Once Off Buy" && isset($fuel->trip)){
-
-                $bill = new Bill;
-                $bill->user_id = Auth::user()->id;
-                $bill->company_id = Auth::user()->employee->company_id;
-                $bill->bill_number = $this->billNumber();
-                $bill->trip_id = $fuel->trip->id;
-                $bill->category = "Trip Expense";
-                $bill->fuel_id = $fuel->id;
-                $bill->bill_date = $fuel->date;
-                $bill->currency_id = $fuel->currency_id;
-                $bill->exchange_rate = $fuel->exchange_rate;
-                $bill->total = $fuel->amount;
-                $bill->balance = $fuel->amount;
-                // Without this, bills.authorization stays 'pending' (the column
-                // default) and this bill never matches the P&L reports' approved-
-                // bills filter, no matter how the account is categorized.
-                $bill->authorization = 'approved';
-                $bill->save();
-
-                $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
-
-                $bill_expense = new BillExpense;
-                $bill_expense->user_id = Auth::user()->id;
-                $bill_expense->bill_id = $bill->id;
-                $bill_expense->currency_id = $bill->currency_id;
-                if (isset($fuel_expense)) {
-                    $bill_expense->expense_id = $fuel_expense->id;
-                    $bill_expense->account_id = $fuel_expense->account_id;
-                }
-                $bill_expense->qty = $fuel->quantity;
-                $bill_expense->amount = $fuel->unit_price;
-                $bill_expense->subtotal = $fuel->amount;
-                // The P&L reports read subtotal_incl (same-currency) / exchange_amount
-                // (cross-currency) to value each line — leaving these unset meant the
-                // amount always computed to 0 and got silently dropped as a zero line.
-                $bill_expense->subtotal_incl = $fuel->amount;
-                $bill_expense->exchange_amount = $fuel->exchange_amount;
-                $bill_expense->save();
-            }
+            // Same posting path as every other fuel approval screen: Fuel - COGS
+            // (trip) / Fuel - Ops, AP for Once Off Buy, Fuel Inventory for Bulk
+            // Buy, customer-supplied against AR. The old inline bill here posted
+            // before its line existed and took the account from the expense row.
+            app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
            
             // sending fuel order email to station
             $trip = $fuel->trip;

@@ -131,6 +131,7 @@
                                   <td>
                                         @if ($dispatch->dispatch_items)
                                             @foreach ($dispatch->dispatch_items as $dispatch_item)
+                                                @if ($dispatch_item->stock_number)<strong>{{ $dispatch_item->stock_number }}</strong> @endif
                                                 @if ($dispatch_item->inventory)
                                                     {{$dispatch_item->inventory->product ? $dispatch_item->inventory->product->name : ""}} 
                                                 @elseif($dispatch_item->asset)

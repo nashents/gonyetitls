@@ -148,6 +148,7 @@
             <tr data-row>
               <td class="center" data-field="item.index">{{$loop->iteration}}</td>
               <td data-field="item.product">
+                @if ($item->stock_number)<strong>{{ $item->stock_number }}</strong> @endif
                 {{$item->product ? $item->product->name : '—'}}
               </td>
               <td class="right" data-field="item.qty">{{$item->qty}}</td>
