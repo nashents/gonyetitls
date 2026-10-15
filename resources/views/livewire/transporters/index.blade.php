@@ -123,6 +123,10 @@
                                                 @if (! $transporter->customer_id)
                                                 <li><a href="#" wire:click="syncToCustomer({{$transporter->id}})" ><i class="fa fa-refresh color-warning"></i> Link to Customer</a></li>
                                                 @endif
+                                                @if (Auth::user()->is_admin() && ! $transporter->default)
+                                                <li><a href="#" wire:click.prevent="setDefault({{$transporter->id}})"
+                                                    onclick="confirm('Make {{ addslashes($transporter->name) }} the default transporter (own fleet)? The current default loses the badge.') || event.stopImmediatePropagation()"><i class="fa fa-star color-primary"></i> Set as Default</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                         @include('transporters.delete')

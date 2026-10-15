@@ -488,6 +488,30 @@ class Index extends Component
         }
     } );
     }
+    /**
+     * Admin-only: make this transporter the company's default (own fleet),
+     * moving the flag off the current one. The create/edit checkbox can only
+     * set a default once; this is the way to correct it, e.g. after a data
+     * reset when MenuRegistrySeeder auto-picked the first pulled transporter.
+     */
+    public function setDefault($id)
+    {
+        abort_unless(Auth::user()->is_admin(), 403);
+
+        $transporter = Transporter::findOrFail($id);
+
+        DB::transaction(function () use ($transporter) {
+            Transporter::where('default', true)->where('id', '<>', $transporter->id)
+                ->get()->each(fn ($t) => $t->update(['default' => false]));
+            $transporter->update(['default' => true]);
+        });
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "{$transporter->name} is now the default transporter.",
+        ]);
+    }
+
     public function render()
     {
 
