@@ -265,7 +265,8 @@ class CustomerFuelSupplyService
             $this->trimAllocations($supply);
 
             if ($postingChanged || !$this->activeEntry($supply)) {
-                $this->reverseEntries($supply, "Customer fuel supply {$supply->supply_number} updated");
+                // A correction - the reversal stays in the original period.
+                $this->reverseEntries($supply, "Customer fuel supply {$supply->supply_number} updated", true);
                 $this->post($supply);
             }
 
@@ -349,13 +350,17 @@ class CustomerFuelSupplyService
             ->first();
     }
 
-    private function reverseEntries(CustomerFuelSupply $supply, string $reason): void
+    private function reverseEntries(CustomerFuelSupply $supply, string $reason, bool $originalDate = false): void
     {
         JournalEntry::where('customer_fuel_supply_id', $supply->id)
             ->where('status', '!=', 'reversed')
             ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
             ->get()
-            ->each(fn ($entry) => $this->journalReversal->reverse($entry, $reason));
+            ->each(fn ($entry) => $this->journalReversal->reverse(
+                $entry,
+                $reason,
+                $originalDate ? optional($entry->date)->toDateString() : null
+            ));
     }
 
     // ── Allocation to invoices ───────────────────────────────────────────────

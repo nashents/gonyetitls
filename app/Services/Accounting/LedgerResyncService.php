@@ -151,13 +151,20 @@ class LedgerResyncService
      * re-instate the posting it cancelled, so every resync layered the
      * document into the ledger once more). See
      * JournalReversalService::isLiveEffect().
+     *
+     * Each reversal is dated like the entry it cancels, not today - a
+     * correction must not move figures out of the original month.
      */
     private function reverseExisting(Builder $query, string $reason): void
     {
         $query->where('status', '!=', 'reversed')
             ->get()
             ->filter(fn (JournalEntry $entry) => $this->journalReversal->isLiveEffect($entry))
-            ->each(fn (JournalEntry $entry) => $this->journalReversal->reverse($entry, $reason));
+            ->each(fn (JournalEntry $entry) => $this->journalReversal->reverse(
+                $entry,
+                $reason,
+                optional($entry->date)->toDateString()
+            ));
     }
 
     /**

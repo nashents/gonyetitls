@@ -12,8 +12,11 @@ class JournalReversalService
      * Post an offsetting entry for $entry (debit/credit flipped on every line),
      * mark the original as 'reversed', and return the new reversing entry.
      * Returns null if $entry is already reversed.
+     *
+     * Dated today unless $date is given - LedgerResyncService passes the
+     * original entry's date so a correction lands in the original period.
      */
-    public function reverse(JournalEntry $entry, ?string $reason = null): ?JournalEntry
+    public function reverse(JournalEntry $entry, ?string $reason = null, ?string $date = null): ?JournalEntry
     {
         if ($entry->status === 'reversed') {
             return null;
@@ -27,7 +30,7 @@ class JournalReversalService
             );
         }
 
-        return DB::transaction(function () use ($entry, $reason) {
+        return DB::transaction(function () use ($entry, $reason, $date) {
 
             $entry->loadMissing('journal_entry_lines');
 
@@ -43,7 +46,7 @@ class JournalReversalService
                 'supplier_journal_id' => $entry->supplier_journal_id,
                 'is_manual'      => false,
                 'journal_number' => $this->generateNumber(),
-                'date'           => now()->toDateString(),
+                'date'           => $date ?? now()->toDateString(),
                 'reference'      => "REV-{$entry->journal_number}",
                 'description'    => "Reversal of {$entry->journal_number}" . ($reason ? " - {$reason}" : ''),
                 'status'         => 'posted',
