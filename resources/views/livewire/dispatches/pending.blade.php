@@ -249,16 +249,23 @@
                     </div>
 
                     @if (!empty($fitments) && $authorize == "approved")
-                        <h6>Tyre Fitment <small>(optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest leave stores unfitted, to be fitted in Tyre Assignments)</small></h6>
+                        <h6>Tyre Fitment <small>(Serial# is required where none is recorded. Fitment is optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest leave stores unfitted, to be fitted in Tyre Assignments)</small></h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead>
-                                    <tr><th>Tyre</th><th>Fit To</th><th>Axle</th><th>Position</th></tr>
+                                    <tr><th>Tyre</th><th>Serial#</th><th>Fit To</th><th>Axle</th><th>Position</th></tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($fitments as $itemId => $fitment)
                                         <tr wire:key="fitment-{{ $itemId }}">
                                             <td>{{ $fitment['tyre'] }}</td>
+                                            <td>
+                                                @if (!empty($fitment['needs_serial']))
+                                                    <input type="text" class="form-control" wire:model.defer="fitments.{{ $itemId }}.serial" placeholder="Required: none recorded" required>
+                                                @else
+                                                    <span class="text-muted">recorded</span>
+                                                @endif
+                                            </td>
                                             <td>
                                                 <select class="form-control" wire:model="fitments.{{ $itemId }}.fit_type">
                                                     <option value="">Select Unit</option>

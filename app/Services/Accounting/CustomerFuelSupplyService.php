@@ -149,14 +149,17 @@ class CustomerFuelSupplyService
 
     /**
      * Create/refresh the supply for a customer-funded trip expense line and
-     * (re)post it - DR Trip Expense (the account its Bill would have
-     * debited) / CR Accounts Receivable.
+     * (re)post it - DR the account its Bill would have debited (the
+     * expense's/allowance's own account, "Trip Expense" only as a fallback -
+     * same as TripExpenseJournalService::accountFor) / CR Accounts Receivable.
      */
     public function syncFromTripExpense(TripExpense $tripExpense): CustomerFuelSupply
     {
-        $tripExpense->loadMissing('trip', 'expense', 'allowance');
+        $tripExpense->loadMissing('trip', 'expense.account', 'allowance.account');
 
-        $account = Account::where('name', 'Trip Expense')->firstOrFail();
+        $account = optional($tripExpense->expense)->account
+            ?: optional($tripExpense->allowance)->account
+            ?: Account::where('name', 'Trip Expense')->firstOrFail();
         $label = optional($tripExpense->expense)->name ?? optional($tripExpense->allowance)->name ?? 'Trip expense';
 
         $supply = CustomerFuelSupply::where('trip_expense_id', $tripExpense->id)->first() ?? new CustomerFuelSupply(['trip_expense_id' => $tripExpense->id]);

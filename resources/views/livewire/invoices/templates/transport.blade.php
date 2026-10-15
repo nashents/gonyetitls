@@ -27,7 +27,7 @@
                     </span>
                 </button>
 
-            @elseif($fiscalStatus === 'failed' && $fiscalActionable)
+            @elseif($fiscalStatus === 'failed')
                 <button type="button"
                         wire:click="fiscalizeInvoice({{ $invoice->id }})"
                         wire:loading.attr="disabled"

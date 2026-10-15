@@ -1,4 +1,15 @@
 {{-- Optional fitting position for one tyre row on a tyre dispatch. Expects $row (the row key). --}}
+@if (!empty($needsSerial[$row]))
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Serial#<span class="required" style="color: red">*</span> <small class="text-muted">(this tyre has none recorded)</small></label>
+                <input type="text" class="form-control" wire:model.defer="tyre_serial.{{ $row }}" placeholder="Enter tyre serial number" required>
+                @error('tyre_serial.'.$row) <span class="error" style="color:red">{{ $message }}</span> @enderror
+            </div>
+        </div>
+    </div>
+@endif
 <div class="row">
     <div class="col-md-4">
         <div class="form-group">

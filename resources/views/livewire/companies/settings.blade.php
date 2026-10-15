@@ -14,6 +14,15 @@
             <small class="form-text text-muted">Controls how horses, trailers and vehicles are labelled and sorted throughout the system.</small>
             @error('fleet_identifier_preference') <span class="text-danger error">{{ $message }}</span>@enderror
         </div>
+        <div class="mb-10 form-group">
+            <label for="default_booking_transaction_type">Default Booking Transaction Type</label>
+            <select wire:model.debounce.300ms="default_booking_transaction_type" id="default_booking_transaction_type" class="form-control">
+                <option value="expense">Expense/Internal Job</option>
+                <option value="income">Income/External Job</option>
+            </select>
+            <small class="form-text text-muted">The transaction type pre-selected when a new booking is created.</small>
+            @error('default_booking_transaction_type') <span class="text-danger error">{{ $message }}</span>@enderror
+        </div>
         <div class="btn-group" role="group" style="float: right;">
             <button type="submit" class="btn btn-success btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
         </div>

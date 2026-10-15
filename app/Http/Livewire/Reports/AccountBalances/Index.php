@@ -15,10 +15,13 @@ class Index extends Component
     public $details;
     public $summary = "summary";
 
-    public $default_currency;
-    public $default_currency_id;
+    // Computed each render and passed to the view rather than held as
+    // public state: the nested float-heavy report array fails Livewire's
+    // payload checksum after a browser round-trip (1500.0 comes back as 1500).
+    protected $default_currency;
+    protected $default_currency_id;
 
-    public $groups = [];
+    protected $groups = [];
 
     public function mount()
     {
@@ -70,6 +73,10 @@ class Index extends Component
             $this->groups = $calculator->report();
         }
 
-        return view('livewire.reports.account-balances.index');
+        return view('livewire.reports.account-balances.index', [
+            'groups'              => $this->groups,
+            'default_currency'    => $this->default_currency,
+            'default_currency_id' => $this->default_currency_id,
+        ]);
     }
 }

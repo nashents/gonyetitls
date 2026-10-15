@@ -59,7 +59,7 @@
                                         @if ($tyre_assignment->tyre)
                                             @if ($tyre_assignment->tyre->product)
                                             {{$tyre_assignment->tyre->product->name}} {{$tyre_assignment->tyre->product->brand ? $tyre_assignment->tyre->product->brand->name : ""}} <br>
-                                            SN#: {{$tyre_assignment->tyre ? $tyre_assignment->tyre->serial_number : ""}}
+                                            SN#: {{$tyre_assignment->tyre ? $tyre_assignment->tyre->serial_label : ""}}
                                             @endif
                                        
                                         @endif
@@ -193,7 +193,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}"> {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} SN#: {{$tyre->serial_label}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -328,7 +328,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}"> {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->tyre_number}} {{$tyre->product && $tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} SN#: {{$tyre->serial_label}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
+/**
+ * Thin HTTP client for the Fiscal Harmony API (docs v0.2.11,
+ * https://docs.fiscalharmony.co.zw/). Orchestration — payload building,
+ * fiscal_documents bookkeeping — lives in FiscalisationService.
+ */
 class FiscalHarmonyService
 {
     protected string $apiUrl;
@@ -13,18 +18,41 @@ class FiscalHarmonyService
     protected string $apiSecret;
     protected string $appName;
     protected string $appStation;
+    protected string $appVersion;
+    protected int $timeout;
 
-    public function __construct()
+    /**
+     * $settings comes from the company's Fiscal Harmony integration (see
+     * FiscalHarmonyDriver); any key left out falls back to config/fiscalharmony.php
+     * (.env), which is also what a container-resolved instance uses.
+     */
+    public function __construct(array $settings = [])
     {
-        $this->apiUrl     = rtrim(config('fiscalharmony.api_url'), '/');
-        $this->apiKey     = config('fiscalharmony.api_key');
-        $this->apiSecret  = config('fiscalharmony.api_secret');
-        $this->appName    = config('fiscalharmony.app_name');
-        $this->appStation = config('fiscalharmony.app_station');
+        $get = fn (string $key, $default = '') => ($settings[$key] ?? '') !== '' && ($settings[$key] ?? null) !== null
+            ? $settings[$key]
+            : config("fiscalharmony.{$key}", $default);
+
+        $this->apiUrl     = rtrim((string) $get('api_url'), '/');
+        $this->apiKey     = (string) $get('api_key');
+        $this->apiSecret  = (string) $get('api_secret');
+        $this->appName    = (string) $get('app_name');
+        $this->appStation = (string) $get('app_station');
+        $this->appVersion = (string) $get('app_version', '1');
+        $this->timeout    = (int) ($settings['timeout'] ?? 30) ?: 30;
+    }
+
+    public function apiUrl(): string
+    {
+        return $this->apiUrl;
+    }
+
+    public function hasCredentials(): bool
+    {
+        return $this->apiUrl !== '' && $this->apiKey !== '' && $this->apiSecret !== '';
     }
 
     // ─────────────────────────────────────────────────────────────
-    // HEADERS
+    // HEADERS / SIGNING
     // ─────────────────────────────────────────────────────────────
 
     /**
@@ -37,6 +65,7 @@ class FiscalHarmonyService
             'X-Api-Key'     => $this->apiKey,
             'X-Application' => $this->appName,
             'X-App-Station' => $this->appStation,
+            'X-App-Version' => $this->appVersion,
         ];
 
         if ($jsonPayload !== null) {
@@ -55,6 +84,48 @@ class FiscalHarmonyService
         return base64_encode($hash);
     }
 
+    /**
+     * Verify an inbound webhook's X-Api-Signature against the raw body.
+     * FH signs with the API secret; the docs don't say whether the secret
+     * is used Base64-decoded (as we sign outbound) or as-is, so accept either.
+     */
+    public function verifySignature(string $rawBody, ?string $signature): bool
+    {
+        if (! $signature || $this->apiSecret === '') {
+            return false;
+        }
+
+        foreach ([base64_decode($this->apiSecret, true), $this->apiSecret] as $key) {
+            if ($key === false || $key === '') {
+                continue;
+            }
+            $expected = base64_encode(hash_hmac('sha256', $rawBody, $key, true));
+            if (hash_equals($expected, trim($signature))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * FH responds in PascalCase (RequestId, QrData, FiscalInvoicePdf…).
+     * Normalise keys recursively to camelCase so callers have one shape.
+     */
+    public static function camelKeys($data)
+    {
+        if (! is_array($data)) {
+            return $data;
+        }
+
+        $out = [];
+        foreach ($data as $key => $value) {
+            $out[is_string($key) ? lcfirst($key) : $key] = static::camelKeys($value);
+        }
+
+        return $out;
+    }
+
     // ─────────────────────────────────────────────────────────────
     // HTTP HELPERS
     // ─────────────────────────────────────────────────────────────
@@ -62,18 +133,23 @@ class FiscalHarmonyService
     protected function get(string $path): array
     {
         $response = Http::withHeaders($this->headers())
-            ->timeout(15)
+            ->timeout($this->timeout)
             ->get("{$this->apiUrl}{$path}");
 
         return $this->handle($response, 'GET', $path);
     }
 
+    /**
+     * The exact signed bytes are sent as the body so the signature always
+     * matches what FH receives.
+     */
     protected function post(string $path, array $data): array
     {
         $json     = json_encode($data);
         $response = Http::withHeaders($this->headers($json))
-            ->timeout(15)
-            ->post("{$this->apiUrl}{$path}", $data);
+            ->timeout($this->timeout)
+            ->withBody($json, 'application/json')
+            ->post("{$this->apiUrl}{$path}");
 
         return $this->handle($response, 'POST', $path);
     }
@@ -82,8 +158,9 @@ class FiscalHarmonyService
     {
         $json     = json_encode($data);
         $response = Http::withHeaders($this->headers($json))
-            ->timeout(15)
-            ->put("{$this->apiUrl}{$path}", $data);
+            ->timeout($this->timeout)
+            ->withBody($json, 'application/json')
+            ->put("{$this->apiUrl}{$path}");
 
         return $this->handle($response, 'PUT', $path);
     }
@@ -91,7 +168,7 @@ class FiscalHarmonyService
     protected function delete(string $path): array
     {
         $response = Http::withHeaders($this->headers())
-            ->timeout(15)
+            ->timeout($this->timeout)
             ->delete("{$this->apiUrl}{$path}");
 
         return $this->handle($response, 'DELETE', $path);
@@ -110,7 +187,13 @@ class FiscalHarmonyService
             ];
         }
 
-        $error = $response->json('message') ?? $response->body();
+        $error = $response->json('Message') ?? $response->json('message') ?? $response->body();
+        if (is_array($error)) {
+            $error = json_encode($error);
+        }
+        if ($error === '' || $error === null) {
+            $error = $this->describeStatus($status);
+        }
         Log::error("FiscalHarmony [{$method} {$path}] HTTP {$status}: {$error}");
 
         return [
@@ -121,9 +204,30 @@ class FiscalHarmonyService
         ];
     }
 
+    /** Meanings from the docs' error table, for empty-bodied failures. */
+    protected function describeStatus(int $status): string
+    {
+        return match (true) {
+            $status === 400 => 'HTTP 400: invalid data sent',
+            $status === 401 => 'HTTP 401: wrong API key or request not signed correctly',
+            $status === 403 => 'HTTP 403: invalid application name (X-Application) or rate-limit ban',
+            $status === 404 => 'HTTP 404: resource unavailable',
+            $status === 429 => 'HTTP 429: rate limited — try again shortly',
+            $status === 522 => 'HTTP 522: Fiscal Harmony is down or under maintenance',
+            $status >= 500  => "HTTP {$status}: revenue authority (ZIMRA) not reachable",
+            default         => "HTTP {$status}",
+        };
+    }
+
     // ─────────────────────────────────────────────────────────────
     // ACCOUNT / DEVICE
     // ─────────────────────────────────────────────────────────────
+
+    /** POST /test — checks the credentials before real POSTs. */
+    public function test(): array
+    {
+        return $this->post('/test', ['Date' => now('Africa/Harare')->format('Y-m-d\TH:i:s')]);
+    }
 
     public function getProfile(): array
     {
@@ -133,6 +237,11 @@ class FiscalHarmonyService
     public function getFiscalDevice(): array
     {
         return $this->get('/fiscaldevice');
+    }
+
+    public function getSubscription(): array
+    {
+        return $this->get('/subscription');
     }
 
     /**
@@ -147,7 +256,7 @@ class FiscalHarmonyService
             return [];
         }
 
-        $currentConfig = $result['data']['currentConfig'] ?? null;
+        $currentConfig = $result['data']['CurrentConfig'] ?? $result['data']['currentConfig'] ?? null;
 
         if (is_string($currentConfig)) {
             $config = json_decode($currentConfig, true);
@@ -157,7 +266,7 @@ class FiscalHarmonyService
             return [];
         }
 
-        return $config['applicableTaxes'] ?? [];
+        return static::camelKeys($config)['applicableTaxes'] ?? [];
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -256,32 +365,24 @@ class FiscalHarmonyService
      *   invoiceId:       string (GUID),
      *   invoiceNumber:   string,
      *   isTaxInclusive:  bool,
-     *   date:            string  ISO-8601 e.g. "2025-04-01T10:00:00+02:00",
+     *   date:            string  ISO-8601 CAT e.g. "2025-04-01T10:00:00+02:00",
      *   currencyCode:    string  e.g. "USD",
      *   paymentMethod:   string  Cash|Card|MobileWallet|Coupon|Credit|BankTransfer|Other,
-     *   buyer: {
-     *     name:       string,
-     *     tradeName?: string,
-     *     tin?:       string,
-     *     vatNumber?: string,
-     *     phone?:     string,
-     *     email?:     string,
-     *     address?: { houseNo, street, city, province }
+     *   buyer?: {
+     *     name?, tradeName?, tin?, vatNumber?, phone?, email?,
+     *     address?: { houseNo, street, city, province }   (all four required if present)
      *   },
      *   lineItems: [{
      *     description:  string,
-     *     taxCode:      string,
-     *     productCode:  string  (HsCode – mandatory as of v0.2.6),
+     *     taxCode:      string  (must have a TaxMapping on FH),
+     *     productCode:  string  (HsCode – mandatory since 01 Apr 2025),
      *     unitAmount:   float,
      *     quantity:     float,
      *     lineAmount:   float,
      *     discountAmount?: float
      *   }],
-     *   subTotal?:      float,
-     *   totalTax?:      float,
-     *   total?:         float,
-     *   isDiscounted?:  bool,
-     *   isRetry?:       bool,
+     *   subTotal?, totalTax?, total?: float,
+     *   isDiscounted?, isRetry?: bool,
      *   reference?:     string
      * }
      * @return array  { success, status, data (requestId string) }
@@ -301,19 +402,17 @@ class FiscalHarmonyService
      *
      * @param  array  $creditNote  {
      *   creditNoteId:       string (GUID),
-     *   originalInvoiceId:  string,
+     *   originalInvoiceId:  string  (the InvoiceId sent when the invoice was fiscalised),
      *   creditNoteNumber:   string,
      *   reference:          string,
      *   isTaxInclusive:     bool,
      *   date:               string  ISO-8601,
      *   currencyCode:       string,
      *   paymentMethod:      string,
-     *   buyer:              array  (same structure as invoice),
+     *   buyer?:             array  (same structure as invoice),
      *   lineItems:          array  (same structure as invoice),
-     *   subTotal?:          float,
-     *   totalTax?:          float,
-     *   total?:             float,
-     *   isRetry?:           bool
+     *   subTotal?, totalTax?, total?: float,
+     *   isDiscounted?, isRetry?: bool
      * }
      */
     public function submitCreditNote(array $creditNote): array
@@ -324,14 +423,14 @@ class FiscalHarmonyService
             'CreditNoteNumber'  => $creditNote['creditNoteNumber'],
             'Reference'         => $creditNote['reference'],
             'IsTaxInclusive'    => $creditNote['isTaxInclusive'],
-            'BuyerContact'      => $this->buildBuyerContact($creditNote['buyer']),
+            'BuyerContact'      => $this->buildBuyerContact($creditNote['buyer'] ?? []),
             'Date'              => $creditNote['date'],
             'LineItems'         => $this->buildLineItems($creditNote['lineItems']),
             'PaymentMethod'     => $creditNote['paymentMethod'],
             'CurrencyCode'      => $creditNote['currencyCode'],
         ];
 
-        foreach (['subTotal' => 'SubTotal', 'totalTax' => 'TotalTax', 'total' => 'Total', 'isRetry' => 'IsRetry'] as $k => $v) {
+        foreach (['subTotal' => 'SubTotal', 'totalTax' => 'TotalTax', 'total' => 'Total', 'isDiscounted' => 'IsDiscounted', 'isRetry' => 'IsRetry'] as $k => $v) {
             if (isset($creditNote[$k])) {
                 $payload[$v] = $creditNote[$k];
             }
@@ -345,13 +444,22 @@ class FiscalHarmonyService
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Check transaction statuses by requestId list (max 100).
+     * Check transaction statuses by requestId list (max 100, last 7 days only).
+     * `data` comes back as a list of camelCase StatusRequest items:
+     * requestId, success, qrData{qrCodeUrl, verificationCode, fiscalDay, deviceId,
+     * invoiceNumber, invoiceCounter}, error, fiscalInvoicePdf.
      *
      * @param  string[]  $requestIds
      */
     public function checkStatus(array $requestIds): array
     {
-        return $this->post('/status', $requestIds);
+        $result = $this->post('/status', array_values(array_slice($requestIds, 0, 100)));
+
+        if ($result['success'] && is_array($result['data'])) {
+            $result['data'] = static::camelKeys($result['data']);
+        }
+
+        return $result;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -364,7 +472,7 @@ class FiscalHarmonyService
     public function downloadPdf(string $filename): ?string
     {
         $response = Http::withHeaders($this->headers())
-            ->timeout(30)
+            ->timeout($this->timeout)
             ->get("{$this->apiUrl}/download/{$filename}");
 
         if ($response->successful()) {
@@ -377,6 +485,7 @@ class FiscalHarmonyService
 
     // ─────────────────────────────────────────────────────────────
     // CUSTOMISATION
+    // (no longer in the v0.2.11 docs, but still live on the API)
     // ─────────────────────────────────────────────────────────────
 
     public function getCustomisation(): array
@@ -409,7 +518,7 @@ class FiscalHarmonyService
             'InvoiceId'      => $invoice['invoiceId'],
             'InvoiceNumber'  => $invoice['invoiceNumber'],
             'IsTaxInclusive' => $invoice['isTaxInclusive'],
-            'BuyerContact'   => $this->buildBuyerContact($invoice['buyer']),
+            'BuyerContact'   => $this->buildBuyerContact($invoice['buyer'] ?? []),
             'Date'           => $invoice['date'],
             'LineItems'      => $this->buildLineItems($invoice['lineItems']),
             'PaymentMethod'  => $invoice['paymentMethod'],
@@ -434,11 +543,16 @@ class FiscalHarmonyService
         return $payload;
     }
 
-    protected function buildBuyerContact(array $buyer): array
+    /**
+     * Since 11 Jun 2026 every BuyerContact field is optional. Address may be
+     * omitted, but when present all four of its fields are required.
+     */
+    protected function buildBuyerContact(array $buyer): ?array
     {
-        $contact = ['Name' => $buyer['name']];
+        $contact = [];
 
         $optionals = [
+            'name'      => 'Name',
             'tradeName' => 'TradeName',
             'tin'       => 'Tin',
             'vatNumber' => 'VatNumber',
@@ -461,7 +575,7 @@ class FiscalHarmonyService
             ];
         }
 
-        return $contact;
+        return $contact ?: null;
     }
 
     protected function buildLineItems(array $lineItems): array
@@ -470,7 +584,7 @@ class FiscalHarmonyService
             $line = [
                 'Description' => $item['description'],
                 'TaxCode'     => $item['taxCode'],
-                'ProductCode' => $item['productCode'],   // HsCode – mandatory v0.2.6+
+                'ProductCode' => $item['productCode'],   // HsCode – mandatory since 01 Apr 2025
                 'UnitAmount'  => $item['unitAmount'],
                 'Quantity'    => $item['quantity'],
                 'LineAmount'  => $item['lineAmount'],
@@ -481,6 +595,6 @@ class FiscalHarmonyService
             }
 
             return $line;
-        }, $lineItems);
+        }, array_values($lineItems));
     }
 }

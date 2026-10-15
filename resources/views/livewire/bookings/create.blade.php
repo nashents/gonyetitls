@@ -15,9 +15,9 @@
                                         <label for="exampleInputEmail13">Transaction Type<span class="required" style="color: red">*</span></label>
                                         <div class="mb-10">
                                             <input type="radio" wire:model.debounce.300ms="transaction_type" value="expense"  class="line-style"  required/>
-                                            <label for="one" class="radio-label">Expense</label>
+                                            <label for="one" class="radio-label">Expense/Internal Job</label>
                                             <input type="radio" wire:model.debounce.300ms="transaction_type" value="income"  class="line-style"  required/>
-                                            <label for="one" class="radio-label">Income</label>
+                                            <label for="one" class="radio-label">Income/External Job</label>
                                         </div>
                                     </div>
                                     @if ($transaction_type == "income")

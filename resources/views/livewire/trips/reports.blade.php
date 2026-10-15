@@ -193,7 +193,7 @@
                                                             <option value="Scheduled">Scheduled</option>
                                                             <option value="Loading Point">Loading Point</option>
                                                             <option value="Loaded">Loaded</option>
-                                                            <option value="Instransit">Instransit</option>
+                                                            <option value="InTransit">InTransit</option>
                                                             <option value="Offloading Point">Offloading Point</option>
                                                             <option value="Offloaded">Offloaded</option>
                                                             <option value="Onhold">Onhold</option>

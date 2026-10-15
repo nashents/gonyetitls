@@ -12,6 +12,7 @@ class Settings extends Component
     public $company_id;
     public $enable_requisition_two_step_authorization;
     public $fleet_identifier_preference;
+    public $default_booking_transaction_type;
 
 
 
@@ -22,6 +23,7 @@ class Settings extends Component
         $this->company_id = $company->id;
         $this->enable_requisition_two_step_authorization = $company->enable_requisition_two_step_authorization;
         $this->fleet_identifier_preference = $company->fleet_identifier_preference;
+        $this->default_booking_transaction_type = $company->default_booking_transaction_type ?: 'expense';
 
     }
 
@@ -30,6 +32,9 @@ class Settings extends Component
         $company = Company::find($this->company_id);
         $company->enable_requisition_two_step_authorization = $this->enable_requisition_two_step_authorization;
         $company->fleet_identifier_preference = $this->fleet_identifier_preference;
+        $company->default_booking_transaction_type = in_array($this->default_booking_transaction_type, ['expense', 'income'])
+            ? $this->default_booking_transaction_type
+            : 'expense';
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[

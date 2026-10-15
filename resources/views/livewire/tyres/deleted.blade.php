@@ -41,10 +41,8 @@
                                         <strong>{{$tyre->tyre_number}}</strong>
                                         <br>
                                         {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->product && $tyre->product->brand ? "(".$tyre->product->brand->name.")" : ""}}
-                                        @if ($tyre->serial_number)
-                                            <br>
-                                            <small><strong>S#:</strong> {{$tyre->serial_number}}</small>
-                                        @endif
+                                        <br>
+                                        <small><strong>SN#:</strong> {{$tyre->serial_label}}</small>
                                     </td>
                                     <td>{{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}</td>
                                     <td>

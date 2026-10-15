@@ -316,7 +316,7 @@
                                         </td>
                                         <td>
                                             @if ($booking->transaction_type)
-                                                <strong>Txn Type: </strong>{{ucfirst($booking->transaction_type)}} <br>
+                                                <strong>Txn Type: </strong>{{ ['expense' => 'Expense/Internal Job', 'income' => 'Income/External Job'][$booking->transaction_type] ?? ucfirst($booking->transaction_type) }} <br>
                                             @endif 
                                             <strong>Job Type: </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
                                             <strong>Problem Category: </strong>{{$booking->problem_category?->name}} <br>

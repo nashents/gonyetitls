@@ -156,12 +156,15 @@ class Index extends Component
         unset($this->fit_type[$index]);
         unset($this->fit_axle[$index]);
         unset($this->fit_position[$index]);
+        unset($this->tyre_serial[$index]);
+        unset($this->tyreSearch[$index]);
     }
 
     // Tyre dispatches: each tyre row says where it is fitted (unit + axle + position).
     public array $fit_type = [];
     public array $fit_axle = [];
     public array $fit_position = [];
+    public array $tyre_serial = [];   // serial entered for a picked tyre that has none
     public array $tyreOptions = [];   // [rowKey => [['id' => .., 'label' => ..], ...]]
     public $horses;
     public $trailers;
@@ -223,6 +226,7 @@ class Index extends Component
                 'fit_type' => $this->fit_type[$key] ?? null,
                 'axle' => $this->fit_axle[$key] ?? null,
                 'position' => $this->fit_position[$key] ?? null,
+                'serial' => $this->tyre_serial[$key] ?? null,
             ];
         }
 
@@ -420,7 +424,8 @@ class Index extends Component
             $q->where('status', 1)
                 ->where('balance', '>', 0)
                 ->when($store_id, fn ($qq) => $qq->where('store_id', $store_id))
-                ->when($relation === 'tyres', fn ($qq) => $qq->whereDoesntHave('tyre_assignments', fn ($a) => $a->where('status', 1)));
+                ->when($relation === 'tyres', fn ($qq) => $qq->whereDoesntHave('tyre_assignments', fn ($a) => $a->where('status', 1))
+                    ->whereDoesntHave('dispatch_items.dispatch', fn ($d) => $d->where('authorization', 'pending')));
         };
     }
 
@@ -488,6 +493,7 @@ class Index extends Component
         $this->trailers = collect();
         $this->vehicles = collect();
         if ($department === 'tyre') {
+            $this->expand = true; // tyres are always dispatched as specific tyres
             $this->horses = Horse::where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
             $this->trailers = Trailer::where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
             $this->vehicles = Vehicle::where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
@@ -687,6 +693,12 @@ class Index extends Component
             return ;
         }
 
+        // Tyres are always dispatched as specific tyres, so every one has a serial number.
+        if ($this->department === 'tyre') {
+            $this->expand = true;
+            return;
+        }
+
         if($value == False){
             $this->inventories = collect();
             $this->tyres = collect();
@@ -718,6 +730,41 @@ class Index extends Component
             }
         }
     }
+    public array $tyreSearch = [];   // per row: find the exact tyre by Tyre# or Serial#
+
+    private function tyreOption(Tyre $tyre): array
+    {
+        return [
+            'id' => $tyre->id,
+            'label' => trim(($tyre->tyre_number ?? '').' SN#: '.$tyre->serial_label
+                .($tyre->product ? ' - '.$tyre->product->name : '')
+                .($tyre->balance ? ' Bal: '.(float) $tyre->balance : '')),
+        ];
+    }
+
+    public function updatedTyreSearch($value, $key)
+    {
+        $term = trim((string) $value);
+        if ($term === '') {
+            return;
+        }
+
+        $this->tyreOptions[$key] = Tyre::dispatchable()
+            ->with('product')
+            ->where(fn ($q) => $q->where('tyre_number', 'like', "%{$term}%")->orWhere('serial_number', 'like', "%{$term}%"))
+            ->orderBy('tyre_number')
+            ->limit(50)
+            ->get()
+            ->map(fn ($tyre) => $this->tyreOption($tyre))
+            ->all();
+
+        // Exactly one match: pick it.
+        if (count($this->tyreOptions[$key]) === 1) {
+            $this->selectedTyre[$key] = $this->tyreOptions[$key][0]['id'];
+            $this->updatedSelectedTyre($this->selectedTyre[$key], $key);
+        }
+    }
+
     public function updatedSelectedTyre($id, $key){
         if (!is_null($id)) {
             $tyre = Tyre::find($id);
@@ -726,6 +773,7 @@ class Index extends Component
                 $this->max[$key] = $tyre->balance;
                 if ($this->department === 'tyre') {
                     $this->qty[$key] = $tyre->balance;
+                    $this->selectedProduct[$key] = $tyre->product_id;
                     $this->defaultFitTypes();
                 }
             }
@@ -738,15 +786,11 @@ class Index extends Component
                   $this->qty[$key] = 1;
             }
             $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
-            $this->tyres = Tyre::inStock()->where('product_id',$id)->orderBy('created_at','asc')->get();
+            $this->tyres = Tyre::dispatchable()->where('product_id',$id)->orderBy('created_at','asc')->get();
 
             // Each tyre row keeps its own list, so picking a product on another row doesn't blank this one.
             if ($this->department === 'tyre') {
-                $this->tyreOptions[$key] = $this->tyres->map(fn ($tyre) => [
-                    'id' => $tyre->id,
-                    'label' => trim(($tyre->tyre_number ?? '').($tyre->serial_number ? ' SN#: '.$tyre->serial_number : '')
-                        .($tyre->balance ? ' Bal: '.$tyre->balance : '')),
-                ])->all();
+                $this->tyreOptions[$key] = $this->tyres->map(fn ($tyre) => $this->tyreOption($tyre))->all();
                 if (!in_array($this->selectedTyre[$key] ?? null, array_column($this->tyreOptions[$key], 'id'))) {
                     $this->selectedTyre[$key] = null;
                 }
@@ -758,7 +802,7 @@ class Index extends Component
             if ($product && $this->department == "inventory") {
                 $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
             }elseif ($product && $this->department == "tyre") {
-                $this->max[$key] = Tyre::inStock()->where('product_id', $product->id)->sum('balance');
+                $this->max[$key] = Tyre::dispatchable()->where('product_id', $product->id)->sum('balance');
             }elseif ($product && $this->department == "asset") {
                 $this->max[$key] = $product->assets->where('status',1)->where('balance','>',0)->sum('balance');
             }
@@ -870,6 +914,8 @@ class Index extends Component
         $this->fit_type = [];
         $this->fit_axle = [];
         $this->fit_position = [];
+        $this->tyre_serial = [];
+        $this->tyreSearch = [];
         $this->horse_id = Null;
         $this->trailer_id = Null;
         $this->vehicle_id = Null;
@@ -877,6 +923,9 @@ class Index extends Component
         $this->searchTicket = [] ;
         $this->searchProduct = [] ;
         $this->dispatch_for = "inventory" ;
+        if ($this->department === 'tyre') {
+            $this->expand = true; // tyre dispatches default to picking specific tyres
+        }
     }
 
      public function calculateExchangeAmount($total = null){
@@ -1172,7 +1221,7 @@ class Index extends Component
                     break;
 
                 case 'tyre':
-                    $items = Tyre::inStock()
+                    $items = Tyre::dispatchable()
                         ->where('product_id', $product->id)
                         ->orderBy('created_at', 'asc')
                         ->get();
@@ -1317,7 +1366,7 @@ class Index extends Component
                     break;
 
                 case 'tyre':
-                    $items = Tyre::inStock()
+                    $items = Tyre::dispatchable()
                         ->where('product_id', $product->id)
                         ->orderBy('created_at', 'asc')
                         ->get();
@@ -1441,10 +1490,11 @@ class Index extends Component
     public function store(){
 
         if ($this->isTyreDispatch()) {
+            $this->expand = true; // tyres are always dispatched individually (serial numbers required)
             $this->defaultFitTypes();
             $this->resetErrorBag();
 
-            $errors = $this->fitmentService()->validate($this->expand ? $this->tyreFitmentRows() : [], $this->fitUnits());
+            $errors = $this->fitmentService()->validate($this->expand ? $this->tyreFitmentRows() : [], $this->fitUnits(), true);
             if ($errors) {
                 foreach ($errors as $field => $message) {
                     $this->addError($field, $message);
@@ -1458,6 +1508,10 @@ class Index extends Component
         }
 
         DB::transaction(function () {
+
+        if ($this->isTyreDispatch() && $this->expand) {
+            $this->fitmentService()->applySerials($this->tyreFitmentRows());
+        }
 
         $this->validate([
             'selectedEmployee' => [
@@ -1916,6 +1970,7 @@ class Index extends Component
 
         $fitUnitOptions = [];
         $fitWarnings = [];
+        $needsSerial = [];
         if ($this->department === 'tyre') {
             $service = $this->fitmentService();
             $units = $this->fitUnits();
@@ -1923,6 +1978,9 @@ class Index extends Component
                 $fitUnitOptions[$type] = $service->unitLabel($type, $id) ?? $type;
             }
             foreach ($this->tyreFitmentRows() as $key => $row) {
+                if (blank(optional(Tyre::find($row['tyre_id']))->serial_number)) {
+                    $needsSerial[$key] = true;
+                }
                 $occupant = $service->occupant($units, $row['fit_type'], $row['axle'], $row['position']);
                 if ($occupant) {
                     $serial = optional($occupant->tyre)->serial_number ?: optional($occupant->tyre)->tyre_number;
@@ -1935,6 +1993,7 @@ class Index extends Component
             'dispatches' => $dispatches,
             'fitUnitOptions' => $fitUnitOptions,
             'fitWarnings' => $fitWarnings,
+            'needsSerial' => $needsSerial,
         ]);
     }
 }

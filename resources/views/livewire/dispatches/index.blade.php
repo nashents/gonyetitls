@@ -515,9 +515,10 @@
 
                 @if (!empty($dispatch_for) && $dispatch_for == "inventory")
                     <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="expand"   class="line-style"  @if(count($inputs) > 0) disabled @endif />
+                        <input type="checkbox" wire:model.debounce.300ms="expand"   class="line-style"  @if(count($inputs) > 0 || $department == "tyre") disabled @endif />
                         <label for="one" class="radio-label">Select specific items to dispatch </label>
                         @error('expand') <span class="text-danger error">{{ $message }}</span>@enderror
+                        @if ($department == "tyre")<br><small class="text-muted">Tyres are always dispatched one by one, so each has a serial number.</small>@endif
                     </div>
                    
                     @if (!is_null($expand) && $expand == False)
@@ -897,7 +898,7 @@
                                             @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                         <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
-                                        <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
+                                        <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" @if($department != "tyre") required @endif size="4">
                                             <option value="" selected>Select Products</option>
                                             @foreach ($products as $product)
                                                 @php
@@ -984,6 +985,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="horse">Tyres<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.400ms="tyreSearch.0" class="form-control" placeholder="Search Tyre# or Serial#">
                                             <select wire:model.debounce.300ms="selectedTyre.0" class="form-control" required size = "4">
                                                     <option value="" selected>Select Item</option>
                                                     @foreach ($tyreOptions[0] ?? [] as $option)
@@ -1048,7 +1050,7 @@
                                                     @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                                 <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/model/part#,..." class="form-control" >
-                                                <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
+                                                <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" @if($department != "tyre") required @endif size="4">
                                                     <option value="" selected>Select Products</option>
                                                     @foreach ($products as $product)
                                                         @php
@@ -1136,6 +1138,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="horse">Tyres<span class="required" style="color: red">*</span></label>
+                                                <input type="text" wire:model.debounce.400ms="tyreSearch.{{$value}}" class="form-control" placeholder="Search Tyre# or Serial#">
                                                 <select wire:model.debounce.300ms="selectedTyre.{{$value}}" class="form-control" required size = "4">
                                                     <option value="" selected>Select Tyre</option>
                                                         @foreach ($tyreOptions[$value] ?? [] as $option)
@@ -1873,7 +1876,7 @@
                                                                 disabled 
                                                             @endif
                                                             >
-                                                            {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
+                                                            {{$tyre->tyre_number}} SN#: {{$tyre->serial_label}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($tyre->total)
                                                                 {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{ number_format((float)($tyre->balance ?? 0) * (float)($tyre->amount ?? 0),2)}} 
                                                             @endif
@@ -2031,7 +2034,7 @@
                                                                     disabled 
                                                                 @endif
                                                                 >
-                                                                {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
+                                                                {{$tyre->tyre_number}} SN#: {{$tyre->serial_label}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
                                                                 @if ($tyre->total)
                                                                     {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{ number_format((float)($tyre->balance ?? 0) * (float)($tyre->amount ?? 0),2)}}
                                                                 @endif

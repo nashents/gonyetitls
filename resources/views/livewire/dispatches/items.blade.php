@@ -21,7 +21,7 @@
                     @if ($item->inventory)
                         {{$item->inventory ? $item->inventory->serial_number : ""}}
                     @elseif($item->tyre)
-                        {{$item->tyre ? $item->tyre->serial_number : ""}}
+                        SN#: {{$item->tyre->serial_label}}
                     @elseif($item->asset)
                         {{$item->asset ? $item->asset->serial_number : ""}}
                     @endif

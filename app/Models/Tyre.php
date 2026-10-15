@@ -99,6 +99,12 @@ class Tyre extends Model implements Auditable
             ->latestOfMany();
     }
 
+    // Serial for display; blank serials say so instead of disappearing.
+    public function getSerialLabelAttribute(): string
+    {
+        return filled($this->serial_number) ? (string) $this->serial_number : 'Not entered';
+    }
+
     // Dispatchable: available, has stock left and not sitting on a truck.
     public function scopeInStock($query)
     {
@@ -106,6 +112,21 @@ class Tyre extends Model implements Auditable
             ->where('balance', '>', 0)
             ->where(fn ($q) => $q->whereNull('disposed')->orWhere('disposed', 0))
             ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1));
+    }
+
+    // Can go on a new dispatch: in stock and not already on another pending dispatch.
+    public function scopeDispatchable($query)
+    {
+        return $query->inStock()
+            ->whereDoesntHave('dispatch_items.dispatch', fn ($d) => $d->where('authorization', 'pending'));
+    }
+
+    // The pending dispatch already holding this tyre, if any.
+    public function pendingDispatch(): ?Dispatch
+    {
+        return Dispatch::where('authorization', 'pending')
+            ->whereHas('dispatch_items', fn ($q) => $q->where('tyre_id', $this->id))
+            ->first();
     }
 
     /**

@@ -72,7 +72,6 @@ class Index extends Component
         $this->validateOnly($value);
     }
     private function resetInputFields(){
-        $this->type = "";
         $this->problem_category_id = Null;
         $this->service_type_id = Null;
         $this->selectedHorse = Null;
@@ -127,6 +126,15 @@ class Index extends Component
 
     }
 
+    // The form binds selectedHorse/Vehicle/Trailer/Asset; the table stores
+    // horse_id/vehicle_id/trailer_id/asset_id. Only the chosen equipment type is kept.
+    private function fillEquipment(InspectionSchedule $inspection_schedule){
+        $inspection_schedule->horse_id = $this->equipment == "Horse" ? ($this->selectedHorse ?: Null) : Null;
+        $inspection_schedule->vehicle_id = $this->equipment == "Vehicle" ? ($this->selectedVehicle ?: Null) : Null;
+        $inspection_schedule->trailer_id = $this->equipment == "Trailer" ? ($this->selectedTrailer ?: Null) : Null;
+        $inspection_schedule->asset_id = $this->equipment == "Asset" ? ($this->selectedAsset ?: Null) : Null;
+    }
+
     public function store(){
         
             $this->validate();
@@ -137,19 +145,16 @@ class Index extends Component
             $inspection_schedule->type = $this->type;
             $inspection_schedule->problem_category_id = $this->problem_category_id ?: Null;
             $inspection_schedule->service_type_id = $this->service_type_id ?: Null;
-            $inspection_schedule->selectedHorse = $this->selectedHorse ?: Null;
-            $inspection_schedule->selectedVehicle = $this->selectedVehicle ?: Null;
-            $inspection_schedule->selectedTrailer = $this->selectedTrailer ?: Null;
-            $inspection_schedule->selectedAsset = $this->selectedAsset ?: Null;
+            $this->fillEquipment($inspection_schedule);
             $inspection_schedule->notes = $this->notes;
             $inspection_schedule->trigger_type = $this->trigger_type;
-            $inspection_schedule->interval_km = $this->interval_km;
-            $inspection_schedule->interval_days = $this->interval_days;
-            $inspection_schedule->last_inspection_date = $this->last_inspection_date;
-            $inspection_schedule->last_inspection_km = $this->last_inspection_km;
-            $inspection_schedule->next_due_date = $this->next_due_date;
-            $inspection_schedule->next_due_km = $this->next_due_km;
-            $inspection_schedule->status = $this->status;
+            $inspection_schedule->interval_km = $this->interval_km ?: Null;
+            $inspection_schedule->interval_days = $this->interval_days ?: Null;
+            $inspection_schedule->last_inspection_date = $this->last_inspection_date ?: Null;
+            $inspection_schedule->last_inspection_km = $this->last_inspection_km ?: Null;
+            $inspection_schedule->next_due_date = $this->next_due_date ?: Null;
+            $inspection_schedule->next_due_km = $this->next_due_km ?: Null;
+            $inspection_schedule->status = $this->status ?: 'active';
             $inspection_schedule->save();
 
             $this->dispatchBrowserEvent('hide-saveModal');
@@ -171,16 +176,21 @@ class Index extends Component
     $this->problem_category_id = $inspection_schedule->problem_category_id;
     $this->inspection_schedule_id = $inspection_schedule->id;
 
-    if ($inspection_schedule->selectedHorse) {
+    $this->selectedHorse = $inspection_schedule->horse_id;
+    $this->selectedVehicle = $inspection_schedule->vehicle_id;
+    $this->selectedTrailer = $inspection_schedule->trailer_id;
+    $this->selectedAsset = $inspection_schedule->asset_id;
+
+    if ($inspection_schedule->horse_id) {
         $this->equipment = "Horse";
     }
-    elseif ($inspection_schedule->selectedAsset) {
+    elseif ($inspection_schedule->asset_id) {
        $this->equipment = "Asset";
     }
-    elseif ($inspection_schedule->selectedVehicle) {
+    elseif ($inspection_schedule->vehicle_id) {
        $this->equipment = "Vehicle";
     }
-    elseif ($inspection_schedule->selectedTrailer) {
+    elseif ($inspection_schedule->trailer_id) {
         $this->equipment = "Trailer";
     }
 
@@ -197,19 +207,16 @@ class Index extends Component
             $inspection_schedule->type = $this->type;
             $inspection_schedule->problem_category_id = $this->problem_category_id ?: Null;
             $inspection_schedule->service_type_id = $this->service_type_id ?: Null;
-            $inspection_schedule->selectedHorse = $this->selectedHorse ?: Null;
-            $inspection_schedule->selectedVehicle = $this->selectedVehicle ?: Null;
-            $inspection_schedule->selectedTrailer = $this->selectedTrailer ?: Null;
-            $inspection_schedule->selectedAsset = $this->selectedAsset ?: Null;
+            $this->fillEquipment($inspection_schedule);
             $inspection_schedule->notes = $this->notes;
             $inspection_schedule->trigger_type = $this->trigger_type;
-            $inspection_schedule->interval_km = $this->interval_km;
-            $inspection_schedule->interval_days = $this->interval_days;
-            $inspection_schedule->last_inspection_date = $this->last_inspection_date;
-            $inspection_schedule->last_inspection_km = $this->last_inspection_km;
-            $inspection_schedule->next_due_date = $this->next_due_date;
-            $inspection_schedule->next_due_km = $this->next_due_km;
-            $inspection_schedule->status = $this->status;
+            $inspection_schedule->interval_km = $this->interval_km ?: Null;
+            $inspection_schedule->interval_days = $this->interval_days ?: Null;
+            $inspection_schedule->last_inspection_date = $this->last_inspection_date ?: Null;
+            $inspection_schedule->last_inspection_km = $this->last_inspection_km ?: Null;
+            $inspection_schedule->next_due_date = $this->next_due_date ?: Null;
+            $inspection_schedule->next_due_km = $this->next_due_km ?: Null;
+            $inspection_schedule->status = $this->status ?: 'active';
             $inspection_schedule->update();
 
             $this->dispatchBrowserEvent('hide-updateModal');
@@ -257,18 +264,18 @@ class Index extends Component
         }else{
             $this->trailers = Trailer::orderByIdentifier('asc')->get();
         }
-        $search = trim($this->search);
+        $search = trim((string) $this->search);
 
         $query = InspectionSchedule::query()
+            ->where('type', $this->type)
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($w) use ($search) {
-                    $w->where('name', 'like', "%{$search}%")
-                    ->orWhere('part_number', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('unit_of_measure', 'like', "%{$search}%");
+                    $w->where('inspection_schedule_number', 'like', "%{$search}%")
+                    ->orWhere('trigger_type', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%");
                 });
             })
-        ->orderBy('name', 'asc')
+        ->orderBy('id', 'desc')
         ->paginate(10);
 
         return view('livewire.inspection-schedules.index',[

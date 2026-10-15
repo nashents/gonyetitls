@@ -5,11 +5,44 @@
         <div class="toolbar hidden-print">
             <div class="text-end">
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
+
+                {{-- ── FISCALIZE / STATUS BUTTON (approved credit notes only) ── --}}
+                @if($fiscalStatus === 'approved')
+                    <span class="btn btn-success btn-wide btn-rounded" style="cursor:default"><i class="fa fa-check-circle"></i> Fiscalised</span>
+                @elseif($fiscalStatus === 'pending')
+                    <button type="button" wire:click="pollFiscalStatus" wire:loading.attr="disabled" wire:target="pollFiscalStatus" class="btn btn-warning btn-wide btn-rounded">
+                        <span wire:loading.remove wire:target="pollFiscalStatus"><i class="fa fa-refresh"></i> Check Fiscal Status</span>
+                        <span wire:loading wire:target="pollFiscalStatus"><span class="spinner-border spinner-border-sm"></span> Checking...</span>
+                    </button>
+                @elseif($credit_note->authorization === 'approved')
+                    <button type="button" wire:click="fiscalizeCreditNote" wire:loading.attr="disabled" wire:target="fiscalizeCreditNote"
+                            class="btn {{ $fiscalStatus === 'failed' ? 'btn-danger' : 'btn-default border-primary' }} btn-wide btn-rounded">
+                        <span wire:loading.remove wire:target="fiscalizeCreditNote">
+                            @if($fiscalStatus === 'failed')
+                                <i class="fa fa-refresh"></i> Retry Fiscalize
+                            @else
+                                <i class="fa fa-receipt" style="color:red"></i> Fiscalize Credit Note
+                            @endif
+                        </span>
+                        <span wire:loading wire:target="fiscalizeCreditNote"><span class="spinner-border spinner-border-sm" role="status"></span> Fiscalizing...</span>
+                    </button>
+                @endif
+
+                @if($fiscalStatus === 'approved' && $fiscalPdfFile)
+                    <button type="button" wire:click="downloadFiscalPdf" class="btn btn-success btn-wide btn-rounded"><i class="fa fa-file-pdf-o"></i> Download Fiscal PDF</button>
+                @endif
                 {{-- <a href="#" wire:click="sendEmail({{$credit_note->id}})" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
                <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
                 <a href="{{route('credit_notes.pdf', $credit_note->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
             </div>
             <hr>
+            @if($fiscalMessage)
+                <div class="alert mt-2 mb-2 py-2 {{ $fiscalMessageType === 'success' ? 'alert-success' : ($fiscalMessageType === 'error' ? 'alert-danger' : 'alert-warning') }}" role="alert">
+                    {{ $fiscalMessage }}
+                </div>
+            @elseif($fiscalStatus === 'failed' && $fiscalError)
+                <div class="alert mt-2 mb-2 py-2 alert-danger" role="alert">Fiscalisation failed: {{ $fiscalError }}</div>
+            @endif
         </div>
         <div class="invoice overflow-auto">
             <div style="min-width: 600px">
@@ -108,6 +141,20 @@
                             <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$credit_note->date}}</div>
                           
                             <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$credit_note->currency ? $credit_note->currency->name : ""}}</div>
+                            @if ($fiscalStatus === 'approved')
+                                @if ($fiscalRaInvoiceNo)
+                                <div class="date" style="padding-bottom: 3px"><strong>RA Invoice No.:</strong> {{$fiscalRaInvoiceNo}}</div>
+                                @endif
+                                @if ($fiscalDay)
+                                <div class="date" style="padding-bottom: 3px"><strong>Fiscal Day:</strong> {{$fiscalDay}}</div>
+                                @endif
+                                @if ($fiscalVerifyCode)
+                                <div class="date" style="padding-bottom: 3px"><strong>Verification Code:</strong> <span style="font-family:monospace;font-weight:700">{{$fiscalVerifyCode}}</span></div>
+                                @endif
+                                @if ($fiscalQrUrl)
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($fiscalQrUrl) }}" width="90" height="90" alt="Fiscal QR">
+                                @endif
+                            @endif
                         </div>
                     </div>
 

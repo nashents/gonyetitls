@@ -120,6 +120,9 @@ class Create extends Component
 
     public function mount(){
         $this->company = Auth::user()->employee->company;
+        if ($this->company && in_array($this->company->default_booking_transaction_type, ['expense', 'income'])) {
+            $this->transaction_type = $this->company->default_booking_transaction_type;
+        }
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
       

@@ -51,9 +51,7 @@
                                     <span class="badge bg-active">{{$tyre->type}}</span>
                                 @endif
                                 </small> <br>
-                                @if ($tyre->serial_number)
-                                    <small><strong>S#:</strong> {{$tyre->serial_number}}</small>
-                                @endif
+                                <small><strong>SN#:</strong> {{$tyre->serial_label}}</small>
                         </td>
                         <td>
                             {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}

@@ -49,7 +49,7 @@
                     <td><input type="checkbox" wire:model="selected" value="{{ $tyre_assignment->id }}"></td>
                     <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : ""}}</td>
                     <td>{{$tyre_assignment->tyre->product ? $tyre_assignment->tyre->product->name : ""}} {{$tyre_assignment->tyre->product && $tyre_assignment->tyre->product->brand ? $tyre_assignment->tyre->product->brand->name : ""}}</td>
-                    <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->serial_number : ""}}</td>
+                    <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->serial_label : ""}}</td>
                     <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->width : ""}} / {{$tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : ""}} R {{$tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : ""}}</td>
                     <td>{{$tyre_assignment->axle}}</td>
                     <td>{{ \App\Models\TyreAssignment::POSITIONS[$tyre_assignment->position] ?? $tyre_assignment->position }}</td>
@@ -182,7 +182,7 @@
                                     <select class="form-control" wire:model.defer="assignRows.{{ $i }}.tyre_id">
                                         <option value="">Select Tyre</option>
                                         @foreach ($availableTyres as $availableTyre)
-                                            <option value="{{ $availableTyre->id }}">{{ $availableTyre->tyre_number }} {{ $availableTyre->product && $availableTyre->product->brand ? $availableTyre->product->brand->name : "" }} {{ $availableTyre->product ? $availableTyre->product->name : "" }} {{ $availableTyre->serial_number ? "SN#: ".$availableTyre->serial_number : "" }} - {{ $availableTyre->width }}/{{ $availableTyre->aspect_ratio }} R {{ $availableTyre->diameter }}</option>
+                                            <option value="{{ $availableTyre->id }}">{{ $availableTyre->tyre_number }} {{ $availableTyre->product && $availableTyre->product->brand ? $availableTyre->product->brand->name : "" }} {{ $availableTyre->product ? $availableTyre->product->name : "" }} SN#: {{ $availableTyre->serial_label }} - {{ $availableTyre->width }}/{{ $availableTyre->aspect_ratio }} R {{ $availableTyre->diameter }}</option>
                                         @endforeach
                                     </select>
                                     @error('assignRows.'.$i.'.tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

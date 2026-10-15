@@ -53,11 +53,12 @@ class TyreDispatchFitmentService
     }
 
     /**
-     * @param array $rows  [key => ['tyre_id', 'fit_type', 'axle', 'position']]
+     * @param array $rows  [key => ['tyre_id', 'fit_type', 'axle', 'position', 'serial']] (serial: entered when the tyre has none)
      * @param array $units from units()
+     * @param bool  $newDispatch true when creating: a tyre already on another pending dispatch is refused
      * @return array       [errorKey => message], errorKey = "{field}.{key}"
      */
-    public function validate(array $rows, array $units): array
+    public function validate(array $rows, array $units, bool $newDispatch = false): array
     {
         $errors = [];
 
@@ -66,6 +67,7 @@ class TyreDispatchFitmentService
         }
 
         $slots = [];
+        $serials = [];
 
         foreach ($rows as $key => $row) {
             $tyre = Tyre::find($row['tyre_id'] ?? null);
@@ -86,8 +88,28 @@ class TyreDispatchFitmentService
             }
 
             if (!Tyre::inStock()->whereKey($tyre->id)->exists()) {
-                $errors["selectedTyre.{$key}"] = "Tyre {$label} is not in stock.";
+                $issued = $tyre->lastDispatchItem();
+                $errors["selectedTyre.{$key}"] = "Tyre {$label} is not in stock"
+                    .($issued && $issued->dispatch ? " (already issued on dispatch {$issued->dispatch->dispatch_number}). Reject this dispatch." : '.');
                 continue;
+            }
+
+            if ($newDispatch && ($pending = $tyre->pendingDispatch())) {
+                $errors["selectedTyre.{$key}"] = "Tyre {$label} is already on pending dispatch {$pending->dispatch_number}. Approve or reject that one first.";
+                continue;
+            }
+
+            // A dispatched tyre must be identifiable: ask for the serial if the record has none.
+            if (blank($tyre->serial_number)) {
+                $serial = trim((string) ($row['serial'] ?? ''));
+                if ($serial === '') {
+                    $errors["tyre_serial.{$key}"] = "Enter the serial number for tyre {$tyre->tyre_number}.";
+                } elseif (isset($serials[strtolower($serial)])) {
+                    $errors["tyre_serial.{$key}"] = "Serial {$serial} is entered for two tyres on this dispatch.";
+                } elseif (Tyre::where('serial_number', $serial)->whereKeyNot($tyre->id)->exists()) {
+                    $errors["tyre_serial.{$key}"] = "Serial {$serial} already belongs to another tyre.";
+                }
+                $serials[strtolower($serial)] = true;
             }
 
             $type = $row['fit_type'] ?? null;
@@ -120,6 +142,22 @@ class TyreDispatchFitmentService
         }
 
         return $errors;
+    }
+
+    /**
+     * Saves serials entered for tyres that had none (rows already validated).
+     */
+    public function applySerials(array $rows): void
+    {
+        foreach ($rows as $row) {
+            $serial = trim((string) ($row['serial'] ?? ''));
+            if ($serial === '') {
+                continue;
+            }
+            Tyre::whereKey($row['tyre_id'])
+                ->where(fn ($q) => $q->whereNull('serial_number')->orWhere('serial_number', ''))
+                ->update(['serial_number' => $serial]);
+        }
     }
 
     /**

@@ -4,7 +4,9 @@ namespace App\Console\Commands;
 
 use App\Models\Account;
 use App\Models\BillExpense;
+use App\Models\CustomerFuelSupply;
 use App\Models\User;
+use App\Services\Accounting\CustomerFuelSupplyService;
 use App\Services\Accounting\FuelJournalService;
 use App\Services\Accounting\LedgerResyncService;
 use Illuminate\Console\Command;
@@ -37,7 +39,7 @@ class RepointTripExpenseBillAccounts extends Command
 
     protected $description = 'Move trip bill lines (trip expenses, fuel orders, transporter payments) onto their correct expense account and repost';
 
-    public function handle(LedgerResyncService $resync, FuelJournalService $fuelJournal)
+    public function handle(LedgerResyncService $resync, FuelJournalService $fuelJournal, CustomerFuelSupplyService $customerFuel)
     {
         $fuelCogs = Account::where('name', 'Fuel - COGS')->first();
         $fuelOps = Account::where('name', 'Fuel - Ops')->first();
@@ -95,18 +97,38 @@ class RepointTripExpenseBillAccounts extends Command
             }
         }
 
+        // Customer-funded trip expense lines (no Bill - DR expense / CR AR)
+        // were hardcoded to "Trip Expense" the same way.
+        $supplies = [];
+        if (! $only) {
+            $tripExpenseIds = Account::where('name', 'Trip Expense')->pluck('id');
+            $candidates = CustomerFuelSupply::with(['account', 'trip_expense' => fn ($q) => $q->withTrashed()->with('expense.account', 'allowance.account')])
+                ->whereNotNull('trip_expense_id')
+                ->whereIn('account_id', $tripExpenseIds)
+                ->get();
+            foreach ($candidates as $supply) {
+                $te = $supply->trip_expense;
+                $target = $te ? (optional($te->expense)->account ?: optional($te->allowance)->account) : null;
+                if ($te && ! $te->trashed() && $target && ! $tripExpenseIds->contains($target->id)) {
+                    $supplies[] = $supply;
+                    $rows[] = [$supply->supply_number, '-', trim(optional($te->expense)->name . ' #' . $te->expense_id), optional($supply->account)->name, $target->name, 'WILL REPOST CUSTOMER SUPPLY'];
+                }
+            }
+        }
+
         if ($rows) {
             $this->table(['Bill', 'Line', 'Expense #id', 'Line account', 'Correct account', 'Action'], $rows);
         }
 
-        $count = count($lines) + count($fuels);
+        $count = count($lines) + count($fuels) + count($supplies);
         if (! $count) {
             $this->info('Nothing to re-point.');
             return self::SUCCESS;
         }
 
         if ($this->option('dry-run')) {
-            $this->warn(count($lines) . ' line(s) would be re-pointed and ' . count($fuels) . ' fuel order(s) reposted. Nothing changed.');
+            $this->warn(count($lines) . ' line(s) would be re-pointed, ' . count($fuels) . ' fuel order(s) and '
+                . count($supplies) . ' customer supply(ies) reposted. Nothing changed.');
             return self::SUCCESS;
         }
 
@@ -159,7 +181,18 @@ class RepointTripExpenseBillAccounts extends Command
             }
         }
 
-        $this->info("Fixed {$fixed} bill(s).");
+        foreach ($supplies as $supply) {
+            try {
+                // Account change -> reverses (original date) + reposts.
+                $this->actAs($supply->user_id);
+                $customerFuel->syncFromTripExpense($supply->trip_expense);
+                $fixed++;
+            } catch (\Throwable $e) {
+                $this->error("Customer supply {$supply->supply_number}: {$e->getMessage()}");
+            }
+        }
+
+        $this->info("Fixed {$fixed} item(s).");
         return self::SUCCESS;
     }
 

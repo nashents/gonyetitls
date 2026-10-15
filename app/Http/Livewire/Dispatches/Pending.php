@@ -9,6 +9,7 @@ use App\Models\Asset;
 use App\Models\Account;
 use Livewire\Component;
 use App\Models\Dispatch;
+use App\Models\DispatchItem;
 use App\Models\Inventory;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
@@ -119,6 +120,8 @@ class Pending extends Component
             $tyre = $item->tyre;
             $this->fitments[$item->id] = [
                 'tyre' => $tyre ? trim(($tyre->tyre_number ?? '').($tyre->serial_number ? ' SN#: '.$tyre->serial_number : '')) : '',
+                'needs_serial' => $tyre && blank($tyre->serial_number),
+                'serial' => '',
                 'fit_type' => $item->fit_type ?: (count($units) === 1 ? array_key_first($units) : null),
                 'axle' => $item->axle,
                 'position' => $item->position,
@@ -141,6 +144,7 @@ class Pending extends Component
                 'fit_type' => $fitment['fit_type'] ?? null,
                 'axle' => $fitment['axle'] ?? null,
                 'position' => $fitment['position'] ?? null,
+                'serial' => $fitment['serial'] ?? null,
             ];
         }
 
@@ -160,6 +164,12 @@ class Pending extends Component
     private function fitTyres(Dispatch $dispatch): void
     {
         $service = $this->fitmentService();
+
+        // Serials entered in the approval window for tyres that had none.
+        $service->applySerials(collect($this->fitments)
+            ->map(fn ($fitment, $itemId) => ['tyre_id' => optional(DispatchItem::find($itemId))->tyre_id, 'serial' => $fitment['serial'] ?? null])
+            ->filter(fn ($row) => $row['tyre_id'])
+            ->all());
 
         foreach ($dispatch->dispatch_items()->with('tyre')->whereNotNull('tyre_id')->get() as $item) {
             $fitment = $this->fitments[$item->id] ?? [];

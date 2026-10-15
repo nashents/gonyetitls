@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EzyTrackWebhookController;
+use App\Http\Controllers\FiscalHarmonyWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,3 +28,11 @@ Route::post('/webhooks/ezytrack', [EzyTrackWebhookController::class, 'store'])
     ->withoutMiddleware('throttle:api')
     ->middleware(['ezytrack.token', 'throttle:600,1'])
     ->name('webhooks.ezytrack');
+
+// Fiscal Harmony pushes fiscalisation results here (set on the API key in
+// the FH portal). Authenticated by the X-Api-Signature HMAC, checked in the
+// controller; FH needs a reply within 5 seconds.
+Route::post('/webhooks/fiscal-harmony', [FiscalHarmonyWebhookController::class, 'store'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware('throttle:600,1')
+    ->name('webhooks.fiscal-harmony');
