@@ -102,15 +102,12 @@
 
       <div class="hr"></div>
 
-      {{-- ===== Transporter & Route ===== --}}
+      {{-- ===== Vehicle & Route ===== --}}
       <section class="grid-2">
 
         <div class="card">
-          <h3>Transporter &amp; Vehicle</h3>
+          <h3>Vehicle</h3>
           <div class="kv">
-            <div class="k">Transporter</div>
-            <div class="v">{{ $trip->transporter?->name }}</div>
-
             <div class="k">Horse | Trailer(s)</div>
             <div class="v">
               @if ($trip->horse)
@@ -186,13 +183,13 @@
 
         {{-- ===== Consignor / Consignee — collapsed across all TTOs ===== --}}
         @php
-          // Build unique shippers and consignees keyed by id to avoid duplicates
+          // Build unique consignors (shippers) and consignees keyed by id to avoid duplicates
           $shippers   = collect();
           $consignees = collect();
 
           foreach ($ttos as $tto) {
             $to = $tto->transport_order;
-            $shipper   = $to?->customer  ?? $trip->customer;
+            $shipper   = $to?->consignor ?? ($trip->consignor ?? null);
             $consignee = $to?->consignee ?? ($trip->consignee ?? null);
 
             if ($shipper   && !$shippers->has($shipper->id))   $shippers->put($shipper->id, $shipper);
@@ -211,8 +208,6 @@
                 @endif
                 <div class="k">Name</div>
                 <div class="v">{{ $shipper->name }}</div>
-                <div class="k" data-screen-only>Ref</div>
-                <div class="v" data-screen-only>{{ $shipper->custom_ref }}</div>
                 <div class="k">Address</div>
                 <div class="v">
                   {{ $shipper->street_address }}
@@ -329,7 +324,7 @@
 
         {{-- ===== Fallback: no TTOs ===== --}}
         @php
-          $shipper   = $trip->customer  ?? null;
+          $shipper   = $trip->consignor ?? null;
           $consignee = $trip->consignee ?? null;
         @endphp
 

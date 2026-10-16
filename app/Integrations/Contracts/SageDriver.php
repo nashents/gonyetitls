@@ -86,4 +86,7 @@ interface SageDriver extends IntegrationDriver
 
     /** Append line items to an existing sales transaction (by RECORDNO key). */
     public function appendSalesTransactionLines(string $key, array $lines, ?string $entityId = null, ?string $projectId = null): array;
+
+    /** The valid values of an ENUM/picklist field on an object (e.g. a PROJECT custom field). */
+    public function lookupFieldValidValues(string $object, string $field): array;
 }

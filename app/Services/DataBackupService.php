@@ -89,6 +89,7 @@ class DataBackupService
             'Contacts/Brokers'                   => fn () => new Exports\BrokersExport(),
             'Contacts/Agents'                    => fn () => new Exports\AgentsExport(),
             'Contacts/Consignees'                => fn () => new Exports\ConsigneesExport(),
+            'Contacts/Consignors'                => fn () => new Exports\ConsignorsExport(),
 
             // Fleet
             'Fleet/Horses'                       => fn () => new Exports\HorsesExport(),

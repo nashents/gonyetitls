@@ -568,6 +568,19 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
+                                            <label for="name"><a href="{{route('consignors.index')}}" style="color: blue" target="_blank">Consignors</a></label>
+                                            <select class="form-control" wire:model.debounce.300ms="consignor_id">
+                                                <option value="">Select Consignor</option>
+                                                @foreach ($consignors as $consignor)
+                                                    <option value="{{$consignor->id}}">{{$consignor->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            <small>  <a href="{{ route('consignors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Consignor</a></small> <a href="#" wire:click.prevent="refresh('consignors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            @error('consignor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
                                             <label for="name"><a href="{{route('consignees.index')}}" style="color: blue" target="_blank">Consignees</a></label>
                                             <select class="form-control" wire:model.debounce.300ms="consignee_id">
                                                 <option value="">Select Consignee</option>
@@ -592,6 +605,8 @@
                                             <small>  <a href="{{ route('brokers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Broker</a></small> <a href="#" wire:click.prevent="refresh('brokers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-md-3">
                                         <div class="row">
                                             <div class="form-group">

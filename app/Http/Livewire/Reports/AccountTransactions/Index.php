@@ -18,14 +18,11 @@ class Index extends Component
     public $details;
     public $summary = "summary";
 
-    public $default_currency;
-    public $default_currency_id;
-
-    public $opening_balance = 0;
-    public $closing_balance = 0;
-    public $total_debit = 0;
-    public $total_credit = 0;
-    public $transactions = [];
+    // Report results (balances, transaction rows, currency) are built in
+    // render() and passed to the view, never stored as public properties:
+    // whole-number floats like 100.0 come back from the browser as 100,
+    // which breaks Livewire's payload checksum (CorruptComponentPayloadException)
+    // on the next request, and the rows bloat every round-trip.
 
     public function mount()
     {
@@ -83,8 +80,12 @@ class Index extends Component
     {
         $user = Auth::user();
         $company = $user->employee?->company ?? $user->company ?? null;
-        $this->default_currency = $company?->currency;
-        $this->default_currency_id = $company?->currency_id;
+        $default_currency = $company?->currency;
+        $opening_balance = 0;
+        $closing_balance = 0;
+        $total_debit = 0;
+        $total_credit = 0;
+        $transactions = [];
 
         if ($this->account_id && isset($this->from) && isset($this->to) && $company) {
             $account = Account::with('account_type.account_type_group')->find($this->account_id);
@@ -93,18 +94,24 @@ class Index extends Component
 
             $calculator = new AccountTransactionsCalculator($company->id, $this->account_id, $this->from, $this->to, $creditNormal);
 
-            $this->opening_balance = $calculator->openingBalance();
-            $this->transactions = $calculator->transactions($this->opening_balance);
+            $opening_balance = $calculator->openingBalance();
+            $transactions = $calculator->transactions($opening_balance);
 
-            $this->total_debit = array_sum(array_column($this->transactions, 'debit'));
-            $this->total_credit = array_sum(array_column($this->transactions, 'credit'));
-            $this->closing_balance = $this->transactions
-                ? end($this->transactions)['running_balance']
-                : $this->opening_balance;
+            $total_debit = array_sum(array_column($transactions, 'debit'));
+            $total_credit = array_sum(array_column($transactions, 'credit'));
+            $closing_balance = $transactions
+                ? end($transactions)['running_balance']
+                : $opening_balance;
         }
 
         return view('livewire.reports.account-transactions.index', [
             'accounts' => $this->accounts,
+            'default_currency' => $default_currency,
+            'opening_balance' => $opening_balance,
+            'closing_balance' => $closing_balance,
+            'total_debit' => $total_debit,
+            'total_credit' => $total_credit,
+            'transactions' => $transactions,
         ]);
     }
 }

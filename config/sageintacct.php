@@ -94,6 +94,18 @@ return [
         // (In Progress / Completed / AVAILABLE in bhsquared-imp).
         'status_completed'   => env('SAGE_INTACCT_PROJECT_STATUS_COMPLETED', 'Completed'),
         'status_in_progress' => env('SAGE_INTACCT_PROJECT_STATUS_IN_PROGRESS', 'In Progress'),
+
+        // CUSTOM field integration IDs on the PROJECT object for a trip's route
+        // (the "Depature Location" / "Destination Location" / "COMMODITY" fields in
+        // the Sage UI). These are user-defined per Sage instance, so they are only
+        // emitted when configured here (null = not sent). Set them to the exact
+        // custom-field integration names from Sage's Platform → Custom Fields.
+        // Confirmed in bhsquared-imp: both are ENUM (picklist) custom fields on the
+        // PROJECT object; the push sends the picklist value (a location name). The
+        // "Depature" spelling matches Sage's field ID exactly — do not "fix" it.
+        'departure_location_field'   => env('SAGE_INTACCT_PROJECT_DEPARTURE_FIELD', 'DEPATURE_LOCATION'),
+        'destination_location_field' => env('SAGE_INTACCT_PROJECT_DESTINATION_FIELD', 'DESTINATION_LOCATION'),
+        'commodity_field'            => env('SAGE_INTACCT_PROJECT_COMMODITY_FIELD', 'COMMODITY'),
     ],
 
     // Trip → PROJECT sync gate. Only trips whose authorization is "approved" AND

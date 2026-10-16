@@ -732,6 +732,8 @@
                                     @error('selectedTripType') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
@@ -743,6 +745,19 @@
                                     </select>
                                     @error('customer_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                     <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name"><a href="{{route('consignors.index')}}" style="color: blue" target="_blank">Consignors</a></label>
+                                    <select class="form-control" wire:model.debounce.300ms="consignor_id">
+                                        <option value="">Select Consignor</option>
+                                        @foreach ($consignors as $consignor)
+                                            <option value="{{$consignor->id}}">{{$consignor->name}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="{{ route('consignors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Consignor</a></small> <a href="#" wire:click.prevent="refresh('consignors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('consignor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -1555,6 +1570,8 @@
                                     @error('selectedTripType') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
@@ -1566,6 +1583,19 @@
                                     </select>
                                     @error('customer_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                     <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name"><a href="{{route('consignors.index')}}" style="color: blue" target="_blank">Consignors</a></label>
+                                    <select class="form-control" wire:model.debounce.300ms="consignor_id">
+                                        <option value="">Select Consignor</option>
+                                        @foreach ($consignors as $consignor)
+                                            <option value="{{$consignor->id}}">{{$consignor->name}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="{{ route('consignors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Consignor</a></small> <a href="#" wire:click.prevent="refresh('consignors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('consignor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-3">

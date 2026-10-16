@@ -7,15 +7,31 @@ use Livewire\Component;
 use App\Models\Destination;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
+use App\Models\SageProjectLocation;
 use App\Exports\DestinationsExport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use App\Services\Sage\SageIntegration;
 use Illuminate\Support\Facades\Session;
+use App\Http\Livewire\Concerns\PullsFromSage;
 
 class Index extends Component
 {
 
     use WithPagination;
+    use PullsFromSage;
+
+    /** Sage integration gate — controls the "Pull Sage locations" button. */
+    public function getSageEnabledProperty()
+    {
+        return SageIntegration::enabledForUser();
+    }
+
+    /** Pull the Depature/Destination Location picklists from Sage + auto-map. */
+    public function pullFromSage()
+    {
+        $this->dispatchSagePull('project_location', 'Sage locations');
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -31,6 +47,7 @@ class Index extends Component
     public $countries;
     public $description;
     public $status;
+    public $sage_location;
 
     public $updateMode = false;
     public $deleteMode = false;
@@ -60,6 +77,7 @@ class Index extends Component
         $this->lat = '';
         $this->location = '';
         $this->status = '';
+        $this->sage_location = '';
     }
 
     public function exportDestinationsCSV(Excel $excel){
@@ -96,6 +114,7 @@ class Index extends Component
         $destination->lat = $this->lat;
         $destination->location = $this->location;
         $destination->description = $this->description;
+        $destination->sage_location = $this->sage_location ?: null;
         $destination->save();
 
         $this->dispatchBrowserEvent('hide-destinationModal');
@@ -126,6 +145,7 @@ class Index extends Component
     $this->description = $destination->description;
     $this->destination_id = $destination->id;
     $this->status = $destination->status;
+    $this->sage_location = $destination->sage_location;
 
    
 
@@ -226,6 +246,7 @@ class Index extends Component
             $destination->lat = $this->lat;
             $destination->description = $this->description;
             $destination->status = $this->status;
+            $destination->sage_location = $this->sage_location ?: null;
             $destination->update();
             $this->dispatchBrowserEvent('hide-destinationEditModal');
             $this->resetInputFields();
@@ -245,8 +266,11 @@ class Index extends Component
     public function render()
     {
 
+        $sageLocations = SageProjectLocation::orderBy('name')->get();
+
         if (isset($this->search) && filled($this->search)) {
             return view('livewire.destinations.index',[
+                'sageLocations' => $sageLocations,
                 'destinations' => Destination::with('country')
                 ->where('city','LIKE','%'.$this->search.'%')
                 ->orWhereHas('country', function ($query) {
@@ -260,6 +284,7 @@ class Index extends Component
             ]);
         }else{
             return view('livewire.destinations.index',[
+                'sageLocations' => $sageLocations,
                 'destinations' => Destination::with('country')->orderBy('city','asc')->paginate(10)
             ]);
         }

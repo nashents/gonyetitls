@@ -21,6 +21,7 @@ use App\Imports\CustomersImport;
 use App\Imports\EmployeesImport;
 use App\Imports\ProvincesImport;
 use App\Imports\ConsigneesImport;
+use App\Imports\ConsignorsImport;
 use App\Imports\InventoriesImport;
 use App\Imports\DestinationsImport;
 use App\Imports\BordersImport;
@@ -127,6 +128,17 @@ class ImportsController extends Controller
         $import = new ConsigneesImport;
         $import->import($file);
         Session::flash('success','Consignees Imported Successfully!!');
+        return redirect()->back();
+    }
+
+    public function importConsignors(Request $request){
+        $this->validate($request,[
+            'file' => 'required|file|mimes:xls,xlsx'
+        ]);
+        ini_set('max_execution_time', 300);
+        $import = new ConsignorsImport;
+        $import->import($request->file);
+        Session::flash('success','Consignors Imported Successfully!!');
         return redirect()->back();
     }
 

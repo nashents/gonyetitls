@@ -53,6 +53,9 @@ class TransportOrder extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function consignor(){
+        return $this->belongsTo('App\Models\Consignor');
+    }
     public function consignee(){
         return $this->belongsTo('App\Models\Consignee');
     }
@@ -106,6 +109,7 @@ class TransportOrder extends Model implements Auditable
     'with_transporter_rates',
     'customer_id',
     'consignee_id',
+    'consignor_id',
     'freight_calculation',
     'calculation_measurement',
     'currency_id',

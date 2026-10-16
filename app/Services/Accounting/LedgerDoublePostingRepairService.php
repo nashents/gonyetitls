@@ -109,10 +109,8 @@ class LedgerDoublePostingRepairService
         $reason = 'Ledger repair: duplicate/one-sided posting cleanup';
 
         if (! $document || $document->trashed()) {
-            // Dated when the document was deleted - when the un-posting should
-            // have happened - so it cancels in that month, not the repair's.
-            $date = $document && $document->deleted_at ? $document->deleted_at->toDateString() : null;
-            DB::transaction(fn () => $live->each(fn ($e) => $this->journalReversal->reverse($e, "{$reason} (document deleted)", $date)));
+            // reverse() dates each one like the posting it cancels.
+            DB::transaction(fn () => $live->each(fn ($e) => $this->journalReversal->reverse($e, "{$reason} (document deleted)")));
 
             return 'reversed (document deleted)';
         }

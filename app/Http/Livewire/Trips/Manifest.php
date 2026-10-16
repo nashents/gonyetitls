@@ -11,6 +11,7 @@ class Manifest extends Component
     public $manifest;
     public $company;
     public $consignee;
+    public $consignor;
     public $customer;
     public $from;
     public $to;
@@ -22,6 +23,7 @@ class Manifest extends Component
         $this->company = $trip->company ?? null;
         $this->customer = $trip->customer ?? null;
         $this->consignee = $trip->consignee ?? null;
+        $this->consignor = $trip->consignor ?? null;
         $this->cargo = $trip->cargo ?? null;
 
         $this->from = Destination::find($trip->from);

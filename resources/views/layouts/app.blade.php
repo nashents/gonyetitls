@@ -2038,6 +2038,26 @@
             })
         </script>
         <script type="text/javascript">
+            window.addEventListener('show-consignorModal', event => {
+                $('#consignorModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-consignorModal', event => {
+                $('#consignorModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('show-consignorEditModal', event => {
+                $('#consignorEditModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-consignorEditModal', event => {
+                $('#consignorEditModal').modal('hide');
+            })
+        </script>
+        <script type="text/javascript">
             window.addEventListener('show-folderDeleteModal', event => {
                 $('#folderDeleteModal').modal('show');
             })

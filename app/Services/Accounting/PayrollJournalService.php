@@ -315,7 +315,8 @@ class PayrollJournalService
             $entry = JournalEntry::create([
                 'company_id'    => $run->company_id,
                 'journal_number'=> $this->generateNumber(),
-                'date'          => now(),
+                // Moves amounts the run posted - same period as the run.
+                'date'          => $run->payroll_date ?? now(),
                 'reference'     => $reference,
                 'description'   => "Payroll split reclassification - {$run->name} (wages/statutory employer cost moved from the unsplit accounts to Admin/Ops and Drivers/COGS)",
                 'is_manual'     => true,

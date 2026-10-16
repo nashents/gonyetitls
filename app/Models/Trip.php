@@ -153,6 +153,9 @@ class Trip extends Model implements Auditable, EditAuthorizable
     public function rate(){
         return $this->belongsTo('App\Models\Rate');
     }
+    public function consignor(){
+        return $this->belongsTo('App\Models\Consignor');
+    }
     public function consignee(){
         return $this->belongsTo('App\Models\Consignee');
         }

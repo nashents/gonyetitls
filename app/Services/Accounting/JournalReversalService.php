@@ -13,8 +13,8 @@ class JournalReversalService
      * mark the original as 'reversed', and return the new reversing entry.
      * Returns null if $entry is already reversed.
      *
-     * Dated today unless $date is given - LedgerResyncService passes the
-     * original entry's date so a correction lands in the original period.
+     * Dated like $entry itself (so it cancels in the same period) unless
+     * $date is given.
      */
     public function reverse(JournalEntry $entry, ?string $reason = null, ?string $date = null): ?JournalEntry
     {
@@ -46,7 +46,10 @@ class JournalReversalService
                 'supplier_journal_id' => $entry->supplier_journal_id,
                 'is_manual'      => false,
                 'journal_number' => $this->generateNumber(),
-                'date'           => $date ?? now()->toDateString(),
+                // Same period as the entry it cancels, whatever the reason
+                // (correction, removal, deletion) - accountant's rule; a
+                // today-dated reversal left the old amount in its month.
+                'date'           => $date ?? optional($entry->date)->toDateString() ?? now()->toDateString(),
                 'reference'      => "REV-{$entry->journal_number}",
                 'description'    => "Reversal of {$entry->journal_number}" . ($reason ? " - {$reason}" : ''),
                 'status'         => 'posted',

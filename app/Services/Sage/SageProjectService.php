@@ -133,11 +133,12 @@ class SageProjectService
             return $this->dependencyFailure($trip, 'Horse could not be synced: ' . ($horse['error'] ?? 'unknown error'));
         }
 
-        // Customer (optional, set only if already synced from Sage): the trip's own,
-        // else the customer on its transport order / deal (trips are often billed via
-        // a transport order and carry no direct customer).
-        $customer       = $trip->customer ?: $this->tripCustomer($trip);
-        $customerSageId = $this->customerSageId($customer);
+        // Customer on the trip PROJECT = the TRANSPORTER's Sage customer (client
+        // requirement, UAT 2026-10-16): the subcontractor running the trip bills via
+        // its transporter's customer. No fallback to the shipper/transport-order
+        // customer — if the transporter has no linked customer we link a same-named
+        // one or create it (in Gonyeti + Sage). See resolveTransporterCustomerId.
+        $customerSageId = $this->resolveTransporterCustomerId($trip);
 
         // Project manager = the driver's Sage EMPLOYEE (created if it doesn't exist).
         $managerId = null;
@@ -158,6 +159,13 @@ class SageProjectService
         if (empty($horse['project_id'])) {
             unset($payload['parentid']);
         }
+
+        // Depature / Destination Location ENUM picklist values — resolved from the
+        // trip's origin/destination (mapped Sage picklist value on each Destination)
+        // and validated against the picklist for that field, so Sage never gets an
+        // invalid value. Null → not emitted.
+        $payload['departure_location']   = $this->tripPicklistLocation($this->tripDepartureDestination($trip), true);
+        $payload['destination_location'] = $this->tripPicklistLocation($this->tripDestinationDestination($trip), false);
 
         // Trip Number controls (Finance workflow §4.2): the Trip Number (= PROJECTID)
         // must be UNIQUE and IMMUTABLE once synced. Reject a duplicate (already synced
@@ -353,6 +361,151 @@ class SageProjectService
     protected function validationError(Trip $trip, string $message): array
     {
         return $this->tripProblem($trip, $message, IntegrationMapping::STATUS_REQUIRES_ATTENTION, 'validate');
+    }
+
+    /**
+     * Sage CUSTOMERID for a trip PROJECT = the transporter's customer (client rule):
+     *   1. the transporter's linked Gonyeti customer;
+     *   2. else a Gonyeti customer with the SAME NAME as the transporter — auto-linked;
+     *   3. else a newly created Gonyeti customer carrying the transporter name.
+     * In every case the transporter is linked to that customer (transporter.customer_id)
+     * and the customer is ensured to exist in Sage, returning its CUSTOMERID. No
+     * fallback to the trip/transport-order customer. Null only when there is no
+     * transporter (or it has no name).
+     */
+    protected function resolveTransporterCustomerId(Trip $trip): ?string
+    {
+        $transporter = $trip->transporter ?: optional($trip->horse)->transporter;
+        if (! $transporter) {
+            return null;
+        }
+
+        $customer = $this->ensureTransporterCustomer($transporter, $trip);
+
+        return $this->customerSageId($customer);
+    }
+
+    /**
+     * Resolve (and link) the Gonyeti customer for a transporter, creating it if
+     * needed, and ensure it has a Sage CUSTOMERID. See resolveTransporterCustomerId.
+     */
+    protected function ensureTransporterCustomer(Transporter $transporter, Trip $trip): ?\App\Models\Customer
+    {
+        $name = trim((string) $transporter->name);
+
+        // 1. Already linked.
+        $customer = $transporter->customer;
+
+        // 2. Not linked, but a same-named Gonyeti customer exists → auto-link it.
+        if (! $customer && $name !== '') {
+            $customer = \App\Models\Customer::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)])->first();
+        }
+
+        // 3. Still none → create a Gonyeti customer carrying the transporter name.
+        if (! $customer && $name !== '') {
+            $customer              = new \App\Models\Customer();
+            $customer->user_id     = $transporter->user_id ?: optional($this->integration->company)->user_id;
+            $customer->company_id  = $this->integration->company_id;
+            $customer->currency_id = $trip->currency_id ?: optional($this->integration->company)->currency_id;
+            $customer->name        = $name;
+            $customer->status      = 1;
+            $customer->saveQuietly();
+        }
+
+        if (! $customer) {
+            return null;
+        }
+
+        // Link the transporter → customer in Gonyeti (idempotent) so it stays linked.
+        if ((int) $transporter->customer_id !== (int) $customer->id) {
+            $transporter->customer_id = $customer->id;
+            $transporter->saveQuietly();
+        }
+
+        $this->ensureCustomerSageId($customer, $transporter, $trip);
+
+        return $customer->refresh();
+    }
+
+    /**
+     * Ensure a Gonyeti customer has a Sage CUSTOMERID: reuse a same-named Sage
+     * customer if one exists, else create one directly in Sage using the SAME id
+     * scheme as the invoice path (TCUS-{transporter->id}) so a transporter resolves
+     * to ONE Sage customer across trips and invoices. Stores the id on custom_ref.
+     */
+    protected function ensureCustomerSageId(\App\Models\Customer $customer, Transporter $transporter, Trip $trip): void
+    {
+        if ($customer->custom_ref || $customer->sage_intacct_id) {
+            return;
+        }
+
+        $name = trim((string) $customer->name);
+        if ($name === '') {
+            return;
+        }
+
+        $sageId = $this->findSageCustomerIdByName($name);
+
+        if (! $sageId) {
+            $id  = (string) config('sageintacct.invoice.transporter_customer_prefix', 'TCUS-') . $transporter->id;
+            $res = $this->driver->createCustomer([
+                'id'       => $id,
+                'name'     => $name,
+                'taxgroup' => config('sageintacct.customer.tax_group') ?: null,
+                'currency' => optional($trip->currency)->name ?: null,
+                'status'   => 'active',
+            ]);
+            if (! empty($res['success']) || str_contains(strtolower((string) ($res['error'] ?? '')), 'already exists')) {
+                $sageId = ($res['data']['id'] ?? null) ?: $id;
+            }
+        }
+
+        if ($sageId) {
+            $customer->custom_ref = $sageId;
+            $customer->saveQuietly();
+        }
+    }
+
+    /** First Sage CUSTOMERID whose NAME matches exactly, or null. */
+    protected function findSageCustomerIdByName(string $name): ?string
+    {
+        $safe = str_replace("'", '', $name);
+        $res  = $this->driver->readByQuery('CUSTOMER', ['CUSTOMERID', 'NAME'], "NAME = '{$safe}'", 1);
+
+        return (! empty($res['success']) && ! empty($res['data'][0]['CUSTOMERID'])) ? $res['data'][0]['CUSTOMERID'] : null;
+    }
+
+    /** The Destination the trip departs FROM (first origin leg). */
+    protected function tripDepartureDestination(Trip $trip): ?\App\Models\Destination
+    {
+        return optional($trip->trip_origins->first())->destination;
+    }
+
+    /** The Destination the trip ends AT (last destination leg). */
+    protected function tripDestinationDestination(Trip $trip): ?\App\Models\Destination
+    {
+        return optional($trip->trip_destinations->last())->destination;
+    }
+
+    /**
+     * The Sage PROJECT picklist value for a leg's Destination (the mapped
+     * `sage_location`), but only when it's a valid value for that field — departure
+     * and destination picklists differ. Returns null otherwise (so nothing is sent,
+     * never an invalid picklist value Sage would reject).
+     */
+    protected function tripPicklistLocation(?\App\Models\Destination $destination, bool $isDeparture): ?string
+    {
+        $value = $destination ? trim((string) $destination->sage_location) : '';
+        if ($value === '') {
+            return null;
+        }
+
+        $loc = \App\Models\SageProjectLocation::where('name', $value)->first();
+        if (! $loc) {
+            return null;
+        }
+
+        return ($isDeparture ? $loc->for_departure : $loc->for_destination) ? $value : null;
     }
 
     /** A trip's customer via its transport order / deal, when it has no direct customer. */

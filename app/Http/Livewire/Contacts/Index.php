@@ -13,6 +13,7 @@ use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Incident;
 use App\Models\Consignee;
+use App\Models\Consignor;
 use App\Models\TruckStop;
 use App\Models\Transporter;
 use App\Models\ClearingAgent;
@@ -25,6 +26,8 @@ class Index extends Component
     public $category;
     public $consignee;
     public $consignee_id;
+    public $consignor;
+    public $consignor_id;
     public $vendor;
     public $vendor_id;
     public $incident;
@@ -89,6 +92,11 @@ class Index extends Component
         $this->contacts = Contact::where('category', $this->category)
         ->where('consignee_id', $this->consignee->id)->latest()->get();
     }
+    elseif ($this->category == "consignor") {
+        $this->consignor = Consignor::find($id);
+        $this->contacts = Contact::where('category', $this->category)
+        ->where('consignor_id', $this->consignor->id)->latest()->get();
+    }
     elseif ($this->category == "incident") {
         $this->incident = Incident::find($id);
         $this->contacts = Contact::where('category', $this->category)
@@ -141,6 +149,9 @@ class Index extends Component
             }
             elseif (isset($this->consignee)) {
                 $contact->consignee_id = $this->consignee->id;
+            }
+            elseif (isset($this->consignor)) {
+                $contact->consignor_id = $this->consignor->id;
             }
             elseif (isset($this->broker)) {
                 $contact->broker_id = $this->broker->id;
@@ -199,6 +210,7 @@ class Index extends Component
         $this->transporter_id = $contact->transporter_id;
         $this->incident_id = $contact->incident_id;
         $this->consignee_id = $contact->consignee_id;
+        $this->consignor_id = $contact->consignor_id;
         $this->truck_stop_id = $contact->truck_stop_id;
         $this->clearing_agent_id = $contact->clearing_agent_id;
         $this->name = $contact->name;
@@ -232,6 +244,9 @@ class Index extends Component
                 }
                 elseif (isset($this->consignee_id)) {
                     $contact->consignee_id = $this->consignee_id;
+                }
+                elseif (isset($this->consignor_id)) {
+                    $contact->consignor_id = $this->consignor_id;
                 }
                 elseif (isset($this->truck_stop_id)) {
                     $contact->truck_stop_id = $this->truck_stop_id;
@@ -287,6 +302,10 @@ class Index extends Component
         elseif ($this->category == "consignee") {
             $this->contacts = Contact::where('category', $this->category)
             ->where('consignee_id', $this->consignee->id)->latest()->get();
+        }
+        elseif ($this->category == "consignor") {
+            $this->contacts = Contact::where('category', $this->category)
+            ->where('consignor_id', $this->consignor->id)->latest()->get();
         }
         elseif ($this->category == "truck_stop") {
             $this->contacts = Contact::where('category', $this->category)

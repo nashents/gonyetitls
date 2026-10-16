@@ -14,6 +14,7 @@ use App\Models\Cargo;
 use App\Models\ClearingAgent;
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\Consignor;
 use App\Models\Container;
 use App\Models\Currency;
 use App\Models\Customer;
@@ -128,6 +129,8 @@ class Edit extends Component
     public $clearing_agent_id;
     public $consignees;
     public $consignee_id;
+    public $consignors;
+    public $consignor_id;
     public $agents;
     public $agent_id;
     public $brokers;
@@ -610,6 +613,9 @@ class Edit extends Component
         $transport_order = TransportOrder::find($id);
         $cargo = Cargo::find($transport_order->cargo_id);
         $this->cargo_type[$key] = $cargo->type;
+        if ($transport_order->consignor_id) {
+            $this->consignor_id = $transport_order->consignor_id;
+        }
         $this->allocated_freight[$key] = $transport_order->freight;
         $this->allocated_rate[$key] = $transport_order->rate;
         $this->allocated_exchange_rate[$key] = $transport_order->exchange_rate;
@@ -1413,6 +1419,7 @@ class Edit extends Component
         }
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->consignees = Consignee::orderBy('name','asc')->get();
+        $this->consignors = Consignor::orderBy('name','asc')->get();
         $this->brokers = Broker::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
@@ -1495,6 +1502,7 @@ class Edit extends Component
           $this->trip_group_id = $this->trip->trip_group_id;
          $this->selectedBroker = $this->trip->broker_id;
          $this->consignee_id = $this->trip->consignee_id;
+         $this->consignor_id = $this->trip->consignor_id;
          $this->customer_id = $this->trip->customer_id;
          $this->timelines = $this->trip->timelines;
          $this->arrive_lp = $this->trip->arrive_loading_point;
@@ -2379,6 +2387,7 @@ class Edit extends Component
         $transport_order->with_transporter_rates = $this->with_transporter_rates;
         $transport_order->customer_id = $this->customer_id ?: null;
         $transport_order->consignee_id = $this->consignee_id ?: null;
+        $transport_order->consignor_id = $this->consignor_id ?: null;
         $transport_order->freight_calculation = $this->freight_calculation;
         $transport_order->calculation_measurement = $this->calculation_measurement;
         $transport_order->currency_id = $this->selectedCurrency ?: null;
@@ -2681,6 +2690,7 @@ class Edit extends Component
             $trip->broker_id = $this->selectedBroker ?: null;
             $trip->customer_id = $this->customer_id ?: null;
             $trip->consignee_id = $this->consignee_id ?: null;
+            $trip->consignor_id = $this->consignor_id ?: null;
             if (!$financiallyLocked) {
                 $trip->freight_calculation = $this->freight_calculation;
                 $trip->calculation_measurement = $this->calculation_measurement;
@@ -2742,6 +2752,7 @@ class Edit extends Component
                 $trip->quotation_id = $primaryTransportOrder->quotation_id;
                 $trip->customer_id = $primaryTransportOrder->customer_id;
                 $trip->consignee_id = $primaryTransportOrder->consignee_id;
+                $trip->consignor_id = $primaryTransportOrder->consignor_id ?: ($this->consignor_id ?: null);
                 $trip->cargo_id = $primaryTransportOrder->cargo_id;
                 $trip->cargo_details = $primaryTransportOrder->cargo_details;
                 $trip->trip_type_id = $primaryTransportOrder->trip_type_id;
@@ -4151,6 +4162,13 @@ class Edit extends Component
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Consignees Refreshed Successfully!!."
+                ]);
+            }
+            elseif($category == 'consignors'){
+                $this->consignors = Consignor::orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Consignors Refreshed Successfully!!."
                 ]);
             }
             elseif($category == 'agents'){

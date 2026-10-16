@@ -11,6 +11,7 @@ use App\Models\CashFlow;
 use App\Models\ClearingAgent;
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\Consignor;
 use App\Models\Customer;
 use App\Models\CustomsDeclaration;
 use App\Models\Department;
@@ -70,6 +71,7 @@ class Index extends Component
     public $application;
     public $bill;
     public $consignee;
+    public $consignor;
     public $department;
     public $incident;
     public $truck_stop;
@@ -113,6 +115,7 @@ class Index extends Component
     public $application_id;
     public $bill_id;
     public $consignee_id;
+    public $consignor_id;
     public $department_id;
     public $incident_id;
     public $truck_stop_id;
@@ -192,6 +195,7 @@ class Index extends Component
             'application' => ['model' => Application::class, 'property' => 'application', 'column' => 'application_id'],
             'bill' => ['model' => Bill::class, 'property' => 'bill', 'column' => 'bill_id'],
             'consignee' => ['model' => Consignee::class, 'property' => 'consignee', 'column' => 'consignee_id'],
+            'consignor' => ['model' => Consignor::class, 'property' => 'consignor', 'column' => 'consignor_id'],
             'department' => ['model' => Department::class, 'property' => 'department', 'column' => 'department_id'],
             'incident' => ['model' => Incident::class, 'property' => 'incident', 'column' => 'incident_id'],
             'truck_stop' => ['model' => TruckStop::class, 'property' => 'truck_stop', 'column' => 'truck_stop_id'],

@@ -12,6 +12,9 @@
                                 <a href="#" wire:click="exportDestinationsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportDestinationsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportDestinationsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                @if($this->sageEnabled)
+                                <a href="#" wire:click="pullFromSage()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Pull Sage Locations</a>
+                                @endif
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -36,6 +39,8 @@
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
+                                    <th class="th-sm">Sage Location
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -56,6 +61,7 @@
                                     <td>{{$destination->lat}}</td>
                                     <td>{{$destination->long}}</td>
                                      <td><span class="badge bg-{{$destination->status == 1 ? "success" : "danger"}}">{{$destination->status == 1 ? "Active" : "Inactive"}}</span></td>
+                                    <td>{{ $destination->sage_location ?: '—' }}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -158,6 +164,16 @@
                        <textarea class="form-control" wire:model.debounce.300ms="description"  cols="30" rows="2" placeholder="Specific destination description"></textarea>
                         @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <div class="form-group">
+                        <label for="sage_location">Sage Location <small class="text-muted">(Depature/Destination picklist)</small></label>
+                        <select class="form-control" wire:model="sage_location">
+                            <option value="">— auto-match by name —</option>
+                            @foreach ($sageLocations as $loc)
+                                <option value="{{ $loc->name }}">{{ $loc->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Overrides the auto-match used when pushing this destination to a Sage trip project.</small>
+                    </div>
                         <div class="form-group">
                             <center> <small style="color: red"><a href="https://www.google.com/maps" target="_blank">Click me to go on Google Maps</a></small></center>
                         </div>
@@ -222,6 +238,16 @@
                         <label for="description">Description</label>
                        <textarea class="form-control" wire:model.debounce.300ms="description" placeholder="Enter Description"  cols="30" rows="2"></textarea>
                         @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="sage_location">Sage Location <small class="text-muted">(Depature/Destination picklist)</small></label>
+                        <select class="form-control" wire:model="sage_location">
+                            <option value="">— auto-match by name —</option>
+                            @foreach ($sageLocations as $loc)
+                                <option value="{{ $loc->name }}">{{ $loc->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Overrides the auto-match used when pushing this destination to a Sage trip project.</small>
                     </div>
                     <div class="form-group">
                         <center> <small style="color: red"><a href="https://www.google.com/maps" target="_blank">Click me to go on Google Maps</a></small></center>

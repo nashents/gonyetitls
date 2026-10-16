@@ -6,6 +6,7 @@ use App\Mail\PendingNotificationEmails;
 use App\Models\Cargo;
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\Consignor;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Deal;
@@ -96,6 +97,8 @@ class Index extends Component
     public $customer_id;
     public $consignees;
     public $consignee_id;
+    public $consignors;
+    public $consignor_id;
     public $destinations;
 
     // location vars
@@ -366,6 +369,7 @@ class Index extends Component
          }
 
         $this->consignees = Consignee::orderBy('name','asc')->get();
+        $this->consignors = Consignor::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
       
         $this->cargos = Cargo::orderBy('name','asc')->get();
@@ -417,6 +421,7 @@ class Index extends Component
         $this->status = Null;
         $this->customer_id = Null;
         $this->consignee_id = Null;
+        $this->consignor_id = Null;
         $this->cargo_details = Null;
         $this->exchange_rate = Null;
         $this->selectedDefinedCustomerRate = Null;
@@ -643,6 +648,7 @@ public function getAuthorizer($id){
                 $transport_order->with_transporter_rates = $this->with_transporter_rates;
                 $transport_order->customer_id = $this->customer_id ?: null;
                 $transport_order->consignee_id = $this->consignee_id ?: null;
+                $transport_order->consignor_id = $this->consignor_id ?: null;
                 $transport_order->freight_calculation = $this->freight_calculation;
                 $transport_order->calculation_measurement = $this->calculation_measurement;
                 $transport_order->deal_id = $this->selectedDeal;
@@ -717,6 +723,7 @@ public function getAuthorizer($id){
         $this->with_transporter_rates = $transport_order->with_transporter_rates;
         $this->customer_id = $transport_order->customer_id;
         $this->consignee_id = $transport_order->consignee_id;
+        $this->consignor_id = $transport_order->consignor_id;
         $this->freight_calculation = $transport_order->freight_calculation;
         $this->calculation_measurement = $transport_order->calculation_measurement;
         $this->selectedCurrency = $transport_order->currency_id;
@@ -821,6 +828,7 @@ public function getAuthorizer($id){
                 $transport_order->with_transporter_rates = $this->with_transporter_rates;
                 $transport_order->customer_id = $this->customer_id ?: null;
                 $transport_order->consignee_id = $this->consignee_id ?: null;
+                $transport_order->consignor_id = $this->consignor_id ?: null;
                 $transport_order->freight_calculation = $this->freight_calculation;
                 $transport_order->deal_id = $this->selectedDeal;
                 $transport_order->calculation_measurement = $this->calculation_measurement;
@@ -1175,6 +1183,13 @@ public function getAuthorizer($id){
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Consignees Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'consignors'){
+            $this->consignors = Consignor::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Consignors Refreshed Successfully!!."
             ]);
         }
      

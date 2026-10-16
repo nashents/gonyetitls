@@ -120,6 +120,10 @@ class SageTripMapper
             'status'        => self::status($trip),
             'projectstatus' => self::projectStatus($trip),
             'description'   => self::description($trip, $trailerRegs),
+            // departure_location / destination_location (ENUM picklist custom fields)
+            // are resolved + validated against the pulled picklist in
+            // SageProjectService (needs DB access), not here — a raw place label would
+            // be rejected by Sage as an invalid picklist value.
         ]);
     }
 

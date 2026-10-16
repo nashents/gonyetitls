@@ -150,4 +150,9 @@ class SageIntacctDriver implements SageDriver
     {
         return $this->driver->appendSalesTransactionLines($key, $lines, $entityId, $projectId);
     }
+
+    public function lookupFieldValidValues(string $object, string $field): array
+    {
+        return $this->driver->lookupFieldValidValues($object, $field);
+    }
 }

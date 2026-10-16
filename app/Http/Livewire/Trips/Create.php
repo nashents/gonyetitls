@@ -15,6 +15,7 @@ use App\Models\ClearingAgent;
 use App\Models\Commission;
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\Consignor;
 use App\Models\Container;
 use App\Models\Currency;
 use App\Models\Customer;
@@ -297,6 +298,8 @@ class Create extends Component
     public $customer_id;
     public $consignees;
     public $consignee_id;
+    public $consignors;
+    public $consignor_id;
     // Agent Vars
     public $agents;
     public $agent_id;
@@ -1038,6 +1041,9 @@ class Create extends Component
         $cargo = Cargo::find($transport_order->cargo_id);
         $this->cargo_type[$key] = $cargo->type;
         $this->trip_type[$key] = $transport_order->trip_type?->name;
+        if ($transport_order->consignor_id) {
+            $this->consignor_id = $transport_order->consignor_id;
+        }
         $this->allocated_freight[$key] = $transport_order->freight;
         $this->allocated_rate[$key] = $transport_order->rate;
         $this->allocated_exchange_rate[$key] = $transport_order->exchange_rate;
@@ -1459,6 +1465,7 @@ class Create extends Component
          }
 
         $this->consignees = Consignee::orderBy('name','asc')->get();
+        $this->consignors = Consignor::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->brokers = Broker::orderBy('name','asc')->latest()->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
@@ -2089,6 +2096,7 @@ class Create extends Component
                 $transport_order->with_transporter_rates = $this->with_transporter_rates;
                 $transport_order->customer_id = $this->customer_id ?: null;
                 $transport_order->consignee_id = $this->consignee_id ?: null;
+                $transport_order->consignor_id = $this->consignor_id ?: null;
                 $transport_order->freight_calculation = $this->freight_calculation;
                 $transport_order->calculation_measurement = $this->calculation_measurement;
                 $transport_order->currency_id = $this->selectedCurrency ?: null;
@@ -2286,6 +2294,7 @@ class Create extends Component
                     $trip->broker_id = $this->selectedBroker ?: null;
                     $trip->customer_id = $this->customer_id ?: null;
                     $trip->consignee_id = $this->consignee_id ?: null;
+                    $trip->consignor_id = $this->consignor_id ?: null;
                     $trip->freight_calculation = $this->freight_calculation;
                     $trip->calculation_measurement = $this->calculation_measurement;
                     $trip->cargo_id = $this->selectedCargo;
@@ -2341,6 +2350,7 @@ class Create extends Component
                         $trip->with_transporter_rates = $primaryTransportOrder->with_transporter_rates;
                         $trip->customer_id = $primaryTransportOrder->customer_id;
                         $trip->consignee_id = $primaryTransportOrder->consignee_id;
+                        $trip->consignor_id = $primaryTransportOrder->consignor_id ?: ($this->consignor_id ?: null);
                         $trip->freight_calculation = $primaryTransportOrder->freight_calculation;
                         $trip->calculation_measurement = $primaryTransportOrder->calculation_measurement;
                         $trip->measurement = $primaryTransportOrder->measurement;
@@ -3635,6 +3645,13 @@ class Create extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Consignees Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'consignors'){
+            $this->consignors = Consignor::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Consignors Refreshed Successfully!!."
             ]);
         }
         elseif($category == 'agents'){

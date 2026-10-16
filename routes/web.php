@@ -248,6 +248,11 @@ Route::get('/consignees/export/csv','ExportsController@exportConsigneesCSV')->na
 Route::get('/consignees/export/pdf','ExportsController@exportConsigneesPDF')->name('consignees.export.pdf');
 Route::post('/consignees/import','ImportsController@importConsignees')->name('consignees.import');
 
+Route::get('/consignors/export/excel','ExportsController@exportConsignorsExcel')->name('consignors.export.excel');
+Route::get('/consignors/export/csv','ExportsController@exportConsignorsCSV')->name('consignors.export.csv');
+Route::get('/consignors/export/pdf','ExportsController@exportConsignorsPDF')->name('consignors.export.pdf');
+Route::post('/consignors/import','ImportsController@importConsignors')->name('consignors.import');
+
 
 
 Route::get('/cargos/export/excel','ExportsController@exportCargosExcel')->name('cargos.export.excel');
@@ -620,6 +625,7 @@ Route::resource('companies','CompanyController');
 Route::resource('bookings','BookingController');
 Route::resource('invoice_items','InvoiceItemController');
 Route::resource('consignees','ConsigneeController');
+Route::resource('consignors','ConsignorController');
 Route::resource('recoveries','RecoveryController');
 Route::resource('trip_destinations','TripDestinationController');
 Route::resource('deductions','DeductionController');

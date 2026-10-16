@@ -14,8 +14,12 @@ use Illuminate\Console\Command;
  *
  * A reversal counts as a correction only when the same document was posted
  * again after it (a repost); reversals from deletions/voids have no repost
- * and keep their date. Idempotent.
+ * and keep their date - unless --all, which re-dates every reversal (the
+ * accountant's rule since 2026-10-16: a reversal belongs in the period of
+ * the posting it cancels, e.g. a fuel bill removed because the order became
+ * customer-supplied, or a deleted trip expense bill). Idempotent.
  *
+ * php artisan journals:redate-correction-reversals --all --since=2000-01-01 --dry-run
  * php artisan journals:redate-correction-reversals --dry-run
  * php artisan journals:redate-correction-reversals --since=2026-01-01
  */
@@ -25,7 +29,8 @@ class RedateCorrectionReversals extends Command
 
     protected $signature = 'journals:redate-correction-reversals
         {--since=2026-10-14 : Only reversals created on/after this date}
-        {--dry-run : Preview only, change nothing}';
+        {--dry-run : Preview only, change nothing}
+        {--all : Every reversal (removals/deletions too), not just corrections followed by a repost}';
 
     protected $description = 'Re-date correction reversals (resync/repair) to the date of the entry they reverse';
 
@@ -52,18 +57,20 @@ class RedateCorrectionReversals extends Command
                 continue;
             }
 
-            $key = collect(self::DOCUMENT_KEYS)->first(fn ($k) => $reversal->{$k});
-            if (! $key) {
-                continue;
-            }
+            if (! $this->option('all')) {
+                $key = collect(self::DOCUMENT_KEYS)->first(fn ($k) => $reversal->{$k});
+                if (! $key) {
+                    continue;
+                }
 
-            // Reposted after this reversal = a correction, not a deletion/void.
-            $reposted = JournalEntry::where($key, $reversal->{$key})
-                ->where('id', '>', $reversal->id)
-                ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
-                ->exists();
-            if (! $reposted) {
-                continue;
+                // Reposted after this reversal = a correction, not a deletion/void.
+                $reposted = JournalEntry::where($key, $reversal->{$key})
+                    ->where('id', '>', $reversal->id)
+                    ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
+                    ->exists();
+                if (! $reposted) {
+                    continue;
+                }
             }
 
             $rows[] = [$reversal, $original, $target];

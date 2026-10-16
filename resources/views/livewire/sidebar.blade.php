@@ -1033,6 +1033,7 @@
                           <li class="{{ request()->routeIs('clearing_agents.index') ? 'active' : '' }}"><a href="{{route('clearing_agents.index')}}" ><i class="fas fa-building"></i> <span>Clearing Agents</span></a></li>
                           <li class="{{ request()->routeIs('countries.index') ? 'active' : '' }}"><a href="{{route('countries.index')}}"><i class="fas fa-globe-africa"></i> <span>Countries</span> </a></li>
                           <li class="{{ request()->routeIs('consignees.index') ? 'active' : '' }}"><a href="{{route('consignees.index')}}" ><i class="fas fa-users"></i> <span>Consignees</span></a></li>
+                          <li class="{{ request()->routeIs('consignors.index') ? 'active' : '' }}"><a href="{{route('consignors.index')}}" ><i class="fas fa-users"></i> <span>Consignors</span></a></li>
                           <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}" ><i class="fas fa-list "></i> <span>Deductions</span></a></li>
                           <li class="{{ request()->routeIs('destinations.index') ? 'active' : '' }}"><a href="{{route('destinations.index')}}"><i class="fas fa-map-pin"></i> <span>Destinations</span> </a></li>
                           <li class="{{ request()->routeIs('expenses.index') ? 'active' : '' }}"><a href="{{ route('expenses.index') }}"><i class="fas fa-list"></i> <span>Expenses</span> </a></li>

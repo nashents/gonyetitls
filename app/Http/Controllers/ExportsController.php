@@ -18,6 +18,7 @@ use App\Exports\CountriesExport;
 use App\Exports\CustomersExport;
 use App\Exports\EmployeesExport;
 use App\Exports\ConsigneesExport;
+use App\Exports\ConsignorsExport;
 use App\Exports\ContainersExport;
 use App\Exports\AllocationsExport;
 use App\Exports\AssignmentsExport;
@@ -91,6 +92,16 @@ class ExportsController extends Controller
     public function exportConsigneesExcel(Excel $excel){
 
         return $excel->download(new ConsigneesExport, 'consignees.xlsx');
+    }
+
+    public function exportConsignorsCSV(Excel $excel){
+        return $excel->download(new ConsignorsExport, 'consignors.csv', Excel::CSV);
+    }
+    public function exportConsignorsPDF(Excel $excel){
+        return $excel->download(new ConsignorsExport, 'consignors.pdf', Excel::DOMPDF);
+    }
+    public function exportConsignorsExcel(Excel $excel){
+        return $excel->download(new ConsignorsExport, 'consignors.xlsx');
     }
  
     public function exportDestinationsCSV(Excel $excel){

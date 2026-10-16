@@ -1767,6 +1767,7 @@ class MenuRegistrySeeder extends Seeder
             ['Clearing Agents','clearing_agents.index','fas fa-building', null],
             ['Countries','countries.index','fas fa-globe-africa', null],
             ['Consignees','consignees.index','fas fa-users', null],
+            ['Consignors','consignors.index','fas fa-users', null],
             ['Corridors','corridors.index','fas fa-road', null],
             ['Deductions','deductions.index','fas fa-list', null],
             ['Destinations','destinations.index','fas fa-map-pin', null],

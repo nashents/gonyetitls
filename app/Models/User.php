@@ -232,6 +232,9 @@ class User extends Authenticatable implements Auditable
     public function loss_groups(){
         return $this->hasMany('App\Models\LossGroup');
     }
+    public function consignors(){
+        return $this->hasMany('App\Models\Consignor');
+    }
     public function consignees(){
         return $this->hasMany('App\Models\Consignee');
     }

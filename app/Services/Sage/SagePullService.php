@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\Company;
 use App\Models\CompanyIntegration;
 use App\Models\Customer;
+use App\Models\Destination;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\ExchangeRate;
@@ -18,6 +19,7 @@ use App\Models\IntegrationMapping;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Role;
+use App\Models\SageProjectLocation;
 use App\Models\Store;
 use App\Models\Tax;
 use App\Models\Trailer;
@@ -85,6 +87,7 @@ class SagePullService
                 'expense'     => $this->pullExpenses($options),
                 'store'       => $this->pullStores(),
                 'inventory'   => $this->pullInventory(),
+                'project_location' => $this->pullProjectLocations(),
                 default       => ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0],
             };
         } catch (Throwable $e) {
@@ -1335,6 +1338,97 @@ class SagePullService
         $init  = ($words[0][0] ?? 'G') . ($words[1][0] ?? '');
 
         return strtoupper($init);
+    }
+
+    // ── Project location picklists (Depature / Destination Location) ──
+
+    /**
+     * Pull the PROJECT "Depature/Destination Location" PICKLIST values (ENUM custom
+     * fields) into `sage_project_locations`, then auto-map any still-unmapped Gonyeti
+     * destinations to a matching value. These are the ONLY values the trip push may
+     * send — the picklists are curated in Sage and do NOT mirror Company > Locations.
+     */
+    protected function pullProjectLocations(): array
+    {
+        $depField  = (string) config('sageintacct.project.departure_location_field', 'DEPATURE_LOCATION');
+        $destField = (string) config('sageintacct.project.destination_location_field', 'DESTINATION_LOCATION');
+
+        $departure   = $depField  !== '' ? $this->driver->lookupFieldValidValues('PROJECT', $depField)  : [];
+        $destination = $destField !== '' ? $this->driver->lookupFieldValidValues('PROJECT', $destField) : [];
+
+        $byName = []; // name => ['dep' => bool, 'dest' => bool]
+        foreach ($departure as $n) {
+            $n = trim((string) $n);
+            if ($n !== '') {
+                $byName[$n]['dep'] = true;
+            }
+        }
+        foreach ($destination as $n) {
+            $n = trim((string) $n);
+            if ($n !== '') {
+                $byName[$n]['dest'] = true;
+            }
+        }
+
+        $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
+        foreach ($byName as $name => $flags) {
+            try {
+                $loc     = SageProjectLocation::firstOrNew(['name' => $name]);
+                $existed = $loc->exists;
+                $loc->for_departure   = ! empty($flags['dep']);
+                $loc->for_destination = ! empty($flags['dest']);
+                $loc->save();
+                $existed ? $s['linked']++ : $s['created']++;
+            } catch (Throwable $e) {
+                $s['failed']++;
+            }
+        }
+
+        // Auto-map destinations that aren't mapped yet (manual overrides are kept).
+        $s['mapped'] = $this->autoMapDestinations();
+
+        return $s;
+    }
+
+    /**
+     * Set destinations.sage_location for any destination still unmapped, matching its
+     * city (then its country name) against the pulled picklist values (case/space
+     * insensitive). Returns how many were newly mapped.
+     */
+    protected function autoMapDestinations(): int
+    {
+        $names = SageProjectLocation::pluck('name');
+        if ($names->isEmpty()) {
+            return 0;
+        }
+
+        $index = []; // normalised name => canonical picklist value
+        foreach ($names as $n) {
+            $index[$this->normaliseLocation((string) $n)] = $n;
+        }
+
+        $mapped = 0;
+        Destination::whereNull('sage_location')->with('country')->chunkById(200, function ($rows) use ($index, &$mapped) {
+            foreach ($rows as $dest) {
+                foreach ([$dest->city, optional($dest->country)->name] as $candidate) {
+                    $key = $this->normaliseLocation((string) $candidate);
+                    if ($key !== '' && isset($index[$key])) {
+                        $dest->sage_location = $index[$key];
+                        $dest->saveQuietly();
+                        $mapped++;
+                        break;
+                    }
+                }
+            }
+        });
+
+        return $mapped;
+    }
+
+    /** Lower-case, collapse whitespace — for matching a place name to a picklist value. */
+    protected function normaliseLocation(string $v): string
+    {
+        return trim(preg_replace('/\s+/', ' ', mb_strtolower(trim($v))));
     }
 
     /** Record the Sage link in integration_mappings (fleet entities). */

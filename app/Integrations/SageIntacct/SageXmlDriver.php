@@ -273,6 +273,32 @@ class SageXmlDriver implements SageDriver
         return $this->parseQuery($t['body'], $t['status']) + ['request' => $fn, 'response' => $t['body']];
     }
 
+    /**
+     * The valid values of an ENUM/picklist field on an object (e.g. the PROJECT
+     * custom fields DEPATURE_LOCATION / DESTINATION_LOCATION). Uses a schema
+     * <lookup> and returns the field's <VALIDVALUE> list (empty on any failure).
+     */
+    public function lookupFieldValidValues(string $object, string $field): array
+    {
+        $t = $this->transport('<lookup><object>' . htmlspecialchars($object, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '</object></lookup>', null);
+        if (empty($t['ok']) || empty($t['body'])) {
+            return [];
+        }
+
+        // Isolate the requested field's block, then read its valid values.
+        if (! preg_match('#<Field>(?:(?!</Field>).)*?<ID>' . preg_quote($field, '#') . '</ID>.*?</Field>#s', $t['body'], $m)) {
+            return [];
+        }
+        if (! preg_match_all('#<VALIDVALUE>(.*?)</VALIDVALUE>#s', $m[0], $vv)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            fn ($v) => trim(html_entity_decode((string) $v, ENT_QUOTES | ENT_XML1, 'UTF-8')),
+            $vv[1]
+        ), fn ($v) => $v !== ''));
+    }
+
     /** Fetch the next page of a prior readByQuery, using its resultId. */
     public function readMore(string $resultId): array
     {
@@ -372,6 +398,21 @@ class SageXmlDriver implements SageDriver
         // (a Sage EMPLOYEE — the trip's driver).
         $fields .= $this->elIf('PROJECTSTATUS', $data['projectstatus'] ?? null);
         $fields .= $this->elIf('MANAGERID', $data['managerid'] ?? null);
+
+        // Route CUSTOM fields (Depature / Destination Location, Commodity). On the
+        // generic object write a custom field is a direct child element named by its
+        // integration ID — only emitted when that ID is configured for this instance
+        // AND the trip carries a value.
+        $customFields = [
+            [config('sageintacct.project.departure_location_field'),   $data['departure_location'] ?? null],
+            [config('sageintacct.project.destination_location_field'), $data['destination_location'] ?? null],
+            [config('sageintacct.project.commodity_field'),            $data['commodity'] ?? null],
+        ];
+        foreach ($customFields as [$fieldId, $value]) {
+            if (is_string($fieldId) && $fieldId !== '' && $value !== null && $value !== '') {
+                $fields .= $this->el($fieldId, $value);
+            }
+        }
 
         return '<PROJECT>' . $fields . '</PROJECT>';
     }
