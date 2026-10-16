@@ -321,10 +321,12 @@ class Expenses extends Component
 
                     }
                 
-                    $trip_expense->category = $this->category[$key] ?? null;
+                    $trip_expense->category = (string) ($this->funded_by[$key] ?? '0') === '2' ? 'Transporter' : ($this->category[$key] ?? null);
                     $customerFunded = $type === 'expense' && (string) ($this->funded_by[$key] ?? '0') === '1';
                     $trip_expense->supplied_by_customer = $customerFunded;
                     $trip_expense->customer_id = $customerFunded ? $this->trip->customer_id : null;
+                    // 2 = the transporter's own driver paid: record only (TripExpenseRecoveryService)
+                    $trip_expense->funded_by_transporter = $type === 'expense' && (string) ($this->funded_by[$key] ?? '0') === '2';
                     $trip_expense->amount = $this->amount[$key] ?? 0;
                     $trip_expense->date = $this->date[$key] ?? $this->tripStartDate();
 
@@ -480,7 +482,7 @@ class Expenses extends Component
             $this->trip_expense_type = "allowance";
         }
         $this->category = $expense->category;
-        $this->funded_by = $expense->supplied_by_customer ? '1' : '0';
+        $this->funded_by = $expense->supplied_by_customer ? '1' : ($expense->funded_by_transporter ? '2' : '0');
         $this->amount = $expense->amount;
         $this->date = $expense->date ?? $this->tripStartDate();
         $this->exchange_rate = $expense->exchange_rate;
@@ -510,10 +512,11 @@ class Expenses extends Component
                     $trip_expense->expense_id = Null;
                 }
 
-                $trip_expense->category = $this->category;
+                $trip_expense->category = (string) ($this->funded_by ?? '0') === '2' ? 'Transporter' : $this->category;
                 $customerFunded = $this->trip_expense_type == 'expense' && (string) ($this->funded_by ?? '0') === '1';
                 $trip_expense->supplied_by_customer = $customerFunded;
                 $trip_expense->customer_id = $customerFunded ? $this->trip->customer_id : null;
+                $trip_expense->funded_by_transporter = $this->trip_expense_type == 'expense' && (string) ($this->funded_by ?? '0') === '2';
                 $trip_expense->date = $this->date;
                 $trip_expense->currency_id = $this->selectedCurrency;
                 $trip_expense->vendor_id = $this->selectedVendor;
@@ -577,7 +580,9 @@ class Expenses extends Component
 
            app(\App\Services\Accounting\CustomerFuelSupplyService::class)->voidForTripExpense($this->trip_expense, "Trip expense #{$this->trip_expense->id} deleted");
 
+           $deleted = $this->trip_expense;
            $this->trip_expense->delete();
+           app(TripExpenseJournalService::class)->refreshTransporterDeductions($deleted);
 
            $this->recalculateExpenses($this->trip->id);
 
@@ -596,8 +601,26 @@ class Expenses extends Component
      * needs one - and it can't also be category "Customer" (that recharges
      * the cost onto the invoice, the opposite of the customer having paid it).
      */
+    /** Funded By: Transporter only makes sense for a Transporter-category line - set it for the user. */
+    public function updatedFundedBy($value, $key = null)
+    {
+        if ((string) $value !== '2') {
+            return;
+        }
+        if ($key === null) {
+            $this->category = 'Transporter';
+        } else {
+            $this->category = (array) $this->category;
+            $this->category[$key] = 'Transporter';
+        }
+    }
+
     private function validateFunding(string $fundedBy, ?string $category, string $fundedField, string $categoryField): void
     {
+        if ($fundedBy === '2' && $category !== 'Transporter') {
+            throw \Illuminate\Validation\ValidationException::withMessages([$fundedField => 'Only Transporter-category expenses can be funded by the transporter.']);
+        }
+
         if ($fundedBy !== '1') {
             return;
         }

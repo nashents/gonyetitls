@@ -62,8 +62,22 @@ class TransporterPaymentBillService
             return null;
         }
 
+        // Deduct mode (Business Settings): company-paid Transporter-category
+        // trip expenses come off this bill as a contra line crediting
+        // Transporter Recoverable - capped at the payment itself.
+        [$deduction, $deductionNote] = $this->deduction($tripExpense, $trip, $amount);
+        $net = round($amount - $deduction, 2);
+
+        // Posted only once the trip is Offloaded - the transporter has
+        // delivered and the debt is real (matching advance-invoice revenue
+        // recognition). Before that the bill is a pending commitment. A bill
+        // already paid stays posted (its payments need the payable).
+        $offloaded = $trip->trip_status === 'Offloaded';
+        $keepPosted = !$offloaded && $bill && $bill->bill_payments()->exists() && $this->isPosted($bill);
+        $post = $offloaded || $keepPosted;
+
         $dateChanged = false;
-        $bill = DB::transaction(function () use ($tripExpense, $trip, $amount, $bill, &$dateChanged) {
+        $bill = DB::transaction(function () use ($tripExpense, $trip, $amount, $bill, &$dateChanged, $deduction, $deductionNote, $net, $offloaded, $post) {
             // The seeded "Transporter Payment" expense's own account (Creditor
             // Payment - COGS, see DefaultExpenseResolver), matching
             // TripExpenseRepairService; Trip Expense only as a fallback.
@@ -84,19 +98,23 @@ class TransporterPaymentBillService
             $bill->category = self::CATEGORY;
             $bill->account_id = $account->id;
             $bill->account_type_id = $account->account_type_id;
-            $bill->bill_date = $trip->start_date ?: ($bill->bill_date ?? now()->toDateString());
+            // Dated when the debt arises: the offload date once Offloaded.
+            $bill->bill_date = $offloaded
+                ? (substr((string) ($trip->end_date ?: $trip->start_date), 0, 10) ?: now()->toDateString())
+                : ($trip->start_date ?: ($bill->bill_date ?? now()->toDateString()));
             $bill->currency_id = $tripExpense->currency_id;
             $bill->exchange_rate = $foreign ? $tripExpense->exchange_rate : null;
             $bill->exchange_amount = $foreign ? $tripExpense->exchange_amount : null;
-            $bill->subtotal = $amount;
-            $bill->total = $amount;
-            $bill->balance = round($amount - (float) $bill->bill_payments()->sum('amount'), 2);
+            $bill->subtotal = $net;
+            $bill->total = $net;
+            $bill->balance = round($net - (float) $bill->bill_payments()->sum('amount'), 2);
             $bill->authorized_by_id = $bill->authorized_by_id ?? ($trip->authorized_by_id ?: Auth::id());
             // authorization/to_be_paid set only after the line exists - see
             // TripExpenseJournalService (BillObserver would post too early).
             $bill->save();
 
-            $line = $bill->bill_expenses()->first() ?? new BillExpense;
+            $recoverable = app(TripExpenseRecoveryService::class)->transporterRecoverable();
+            $line = $bill->bill_expenses()->where('account_id', '!=', $recoverable->id)->first() ?? new BillExpense;
             $line->user_id = $line->user_id ?? Auth::id();
             $line->bill_id = $bill->id;
             $line->currency_id = $bill->currency_id;
@@ -111,12 +129,31 @@ class TransporterPaymentBillService
             $line->subtotal_incl = $amount;
             $line->save();
 
-            // Any extra lines from older duplicate-building flows would
-            // unbalance the posting - the bill is exactly one line.
-            $bill->bill_expenses()->where('id', '!=', $line->id)->delete();
+            $keep = [$line->id];
+            if ($deduction > 0) {
+                $less = $bill->bill_expenses()->where('account_id', $recoverable->id)->first() ?? new BillExpense;
+                $less->user_id = $less->user_id ?? Auth::id();
+                $less->bill_id = $bill->id;
+                $less->currency_id = $bill->currency_id;
+                $less->account_id = $recoverable->id;
+                $less->account_type_id = $recoverable->account_type_id;
+                $less->description = $deductionNote;
+                $less->qty = 1;
+                $less->exchange_rate = $bill->exchange_rate;
+                $less->amount = -$deduction;
+                $less->subtotal = -$deduction;
+                $less->subtotal_incl = -$deduction;
+                $less->save();
+                $keep[] = $less->id;
+            }
 
-            $bill->to_be_paid = true;
-            $bill->authorization = 'approved';
+            // Any extra lines from older duplicate-building flows would
+            // unbalance the posting - the bill is the payment line plus the
+            // optional deduction line.
+            $bill->bill_expenses()->whereNotIn('id', $keep)->delete();
+
+            $bill->to_be_paid = $post;
+            $bill->authorization = $post ? 'approved' : 'pending';
             $bill->save();
 
             $dateChanged = $previousBillDate !== null && $previousBillDate !== $bill->bill_date;
@@ -125,17 +162,49 @@ class TransporterPaymentBillService
         });
 
         try {
-            $this->ledgerResync->resyncBill(
-                $bill->fresh(),
-                "Trip {$trip->trip_number} transporter payment updated",
-                $dateChanged
-            );
+            if ($post) {
+                $this->ledgerResync->resyncBill(
+                    $bill->fresh(),
+                    "Trip {$trip->trip_number} transporter payment updated",
+                    $dateChanged
+                );
+            } else {
+                // Not Offloaded (yet, or any more): no live posting.
+                $reversal = app(JournalReversalService::class);
+                $reversal->reverseLiveEffects(
+                    JournalEntry::where('bill_id', $bill->id),
+                    "Trip {$trip->trip_number} not Offloaded - transporter payment not yet due"
+                );
+            }
         } catch (\Throwable $e) {
-            $warning = "Transporter bill {$bill->bill_number} saved but not posted to the ledger: " . $e->getMessage();
+            $warning = "Transporter bill {$bill->bill_number} saved but its ledger posting was not updated: " . $e->getMessage();
             Log::error($warning);
         }
 
         return $bill->fresh();
+    }
+
+    /**
+     * [amount, description] to take off the transporter payment in deduct
+     * mode: company-paid Transporter-category trip expenses converted to the
+     * payment's currency, capped at the payment. [0, null] in invoice mode.
+     */
+    private function deduction(TripExpense $tripExpense, Trip $trip, float $amount): array
+    {
+        $recovery = app(TripExpenseRecoveryService::class);
+        if ($recovery->transporterRecoveryMode($trip->company) !== 'deduct') {
+            return [0.0, null];
+        }
+
+        $items = $recovery->transporterDeductions($trip);
+        if ($items->isEmpty()) {
+            return [0.0, null];
+        }
+
+        $total = round($items->sum(fn (TripExpense $e) => $recovery->amountIn($e, $tripExpense->currency_id, $trip->company, $tripExpense->exchange_rate)), 2);
+        $names = $items->map(fn (TripExpense $e) => optional($e->expense)->name ?? optional($e->allowance)->name ?? 'Expense')->unique()->implode(', ');
+
+        return [min($total, $amount), "Less: trip expenses paid on the transporter's behalf ({$names})"];
     }
 
     /** Sync every transporter expense on the trip (normally one). */

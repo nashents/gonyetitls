@@ -98,7 +98,7 @@ class AccountController extends Controller
      */
     public function destroy(Account $account)
     {
-        if ($account->is_locked) {
+        if ($account->is_locked || $account->isProtectedControl()) {
             Session::flash('error', 'This account is a core system account required by the application and cannot be deleted.');
             return redirect()->back();
         }
@@ -121,6 +121,10 @@ class AccountController extends Controller
 
     public function deactivate(Account $account)
     {
+        if ($account->isProtectedControl()) {
+            Session::flash('error', "\"{$account->name}\" is a protected control account and can't be changed.");
+            return redirect()->back();
+        }
         $account->status = 0;
         $account->update();
         Session::flash('success', 'Account Deactivated Successfully');
@@ -129,6 +133,10 @@ class AccountController extends Controller
 
     public function activate(Account $account)
     {
+        if ($account->isProtectedControl()) {
+            Session::flash('error', "\"{$account->name}\" is a protected control account and can't be changed.");
+            return redirect()->back();
+        }
         $account->status = 1;
         $account->update();
         Session::flash('success', 'Account Activated Successfully');

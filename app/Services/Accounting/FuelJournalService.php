@@ -173,10 +173,22 @@ class FuelJournalService
         // a supply was already posted - undo it before the normal Bill path.
         $this->customerFuel->voidForFuel($fuel);
 
-        return DB::transaction(function () use ($fuel) {
-            $targetAccount = $fuel->trip_id
-                ? Account::where('name', 'Fuel - COGS')->firstOrFail()
-                : Account::where('name', 'Fuel - Ops')->firstOrFail();
+        $entry = DB::transaction(function () use ($fuel) {
+            // Fuel for a subcontracted (Transporter-category) trip is the
+            // transporter's cost: DR Transporter Recoverable at cost, or cost +
+            // markup with the markup credited to Fuel Margin (Business Settings).
+            $recovery = app(TripExpenseRecoveryService::class);
+            $isTransporterFuel = $recovery->isTransporterFuel($fuel);
+            $markup = 0.0;
+            if ($isTransporterFuel) {
+                $targetAccount = $recovery->transporterRecoverable();
+                $markup = $recovery->applyFuelMarkup($fuel, optional($fuel->trip)->company ?? optional(optional(Auth::user())->employee)->company);
+            } else {
+                $targetAccount = $fuel->trip_id
+                    ? Account::where('name', 'Fuel - COGS')->firstOrFail()
+                    : Account::where('name', 'Fuel - Ops')->firstOrFail();
+            }
+            $marginAccount = Account::where('name', 'Fuel Margin')->first();
 
             $fuelExpense = Expense::where('name', Expense::FUEL_TOPUP)->first();
             $isOnceOffBuy = optional($fuel->container)->purchase_type === 'Once Off Buy';
@@ -215,7 +227,9 @@ class FuelJournalService
             // call further down via its own existing-entry guard.
             $bill->save();
 
-            $billExpense = $bill->bill_expenses()->first() ?? new BillExpense;
+            $billExpense = $bill->bill_expenses()
+                ->when($marginAccount, fn ($q) => $q->where('account_id', '!=', $marginAccount->id))
+                ->first() ?? new BillExpense;
             $billExpense->user_id = $billExpense->user_id ?? Auth::id();
             $billExpense->bill_id = $bill->id;
             $billExpense->currency_id = $bill->currency_id;
@@ -223,13 +237,34 @@ class FuelJournalService
             $billExpense->account_id = $targetAccount->id;
             $billExpense->account_type_id = $targetAccount->account_type_id;
             $billExpense->qty = $fuel->quantity;
-            $billExpense->amount = $fuel->unit_price;
-            $billExpense->subtotal = $fuel->amount;
+            $billExpense->amount = $markup > 0 ? $fuel->transporter_price : $fuel->unit_price;
+            $billExpense->subtotal = round((float) $fuel->amount + $markup, 2);
             // A bill built by the old inline trip-approval code was booked to
             // "Trip Expense" - moving it to Fuel - COGS/Ops must repost, since
             // resync otherwise only compares the control account's amount.
-            $accountChanged = $billExpense->exists && $billExpense->isDirty('account_id');
+            $accountChanged = $billExpense->exists && $billExpense->isDirty(['account_id', 'subtotal']);
             $billExpense->save();
+
+            // Markup: a contra line crediting Fuel Margin keeps the bill total
+            // (the payable / inventory drawn) at cost.
+            $marginLine = $marginAccount ? $bill->bill_expenses()->where('account_id', $marginAccount->id)->first() : null;
+            if ($markup > 0 && $marginAccount) {
+                $marginLine = $marginLine ?? new BillExpense;
+                $accountChanged = $accountChanged || !$marginLine->exists || round((float) $marginLine->subtotal, 2) !== round(-$markup, 2);
+                $marginLine->user_id = $marginLine->user_id ?? Auth::id();
+                $marginLine->bill_id = $bill->id;
+                $marginLine->currency_id = $bill->currency_id;
+                $marginLine->account_id = $marginAccount->id;
+                $marginLine->account_type_id = $marginAccount->account_type_id;
+                $marginLine->description = 'Fuel markup charged to the transporter';
+                $marginLine->qty = 1;
+                $marginLine->amount = -$markup;
+                $marginLine->subtotal = -$markup;
+                $marginLine->save();
+            } elseif ($marginLine) {
+                $marginLine->delete();
+                $accountChanged = true;
+            }
 
             // Once Off Buy is a genuine new payable; Bulk Buy consumption
             // draws down inventory already paid for at top-up time - not a
@@ -265,6 +300,17 @@ class FuelJournalService
                 force: $accountChanged
             );
         });
+
+        // Transporter fuel is deducted from the trip's transporter payment bill.
+        if ($fuel->trip_id && app(TripExpenseRecoveryService::class)->isTransporterFuel($fuel) && $fuel->trip) {
+            try {
+                app(TransporterPaymentBillService::class)->syncTrip($fuel->trip);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Transporter bill deductions for fuel order {$fuel->order_number} not refreshed: " . $e->getMessage());
+            }
+        }
+
+        return $entry;
     }
 
     /**

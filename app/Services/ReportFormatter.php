@@ -9,6 +9,18 @@ namespace App\Services;
 class ReportFormatter
 {
     /**
+     * Excel exports render the same report partials as print/PDF, but need
+     * plain numbers (no currency code, separators or parentheses) so the
+     * cells land in the sheet as real numbers. See FinancialReportExport.
+     */
+    public static bool $raw = false;
+
+    private static function rawNumber($value): string
+    {
+        return number_format(is_numeric($value) ? (float) $value : 0.0, 2, '.', '');
+    }
+
+    /**
      * Whether a value from one of this app's many string-typed "numeric"
      * columns (total, balance, subtotal, tax_amount, etc.) is actually a
      * well-formed number and safe to cast/sum, rather than dirty data.
@@ -24,6 +36,10 @@ class ReportFormatter
      */
     public static function money($value): string
     {
+        if (static::$raw) {
+            return static::rawNumber($value);
+        }
+
         $value = is_numeric($value) ? (float) $value : 0.0;
         $formatted = number_format(abs($value), 2);
 
@@ -42,6 +58,10 @@ class ReportFormatter
      */
     public static function waveMoney($value, string $currencyCode = ''): string
     {
+        if (static::$raw) {
+            return static::rawNumber($value);
+        }
+
         $value = is_numeric($value) ? (float) $value : 0.0;
         $formatted = rtrim(rtrim(number_format(abs($value), 2), '0'), '.');
 

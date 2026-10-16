@@ -157,7 +157,10 @@ class CustomerFuelSupplyService
     {
         $tripExpense->loadMissing('trip', 'expense.account', 'allowance.account');
 
-        $account = optional($tripExpense->expense)->account
+        // Category Transporter: the customer paid, but the cost is the
+        // transporter's - it is recoverable from them, not a company cost.
+        $account = app(TripExpenseRecoveryService::class)->customerFundedDebitAccount($tripExpense)
+            ?: optional($tripExpense->expense)->account
             ?: optional($tripExpense->allowance)->account
             ?: Account::where('name', 'Trip Expense')->firstOrFail();
         $label = optional($tripExpense->expense)->name ?? optional($tripExpense->allowance)->name ?? 'Trip expense';

@@ -642,7 +642,9 @@ WithBatchInserts
         }
 
         // The expense's/allowance's own account; "Trip Expense" only as a fallback.
-        $account = optional($trip_expense->expense)->account
+        // Transporter / Customer category lines are recoverable, not company costs.
+        $account = app(\App\Services\Accounting\TripExpenseRecoveryService::class)->recoverableAccountFor($trip_expense)
+            ?: optional($trip_expense->expense)->account
             ?: optional($trip_expense->allowance)->account
             ?: $this->payment_account;
 

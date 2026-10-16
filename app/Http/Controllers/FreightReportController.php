@@ -11,6 +11,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\FinancialReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FreightReportController extends Controller
 {
@@ -232,5 +234,50 @@ class FreightReportController extends Controller
             'customer_rows' => $customerRows,
             'grand_totals' => $grandTotals,
         ];
+    }
+
+    // ── Excel exports (same data + partial as the PDFs) ──────────────
+
+    public function jobProfitabilityExcel(Request $request)
+    {
+        $data = $this->buildJobProfitabilityData($request);
+
+        return $this->excel($data, 'job_profitability', ['title' => 'Freight Job Profitability', 'from' => $data['from'], 'to' => $data['to']], 'freight-job-profitability');
+    }
+
+    public function portExposureExcel(Request $request)
+    {
+        $data = $this->buildPortExposureData($request);
+
+        return $this->excel($data, 'port_exposure', ['title' => 'Port & Demurrage/Detention Exposure', 'asOfDate' => $data['as_of_date']], 'freight-port-exposure');
+    }
+
+    public function customsTurnaroundExcel(Request $request)
+    {
+        $data = $this->buildCustomsTurnaroundData($request);
+
+        return $this->excel($data, 'customs_turnaround', ['title' => 'Customs Turnaround Time', 'from' => $data['from'], 'to' => $data['to']], 'freight-customs-turnaround');
+    }
+
+    public function unbilledCostsExcel(Request $request)
+    {
+        $data = $this->buildUnbilledCostsData($request);
+
+        return $this->excel($data, 'unbilled_costs', ['title' => 'Unbilled Freight Costs Aging', 'asOfDate' => $data['as_of_date']], 'freight-unbilled-costs');
+    }
+
+    public function uninvoicedChargesExcel(Request $request)
+    {
+        $data = $this->buildUninvoicedChargesData($request);
+
+        return $this->excel($data, 'uninvoiced_charges', ['title' => 'Uninvoiced Freight Charges Aging', 'asOfDate' => $data['as_of_date']], 'freight-uninvoiced-charges');
+    }
+
+    private function excel(array $data, string $folder, array $header, string $filename)
+    {
+        return Excel::download(
+            new FinancialReportExport("freight.reports.{$folder}.partials.statement", $data, $header),
+            $filename . '.xlsx'
+        );
     }
 }

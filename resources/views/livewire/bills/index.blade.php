@@ -438,6 +438,10 @@
                                             <span class="badge bg-danger">Not Posted</span>
                                             <br>
                                             <a href="#" wire:click.prevent="postToLedger({{ $bill->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Post to General Ledger"><i class="fa fa-book"></i> Post to Ledger</a>
+                                        @elseif ($bill->category === \App\Services\Accounting\TransporterPaymentBillService::CATEGORY)
+                                            <span class="badge bg-warning" title="Transporter payment bills post to the ledger when the trip is Offloaded">Awaiting Offload</span>
+                                            <br>
+                                            <a href="#" wire:click.prevent="postToLedger({{ $bill->id }})" wire:loading.attr="disabled" style="color:#d9534f" title="Posts only if the trip is Offloaded"><i class="fa fa-book"></i> Post to Ledger</a>
                                         @else
                                             <span class="badge bg-secondary">N/A</span>
                                         @endif

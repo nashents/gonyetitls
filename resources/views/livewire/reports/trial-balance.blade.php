@@ -70,6 +70,9 @@
                                                     <a href="{{ route('reports.trial_balance.pdf', ['date_from' => $date_from, 'date_to' => $date_to, 'search' => $search, 'hide_zero' => $hide_zero_balances ? '1' : '0']) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                                         <i class="fa fa-file-pdf-o"></i> Export PDF
                                                     </a>
+                                                    <a href="{{ route('reports.trial_balance.excel', ['date_from' => $date_from, 'date_to' => $date_to, 'search' => $search, 'hide_zero' => $hide_zero_balances ? '1' : '0']) }}" class="btn btn-default btn-wide btn-rounded">
+                                                        <i class="fa fa-file-excel-o"></i> Export Excel
+                                                    </a>
                                                 </div>
                                             </div>
                                             <br>

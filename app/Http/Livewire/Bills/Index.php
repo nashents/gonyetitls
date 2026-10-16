@@ -750,6 +750,24 @@ class Index extends Component
             return;
         }
 
+        // Transporter payment bills post when their trip is Offloaded.
+        if ($bill->category === \App\Services\Accounting\TransporterPaymentBillService::CATEGORY && $bill->trip) {
+            if ($bill->trip->trip_status !== 'Offloaded') {
+                $this->dispatchBrowserEvent('alert', [
+                    'type'    => 'error',
+                    'message' => "Not posted - trip {$bill->trip->trip_number} is {$bill->trip->trip_status}. The transporter payment posts when the trip is Offloaded.",
+                ]);
+                return;
+            }
+            $warning = null;
+            app(\App\Services\Accounting\TransporterPaymentBillService::class)->syncTrip($bill->trip, $warning);
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => $warning ? 'error' : 'success',
+                'message' => $warning ?: 'Transporter payment bill posted to the general ledger.',
+            ]);
+            return;
+        }
+
         if (strcasecmp((string) $bill->authorization, 'approved') !== 0) {
             $this->dispatchBrowserEvent('alert', [
                 'type'    => 'warning',

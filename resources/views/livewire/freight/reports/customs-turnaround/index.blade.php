@@ -53,6 +53,9 @@
                                         <a href="{{ route('freight.reports.customs_turnaround.pdf', ['from' => $from, 'to' => $to, 'clearing_officer_id' => $clearing_officer_id, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                             <i class="fa fa-file-pdf-o"></i> Export PDF
                                         </a>
+                                        <a href="{{ route('freight.reports.customs_turnaround.excel', ['from' => $from, 'to' => $to, 'clearing_officer_id' => $clearing_officer_id, 'view' => $this->viewMode()]) }}" class="btn btn-default btn-wide btn-rounded">
+                                            <i class="fa fa-file-excel-o"></i> Export Excel
+                                        </a>
                                     </div>
                                 </div>
                             </div>

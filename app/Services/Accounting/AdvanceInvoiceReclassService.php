@@ -199,17 +199,29 @@ class AdvanceInvoiceReclassService
 
         // CR revenue per line account (falls back to Sales) - as InvoiceJournalService
         $revenueGroups = $invoice->invoice_items()
-            ->selectRaw('account_id, SUM(subtotal) as total_subtotal')
+            ->selectRaw('account_id, SUM(subtotal) as total_subtotal, SUM(COALESCE(recharge_amount, 0)) as total_recharge')
             ->groupBy('account_id')
             ->get();
         // Lines that don't add up to the header subtotal would leave the entry
         // unbalanced against the deferred total - release to Sales in one line.
         if ($revenueGroups->isEmpty() || abs($revenueGroups->sum('total_subtotal') - (float) $invoice->subtotal) > 0.01) {
-            $entry->journal_entry_lines()->create($line($salesAccount->id, 0, (float) $invoice->subtotal, "Sales - Invoice {$invoice->invoice_number}"));
+            $recharge = round(min((float) $revenueGroups->sum('total_recharge'), (float) $invoice->subtotal), 2);
+            $entry->journal_entry_lines()->create($line($salesAccount->id, 0, (float) $invoice->subtotal - $recharge, "Sales - Invoice {$invoice->invoice_number}"));
+            if ($recharge > 0) {
+                $entry->journal_entry_lines()->create($line(app(TripExpenseRecoveryService::class)->customerRecoverable()->id, 0, $recharge, "Recharged trip expenses - Invoice {$invoice->invoice_number}"));
+            }
         } else {
             foreach ($revenueGroups as $group) {
                 $account = ($group->account_id ? Account::find($group->account_id) : null) ?? $salesAccount;
-                $entry->journal_entry_lines()->create($line($account->id, 0, (float) $group->total_subtotal, "{$account->name} - Invoice {$invoice->invoice_number}"));
+                $revenue = (float) $group->total_subtotal - (float) $group->total_recharge;
+                if (round($revenue, 2) != 0.0) {
+                    $entry->journal_entry_lines()->create($line($account->id, 0, $revenue, "{$account->name} - Invoice {$invoice->invoice_number}"));
+                }
+            }
+            // Recharged Customer-category trip expenses clear Customer Recoverable
+            $recharge = round((float) $revenueGroups->sum('total_recharge'), 2);
+            if ($recharge > 0) {
+                $entry->journal_entry_lines()->create($line(app(TripExpenseRecoveryService::class)->customerRecoverable()->id, 0, $recharge, "Recharged trip expenses - Invoice {$invoice->invoice_number}"));
             }
         }
 

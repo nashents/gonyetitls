@@ -2198,21 +2198,28 @@
                                                                             <select class="form-control" wire:model="expense_funded_by.{{ $id }}">
                                                                                 <option value="0">Company</option>
                                                                                 <option value="1">Customer</option>
+                                                                                <option value="2">Transporter (record only)</option>
                                                                             </select>
                                                                             @if (($expense_funded_by[$id] ?? '0') === '1')
                                                                                 <small class="text-muted">No supplier bill - credited to the trip customer.</small>
+                                                                            @endif
+                                                                            @if (($expense_funded_by[$id] ?? '0') === '2')
+                                                                                <small class="text-muted">No supplier bill and nothing posted - recorded on the trip only. The transporter is paid in full.</small>
                                                                             @endif
                                                                             @error('expense_funded_by.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
                                                                         </div>
                                                                     </td>
                                                                     <td>
                                                                         <div class="form-group">
-                                                                            <select class="form-control" wire:model="category.{{ $id }}" {{ $rowHasInput ? 'required' : '' }}>
+                                                                            <select class="form-control" wire:model="category.{{ $id }}" {{ $rowHasInput ? 'required' : '' }} @if ((($expense_funded_by[$id] ?? '0') === '2')) disabled @endif>
                                                                                 <option value="">Select Category</option>
                                                                                 <option value="Customer">Customer</option>
                                                                                 <option value="Self">Self</option>
                                                                                 <option value="Transporter">Transporter</option>
                                                                             </select>
+                                                                            @if ((($expense_funded_by[$id] ?? '0') === '2'))
+                                                                                <small class="text-muted">Set to Transporter - Funded By is Transporter.</small>
+                                                                            @endif
                                                                             @error('category.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
                                                                         </div>
                                                                     </td>

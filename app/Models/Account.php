@@ -13,6 +13,34 @@ class Account extends Model implements Auditable
 
     use HasFactory, SoftDeletes;
 
+    /**
+     * Control accounts the trip-expense recovery postings depend on. Stricter
+     * than is_locked (which only blocks rename/delete): no edit of name, type,
+     * currency or status, and no delete. System balance updates still pass.
+     */
+    public const PROTECTED_CONTROL_ACCOUNTS = ['Transporter Recoverable', 'Customer Recoverable', 'Fuel Margin'];
+
+    protected const PROTECTED_FIELDS = ['name', 'account_type_id', 'account_type_group_id', 'currency_id', 'status', 'is_locked'];
+
+    protected static function booted()
+    {
+        static::updating(function (Account $account) {
+            if (in_array($account->getOriginal('name'), self::PROTECTED_CONTROL_ACCOUNTS, true) && $account->isDirty(self::PROTECTED_FIELDS)) {
+                throw new \RuntimeException("\"{$account->getOriginal('name')}\" is a protected control account and can't be edited or deactivated.");
+            }
+        });
+        static::deleting(function (Account $account) {
+            if (in_array($account->name, self::PROTECTED_CONTROL_ACCOUNTS, true)) {
+                throw new \RuntimeException("\"{$account->name}\" is a protected control account and can't be deleted.");
+            }
+        });
+    }
+
+    public function isProtectedControl(): bool
+    {
+        return in_array($this->name, self::PROTECTED_CONTROL_ACCOUNTS, true);
+    }
+
     public function account_type(){
         return $this->belongsTo('App\Models\AccountType');
     }

@@ -7,6 +7,8 @@ use App\Models\BankReconciliation;
 use App\Services\BankReconciliation\ReconciliationService;
 use App\Services\BankStatement\StatementImportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\FinancialReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -88,6 +90,22 @@ class BankReconciliationController extends Controller
         $pdf = Pdf::loadView('reports.bank_reconciliations.pdf', $this->buildStatementData($bankReconciliation, isPdf: true));
 
         return $pdf->download("bank-reconciliation-{$bankReconciliation->id}.pdf");
+    }
+
+    public function statementExcel(BankReconciliation $bankReconciliation)
+    {
+        $this->authorize('view', $bankReconciliation);
+
+        $data = $this->buildStatementData($bankReconciliation);
+
+        return Excel::download(
+            new FinancialReportExport('reports.bank_reconciliations.partials.statement', $data, [
+                'title' => 'Bank Reconciliation Statement',
+                'from' => $data['from'],
+                'to' => $data['to'],
+            ]),
+            "bank-reconciliation-{$bankReconciliation->id}.xlsx"
+        );
     }
 
     /**

@@ -268,9 +268,13 @@
                                 <select class="form-control" wire:model="funded_by.0">
                                     <option value="0">Company</option>
                                     <option value="1">Customer (paid / supplied as part-payment)</option>
+                                    <option value="2">Transporter (their driver paid - record only)</option>
                                 </select>
                                 @if ((string) data_get($this, 'funded_by.0') === '1')
                                     <small class="text-muted">No supplier bill - credited to {{ $trip->customer ? $trip->customer->name : 'the trip customer' }} and applied against this trip's invoice.</small>
+                                @endif
+                                @if ((string) data_get($this, 'funded_by.0') === '2')
+                                    <small class="text-muted">No supplier bill and nothing posted - recorded on the trip only. The transporter is paid in full.</small>
                                 @endif
                                 @error('funded_by.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -279,12 +283,15 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Categories<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="category.0"  required>
+                                <select class="form-control" wire:model.debounce.300ms="category.0"  required @if ((string) data_get($this, 'funded_by.0') === '2') disabled @endif>
                                 <option value="">Select Category</option>
                                 <option value="Customer">Customer</option>
                                 <option value="Self">Self</option>
                                 <option value="Transporter">Transporter</option>
                                 </select>
+                                @if ((string) data_get($this, 'funded_by.0') === '2')
+                                    <small class="text-muted">Set to Transporter - Funded By is Transporter.</small>
+                                @endif
                                 @error('category.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -406,23 +413,30 @@
                                 <select class="form-control" wire:model="funded_by.{{$value}}">
                                     <option value="0">Company</option>
                                     <option value="1">Customer (paid / supplied as part-payment)</option>
+                                    <option value="2">Transporter (their driver paid - record only)</option>
                                 </select>
-                                @if ((string) data_get($this, 'funded_by.{{$value}}') === '1')
+                                @if ((string) data_get($this, "funded_by.$value") === '1')
                                     <small class="text-muted">No supplier bill - credited to {{ $trip->customer ? $trip->customer->name : 'the trip customer' }} and applied against this trip's invoice.</small>
                                 @endif
-                                @error('funded_by.{{$value}}') <span class="text-danger error">{{ $message }}</span>@enderror
+                                @if ((string) data_get($this, "funded_by.$value") === '2')
+                                    <small class="text-muted">No supplier bill and nothing posted - recorded on the trip only. The transporter is paid in full.</small>
+                                @endif
+                                @error("funded_by.$value") <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         @endif
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Categories<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="category.{{$value}}"  required>
+                                <select class="form-control" wire:model.debounce.300ms="category.{{$value}}"  required @if ((string) data_get($this, "funded_by.$value") === '2') disabled @endif>
                                     <option value="">Select Category</option>
                                     <option value="Customer">Customer</option>
                                     <option value="Self">Self</option>
                                     <option value="Transporter">Transporter</option>
                                 </select>
+                                @if ((string) data_get($this, "funded_by.$value") === '2')
+                                    <small class="text-muted">Set to Transporter - Funded By is Transporter.</small>
+                                @endif
                                 @error('category.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -582,9 +596,13 @@
                             <select class="form-control" wire:model="funded_by">
                                 <option value="0">Company</option>
                                 <option value="1">Customer (paid / supplied as part-payment)</option>
+                                <option value="2">Transporter (their driver paid - record only)</option>
                             </select>
                             @if ((string) data_get($this, 'funded_by') === '1')
                                 <small class="text-muted">No supplier bill - credited to {{ $trip->customer ? $trip->customer->name : 'the trip customer' }} and applied against this trip's invoice.</small>
+                            @endif
+                            @if ((string) data_get($this, 'funded_by') === '2')
+                                <small class="text-muted">No supplier bill and nothing posted - recorded on the trip only. The transporter is paid in full.</small>
                             @endif
                             @error('funded_by') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
@@ -593,12 +611,15 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="title">Categories<span class="required" style="color: red">*</span></label>
-                            <select class="form-control" wire:model.debounce.300ms="category"  required>
+                            <select class="form-control" wire:model.debounce.300ms="category"  required @if (is_scalar($funded_by ?? null) && (string) $funded_by === '2') disabled @endif>
                                 <option value="">Select Category</option>
                                <option value="Customer">Customer</option>
                                <option value="Self">Self</option>
                                <option value="Transporter">Transporter</option>
                             </select>
+                            @if (is_scalar($funded_by ?? null) && (string) $funded_by === '2')
+                                <small class="text-muted">Set to Transporter - Funded By is Transporter.</small>
+                            @endif
                             @error('category') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                     </div>

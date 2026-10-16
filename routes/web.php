@@ -440,40 +440,51 @@ Route::get('transporters/{selectedTransporter?}/{from?}/{to?}/profit-loss/previe
 Route::get('reports/financial-statements','ReportController@index')->name('reports.index');
 Route::get('reports/income-statement','ReportController@incomeStatement')->name('reports.income_statement');
 Route::get('reports/income-statement/pdf','ReportController@incomeStatementPdf')->name('reports.income_statement.pdf');
+Route::get('reports/income-statement/excel','ReportController@incomeStatementExcel')->name('reports.income_statement.excel');
 Route::get('reports/income-statement/print','ReportController@incomeStatementPrint')->name('reports.income_statement.print');
 Route::get('reports/cashflow','ReportController@cashflow')->name('reports.cashflow');
 Route::get('reports/cashflow/pdf','ReportController@cashflowPdf')->name('reports.cashflow.pdf');
+Route::get('reports/cashflow/excel','ReportController@cashflowExcel')->name('reports.cashflow.excel');
 Route::get('reports/cashflow/print','ReportController@cashflowPrint')->name('reports.cashflow.print');
 Route::get('reports/balance-sheet','ReportController@balanceSheet')->name('reports.balance_sheet');
 Route::get('reports/balance-sheet/pdf','ReportController@balanceSheetPdf')->name('reports.balance_sheet.pdf');
+Route::get('reports/balance-sheet/excel','ReportController@balanceSheetExcel')->name('reports.balance_sheet.excel');
 Route::get('reports/balance-sheet/print','ReportController@balanceSheetPrint')->name('reports.balance_sheet.print');
 Route::get('reports/trial-balance','ReportController@trialBalance')->name('reports.trial-balance');
 Route::get('reports/trial-balance/pdf','ReportController@trialBalancePdf')->name('reports.trial_balance.pdf');
+Route::get('reports/trial-balance/excel','ReportController@trialBalanceExcel')->name('reports.trial_balance.excel');
 Route::get('reports/trial-balance/print','ReportController@trialBalancePrint')->name('reports.trial_balance.print');
 Route::get('reports/fleet-subledger','ReportController@fleetSubledger')->name('reports.fleet_subledger');
 Route::get('reports/sales-tax','ReportController@salesTax')->name('reports.sales_tax');
 Route::get('reports/sales-tax/pdf','ReportController@salesTaxPdf')->name('reports.sales_tax.pdf');
+Route::get('reports/sales-tax/excel','ReportController@salesTaxExcel')->name('reports.sales_tax.excel');
 Route::get('reports/sales-tax/print','ReportController@salesTaxPrint')->name('reports.sales_tax.print');
 Route::get('reports/zimra-schedule','ReportController@zimraSchedule')->name('reports.zimra_schedule');
 Route::get('reports/zimra-schedule/print','ReportController@zimraSchedulePrint')->name('reports.zimra_schedule.print');
 Route::get('reports/zimra-schedule/excel','ReportController@zimraScheduleExcel')->name('reports.zimra_schedule.excel');
 Route::get('reports/income-by-customer','ReportController@incomeByCustomer')->name('reports.income_by_customer');
 Route::get('reports/income-by-customer/pdf','ReportController@incomeByCustomerPdf')->name('reports.income_by_customer.pdf');
+Route::get('reports/income-by-customer/excel','ReportController@incomeByCustomerExcel')->name('reports.income_by_customer.excel');
 Route::get('reports/income-by-customer/print','ReportController@incomeByCustomerPrint')->name('reports.income_by_customer.print');
 Route::get('reports/aged-receivables','ReportController@agedReceivables')->name('reports.aged_receivables');
 Route::get('reports/aged-receivables/pdf','ReportController@agedReceivablesPdf')->name('reports.aged_receivables.pdf');
+Route::get('reports/aged-receivables/excel','ReportController@agedReceivablesExcel')->name('reports.aged_receivables.excel');
 Route::get('reports/aged-receivables/print','ReportController@agedReceivablesPrint')->name('reports.aged_receivables.print');
 Route::get('reports/purchase-by-vendor','ReportController@purchaseByVendor')->name('reports.purchase_by_vendor');
 Route::get('reports/purchase-by-vendor/pdf','ReportController@purchaseByVendorPdf')->name('reports.purchase_by_vendor.pdf');
+Route::get('reports/purchase-by-vendor/excel','ReportController@purchaseByVendorExcel')->name('reports.purchase_by_vendor.excel');
 Route::get('reports/purchase-by-vendor/print','ReportController@purchaseByVendorPrint')->name('reports.purchase_by_vendor.print');
 Route::get('reports/aged-payables','ReportController@agedPayables')->name('reports.aged_payables');
 Route::get('reports/aged-payables/pdf','ReportController@agedPayablesPdf')->name('reports.aged_payables.pdf');
+Route::get('reports/aged-payables/excel','ReportController@agedPayablesExcel')->name('reports.aged_payables.excel');
 Route::get('reports/aged-payables/print','ReportController@agedPayablesPrint')->name('reports.aged_payables.print');
 Route::get('reports/account-balances','ReportController@accountBalances')->name('reports.account_balances');
 Route::get('reports/account-balances/pdf','ReportController@accountBalancesPdf')->name('reports.account_balances.pdf');
+Route::get('reports/account-balances/excel','ReportController@accountBalancesExcel')->name('reports.account_balances.excel');
 Route::get('reports/account-balances/print','ReportController@accountBalancesPrint')->name('reports.account_balances.print');
 Route::get('reports/account-transactions','ReportController@accountTransactions')->name('reports.account_transactions');
 Route::get('reports/account-transactions/pdf','ReportController@accountTransactionsPdf')->name('reports.account_transactions.pdf');
+Route::get('reports/account-transactions/excel','ReportController@accountTransactionsExcel')->name('reports.account_transactions.excel');
 Route::get('reports/account-transactions/print','ReportController@accountTransactionsPrint')->name('reports.account_transactions.print');
 
 Route::get('bookings/delete','BookingController@deleted')->name('bookings.deleted');
@@ -807,6 +818,7 @@ Route::post('bank-reconciliations/start', 'BankReconciliationController@start')-
 Route::get('bank-reconciliations/{bankReconciliation}', 'BankReconciliationController@workspace')->name('bank-reconciliations.workspace');
 Route::get('bank-reconciliations/{bankReconciliation}/statement', 'BankReconciliationController@statement')->name('bank-reconciliations.statement');
 Route::get('bank-reconciliations/{bankReconciliation}/statement/pdf', 'BankReconciliationController@statementPdf')->name('bank-reconciliations.statement.pdf');
+Route::get('bank-reconciliations/{bankReconciliation}/statement/excel', 'BankReconciliationController@statementExcel')->name('bank-reconciliations.statement.excel');
 Route::resource('incomes','IncomeController');
 Route::resource('deals','DealController');
 Route::resource('corridors','CorridorController');
@@ -839,22 +851,27 @@ Route::get('freight/settings/service-types','FreightServiceTypesController@index
 
 Route::get('freight/reports/job-profitability','FreightReportController@jobProfitability')->name('freight.reports.job_profitability');
 Route::get('freight/reports/job-profitability/pdf','FreightReportController@jobProfitabilityPdf')->name('freight.reports.job_profitability.pdf');
+Route::get('freight/reports/job-profitability/excel','FreightReportController@jobProfitabilityExcel')->name('freight.reports.job_profitability.excel');
 Route::get('freight/reports/job-profitability/print','FreightReportController@jobProfitabilityPrint')->name('freight.reports.job_profitability.print');
 
 Route::get('freight/reports/port-exposure','FreightReportController@portExposure')->name('freight.reports.port_exposure');
 Route::get('freight/reports/port-exposure/pdf','FreightReportController@portExposurePdf')->name('freight.reports.port_exposure.pdf');
+Route::get('freight/reports/port-exposure/excel','FreightReportController@portExposureExcel')->name('freight.reports.port_exposure.excel');
 Route::get('freight/reports/port-exposure/print','FreightReportController@portExposurePrint')->name('freight.reports.port_exposure.print');
 
 Route::get('freight/reports/customs-turnaround','FreightReportController@customsTurnaround')->name('freight.reports.customs_turnaround');
 Route::get('freight/reports/customs-turnaround/pdf','FreightReportController@customsTurnaroundPdf')->name('freight.reports.customs_turnaround.pdf');
+Route::get('freight/reports/customs-turnaround/excel','FreightReportController@customsTurnaroundExcel')->name('freight.reports.customs_turnaround.excel');
 Route::get('freight/reports/customs-turnaround/print','FreightReportController@customsTurnaroundPrint')->name('freight.reports.customs_turnaround.print');
 
 Route::get('freight/reports/unbilled-costs','FreightReportController@unbilledCosts')->name('freight.reports.unbilled_costs');
 Route::get('freight/reports/unbilled-costs/pdf','FreightReportController@unbilledCostsPdf')->name('freight.reports.unbilled_costs.pdf');
+Route::get('freight/reports/unbilled-costs/excel','FreightReportController@unbilledCostsExcel')->name('freight.reports.unbilled_costs.excel');
 Route::get('freight/reports/unbilled-costs/print','FreightReportController@unbilledCostsPrint')->name('freight.reports.unbilled_costs.print');
 
 Route::get('freight/reports/uninvoiced-charges','FreightReportController@uninvoicedCharges')->name('freight.reports.uninvoiced_charges');
 Route::get('freight/reports/uninvoiced-charges/pdf','FreightReportController@uninvoicedChargesPdf')->name('freight.reports.uninvoiced_charges.pdf');
+Route::get('freight/reports/uninvoiced-charges/excel','FreightReportController@uninvoicedChargesExcel')->name('freight.reports.uninvoiced_charges.excel');
 Route::get('freight/reports/uninvoiced-charges/print','FreightReportController@uninvoicedChargesPrint')->name('freight.reports.uninvoiced_charges.print');
 
 Route::get('freight/imports/rate-cards','FreightImportController@rateCards')->name('freight.imports.rate_cards');

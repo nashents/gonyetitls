@@ -2130,10 +2130,24 @@ class Create extends Component
         }
     }
 
+    /** Funded By: Transporter only makes sense for a Transporter-category line - set it for the user. */
+    public function updatedExpenseFundedBy($value, $key)
+    {
+        if ((string) $value === '2') {
+            $this->category = (array) $this->category;
+            $this->category[$key] = 'Transporter';
+        }
+    }
+
     protected function validateFuelFunding(): void
     {
         // Customer funded expense lines can't also be recharged to the customer.
         foreach ((array) $this->expense_id as $key => $value) {
+            if ($value && (string) ($this->expense_funded_by[$key] ?? '0') === '2' && ($this->category[$key] ?? null) !== 'Transporter') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "expense_funded_by.{$key}" => 'Only Transporter-category expenses can be funded by the transporter.',
+                ]);
+            }
             if ($value && (string) ($this->expense_funded_by[$key] ?? '0') === '1' && ($this->category[$key] ?? null) === 'Customer') {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     "category.{$key}" => 'Customer funded expenses can\'t also be recharged to the customer - use Self or Transporter.',
@@ -2763,7 +2777,7 @@ class Create extends Component
                         $trip_expense->currency_id = $this->expense_currency_id[$key] ?? null;
                         $trip_expense->vendor_id = $this->expense_vendor_id[$key] ?? null;
                         $trip_expense->payment_method_id = $this->payment_method_id[$key] ?? null;
-                        $trip_expense->category = $this->category[$key] ?? null;
+                        $trip_expense->category = (string) ($this->expense_funded_by[$key] ?? '0') === '2' ? 'Transporter' : ($this->category[$key] ?? null);
                         if ((string) ($this->expense_funded_by[$key] ?? '0') === '1') {
                             // Settles against the trip's customer (DR Trip Expense / CR AR) at approval.
                             if (!$trip->customer_id) {
@@ -2774,6 +2788,8 @@ class Create extends Component
                             $trip_expense->supplied_by_customer = true;
                             $trip_expense->customer_id = $trip->customer_id;
                         }
+                        // 2 = the transporter's own driver paid: record only
+                        $trip_expense->funded_by_transporter = (string) ($this->expense_funded_by[$key] ?? '0') === '2';
                         $trip_expense->amount = $this->amount[$key] ?? 0;
                         $trip_expense->exchange_rate = $this->expense_exchange_rate[$key] ?? null;
                         $trip_expense->exchange_amount = $this->expense_exchange_amount[$key] ?? 0;

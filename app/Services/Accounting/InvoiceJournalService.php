@@ -94,7 +94,7 @@ class InvoiceJournalService
             // a specific account per line. Mirrors BillJournalService's
             // existing per-line account_id posting on the debit side. ────
             $revenueGroups = $invoice->invoice_items()
-                ->selectRaw('account_id, SUM(subtotal) as total_subtotal')
+                ->selectRaw('account_id, SUM(subtotal) as total_subtotal, SUM(COALESCE(recharge_amount, 0)) as total_recharge')
                 ->groupBy('account_id')
                 ->get();
 
@@ -116,7 +116,12 @@ class InvoiceJournalService
                 foreach ($revenueGroups as $group) {
                     $creditAccount = $group->account_id ? Account::find($group->account_id) : null;
                     $creditAccount = $creditAccount ?? $salesAccount;
-                    $groupSubtotal = (float) $group->total_subtotal;
+                    // Recharged Customer-category trip expenses are not revenue -
+                    // they clear Customer Recoverable (TripExpenseRecoveryService).
+                    $groupSubtotal = (float) $group->total_subtotal - (float) $group->total_recharge;
+                    if (round($groupSubtotal, 2) == 0.0) {
+                        continue;
+                    }
 
                     $entry->journal_entry_lines()->create([
                         'account_id'      => $creditAccount->id,
@@ -130,6 +135,23 @@ class InvoiceJournalService
                         'description'     => "{$creditAccount->name} - Invoice {$invoice->invoice_number}",
                     ]);
                 }
+            }
+
+            // ── CR Customer Recoverable (recharged trip expenses) ────────
+            $recharge = round((float) $revenueGroups->sum('total_recharge'), 2);
+            if ($recharge > 0) {
+                $recoverable = app(TripExpenseRecoveryService::class)->customerRecoverable();
+                $entry->journal_entry_lines()->create([
+                    'account_id'      => $recoverable->id,
+                    'customer_id'     => $invoice->customer_id,
+                    'debit'           => 0,
+                    'credit'          => $recharge,
+                    'exchange_debit'  => 0,
+                    'exchange_credit' => $recharge * $rate,
+                    'currency_id'     => $invoice->currency_id,
+                    'exchange_rate'   => $rate,
+                    'description'     => "Recharged trip expenses - Invoice {$invoice->invoice_number}",
+                ]);
             }
 
             // ── CR VAT Payable (tax_amount) ──────────────────────────────

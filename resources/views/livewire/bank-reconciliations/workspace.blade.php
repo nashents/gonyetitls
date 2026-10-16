@@ -23,6 +23,9 @@
                                     <a href="{{ route('bank-reconciliations.statement.pdf', $reconciliation->id) }}" class="btn btn-default btn-sm">
                                         <i class="fa fa-file-pdf-o"></i> PDF
                                     </a>
+                                    <a href="{{ route('bank-reconciliations.statement.excel', $reconciliation->id) }}" class="btn btn-default btn-sm">
+                                        <i class="fa fa-file-excel-o"></i> Excel
+                                    </a>
                                     @if($reconciliation->status !== 'completed')
                                     <button type="button" class="btn btn-default btn-sm" wire:click="autoMatch" wire:loading.attr="disabled">
                                         <i class="fa fa-magic"></i> Auto-Match

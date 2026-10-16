@@ -23,6 +23,36 @@
             <small class="form-text text-muted">The transaction type pre-selected when a new booking is created.</small>
             @error('default_booking_transaction_type') <span class="text-danger error">{{ $message }}</span>@enderror
         </div>
+        <div class="mb-10 form-group">
+            <label for="transporter_expense_recovery">Transporter Trip Expenses Recovery</label>
+            <select wire:model.debounce.300ms="transporter_expense_recovery" id="transporter_expense_recovery" class="form-control">
+                <option value="deduct">Deduct from the transporter payment bill</option>
+                <option value="invoice">Invoice the transporter separately</option>
+            </select>
+            <small class="form-text text-muted">Trip expenses with category Transporter that the company paid are posted to Transporter Recoverable, not company expenses. Choose how they are recovered: automatically taken off the trip's transporter payment bill, or raised as an invoice to the transporter ("Invoice to: Transporter"). Expenses the transporter's own driver paid (Funded By: Transporter) are only recorded - the transporter is paid in full.</small>
+            @error('transporter_expense_recovery') <span class="text-danger error">{{ $message }}</span>@enderror
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-10 form-group">
+                    <label for="transporter_fuel_recovery">Transporter Fuel Recovery</label>
+                    <select wire:model="transporter_fuel_recovery" id="transporter_fuel_recovery" class="form-control">
+                        <option value="cost">At cost</option>
+                        <option value="markup">Marked up</option>
+                    </select>
+                    <small class="form-text text-muted">Fuel orders for Transporter-category (subcontracted) trips post to Transporter Recoverable and are recovered with the trip's other transporter expenses. Marked up: the transporter is charged cost plus the markup below, and the markup is booked to Fuel Margin (income). Applies to fuel orders posted or edited after the change.</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                @if ($transporter_fuel_recovery === 'markup')
+                <div class="mb-10 form-group">
+                    <label for="transporter_fuel_markup">Markup %</label>
+                    <input type="number" step="any" min="0" wire:model.debounce.300ms="transporter_fuel_markup" id="transporter_fuel_markup" class="form-control" placeholder="e.g. 10">
+                    @error('transporter_fuel_markup') <span class="text-danger error">{{ $message }}</span>@enderror
+                </div>
+                @endif
+            </div>
+        </div>
         <div class="btn-group" role="group" style="float: right;">
             <button type="submit" class="btn btn-success btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
         </div>

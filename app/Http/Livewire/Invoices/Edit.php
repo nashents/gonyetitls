@@ -213,6 +213,9 @@ class Edit extends Component
        
     public $tax_amount;
     public $total_customer_expenses = 0;
+    // Recharge portion per line (invoice_items.recharge_amount)
+    public $recharge_amount = [];
+    public $current_recharge_amount = [];
     public $item_subtotal = 0;
     public $subtotal = 0;
     public $subtotal_incl = 0;
@@ -517,6 +520,7 @@ class Edit extends Component
     public function updatedSelectedTrip($id, $key){
       
         if (!is_null($id)) {
+            $this->total_customer_expenses = 0;
             
             $trip = Trip::find($id);
             $delivery_note = $trip?->delivery_note;
@@ -542,11 +546,7 @@ class Edit extends Component
                 if($this->invoice_to == "Transporter"){
                     $this->description[$key] = $this->setTransporterDescription($id); 
                     $base_currency_id = $this->base_currency->id;
-                    $this->amount[$key] = $trip->trip_expenses->where('category','Transporter')->sum(function ($expense) use ($base_currency_id) {
-                        return $expense->currency_id == $base_currency_id
-                            ? (float) $expense->amount
-                            : (float) $expense->exchange_amount;
-                    });
+                    $this->amount[$key] = $this->transporterRecoveryAmount($trip);
                 }elseif($this->invoice_to == "Customer"){
                     if (isset($this->total_customer_expenses) && $this->total_customer_expenses > 0) {
                     if($this->values == "scheduled"){
@@ -572,6 +572,7 @@ class Edit extends Component
                 
                 $this->qty[$key] = 1; 
                 $this->selectedAccount[$key] =  $this->income_account_id;
+                $this->recharge_amount[$key] = $this->customerRechargeAmount($trip, $trip->currency_id);
             }
            
             
@@ -582,6 +583,7 @@ class Edit extends Component
        public function updatedSelectedTTO($id, $key){
       
         if (!is_null($id)) {
+            $this->total_customer_expenses = 0;
             
             $tto = TripTransportOrder::find($id);
             $trip = $tto?->trip;
@@ -630,6 +632,7 @@ class Edit extends Component
                 
                 $this->current_qty[$key] = 1; 
                 $this->selectedCurrentAccount[$key] =  $this->income_account_id;
+                $this->current_recharge_amount[$key] = $this->customerRechargeAmount($trip, $tto->currency_id);
             }
            
             
@@ -639,6 +642,7 @@ class Edit extends Component
     public function updatedSelectedCurrentTrip($id, $key){
       
         if (!is_null($id)) {
+            $this->total_customer_expenses = 0;
             
             $trip = Trip::find($id);
             $delivery_note = $trip?->delivery_note;
@@ -662,11 +666,7 @@ class Edit extends Component
                 if($this->invoice_to == "Transporter"){
                     $this->current_description[$key] = $this->setTransporterDescription($id); 
                     $base_currency_id = $this->base_currency->id;
-                    $this->current_amount[$key] = $trip->trip_expenses->sum(function ($expense) use ($base_currency_id) {
-                        return $expense->currency_id == $base_currency_id
-                            ? (float) $expense->amount
-                            : (float) $expense->exchange_amount;
-                    });
+                    $this->current_amount[$key] = $this->transporterRecoveryAmount($trip);
                 }elseif($this->invoice_to == "Customer"){
                     if (isset($this->total_customer_expenses) && $this->total_customer_expenses > 0) {
                     if($this->values == "scheduled"){
@@ -691,6 +691,7 @@ class Edit extends Component
                 }
                 $this->current_qty[$key] = 1; 
                 $this->selectedCurrentAccount[$key] =  $this->income_account_id;
+                $this->current_recharge_amount[$key] = $this->customerRechargeAmount($trip, $trip->currency_id);
             }
            
             
@@ -820,7 +821,8 @@ class Edit extends Component
 
         $parts = [];
 
-        foreach ($trip->trip_expenses as $trip_expense) {
+        // company-paid, recoverable Transporter lines only
+        foreach (app(\App\Services\Accounting\TripExpenseRecoveryService::class)->transporterDeductions($trip) as $trip_expense) {
 
                 $name = null;
 
@@ -1118,6 +1120,7 @@ class Edit extends Component
             $this->current_measurement[] = $item->measurement;
             $this->current_qty[] = $item->qty;
             $this->current_amount[] = $item->amount;
+            $this->current_recharge_amount[] = $item->recharge_amount;
             if($item->description){
                 $this->current_description[] = $item->description;
             }elseif($item->trip_details){
@@ -1313,6 +1316,11 @@ class Edit extends Component
 
     public function update()
     {
+
+        if ($this->transporterDeductModeBlocks()) {
+            return;
+        }
+
         if (!$this->tickedTripsAreFreightUpdateSafe()) {
             return;
         }
@@ -1389,6 +1397,7 @@ class Edit extends Component
                         
                         if (isset($this->selectedCurrentTrip[$key])) {
                             $invoice_item->trip_id = $this->selectedCurrentTrip[$key];
+                            $invoice_item->recharge_amount = $this->current_recharge_amount[$key] ?? null;
                         }
                         if (isset($this->selectedCurrentProduct[$key])) {
                             $invoice_item->product_id = $this->selectedCurrentProduct[$key];
@@ -1525,6 +1534,7 @@ class Edit extends Component
                             }
                             if (isset($this->selectedTrip[$key])) {
                                 $invoice_item->trip_id = $this->selectedTrip[$key];
+                                $invoice_item->recharge_amount = $this->recharge_amount[$key] ?? null;
                             }
                             if (isset($this->selectedProduct[$key])) {
                                 $invoice_item->product_id = $this->selectedProduct[$key];
@@ -1597,6 +1607,7 @@ class Edit extends Component
                             }
                             if (isset($this->selectedCurrentTTO[$key])) {
                                 $invoice_item->trip_transport_order_id = $this->selectedCurrentTTO[$key];
+                                $invoice_item->recharge_amount = $this->current_recharge_amount[$key] ?? null;
                             }
                             if (isset($this->selectedCurrentProduct[$key])) {
                                 $invoice_item->product_id = $this->selectedCurrentProduct[$key];
@@ -1728,6 +1739,7 @@ class Edit extends Component
                             }
                             if (isset($this->selectedTTO[$key])) {
                                 $invoice_item->trip_transport_order_id = $this->selectedTTO[$key];
+                                $invoice_item->recharge_amount = $this->recharge_amount[$key] ?? null;
                             }
                             if (isset($this->selectedProduct[$key])) {
                                 $invoice_item->product_id = $this->selectedProduct[$key];
@@ -2851,4 +2863,53 @@ class Edit extends Component
             'invoice_items' => $this->invoice_items,
         ]);
     }
+
+    /** Company-paid Transporter-category trip expenses in base currency - what an invoice to the transporter recovers (TripExpenseRecoveryService). */
+    private function transporterRecoveryAmount($trip): float
+    {
+        $recovery = app(\App\Services\Accounting\TripExpenseRecoveryService::class);
+        $company = Auth::user()->employee->company;
+
+        return round($recovery->transporterDeductions($trip)->sum(fn ($e) => $recovery->amountIn($e, $this->base_currency->id, $company)), 2);
+    }
+
+    /** Part of a customer line recharging Customer-category expenses - credited to Customer Recoverable, not Sales. */
+    private function customerRechargeAmount($trip, $currencyId): float
+    {
+        if ($this->invoice_to !== 'Customer' || !$trip || !($this->total_customer_expenses > 0)) {
+            return 0.0;
+        }
+
+        return round((float) app(\App\Services\Accounting\TripExpenseRecoveryService::class)->customerRecharges($trip, $currencyId)->sum('amount'), 2);
+    }
+
+
+    /**
+     * In 'deduct' mode (Business Settings) company-paid Transporter trip
+     * expenses already come off the transporter payment bill - invoicing them
+     * to the transporter too would recover them twice.
+     */
+    private function transporterDeductModeBlocks(): bool
+    {
+        if ($this->invoice_to !== 'Transporter') {
+            return false;
+        }
+        $tripLines = collect(["selectedTrip", "selectedMultiTrip", "selectedCurrentTrip", "selectedTTO", "selectedMultiTTO", "selectedCurrentTTO"])
+            ->filter(fn ($p) => property_exists($this, $p))
+            ->flatMap(fn ($p) => array_filter((array) $this->{$p}));
+        if ($tripLines->isEmpty()) {
+            return false;
+        }
+        $mode = app(\App\Services\Accounting\TripExpenseRecoveryService::class)->transporterRecoveryMode(Auth::user()->employee->company);
+        if ($mode !== 'deduct') {
+            return false;
+        }
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'error',
+            'message' => 'Transporter trip expenses are set to be deducted from the transporter payment bill (Business Settings), so they can\'t also be invoiced to the transporter. Switch the setting to "Invoice the transporter separately" to raise this invoice.',
+        ]);
+
+        return true;
+    }
+
 }

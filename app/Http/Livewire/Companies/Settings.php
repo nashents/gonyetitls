@@ -13,6 +13,9 @@ class Settings extends Component
     public $enable_requisition_two_step_authorization;
     public $fleet_identifier_preference;
     public $default_booking_transaction_type;
+    public $transporter_expense_recovery;
+    public $transporter_fuel_recovery;
+    public $transporter_fuel_markup;
 
 
 
@@ -24,6 +27,9 @@ class Settings extends Component
         $this->enable_requisition_two_step_authorization = $company->enable_requisition_two_step_authorization;
         $this->fleet_identifier_preference = $company->fleet_identifier_preference;
         $this->default_booking_transaction_type = $company->default_booking_transaction_type ?: 'expense';
+        $this->transporter_expense_recovery = $company->transporter_expense_recovery ?: 'deduct';
+        $this->transporter_fuel_recovery = $company->transporter_fuel_recovery ?: 'cost';
+        $this->transporter_fuel_markup = $company->transporter_fuel_markup ?? 0;
 
     }
 
@@ -35,6 +41,11 @@ class Settings extends Component
         $company->default_booking_transaction_type = in_array($this->default_booking_transaction_type, ['expense', 'income'])
             ? $this->default_booking_transaction_type
             : 'expense';
+        $company->transporter_expense_recovery = in_array($this->transporter_expense_recovery, ['deduct', 'invoice'])
+            ? $this->transporter_expense_recovery
+            : 'deduct';
+        $company->transporter_fuel_recovery = $this->transporter_fuel_recovery === 'markup' ? 'markup' : 'cost';
+        $company->transporter_fuel_markup = is_numeric($this->transporter_fuel_markup) ? max(0, (float) $this->transporter_fuel_markup) : 0;
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[

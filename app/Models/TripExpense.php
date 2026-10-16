@@ -93,6 +93,7 @@ class TripExpense extends Model implements Auditable
         'payment_method_id',
         'category',
         'supplied_by_customer',
+        'funded_by_transporter',
         'customer_id',
         'visible_on_trip_sheet',
         'date',
@@ -101,5 +102,6 @@ class TripExpense extends Model implements Auditable
     protected $casts = [
         'visible_on_trip_sheet' => 'boolean',
         'supplied_by_customer' => 'boolean',
+        'funded_by_transporter' => 'boolean',
     ];
 }

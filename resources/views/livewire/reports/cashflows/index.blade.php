@@ -65,6 +65,9 @@
                                                         <a href="{{ route('reports.cashflow.pdf', ['from' => $from, 'to' => $to, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                                             <i class="fa fa-file-pdf-o"></i> Export PDF
                                                         </a>
+                                                        <a href="{{ route('reports.cashflow.excel', ['from' => $from, 'to' => $to, 'view' => $this->viewMode()]) }}" class="btn btn-default btn-wide btn-rounded">
+                                                            <i class="fa fa-file-excel-o"></i> Export Excel
+                                                        </a>
                                                     </div>
                                                 </div>
                                             </div>

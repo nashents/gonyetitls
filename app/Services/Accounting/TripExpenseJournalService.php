@@ -42,6 +42,32 @@ class TripExpenseJournalService
      */
     public function postExpense(TripExpense $tripExpense): ?JournalEntry
     {
+        $entry = $this->postExpenseLine($tripExpense);
+        $this->refreshTransporterDeductions($tripExpense);
+
+        return $entry;
+    }
+
+    /**
+     * A Transporter-category line can change what the trip's transporter
+     * payment bill deducts (TripExpenseRecoveryService) - re-sync it. Never
+     * blocks the expense save.
+     */
+    public function refreshTransporterDeductions(TripExpense $tripExpense): void
+    {
+        $trip = $tripExpense->trip;
+        if (!$trip || $tripExpense->transporter_id || !$trip->trip_expenses()->whereNotNull('transporter_id')->exists()) {
+            return;
+        }
+        try {
+            app(TransporterPaymentBillService::class)->syncTrip($trip);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Transporter bill deductions for trip {$trip->trip_number} not refreshed: " . $e->getMessage());
+        }
+    }
+
+    private function postExpenseLine(TripExpense $tripExpense): ?JournalEntry
+    {
         if ($tripExpense->fuel_id || $tripExpense->transporter_id) {
             return null;
         }
@@ -63,6 +89,20 @@ class TripExpenseJournalService
         // Switched back to company funded - undo the customer supply first.
         $this->customerFuel->voidForTripExpense($tripExpense);
 
+        // Funded By: Transporter - their own driver paid, so it is only a
+        // record on the trip: no supplier bill, no ledger, no deduction.
+        if (app(TripExpenseRecoveryService::class)->isTransporterFunded($tripExpense)) {
+            DB::transaction(function () use ($tripExpense) {
+                foreach (Bill::where('trip_expense_id', $tripExpense->id)->get() as $bill) {
+                    if (! $bill->bill_payments()->exists()) {
+                        $this->customerFuel->removeBill($bill, "Trip expense #{$tripExpense->id} funded by the transporter");
+                    }
+                }
+            });
+
+            return null;
+        }
+
         // Non-billable expense (Expenses > Billable unchecked): it stays a
         // cost on the trip only - no supplier Bill, so a share of fuel that
         // the truck's fuel order already billed isn't billed a second time.
@@ -80,7 +120,9 @@ class TripExpenseJournalService
         }
 
         return DB::transaction(function () use ($tripExpense) {
-            $account = $this->accountFor($tripExpense);
+            // Transporter / Customer category: recoverable from them, not a company cost.
+            $account = app(TripExpenseRecoveryService::class)->recoverableAccountFor($tripExpense)
+                ?? $this->accountFor($tripExpense);
             $trip = $tripExpense->trip;
 
             $bill = Bill::where('trip_expense_id', $tripExpense->id)->first() ?: new Bill;

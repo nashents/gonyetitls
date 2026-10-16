@@ -287,6 +287,10 @@ class Index extends Component
 
     public function edit($id){
     $account = Account::find($id);
+    if ($account && $account->isProtectedControl()) {
+        $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "\"{$account->name}\" is a protected control account and can't be edited."]);
+        return;
+    }
     $this->user_id = $account->user_id;
     $this->name = $account->name;
     $this->code = $account->code;
@@ -314,6 +318,10 @@ class Index extends Component
             }
             try{
             $account = Account::find($this->account_id);
+            if ($account->isProtectedControl()) {
+                $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "\"{$account->name}\" is a protected control account and can't be edited."]);
+                return;
+            }
             $locked = optional($account->account_type)->name === 'Cash & Bank';
             $account->user_id = Auth::user()->id;
             if ($account->is_locked && $this->name !== $account->name) {

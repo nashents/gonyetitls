@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\SalesTaxCalculator;
 use App\Services\ZimraScheduleCalculator;
 use App\Exports\ZimraScheduleExport;
+use App\Exports\FinancialReportExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Services\AgedPayablesCalculator;
 use App\Services\BalanceSheetCalculator;
@@ -693,5 +694,81 @@ class ReportController extends Controller
             'totals' => $totals,
             'is_balanced' => $calculator->isBalanced($totals),
         ];
+    }
+
+    /*
+     * Excel exports - one per PDF export, built from the same data and
+     * statement partial so the workbook matches the PDF row for row.
+     */
+
+    public function incomeStatementExcel(Request $request)
+    {
+        return $this->excel($this->buildIncomeStatementData($request), 'income_statements', 'Profit and Loss', 'income-statement');
+    }
+
+    public function cashflowExcel(Request $request)
+    {
+        return $this->excel($this->buildCashFlowData($request), 'cashflows', 'Cash Flow Statement', 'cash-flow-statement');
+    }
+
+    public function balanceSheetExcel(Request $request)
+    {
+        return $this->excel($this->buildBalanceSheetData($request), 'balance_sheets', 'Balance Sheet', 'balance-sheet');
+    }
+
+    public function salesTaxExcel(Request $request)
+    {
+        return $this->excel($this->buildSalesTaxData($request), 'sales_tax', 'Sales Tax Report', 'sales-tax-report');
+    }
+
+    public function incomeByCustomerExcel(Request $request)
+    {
+        return $this->excel($this->buildIncomeByCustomerData($request), 'income_by_customers', 'Income by Customer', 'income-by-customer');
+    }
+
+    public function agedReceivablesExcel(Request $request)
+    {
+        return $this->excel($this->buildAgedReceivablesData($request), 'aged_receivables', 'Aged Receivables', 'aged-receivables');
+    }
+
+    public function purchaseByVendorExcel(Request $request)
+    {
+        return $this->excel($this->buildPurchaseByVendorData($request), 'purchase_by_vendors', 'Purchase by Vendor', 'purchase-by-vendor');
+    }
+
+    public function agedPayablesExcel(Request $request)
+    {
+        return $this->excel($this->buildAgedPayablesData($request), 'aged_payables', 'Aged Payables', 'aged-payables');
+    }
+
+    public function accountBalancesExcel(Request $request)
+    {
+        return $this->excel($this->buildAccountBalancesData($request), 'account_balances', 'Account Balances', 'account-balances');
+    }
+
+    public function accountTransactionsExcel(Request $request)
+    {
+        return $this->excel($this->buildAccountTransactionsData($request), 'account_transactions', 'Account Transactions (General Ledger)', 'account-transactions');
+    }
+
+    public function trialBalanceExcel(Request $request)
+    {
+        return $this->excel($this->buildTrialBalanceData($request), 'trial_balance', 'Trial Balance', 'trial-balance');
+    }
+
+    private function excel(array $data, string $folder, string $title, string $filename)
+    {
+        $header = [
+            'title' => $title,
+            'asOfDate' => $data['as_of_date'] ?? null,
+            'from' => $data['from'] ?? $data['date_from'] ?? null,
+            'to' => $data['to'] ?? $data['date_to'] ?? null,
+            'selectedType' => $data['selectedType'] ?? null,
+        ];
+
+        return Excel::download(
+            new FinancialReportExport("reports.{$folder}.partials.statement", $data, $header),
+            $filename . '.xlsx'
+        );
     }
 }

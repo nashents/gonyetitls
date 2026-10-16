@@ -127,10 +127,12 @@ class BillJournalService
                     'driver_id'       => $bill->driver_id,
                     'transporter_id'  => $bill->transporter_id,
                     'container_id'    => $bill->container_id,
-                    'debit'           => $subtotal,
-                    'credit'          => 0,
-                    'exchange_debit'  => $subtotal * (is_numeric($rate) ? (float) $rate : 0),
-                    'exchange_credit' => 0,
+                    // A negative line is a deduction (e.g. trip expenses taken off a
+                    // transporter payment bill) - it posts as a credit to its account.
+                    'debit'           => max($subtotal, 0),
+                    'credit'          => max(-$subtotal, 0),
+                    'exchange_debit'  => max($subtotal, 0) * (is_numeric($rate) ? (float) $rate : 0),
+                    'exchange_credit' => max(-$subtotal, 0) * (is_numeric($rate) ? (float) $rate : 0),
                     'currency_id'     => $bill->currency_id,
                     'exchange_rate'   => $rate,
                     'description'     => $expense->description ?? "Bill {$bill->bill_number} - {$expense->account?->name}",

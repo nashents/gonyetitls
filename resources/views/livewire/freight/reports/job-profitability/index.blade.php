@@ -88,6 +88,9 @@
                                         <a href="{{ route('freight.reports.job_profitability.pdf', ['from' => $from, 'to' => $to, 'customer_id' => $customer_id, 'salesperson_id' => $salesperson_id, 'freight_service_type_id' => $freight_service_type_id, 'primary_transport_mode' => $primary_transport_mode, 'status' => $status, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                             <i class="fa fa-file-pdf-o"></i> Export PDF
                                         </a>
+                                        <a href="{{ route('freight.reports.job_profitability.excel', ['from' => $from, 'to' => $to, 'customer_id' => $customer_id, 'salesperson_id' => $salesperson_id, 'freight_service_type_id' => $freight_service_type_id, 'primary_transport_mode' => $primary_transport_mode, 'status' => $status, 'view' => $this->viewMode()]) }}" class="btn btn-default btn-wide btn-rounded">
+                                            <i class="fa fa-file-excel-o"></i> Export Excel
+                                        </a>
                                     </div>
                                 </div>
                             </div>

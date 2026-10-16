@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Jobs\Sage\SyncTripToSageJob;
 use App\Models\Trip;
 use App\Services\Accounting\AdvanceInvoiceReclassService;
+use App\Services\Accounting\TransporterPaymentBillService;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -49,6 +50,12 @@ class TripObserver
         if ($trip->trip_status === 'Offloaded' && $trip->wasChanged('trip_status')) {
             $this->releaseAdvanceInvoices($trip);
         }
+
+        // Transporter payment bills post at Offloaded (and un-post if the
+        // trip leaves Offloaded) - TransporterPaymentBillService.
+        if ($trip->wasChanged('trip_status')) {
+            $this->syncTransporterBills($trip);
+        }
     }
 
     /**
@@ -63,6 +70,22 @@ class TripObserver
             app(AdvanceInvoiceReclassService::class)->handleTripOffloaded($trip);
         } catch (\Throwable $e) {
             Log::warning("Advance invoice release for trip {$trip->trip_number} failed: " . $e->getMessage());
+        }
+    }
+
+    protected function syncTransporterBills(Trip $trip): void
+    {
+        if (!$trip->trip_expenses()->whereNotNull('transporter_id')->exists()) {
+            return;
+        }
+        try {
+            $warning = null;
+            app(TransporterPaymentBillService::class)->syncTrip($trip, $warning);
+            if ($warning) {
+                Log::warning($warning);
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Transporter bill sync for trip {$trip->trip_number} failed: " . $e->getMessage());
         }
     }
 
