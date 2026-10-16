@@ -14,7 +14,7 @@ class FiscalDocument extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
-        'document_type', 'source_id', 'external_document_id', 'document_number',
+        'document_type', 'provider', 'company_integration_id', 'source_id', 'external_document_id', 'document_number',
         'request_id', 'success', 'is_actionable', 'error_message',
         'fiscal_invoice_pdf', 'verification_code', 'qr_code_url',
         'fiscal_day', 'device_id', 'ra_invoice_number',

@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Models\DebitNote;
+use App\Models\JournalEntry;
 use App\Services\Accounting\DebitNoteJournalService;
+use App\Services\Accounting\JournalReversalService;
 
 class DebitNoteObserver
 {
@@ -41,7 +43,12 @@ class DebitNoteObserver
      */
     public function deleted(DebitNote $debitNote)
     {
-        //
+        // Safety net: a deleted debit note must not stay in the ledger (see
+        // BillObserver::deleted).
+        app(JournalReversalService::class)->reverseLiveEffects(
+            JournalEntry::where('debit_note_id', $debitNote->id),
+            "Debit Note {$debitNote->debit_note_number} deleted"
+        );
     }
 
     /**

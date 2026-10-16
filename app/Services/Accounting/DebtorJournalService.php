@@ -144,11 +144,10 @@ class DebtorJournalService
 
             $reason = $reason ?: 'Voided';
 
-            JournalEntry::where('debtor_journal_id', $journal->id)
-                ->where('status', '!=', 'reversed')
-                ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
-                ->get()
-                ->each(fn ($entry) => $this->journalReversal->reverse($entry, "Debtors journal {$journal->journal_number} voided - {$reason}"));
+            $this->journalReversal->reverseLiveEffects(
+                JournalEntry::where('debtor_journal_id', $journal->id),
+                "Debtors journal {$journal->journal_number} voided - {$reason}"
+            );
 
             $journal->status = 'voided';
             $journal->voided_by_id = Auth::id();

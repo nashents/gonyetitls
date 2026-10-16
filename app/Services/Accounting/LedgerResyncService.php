@@ -43,7 +43,7 @@ class LedgerResyncService
         return DB::transaction(function () use ($invoice, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('invoice_id', $invoice->id));
 
-            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $invoice->total, $invoice->exchange_rate, $invoice->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $invoice->total, $invoice->exchange_rate, $invoice->currency_id, $invoice->date)) {
                 return $existing;
             }
 
@@ -70,7 +70,7 @@ class LedgerResyncService
             // Fuel Inventory for a Bulk Buy consumption bill, else Accounts Payable.
             $controlAccount = $this->billJournal->creditAccountFor($bill)->name;
 
-            if (!$force && $existing && $this->isUnchanged($existing, $controlAccount, (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, $controlAccount, (float) $bill->total, $bill->exchange_rate, $bill->currency_id, $bill->bill_date)) {
                 return $existing;
             }
 
@@ -88,7 +88,7 @@ class LedgerResyncService
         return DB::transaction(function () use ($creditNote, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('credit_note_id', $creditNote->id));
 
-            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $creditNote->total, $creditNote->exchange_rate, $creditNote->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $creditNote->total, $creditNote->exchange_rate, $creditNote->currency_id, $creditNote->date)) {
                 return $existing;
             }
 
@@ -114,7 +114,7 @@ class LedgerResyncService
         return DB::transaction(function () use ($bill, $creditAccount, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('bill_id', $bill->id));
 
-            if (!$force && $existing && $this->isUnchanged($existing, $creditAccount->name, (float) $bill->total, $bill->exchange_rate, $bill->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, $creditAccount->name, (float) $bill->total, $bill->exchange_rate, $bill->currency_id, $bill->bill_date)) {
                 return $existing;
             }
 
@@ -132,7 +132,7 @@ class LedgerResyncService
         return DB::transaction(function () use ($debitNote, $reason, $force) {
             $existing = $this->currentEntry(JournalEntry::where('debit_note_id', $debitNote->id));
 
-            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $debitNote->total, $debitNote->exchange_rate, $debitNote->currency_id)) {
+            if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Payable', (float) $debitNote->total, $debitNote->exchange_rate, $debitNote->currency_id, $debitNote->date)) {
                 return $existing;
             }
 
@@ -190,8 +190,15 @@ class LedgerResyncService
      * document's `total` verbatim regardless of its internal tax/discount
      * breakdown. If unchanged, resync can skip reversing and reposting.
      */
-    private function isUnchanged(JournalEntry $entry, string $controlAccountName, float $currentTotal, $currentRate, $currentCurrencyId): bool
+    private function isUnchanged(JournalEntry $entry, string $controlAccountName, float $currentTotal, $currentRate, $currentCurrencyId, $documentDate = null): bool
     {
+        // A repost must carry the source document's date - a date-only
+        // correction (e.g. a fuel order re-dated, so its bill_date moved)
+        // used to look "unchanged" and left the posting in the old period.
+        if ($documentDate && optional($entry->date)->toDateString() !== substr((string) $documentDate, 0, 10)) {
+            return false;
+        }
+
         $line = $entry->journal_entry_lines()
             ->whereHas('account', fn ($q) => $q->where('name', $controlAccountName))
             ->first();

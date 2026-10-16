@@ -11,13 +11,43 @@ class IntegrationProviderSeeder extends Seeder
     {
         $providers = [
             // --- FISCAL / VIRTUAL FISCALIZATION ---
+            // A company fiscalises through its ONE active "fiscal" integration
+            // (App\Services\Fiscal\FiscalProviderResolver); drivers implement
+            // App\Integrations\Contracts\FiscalDriver.
             [
                 'key'                  => 'fiscal_harmony',
                 'name'                 => 'Fiscal Harmony',
                 'type'                 => 'fiscal',
                 'driver'               => 'App\\Integrations\\FiscalHarmony\\FiscalHarmonyDriver',
-                'required_credentials' => json_encode(['app_name', 'api_key', 'base_url']),
-                'default_config'       => json_encode(['environment' => 'production', 'timeout' => 30]),
+                // base_url includes /api, e.g. https://api.fiscalharmony.co.zw/api
+                // (test: https://apitest.fiscalharmony.co.zw/api). app_name = X-Application
+                // assigned by FH; app_station = X-App-Station, constant once set.
+                'required_credentials' => json_encode(['base_url', 'api_key', 'api_secret', 'app_name', 'app_station']),
+                'optional_credentials' => json_encode([]),
+                'default_config'       => json_encode(['payment_method' => 'Credit', 'app_version' => '1', 'timeout' => 30]),
+                'is_active'            => true,
+            ],
+            [
+                'key'                  => 'revmax',
+                'name'                 => 'Revmax',
+                'type'                 => 'fiscal',
+                'driver'               => 'App\\Integrations\\Revmax\\RevmaxDriver',
+                // Axis Solutions virtual device web service — one instance per device.
+                // base_url is the host root, e.g. http://140.82.25.196:10007 (dev).
+                // email/password only when the web service has auth switched on
+                // (POST /api/Auth/login → Bearer JWT); leave blank for an open one.
+                'required_credentials' => json_encode(['base_url']),
+                'optional_credentials' => json_encode(['email', 'password']),
+                'default_config'       => json_encode([
+                    'payment_method'           => 'Credit',
+                    'receipt_print_form'       => 'InvoiceA4',
+                    'tax_code_standard'        => 'A',
+                    'tax_code_zero_rated'      => 'B',
+                    'tax_code_exempt'          => 'C',
+                    'auto_open_fiscal_day'     => 'yes',
+                    'auto_rollover_fiscal_day' => 'yes',
+                    'timeout'                  => 30,
+                ]),
                 'is_active'            => true,
             ],
             [

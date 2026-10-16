@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Invoice;
+use App\Models\JournalEntry;
 use App\Services\Accounting\CustomerFuelSupplyService;
+use App\Services\Accounting\JournalReversalService;
 use App\Services\Accounting\InvoiceJournalService;
 use App\Services\Accounting\InvoiceTripFreightSyncService;
 use App\Services\Sage\SageSyncService;
@@ -87,7 +89,12 @@ class InvoiceObserver
      */
     public function deleted(Invoice $invoice)
     {
-        //
+        // Safety net: a deleted invoice must not stay in the ledger (see
+        // BillObserver::deleted). No-op after InvoiceDeletionService.
+        app(JournalReversalService::class)->reverseLiveEffects(
+            JournalEntry::where('invoice_id', $invoice->id),
+            "Invoice {$invoice->invoice_number} deleted"
+        );
     }
 
     /**

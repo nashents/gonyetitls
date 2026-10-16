@@ -47,10 +47,10 @@ class SendDailyReports extends Command
                 'export' => new ShiftsDailyExport(workType: 'Trips'),
                 'file'   => "shifts-trips-{$date}.xlsx",
             ],
-            [
-                'export' => new ShiftsDailyExport(workType: 'Rehandlings'),
-                'file'   => "shift-rehandle-{$date}.xlsx",
-            ],
+            // [
+            //     'export' => new ShiftsDailyExport(workType: 'Rehandlings'),
+            //     'file'   => "shift-rehandle-{$date}.xlsx",
+            // ],
             [
                 'export' => new BookingsExport(),
                 'file'   => "garage_bookings-{$date}.xlsx",

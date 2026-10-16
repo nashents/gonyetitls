@@ -190,6 +190,7 @@ Credit Note | @if (Auth::user()->employee->company)
                                 </tfoot>
                             </table>
                         <br>
+                        @include('fiscal.verification', ['fiscalDocument' => \App\Models\FiscalDocument::forCreditNote($credit_note->id)->latest()->first()])
                         @if ($credit_note->credit_note_reason)
                             <div class="notices">
                             <strong>REASON FOR CREDIT: </strong>{{$credit_note->credit_note_reason}}

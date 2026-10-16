@@ -15,6 +15,7 @@ class IntegrationProvider extends Model implements Auditable
 
     protected $casts = [
         'required_credentials' => 'array',
+        'optional_credentials' => 'array',
         'default_config'       => 'array',
         'is_active'            => 'boolean',
     ];
@@ -25,6 +26,7 @@ class IntegrationProvider extends Model implements Auditable
         'type',
         'driver',
         'required_credentials',
+        'optional_credentials',
         'default_config',
         'is_active',
     ];

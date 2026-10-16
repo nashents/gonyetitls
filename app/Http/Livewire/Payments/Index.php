@@ -729,15 +729,14 @@ class Index extends Component
             }
 
             // -----------------------------
-            // 5) Reverse the associated journal entry, if any
+            // 5) Reverse the payment's live journal entries, if any
             // -----------------------------
-            $journalEntry = JournalEntry::where('payment_id', $payment->id)->first();
-            if ($journalEntry) {
-                app(JournalReversalService::class)->reverse(
-                    $journalEntry,
-                    "Payment {$payment->payment_number} deleted"
-                );
-            }
+            // Not ->first(): after a resync that is the already-reversed
+            // original, so the current posting was never un-posted.
+            app(JournalReversalService::class)->reverseLiveEffects(
+                JournalEntry::where('payment_id', $payment->id),
+                "Payment {$payment->payment_number} deleted"
+            );
 
             // -----------------------------
             // 6) Delete payment

@@ -7,6 +7,7 @@ use App\Models\CreditNote;
 use App\Models\DebitNote;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,7 @@ class LedgerDoublePostingRepairService
         'invoice_id' => Invoice::class,
         'credit_note_id' => CreditNote::class,
         'debit_note_id' => DebitNote::class,
+        'payment_id' => Payment::class,
     ];
 
     public function __construct(
@@ -56,13 +58,21 @@ class LedgerDoublePostingRepairService
 
                 foreach ($ids as $id) {
                     $live = $this->liveEntries($column, $id);
+                    if ($live->isEmpty()) {
+                        continue;
+                    }
                     $unbalanced = $live->filter(fn ($e) => abs($this->diff($e)) > 0.01);
+                    $document = $model::withTrashed()->find($id);
+                    $deleted = ! $document || $document->trashed();
 
-                    if ($live->count() <= 1 && $unbalanced->isEmpty()) {
+                    // A deleted document with ANY live posting is damaged too -
+                    // deleted via a path that never un-posted it (trip expense
+                    // removal etc.) or whose deletion reversed REV- cancellers
+                    // and re-instated old postings.
+                    if (! $deleted && $live->count() <= 1 && $unbalanced->isEmpty()) {
                         continue;
                     }
 
-                    $document = $model::withTrashed()->find($id);
                     $row = [
                         'type' => $column,
                         'id' => $id,
@@ -99,9 +109,17 @@ class LedgerDoublePostingRepairService
         $reason = 'Ledger repair: duplicate/one-sided posting cleanup';
 
         if (! $document || $document->trashed()) {
-            DB::transaction(fn () => $live->each(fn ($e) => $this->journalReversal->reverse($e, $reason)));
+            // Dated when the document was deleted - when the un-posting should
+            // have happened - so it cancels in that month, not the repair's.
+            $date = $document && $document->deleted_at ? $document->deleted_at->toDateString() : null;
+            DB::transaction(fn () => $live->each(fn ($e) => $this->journalReversal->reverse($e, "{$reason} (document deleted)", $date)));
 
             return 'reversed (document deleted)';
+        }
+
+        // No resync for payments - a live one is reported, not touched.
+        if ($column === 'payment_id') {
+            return 'skipped';
         }
 
         if ($column === 'bill_id' && $document->authorization !== 'approved') {
@@ -140,6 +158,10 @@ class LedgerDoublePostingRepairService
             return 'reverse (document deleted)';
         }
 
+        if ($column === 'payment_id') {
+            return 'skip (live payment - review manually)';
+        }
+
         return $column === 'bill_id' && $document->authorization !== 'approved' ? 'skip (not approved)' : 'repost';
     }
 
@@ -152,14 +174,25 @@ class LedgerDoublePostingRepairService
             ->values();
     }
 
+    /**
+     * Imbalance in the company's base currency, the way the Trial Balance
+     * sums it - raw debit/credit are in each line's own currency, so a
+     * cross-currency payment (cash in ZAR, AR in USD) looked one-sided.
+     */
     private function diff(JournalEntry $entry): float
     {
-        return (float) $entry->journal_entry_lines()->sum('debit') - (float) $entry->journal_entry_lines()->sum('credit');
+        $base = (int) (DB::table('companies')->where('id', $entry->company_id)->value('currency_id') ?? 0);
+
+        return (float) DB::table('journal_entry_lines')
+            ->where('journal_entry_id', $entry->id)
+            ->selectRaw("COALESCE(SUM(CASE WHEN currency_id IS NULL OR currency_id = {$base} THEN debit ELSE exchange_debit END)
+                - SUM(CASE WHEN currency_id IS NULL OR currency_id = {$base} THEN credit ELSE exchange_credit END), 0) as d")
+            ->value('d');
     }
 
     private function number($document): ?string
     {
         return $document?->bill_number ?? $document?->invoice_number
-            ?? $document?->credit_note_number ?? $document?->debit_note_number;
+            ?? $document?->credit_note_number ?? $document?->debit_note_number ?? $document?->payment_number;
     }
 }

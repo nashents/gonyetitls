@@ -3,13 +3,13 @@
 namespace App\Http\Livewire\Concerns;
 
 use App\Models\FiscalDocument;
-use App\Services\FiscalHarmonyService;
 use App\Services\FiscalisationService;
 
 /**
- * Fiscal Harmony UI state for a document preview (invoice templates, credit
- * note preview). State is read from fiscal_documents, never stored on the
- * source document. The using component supplies fiscalDocument().
+ * Fiscalisation UI state for a document preview (invoice templates, credit
+ * note preview), whichever fiscal provider is configured. State is read from
+ * fiscal_documents, never stored on the source document. The using component
+ * supplies fiscalDocument().
  */
 trait HasFiscalDocument
 {
@@ -51,8 +51,8 @@ trait HasFiscalDocument
     {
         $doc = $this->fiscalDocument();
 
-        if (! $doc || ! $doc->request_id) {
-            $this->setFiscalMessage('No request ID found. Please fiscalise first.', 'error');
+        if (! $doc) {
+            $this->setFiscalMessage('This document has not been fiscalised yet.', 'error');
             return;
         }
 
@@ -66,7 +66,8 @@ trait HasFiscalDocument
             return;
         }
 
-        $bytes = app(FiscalHarmonyService::class)->downloadPdf($this->fiscalPdfFile);
+        $doc   = $this->fiscalDocument();
+        $bytes = $doc ? rescue(fn () => app(FiscalisationService::class)->downloadPdf($doc), null) : null;
 
         if (! $bytes) {
             $this->setFiscalMessage('PDF download failed.', 'error');

@@ -145,7 +145,8 @@ class PurchaseController extends Controller
 
         if ($purchase->bill) {
             $purchase->bill->bill_expenses()->delete();
-            $purchase->bill()->delete();
+            // Model delete (not a query delete) so BillObserver un-posts it.
+            $purchase->bill->delete();
         }
        
         $purchase->delete();

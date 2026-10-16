@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Integrations\FiscalHarmony\FiscalHarmonyDriver;
 use App\Models\Currency;
 use App\Models\Tax;
+use App\Services\Fiscal\FiscalProviderResolver;
 use App\Services\FiscalHarmonyService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -11,23 +13,40 @@ use Illuminate\Console\Command;
 /**
  * Readiness check for Fiscal Harmony: credentials, device, subscription,
  * tax mappings (our tax abbreviation → ZIMRA tax ID), HS codes and currencies.
- * Run after changing FISCAL_HARMONY_* credentials, before the first submit.
+ * Run after changing the Fiscal Harmony integration (--company=ID) or the
+ * legacy FISCAL_HARMONY_* .env credentials, before the first submit.
  */
 class FiscalHarmonyCheck extends Command
 {
     protected $signature = 'fiscalharmony:check
+                            {--company= : Company id whose Fiscal Harmony integration to check (default: the .env FISCAL_HARMONY_* credentials)}
                             {--map-taxes : Create missing tax mappings by matching each local tax rate to the device\'s applicable taxes}';
 
     protected $description = 'Check Fiscal Harmony credentials, device, tax mappings, HS codes and currencies';
 
-    public function handle(FiscalHarmonyService $api): int
+    public function handle(FiscalProviderResolver $providers): int
     {
         $problems = 0;
 
-        $this->info('Fiscal Harmony — ' . config('fiscalharmony.api_url'));
-        $this->line('  X-Application: ' . config('fiscalharmony.app_name')
-            . ' | X-App-Station: ' . config('fiscalharmony.app_station')
-            . ' | X-App-Version: ' . config('fiscalharmony.app_version'));
+        if ($companyId = $this->option('company')) {
+            try {
+                $integration = $providers->integrationForCompany((int) $companyId);
+            } catch (\RuntimeException $e) {
+                $this->error($e->getMessage());
+                return self::FAILURE;
+            }
+            if ($providers->providerKey($integration) !== 'fiscal_harmony') {
+                $this->error("Company {$companyId}'s active fiscal provider is " . ($integration->integration_provider->name ?? '?') . ', not Fiscal Harmony.');
+                return self::FAILURE;
+            }
+            $api    = (new FiscalHarmonyDriver($integration))->api();
+            $source = "company {$companyId} integration";
+        } else {
+            $api    = new FiscalHarmonyService();
+            $source = '.env';
+        }
+
+        $this->info('Fiscal Harmony — ' . $api->apiUrl() . " ({$source})");
 
         // 1. Credentials
         $test = $api->test();
@@ -101,7 +120,7 @@ class FiscalHarmonyCheck extends Command
         // 4. Currencies
         $supportedResult = $api->getSupportedCurrencies();
         $supported = $supportedResult['success'] ? (array) $supportedResult['data'] : [];
-        $aliases   = config('fiscalharmony.currency_aliases', []);
+        $aliases   = config('fiscal.currency_aliases', []);
 
         $currencyRows = [];
         foreach (Currency::orderBy('id')->get() as $currency) {

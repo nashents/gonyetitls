@@ -70,10 +70,8 @@ class InvoiceDeletionService
                 }
 
                 // Post a reversing journal entry for whatever this payment originally posted
-                JournalEntry::where('payment_id', $payment->id)
-                    ->where('status', '!=', 'reversed')
-                    ->get()
-                    ->each(fn ($entry) => $this->journalReversal->reverse($entry, $reasonText));
+                // Live effects only - reversing a REV- canceller re-instates what it cancelled.
+                $this->journalReversal->reverseLiveEffects(JournalEntry::where('payment_id', $payment->id), $reasonText);
 
                 $payment->denominations?->each->delete();
                 $payment->documents?->each->delete();
@@ -94,10 +92,8 @@ class InvoiceDeletionService
             // -----------------------------
             // 3) Reverse the invoice's own journal entry
             // -----------------------------
-            JournalEntry::where('invoice_id', $invoice->id)
-                ->where('status', '!=', 'reversed')
-                ->get()
-                ->each(fn ($entry) => $this->journalReversal->reverse($entry, $reasonText));
+            // Live effects only - reversing a REV- canceller re-instates what it cancelled.
+            $this->journalReversal->reverseLiveEffects(JournalEntry::where('invoice_id', $invoice->id), $reasonText);
 
             // -----------------------------
             // 4) Cascade the same reversal treatment to bills raised against this invoice

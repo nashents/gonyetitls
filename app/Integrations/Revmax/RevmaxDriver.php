@@ -62,9 +62,24 @@ class RevmaxDriver implements FiscalDriver
         return 'Revmax';
     }
 
+    /**
+     * Reachable + authorised = pass. A device that answers but is in a bad
+     * fiscal-day state still passes (the credentials are right) and says so.
+     */
     public function testConnection(): array
     {
-        return $this->deviceStatus();
+        $status = $this->deviceStatus();
+
+        if (! $status['success'] && isset($status['data']['Data']['fiscalDayStatus'])) {
+            return [
+                'success' => true,
+                'status'  => $status['status'],
+                'data'    => ['summary' => 'Connected to device ' . ($status['data']['DeviceID'] ?? '?') . ', but: ' . $status['error']],
+                'error'   => null,
+            ];
+        }
+
+        return $status;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -377,6 +392,20 @@ class RevmaxDriver implements FiscalDriver
         ];
     }
 
+    /** Readable message for a device whose fiscal day is in a bad state (e.g. FiscalDayCloseFailed). */
+    protected function dayProblem(array $status): string
+    {
+        $text = 'The fiscal device reports "' . $this->humanDayStatus((string) $status['fiscalDayStatus']) . '"'
+            . (isset($status['lastFiscalDayNo']) ? " for fiscal day {$status['lastFiscalDayNo']}" : '')
+            . (! empty($status['fiscalDayClosingErrorCode']) ? " ({$status['fiscalDayClosingErrorCode']})" : '') . '.';
+
+        if (stripos((string) $status['fiscalDayStatus'], 'CloseFailed') !== false) {
+            $text .= ' Try Close Fiscal Day again; if it keeps failing, contact Axis Solutions (Revmax) support — the device certificate or ZIMRA registration may need attention.';
+        }
+
+        return $text;
+    }
+
     protected function humanDayStatus(string $status): string
     {
         return trim(preg_replace('/(?<!^)([A-Z])/', ' $1', $status)) ?: $status;
@@ -438,6 +467,14 @@ class RevmaxDriver implements FiscalDriver
         if ((string) ($body['Code'] ?? '') !== '1') {
             $error = (string) ($body['Message'] ?? $body['message'] ?? $body['title'] ?? "Revmax request failed (HTTP {$response->status()}).");
             Log::warning("Revmax [{$method} {$path}] Code " . ($body['Code'] ?? '?') . ": {$error}");
+
+            // Seen live 2026-10-15: GetStatus on a device whose day close failed answers
+            // Code 0 with the status object JSON-encoded in Message.
+            $status = json_decode($error, true);
+            if (is_array($status) && isset($status['fiscalDayStatus'])) {
+                return ['success' => false, 'status' => $response->status(), 'data' => ['Data' => $status] + $body, 'error' => $this->dayProblem($status)];
+            }
+
             return $this->fail($error, $response->status());
         }
 

@@ -64,10 +64,8 @@ class BillDeletionService
                 }
 
                 // Post a reversing journal entry for whatever this payment originally posted
-                JournalEntry::where('payment_id', $payment->id)
-                    ->where('status', '!=', 'reversed')
-                    ->get()
-                    ->each(fn ($entry) => $this->journalReversal->reverse($entry, $reasonText));
+                // Live effects only - reversing a REV- canceller re-instates what it cancelled.
+                $this->journalReversal->reverseLiveEffects(JournalEntry::where('payment_id', $payment->id), $reasonText);
 
                 $payment->denominations?->each->delete();
                 $payment->documents?->each->delete();
@@ -88,10 +86,8 @@ class BillDeletionService
             // -----------------------------
             // 3) Reverse the bill's own journal entry, remove line items and the bill itself
             // -----------------------------
-            JournalEntry::where('bill_id', $bill->id)
-                ->where('status', '!=', 'reversed')
-                ->get()
-                ->each(fn ($entry) => $this->journalReversal->reverse($entry, $reasonText));
+            // Live effects only - reversing a REV- canceller re-instates what it cancelled.
+            $this->journalReversal->reverseLiveEffects(JournalEntry::where('bill_id', $bill->id), $reasonText);
 
             foreach ($bill->bill_expenses as $bill_expense) {
                 $bill_expense->delete();

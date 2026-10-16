@@ -86,6 +86,33 @@ class JournalReversalService
     }
 
     /**
+     * Un-post a document: reverse each of its entries that still carries a
+     * live effect (isLiveEffect) - never a REV- entry that is only
+     * cancelling an earlier posting. Reversing "everything not reversed"
+     * reversed those cancellers too, re-instating the postings they had
+     * cancelled (deleted bills left 3x their expense + one-sided AP credits
+     * in the ledger, throwing the Trial Balance out).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $entries  e.g. JournalEntry::where('bill_id', $id)
+     * @param  bool  $originalDate  date each reversal like the entry it cancels (corrections)
+     */
+    public function reverseLiveEffects($entries, ?string $reason = null, bool $originalDate = false): int
+    {
+        $count = 0;
+        $entries->where('status', '!=', 'reversed')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (JournalEntry $entry) => $this->isLiveEffect($entry))
+            ->each(function (JournalEntry $entry) use ($reason, $originalDate, &$count) {
+                if ($this->reverse($entry, $reason, $originalDate ? optional($entry->date)->toDateString() : null)) {
+                    $count++;
+                }
+            });
+
+        return $count;
+    }
+
+    /**
      * Undo a previous reverse() call: find the reversing entry this entry's
      * reversal created (matched by its "REV-{journal_number}" reference) and
      * reverse that reversal, restoring the original's net ledger effect

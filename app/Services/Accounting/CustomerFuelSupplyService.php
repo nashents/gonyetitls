@@ -355,15 +355,11 @@ class CustomerFuelSupplyService
 
     private function reverseEntries(CustomerFuelSupply $supply, string $reason, bool $originalDate = false): void
     {
-        JournalEntry::where('customer_fuel_supply_id', $supply->id)
-            ->where('status', '!=', 'reversed')
-            ->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', 'not like', 'REV-%'))
-            ->get()
-            ->each(fn ($entry) => $this->journalReversal->reverse(
-                $entry,
-                $reason,
-                $originalDate ? optional($entry->date)->toDateString() : null
-            ));
+        $this->journalReversal->reverseLiveEffects(
+            JournalEntry::where('customer_fuel_supply_id', $supply->id),
+            $reason,
+            $originalDate
+        );
     }
 
     // ── Allocation to invoices ───────────────────────────────────────────────

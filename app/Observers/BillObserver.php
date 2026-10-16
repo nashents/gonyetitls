@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Bill;
+use App\Models\JournalEntry;
 use App\Services\Accounting\BillJournalService;
+use App\Services\Accounting\JournalReversalService;
 use Illuminate\Support\Facades\Log;
 
 class BillObserver
@@ -63,7 +65,14 @@ class BillObserver
      */
     public function deleted(Bill $bill)
     {
-        //
+        // Safety net: however it was deleted, a deleted bill must not stay in
+        // the ledger. BillDeletionService etc. reverse first and leave no live
+        // entry (no-op here); direct ->delete() callers - trip expense removal,
+        // ticket/workshop/purchase controllers - used to leave it posted.
+        app(JournalReversalService::class)->reverseLiveEffects(
+            JournalEntry::where('bill_id', $bill->id),
+            "Bill {$bill->bill_number} deleted"
+        );
     }
 
     /**

@@ -37,9 +37,18 @@ class RedateCorrectionReversals extends Command
             ->get();
 
         $rows = [];
+        // Dates assigned earlier in this run, by journal number. In a chain
+        // X <- R1 <- R2 the target for R2 is R1's NEW date - reading R1's
+        // stored (old) date left R2 a month off, so the chain no longer
+        // cancelled within one period. Ids ascend, so R1 is settled first.
+        $newDates = [];
         foreach ($reversals as $reversal) {
             $original = JournalEntry::withTrashed()->where('journal_number', substr($reversal->reference, 4))->first();
-            if (! $original || ! $original->date || optional($reversal->date)->toDateString() === $original->date->toDateString()) {
+            if (! $original || ! $original->date) {
+                continue;
+            }
+            $target = $newDates[$original->journal_number] ?? $original->date->toDateString();
+            if (optional($reversal->date)->toDateString() === $target) {
                 continue;
             }
 
@@ -57,7 +66,8 @@ class RedateCorrectionReversals extends Command
                 continue;
             }
 
-            $rows[] = [$reversal, $original];
+            $rows[] = [$reversal, $original, $target];
+            $newDates[$reversal->journal_number] = $target;
         }
 
         if (! $rows) {
@@ -70,7 +80,7 @@ class RedateCorrectionReversals extends Command
             $r[1]->journal_number,
             $r[0]->reference . ' ' . collect(self::DOCUMENT_KEYS)->filter(fn ($k) => $r[0]->{$k})->map(fn ($k) => "{$k}={$r[0]->{$k}}")->implode(' '),
             optional($r[0]->date)->toDateString(),
-            $r[1]->date->toDateString(),
+            $r[2],
         ], $rows));
 
         if ($this->option('dry-run')) {
@@ -78,8 +88,8 @@ class RedateCorrectionReversals extends Command
             return self::SUCCESS;
         }
 
-        foreach ($rows as [$reversal, $original]) {
-            $reversal->date = $original->date;
+        foreach ($rows as [$reversal, , $target]) {
+            $reversal->date = $target;
             $reversal->saveQuietly();
         }
 

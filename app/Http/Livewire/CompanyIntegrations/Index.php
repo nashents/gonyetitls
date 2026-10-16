@@ -6,6 +6,8 @@ use Livewire\Component;
 use App\Models\CompanyIntegration;
 use App\Models\IntegrationProvider;
 use App\Models\IntegrationLog;
+use App\Integrations\Contracts\FiscalDriver;
+use App\Services\Fiscal\FiscalProviderResolver;
 use Illuminate\Support\Facades\DB;
 
 class Index extends Component
@@ -22,6 +24,7 @@ class Index extends Component
 
     // Fields derived from the selected provider
     public $required_credentials = [];
+    public $optional_credentials = [];   // shown, but may be left blank
     public $default_config = [];
 
     protected function rules()
@@ -69,13 +72,17 @@ class Index extends Component
             ? $provider->required_credentials
             : [];
 
+        $this->optional_credentials = $provider && is_array($provider->optional_credentials)
+            ? array_values(array_diff($provider->optional_credentials, $this->required_credentials))
+            : [];
+
         $this->default_config = $provider && is_array($provider->default_config)
             ? $provider->default_config
             : [];
 
         // Build credentials array from required fields, preserving existing values on edit
         $credentials = [];
-        foreach ($this->required_credentials as $field) {
+        foreach (array_merge($this->required_credentials, $this->optional_credentials) as $field) {
             $credentials[$field] = $existingCredentials[$field] ?? '';
         }
         $this->credentials = $credentials;
@@ -92,6 +99,7 @@ class Index extends Component
         $this->credentials = [];
         $this->config = [];
         $this->required_credentials = [];
+        $this->optional_credentials = [];
         $this->default_config = [];
         $this->resetErrorBag();
     }
@@ -130,6 +138,14 @@ class Index extends Component
                 $this->dispatchBrowserEvent('alert', [
                     'type'    => 'error',
                     'message' => 'No company context — reload the page from your company profile and try again.',
+                ]);
+                return;
+            }
+
+            if ($this->status === 'active' && ($clash = $this->otherActiveFiscal($this->integration_provider_id))) {
+                $this->dispatchBrowserEvent('alert', [
+                    'type'    => 'error',
+                    'message' => "{$clash} is already the active fiscal provider. Deactivate it first — only one fiscal provider can be active.",
                 ]);
                 return;
             }
@@ -193,6 +209,14 @@ class Index extends Component
 
         $integration = CompanyIntegration::findOrFail($this->company_integration_id);
 
+        if ($this->status === 'active' && ($clash = $this->otherActiveFiscal($integration->integration_provider_id, $integration->id))) {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => "{$clash} is already the active fiscal provider. Deactivate it first — only one fiscal provider can be active.",
+            ]);
+            return;
+        }
+
         $integration->update([
             'status'      => $this->status,
             'credentials' => array_filter($this->credentials, fn ($v) => $v !== '' && $v !== null),
@@ -236,9 +260,14 @@ class Index extends Component
             $ok    = ! empty($result['success']);
             $error = $ok ? null : ($result['error'] ?? 'Connection test failed');
 
+            // A passing test activates the integration — unless another fiscal
+            // provider is already active (a company fiscalises through one only).
+            $clash  = $ok ? $this->otherActiveFiscal($integration->integration_provider_id, $integration->id) : null;
+            $status = $ok ? ($clash ? $integration->status : 'active') : 'error';
+
             $integration->update([
                 'last_tested_at'  => now(),
-                'status'          => $ok ? 'active' : 'error',
+                'status'          => $status,
                 'last_success_at' => $ok ? now() : $integration->last_success_at,
                 'last_error'      => $error,
             ]);
@@ -253,7 +282,10 @@ class Index extends Component
 
             $this->dispatchBrowserEvent('alert', [
                 'type'    => $ok ? 'success' : 'error',
-                'message' => $ok ? 'Connection test succeeded!' : ('Connection test failed: ' . $error),
+                'message' => $ok
+                    ? 'Connection test succeeded!' . (! empty($result['data']['summary']) ? ' ' . $result['data']['summary'] : '')
+                        . ($clash ? " Not activated: {$clash} is the active fiscal provider." : '')
+                    : ('Connection test failed: ' . $error),
             ]);
         } catch (\Exception $e) {
             $this->dispatchBrowserEvent('alert', [
@@ -263,13 +295,97 @@ class Index extends Component
         }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // FISCAL DEVICE (fiscal-type integrations)
+    // ─────────────────────────────────────────────────────────────
+
+    public function fiscalDeviceStatus($id)
+    {
+        $this->runFiscalAction($id, 'status', fn (FiscalDriver $d) => $d->deviceStatus());
+    }
+
+    public function openFiscalDay($id)
+    {
+        $this->runFiscalAction($id, 'open_fiscal_day', fn (FiscalDriver $d) => $d->openFiscalDay());
+    }
+
+    public function closeFiscalDay($id)
+    {
+        $this->runFiscalAction($id, 'close_fiscal_day', fn (FiscalDriver $d) => $d->closeFiscalDay());
+    }
+
+    protected function runFiscalAction($id, string $action, callable $call): void
+    {
+        $integration = CompanyIntegration::with('integration_provider')
+            ->where('company_id', $this->company_id)
+            ->findOrFail($id);
+
+        try {
+            $result = $call(app(FiscalProviderResolver::class)->driver($integration));
+        } catch (\Throwable $e) {
+            $result = ['success' => false, 'error' => $e->getMessage()];
+        }
+
+        $ok      = ! empty($result['success']);
+        $message = $ok ? ($result['data']['summary'] ?? 'Done.') : ($result['error'] ?? 'The fiscal device did not respond.');
+
+        IntegrationLog::create([
+            'company_integration_id' => $integration->id,
+            'direction'              => 'outbound',
+            'action'                 => $action,
+            'status'                 => $ok ? 'ok' : 'fail',
+            'message'                => \Illuminate\Support\Str::limit($message, 1000),
+        ]);
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $ok ? 'success' : 'error',
+            'message' => $message,
+        ]);
+    }
+
+    /** Name of another ACTIVE fiscal integration for this company, if $providerId is a fiscal provider. */
+    protected function otherActiveFiscal($providerId, $exceptId = null): ?string
+    {
+        $provider = IntegrationProvider::find($providerId);
+        if (! $provider || $provider->type !== FiscalProviderResolver::TYPE) {
+            return null;
+        }
+
+        return CompanyIntegration::with('integration_provider')
+            ->where('company_id', $this->company_id)
+            ->where('status', 'active')
+            ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))
+            ->whereHas('integration_provider', fn ($q) => $q->where('type', FiscalProviderResolver::TYPE))
+            ->first()?->integration_provider?->name;
+    }
+
+    /** Fiscal rows whose driver lets us open/close the fiscal day (Revmax, not Fiscal Harmony). */
+    protected function fiscalDayIntegrationIds($integrations): array
+    {
+        return $integrations
+            ->filter(function ($integration) {
+                $class = $integration->integration_provider->driver ?? null;
+                if (($integration->integration_provider->type ?? null) !== FiscalProviderResolver::TYPE
+                    || ! $class || ! class_exists($class) || ! is_subclass_of($class, FiscalDriver::class)) {
+                    return false;
+                }
+
+                return (new $class($integration))->managesFiscalDay();
+            })
+            ->pluck('id')
+            ->all();
+    }
+
     public function render()
     {
+        $companyIntegrations = CompanyIntegration::with('integration_provider')
+            ->where('company_id', $this->company_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('livewire.company-integrations.index', [
-            'company_integrations' => CompanyIntegration::with('integration_provider')
-                ->where('company_id', $this->company_id)
-                ->orderBy('created_at', 'desc')
-                ->get(),
+            'company_integrations'       => $companyIntegrations,
+            'fiscal_day_integration_ids' => $this->fiscalDayIntegrationIds($companyIntegrations),
         ]);
     }
 }

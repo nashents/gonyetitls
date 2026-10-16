@@ -53,6 +53,19 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="#" wire:click.prevent="testConnection({{ $integration->id }})"><i class="fa fa-plug color-info"></i> Test</a></li>
+                                                    @if (($integration->integration_provider->type ?? null) === 'fiscal')
+                                                        <li><a href="#" wire:click.prevent="fiscalDeviceStatus({{ $integration->id }})"><i class="fa fa-info-circle color-info"></i> Device Status</a></li>
+                                                        @if (in_array($integration->id, $fiscal_day_integration_ids))
+                                                            <li><a href="#" wire:click.prevent="openFiscalDay({{ $integration->id }})"><i class="fa fa-sun-o color-success"></i> Open Fiscal Day</a></li>
+                                                            <li>
+                                                                <a href="#"
+                                                                   wire:click.prevent="closeFiscalDay({{ $integration->id }})"
+                                                                   onclick="return confirm('Close the current fiscal day? This produces the Z report for the day; a new day must be opened (or is opened automatically on the next fiscalisation) before further receipts.')">
+                                                                    <i class="fa fa-moon-o color-danger"></i> Close Fiscal Day
+                                                                </a>
+                                                            </li>
+                                                        @endif
+                                                    @endif
                                                     <li><a href="#" wire:click.prevent="edit({{ $integration->id }})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li>
                                                         <a href="#"
@@ -119,15 +132,18 @@
                             </div>
                         </div>
 
-                        @if (count($required_credentials))
+                        @if (count($required_credentials) || count($optional_credentials))
                             <hr>
                             <h5><i class="fa fa-key"></i> Credentials</h5>
                             <div class="row">
-                                @foreach ($required_credentials as $field)
+                                @foreach (array_merge($required_credentials, $optional_credentials) as $field)
+                                    @php $isRequired = in_array($field, $required_credentials, true); @endphp
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>{{ ucwords(str_replace('_', ' ', $field)) }}<span class="required" style="color:red">*</span></label>
-                                            <input type="{{ in_array($field, ['password','secret','api_key','token']) ? 'password' : 'text' }}"
+                                            <label>{{ ucwords(str_replace('_', ' ', $field)) }}
+                                                @if ($isRequired)<span class="required" style="color:red">*</span>@else <small class="text-muted">(optional)</small>@endif
+                                            </label>
+                                            <input type="{{ \Illuminate\Support\Str::contains($field, ['password', 'secret', 'api_key', 'token']) ? 'password' : 'text' }}"
                                                    class="form-control"
                                                    wire:model.defer="credentials.{{ $field }}"
                                                    placeholder="Enter {{ str_replace('_', ' ', $field) }}" />
@@ -200,15 +216,18 @@
                             </div>
                         </div>
 
-                        @if (count($required_credentials))
+                        @if (count($required_credentials) || count($optional_credentials))
                             <hr>
                             <h5><i class="fa fa-key"></i> Credentials</h5>
                             <div class="row">
-                                @foreach ($required_credentials as $field)
+                                @foreach (array_merge($required_credentials, $optional_credentials) as $field)
+                                    @php $isRequired = in_array($field, $required_credentials, true); @endphp
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>{{ ucwords(str_replace('_', ' ', $field)) }}<span class="required" style="color:red">*</span></label>
-                                            <input type="{{ in_array($field, ['password','secret','api_key','token']) ? 'password' : 'text' }}"
+                                            <label>{{ ucwords(str_replace('_', ' ', $field)) }}
+                                                @if ($isRequired)<span class="required" style="color:red">*</span>@else <small class="text-muted">(optional)</small>@endif
+                                            </label>
+                                            <input type="{{ \Illuminate\Support\Str::contains($field, ['password', 'secret', 'api_key', 'token']) ? 'password' : 'text' }}"
                                                    class="form-control"
                                                    wire:model.defer="credentials.{{ $field }}"
                                                    placeholder="Enter {{ str_replace('_', ' ', $field) }}" />

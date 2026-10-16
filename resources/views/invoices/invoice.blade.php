@@ -249,6 +249,7 @@
                                     </tfoot>
                                 </table>
                            
+                            @include('fiscal.verification', ['fiscalDocument' => \App\Models\FiscalDocument::forInvoice($invoice->id)->latest()->first()])
                             @if ($invoice->memo)
                             <div class="notices">
                                 <div><strong>Notes / Terms & Conditions</strong></div>

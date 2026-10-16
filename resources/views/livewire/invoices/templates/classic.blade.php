@@ -17,7 +17,7 @@
             </span>
 
         @elseif($fiscalStatus === 'pending')
-            {{-- Submitted but still waiting on Fiscal Harmony --}}
+            {{-- Submitted but still waiting on the fiscal provider --}}
             <button type="button"
                     wire:click="pollFiscalStatus"
                     wire:loading.attr="disabled"

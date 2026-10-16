@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Integrations\FiscalHarmony\FiscalHarmonyDriver;
+use App\Models\CompanyIntegration;
 use App\Models\FiscalDocument;
+use App\Services\Fiscal\FiscalProviderResolver;
 use App\Services\FiscalHarmonyService;
 use App\Services\FiscalisationService;
 use Illuminate\Http\Request;
@@ -16,14 +19,19 @@ use Illuminate\Support\Facades\Log;
  * 2xx for a correctly signed payload and 401 for a badly signed one. The
  * payload schema isn't published, so we accept a StatusRequest-shaped object,
  * a list of them, or either wrapped in "Data", and log it for reference.
+ *
+ * The body is signed with the sending account's API secret. Each company
+ * configures its own FH integration, so the signature is checked against
+ * every active FH integration (plus the legacy .env credentials).
  */
 class FiscalHarmonyWebhookController extends Controller
 {
-    public function store(Request $request, FiscalHarmonyService $api, FiscalisationService $fiscalisation)
+    public function store(Request $request, FiscalProviderResolver $providers, FiscalisationService $fiscalisation)
     {
-        $raw = $request->getContent();
+        $raw    = $request->getContent();
+        $driver = $this->signingDriver($providers, $raw, $request->header('X-Api-Signature'));
 
-        if (! $api->verifySignature($raw, $request->header('X-Api-Signature'))) {
+        if (! $driver) {
             Log::warning('FiscalHarmony webhook rejected: bad signature', ['ip' => $request->ip()]);
             return response('Unauthorized', 401);
         }
@@ -44,13 +52,35 @@ class FiscalHarmonyWebhookController extends Controller
             }
 
             try {
-                $fiscalisation->applyStatus($doc, $item);
+                $fiscalisation->applyOutcome($doc, $driver->fromStatusItem($item)['data'], $driver->providerName());
             } catch (\Throwable $e) {
                 Log::error("FiscalHarmony webhook apply failed for request {$item['requestId']}: {$e->getMessage()}");
             }
         }
 
         return response()->json(['received' => true]);
+    }
+
+    /** The FH driver whose API secret signed this body, or null. */
+    protected function signingDriver(FiscalProviderResolver $providers, string $raw, ?string $signature): ?FiscalHarmonyDriver
+    {
+        $integrations = CompanyIntegration::with('integration_provider')
+            ->where('status', 'active')
+            ->whereHas('integration_provider', fn ($q) => $q->where('key', 'fiscal_harmony'))
+            ->get();
+
+        if ($legacy = $providers->legacyFiscalHarmony()) {
+            $integrations->push($legacy);
+        }
+
+        foreach ($integrations as $integration) {
+            $driver = new FiscalHarmonyDriver($integration);
+            if ($driver->api()->verifySignature($raw, $signature)) {
+                return $driver;
+            }
+        }
+
+        return null;
     }
 
     /** @return array<int, array> StatusRequest items that carry a requestId */

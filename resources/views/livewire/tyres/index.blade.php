@@ -123,6 +123,9 @@
                                         @elseif ($tyre->disposed)
                                         @elseif ($tyre->retread != 0)
                                             <span class="badge bg-warning">Retread</span>
+                                        @elseif ($tyre->goods_received && $tyre->goods_received->authorization === 'pending')
+                                            <span class="badge bg-warning">Awaiting GRV approval</span>
+                                            <br><small>{{ $tyre->goods_received->goods_received_number }} &middot; not dispatchable until approved</small>
                                         @elseif ((float) $tyre->balance <= 0)
                                             <span class="badge bg-info">Out of store &middot; not fitted</span>
                                             @if ($awaiting = $tyre->awaitingFitmentLabel())
