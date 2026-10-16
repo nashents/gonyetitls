@@ -112,6 +112,8 @@ class Edit extends Component
     public $cd3_number;
     public $cd1_number;
     public $bill_of_entry;
+    // Freight invoice #(s) for a trip with no attached order; saved on its auto-created transport order.
+    public $invoice_numbers;
     public $container_number;
     public $manifest_number;
     public $sage_integration_active = false;
@@ -529,43 +531,7 @@ class Edit extends Component
     public $trailer_inputs = [];
     public $t = 1;
     public $s = 1;
-
-    public function trailerAdd($t)
-    {
-        $t = $t + 1;
-        $this->t = $t;
-        array_push($this->trailer_inputs ,$t);
-    }
-
-    public function trailerRemove($t)
-    {
-        unset($this->trailer_inputs[$t]);
-    }
-
-    private $previousTrailerIds = [];
-
-    public function updatingTrailerId()
-    {
-        $this->previousTrailerIds = $this->selectedTrailerIds();
-    }
-
-    /** Newly picked linked trailers pull their partner into the multi-select. */
-    public function updatedTrailerId()
-    {
-        $this->create_trailer_link = false;
-        $added = array_diff($this->selectedTrailerIds(), $this->previousTrailerIds);
-        foreach ($added as $id) {
-            $partner = $this->linkedPartnerToAdd($id);
-            if ($partner) {
-                $this->trailer_id = array_values(array_merge($this->selectedTrailerIds(), [$partner->id]));
-                $this->dispatchBrowserEvent('alert', [
-                    'type' => 'success',
-                    'message' => "Linked trailer {$partner->registration_number} added automatically.",
-                ]);
-            }
-        }
-        $this->ensureSelectedTrailersListed();
-    }
+    // trailerAdd/trailerRemove/setTrailerRows/updatedTrailerId: HandlesTripTrailerLinks
 
     public $allowance_inputs = [];
     public $x = 1;
@@ -681,12 +647,9 @@ class Edit extends Component
               
               
                 $initial_trip_trailers = $initial_trip->trailers;
-                if($initial_trip_trailers){
+                if($initial_trip_trailers && $initial_trip_trailers->count() > 0){
                     $this->with_trailer = True;
-                    $this->trailer_id = [];
-                    foreach($initial_trip_trailers as $trailer){
-                        $this->trailer_id[] = $trailer->id;
-                    }
+                    $this->setTrailerRows($initial_trip_trailers->pluck('id')->all());
                 }
                 $this->driver_id = $initial_trip->driver_id;
             }
@@ -1028,15 +991,8 @@ class Edit extends Component
                 $this->driver_id = $driver->id;
             }                        
             if (isset( $trailer_assignments)) {
-                foreach ($trailer_assignments as $trailer_assignment) {
-                    $this->trailer_id[] = $trailer_assignment->trailer_id;
-                    $partnerId = TrailerLink::partnerOf($trailer_assignment->trailer_id);
-                    if ($partnerId) {
-                        $this->trailer_id[] = $partnerId;
-                    }
-                }
-                $this->trailer_id = $this->selectedTrailerIds();
-                $this->ensureSelectedTrailersListed();
+                // Keep the trip's current trailers, add the horse's (plus linked partners)
+                $this->setTrailerRows(array_merge($this->selectedTrailerIds(), $trailer_assignments->pluck('trailer_id')->all()));
             }
            
         }
@@ -1400,7 +1356,8 @@ class Edit extends Component
             $this->trailers = Trailer::where('service',0)
             ->orderByIdentifier('asc')->get();
         }
-       
+        // One trailer line per saved trailer; partners are not pulled in on load.
+        $this->setTrailerRows((array) $this->trailer_id, false);
 
         $this->drivers = Driver::withAggregate('employee','name')
         ->where('status', 1)
@@ -1555,6 +1512,9 @@ class Edit extends Component
          $this->cd3_number = $this->trip->cd3_number;
          $this->cd1_number = $this->trip->cd1_number;
          $this->bill_of_entry = $this->trip->bill_of_entry;
+         // Freight invoice #(s) live on the trip's own (auto-created) transport order
+         $this->invoice_numbers = $this->attach_transport_order ? null
+             : TripTransportOrder::where('trip_id', $this->trip->id)->first()?->transport_order?->invoice_numbers;
          $this->container_number = $this->trip->container_number;
          $this->manifest_number = $this->trip->manifest_number;
          $this->units_of_measure_id = $this->trip->units_of_measure_id;
@@ -1907,9 +1867,7 @@ class Edit extends Component
                     $horse = $shift->horse;
                     $cluster = $horse?->cluster;
                     if($cluster){
-                        foreach($cluster->trailers as $trailer){
-                            $this->trailer_id[] = $trailer->id;
-                        }
+                        $this->setTrailerRows(array_merge($this->selectedTrailerIds(), $cluster->trailers->pluck('id')->all()));
                     }
                     $this->selectedHorse = $shift->horse_id;
                     $this->mode_of_transport = "Horse";
@@ -2065,9 +2023,10 @@ class Edit extends Component
 
     private function syncRelations($trip)
     {
+        $this->saveHorseAssignmentsIfRequested($trip);
         if ($this->with_trailer && !empty($this->trailer_id)) {
             $trip->trailers()->detach();
-            $trip->trailers()->sync($this->trailer_id);
+            $trip->trailers()->sync($this->selectedTrailerIds());
             $this->saveTrailerLinkIfRequested();
         }
         if (!empty($this->selectedBorder)) {
@@ -2380,6 +2339,7 @@ class Edit extends Component
         $transport_order->transport_order_number = $this->transportOrderNumber();
         $transport_order->custom_ref = $this->trip_ref;
         $transport_order->bill_of_entry = $this->bill_of_entry;
+        $transport_order->invoice_numbers = $this->invoice_numbers ?: null;
         $transport_order->user_id = $this->user->id ?? null;
         $transport_order->company_id = $this->company->id ?? null;
         $transport_order->quotation_id = $this->selectedQuotation ?: null;

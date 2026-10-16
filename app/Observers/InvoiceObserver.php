@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Services\Accounting\AdvanceInvoiceReclassService;
 use App\Services\Accounting\CustomerFuelSupplyService;
 use App\Services\Accounting\JournalReversalService;
 use App\Services\Accounting\InvoiceJournalService;
@@ -24,6 +25,7 @@ class InvoiceObserver
     {
         if ($invoice->isDirty('authorization') && $invoice->authorization === 'approved') {
             app(InvoiceJournalService::class)->post($invoice);
+            $this->releaseAdvanceIfEarned($invoice);
             app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
             $this->applyCustomerSuppliedFuel($invoice);
@@ -40,9 +42,27 @@ class InvoiceObserver
     {
         if ($invoice->isDirty('authorization') && $invoice->authorization === 'approved') {
             app(InvoiceJournalService::class)->post($invoice);
+            $this->releaseAdvanceIfEarned($invoice);
             app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
             $this->applyCustomerSuppliedFuel($invoice);
+        }
+    }
+
+    /**
+     * An advance invoice approved after its trips were already Offloaded is
+     * earned straight away - release it to Sales now, since no further trip
+     * status change will come along to trigger it. Never blocks approval.
+     */
+    protected function releaseAdvanceIfEarned(Invoice $invoice): void
+    {
+        if ($invoice->invoice_type !== 'advance') {
+            return;
+        }
+        try {
+            app(AdvanceInvoiceReclassService::class)->reclassIfEarned($invoice->id);
+        } catch (\Throwable $e) {
+            Log::warning("Advance invoice {$invoice->invoice_number} release to Sales failed: " . $e->getMessage());
         }
     }
 

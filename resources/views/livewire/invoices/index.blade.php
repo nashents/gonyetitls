@@ -319,6 +319,10 @@
                                     <td>
                                         @php $revenueAccountLabel = $invoice->revenue_account_label; @endphp
                                         <span class="label label-{{ $revenueAccountLabel === 'Sales' ? 'info' : ($revenueAccountLabel === 'Sales (Recognized)' ? 'success' : 'warning') }}">{{ $revenueAccountLabel }}</span>
+                                        @if ($revenueAccountLabel === 'Customer Advances (Deferred)' && $invoice->authorization == 'approved')
+                                            <br>
+                                            <a href="#" wire:click.prevent="postToSales({{ $invoice->id }})" wire:loading.attr="disabled" onclick="return confirm('Release this advance invoice from Customer Advances to Sales? Every attached trip must be Offloaded.')" style="color:#5cb85c" title="Checks that every attached trip is Offloaded, then moves the deferred amount from Customer Advances to Sales"><i class="fa fa-share"></i> Post to Sales</a>
+                                        @endif
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

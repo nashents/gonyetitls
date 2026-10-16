@@ -168,6 +168,8 @@ class Create extends Component
     public $cd1_number;
     public $container_number;
     public $bill_of_entry;
+    // Freight invoice #(s) for a trip with no attached order; saved on its auto-created transport order.
+    public $invoice_numbers;
     public $selectedStatus;
     public $transporters;
     public $selectedTransporter;
@@ -193,73 +195,7 @@ class Create extends Component
     public $trailer_inputs = [];
     public $t = 1;
     public $s = 1;
-    // Row 0 is the fixed first select; each extra row binds trailer_id.{index}.
-    // New rows take the next free index so pre-filled ids (e.g. a horse's
-    // second assigned trailer at index 1) always have a visible row.
-    public function trailerAdd($t = null)
-    {
-        $used = array_merge([0], array_keys((array) $this->trailer_id), $this->trailer_inputs);
-        $t = max(array_map('intval', $used)) + 1;
-        $this->t = $t;
-        array_push($this->trailer_inputs ,$t);
-        return $t;
-    }
-    public function trailerRemove($t)
-    {
-        $index = $this->trailer_inputs[$t] ?? null;
-        unset($this->trailer_inputs[$t]);
-        if ($index !== null && is_array($this->trailer_id)) {
-            unset($this->trailer_id[$index]);
-        }
-    }
-
-    /** Replace the trailer selection with $ids, one visible row per trailer (plus linked partners). */
-    private function setTrailerRows(array $ids)
-    {
-        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
-        foreach ($ids as $id) {
-            $partnerId = TrailerLink::partnerOf($id);
-            if ($partnerId && !in_array($partnerId, $ids)) {
-                $ids[] = $partnerId;
-            }
-        }
-        $this->trailer_id = $ids;
-        $this->trailer_inputs = count($ids) > 1 ? range(1, count($ids) - 1) : [];
-        $this->t = max(1, count($ids) - 1);
-        $this->create_trailer_link = false;
-        $this->ensureSelectedTrailersListed();
-    }
-
-    /** Picking a linked trailer adds its partner on an empty row (or a new one). */
-    public function updatedTrailerId($value, $key)
-    {
-        $this->create_trailer_link = false;
-        if (empty($value)) {
-            return;
-        }
-        $partner = $this->linkedPartnerToAdd($value);
-        if (!$partner) {
-            return;
-        }
-        $index = null;
-        if ((string) $key !== '0' && empty($this->trailer_id[0] ?? null)) {
-            $index = 0;
-        }
-        foreach ($this->trailer_inputs as $row) {
-            if ($index === null && (string) $row !== (string) $key && empty($this->trailer_id[$row] ?? null)) {
-                $index = $row;
-            }
-        }
-        if ($index === null) {
-            $index = $this->trailerAdd();
-        }
-        $this->trailer_id[$index] = $partner->id;
-        $this->ensureSelectedTrailersListed();
-        $this->dispatchBrowserEvent('alert', [
-            'type' => 'success',
-            'message' => "Linked trailer {$partner->registration_number} added automatically.",
-        ]);
-    }
+    // trailerAdd/trailerRemove/setTrailerRows/updatedTrailerId: HandlesTripTrailerLinks
     // driver vars
     public $all_drivers = False;
     public $searchDriver;
@@ -1779,6 +1715,7 @@ class Create extends Component
 
     private function syncRelations($trip)
     {
+        $this->saveHorseAssignmentsIfRequested($trip);
         if ($this->with_trailer && !empty($this->trailer_id)) {
 
                 $ids = is_array($this->trailer_id)
@@ -2088,6 +2025,7 @@ class Create extends Component
                 $transport_order->transport_order_number = $this->transportOrderNumber();
                 $transport_order->custom_ref = $this->trip_ref;
                 $transport_order->bill_of_entry = $this->bill_of_entry;
+                $transport_order->invoice_numbers = $this->invoice_numbers ?: null;
                 $transport_order->user_id =  $this->user->id ?: null;
                 $transport_order->deal_id =  $this->selectedDeal ?: null;
                 $transport_order->company_id = $this->company->id ?: null;

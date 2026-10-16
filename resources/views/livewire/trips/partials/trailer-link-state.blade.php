@@ -2,9 +2,9 @@
 @php($trailerLinkState = $this->trailerLinkState)
 @if ($trailerLinkState === 'can_link')
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-12" title="These 2 trailers aren't linked yet. Tick to save them as a trailer link when the trip is saved - picking either one on a future trip will then add the other automatically.">
             <input type="checkbox" id="create_trailer_link" wire:model="create_trailer_link" class="line-style" />
-            <label for="create_trailer_link" class="radio-label">Link these 2 trailers (saved with the trip)</label>
+            <label for="create_trailer_link" class="radio-label">Link trailers <i class="fa fa-info-circle text-muted"></i></label>
         </div>
     </div>
 @elseif ($trailerLinkState === 'linked')

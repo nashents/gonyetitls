@@ -101,6 +101,7 @@ class TransportOrder extends Model implements Auditable
     'transport_order_number',
     'custom_ref',
     'bill_of_entry',
+    'invoice_numbers',
     'user_id',
     'deal_id',
     'company_id',

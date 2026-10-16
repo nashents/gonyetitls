@@ -1301,6 +1301,30 @@ class Index extends Component
     }
 
     /**
+     * Release an advance invoice from Customer Advances to Sales. Refuses
+     * (with the reason) unless every attached trip is Offloaded - normally
+     * this happens automatically when the last trip is saved as Offloaded.
+     */
+    public function postToSales($id)
+    {
+        $invoice = Invoice::find($id);
+        if (! $invoice) {
+            return;
+        }
+
+        try {
+            [$ok, $message] = app(\App\Services\Accounting\AdvanceInvoiceReclassService::class)->postToSales($invoice);
+        } catch (\Throwable $e) {
+            [$ok, $message] = [false, 'Could not post to Sales: ' . $e->getMessage()];
+        }
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => $ok ? 'success' : 'error',
+            'message' => $message,
+        ]);
+    }
+
+    /**
      * Manually push an approved invoice to the general ledger. Covers
      * invoices approved without ever triggering InvoiceObserver (e.g.
      * invoices created already-approved in one save, which never fire an

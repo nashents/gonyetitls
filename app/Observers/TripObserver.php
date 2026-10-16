@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Jobs\Sage\SyncTripToSageJob;
 use App\Models\Trip;
+use App\Services\Accounting\AdvanceInvoiceReclassService;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -23,6 +24,9 @@ class TripObserver
         if (strcasecmp((string) $trip->authorization, 'approved') === 0) {
             $this->queueSync($trip);
         }
+        if ($trip->trip_status === 'Offloaded') {
+            $this->releaseAdvanceInvoices($trip);
+        }
     }
 
     /** Trip columns that map to the Sage project — a change to any re-syncs. */
@@ -40,6 +44,25 @@ class TripObserver
         if (strcasecmp((string) $trip->authorization, 'approved') === 0
             && $trip->wasChanged(self::MAPPED_FIELDS)) {
             $this->queueSync($trip);
+        }
+
+        if ($trip->trip_status === 'Offloaded' && $trip->wasChanged('trip_status')) {
+            $this->releaseAdvanceInvoices($trip);
+        }
+    }
+
+    /**
+     * A trip reaching Offloaded may complete an advance invoice: once all its
+     * trips are Offloaded the deferred Customer Advances balance is released to
+     * Sales. Runs for every save path (trip edit, status manager, delivery
+     * notes, shifts, imports...). Never blocks the trip save.
+     */
+    protected function releaseAdvanceInvoices(Trip $trip): void
+    {
+        try {
+            app(AdvanceInvoiceReclassService::class)->handleTripOffloaded($trip);
+        } catch (\Throwable $e) {
+            Log::warning("Advance invoice release for trip {$trip->trip_number} failed: " . $e->getMessage());
         }
     }
 

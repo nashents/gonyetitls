@@ -286,11 +286,16 @@
                   $totalWeight += (float) $ttoWeight;
                   $totalVolume += (float) $ttoVolume;
 
-                  $invoiceNumbers = ($tto->invoice_items ?? $trip->invoice_items ?? collect())
-                      ->map(fn($item) => $item->invoice?->invoice_number)
-                      ->filter()
-                      ->unique()
-                      ->values();
+                  // Freight invoice #(s) typed on the order (a trip without an attached
+                  // order types them onto its auto-created one); else the system invoices.
+                  $freightInvoices = $to?->invoice_numbers;
+                  $invoiceNumbers = $freightInvoices
+                      ? collect(preg_split('/\s*,\s*/', trim($freightInvoices)))->filter()->values()
+                      : ($tto->invoice_items ?? $trip->invoice_items ?? collect())
+                          ->map(fn($item) => $item->invoice?->invoice_number)
+                          ->filter()
+                          ->unique()
+                          ->values();
                 @endphp
                 <tr>
                   <td class="center">{{ $loop->iteration }}</td>

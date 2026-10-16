@@ -716,6 +716,14 @@
                                     @error('custom_ref') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="invoice_numbers">Freight Invoice #(s)</label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="invoice_numbers" placeholder="e.g. INV-1001, INV-1002" />
+                                    <small class="text-muted">Shown on the manifest under Invoice #(s)</small>
+                                    @error('invoice_numbers') <span class="text-danger error">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                             <!-- Trip Type -->
                             <div class="col-md-3">
                                 <div class="form-group">
@@ -1552,6 +1560,14 @@
                                     <label for="transport_order_ref">Custom Reference</label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Custom Order Reference#"  />
                                     @error('custom_ref') <span class="text-danger error">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="invoice_numbers">Freight Invoice #(s)</label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="invoice_numbers" placeholder="e.g. INV-1001, INV-1002" />
+                                    <small class="text-muted">Shown on the manifest under Invoice #(s)</small>
+                                    @error('invoice_numbers') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <!-- Trip Type -->

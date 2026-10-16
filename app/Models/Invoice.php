@@ -216,7 +216,8 @@ class Invoice extends Model implements Auditable
             ? $this->journal_entries
             : $this->journal_entries()->get();
 
-        $reclassed = $entries->contains(fn ($entry) => str_starts_with((string) $entry->reference, 'RECLASS-'));
+        $reclassed = $entries->contains(fn ($entry) => str_starts_with((string) $entry->reference, 'RECLASS-')
+            && !in_array($entry->status, ['reversed', 'draft'], true));
 
         return $reclassed ? 'Sales (Recognized)' : 'Customer Advances (Deferred)';
     }
