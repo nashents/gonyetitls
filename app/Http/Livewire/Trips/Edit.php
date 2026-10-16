@@ -40,6 +40,7 @@ use App\Services\TripCompletionCascadeService;
 use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Trailer;
+use App\Models\TrailerLink;
 use App\Models\Transporter;
 use App\Models\TransportOrder;
 use App\Models\Trip;
@@ -60,11 +61,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
+use App\Http\Livewire\Concerns\HandlesTripTrailerLinks;
 use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
     use WithFileUploads;
+    use HandlesTripTrailerLinks;
     use ResolvesSageIntegration;
 
     public $trip;
@@ -536,6 +539,31 @@ class Edit extends Component
         unset($this->trailer_inputs[$t]);
     }
 
+    private $previousTrailerIds = [];
+
+    public function updatingTrailerId()
+    {
+        $this->previousTrailerIds = $this->selectedTrailerIds();
+    }
+
+    /** Newly picked linked trailers pull their partner into the multi-select. */
+    public function updatedTrailerId()
+    {
+        $this->create_trailer_link = false;
+        $added = array_diff($this->selectedTrailerIds(), $this->previousTrailerIds);
+        foreach ($added as $id) {
+            $partner = $this->linkedPartnerToAdd($id);
+            if ($partner) {
+                $this->trailer_id = array_values(array_merge($this->selectedTrailerIds(), [$partner->id]));
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => "Linked trailer {$partner->registration_number} added automatically.",
+                ]);
+            }
+        }
+        $this->ensureSelectedTrailersListed();
+    }
+
     public $allowance_inputs = [];
     public $x = 1;
     public $z = 1;
@@ -996,9 +1024,14 @@ class Edit extends Component
             if (isset( $trailer_assignments)) {
                 foreach ($trailer_assignments as $trailer_assignment) {
                     $this->trailer_id[] = $trailer_assignment->trailer_id;
+                    $partnerId = TrailerLink::partnerOf($trailer_assignment->trailer_id);
+                    if ($partnerId) {
+                        $this->trailer_id[] = $partnerId;
+                    }
                 }
-                
-            }                        
+                $this->trailer_id = $this->selectedTrailerIds();
+                $this->ensureSelectedTrailersListed();
+            }
            
         }
     }
@@ -2027,6 +2060,7 @@ class Edit extends Component
         if ($this->with_trailer && !empty($this->trailer_id)) {
             $trip->trailers()->detach();
             $trip->trailers()->sync($this->trailer_id);
+            $this->saveTrailerLinkIfRequested();
         }
         if (!empty($this->selectedBorder)) {
             $trip->borders()->detach();

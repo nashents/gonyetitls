@@ -12,11 +12,19 @@
 
                             <div class="panel-title">
                                 <a href="#" data-toggle="modal" data-target="#borderModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Border</a>
+                                <a href="#" data-toggle="modal" data-target="#bordersImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                <a href="#" wire:click="exportBordersExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportBordersCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportBordersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
-                            <table id="bordersTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <div class="col-md-5" style="float: right; padding-right:2px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search borders...">
+                                </div>
+                            </div>
+                            <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Country A
@@ -29,13 +37,12 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($borders->count()>0)
                                 <tbody>
-                                    @foreach ($borders as $border)
+                                    @forelse ($borders as $border)
                                   <tr wire:key="{{ '99320c-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($border->id ?? '') }}">
                                     @php
-                                        $country_a = App\Models\Country::find($border->country_a);
-                                        $country_b = App\Models\Country::find($border->country_b);
+                                        $country_a = $countries->firstWhere('id', $border->country_a);
+                                        $country_b = $countries->firstWhere('id', $border->country_b);
                                     @endphp
                                     <td>{{$country_a ? $country_a->name : ""}}</td>
                                     <td>{{$country_b ? $country_b->name : ""}}</td>
@@ -54,12 +61,22 @@
                                         @include('borders.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                  <tr>
+                                    <td colspan="4">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Borders Found ....
+                                        </div>
+                                    </td>
+                                  </tr>
+                                  @endforelse
                                 </tbody>
-                                @else
-                                    <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                                 @endif
                               </table>
+                              <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    {{ $borders->links() }}
+                                </ul>
+                              </nav>
 
                             <!-- /.col-md-12 -->
                         </div>
@@ -72,6 +89,32 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bordersImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Borders <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form action="{{route('borders.import')}}" method="POST" enctype="multipart/form-data">
+                    {{ csrf_field() }}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="file">Upload Border(s) Excel File</label>
+                        <input type="file" class="form-control" name="file" placeholder="Upload Border File" >
+                        @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <small class="text-muted">Columns: name, country_a, country_b (country names). Borders that already exist (same name) are updated. Rows whose name starts with # are skipped.<a href="{{ asset('templates/Borders Import File.xlsx') }}" download><i class="fa fa-download"></i> Download template</a></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button  onClick="this.form.submit(); this.disabled=true; this.value='Sending…'; "  class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="borderModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

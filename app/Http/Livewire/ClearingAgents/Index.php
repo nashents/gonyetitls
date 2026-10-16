@@ -11,6 +11,9 @@ use App\Models\Document;
 use Illuminate\Http\Request;
 use App\Models\ClearingAgent;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
+use App\Exports\ClearingAgentsExport;
 use App\Mail\AccountCreationMail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -21,9 +24,13 @@ use Illuminate\Ixudra\Curl\Facades\Curl;
 
 class Index extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $clearing_agents;
+    protected $paginationTheme = 'bootstrap';
+
+    public $search;
+    protected $queryString = ['search'];
+
     public $contact_name;
     public $contact_surname;
     public $contact_email;
@@ -98,7 +105,7 @@ class Index extends Component
 
 
     public function mount(){
-        $this->clearing_agents = ClearingAgent::latest()->get();
+        $this->resetPage();
         $this->borders = Border::orderBy('name','asc')->get();
     }
 
@@ -137,7 +144,6 @@ class Index extends Component
     }
 
     private function resetInputFields(){
-        $this->clearing_agents = "";
         $this->contact_name = "";
         $this->contact_surname = "";
         $this->contact_email = "";
@@ -159,6 +165,23 @@ class Index extends Component
         $this->suburb = "";
         $this->street_address = "";
     }
+    public function exportClearingAgentsCSV(Excel $excel){
+
+        return $excel->download(new ClearingAgentsExport, 'clearing_agents.csv', Excel::CSV);
+    }
+    public function exportClearingAgentsPDF(Excel $excel){
+
+        return $excel->download(new ClearingAgentsExport, 'clearing_agents.pdf', Excel::DOMPDF);
+    }
+    public function exportClearingAgentsExcel(Excel $excel){
+
+        return $excel->download(new ClearingAgentsExport, 'clearing_agents.xlsx');
+    }
+
+    public function updatingSearch(){
+        $this->resetPage();
+    }
+
     public function updated($value){
         $this->validateOnly($value);
     }
@@ -283,7 +306,7 @@ class Index extends Component
     $this->phonenumber = $clearing_agent->phonenumber;
     $this->worknumber = $clearing_agent->worknumber;
     $this->country = $clearing_agent->country;
-    $this->city = $clearing_agent->city;
+    $this->town = $clearing_agent->city;
     $this->suburb = $clearing_agent->suburb;
     $this->street_address = $clearing_agent->street_address;
     $this->clearing_agent_id = $clearing_agent->id;
@@ -327,9 +350,28 @@ class Index extends Component
     }
     public function render()
     {
-        $this->clearing_agents = ClearingAgent::latest()->get();
-        return view('livewire.clearing-agents.index',[
-            'clearing_agents'=>$this->clearing_agents
+        $clearing_agents = ClearingAgent::with('borders')
+            ->when(filled($this->search), function ($query) {
+                $search = '%' . $this->search . '%';
+                $query->where(function ($q) use ($search) {
+                    $q->where('clearing_agent_number', 'like', $search)
+                        ->orWhere('name', 'like', $search)
+                        ->orWhere('email', 'like', $search)
+                        ->orWhere('phonenumber', 'like', $search)
+                        ->orWhere('country', 'like', $search)
+                        ->orWhere('city', 'like', $search)
+                        ->orWhere('suburb', 'like', $search)
+                        ->orWhere('street_address', 'like', $search)
+                        ->orWhereHas('borders', function ($b) use ($search) {
+                            $b->where('name', 'like', $search);
+                        });
+                });
+            })
+            ->latest()
+            ->paginate(10);
+
+        return view('livewire.clearing-agents.index', [
+            'clearing_agents' => $clearing_agents,
         ]);
     }
 }

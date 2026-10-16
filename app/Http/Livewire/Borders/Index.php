@@ -5,16 +5,23 @@ namespace App\Http\Livewire\Borders;
 use App\Models\Border;
 use App\Models\Country;
 use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
+use App\Exports\BordersExport;
 use App\Models\Destination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
+    use WithPagination;
 
+    protected $paginationTheme = 'bootstrap';
+
+    public $search;
+    protected $queryString = ['search'];
 
     public $countries;
-    public $borders;
     public $country_a;
     public $country_b;
     public $name;
@@ -24,8 +31,25 @@ class Index extends Component
     public $user_id;
 
     public function mount(){
-        $this->borders = Border::latest()->get();
+        $this->resetPage();
         $this->countries = Country::all();
+    }
+
+    public function exportBordersCSV(Excel $excel){
+
+        return $excel->download(new BordersExport, 'borders.csv', Excel::CSV);
+    }
+    public function exportBordersPDF(Excel $excel){
+
+        return $excel->download(new BordersExport, 'borders.pdf', Excel::DOMPDF);
+    }
+    public function exportBordersExcel(Excel $excel){
+
+        return $excel->download(new BordersExport, 'borders.xlsx');
+    }
+
+    public function updatingSearch(){
+        $this->resetPage();
     }
 
     public function updated($value){
@@ -117,9 +141,20 @@ class Index extends Component
 
     public function render()
     {
-        $this->borders = Border::latest()->get();
-        return view('livewire.borders.index',[
-            'borders'=>   $this->borders
+        $borders = Border::query()
+            ->when(filled($this->search), function ($query) {
+                $countryIds = Country::where('name', 'like', '%' . $this->search . '%')->pluck('id');
+                $query->where(function ($q) use ($countryIds) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhereIn('country_a', $countryIds)
+                        ->orWhereIn('country_b', $countryIds);
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(10);
+
+        return view('livewire.borders.index', [
+            'borders' => $borders,
         ]);
     }
 }

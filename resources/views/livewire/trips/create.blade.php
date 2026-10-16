@@ -1612,7 +1612,7 @@
                                         {{-- <br> --}}
                                       
                                             @foreach ($trailer_inputs as $key => $value)
-                                            <div class="row">
+                                            <div class="row" wire:key="trip-trailer-row-{{ $value }}">
                                                 <div class="col-md-10">
                                                     <select class="form-control" wire:model.debounce.300ms="trailer_id.{{ $value }}" size="4" >
                                                         <option value="" disabled>Select Trailer {{ $value }}</option>
@@ -1647,6 +1647,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        @include('livewire.trips.partials.trailer-link-state')
                                         <br>
                                         @endif
                                     </div>

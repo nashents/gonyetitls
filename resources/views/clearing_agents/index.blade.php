@@ -46,12 +46,3 @@
 
 
 @endsection
-
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#clearing_agentsTable').DataTable();
-    } );
-    </script>
-@endsection
-

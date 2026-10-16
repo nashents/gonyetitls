@@ -289,6 +289,8 @@ Route::get('/agents/export/excel','ExportsController@exportAgentsExcel')->name('
 Route::get('/agents/export/csv','ExportsController@exportAgentsCSV')->name('agents.export.csv');
 Route::get('/agents/export/pdf','ExportsController@exportAgentsPDF')->name('agents.export.pdf');
 Route::post('/agents/import','ImportsController@importAgents')->name('agents.import');
+Route::post('/borders/import','ImportsController@importBorders')->name('borders.import');
+Route::post('/clearing_agents/import','ImportsController@importClearingAgents')->name('clearing_agents.import');
 
 Route::get('/companies/{company}/profile','CompanyController@getProfile')->name('company-profile');
 Route::get('/data-backups/{dataBackup}/download','DataBackupsController@download')->name('data-backups.download');

@@ -11,10 +11,19 @@
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#clearing_agentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Clearing Agent</a>
+                                <a href="" data-toggle="modal" data-target="#clearing_agentsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                <a href="#" wire:click="exportClearingAgentsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportClearingAgentsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportClearingAgentsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-                            <table id="clearing_agentsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <div class="col-md-5" style="float: right; padding-right:2px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search clearing agents...">
+                                </div>
+                            </div>
+                            <table class="table table-striped table-bordered table-sm table-condensed compact table-responsive" cellspacing="0" width="100%" style="font-size: 12px;">
                                 <thead>
                                   <tr>
 
@@ -22,15 +31,11 @@
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
-                                    <th class="th-sm">Email
-                                    </th>
-                                    <th class="th-sm">Phonenumber
-                                    </th>
-                                    <th class="th-sm">Country
-                                    </th>
-                                    <th class="th-sm">City
+                                    <th class="th-sm">Contact
                                     </th>
                                     <th class="th-sm">Address
+                                    </th>
+                                    <th class="th-sm">Borders
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -38,21 +43,21 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($clearing_agents->count()>0)
                                 <tbody>
-                                    @foreach ($clearing_agents as $clearing_agent)
+                                    @forelse ($clearing_agents as $clearing_agent)
                                   <tr wire:key="{{ '35ba67-43-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($clearing_agent->id ?? '') }}">
                                     <td>{{$clearing_agent->clearing_agent_number}}</td>
                                     <td>{{ucfirst($clearing_agent->name)}}</td>
-                                    <td>{{$clearing_agent->email}}</td>
-                                    <td>{{$clearing_agent->phonenumber}}</td>
-                                    <td>{{$clearing_agent->country}}</td>
-                                    <td>{{$clearing_agent->city}}</td>
                                     <td>
-                                        @if (isset($clearing_agent->suburb) || isset($clearing_agent->street_address))
-                                             {{$clearing_agent->suburb}}, {{$clearing_agent->street_address}}        
+                                        @if ($clearing_agent->email)
+                                            <div><i class="fa fa-envelope"></i> {{$clearing_agent->email}}</div>
+                                        @endif
+                                        @if ($clearing_agent->phonenumber)
+                                            <div><i class="fa fa-phone"></i> {{$clearing_agent->phonenumber}}</div>
                                         @endif
                                     </td>
+                                    <td>{{ collect([$clearing_agent->street_address, $clearing_agent->suburb, $clearing_agent->city, $clearing_agent->country])->filter()->implode(', ') }}</td>
+                                    <td>{{ $clearing_agent->borders->pluck('name')->implode(', ') }}</td>
                                     <td><span class="badge bg-{{$clearing_agent->status == 1 ? "success" : "danger"}}">{{$clearing_agent->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -69,12 +74,22 @@
                                         @include('clearing_agents.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                  <tr>
+                                    <td colspan="7">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Clearing Agents Found ....
+                                        </div>
+                                    </td>
+                                  </tr>
+                                  @endforelse
                                 </tbody>
-                                @else
-                                    <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                                 @endif
                               </table>
+                              <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    {{ $clearing_agents->links() }}
+                                </ul>
+                              </nav>
 
                             <!-- /.col-md-12 -->
                         </div>
@@ -87,6 +102,42 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="clearing_agentsImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Clearing Agents <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form action="{{route('clearing_agents.import')}}" method="POST" enctype="multipart/form-data">
+                    {{ csrf_field() }}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="file">Upload Clearing Agent(s) Excel File</label>
+                        <input type="file" class="form-control" name="file" placeholder="Upload Clearing Agent File" >
+                        @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <small class="text-muted">Columns: name, email, phonenumber, worknumber, country, city, suburb, street_address, borders (comma separated, e.g. Beitbridge, Chirundu). Borders that don't exist are created. Agents that already exist (same name) are updated. Rows whose name starts with # are skipped.<a href="{{ asset('templates/Clearing Agents Import File.xlsx') }}" download><i class="fa fa-download"></i> Download template</a></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="border_ids">Attach Border(s) to every agent in the file</label>
+                        <select name="border_ids[]" class="form-control" multiple size="6">
+                            @foreach ($borders as $border)
+                                <option value="{{ $border->id }}">{{ $border->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Optional. Hold Ctrl to pick more than one. Added on top of the borders in the file.</small>
+                        @error('border_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button  onClick="this.form.submit(); this.disabled=true; this.value='Sending…'; "  class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
    
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="clearing_agentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
@@ -424,7 +475,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="city">City</label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="city" placeholder="Enter City/Town"  />
+                                <input type="text" class="form-control" wire:model.debounce.300ms="town" placeholder="Enter City/Town"  />
                                 @error('city') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

@@ -23,6 +23,8 @@ use App\Imports\ProvincesImport;
 use App\Imports\ConsigneesImport;
 use App\Imports\InventoriesImport;
 use App\Imports\DestinationsImport;
+use App\Imports\BordersImport;
+use App\Imports\ClearingAgentsImport;
 use App\Imports\TransportersImport;
 use App\Imports\LoadingPointsImport;
 use App\Imports\EmployeesLeaveImport;
@@ -232,6 +234,30 @@ class ImportsController extends Controller
         $import = new CustomersImport;
         $import->import($file);
         Session::flash('success','Customer(s) Imported Successfully!!');
+        return redirect()->back();
+    }
+    public function importBorders(Request $request){
+        $this->validate($request,[
+            'file' => 'required|file|mimes:xls,xlsx'
+        ]);
+        $file = $request->file;
+        ini_set('max_execution_time', 300);
+        $import = new BordersImport;
+        $import->import($file);
+        Session::flash('success','Border(s) Imported Successfully!!');
+        return redirect()->back();
+    }
+    public function importClearingAgents(Request $request){
+        $this->validate($request,[
+            'file' => 'required|file|mimes:xls,xlsx',
+            'border_ids' => 'nullable|array',
+            'border_ids.*' => 'exists:borders,id',
+        ]);
+        $file = $request->file;
+        ini_set('max_execution_time', 300);
+        $import = new ClearingAgentsImport($request->input('border_ids', []));
+        $import->import($file);
+        Session::flash('success','Clearing Agent(s) Imported Successfully!!');
         return redirect()->back();
     }
     public function importAgents(Request $request){

@@ -1652,6 +1652,7 @@
                                                 </select>
                                                 @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small>  <a href="{{ route('trailers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Trailer</a></small> <a href="#" wire:click.prevent="refresh('trailers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @include('livewire.trips.partials.trailer-link-state')
                                             </div>
                                         @endif
                                     </div>

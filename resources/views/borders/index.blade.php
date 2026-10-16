@@ -47,12 +47,3 @@
 
 
 @endsection
-
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#bordersTable').DataTable();
-    } );
-    </script>
-@endsection
-

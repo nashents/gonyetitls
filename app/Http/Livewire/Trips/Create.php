@@ -39,6 +39,7 @@ use App\Models\Route;
 use App\Models\RouteExpense;
 use App\Models\TopUp;
 use App\Models\Trailer;
+use App\Models\TrailerLink;
 use App\Models\Transporter;
 use App\Models\TransportOrder;
 use App\Models\Trip;
@@ -65,6 +66,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
+use App\Http\Livewire\Concerns\HandlesTripTrailerLinks;
 use Livewire\WithFileUploads;
 // use Illuminate\Support\Facades\Session;
 
@@ -73,6 +75,7 @@ class Create extends Component
 {
     use WithFileUploads;
     use ResolvesSageIntegration;
+    use HandlesTripTrailerLinks;
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     public $trip_id;
     public $with_quotation = False;
@@ -189,15 +192,72 @@ class Create extends Component
     public $trailer_inputs = [];
     public $t = 1;
     public $s = 1;
-    public function trailerAdd($t)
+    // Row 0 is the fixed first select; each extra row binds trailer_id.{index}.
+    // New rows take the next free index so pre-filled ids (e.g. a horse's
+    // second assigned trailer at index 1) always have a visible row.
+    public function trailerAdd($t = null)
     {
-        $t = $t + 1;
+        $used = array_merge([0], array_keys((array) $this->trailer_id), $this->trailer_inputs);
+        $t = max(array_map('intval', $used)) + 1;
         $this->t = $t;
         array_push($this->trailer_inputs ,$t);
+        return $t;
     }
     public function trailerRemove($t)
     {
+        $index = $this->trailer_inputs[$t] ?? null;
         unset($this->trailer_inputs[$t]);
+        if ($index !== null && is_array($this->trailer_id)) {
+            unset($this->trailer_id[$index]);
+        }
+    }
+
+    /** Replace the trailer selection with $ids, one visible row per trailer (plus linked partners). */
+    private function setTrailerRows(array $ids)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        foreach ($ids as $id) {
+            $partnerId = TrailerLink::partnerOf($id);
+            if ($partnerId && !in_array($partnerId, $ids)) {
+                $ids[] = $partnerId;
+            }
+        }
+        $this->trailer_id = $ids;
+        $this->trailer_inputs = count($ids) > 1 ? range(1, count($ids) - 1) : [];
+        $this->t = max(1, count($ids) - 1);
+        $this->create_trailer_link = false;
+        $this->ensureSelectedTrailersListed();
+    }
+
+    /** Picking a linked trailer adds its partner on an empty row (or a new one). */
+    public function updatedTrailerId($value, $key)
+    {
+        $this->create_trailer_link = false;
+        if (empty($value)) {
+            return;
+        }
+        $partner = $this->linkedPartnerToAdd($value);
+        if (!$partner) {
+            return;
+        }
+        $index = null;
+        if ((string) $key !== '0' && empty($this->trailer_id[0] ?? null)) {
+            $index = 0;
+        }
+        foreach ($this->trailer_inputs as $row) {
+            if ($index === null && (string) $row !== (string) $key && empty($this->trailer_id[$row] ?? null)) {
+                $index = $row;
+            }
+        }
+        if ($index === null) {
+            $index = $this->trailerAdd();
+        }
+        $this->trailer_id[$index] = $partner->id;
+        $this->ensureSelectedTrailersListed();
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Linked trailer {$partner->registration_number} added automatically.",
+        ]);
     }
     // driver vars
     public $all_drivers = False;
@@ -733,11 +793,9 @@ class Create extends Component
               
               
                 $initial_trip_trailers = $initial_trip->trailers;
-                if($initial_trip_trailers){
+                if($initial_trip_trailers && $initial_trip_trailers->count() > 0){
                     $this->with_trailer = True;
-                    foreach($initial_trip_trailers as $trailer){
-                        $this->trailer_id[] = $trailer->id;
-                    }
+                    $this->setTrailerRows($initial_trip_trailers->pluck('id')->all());
                 }
                 $this->driver_id = $initial_trip->driver_id;
             }
@@ -880,9 +938,7 @@ class Create extends Component
                                 
                 if (isset( $trailer_assignments) && $trailer_assignments->count()> 0) {
                     $this->with_trailer = True;
-                    foreach ($trailer_assignments as $trailer_assignment) {
-                        $this->trailer_id[] = $trailer_assignment->trailer_id;
-                    }
+                    $this->setTrailerRows($trailer_assignments->pluck('trailer_id')->all());
                     
                 }   
             }
@@ -1728,6 +1784,7 @@ class Create extends Component
                 if (!empty($validTrailerIds)) {
                     $trip->trailers()->sync($validTrailerIds);
                 }
+                $this->saveTrailerLinkIfRequested();
         }
         if (!empty($this->selectedBorder)) {
              $ids = is_array($this->selectedBorder)
@@ -3239,6 +3296,7 @@ class Create extends Component
             $this->trailers = $query
                 ->orderByIdentifier('asc')
                 ->get();
+            $this->ensureSelectedTrailersListed();
         }
 
         public function updatedSearchTrip(){

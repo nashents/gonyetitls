@@ -141,6 +141,8 @@ class DataBackupService
             'Master Data/Destinations'           => fn () => new Exports\DestinationsExport(),
             'Master Data/Loading Points'         => fn () => new Exports\LoadingPointsExport(),
             'Master Data/Offloading Points'      => fn () => new Exports\OffloadingPointsExport(),
+            'Master Data/Borders'                => fn () => new Exports\BordersExport(),
+            'Master Data/Clearing Agents'        => fn () => new Exports\ClearingAgentsExport(),
             'Master Data/Locations'              => $this->table(Models\Location::class),
             'Master Data/Parkings'               => $this->table(Models\Parking::class),
             'Master Data/Companies'              => $this->table(Models\Company::class),

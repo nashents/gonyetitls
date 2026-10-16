@@ -108,7 +108,7 @@
                                 <a href="#" wire:click="showBulkInvoices()"  class="btn btn-default"><i class="fa fa-copy"></i>Bulk Invoices</a>
                                 <a href="#" wire:click="showBulkDeleteInvoices()"  class="btn btn-default border-danger"><i class="fa fa-trash"></i>Bulk Delete Invoices</a>
                                 @endif
-                                <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Invoices Payments</a>
+                                <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Payment - Invoice Matching</a>
                                 @if ($this->unpostedInvoicesCount > 0)
                                     <a href="#" wire:click.prevent="bulkPostToLedger()" wire:loading.attr="disabled" onclick="return confirm('Post {{ $this->unpostedInvoicesCount }} approved invoice(s) to the general ledger?')" class="btn btn-default border-danger btn-rounded btn-wide" title="Post every approved, unposted invoice to the ledger"><i class="fa fa-book"></i> Bulk Post to Ledger ({{ $this->unpostedInvoicesCount }})</a>
                                 @endif
@@ -843,7 +843,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Bulk Invoices Payments <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Payment - Invoice Matching <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
 
                 <form wire:submit.prevent="drawdownPayments()" >
