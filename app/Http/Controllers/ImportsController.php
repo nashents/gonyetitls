@@ -30,6 +30,8 @@ use App\Imports\TransportersImport;
 use App\Imports\LoadingPointsImport;
 use App\Imports\EmployeesLeaveImport;
 use App\Imports\OffloadingPointsImport;
+use App\Imports\LocationsImport;
+use App\Imports\RentalsImport;
 use Illuminate\Support\Facades\Session;
 
 class ImportsController extends Controller
@@ -351,5 +353,36 @@ class ImportsController extends Controller
         $import->import($file);
         Session::flash('success','Companies Imported Successfully!!');
         return redirect()->back();
+    }
+
+    public function importLocations(Request $request){
+        $this->validate($request,[
+            'file' => 'required|file|mimes:xls,xlsx'
+        ]);
+        ini_set('max_execution_time', 300);
+        $import = new LocationsImport;
+        $import->import($request->file);
+        Session::flash('success', "Worksite(s) Imported Successfully!! ({$import->created} created, {$import->updated} updated)");
+        $this->flashSkipped($import->skipped);
+        return redirect()->back();
+    }
+
+    public function importRentals(Request $request){
+        $this->validate($request,[
+            'file' => 'required|file|mimes:xls,xlsx'
+        ]);
+        ini_set('max_execution_time', 300);
+        $import = new RentalsImport;
+        $import->import($request->file);
+        Session::flash('success', "Rental(s) Imported Successfully!! ({$import->created} created)");
+        $this->flashSkipped($import->skipped);
+        return redirect()->back();
+    }
+
+    private function flashSkipped(array $skipped){
+        if (!empty($skipped)) {
+            $more = count($skipped) > 10 ? ' ... and '.(count($skipped) - 10).' more' : '';
+            Session::flash('warning', count($skipped).' row(s) skipped: '.implode('; ', array_slice($skipped, 0, 10)).$more);
+        }
     }
 }

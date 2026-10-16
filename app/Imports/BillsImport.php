@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Account;
 use App\Models\AccountType;
 use App\Models\AccountTypeGroup;
@@ -40,6 +42,8 @@ WithValidation,
 WithChunkReading,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use SkipsErrors, Importable;
     use SkipsFailures;
     

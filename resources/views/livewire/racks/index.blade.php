@@ -84,6 +84,7 @@
                         <label for="name">Upload Racks Excel File</label>
                         <input type="file" class="form-control" name="file" placeholder="Upload Rack File" >
                         @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @include('includes.import-template-link', ['template' => 'Racks Import File.xlsx'])
                     </div>
                 </div>
                 <div class="modal-footer">

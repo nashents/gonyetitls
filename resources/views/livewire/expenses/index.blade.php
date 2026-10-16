@@ -182,6 +182,7 @@
                         <label for="name">Upload Expenses Excel File<span class="required" style="color: red">*</span></label>
                         <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Loading Points File" required>
                         @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @include('includes.import-template-link', ['template' => 'Trip Expenses Import File.xlsx'])
                     </div>
                 </div>
                 <div class="modal-footer">

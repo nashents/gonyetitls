@@ -208,6 +208,21 @@ class Employee extends Model implements Auditable
     public function driver(){
         return $this->hasOne('App\Models\Driver');
     }
+
+    /**
+     * Limit to drivers ("drivers": has a Driver record) or admin staff
+     * ("admin": no Driver record); anything else leaves the query untouched.
+     */
+    public function scopeOfStaffType($query, $type)
+    {
+        if ($type === 'drivers') {
+            return $query->whereHas('driver');
+        }
+        if ($type === 'admin') {
+            return $query->whereDoesntHave('driver');
+        }
+        return $query;
+    }
   
     public function fuel_requests(){
         return $this->hasMany('App\Models\FuelRequest');

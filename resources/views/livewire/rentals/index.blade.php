@@ -12,6 +12,7 @@
                             
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#rentalModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Rental</a>
+                                <a href="" data-toggle="modal" data-target="#rentalsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                 {{-- <a href="#" wire:click="exportRentalsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportRentalsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportRentalsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> --}}
@@ -164,13 +165,14 @@
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Rentals <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-                <form action="#" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('rentals.import') }}" method="POST" enctype="multipart/form-data">
                     {{ csrf_field() }}
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="name">Upload Rental(s) Excel File</label>
                         <input type="file" class="form-control" name="file" placeholder="Upload rental File" >
                         @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @include('includes.import-template-link', ['template' => 'Rentals Import File.xlsx'])
                     </div>
                 </div>
                 <div class="modal-footer">

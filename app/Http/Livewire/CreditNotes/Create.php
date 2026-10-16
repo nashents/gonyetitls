@@ -113,7 +113,7 @@ class Create extends Component
             $this->tax_rate =  $this->invoice->tax_rate;
             $this->selectedCustomer =  $this->invoice->customer_id;
             $this->customer = Customer::find( $this->invoice->customer_id);
-            $this->initials = $this->customer->initials;
+            $this->initials = $this->customer->serialInitials();
             $this->invoiceItems = $this->invoice->invoice_items;
             $this->rows = [];
             $this->recalculateTotals();
@@ -123,7 +123,7 @@ class Create extends Component
     public function updatedSelectedCustomer($id){
         if ($this->invoice_attached === 'No' && !is_null($id)) {
             $this->customer = Customer::find($id);
-            $this->initials = $this->customer->initials;
+            $this->initials = $this->customer->serialInitials();
         }
     }
 

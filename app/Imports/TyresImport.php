@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 
 use DateTime;
 use Carbon\Carbon;
@@ -39,6 +41,8 @@ WithValidation,
 WithChunkReading,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     public $horse;
@@ -285,7 +289,7 @@ WithBatchInserts
     {
        foreach($rows as $row){
 
-                if($row->filter()->isNotEmpty()){     
+                if($row->filter()->isNotEmpty()){
                         
                     $store = $currency = $product = $category = $horse = $vehicle = $trailer = null;
 
@@ -400,6 +404,16 @@ WithBatchInserts
                 }
         }
     
+    }
+
+    /**
+     * Also skip rows that only hold the template's X-Z dropdown lists (no
+     * product or serial) - otherwise they fail validation, or import as junk tyres.
+     */
+    public function isEmptyWhen(array $row): bool
+    {
+        return $this->isTemplateExampleRow($row)
+            || (blank($row['product_name'] ?? null) && blank($row['serial_number'] ?? null));
     }
 
     public function rules(): array{

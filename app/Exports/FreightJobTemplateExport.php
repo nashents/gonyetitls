@@ -10,9 +10,15 @@ class FreightJobTemplateExport implements FromArray, WithHeadings
 {
     use Exportable;
 
+    // "#" example row - skipped on import (SkipsTemplateExampleRows).
     public function array(): array
     {
-        return [];
+        return [[
+            '#Harare Fresh Produce (Pvt) Ltd', 'Freight Forwarding & Customs Clearing', 'USD', 'South Africa', 'Zimbabwe',
+            'road', 'draft', 'PO-4471', 'import', 'FCL',
+            'Durban', 'Harare', 'FOB', '2026-10-16', 'Durban', 'Beira',
+            'BKG-88213', 'Agricultural machinery spares', 12500, 38.5, 24, 'Example row - delete or leave, it is skipped',
+        ]];
     }
 
     public function headings(): array

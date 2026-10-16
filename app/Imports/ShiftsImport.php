@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use Carbon\Carbon;
 use App\Models\Cargo;
 use App\Models\Horse;
@@ -41,6 +43,8 @@ WithChunkReading,
 WithBatchInserts,
 WithCalculatedFormulas
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     public $for;

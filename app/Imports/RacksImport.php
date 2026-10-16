@@ -2,12 +2,21 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Rack;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithLimit;
+use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
 class RacksImport implements ToCollection, SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
@@ -16,6 +25,8 @@ WithValidation,
 WithChunkReading,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     /**

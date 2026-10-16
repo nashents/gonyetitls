@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\Bill;
@@ -69,6 +71,8 @@ use Maatwebsite\Excel\Concerns\WithValidation;
  */
 class DispatchesImport implements ToCollection, WithHeadingRow, WithValidation, WithMultipleSheets
 {
+    use SkipsTemplateExampleRows;
+
     use Importable;
     use SkipsErrors;
     use SkipsFailures;

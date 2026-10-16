@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Transporter;
@@ -27,6 +29,8 @@ WithValidation,
 WithChunkReading,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
 
     use Importable, SkipsErrors, ChecksFleetLimit;
     public $transporter;

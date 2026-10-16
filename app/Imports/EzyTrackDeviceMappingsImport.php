@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\EzyTrackDevice;
 use App\Models\Horse;
 use App\Models\IntegrationMapping;
@@ -34,6 +36,8 @@ use Maatwebsite\Excel\Concerns\WithLimit;
  */
 class EzyTrackDeviceMappingsImport implements ToCollection, SkipsEmptyRows, WithLimit, WithHeadingRow, SkipsOnError
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     /** EzyTrack "Asset Type" -> our fleet-unit entity key. Extend as new asset types are seen. */

@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Horse;
 use App\Models\HorseMake;
 use App\Models\HorseModel;
@@ -29,6 +31,8 @@ WithValidation,
 WithChunkReading,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
 
     use Importable, SkipsErrors, ChecksFleetLimit;
 

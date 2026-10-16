@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use Carbon\Carbon;
 use App\Models\Trip;
 use App\Models\Cargo;
@@ -42,6 +44,8 @@ WithChunkReading,
 WithBatchInserts,
 WithCalculatedFormulas
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     /**

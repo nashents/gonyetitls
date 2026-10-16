@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\User;
 use App\Models\Count;
 use App\Models\Transporter;
@@ -26,6 +28,8 @@ WithValidation,
 WithChunkReading,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     public function generatePIN($digits = 4){

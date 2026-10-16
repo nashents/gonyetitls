@@ -33,6 +33,15 @@
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search employees...">
                                     </div>
                                 </div>
+                                <div class="col-md-3" style="float: right">
+                                    <div class="form-group">
+                                        <select wire:model="staff_type" class="form-control" title="Also applies to Excel/CSV/PDF exports">
+                                            <option value="all">All Employees</option>
+                                            <option value="drivers">Drivers Only</option>
+                                            <option value="admin">Admin Employees Only</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <th class="th-sm">Employee
@@ -156,6 +165,7 @@
                             <label for="name">Upload Employee Leave Data Excel File</label>
                             <input type="file" class="form-control" name="file" placeholder="Upload Employee File" >
                             @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @include('includes.import-template-link', ['template' => 'Leave Days Import File.xlsx'])
                         </div>
                     </div>
                     <div class="modal-footer">

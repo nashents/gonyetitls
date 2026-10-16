@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Imports\EmployeesImport;
 use App\Mail\AccountCreationMail;
 use App\Models\Count;
@@ -42,6 +44,8 @@ WithChunkReading,
 WithCalculatedFormulas,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
     public $transporter;
     public $transporter_id;

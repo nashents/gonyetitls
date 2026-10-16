@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Mail\AccountCreationMail;
 use App\Models\Count;
 use App\Models\Department;
@@ -38,6 +40,8 @@ WithChunkReading,
 WithCalculatedFormulas,
 WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     public $company;

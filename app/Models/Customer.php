@@ -111,6 +111,28 @@ class Customer extends Authenticatable implements Auditable
         return $this->hasMany('App\Models\Ticket');
     }
 
+    /**
+     * Prefix for customer-serialized document numbers (invoices, quotations...).
+     * Uses the saved initials, else the first letter of each word of the name
+     * ("Bulk Fuel Logistics" => "BFL").
+     */
+    public function serialInitials(): ?string
+    {
+        if (trim((string) $this->initials) !== '') {
+            return trim($this->initials);
+        }
+
+        $initials = '';
+        foreach (preg_split('/\s+/', trim((string) $this->name)) as $word) {
+            $word = preg_replace('/[^A-Za-z0-9]/', '', $word);
+            if ($word !== '') {
+                $initials .= strtoupper($word[0]);
+            }
+        }
+
+        return $initials !== '' ? $initials : null;
+    }
+
     protected $fillable = [
         'user_id',
         'name',

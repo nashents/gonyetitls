@@ -396,7 +396,7 @@ class Create extends Component
     public function updatedSelectedCustomer($id){
 
         $customer = Customer::find($id);
-        $this->initials = $customer?->initials;
+        $this->initials = $customer?->serialInitials();
         $this->invoice_number = $this->invoiceNumber();
     
     }

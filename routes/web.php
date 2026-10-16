@@ -782,6 +782,7 @@ Route::resource('stores','StoreController');
 Route::resource('orders','OrderController');
 Route::resource('vehicle_makes','VehicleMakeController');
 Route::resource('horse_makes','HorseMakeController');
+Route::post('/rentals/import','ImportsController@importRentals')->name('rentals.import');
 Route::resource('rentals','RentalController');
 Route::resource('vehicle_models','VehicleModelController');
 Route::resource('modules','ModuleController');

@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use Carbon\Carbon;
 use App\Models\Bin;
 use App\Models\Rack;
@@ -36,6 +38,8 @@ use Maatwebsite\Excel\Concerns\Importable;
 class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
     WithHeadingRow, WithValidation, WithChunkReading
 {
+    use SkipsTemplateExampleRows;
+
     use Importable;
 
     public const PURCHASE_TYPE = 'Opening Balance';

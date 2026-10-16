@@ -121,6 +121,7 @@
                             <label for="name">Upload Horse(s) Excel File</label>
                             <input type="file" class="form-control" name="file" placeholder="Upload horse File" >
                             @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @include('includes.import-template-link', ['template' => 'Horses Import File.xlsx'])
                         </div>
                     </div>
                     <div class="modal-footer">

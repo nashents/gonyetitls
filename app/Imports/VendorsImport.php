@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Support\Collection;
@@ -30,6 +32,8 @@ class VendorsImport implements
     WithBatchInserts
     // ShouldQueue
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     protected $initialVendorId;

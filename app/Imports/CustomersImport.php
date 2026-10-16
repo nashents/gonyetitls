@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\User;
 use App\Models\Customer;
 use Illuminate\Support\Collection;
@@ -28,6 +30,8 @@ class CustomersImport implements
     WithBatchInserts,
     WithLimit
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
   protected $initialCustomerId;

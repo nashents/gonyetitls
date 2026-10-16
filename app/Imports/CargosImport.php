@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\User;
 use App\Models\Cargo;
 use App\Models\Count;
@@ -27,6 +29,8 @@ WithChunkReading,
 WithBatchInserts
 
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     /**

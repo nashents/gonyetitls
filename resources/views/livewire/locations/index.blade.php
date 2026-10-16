@@ -6,7 +6,9 @@
                 <div class="col-md-12">
                     <div class="panel">
                         <div class="panel-heading">
-                       
+                            <div>
+                                @include('includes.messages')
+                            </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#locationModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Location</a>
                                 <a href="" data-toggle="modal" data-target="#locationsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
@@ -108,15 +110,16 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Loading Point(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Worksite(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form action="{{route('locations.import')}}" method="POST" enctype="multipart/form-data">
                     {{ csrf_field() }}
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Upload Loading Point(s) Excel File</label>
-                        <input type="file" class="form-control" name="file" placeholder="Upload Loading Points File" >
+                        <label for="name">Upload Worksite(s) Excel File</label>
+                        <input type="file" class="form-control" name="file" placeholder="Upload Worksites File" >
                         @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @include('includes.import-template-link', ['template' => 'Worksites Import File.xlsx'])
                     </div>
                 </div>
                 <div class="modal-footer">

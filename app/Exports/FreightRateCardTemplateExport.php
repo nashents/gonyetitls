@@ -10,9 +10,14 @@ class FreightRateCardTemplateExport implements FromArray, WithHeadings
 {
     use Exportable;
 
+    // "#" example row - skipped on import (SkipsTemplateExampleRows).
     public function array(): array
     {
-        return [];
+        return [[
+            '#sell', '', 'Harare Fresh Produce (Pvt) Ltd', 'Ocean Freight', 'sea', '40ft',
+            'Durban', 'Harare', 'General Cargo', 'USD', 'per_container',
+            2450, 'percentage', 12, '2026-10-01', '2026-12-31', 'Example row - delete or leave, it is skipped',
+        ]];
     }
 
     public function headings(): array

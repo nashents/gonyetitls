@@ -18,7 +18,9 @@ class Index extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    // 'all' (default), 'drivers' or 'admin' — applies to the list and every export.
+    public $staff_type = 'all';
+    protected $queryString = ['search', 'staff_type' => ['except' => 'all']];
 
     private $employees;
     public $employee;
@@ -127,14 +129,20 @@ class Index extends Component
 
     public function exportEmployeesLeaveCSV(Excel $excel){
 
-        return $excel->download(new EmployeesLeaveExport, 'employees_leave_data.csv', Excel::CSV);
+        return $excel->download(new EmployeesLeaveExport($this->staff_type), $this->exportFileName('csv'), Excel::CSV);
     }
     public function exportEmployeesLeavePDF(Excel $excel){
 
-        return $excel->download(new EmployeesLeaveExport, 'employees_leave_data.pdf', Excel::DOMPDF);
+        return $excel->download(new EmployeesLeaveExport($this->staff_type), $this->exportFileName('pdf'), Excel::DOMPDF);
     }
     public function exportEmployeesLeaveExcel(Excel $excel){
-        return $excel->download(new EmployeesLeaveExport, 'employees_leave_data.xlsx');
+        return $excel->download(new EmployeesLeaveExport($this->staff_type), $this->exportFileName('xlsx'));
+    }
+
+    private function exportFileName(string $extension): string
+    {
+        $suffix = ['drivers' => '_drivers', 'admin' => '_admin'][$this->staff_type] ?? '';
+        return "employees_leave_data{$suffix}.{$extension}";
     }
 
     public function updated($value){
@@ -293,20 +301,28 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingStaffType()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        if (isset($this->search)) {
-               
-            return view('livewire.employees.leaves.index',[
-                'employees' => Employee::query()->where('employee_number','like', '%'.$this->search.'%')
-                ->orWhere(DB::raw("concat(name, ' ', surname)"),'like', '%'.$this->search.'%')
-                ->orderBy('name','asc')->paginate(10),
-            ]);
-        }{
-            return view('livewire.employees.leaves.index',[
-                'employees' => Employee::where('archive', 0)->orderBy('name','asc')->paginate(10)
-            ]);
+        $query = Employee::query()->ofStaffType($this->staff_type);
+
+        if (filled($this->search)) {
+            // Grouped so the staff-type filter still applies to both search terms.
+            $query->where(function ($q) {
+                $q->where('employee_number','like', '%'.$this->search.'%')
+                  ->orWhere(DB::raw("concat(name, ' ', surname)"),'like', '%'.$this->search.'%');
+            });
+        } else {
+            $query->where('archive', 0);
         }
+
+        return view('livewire.employees.leaves.index',[
+            'employees' => $query->orderBy('name','asc')->paginate(10),
+        ]);
      
     }
 }

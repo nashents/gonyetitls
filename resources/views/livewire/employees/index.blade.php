@@ -260,6 +260,7 @@
                                 <label for="name">Upload Employee(s) Excel File<span class="required" style="color: red">*</span></label>
                                 <input type="file" class="form-control" wire:model.debounce.3300ms="importFile" placeholder="Upload Employee File" required>
                                 @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @include('includes.import-template-link', ['template' => 'Employees Import File.xlsx'])
                             </div>
                             <div class="mb-10">
                                 <input type="checkbox" wire:model.debounce.300ms="send_creds" class="line-style" />

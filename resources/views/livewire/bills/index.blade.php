@@ -896,6 +896,7 @@
                 <div class="form-group">
                     <label for="name">Upload Bill(s) Excel File<span class="required" style="color: red">*</span></label>
                     <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Bills File" required>
+                    @include('includes.import-template-link', ['template' => 'Bills Import File.xlsx'])
                     @if ($errors->has('importFile'))
                         <ul style="color:red; padding-left: 18px; margin-bottom: 0;">
                             @foreach ($errors->get('importFile') as $message)

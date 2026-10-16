@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Account;
 use App\Models\Expense;
 use App\Models\Currency;
@@ -29,6 +31,8 @@ class ExpensesImport implements ToCollection,
     WithBatchInserts,
     WithLimit
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
 

@@ -370,6 +370,7 @@
                         <label for="name">Upload Tyres Excel File</label>
                         <input type="file" class="form-control" name="file" placeholder="Upload Loading Points File" >
                         @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @include('includes.import-template-link', ['template' => 'Tyres Import File.xlsx'])
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Category;
 use App\Models\CategoryValue;
 use App\Models\Company;
@@ -25,6 +27,8 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
     WithHeadingRow, SkipsOnError, WithValidation, WithChunkReading, WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
 
     protected $company;

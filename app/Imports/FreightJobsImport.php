@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Imports\Concerns\ResolvesLookups;
 use App\Models\Country;
 use App\Models\Currency;
@@ -26,6 +28,8 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 class FreightJobsImport implements ToCollection, SkipsEmptyRows, WithLimit,
     WithHeadingRow, SkipsOnError, WithValidation, WithChunkReading, WithBatchInserts
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors, ResolvesLookups;
 
     protected array $skipped = [];

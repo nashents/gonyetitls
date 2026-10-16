@@ -561,6 +561,7 @@
                                     <label for="name">Upload Shift(s) Excel File</label>
                                     <input type="file" class="form-control" wire:model.debounce.300ms="importFile"placeholder="Upload Shifts File" required>
                                     @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    @include('includes.import-template-link', ['template' => 'Shifts Import File.xlsx'])
                                 </div>
                             </div>
                         </div>
@@ -619,6 +620,7 @@
                             <label for="name">Upload Shift(s) Excel File</label>
                             <input type="file" class="form-control" wire:model.debounce.300ms="shift_tripsimportFile"placeholder="Upload Shifts File" required>
                             @error('shift_tripsimportFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @include('includes.import-template-link', ['template' => 'Shift Trips Import File.xlsx'])
                         </div>
                     </div>
                     <div class="modal-footer">

@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\SkipsTemplateExampleRows;
+
 use App\Models\Employee;
 use App\Models\EmployeeLeave;
 use App\Models\LeaveType;
@@ -28,6 +30,8 @@ WithChunkReading,
 WithBatchInserts,
 WithCalculatedFormulas
 {
+    use SkipsTemplateExampleRows;
+
     use Importable, SkipsErrors;
     /**
     * @param array $row

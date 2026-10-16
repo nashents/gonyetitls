@@ -32,8 +32,13 @@ WithCustomStartCell
 
     protected Collection $leaveTypes;
 
-    public function __construct()
+    /** 'all' (default), 'drivers' or 'admin' — see Employee::scopeOfStaffType(). */
+    protected string $staffType;
+
+    public function __construct(string $staffType = 'all')
     {
+        $this->staffType = $staffType;
+
         $this->leaveTypes = LeaveType::query()
             ->where('active', true)
             ->orderBy('name')
@@ -57,7 +62,7 @@ WithCustomStartCell
 
         return EmployeeLeave::query()
             ->whereHas('employee', function ($query) {
-                $query->where('status', 1);
+                $query->where('status', 1)->ofStaffType($this->staffType);
             })
             ->whereIn('leave_type_id', $this->leaveTypes->pluck('id'))
             ->with(['employee', 'leave_type'])

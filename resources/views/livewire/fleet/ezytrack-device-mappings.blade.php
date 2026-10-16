@@ -181,6 +181,7 @@
                         <label>Excel / CSV File<span class="required" style="color:red">*</span></label>
                         <input type="file" class="form-control" wire:model="importFile">
                         @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @include('includes.import-template-link', ['template' => 'EzyTrack Device Mappings Import File.xlsx'])
                         <div wire:loading wire:target="importFile" class="text-muted mt-1">
                             <i class="fa fa-spinner fa-spin"></i> Uploading...
                         </div>
