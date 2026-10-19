@@ -32,18 +32,7 @@
     default   => 'unpaid',
   };
 
-  $user      = Auth::user();
-  $deptNames = $user->employee?->departments?->pluck('name')->toArray() ?? [];
-  $roleNames = $user->roles->pluck('name')->toArray();
-
-  // This document is the one handed to the driver, so financials are hidden
-  // by default; the company must explicitly opt in via show_financials_to_drivers,
-  // and internal Finance-only restrictions still apply on top of that.
-  $showFinancials = optional($company)->show_financials_to_drivers && (
-                        !optional($company)->rates_managed_by_finance
-                        || in_array('Finance', $deptNames)
-                        || in_array('Super Admin', $roleNames)
-                    );
+  // This document is handed to the driver, so no rate/freight is shown on it.
 
   // trip -> trip_transport_orders -> transport_order -> customer
   $tripTransportOrders = $trip->trip_transport_orders ?? collect();
@@ -209,9 +198,6 @@
             <th class="right" style="width:9%">Quantity</th>
             <th style="width:10%">From</th>
             <th style="width:10%">To</th>
-            @if($showFinancials)
-            <th class="right" style="width:12%">Freight</th>
-            @endif
           </tr>
         </thead>
         <tbody>
@@ -232,27 +218,9 @@
               @php $tD = $to?->toDestination; @endphp
               {{$tD ? optional($tD->country)->name.' '.$tD->city : '—'}}
             </td>
-            @if($showFinancials)
-            <td class="right">
-              {{$to?->currency?->symbol}}{{$to?->freight ? number_format($to->freight, 2) : '—'}}
-            </td>
-            @endif
           </tr>
           @endforeach
         </tbody>
-        @if($showFinancials && $tripTransportOrders->count() > 1)
-        <tfoot>
-          <tr>
-            <td colspan="8" class="right"><strong>Total Freight</strong></td>
-            <td class="right">
-              <strong>
-                {{$tripTransportOrders->first()?->transport_order?->currency?->symbol}}
-                {{number_format($tripTransportOrders->sum(fn($tto) => $tto->transport_order?->freight ?? 0), 2)}}
-              </strong>
-            </td>
-          </tr>
-        </tfoot>
-        @endif
       </table>
     </section>
     @endif
@@ -570,24 +538,6 @@
           </tr>
         </tfoot>
       </table>
-    </section>
-    @endif
-
-    <!-- ===== Trip-level Financials ===== -->
-    @if($showFinancials && ($trip->currency || $trip->rate || $trip->freight))
-    <section class="card" style="margin-top:12px;">
-      <h3>Trip Financials</h3>
-      <div class="kv">
-        @if($trip->currency)
-        <div class="k">Currency</div><div class="v">{{$trip->currency->name}}</div>
-        @endif
-        @if($trip->rate)
-        <div class="k">Rate</div><div class="v">{{$trip->currency?->symbol}}{{number_format($trip->rate, 2)}}</div>
-        @endif
-        @if($trip->freight)
-        <div class="k">Freight</div><div class="v">{{$trip->currency?->symbol}}{{number_format($trip->freight, 2)}}</div>
-        @endif
-      </div>
     </section>
     @endif
 

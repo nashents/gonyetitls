@@ -209,16 +209,6 @@
                                         </td>
                                     </tr>
                                     @endif
-                                    @if (optional($company)->show_financials_to_drivers && $trip->driver_allowances->count()>0)
-                                    @foreach ($trip->driver_allowances as $allowance)
-                                    <tr>
-                                        <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
-                                        <td class="text-center"> 
-                                            {{ $allowance->currency ? $allowance->currency->name : ""}} {{ $allowance->currency ? $allowance->currency->symbol : ""}}{{ number_format($allowance->amount)}}
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                @endif
                                     <tr>
                                         <th class="text-center"> <strong>Start Date</strong></th>
                                         <td class="text-center">
@@ -528,98 +518,6 @@
                                         </td>
                                     </tr>
                                     @endif
-                                    @if (optional($company)->show_financials_to_drivers && (isset($trip->delivery_note->loaded_freight) && $trip->delivery_note->loaded_freight > 0) && (isset($trip->delivery_note->offloaded_freight) && $trip->delivery_note->offloaded_freight > 0))
-                                    <tr>
-                                        <th class="text-center"><strong> Freight Loss</strong></th>
-                                        <td class="text-center"> 
-                                            @php
-                                            if ((isset($trip->delivery_note->loaded_freight) && $trip->delivery_note->loaded_freight > 0) && (isset($trip->delivery_note->offloaded_freight) && $trip->delivery_note->offloaded_freight > 0)) {
-                                                $freight_loss = $trip->delivery_note->loaded_freight - $trip->delivery_note->offloaded_freight;
-                                            }else {
-                                                $freight_loss = Null;
-                                            }
-                                        @endphp
-                                        <!-- /.col-md-6 -->
-                                        @if (isset($freight_loss) && $freight_loss > 0)
-                                        <div class="col-xs-6 p-n" style="color: red">
-                                            {{ $trip->currency ? $trip->currency->name : "" }} {{ $trip->currency ? $trip->currency->symbol : "" }}{{ number_format($freight_loss,2) }}
-                                        </div>
-                                        @elseif (isset($freight_loss) && $freight_loss == 0)
-                                        <div class="col-xs-6 p-n">
-                                            {{ $trip->currency ? $trip->currency->name : "" }} {{ $trip->currency ? $trip->currency->symbol : "" }}{{ number_format($freight_loss,2) }}
-                                           </div>
-                                        @else
-                                        <div class="col-xs-6 p-n">
-                                            No Offloaded Freight Recorded
-                                            </div>
-                                        @endif
-                                        </td>
-                                    </tr>
-                                    @endif
-
-                                    @php
-                                        $user = Auth::user();
-                                        $employee = $user->employee;
-
-                                        $departments = $employee->departments;
-                                        foreach($departments as $department){
-                                            $department_names[] = $department->name;
-                                        }
-                                        $roles = $user->roles;
-                                        foreach($roles as $role){
-                                            $role_names[] = $role->name;
-                                        }
-                                    @endphp 
-
-                                    {{--
-                                        This document is the one handed to the driver, so financials are hidden
-                                        by default; the company must explicitly opt in via show_financials_to_drivers,
-                                        and internal Finance-only restrictions still apply on top of that.
-                                    --}}
-                                    @if (optional($company)->show_financials_to_drivers)
-                                    @if (Auth::user()->employee->company->rates_managed_by_finance == True)
-                                        @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
-                                                @if ($trip->currency)
-                                                    <tr>
-                                                        <th class="text-center"><strong>Currency</strong></th>
-                                                        <td class="text-center"> {{$trip->currency ? $trip->currency->name : ""}}</td>
-                                                    </tr>
-                                                @endif
-                                                @if ($trip->rate)
-                                                    <tr>
-                                                        <th class="text-center"><strong>Rate</strong></th>
-                                                        <td class="text-center">{{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate,2)}}</td>
-                                                    </tr>
-                                                @endif
-                                                @if ($trip->freight)
-                                                    <tr>
-                                                        <th class="text-center"><strong>Freight</strong></th>
-                                                        <td class="text-center"> {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight,2)}}</td>
-                                                    </tr>
-                                                @endif
-                                        @endif
-                                    @else
-                                        @if ($trip->currency)
-                                            <tr>
-                                                <th class="text-center"><strong>Currency</strong></th>
-                                                <td class="text-center"> {{$trip->currency ? $trip->currency->name : ""}}</td>
-                                            </tr>
-                                        @endif
-                                        @if ($trip->rate)
-                                            <tr>
-                                                <th class="text-center"><strong>Rate</strong></th>
-                                                <td class="text-center">{{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate,2)}}</td>
-                                            </tr>
-                                        @endif
-                                        @if ($trip->freight)
-                                            <tr>
-                                                <th class="text-center"><strong>Freight</strong></th>
-                                                <td class="text-center"> {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight,2)}}</td>
-                                            </tr>
-                                        @endif
-                                    @endif
-                                    @endif
-
                                     @php $cmrDetail = $trip->cmr_detail; @endphp
                                     @if ($cmrDetail?->number_of_packages)
                                     <tr>
@@ -631,12 +529,6 @@
                                     <tr>
                                         <th class="text-center"><strong>Marks &amp; Numbers</strong></th>
                                         <td class="text-center">{{$cmrDetail->marks_and_numbers}}</td>
-                                    </tr>
-                                    @endif
-                                    @if (optional($company)->show_financials_to_drivers && $cmrDetail?->freight_payment_terms)
-                                    <tr>
-                                        <th class="text-center"><strong>Freight Terms</strong></th>
-                                        <td class="text-center">{{ucfirst($cmrDetail->freight_payment_terms)}}</td>
                                     </tr>
                                     @endif
                                     @if ($cmrDetail?->insurer_name || $cmrDetail?->insurance_policy_number)

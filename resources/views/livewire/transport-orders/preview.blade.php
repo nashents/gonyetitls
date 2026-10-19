@@ -191,45 +191,6 @@
           </div>
         </div>
 
-        <!-- Cargo -->
-        <div class="card">
-          <h3>Cargo</h3>
-          <div class="kv">
-            <div class="k">Cargo</div>
-            <div class="v">{{$transport_order->cargo?->name ?? '—'}}</div>
-
-            @if($transport_order->weight)
-            <div class="k">Weight (Gross)</div>
-            <div class="v">{{$transport_order->weight}} Tons</div>
-            @endif
-
-            @if($transport_order->net_weight)
-            <div class="k">Net Weight</div>
-            <div class="v">{{$transport_order->net_weight}} Tons</div>
-            @endif
-
-            @if($transport_order->quantity)
-            <div class="k">Quantity</div>
-            <div class="v">{{$transport_order->quantity}} {{$transport_order->unit_of_measure}}</div>
-            @endif
-
-            @if($transport_order->litreage)
-            <div class="k">Litreage (Ambient)</div>
-            <div class="v">{{$transport_order->litreage}} {{$transport_order->unit_of_measure}}</div>
-            @endif
-
-            @if($transport_order->litreage_at_20)
-            <div class="k">Litreage @ 20°C</div>
-            <div class="v">{{$transport_order->litreage_at_20}} {{$transport_order->unit_of_measure}}</div>
-            @endif
-
-            @if($transport_order->temparature)
-            <div class="k">Temperature</div>
-            <div class="v">{{$transport_order->temparature}}</div>
-            @endif
-          </div>
-        </div>
-
       </div>{{-- end left --}}
 
       <!-- RIGHT COLUMN -->
@@ -272,33 +233,44 @@
           </div>
         </div>
 
-        <!-- Financials: hidden unless Business Settings > Show Rate & Freight to Drivers is on -->
-        @if(optional($company)->show_financials_to_drivers && ($transport_order->currency || $transport_order->rate || $transport_order->freight))
+        <!-- Cargo -->
         <div class="card">
-          <h3>Financials</h3>
+          <h3>Cargo</h3>
           <div class="kv">
-            @if($transport_order->currency)
-            <div class="k">Currency</div>
-            <div class="v">{{$transport_order->currency->name}}</div>
+            <div class="k">Cargo</div>
+            <div class="v">{{$transport_order->cargo?->name ?? '—'}}</div>
+
+            @if($transport_order->weight)
+            <div class="k">Weight (Gross)</div>
+            <div class="v">{{$transport_order->weight}} Tons</div>
             @endif
 
-            @if($transport_order->rate)
-            <div class="k">Rate</div>
-            <div class="v">{{$transport_order->currency?->symbol}}{{number_format($transport_order->rate, 2)}}</div>
+            @if($transport_order->net_weight)
+            <div class="k">Net Weight</div>
+            <div class="v">{{$transport_order->net_weight}} Tons</div>
             @endif
 
-            @if($transport_order->freight)
-            <div class="k">Freight</div>
-            <div class="v">{{$transport_order->currency?->symbol}}{{number_format($transport_order->freight, 2)}}</div>
+            @if($transport_order->quantity)
+            <div class="k">Quantity</div>
+            <div class="v">{{$transport_order->quantity}} {{$transport_order->unit_of_measure}}</div>
             @endif
 
-            @if($transport_order->freight_calculation_method)
-            <div class="k">Calc Method</div>
-            <div class="v">{{$transport_order->freight_calculation_method}}</div>
+            @if($transport_order->litreage)
+            <div class="k">Litreage (Ambient)</div>
+            <div class="v">{{$transport_order->litreage}} {{$transport_order->unit_of_measure}}</div>
+            @endif
+
+            @if($transport_order->litreage_at_20)
+            <div class="k">Litreage @ 20°C</div>
+            <div class="v">{{$transport_order->litreage_at_20}} {{$transport_order->unit_of_measure}}</div>
+            @endif
+
+            @if($transport_order->temparature)
+            <div class="k">Temperature</div>
+            <div class="v">{{$transport_order->temparature}}</div>
             @endif
           </div>
         </div>
-        @endif
 
       </div>{{-- end right --}}
 
