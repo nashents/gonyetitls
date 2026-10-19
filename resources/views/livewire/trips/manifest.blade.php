@@ -16,7 +16,7 @@
     h1 { font-size: 13px !important; }
     h3 { font-size: 9px !important; margin: 1px 0 !important; }
     .manifest__header { margin-bottom: 2px !important; }
-    .brand__logo { width: 90px !important; height: 90px !important; max-height: 90px !important; }
+    .brand__logo { width: 130px !important; height: 130px !important; max-height: 130px !important; }
     .brand__name { font-size: 11px !important; }
     .brand__meta { font-size: 7px !important; }
     .meta-grid { font-size: 8px !important; gap: 1px 6px !important; }
