@@ -131,6 +131,13 @@
                                                     Total Fuel Usage:
                                                     <strong>{{ isset($total_fuel) ? number_format($total_fuel, 2) . ' Litres' : '0.00 Litres' }}</strong>
                                                 </div>
+                                                @if (!empty($uncosted_fuel_orders))
+                                                {{-- Approved orders whose bill was deleted etc.: litres above, no cost below --}}
+                                                <div style="color: #c0392b">
+                                                    No fuel cost posted for: <strong>{{ implode(', ', $uncosted_fuel_orders) }}</strong>
+                                                    (approved, but no bill or customer fuel supply)
+                                                </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -351,8 +358,8 @@
                                                         <th style="width:140px;">Trip</th>
                                                         <th style="width:180px;">Account</th>
                                                         <th>Item</th>
-                                                        <th style="width:170px;">Expense Currency</th>
-                                                        <th style="width:190px;" class="text-right">Amount</th>
+                                                        <th style="width:170px;">Original Amount</th>
+                                                        <th style="width:190px;" class="text-right">Amount ({{ $default_currency->name ?? '' }})</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -386,8 +393,8 @@
                                                         <th style="width:140px;">Trip</th>
                                                         <th style="width:180px;">Account</th>
                                                         <th>Item</th>
-                                                        <th style="width:170px;">Expense Currency</th>
-                                                        <th style="width:190px;" class="text-right">Amount</th>
+                                                        <th style="width:170px;">Original Amount</th>
+                                                        <th style="width:190px;" class="text-right">Amount ({{ $default_currency->name ?? '' }})</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>

@@ -323,7 +323,7 @@
                                                             <th style="width:140px;">Trip</th>
                                                             <th style="width:180px;">Account</th>
                                                             <th>Item</th>
-                                                            <th style="width:170px;">Expense Currency</th>
+                                                            <th style="width:170px;">Original Amount</th>
                                                             <th style="width:220px;" class="text-right">Amount ({{ $default_currency->name }} {{ $default_currency->symbol }})</th>
                                                         </tr>
                                                     </thead>
@@ -394,7 +394,7 @@
                                                                 <th style="width:140px;">Trip</th>
                                                                 <th style="width:180px;">Account</th>
                                                                 <th>Item</th>
-                                                                <th style="width:170px;">Expense Currency</th>
+                                                                <th style="width:170px;">Original Amount</th>
                                                                 <th style="width:220px;" class="text-right">Amount ({{ $default_currency->name }} {{ $default_currency->symbol }})</th>
                                                             </tr>
                                                         </thead>

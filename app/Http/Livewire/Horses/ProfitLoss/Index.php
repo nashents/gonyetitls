@@ -16,6 +16,8 @@ use App\Models\BillExpense;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ProfitLossLineItems;
+
     // Horse picker filters: owning transporter and a reg#/fleet# search.
     public $transporters;
     public $horseTransporter;
@@ -50,6 +52,8 @@ class Index extends Component
     public $total_trips = 0;
     public $total_fuel_orders = 0;
     public $total_fuel = 0;
+    /** Approved fuel orders with no cost posted (order numbers) - see fuelStats(). */
+    public $uncosted_fuel_orders = [];
 
     /**
      * Flat line items:
@@ -168,6 +172,7 @@ class Index extends Component
         $this->total_trips = 0;
         $this->total_fuel_orders = 0;
         $this->total_fuel = 0;
+        $this->uncosted_fuel_orders = [];
 
         $this->cogs_items = [];
         $this->opex_items = [];
@@ -195,17 +200,7 @@ class Index extends Component
             ->whereBetween('start_date', [$this->fromDt, $this->toDt])
             ->count();
 
-        $this->total_fuel_orders = Fuel::query()
-            ->where('horse_id', $horseId)
-            ->where('authorization', 'approved')
-            ->whereBetween('date', [$this->fromDt, $this->toDt])
-            ->count();
-
-        $this->total_fuel = (float) Fuel::query()
-            ->where('horse_id', $horseId)
-            ->where('authorization', 'approved')
-            ->whereBetween('date', [$this->fromDt, $this->toDt])
-            ->sum('quantity');
+        [$this->total_fuel_orders, $this->total_fuel, $this->uncosted_fuel_orders] = $this->fuelStats((int) $horseId);
 
         // Income in reporting currency
         $incomeBase = (float) Trip::query()
@@ -232,6 +227,11 @@ class Index extends Component
             tripOnly: true,
             excludeAllowances: true
         );
+        // Customer-supplied fuel posts to Fuel - COGS with no Bill - see ProfitLossLineItems.
+        $this->cogs_items = array_merge($this->cogs_items, $this->customerFuelItems(
+            (int) $this->selectedHorse,
+            $this->cost_of_goods_sold_accounts->pluck('id')->all()
+        ));
 
         $this->opex_items = $this->fetchExpenseItemsFlat(
             $this->operating_expenses_accounts,
@@ -330,7 +330,7 @@ class Index extends Component
                 'inventory.product:id,name,brand_id',
                 'inventory.product.brand:id,name',
 
-                'bill:id,bill_number,currency_id,bill_date,trip_id',
+                'bill:id,bill_number,currency_id,bill_date,trip_id,exchange_rate',
                 'bill.currency:id,name,symbol',
                 'bill.trip:id,trip_number,start_date',
             ])
@@ -351,9 +351,7 @@ class Index extends Component
             );
 
             // Amount in reporting currency
-            $amount = ((int)($bill?->currency_id) === (int)$this->default_currency_id)
-                ? (float) $be->subtotal_incl
-                : (float) $be->exchange_amount;
+            $amount = $this->reportingAmount($be, $bill);
 
             // Skip true zeros (optional)
             if (abs($amount) < 0.00001) {
@@ -367,7 +365,7 @@ class Index extends Component
                 'account_name'    => $be->account?->name ?? '—',
                 'account_type_name' => $be->account?->account_type?->name ?? 'Uncategorized',
                 'item_name'       => $this->resolveBillExpenseName($be),
-                'expense_currency'=> $expenseCurrency,
+                'expense_currency'=> $this->currencyLabel($bill?->currency, (float) ($be->subtotal_incl ?: $be->subtotal)),
                 'amount'          => $amount,
             ];
         }

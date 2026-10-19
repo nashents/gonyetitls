@@ -18,6 +18,8 @@ use App\Models\BillExpense;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ProfitLossLineItems;
+
     public $transporterSearch;
 
     public $selectedTransporter;
@@ -441,7 +443,7 @@ class Index extends Component
                 'inventory.product:id,name,brand_id',
                 'inventory.product.brand:id,name',
 
-                'bill:id,bill_number,currency_id,bill_date,trip_id,horse_id,trailer_id,driver_id,total,balance,status',
+                'bill:id,bill_number,currency_id,bill_date,trip_id,horse_id,trailer_id,driver_id,total,balance,status,exchange_rate',
                 'bill.currency:id,name,symbol',
                 'bill.trip:id,trip_number,start_date',
                 'bill.horse:id,registration_number,fleet_number',
@@ -466,9 +468,7 @@ class Index extends Component
             );
 
             // Amount in reporting currency
-            $amount = ((int)($bill?->currency_id) === (int)$this->default_currency_id)
-                ? (float) $be->subtotal_incl
-                : (float) $be->exchange_amount;
+            $amount = $this->reportingAmount($be, $bill);
 
             // Cash basis: bill_expenses has no per-line payment record, so prorate
             // each line by how much of the whole bill has actually been paid
@@ -496,7 +496,7 @@ class Index extends Component
                 'item_name'       => $this->resolveBillExpenseName($be),
                 'resource_type'   => $resourceType,
                 'resource_name'   => $resourceName,
-                'expense_currency'=> $expenseCurrency,
+                'expense_currency'=> $this->currencyLabel($bill?->currency, (float) ($be->subtotal_incl ?: $be->subtotal)),
                 'amount'          => $amount,
             ];
         }
