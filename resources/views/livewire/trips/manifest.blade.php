@@ -16,7 +16,7 @@
     h1 { font-size: 13px !important; }
     h3 { font-size: 9px !important; margin: 1px 0 !important; }
     .manifest__header { margin-bottom: 2px !important; }
-    .brand__logo { max-height: 36px !important; }
+    .brand__logo { width: 90px !important; height: 90px !important; max-height: 90px !important; }
     .brand__name { font-size: 11px !important; }
     .brand__meta { font-size: 7px !important; }
     .meta-grid { font-size: 8px !important; gap: 1px 6px !important; }
@@ -75,14 +75,25 @@
                 {{ $company->country }}
               </span><br />
               Tel: <span data-field="company.phone">{{ $company->phonenumber }}</span>
-              · Email: <span data-field="company.email">{{ $company->email }}</span>
             </div>
           </div>
         </div>
 
+        @php
+          // The transport order number(s) tie this manifest to its transport order(s),
+          // which in turn print this manifest # and trip #.
+          $orderNumbers = ($trip->trip_transport_orders ?? collect())
+              ->map(fn ($tto) => $tto->transport_order?->transport_order_number)
+              ->filter()->unique()->values();
+          $qrData = collect([
+              'Manifest'        => $trip->manifest_number,
+              'Trip'            => $trip->trip_number.($trip->trip_ref ? '/'.$trip->trip_ref : ''),
+              'Transport Order' => $orderNumbers->implode(', '),
+          ])->filter()->map(fn ($value, $label) => $label.': '.$value)->implode("\n");
+        @endphp
         <aside class="meta">
           <div style="float:right; margin-left:8px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode('Manifest: '.$trip->manifest_number.' | Trip: '.$trip->trip_number.($trip->trip_ref ? '/'.$trip->trip_ref : '')) }}" alt="QR Code" width="90" height="90" />
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($qrData) }}" alt="QR Code" width="90" height="90" />
           </div>
           <h1>Transport Manifest</h1>
           <dl class="meta-grid">
@@ -92,6 +103,10 @@
             <dd class="mono" data-field="trip.number">
               {{ $trip->trip_number }}{{ $trip->trip_ref ? ' / '.$trip->trip_ref : '' }}
             </dd>
+            @if ($orderNumbers->isNotEmpty())
+              <dt>Transport Order #</dt>
+              <dd class="mono" data-field="transport_order.number">{{ $orderNumbers->implode(', ') }}</dd>
+            @endif
             <dt>Date</dt>
             <dd data-field="manifest.date">{{ $trip->start_date }}</dd>
             <dt>Created By</dt>
@@ -137,14 +152,6 @@
         <div class="card">
           <h3>Route</h3>
           <div class="kv">
-            <div class="k">Origin</div>
-            <div class="v">
-              @if (isset($from))
-                {{ $from->country?->name }} {{ $from->city }}
-              @endif
-              {{ $trip->loading_point?->name }}
-            </div>
-
             <div class="k">Destination</div>
             <div class="v">
               @if (isset($to))
@@ -416,11 +423,8 @@
         </div>
         <div class="card">
           <div class="kv">
-            <div class="k">Gross / Net Weight</div>
-            <div class="v">
-              {{ $trip->weight ? $trip->weight.'t' : '' }}
-              {{ $trip->net_weight ? ' / '.$trip->net_weight.'t' : '' }}
-            </div>
+            <div class="k">Gross Weight</div>
+            <div class="v">{{ $trip->weight ? $trip->weight.'t' : '' }}</div>
             <div class="k">Seal #</div>
             <div class="v">{{ $trip->seal_number }}</div>
             <div class="k">Container #</div>

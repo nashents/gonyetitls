@@ -29,7 +29,7 @@
     /* ---------- Header ---------- */
     .manifest__header { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; align-items: start; }
     .brand { display:flex; gap: 12px; align-items:flex-start; }
-    .brand__logo { width: 96px; height: 96px; object-fit: contain; border-radius: 8px; border:1px solid var(--line); }
+    .brand__logo { width: 120px; height: 120px; object-fit: contain; border-radius: 8px; border:1px solid var(--line); }
     .brand__name { font-size: 20px; font-weight: 700; }
     .brand__meta { font-size: 12px; color: var(--muted); line-height: 1.35; }
 
@@ -318,8 +318,8 @@ html, body { background: var(--bg); color: var(--ink); font-family: var(--font);
   }
 
   .brand__logo {
-    width: 70px !important;
-    height: 70px !important;
+    width: 90px !important;
+    height: 90px !important;
   }
 
   .brand__meta {
