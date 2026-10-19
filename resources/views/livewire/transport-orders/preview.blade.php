@@ -272,8 +272,8 @@
           </div>
         </div>
 
-        <!-- Financials -->
-        @if($transport_order->currency || $transport_order->rate || $transport_order->freight)
+        <!-- Financials: hidden unless Business Settings > Show Rate & Freight to Drivers is on -->
+        @if(optional($company)->show_financials_to_drivers && ($transport_order->currency || $transport_order->rate || $transport_order->freight))
         <div class="card">
           <h3>Financials</h3>
           <div class="kv">
