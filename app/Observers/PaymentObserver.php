@@ -44,12 +44,12 @@ class PaymentObserver
      */
     public function deleted(Payment $payment)
     {
-        // Safety net: a deleted payment must not stay in the ledger (see
-        // BillObserver::deleted). No-op where the caller already reversed.
-        app(JournalReversalService::class)->reverseLiveEffects(
-            JournalEntry::where('payment_id', $payment->id),
-            "Payment {$payment->payment_number} deleted"
-        );
+        // However it was deleted, undo everything the payment did (allocations,
+        // invoice/bill balances, cash/bank balance, child rows, ledger) - see
+        // PaymentDeletionService. Runs once per payment per request.
+        $service = app(\App\Services\Accounting\PaymentDeletionService::class);
+        $service->cascade($payment, "Payment {$payment->payment_number} deleted", $payment->deleted_by_id);
+        $service->syncWallet($payment);
     }
 
     /**

@@ -620,9 +620,15 @@ class Index extends Component
     }
 
 
+    /** Why the selected bill can't be deleted on its own (raised from a source document), else null. */
+    public $delete_block_reason;
+
     public function delete($id){
         $this->bill_id = $id;
         $this->selected_bill = Bill::find($id);
+        $this->delete_block_reason = $this->selected_bill
+            ? app(\App\Services\Accounting\BillDeletionService::class)->sourceBlockReason($this->selected_bill)
+            : null;
          $this->dispatchBrowserEvent('show-deleteModal');
         
     }
@@ -631,8 +637,14 @@ class Index extends Component
 
         $bill = Bill::findOrFail($this->bill_id);
 
-        app(\App\Services\Accounting\BillDeletionService::class)
-            ->delete($bill, Auth::id());
+        try {
+            app(\App\Services\Accounting\BillDeletionService::class)
+                ->delete($bill, Auth::id());
+        } catch (\RuntimeException $e) {
+            $this->dispatchBrowserEvent('hide-deleteModal');
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
+        }
 
         $this->dispatchBrowserEvent('hide-deleteModal');
         $this->dispatchBrowserEvent('alert',[
@@ -901,6 +913,13 @@ class Index extends Component
                 })
                 ->orWhereHas('purchase', function ($sub) use ($term) {
                     $sub->where('purchase_number', 'like', $term);
+                })
+                // Fuel order / station top-up a bill was raised from (CEFO00017 etc.)
+                ->orWhereHas('fuel', function ($sub) use ($term) {
+                    $sub->where('order_number', 'like', $term);
+                })
+                ->orWhereHas('top_up', function ($sub) use ($term) {
+                    $sub->where('order_number', 'like', $term);
                 })
                 ->orWhereHas('vendor', function ($sub) use ($term) {
                     $sub->where('name', 'like', $term);

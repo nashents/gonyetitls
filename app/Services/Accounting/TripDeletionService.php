@@ -97,7 +97,7 @@ class TripDeletionService
                     $warnings[] = "Invoice {$invoice->invoice_number} was synced to Sage Intacct (ref {$invoice->sageMapping->external_reference}) - void it there too.";
                 }
 
-                $this->invoiceDeletion->delete($invoice, $deletedById, $reasonText);
+                $this->invoiceDeletion->delete($invoice, $deletedById, $reasonText, fromSource: true);
             }
 
             // -----------------------------
@@ -107,7 +107,7 @@ class TripDeletionService
             // plus any requisition-linked bill that slipped through without it.
             // -----------------------------
             foreach ($trip->bills as $bill) {
-                $this->billDeletion->delete($bill, $deletedById, $reasonText);
+                $this->billDeletion->delete($bill, $deletedById, $reasonText, fromSource: true);
             }
 
             foreach ($trip->requisitions as $requisition) {

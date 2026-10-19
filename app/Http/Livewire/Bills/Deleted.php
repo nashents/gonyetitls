@@ -50,7 +50,10 @@ class Deleted extends Component
 
     public function render()
     {
-        $query = Bill::onlyTrashed()->with(['vendor', 'transporter', 'currency', 'user', 'deleted_by']);
+        $query = Bill::onlyTrashed()->with([
+            'vendor', 'transporter', 'currency', 'user', 'deleted_by', 'trip', 'horse', 'container', 'top_up',
+            'fuel' => fn ($q) => $q->withTrashed(),
+        ]);
 
         $search = trim((string) ($this->search ?? ''));
         if ($search !== '') {
@@ -61,7 +64,13 @@ class Deleted extends Component
                     ->orWhere('bill_date', 'like', $term)
                     ->orWhereHas('vendor', fn ($qq) => $qq->where('name', 'like', $term))
                     ->orWhereHas('transporter', fn ($qq) => $qq->where('name', 'like', $term))
-                    ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', $term));
+                    ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', $term))
+                    // Find a deleted bill by what it was raised from
+                    ->orWhereHas('fuel', fn ($qq) => $qq->withTrashed()->where('order_number', 'like', $term))
+                    ->orWhereHas('top_up', fn ($qq) => $qq->where('order_number', 'like', $term))
+                    ->orWhereHas('trip', fn ($qq) => $qq->where('trip_number', 'like', $term))
+                    ->orWhereHas('horse', fn ($qq) => $qq->where('registration_number', 'like', $term))
+                    ->orWhereHas('container', fn ($qq) => $qq->where('name', 'like', $term));
             });
         }
 

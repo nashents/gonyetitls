@@ -252,22 +252,15 @@ class BillController extends Controller
      */
     public function destroy(Bill $bill)
     {
-        $bill_expenses = $bill->bill_expenses;
-        if (isset($bill_expenses)) {
-            foreach ($bill_expenses as $bill_expense) {
-                $bill_expense->delete();
-            }
+        // Same rules as the Bills list: blocked when raised from a source
+        // document, otherwise everything under the bill is reversed with it.
+        try {
+            app(\App\Services\Accounting\BillDeletionService::class)->delete($bill, \Illuminate\Support\Facades\Auth::id());
+        } catch (\RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+            return redirect()->back();
         }
-     
-        $payments = $bill->payments;
-        if (isset($payments)) {
-            foreach ($payments as $payment) {
-                $payment->delete();
-            }
-        }
-       
 
-        $bill->delete();
         Session::flash('success','Bill Deleted Successfully!!');
         return redirect()->back();
     }

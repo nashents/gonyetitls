@@ -103,17 +103,17 @@ class AccountController extends Controller
             return redirect()->back();
         }
 
-        $bill_expenses = $account->bill_expenses;
-        if (isset($bill_expenses)) {
-            foreach ($bill_expenses as $bill_expense) {
-                $bill = $bill_expense->bill;
-                if (isset($bill)) {
-                  $bill->delete();
-                }
-                $bill_expense->delete();
-              }
+        // An account that has been used can't go: this used to delete every
+        // bill with a line on it, wiping supplier bills (and leaving their
+        // payments hanging) just to remove a chart-of-accounts entry.
+        $inUse = $account->bill_expenses()->exists()
+            || \App\Models\JournalEntryLine::where('account_id', $account->id)->exists()
+            || \App\Models\Payment::where('account_id', $account->id)->exists();
+        if ($inUse) {
+            Session::flash('error', "Account {$account->name} has transactions (bills, payments or journal lines) and can't be deleted. Deactivate it instead.");
+            return redirect()->back();
         }
-       
+
         $account->delete();
         Session::flash('success','Account Deleted Successfully');
         return redirect()->back();

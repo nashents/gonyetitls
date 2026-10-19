@@ -534,8 +534,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
+               @if ($delete_block_reason)
+               {{-- Raised from another document: deleting just the bill would leave the source hanging --}}
+               <center><strong>Bill {{$selected_bill?->bill_number}} can't be deleted on its own</strong></center>
+               <center><small>{{ $delete_block_reason }}</small></center>
+               @else
                <center> <strong>Are you sure you want to delete  Bill {{$selected_bill?->bill_number}}</strong> </center>
-               @if ($selected_bill && $selected_bill->payments->isNotEmpty())
+               @endif
+               @if (! $delete_block_reason && $selected_bill && $selected_bill->payments->isNotEmpty())
                <center>
                    <small>
                        This bill has existing payments totalling {{ number_format($selected_bill->payments->sum('amount'), 2) }}.
@@ -549,7 +555,9 @@
             <div class="modal-footer no-border">
                 <div class="btn-group" role="group">
                     <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    @unless ($delete_block_reason)
                     <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    @endunless
                 </div>
                 <!-- /.btn-group -->
             </div>

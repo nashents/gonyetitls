@@ -130,6 +130,8 @@ class BillsExport implements
                   ->orWhereHas('transporter', fn (Builder $r) => $r->where('name', 'like', $term))
                   ->orWhereHas('container', fn (Builder $r) => $r->where('name', 'like', $term))
                   ->orWhereHas('purchase', fn (Builder $r) => $r->where('purchase_number', 'like', $term))
+                  ->orWhereHas('fuel', fn (Builder $r) => $r->where('order_number', 'like', $term))
+                  ->orWhereHas('top_up', fn (Builder $r) => $r->where('order_number', 'like', $term))
                   ->orWhereHas('vendor', fn (Builder $r) => $r->where('name', 'like', $term));
             });
         });

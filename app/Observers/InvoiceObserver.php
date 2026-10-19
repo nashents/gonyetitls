@@ -121,11 +121,13 @@ class InvoiceObserver
      */
     public function deleted(Invoice $invoice)
     {
-        // Safety net: a deleted invoice must not stay in the ledger (see
-        // BillObserver::deleted). No-op after InvoiceDeletionService.
-        app(JournalReversalService::class)->reverseLiveEffects(
-            JournalEntry::where('invoice_id', $invoice->id),
-            "Invoice {$invoice->invoice_number} deleted"
+        // However it was deleted (e.g. its sale being deleted), nothing under
+        // the invoice may be left hanging - see InvoiceDeletionService::cascade().
+        // Idempotent, so a no-op after InvoiceDeletionService already did it.
+        app(\App\Services\Accounting\InvoiceDeletionService::class)->cascade(
+            $invoice,
+            "Invoice {$invoice->invoice_number} deleted",
+            $invoice->deleted_by_id
         );
     }
 

@@ -65,6 +65,22 @@
                                             <br>
                                             Trip | {{ $bill->trip->trip_number }}
                                         @endif
+                                        {{-- What the bill was raised from, so a deleted fuel / top-up bill can be traced back --}}
+                                        @if ($bill->fuel)
+                                            <br>
+                                            Fuel Order | {{ $bill->fuel->order_number }}{{ $bill->fuel->trashed() ? ' (deleted)' : '' }}
+                                        @elseif ($bill->top_up)
+                                            <br>
+                                            Top Up | {{ $bill->top_up->order_number }}
+                                        @endif
+                                        @if ($bill->container)
+                                            <br>
+                                            Station | {{ $bill->container->name }}
+                                        @endif
+                                        @if ($bill->horse)
+                                            <br>
+                                            Horse | {{ $bill->horse->registration_number }}
+                                        @endif
                                         @if ($bill->description)
                                             <br>
                                             {{$bill->description}}

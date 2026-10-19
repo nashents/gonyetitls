@@ -436,36 +436,11 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-paymentDeleteModal');
     }
     public function deleteTransaction(){
-        DB::transaction(function () {
-            $payment = Payment::lockForUpdate()->find($this->payment->id);
-
-            if ($payment && $payment->account_id) {
-                $account = Account::lockForUpdate()->find($payment->account_id);
-
-                if ($account && is_numeric($account->balance) && is_numeric($payment->amount)) {
-                    if ($payment->movement === 'Crt') {
-                        $account->balance = (float) $account->balance - (float) $payment->amount;
-                        $account->save();
-                    } elseif ($payment->movement === 'Dbt') {
-                        $account->balance = (float) $account->balance + (float) $payment->amount;
-                        $account->save();
-                    }
-                }
-            }
-
-            // Transfers also move the destination account's balance -
-            // reverse that leg too.
-            if ($payment && $payment->category === 'transfer' && $payment->to_account_id) {
-                $toAccount = Account::lockForUpdate()->find($payment->to_account_id);
-
-                if ($toAccount && is_numeric($toAccount->balance) && is_numeric($payment->to_amount)) {
-                    $toAccount->balance = (float) $toAccount->balance - (float) $payment->to_amount;
-                    $toAccount->save();
-                }
-            }
-
-            $payment?->delete();
-        });
+        // Account balances (both legs of a transfer), allocations and ledger -
+        // see PaymentDeletionService.
+        if ($payment = Payment::find($this->payment->id)) {
+            app(\App\Services\Accounting\PaymentDeletionService::class)->delete($payment, Auth::id());
+        }
 
         $this->dispatchBrowserEvent('hide-paymentDeleteModal');
         $this->dispatchBrowserEvent('alert',[

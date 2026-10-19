@@ -358,8 +358,14 @@ class InvoiceController extends Controller
      */
     public function destroy(Invoice $invoice)
     {
-        app(\App\Services\Accounting\InvoiceDeletionService::class)
-            ->delete($invoice, Auth::id());
+        try {
+            app(\App\Services\Accounting\InvoiceDeletionService::class)
+                ->delete($invoice, Auth::id());
+        } catch (\RuntimeException $e) {
+            // Fiscalised, or raised from a sale - see InvoiceDeletionService::blockReason()
+            Session::flash('error', $e->getMessage());
+            return redirect()->back();
+        }
 
         Session::flash('success','Invoice Deleted and related transactions reversed Successfully!!');
         return redirect()->back();

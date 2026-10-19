@@ -65,13 +65,15 @@ class BillObserver
      */
     public function deleted(Bill $bill)
     {
-        // Safety net: however it was deleted, a deleted bill must not stay in
-        // the ledger. BillDeletionService etc. reverse first and leave no live
-        // entry (no-op here); direct ->delete() callers - trip expense removal,
-        // ticket/workshop/purchase controllers - used to leave it posted.
-        app(JournalReversalService::class)->reverseLiveEffects(
-            JournalEntry::where('bill_id', $bill->id),
-            "Bill {$bill->bill_number} deleted"
+        // However it was deleted - including a source document's own removal
+        // (trip expense, fuel order, ticket, workshop/purchase controllers) -
+        // nothing under the bill may be left hanging: its allocations,
+        // payments, posting and line items go with it. Idempotent, so a no-op
+        // after BillDeletionService already did it.
+        app(\App\Services\Accounting\BillDeletionService::class)->cascade(
+            $bill,
+            "Bill {$bill->bill_number} deleted",
+            $bill->deleted_by_id
         );
     }
 
