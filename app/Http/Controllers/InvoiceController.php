@@ -290,17 +290,8 @@ class InvoiceController extends Controller
     }
 
     public function generatePDF(Invoice $invoice){
-        $company = $invoice->company;
-        $invoice_items = $invoice->invoice_items;
-        $data = [
-            'invoice' => $invoice,
-            'company' => $company,
-            'invoice_items' => $invoice_items,
-        ];
-        $pdf = PDF::loadView('invoices.invoice', $data);
-
-        return $pdf->download('invoice.pdf');
-
+        // Same layout as the preview (company invoice template) + fiscal data.
+        return app(\App\Services\Invoices\InvoicePdf::class)->download($invoice);
     }
 
     /**

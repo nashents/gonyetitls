@@ -29,7 +29,10 @@
                 @endif
 
                 @if($fiscalStatus === 'approved' && $fiscalPdfFile)
-                    <button type="button" wire:click="downloadFiscalPdf" class="btn btn-success btn-wide btn-rounded"><i class="fa fa-file-pdf-o"></i> Download Fiscal PDF</button>
+                    <button type="button" wire:click="downloadFiscalPdf" class="btn btn-default border-success btn-wide btn-rounded"
+                            title="The fiscal provider's own copy of this credit note, in its standard layout">
+                        <i class="fa fa-file-pdf-o" style="color:green"></i> Provider Fiscal Copy
+                    </button>
                 @endif
                 {{-- <a href="#" wire:click="sendEmail({{$credit_note->id}})" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
                <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
@@ -91,7 +94,7 @@
                     </div>
                   
                     <div style="padding-top: 25px; padding-bottom:15px">
-                        <center><h2>CREDIT NOTE</h2></center>
+                        <center><h2>{{ $credit_note->isFiscalised() ? "FISCAL CREDIT NOTE" : "CREDIT NOTE" }}</h2></center>
                     </div>
                 
                 </header>
@@ -141,20 +144,6 @@
                             <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$credit_note->date}}</div>
                           
                             <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$credit_note->currency ? $credit_note->currency->name : ""}}</div>
-                            @if ($fiscalStatus === 'approved')
-                                @if ($fiscalRaInvoiceNo)
-                                <div class="date" style="padding-bottom: 3px"><strong>RA Invoice No.:</strong> {{$fiscalRaInvoiceNo}}</div>
-                                @endif
-                                @if ($fiscalDay)
-                                <div class="date" style="padding-bottom: 3px"><strong>Fiscal Day:</strong> {{$fiscalDay}}</div>
-                                @endif
-                                @if ($fiscalVerifyCode)
-                                <div class="date" style="padding-bottom: 3px"><strong>Verification Code:</strong> <span style="font-family:monospace;font-weight:700">{{$fiscalVerifyCode}}</span></div>
-                                @endif
-                                @if ($fiscalQrUrl)
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($fiscalQrUrl) }}" width="90" height="90" alt="Fiscal QR">
-                                @endif
-                            @endif
                         </div>
                     </div>
 
@@ -227,6 +216,9 @@
                             </tr>
                         </tfoot>
                     </table>
+
+                    {{-- Same fiscal block as the credit note PDF / print views. --}}
+                    @include('fiscal.verification', ['fiscalDocument' => $this->fiscalDocumentRecord])
                     <br>
                     @if ($credit_note->credit_note_reason)
                         <div class="notices">

@@ -63,8 +63,8 @@
                                         <input type="text" wire:model.debounce.300ms="search" placeholder="Search with invoice number, customer, date..." class="form-control">
                                         <select wire:model="selectedInvoice" class="form-control" size="4" required >
                                            <option value="" disabled>Select Invoice</option>
-                                            @foreach ($invoices as $invoice)
-                                                <option value="{{$invoice->id}}">{{$invoice->invoice_number}} | {{$invoice->customer ? $invoice->customer->name : ""}} | {{ $invoice->date }} | {{ $invoice->currency ? $invoice->currency->name : "" }} {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->total,2)}} </option>
+                                            @foreach ($invoices as $invoiceOption)
+                                                <option value="{{$invoiceOption->id}}">{{$invoiceOption->invoice_number}} | {{$invoiceOption->customer ? $invoiceOption->customer->name : ""}} | {{ $invoiceOption->date }} | {{ $invoiceOption->currency ? $invoiceOption->currency->name : "" }} {{ $invoiceOption->currency ? $invoiceOption->currency->symbol : "" }}{{number_format($invoiceOption->total,2)}} </option>
                                             @endforeach
                                        </select>
                                         @error('selectedInvoice') <span class="error" style="color:red">{{ $message }}</span> @enderror

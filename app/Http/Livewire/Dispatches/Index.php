@@ -417,12 +417,60 @@ class Index extends Component
             ->get();
     }
 
+    // What a new dispatch may take from a stock row: balance less what pending dispatches
+    // already hold (balance only drops on approval). Tyres are held whole by dispatchable().
+    private function availableQty($row, float $tyreQty): float
+    {
+        return $row instanceof Tyre ? $tyreQty : $row->available_balance;
+    }
+
+    // Requested qty beyond what's free. Checked on save as well as in the form, since another
+    // dispatch may have reserved the same stock after this form loaded.
+    private function reservationProblems(): array
+    {
+        $model = $this->department === 'asset' ? Asset::class : Inventory::class;
+        $problems = [];
+
+        if ($this->expand) {
+            $rows = $this->department === 'asset' ? ($this->selectedAsset ?? []) : ($this->selectedInventory ?? []);
+            foreach ($rows as $key => $id) {
+                $requested = (float) ($this->qty[$key] ?? 0);
+                $row = $id ? $model::find($id) : null;
+                if ($row && $requested - $row->available_balance > 0.000001) {
+                    $problems["qty.$key"] = $this->reservationMessage($row->available_balance, $row->reserved_qty);
+                }
+            }
+
+            return $problems;
+        }
+
+        foreach ($this->selectedProduct ?? [] as $key => $productId) {
+            $requested = (float) ($this->qty[$key] ?? 0);
+            if (! $productId || $requested <= 0) {
+                continue;
+            }
+            $rows = $model::where('product_id', $productId)->where('status', 1)->where('balance', '>', 0)->withReservedQty()->get();
+            $available = $rows->sum('available_balance');
+            if ($requested - $available > 0.000001) {
+                $problems["qty.$key"] = $this->reservationMessage($available, $rows->sum('reserved_qty'));
+            }
+        }
+
+        return $problems;
+    }
+
+    private function reservationMessage(float $available, float $reserved): string
+    {
+        return 'Only '.(float) $available.' available'
+            .($reserved > 0 ? ' - '.(float) $reserved.' reserved by dispatches awaiting approval.' : '.');
+    }
+
     // Stock rows that can still be dispatched. Tyres fitted to a unit are never in stock.
     private function stockConstraint(string $relation, $store_id = null): \Closure
     {
         return function ($q) use ($relation, $store_id) {
             $q->where('status', 1)
-                ->where('balance', '>', 0)
+                ->when(in_array($relation, ['inventories', 'assets']), fn ($qq) => $qq->available(), fn ($qq) => $qq->where('balance', '>', 0))
                 ->when($store_id, fn ($qq) => $qq->where('store_id', $store_id))
                 ->when($relation === 'tyres', fn ($qq) => $qq->whereDoesntHave('tyre_assignments', fn ($a) => $a->where('status', 1))
                     ->whereDoesntHave('dispatch_items.dispatch', fn ($d) => $d->where('authorization', 'pending')));
@@ -715,8 +763,8 @@ class Index extends Component
         if (!is_null($id)) {
             $inventory = Inventory::find($id);
             if ($inventory && $this->expand == True) {
-                $this->qty[$key] = $inventory->balance;
-                $this->max[$key] = $inventory->balance;
+                $this->qty[$key] = $inventory->available_balance;
+                $this->max[$key] = $inventory->available_balance;
             }
         }
          
@@ -725,8 +773,8 @@ class Index extends Component
         if (!is_null($id)) {
             $asset = Asset::find($id);
             if ($asset && $this->expand == True) {
-                $this->qty[$key] = $asset->balance;
-                $this->max[$key] = $asset->balance;
+                $this->qty[$key] = $asset->available_balance;
+                $this->max[$key] = $asset->available_balance;
             }
         }
     }
@@ -770,9 +818,9 @@ class Index extends Component
             $tyre = Tyre::find($id);
             if ($tyre && $this->expand == True) {
                 $this->weight[$key] = $tyre->balance;
-                $this->max[$key] = $tyre->balance;
+                $this->max[$key] = 1;
                 if ($this->department === 'tyre') {
-                    $this->qty[$key] = $tyre->balance;
+                    $this->qty[$key] = 1;
                     $this->selectedProduct[$key] = $tyre->product_id;
                     $this->defaultFitTypes();
                 }
@@ -785,7 +833,8 @@ class Index extends Component
             if ($this->expand == False) {
                   $this->qty[$key] = 1;
             }
-            $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+            // Fully reserved rows stay listed (disabled) so stores can see what pending dispatches hold.
+            $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->withReservedQty()->orderBy('created_at','asc')->get();
             $this->tyres = Tyre::dispatchable()->where('product_id',$id)->orderBy('created_at','asc')->get();
 
             // Each tyre row keeps its own list, so picking a product on another row doesn't blank this one.
@@ -795,16 +844,16 @@ class Index extends Component
                     $this->selectedTyre[$key] = null;
                 }
             }
-            $this->assets = Asset::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+            $this->assets = Asset::where('product_id',$id)->where('status',1)->where('balance','>',0)->withReservedQty()->orderBy('created_at','asc')->get();
             
             $product = Product::find($id);
 
             if ($product && $this->department == "inventory") {
-                $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
+                $this->max[$key] = $this->inventories->sum('available_balance');
             }elseif ($product && $this->department == "tyre") {
                 $this->max[$key] = Tyre::dispatchable()->where('product_id', $product->id)->sum('balance');
             }elseif ($product && $this->department == "asset") {
-                $this->max[$key] = $product->assets->where('status',1)->where('balance','>',0)->sum('balance');
+                $this->max[$key] = $this->assets->sum('available_balance');
             }
 
         
@@ -957,7 +1006,8 @@ class Index extends Component
 
         foreach ($collection as $key => $collectionId) {
 
-            $requestedQty = (float)($this->qty[$key] ?? 0);
+            // A selected tyre is one physical unit.
+            $requestedQty = $this->department === 'tyre' ? 1.0 : (float)($this->qty[$key] ?? 0);
             if ($requestedQty <= 0) {
                 continue;
             }
@@ -975,8 +1025,8 @@ class Index extends Component
                 continue;
             }
 
-            // 3) How much is available on this exact row
-            $rowQtyAvailable = (float)($model->balance);
+            // 3) How much is available on this exact row (less pending-dispatch reservations)
+            $rowQtyAvailable = $this->availableQty($model, (float)$model->balance);
             if ($rowQtyAvailable <= 0) {
                 continue;
             }
@@ -1078,7 +1128,8 @@ class Index extends Component
 
         foreach ($collection as $key => $collectionId) {
 
-            $requestedQty = (float)($this->qty[$key] ?? 0);
+            // A selected tyre is one physical unit.
+            $requestedQty = $this->department === 'tyre' ? 1.0 : (float)($this->qty[$key] ?? 0);
             if ($requestedQty <= 0) {
                 continue;
             }
@@ -1096,7 +1147,7 @@ class Index extends Component
                 continue;
             }
 
-            $rowQtyAvailable = (float)$model->balance;
+            $rowQtyAvailable = $this->availableQty($model, (float)$model->balance);
             if ($rowQtyAvailable <= 0) {
                 continue;
             }
@@ -1208,6 +1259,7 @@ class Index extends Component
                     $items = Inventory::where('product_id', $product->id)
                         ->where('status', 1)
                         ->where('balance', '>', 0)
+                        ->withReservedQty()
                         ->orderBy('created_at', 'asc')
                         ->get();
                     break;
@@ -1216,6 +1268,7 @@ class Index extends Component
                     $items = Asset::where('product_id', $product->id)
                         ->where('status', 1)
                         ->where('balance', '>', 0)
+                        ->withReservedQty()
                         ->orderBy('created_at', 'asc')
                         ->get();
                     break;
@@ -1242,8 +1295,8 @@ class Index extends Component
                     break;
                 }
 
-                // 2) Determine available qty on this row
-                $rowQtyAvailable = (float)($item->balance ?: $item->qty);
+                // 2) Determine available qty on this row (less pending-dispatch reservations)
+                $rowQtyAvailable = $this->availableQty($item, (float)($item->balance ?: $item->qty));
 
                 if ($rowQtyAvailable <= 0) {
                     continue;
@@ -1353,6 +1406,7 @@ class Index extends Component
                     $items = Inventory::where('product_id', $product->id)
                         ->where('status', 1)
                         ->where('balance', '>', 0)
+                        ->withReservedQty()
                         ->orderBy('created_at', 'asc')
                         ->get();
                     break;
@@ -1361,6 +1415,7 @@ class Index extends Component
                     $items = Asset::where('product_id', $product->id)
                         ->where('status', 1)
                         ->where('balance', '>', 0)
+                        ->withReservedQty()
                         ->orderBy('created_at', 'asc')
                         ->get();
                     break;
@@ -1418,7 +1473,7 @@ class Index extends Component
                     break;
                 }
 
-                $rowQtyAvailable = (float)($item->balance ?: $item->qty);
+                $rowQtyAvailable = $this->availableQty($item, (float)($item->balance ?: $item->qty));
                 if ($rowQtyAvailable <= 0) {
                     continue;
                 }
@@ -1502,6 +1557,21 @@ class Index extends Component
                 $this->dispatchBrowserEvent('alert', [
                     'type' => 'error',
                     'message' => reset($errors),
+                ]);
+                return;
+            }
+        }
+
+        if ($this->dispatch_for === 'inventory' && in_array($this->department, ['inventory', 'asset'])) {
+            $problems = $this->reservationProblems();
+            if ($problems) {
+                $this->resetErrorBag();
+                foreach ($problems as $field => $message) {
+                    $this->addError($field, $message);
+                }
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'error',
+                    'message' => reset($problems),
                 ]);
                 return;
             }

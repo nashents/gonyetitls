@@ -123,6 +123,10 @@
                                         @if ($inventory->balance)
                                             <strong>Bal: </strong> {{$inventory->balance ? $inventory->balance : ""}}  {{$inventory->measurement ? $inventory->measurement : $inventory->product->unit_of_measure}}
                                         @endif
+                                        @if ($inventory->reserved_qty > 0)
+                                            <br><span class="badge bg-warning" title="Held by dispatches awaiting approval - leaves stock when they're approved, freed if rejected">Reserved: {{ (float) $inventory->reserved_qty }}</span>
+                                            <br><strong>Available: </strong> {{ $inventory->available_balance }}
+                                        @endif
                                          
                                     </td>
                                     <td>

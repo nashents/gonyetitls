@@ -64,6 +64,8 @@ class Create extends Component
     public $product_description;
     public $company;
     public $invoiceItems = [];
+    // Why the selected invoice can't take a credit note (greys out Save), or null.
+    public $selectedBlockReason = null;
     public $rows = [];
     public $invoice_attached = 'Yes';
     public $tax_accounts = [];
@@ -92,6 +94,7 @@ class Create extends Component
     public function updatedInvoiceAttached($value){
         $this->selectedInvoice = null;
         $this->invoice = null;
+        $this->selectedBlockReason = null;
         $this->invoiceItems = [];
         $this->selectedCustomer = null;
         $this->customer = null;
@@ -103,7 +106,8 @@ class Create extends Component
     public function updatedSelectedInvoice($id){
         if (!is_null($id)) {
             $this->invoice = Invoice::find($this->selectedInvoice);
-            if ($blockReason = $this->invoice->creditNoteBlockReason()) {
+            $this->selectedBlockReason = $this->invoice->creditNoteBlockReason();
+            if ($blockReason = $this->selectedBlockReason) {
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'warning',
                     'message'=>$blockReason
@@ -406,19 +410,48 @@ class Create extends Component
     }
 
 
+    /**
+     * What each listed invoice can still be credited, keyed by invoice id:
+     * balance less pending credit notes — the same rule as
+     * Invoice::creditNoteBlockReason(), in one grouped query for the list.
+     */
+    protected function creditableAmounts(): array
+    {
+        $invoices = collect($this->invoices ?? []);
+        if ($invoices->isEmpty()) {
+            return [];
+        }
+
+        $pending = \App\Models\CreditNote::where('authorization', 'pending')
+            ->whereIn('invoice_id', $invoices->pluck('id'))
+            ->groupBy('invoice_id')
+            ->selectRaw('invoice_id, SUM(COALESCE(total+0,0)) as pending_total')
+            ->pluck('pending_total', 'invoice_id');
+
+        return $invoices->mapWithKeys(fn ($invoice) => [
+            $invoice->id => [
+                'amount'  => round((float) $invoice->balance - (float) ($pending[$invoice->id] ?? 0), 2),
+                'pending' => (float) ($pending[$invoice->id] ?? 0) > 0,
+            ],
+        ])->all();
+    }
+
     public function render()
     {
         if (isset($this->search)) {
+            // Search terms grouped so the approved-only filter applies to every match.
             $this->invoices = Invoice::query()->with('customer:id,name')
                                 ->where('authorization', 'approved')
-                                ->where('invoice_number', 'like', '%'.$this->search.'%')
-                                ->orWhere('date', 'like', '%'.$this->search.'%')
-                                ->orWhereHas('customer', function ($query) {
-                                 return $query->where('name', 'like', '%'.$this->search.'%');
+                                ->where(function ($query) {
+                                    $query->where('invoice_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('date', 'like', '%'.$this->search.'%')
+                                        ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'));
                                 })->orderBy('created_at','desc')->get();
         }
-               
-        return view('livewire.credit-notes.create');
+
+        return view('livewire.credit-notes.create', [
+            'creditable' => $this->creditableAmounts(),
+        ]);
 
 
 

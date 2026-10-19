@@ -75,7 +75,9 @@ class FiscalHarmonyDriver implements FiscalDriver
         return $this->submitted(fn () => $this->api->submitInvoice([
             'invoiceId'      => $document['externalId'],
             'invoiceNumber'  => $document['number'],
-            'reference'      => $document['reference'] ?: null,
+            // FH rejects invoices without a Reference (400) although the docs
+            // don't mark it required; fall back to our invoice number.
+            'reference'      => $document['reference'] ?: $document['number'],
             'isTaxInclusive' => false,
             'date'           => $document['date'],
             'currencyCode'   => $document['currencyCode'],

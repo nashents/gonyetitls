@@ -171,6 +171,7 @@ class Index extends Component
     {
 
         $query = Inventory::query()
+        ->withReservedQty()
         ->with([
             'product',
             'product.brand',

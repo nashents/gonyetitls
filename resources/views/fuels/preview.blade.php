@@ -1,193 +1,152 @@
-@extends('layouts.previews')
+@extends('layouts.jobcard')
+
 @section('title')
-    Fuel Order Preview|@if (isset(Auth::user()->employee->company))
-    {{Auth::user()->employee->company->name}}
-    @elseif (Auth::user()->company)
-    {{Auth::user()->company->name}}
-    @endif
+    Fuel Order {{ $fuel->order_number }}
 @endsection
+
+@section('extra-css')
+    @include('fuels.partials.document-styles')
+@endsection
+
 @section('content')
+@php
+    // Fuel dates are stored as free text ("2026-07-10", "2026-07-22T16:48", ...): show them all one way.
+    $formatDate = function ($date) {
+        try {
+            $parsed = \Carbon\Carbon::parse($date);
+            return preg_match('/\d{1,2}:\d{2}/', (string) $date) ? $parsed->format('d M Y H:i') : $parsed->format('d M Y');
+        } catch (\Throwable $e) {
+            return $date;
+        }
+    };
 
-<div class="container">
-    <div class="card">
-        <div class="card-body">
-             <div id="print-area">
-            <div id="invoice">
-                <div class="toolbar hidden-print">
-                    <div class="text-end">
-                        <button type="button" onclick="goBack()" class="btn btn-default" ><i class="fa fa-arrow-left"></i> Back</button>
-                        <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
-                    </div>
-                    <hr>
-                </div>
-                <div class="invoice overflow-auto">
-                    <div style="min-width: 600px">
-                        <header>
-                            <div class="row">
-                                <div class="col">
-                                    <a href="javascript:;">
-    									<img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
-									</a>
-                                </div>
-                                <div class="col company-details">
-                                    <h3 class="name" >
-                                        <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
-									{{$company->name}}
-									</a>
-                                    </h3>
-                                    <div>{{$company->street_address}}, {{$company->suburb}}, {{$company->city}} {{$company->country}}</div>
-                                    <div>{{$company->phonenumber}}
-                                    </div>
-                                    <div>{{$company->email}}</div>
-                                </div>
-                            </div>
-                        </header>
-                        <main>
-                            <div class="row contacts">
-                                <div class="col invoice-to">
-                                    <div class="text-gray-light">FUEL ORDER TO:</div>
-                                    @if ($container)
-                                        <h5 class="to">{{$container->name}}</h5>
-                                        <div class="address">{{$container->address}}</div>
-                                        <div class="email"><a href="mailto:{{$container->email}}">{{$container->email}}</a></div>
-                                    @elseif ($source_horse)
-                                        <h5 class="to">Truck: {{$source_horse->identifier_label}}</h5>
-                                    @endif
-                                </div>
-                                <div class="col invoice-details">
-                                    <div class="date"><strong>Fuel Order Number:</strong> {{$fuel->order_number}}</div>
-                                    @if ($fuel->type = "Trip")
-                                        @if ($fuel->trip)
-                                        <div class="date"> <strong>Trip Number:</strong>{{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}} </div>
-                                        @endif
-                                    @endif
-                                    <div class="date"> <strong>Collection Date:</strong>
-                                        @php
-                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            @endphp
-                                            @if ((preg_match($pattern, $fuel->date)) )
-                                                {{ \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$fuel->date}}
-                                            @endif    
-                                    
-                                    </div>
-                                </div>
-                            </div>
-                            <table>
+    // Trip-linked orders carry driver_id; others only the employee picked on the form.
+    $driver = optional($fuel->driver)->employee ?? $fuel->employee;
+    $authoriser = App\Models\User::find($fuel->authorized_by_id);
+    $checkedBy = optional($fuel->user)->employee;
 
-                                <tbody>
-                                    <tr>
-                                        <th class="text-center"><strong>Fuel Order #</strong></th>
-                                        <td class="text-center"> <strong>{{$fuel->order_number}}</strong></td>
-                                    </tr>
-                                    @if ($fuel->trip)
-                                        <tr>
-                                            <th class="text-center"><strong>Trip #</strong></th>
-                                            <td class="text-center"> <strong>{{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}</strong></td>
-                                        </tr>
-                                    @endif
-                                   
-                                    <tr>
-                                        <th class="text-center"> <strong>Date</strong></th>
-                                        <td class="text-center">
-                                           
-                                            @php
-                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            @endphp
-                                            @if ((preg_match($pattern, $fuel->date)) )
-                                                {{ \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$fuel->date}}
-                                            @endif    
-                                           
-                                        </td>
-                                    </tr>
-                                    @if ($fuel->horse)
-                                    <tr>
-                                        <th class="text-center"> <strong>Horse</strong></th>
-                                        <td class="text-center">
-                                            {{$fuel->horse ? $fuel->horse->identifier_label : ""}} {{$fuel->horse->horse_make ? $fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}}
-                                        </td>
-                                    </tr>
-                                    @elseif($fuel->asset)
-                                    <tr>
-                                        <th class="text-center"> <strong>Asset</strong></th>
-                                        <td class="text-center">
-                                            {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
-                                        </td>
-                                    </tr>
-                                    @elseif($fuel->vehicle) 
-                                    <tr>
-                                        <th class="text-center"> <strong>Vehicle</strong></th>
-                                        <td class="text-center">
-                                            {{  $fuel->vehicle ? $fuel->vehicle->identifier_label : "" }} {{$fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : ""}} {{$fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : ""}}
-                                        </td>
-                                    </tr>
-                                    @endif
-                                    @if ($fuel->driver)
-                                    <tr>
-                                        <th class="text-center"><strong>Driver</strong></th>
-                                        <td class="text-center">{{$fuel->driver ? $fuel->driver->employee->name : ""}} {{$fuel->driver ? $fuel->driver->employee->surname : ""}}</td>
-                                    </tr>
-                                    @endif
-                                  
-                                    <tr>
-                                        <th class="text-center"><strong>Fuel Type</strong></th>
-                                        <td class="text-center"> {{$fuel->container ? $fuel->container->fuel_type : ($fuel->fuel_type ?? "")}}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Quantity</strong></th>
-                                        <td class="text-center"> {{$fuel->quantity ? $fuel->quantity."L" : ""}}</td>
-                                    </tr>
-                                    @if ($fuel->comments)
-                                    <tr>
-                                        <th class="text-center"><strong>Comments</strong></th>
-                                        <td class="text-center"> {{$fuel->comments}}</td>
-                                    </tr>
-                                    @endif
-                                   
-                                    <tr>
-                                        <th class="text-center"><strong>Checked By</strong></th>
-                                        <td class="text-center"> {{$fuel->user->employee ? $fuel->user->employee->name : "" }} {{$fuel->user->employee ? $fuel->user->employee->surname : "" }}</td>
-                                    </tr>
+    if ($fuel->horse) {
+        $unitLabel = 'Horse';
+        $unit = trim($fuel->horse->identifier_label.' '.optional($fuel->horse->horse_make)->name.' '.optional($fuel->horse->horse_model)->name);
+    } elseif ($fuel->vehicle) {
+        $unitLabel = 'Vehicle';
+        $unit = trim($fuel->vehicle->identifier_label.' '.optional($fuel->vehicle->vehicle_make)->name.' '.optional($fuel->vehicle->vehicle_model)->name);
+    } elseif ($fuel->asset) {
+        $unitLabel = 'Asset';
+        $unit = trim(optional(optional($fuel->asset->product)->brand)->name.' '.optional($fuel->asset->product)->name);
+    } else {
+        $unitLabel = 'Unit';
+        $unit = $fuel->type ?: '—';
+    }
 
-                                    @php
-                                        $authoriser = App\Models\User::find($fuel->authorized_by_id);
-                                    @endphp
-                                    @if (isset($authoriser))
-                                    <tr>
-                                        <th class="text-center"><strong>Authorised By</strong></th>
-                                        <td class="text-center"> {{$authoriser->name }} {{$authoriser->surname }}</td>
-                                    </tr>
-                                    @endif
-                                  
+    $fuelType = $fuel->container ? $fuel->container->fuel_type : $fuel->fuel_type;
+@endphp
 
-                                </tbody>
+  <div class="action-bar">
+    <button class="btn" type="button" onclick="window.history.back()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+      Back
+    </button>
+    <button class="btn" id="btnPrint" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18h12v4H6v-4zM6 14h12v2H6v-2z" /></svg>
+      Print
+    </button>
+  </div>
 
-                            </table>
-                            @if ($fuel->driver)
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong style="margin-left: 20px">{{$fuel->driver->employee ? $fuel->driver->employee->name : ""}} {{$fuel->driver->employee ? $fuel->driver->employee->surname : ""}} Signature </strong>
-                                    <br>
-                                    <br>
-                                    <strong style="margin-left: 20px">......................................................................</strong>
-                                </div>
-                            </div>
-                            @endif
-                           
-                           
-                        </main>
-                        <footer>{{ucfirst($company->name)}} FUEL ORDER!!</footer>
-                    </div>
-                    <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
-                    <div></div>
-                </div>
-            </div>
-        </div>
-        </div>
+  <section class="doc" data-entity="fuel order {{ $fuel->order_number }}">
+
+    @include('fuels.partials.document-header', [
+        'title' => 'Fuel Order',
+        'meta' => [
+            'Order #' => '<span class="order-no">'.e($fuel->order_number).'</span>',
+            'Collection Date' => e($formatDate($fuel->date)),
+            'Status' => e(ucfirst($fuel->authorization ?: 'pending')),
+        ],
+    ])
+
+    <div class="notice">
+      Please record <strong class="order-ref">{{ $fuel->order_number }}</strong> against this fill-up and quote it on your invoice or statement.
     </div>
-</div>
 
+    <div class="hr"></div>
+
+    <div class="grid-2">
+      <section class="card">
+        <h3>Fuel Order To</h3>
+        @if ($container)
+          <p><strong>{{ $container->name }}</strong></p>
+          @if ($container->address) <p>{{ $container->address }}</p> @endif
+          @if ($container->email) <p>{{ $container->email }}</p> @endif
+        @elseif ($source_horse)
+          <p><strong>Truck: {{ $source_horse->identifier_label }}</strong></p>
+          <p>Truck-to-truck transfer</p>
+        @else
+          <p>—</p>
+        @endif
+      </section>
+
+      <section class="card">
+        <h3>{{ $unitLabel }} &amp; Driver</h3>
+        <div class="kv">
+          <div class="k">{{ $unitLabel }}</div><div class="v"><strong>{{ $unit }}</strong></div>
+          <div class="k">Driver</div><div class="v">{{ $driver ? $driver->name.' '.$driver->surname : '—' }}</div>
+          @if ($fuel->odometer)
+            <div class="k">Mileage</div><div class="v">{{ $fuel->odometer }}</div>
+          @endif
+        </div>
+      </section>
+    </div>
+
+    <div class="hr"></div>
+
+    <table class="tbl" aria-label="Fuel">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Fuel Type</th>
+          <th class="right">Quantity</th>
+          <th class="center">Full Tank</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="order">{{ $fuel->order_number }}</td>
+          <td>{{ $fuelType ?: '—' }}</td>
+          <td class="right"><strong>{{ $fuel->quantity ? (float) $fuel->quantity.' L' : '—' }}</strong></td>
+          <td class="center">{{ $fuel->is_full_tank ? 'Yes' : 'No' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    @if ($fuel->comments)
+      <section class="card" style="margin-top: 12px;">
+        <h3>Comments</h3>
+        <p>{{ $fuel->comments }}</p>
+      </section>
+    @endif
+
+    <section class="signatures">
+      <div class="sig">
+        <div class="label">Driver{{ $driver ? ': '.$driver->name.' '.$driver->surname : '' }} (Sign)</div>
+        <div class="line"></div>
+      </div>
+      <div class="sig">
+        <div class="label">Station Attendant (Name &amp; Sign)</div>
+        <div class="line"></div>
+      </div>
+      <div class="sig">
+        <div class="label">
+          Checked By{{ $checkedBy ? ': '.$checkedBy->name.' '.$checkedBy->surname : '' }}
+          @if ($authoriser)<br>Authorised By: {{ $authoriser->name }} {{ $authoriser->surname }}@endif
+        </div>
+        <div class="line"></div>
+      </div>
+      <div class="sig label-only"><div class="label">Station (Stamp)</div></div>
+    </section>
+
+    <footer class="footer">
+      <div>{{ ucfirst($company->name) }} — Fuel Order {{ $fuel->order_number }}</div>
+      <div>Generated: <span id="printTimestamp">{{ now()->format('Y-m-d H:i') }}</span></div>
+    </footer>
+  </section>
 @endsection

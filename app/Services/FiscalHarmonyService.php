@@ -76,18 +76,21 @@ class FiscalHarmonyService
     }
 
     /**
-     * HMACSHA256 + Base64 signature of the JSON payload.
+     * HMACSHA256 + Base64 signature of the JSON payload, keyed with the API
+     * secret string exactly as issued — NOT Base64-decoded, even though it
+     * looks like Base64. Verified against apitest 2026-10-19: decoded key → 401.
+     * (/test and /status don't enforce signatures; /taxmapping etc. do.)
      */
     protected function sign(string $payload): string
     {
-        $hash = hash_hmac('sha256', $payload, base64_decode($this->apiSecret), true);
+        $hash = hash_hmac('sha256', $payload, $this->apiSecret, true);
         return base64_encode($hash);
     }
 
     /**
      * Verify an inbound webhook's X-Api-Signature against the raw body.
-     * FH signs with the API secret; the docs don't say whether the secret
-     * is used Base64-decoded (as we sign outbound) or as-is, so accept either.
+     * FH signs with the API secret as-is (as we sign outbound); the decoded
+     * form is still accepted in case webhooks differ.
      */
     public function verifySignature(string $rawBody, ?string $signature): bool
     {
@@ -95,7 +98,7 @@ class FiscalHarmonyService
             return false;
         }
 
-        foreach ([base64_decode($this->apiSecret, true), $this->apiSecret] as $key) {
+        foreach ([$this->apiSecret, base64_decode($this->apiSecret, true)] as $key) {
             if ($key === false || $key === '') {
                 continue;
             }
@@ -188,6 +191,15 @@ class FiscalHarmonyService
         }
 
         $error = $response->json('Message') ?? $response->json('message') ?? $response->body();
+
+        // ASP.NET validation problem: {"title": ..., "errors": {"Field": ["msg"]}}
+        $fieldErrors = $response->json('errors');
+        if (is_array($fieldErrors) && $fieldErrors) {
+            $error = collect($fieldErrors)
+                ->map(fn ($messages, $field) => implode(' ', (array) $messages))
+                ->implode('; ');
+        }
+
         if (is_array($error)) {
             $error = json_encode($error);
         }
@@ -227,6 +239,36 @@ class FiscalHarmonyService
     public function test(): array
     {
         return $this->post('/test', ['Date' => now('Africa/Harare')->format('Y-m-d\TH:i:s')]);
+    }
+
+    /**
+     * Prove our signing on an endpoint that enforces it. /test does NOT check
+     * signatures, so POST an empty TaxMapping instead: the signature is
+     * checked before validation, so a good signature gets 400 (empty
+     * TaxCode, nothing created) and a bad one gets 401.
+     *
+     * @return array{verified: ?bool, ours: int, wrong: int}  verified null = inconclusive
+     */
+    public function testSignatureEnforcement(): array
+    {
+        $json = '{}';
+
+        // Bypasses handle(): the expected 400/401 are not errors worth logging.
+        $send = fn (string $signature) => Http::withHeaders(array_merge($this->headers($json), ['X-Api-Signature' => $signature]))
+            ->timeout($this->timeout)
+            ->withBody($json, 'application/json')
+            ->post("{$this->apiUrl}/taxmapping")
+            ->status();
+
+        $wrong = $send(base64_encode(hash_hmac('sha256', $json, 'deliberately-wrong-secret', true)));
+        $ours  = $send($this->sign($json));
+
+        $verified = null;
+        if ($wrong === 401) {
+            $verified = $ours === 400 ? true : ($ours === 401 ? false : null);
+        }
+
+        return ['verified' => $verified, 'ours' => $ours, 'wrong' => $wrong];
     }
 
     public function getProfile(): array

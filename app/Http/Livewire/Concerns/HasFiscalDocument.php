@@ -27,6 +27,12 @@ trait HasFiscalDocument
 
     abstract protected function fiscalDocument(): ?FiscalDocument;
 
+    /** `$this->fiscalDocumentRecord` in views: the fiscal record the printable layouts render. */
+    public function getFiscalDocumentRecordProperty(): ?FiscalDocument
+    {
+        return $this->fiscalDocument();
+    }
+
     protected function loadFiscalState(): void
     {
         $doc = $this->fiscalDocument();

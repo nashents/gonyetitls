@@ -150,6 +150,7 @@ Route::get('fuel/orders/deleted','FuelController@deleted')->name('fuels.deleted'
 Route::get('fuel/orders/pending','FuelController@pending')->name('fuels.pending');
 Route::get('fuel/orders/approved','FuelController@approved')->name('fuels.approved');
 Route::get('fuel/orders/rejected','FuelController@rejected')->name('fuels.rejected');
+Route::get('fuels/schedule','FuelController@schedule')->name('fuels.schedule');
 Route::get('fuels/{fuel}/preview','FuelController@preview')->name('fuels.preview');
 Route::get('fuels/{fuel}/print','FuelController@print')->name('fuels.print');
 
@@ -781,6 +782,8 @@ Route::resource('expenses','ExpenseController');
 Route::resource('categories','CategoryController');
 Route::resource('category_values','CategoryValueController');
 Route::resource('stocks','StockController');
+Route::get('stock-adjustments','StockAdjustmentController@index')->name('stock_adjustments.index');
+Route::get('stock-adjustments/{stockAdjustment}','StockAdjustmentController@show')->name('stock_adjustments.show');
 Route::resource('invoices','InvoiceController');
 Route::resource('sales','SaleController');
 Route::resource('attendances','AttendanceController');

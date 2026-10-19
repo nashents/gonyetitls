@@ -221,4 +221,22 @@ class Invoice extends Model implements Auditable
 
         return $reclassed ? 'Sales (Recognized)' : 'Customer Advances (Deferred)';
     }
+
+    /** Fiscalised through the fiscal integration (an approved fiscal record exists). */
+    public function isFiscalised(): bool
+    {
+        return $this->id
+            && FiscalDocument::forInvoice($this->id)->where('success', true)->exists();
+    }
+
+    /**
+     * Print as "FISCAL TAX INVOICE": the create-form "fiscalize" checkbox is
+     * ticked (offline fiscal devices need the printed invoice to say so before
+     * it is keyed into the device) OR it was fiscalised via the integration,
+     * even if the box was left unticked.
+     */
+    public function showsFiscalHeading(): bool
+    {
+        return (bool) $this->fiscalize || $this->isFiscalised();
+    }
 }

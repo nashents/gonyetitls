@@ -73,7 +73,18 @@
                                     <td>{{$fuel->odometer}}</td>
                                     <td>{{$fuel->fillup == "1" ? "Initial" : "Top Up"}}</td>
                                     <td>{{$fuel->comments? $fuel->comments : "No comment recorded"}}</td>
-                                    <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        @if($fuel->authorized_by_id)
+                                            @php $authorizer = App\Models\User::find($fuel->authorized_by_id); @endphp
+                                            <div class="text-muted"><small><strong>Auth By:</strong> {{ optional($authorizer)->name }} {{ optional($authorizer)->surname }}</small></div>
+                                        @endif
+                                        @if($fuel->authorization_date)
+                                            <div class="text-muted"><small><strong>Date:</strong> {{ $fuel->authorization_date }}</small></div>
+                                        @endif
+                                        @if($fuel->reason)
+                                            <div class="text-muted"><small><strong>Comments:</strong> {{ $fuel->reason }}</small></div>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

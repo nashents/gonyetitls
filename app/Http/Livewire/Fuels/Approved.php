@@ -75,6 +75,7 @@ class Approved extends Component
 
             $fuel->authorized_by_id = Auth::user()->id;
             $fuel->authorization = $this->authorize;
+            $fuel->authorization_date = now();
             $fuel->reason = $this->comments;
             $fuel->update();
 
@@ -182,6 +183,7 @@ class Approved extends Component
 
             $fuel->authorized_by_id = Auth::user()->id;
             $fuel->authorization = $this->authorize;
+            $fuel->authorization_date = now();
             $fuel->reason = $this->comments;
             $fuel->update();
 

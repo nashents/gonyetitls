@@ -7,6 +7,8 @@ use App\Models\CompanyIntegration;
 use App\Models\IntegrationProvider;
 use App\Models\IntegrationLog;
 use App\Integrations\Contracts\FiscalDriver;
+use App\Integrations\FiscalHarmony\FiscalHarmonyDriver;
+use App\Services\Fiscal\FiscalHarmonyReadinessService;
 use App\Services\Fiscal\FiscalProviderResolver;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,11 @@ class Index extends Component
     public $required_credentials = [];
     public $optional_credentials = [];   // shown, but may be left blank
     public $default_config = [];
+
+    // Fiscal Harmony readiness check results (shown in #fiscalReadinessModal)
+    public $readiness = null;
+    public $readiness_integration_id;
+    public $readiness_provider;
 
     protected function rules()
     {
@@ -293,6 +300,45 @@ class Index extends Component
                 'message' => 'Connection test failed: ' . $e->getMessage(),
             ]);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // FISCAL HARMONY READINESS (same report as `php artisan fiscalharmony:check`)
+    // ─────────────────────────────────────────────────────────────
+
+    /** Run the readiness check; $mapTaxes also creates missing FH tax mappings. */
+    public function fiscalReadiness($id, $mapTaxes = false)
+    {
+        $integration = CompanyIntegration::with('integration_provider')
+            ->where('company_id', $this->company_id)
+            ->findOrFail($id);
+
+        $this->readiness_integration_id = $integration->id;
+        $this->readiness_provider       = $integration->integration_provider->name ?? 'Fiscal Harmony';
+
+        try {
+            if (($integration->integration_provider->key ?? null) !== 'fiscal_harmony') {
+                throw new \RuntimeException('The readiness check is only available for Fiscal Harmony.');
+            }
+
+            $api    = (new FiscalHarmonyDriver($integration))->api();
+            $report = app(FiscalHarmonyReadinessService::class)->run($api, (bool) $mapTaxes);
+        } catch (\Throwable $e) {
+            $report = ['fatal' => $e->getMessage(), 'checks' => [], 'ready' => false, 'problems' => 1];
+        }
+
+        $this->readiness = $report;
+
+        IntegrationLog::create([
+            'company_integration_id' => $integration->id,
+            'direction'              => 'outbound',
+            'action'                 => $mapTaxes ? 'readiness_map_taxes' : 'readiness_check',
+            'status'                 => ! empty($report['ready']) ? 'ok' : 'fail',
+            'message'                => $report['fatal']
+                ?? (! empty($report['ready']) ? 'Ready to fiscalise' : ($report['problems'] . ' issue(s) to resolve')),
+        ]);
+
+        $this->dispatchBrowserEvent('show-fiscalReadinessModal');
     }
 
     // ─────────────────────────────────────────────────────────────

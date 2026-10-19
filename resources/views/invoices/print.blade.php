@@ -66,7 +66,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                             </div>
                           
                             <div style="padding-top: 25px; padding-bottom:15px">
-                                <center><h2>{{ $invoice->fiscalize == TRUE ? " FISCAL TAX INVOICE" : "INVOICE"}} </h2>  </center>
+                                <center><h2>{{ $invoice->showsFiscalHeading() ? " FISCAL TAX INVOICE" : "INVOICE"}} </h2>  </center>
                             </div>
                         </header>
                         <main>
@@ -105,7 +105,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                     </div>
                                 </div>
                                 <div class="col invoice-details">
-                                    @if ($invoice->fiscalize == TRUE)
+                                    @if ($invoice->showsFiscalHeading())
                                     <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$invoice->invoice_number}}</div>
                                     @else   
                                     <div class="date" style="padding-bottom: 3px"> <strong>Invoice No.:</strong> {{$invoice->invoice_number}}</div>

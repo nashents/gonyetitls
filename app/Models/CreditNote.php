@@ -38,4 +38,11 @@ class CreditNote extends Model implements Auditable
         return $this->belongsTo('App\Models\Customer');
     }
 
+    /** Actually fiscalised (an approved fiscal record exists) — drives the "FISCAL CREDIT NOTE" heading. */
+    public function isFiscalised(): bool
+    {
+        return $this->id
+            && FiscalDocument::forCreditNote($this->id)->where('success', true)->exists();
+    }
+
 }

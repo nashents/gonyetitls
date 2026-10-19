@@ -1,0 +1,321 @@
+{{--
+    CLASSIC invoice document — the single source for screen, browser print and
+    Export as PDF (dompdf, via includes.pdf_css). Keep it table/row based: dompdf
+    has no flexbox. Expects $invoice, $company, $invoice_items, optional
+    $fiscalDocument (fiscal block appears once fiscalised) and $pdf.
+--}}
+<div class="invoice overflow-auto">
+    <div style="min-width: 600px">
+        <header>
+            <div class="row">
+                <div class="col">
+                    <img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
+                </div>
+                <div class="col company-details">
+                
+                    <h4 class="name" style="color:  {{$company->color ? $company->color : "#000000" }}" >
+                        {{$company->name}}
+                    </h4>
+                    <div>{{$company->street_address}} {{$company->suburb}} <br>
+                        {{$company->city}}, {{$company->country}}</div>
+                    <div>
+                        {{$company->phonenumber}}
+                        @if ($company->second_phonenumber)
+                        | {{$company->second_phonenumber}}
+                        @endif
+                        @if ($company->third_phonenumber)
+                        | {{$company->third_phonenumber}}
+                        @endif
+                    </div>
+                
+                    
+                    <div>{{$company->email}}</div>
+                    @if ($company->second_email)
+                    <div>{{$company->second_email}}</div>
+                    @endif
+                    @if ($company->third_email)
+                    <div>{{$company->third_email}}</div>
+                    <br>
+                    @endif
+                    <div>
+                    
+                            VAT No.: {{$company->vat_number}}
+                    
+                    </div>
+                    <div>
+                    
+                            TIN.: {{$company->tin_number}}
+                    
+                    </div>
+                    @if ($company->vendor_number)
+                        <div>
+                    
+                            Vendor No.: {{$company->vendor_number}}
+                    
+                        </div>
+                    @endif
+                   
+                </div>
+            </div>
+        
+            <div style="{{ ($pdf ?? false) ? "" : "padding-top: 25px; padding-bottom:15px" }}">
+                <center>
+                    <h2>{{ $invoice->showsFiscalHeading() ? " FISCAL TAX INVOICE" : $company->invoice_title }} </h2>
+                    <p>{{$company->invoice_subheading}}</p>
+                </center>
+            </div>
+    
+        </header>
+        <main>
+            <div class="row contacts">
+                <div class="col invoice-to" >
+                    <div class="text-gray-light">BILL TO:</div>
+                    <h6 class="to"> <strong>Customer Name: </strong> {{$invoice->customer ? $invoice->customer->name : ""}}</h6>
+                
+                    <div class="address" >
+                        <strong>Customer Address: </strong>
+                        @if (isset($invoice->customer->street_address) || isset($invoice->customer->suburb))
+                        {{$invoice->customer ? $invoice->customer->street_address : ""}} {{$invoice->customer ? $invoice->customer->suburb : ""}}, <br>  
+                        @endif
+                        {{$invoice->customer ? $invoice->customer->city : ""}} {{$invoice->customer ? $invoice->customer->country : ""}}
+                    </div>
+                
+                    @if (isset($invoice->customer->email))
+                    <div class="email">
+                        <strong>Customer Email: </strong> {{$invoice->customer->email}}
+                    </div>
+                    @endif
+                    @if (isset($invoice->customer->email))
+                    <div class="email">
+                        <strong>Customer Phonenumber: </strong>{{$invoice->customer->phonenumber}}
+                    </div>
+                    @endif
+                    <div class="email">
+                    
+                        <strong>Customer VAT No:</strong> {{$invoice->customer ? $invoice->customer->vat_number : ""}}
+                    
+                    </div>
+                    <div class="email">
+                    
+                        <strong>Customer TIN No:</strong> {{$invoice->customer ? $invoice->customer->tin_number : ""}}
+                    
+                    </div>
+                </div>
+                <div class="col invoice-details">
+                    @if ($invoice->showsFiscalHeading())
+                    <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$invoice->invoice_number}}</div>
+                    @else   
+                    <div class="date" style="padding-bottom: 3px"> <strong>Invoice No.:</strong> {{$invoice->invoice_number}}</div>
+                    @endif
+                    @if ($invoice->sales_order_number)
+                    <div class="date" style="padding-bottom: 3px"> <strong>S.O No.:</strong> {{$invoice->sales_order_number}}</div>
+                    @endif
+                    @if ($invoice->purchase_order_number)
+                    <div class="date" style="padding-bottom: 3px"> <strong>P.O No.:</strong> {{$invoice->purchase_order_number}}</div>
+                    @endif
+                    @if ($invoice->pat_number)
+                    <div class="date" style="padding-bottom: 3px"> <strong>PAT No.:</strong> {{$invoice->pat_number}}</div>
+                    @endif
+                    <div class="date" style="padding-bottom: 3px"><strong>Invoice Date:</strong> {{$invoice->date}}</div>
+                    @if ($invoice->expiry)
+                    <div class="date" style="padding-bottom: 3px"><strong>Payment Due:</strong> {{$invoice->expiry}}</div>
+                    @endif
+                    <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$invoice->currency ? $invoice->currency->name : ""}}</div>
+                    
+                </div>
+            </div>
+
+            <table >
+                <thead>
+                    <tr>
+                       
+                        @if ($company->hide_description == False)
+                             <th class="text-center"> <strong>{{$company->items_column}}</strong></th>
+                        @endif
+                        <th class="text-center"> <strong>HS Code</strong></th>
+                        @if ($company->hide_quantity == False)
+                            <th class="text-right"><strong>{{$company->units_column}}</strong></th>
+                        @endif
+                        @if ($company->hide_price == False)
+                            <th class="text-right"><strong>{{$company->price_column}}</strong></th>
+                        @endif
+                        @if ($company->hide_amount == False)
+                             <th class="text-right"><strong>{{$company->total_column}}</strong><small>(Excl)</small></th>
+                        @endif
+                        <th class="text-right"><strong>VAT Amount</strong></th>
+                        <th class="text-right"><strong>Total</strong><small>(Incl)</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                
+                    @foreach ($invoice_items as $invoice_item)
+                        <tr>
+                            @php
+                                $tax = $invoice_item->tax;
+                            @endphp
+                           
+                            @if ($company->hide_description == False)
+                                <td class="text-center">
+                                    @if ($invoice_item->product)
+                                    {{$invoice_item->product ? $invoice_item->product->name : ""}}<br>
+                                    {{-- @elseif ($invoice_item->trip)
+                                        {{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}<br> --}}
+                                    {{-- @elseif ($invoice_item->rental)
+                                        {{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}<br> --}}
+                                    @endif
+                                    {{$invoice_item->description}}
+                                </td>
+                            @endif
+                            <td class="unit text-center">{{ $invoice_item->hs_code ?: $tax?->hs_code }}</td>
+                            @if ($company->hide_quantity == False)
+                                <td class="unit text-right"> {{$invoice_item->qty}}</td>
+                            @endif
+                            @if ($company->hide_price == False)
+                                <td class="unit text-right">
+                                    @if ($invoice_item->amount)
+                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($company->hide_amount == False)
+                                <td class="unit text-right">
+                                    @if ($invoice_item->subtotal)
+                                        {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
+                                    @endif
+                                </td>
+                            @endif
+
+                            <td class="unit text-right">
+                                @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0)
+                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->tax_amount,2)}}
+                                @else
+                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format(0,2)}}
+                                @endif
+                            </td>
+                        
+                            <td class="unit text-right">
+                                @if (isset($invoice_item->subtotal_incl))
+                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal_incl,2)}}
+                                @endif
+                            </td>
+                        </tr>
+
+                    @endforeach
+                
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4"></td>
+                        <td colspan="2">SUB-TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} <small>(Excl)</small></td>
+                        <td>  
+                            @if (isset($invoice->invoice_items))
+                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->invoice_items->where('subtotal','!=',Null)->where('subtotal','!=','')->sum('subtotal'),2)}}  
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4"></td>
+                        <td colspan="2">VAT TOTAL</td>
+                        <td>
+                            @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0) 
+                            {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->tax_amount,2)}}
+                            @else
+                            {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format(0,2)}}
+                            @endif
+                        </td>
+                    </tr>
+                    @if ($invoice->discount)
+                        <tr>
+                            <td colspan="4"></td>
+                            <td colspan="2">DISCOUNT {{$invoice->discount->description}}</td>
+                            
+                            <td>
+                                @if ($invoice->discount->unit == "currency")
+                                    {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->discount->amount ? $invoice->discount->amount : 0,2)}}
+                                    @elseif($invoice->discount->unit == "percentage")
+                                    {{number_format($invoice->discount->amount ? $invoice->discount->amount : 0,2)}} %
+                                    @endif 
+                            </td>
+                        </tr>
+                    @endif
+                    <tr>
+                        <td colspan="4"></td>
+                        <td colspan="2">INVOICE TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} </td>
+                        <td>
+                            @if ($invoice->total)
+                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->total,2)}}
+                            @endif
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            @include('fiscal.verification', ['fiscalDocument' => $fiscalDocument ?? null])
+
+            @if ($invoice->memo)
+            <div class="notices">
+                <div><strong>Notes / Terms & Conditions</strong></div>
+                <div class="notice">{{$invoice->memo}}</div>
+            </div>
+            @endif
+        
+            @unless ($pdf ?? false)<br>@endunless
+            @if ($invoice->bank_accounts->count()>0)
+                    <table>
+                        <thead>
+                            <tr>
+                                <th  style="background-color: white;"><strong>Banking Details</strong></th>      
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                @foreach ($invoice->bank_accounts as $bank_account)
+                                <td class="text-left "  scope="col" >
+                                    @if ($bank_account->name )
+                                    <strong>Bank: </strong>{{ $bank_account->name }} <br> 
+                                    @endif
+                                    @if ($bank_account->branch)
+                                    <strong>Branch: </strong>{{ $bank_account->branch }} <br>
+                                    @endif
+                                    @if ($bank_account->branch_code)
+                                    <strong>Branch Code: </strong> {{ $bank_account->branch_code }} <br>
+                                    @endif
+                                    @if ($bank_account->swift_code)
+                                    <strong>Swift Code: </strong> {{ $bank_account->swift_code }} <br>
+                                    @endif
+                                    @if ($bank_account->type)
+                                    <strong>Account Type: </strong> {{ $bank_account->type }} <br> 
+                                    @endif
+                                    @if ($bank_account->account_name)
+                                    <strong>Account Name: </strong> {{ $bank_account->account_name }} <br>
+                                    @endif
+                                @if ($bank_account->account_number)
+                                <strong>Account Number: </strong> {{ $bank_account->account_number }} <br>
+                                @endif
+                                
+                                </td>
+                                @endforeach
+                            </tr>
+                        </tbody>
+                    </table>
+                    @endif
+        </main>
+    
+        <center> 
+            {{-- Flows after the content (a fixed PDF footer overlapped the fiscal block). --}}
+            <footer style="text-align: center;">
+                {{$invoice->footer}}
+                @if ($company->show_branding ?? true)
+                    <br>
+                    @if ($pdf ?? false)
+                        Powered By <img src="{{asset('images/logo.png')}}" alt="" style="height: 22px; vertical-align: middle;">
+                    @else
+                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/logo.png')}}" alt="" style="width: 20%; height:20%">
+                    @endif
+                @endif
+            </footer>
+        </center>  
+    </div>
+    <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
+    <div></div>
+</div>

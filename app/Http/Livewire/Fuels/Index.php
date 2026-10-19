@@ -169,6 +169,28 @@ class Index extends Component
     public $total_customer_expenses = 0;
     public $total_expenses = 0;
 
+    // Bulk actions: selected fuel order ids (strings, as the checkboxes send them).
+    public $selectedRows = [];
+    public $selectPageRows = false;
+
+    public function updatedSelectPageRows($value)
+    {
+        $this->selectedRows = $value
+            ? $this->listQuery()->orderBy('order_number', 'desc')->paginate(10)->pluck('id')->map(fn ($id) => (string) $id)->all()
+            : [];
+    }
+
+    // Bulk Generate Order Schedule: one printable sheet per station for the ticked orders.
+    public function generateSchedule()
+    {
+        if (empty($this->selectedRows)) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Tick the fuel orders to put on the schedule first.']);
+            return;
+        }
+
+        return redirect()->route('fuels.schedule', ['ids' => implode(',', $this->selectedRows)]);
+    }
+
     /** Filters the table and the exports share (see FuelsExport::applyFilters). */
     protected function tableFilters(): array
     {
@@ -1805,6 +1827,23 @@ class Index extends Component
         }
        
 
+        return view('livewire.fuels.index', [
+            'fuels' => $this->listQuery()->orderBy('order_number', 'desc')->paginate(10),
+            'unit_price' => $this->unit_price,
+            'amount' => $this->amount,
+            'type' => $this->type,
+            'containers' => $this->containers,
+            'fuel_tank_capacity' => $this->fuel_tank_capacity,
+            'mileage' => $this->mileage,
+            'hours' => $this->hours,
+            'selected_horse' => $this->selected_horse,
+            'fuel_filter' => $this->fuel_filter,
+        ]);
+    }
+
+    // The table's query (filters + date window), shared with "select this page".
+    protected function listQuery()
+    {
         $query = Fuel::query()
                 ->with([
                     'user',
@@ -1840,18 +1879,6 @@ class Index extends Component
             // Equipment + search filters (shared with the exports)
             FuelsExport::applyFilters($query, $this->tableFilters());
 
-            return view('livewire.fuels.index', [
-                'fuels' => $query->orderBy('order_number', 'desc')->paginate(10),
-                'unit_price' => $this->unit_price,
-                'amount' => $this->amount,
-                'type' => $this->type,
-                'containers' => $this->containers,
-                'fuel_tank_capacity' => $this->fuel_tank_capacity,
-                'mileage' => $this->mileage,
-                'hours' => $this->hours,
-                'selected_horse' => $this->selected_horse,
-                'fuel_filter' => $this->fuel_filter,
-            ]);
-        
+            return $query;
     }
 }

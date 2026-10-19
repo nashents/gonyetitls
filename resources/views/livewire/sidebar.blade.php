@@ -1515,6 +1515,7 @@
                       <li class="{{ request()->routeIs('inventory_assignments.index') ? 'active' : '' }}"><a href="{{route('inventory_assignments.index')}}"><i class="fas fa-list "></i> <span>Inventory Assignments</span></a></li>
                       <li class="{{ request()->routeIs('inventory_dispatches.index') ? 'active' : '' }}"><a href="{{route('inventory_dispatches.index')}}"><i class="fas fa-list "></i> <span>Inventory Dispatches</span></a></li>
                       <li class="{{ request()->routeIs('disposes.index') ? 'active' : '' }}"> <a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
+                      <li class="{{ request()->routeIs('stock_adjustments.*') ? 'active' : '' }}"> <a href="{{route('stock_adjustments.index')}}"><i class="fas fa-clipboard-check "></i> <span>Stock Adjustments</span></a></li>
                   </ul>
               </li>
 

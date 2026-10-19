@@ -7,7 +7,6 @@ use App\Models\FiscalDocument;
 use App\Http\Livewire\Concerns\HasFiscalDocument;
 use App\Services\FiscalisationService;
 use Livewire\Component;
-use Barryvdh\DomPDF\PDF;
 use App\Mail\SendingInvoiceMail;
 use Illuminate\Support\Facades\Mail;
 
@@ -86,12 +85,7 @@ class Preview extends Component
 
     public function generatePdf($id)
     {
-        $pdf = PDF::loadView('invoices.invoice', [
-            'invoice'       => $this->invoice,
-            'company'       => $this->company,
-            'invoice_items' => $this->invoice_items,
-        ]);
-        return $pdf->download('invoice.pdf');
+        return app(\App\Services\Invoices\InvoicePdf::class)->download($this->invoice);
     }
 
     public function render()

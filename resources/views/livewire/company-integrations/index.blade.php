@@ -55,6 +55,9 @@
                                                     <li><a href="#" wire:click.prevent="testConnection({{ $integration->id }})"><i class="fa fa-plug color-info"></i> Test</a></li>
                                                     @if (($integration->integration_provider->type ?? null) === 'fiscal')
                                                         <li><a href="#" wire:click.prevent="fiscalDeviceStatus({{ $integration->id }})"><i class="fa fa-info-circle color-info"></i> Device Status</a></li>
+                                                        @if (($integration->integration_provider->key ?? null) === 'fiscal_harmony')
+                                                            <li><a href="#" wire:click.prevent="fiscalReadiness({{ $integration->id }})"><i class="fa fa-check-square-o color-success"></i> Readiness Check</a></li>
+                                                        @endif
                                                         @if (in_array($integration->id, $fiscal_day_integration_ids))
                                                             <li><a href="#" wire:click.prevent="openFiscalDay({{ $integration->id }})"><i class="fa fa-sun-o color-success"></i> Open Fiscal Day</a></li>
                                                             <li>
@@ -263,4 +266,145 @@
             </div>
         </div>
     </div>
+    {{-- FISCAL HARMONY READINESS MODAL (same report as `php artisan fiscalharmony:check`) --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fiscalReadinessModal" tabindex="-1" role="dialog" aria-labelledby="fiscalReadinessLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="fiscalReadinessLabel"><i class="fa fa-check-square-o"></i> {{ $readiness_provider ?? 'Fiscal Harmony' }} Readiness Check
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </h4>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div wire:loading wire:target="fiscalReadiness" class="text-center p-3">
+                        <span class="spinner-border spinner-border-sm"></span> Checking Fiscal Harmony…
+                    </div>
+
+                    @if ($readiness)
+                        <div wire:loading.remove wire:target="fiscalReadiness">
+                            @php
+                                $icon  = ['ok' => 'fa-check-circle text-success', 'warn' => 'fa-exclamation-triangle text-warning', 'fail' => 'fa-times-circle text-danger'];
+                                $badge = ['ok' => 'success', 'warn' => 'warning', 'fail' => 'danger'];
+                            @endphp
+
+                            @if (! empty($readiness['url']))
+                                <p class="text-muted mb-2"><small>{{ $readiness['url'] }}</small></p>
+                            @endif
+
+                            @if ($readiness['fatal'] ?? null)
+                                <div class="alert alert-danger">{{ $readiness['fatal'] }}</div>
+                            @elseif ($readiness['ready'])
+                                <div class="alert alert-success mb-3"><i class="fa fa-check-circle"></i> Ready to fiscalise.</div>
+                            @else
+                                <div class="alert alert-warning mb-3"><i class="fa fa-exclamation-triangle"></i> {{ $readiness['problems'] }} issue(s) to resolve before fiscalising.</div>
+                            @endif
+
+                            @if (! empty($readiness['checks']))
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        @foreach ($readiness['checks'] as $check)
+                                            <tr wire:key="readiness-check-{{ $loop->index }}">
+                                                <td style="width: 160px"><i class="fa {{ $icon[$check['status']] }}"></i> <strong>{{ $check['label'] }}</strong></td>
+                                                <td>{{ $check['detail'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @endif
+
+                            @if (! empty($readiness['taxes']))
+                                <h5 class="mt-3"><i class="fa fa-percent"></i> Tax mappings</h5>
+                                <p class="text-muted mb-1"><small>Every invoice line needs a mapped tax and an HS code.</small></p>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr><th>Tax code</th><th class="text-right">Rate</th><th>HS code</th><th>Fiscal Harmony mapping</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($readiness['taxes'] as $tax)
+                                            <tr wire:key="readiness-tax-{{ $tax['id'] }}">
+                                                <td>{{ $tax['code'] }}</td>
+                                                <td class="text-right">{{ $tax['rate'] }}%</td>
+                                                <td>
+                                                    @if ($tax['hs_code'])
+                                                        {{ $tax['hs_code'] }}
+                                                    @else
+                                                        <span class="text-danger">Missing</span>
+                                                    @endif
+                                                </td>
+                                                <td><span class="badge bg-{{ $badge[$tax['status']] }}">{{ $tax['mapping'] }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @endif
+
+                            @if (! empty($readiness['device_taxes']))
+                                <details class="mb-3">
+                                    <summary class="text-muted">Taxes configured on the fiscal device (ZIMRA)</summary>
+                                    <table class="table table-sm table-bordered mt-2">
+                                        <thead><tr><th>Tax ID</th><th>Name</th><th class="text-right">Rate</th></tr></thead>
+                                        <tbody>
+                                            @foreach ($readiness['device_taxes'] as $deviceTax)
+                                                <tr wire:key="readiness-devtax-{{ $loop->index }}">
+                                                    <td>{{ $deviceTax['id'] }}</td>
+                                                    <td>{{ $deviceTax['name'] }}</td>
+                                                    <td class="text-right">{{ $deviceTax['percent'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </details>
+                            @endif
+
+                            @if (! empty($readiness['currencies']))
+                                <h5><i class="fa fa-money"></i> Currencies</h5>
+                                <table class="table table-sm table-bordered">
+                                    <thead><tr><th>Local</th><th>Sent as</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        @foreach ($readiness['currencies'] as $currency)
+                                            <tr wire:key="readiness-cur-{{ $loop->index }}">
+                                                <td>{{ $currency['local'] }}</td>
+                                                <td>{{ $currency['sent'] }}</td>
+                                                <td><span class="badge bg-{{ $badge[$currency['status']] }}">{{ $currency['status'] === 'ok' ? 'Supported' : 'Not supported' }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @endif
+
+                            @if (! empty($readiness['webhook_url']))
+                                <p class="mb-0"><strong>Webhook URL for the API key:</strong> <code>{{ $readiness['webhook_url'] }}</code>
+                                    @unless (str_starts_with($readiness['webhook_url'], 'https://'))
+                                        <br><small class="text-warning">Fiscal Harmony only accepts HTTPS — set this from a server with SSL.</small>
+                                    @endunless
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        @if ($readiness_integration_id)
+                            <button type="button" class="btn btn-default border-primary btn-wide btn-rounded"
+                                    wire:click="fiscalReadiness({{ $readiness_integration_id }})" wire:loading.attr="disabled" wire:target="fiscalReadiness">
+                                <i class="fa fa-refresh"></i> Re-run
+                            </button>
+                            @if (! empty($readiness['unmapped']))
+                                <button type="button" class="btn bg-success btn-wide btn-rounded"
+                                        wire:click="fiscalReadiness({{ $readiness_integration_id }}, true)" wire:loading.attr="disabled" wire:target="fiscalReadiness"
+                                        onclick="confirm('Create the missing tax mappings on Fiscal Harmony, matching each tax by rate to the fiscal device taxes?') || event.stopImmediatePropagation()">
+                                    <i class="fa fa-link"></i> Map Missing Taxes
+                                </button>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window.addEventListener('show-fiscalReadinessModal', () => $('#fiscalReadinessModal').modal('show'));
+    </script>
 </div>

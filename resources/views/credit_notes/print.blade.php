@@ -66,7 +66,7 @@ Credit Note | @if (Auth::user()->employee->company)
                         </div>
                     
                         <div style="padding-top: 25px; padding-bottom:15px">
-                            <center><h2>CREDIT NOTE</h2></center>
+                            <center><h2>{{ $credit_note->isFiscalised() ? "FISCAL CREDIT NOTE" : "CREDIT NOTE" }}</h2></center>
                         </div>
                     
                     </header>

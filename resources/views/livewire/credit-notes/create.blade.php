@@ -62,12 +62,17 @@
                                                 <label for="country">Invoice(s)<span class="required" style="color: red">*</span></label>
                                                 <input type="text" wire:model.debounce.300ms="search" placeholder="Search with invoice number, customer, date..." class="form-control">
                                                 <select wire:model="selectedInvoice" class="form-control" size="4" required >
+                                                   {{-- Greyed-out invoices are fully paid/credited (or covered by pending credit notes). --}}
                                                    <option value="" disabled>Select Invoice</option>
-                                                    @foreach ($invoices as $invoice)
-                                                        <option value="{{$invoice->id}}">{{$invoice->invoice_number}} | {{$invoice->customer ? $invoice->customer->name : ""}} | {{ $invoice->date }} | {{ $invoice->currency ? $invoice->currency->name : "" }} {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->total,2)}} </option>
+                                                    @foreach ($invoices as $invoiceOption)
+                                                        @php $credit = $creditable[$invoiceOption->id] ?? null; $blocked = $credit && $credit['amount'] <= 0; @endphp
+                                                        <option value="{{$invoiceOption->id}}" @if ($blocked) disabled style="color:#aaa" title="{{ $credit['pending'] ? 'Balance already covered by pending credit notes' : 'No outstanding balance to credit' }}" @endif>@if ($blocked)[{{ $credit['pending'] ? 'Pending credit' : 'Nothing to credit' }}] @endif{{$invoiceOption->invoice_number}} | {{$invoiceOption->customer ? $invoiceOption->customer->name : ""}} | {{ $invoiceOption->date }} | {{ $invoiceOption->currency ? $invoiceOption->currency->name : "" }} {{ $invoiceOption->currency ? $invoiceOption->currency->symbol : "" }}{{number_format($invoiceOption->total,2)}} </option>
                                                     @endforeach
                                                </select>
                                                 @error('selectedInvoice') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @if ($selectedBlockReason)
+                                                    <div class="alert alert-warning py-1 px-2 mt-2 mb-0"><i class="fa fa-exclamation-triangle"></i> {{ $selectedBlockReason }}</div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -241,7 +246,9 @@
                                 <div class="modal-footer">
                                     <div class="btn-group" role="group">
                                         <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                        <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="store" wire:loading.class="opacity-50 cursor-not-allowed"><i class="fa fa-save"></i>Save</button>
+                                        @php $saveBlocked = $invoice_attached === 'Yes' && $selectedBlockReason; @endphp
+                                        <button type="submit" class="btn bg-success btn-wide btn-rounded {{ $saveBlocked ? 'opacity-50' : '' }}" wire:loading.attr="disabled" wire:target="store" wire:loading.class="opacity-50 cursor-not-allowed"
+                                                @if ($saveBlocked) disabled style="cursor:not-allowed" title="{{ $selectedBlockReason }}" @endif><i class="fa fa-save"></i>Save</button>
                                     </div>
                                     <!-- /.btn-group -->
                                 </div>

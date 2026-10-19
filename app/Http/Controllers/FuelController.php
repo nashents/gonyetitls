@@ -49,6 +49,28 @@ class FuelController extends Controller
             'source_horse' => $fuel->source_horse,
           ]);
     }
+    /**
+     * Fuel order schedule (Fuel Orders > Bulk Actions): the fuel order
+     * document for several trucks at once, one sheet per station. Only
+     * approved orders go on it - the station shouldn't fuel anything else.
+     */
+    public function schedule(Request $request){
+        $ids = collect(explode(',', (string) $request->query('ids')))->map(fn ($id) => (int) $id)->filter()->unique();
+
+        $fuels = Fuel::with(['horse.horse_make', 'horse.horse_model', 'vehicle', 'asset.product.brand', 'driver.employee', 'employee', 'trip', 'container', 'source_horse', 'user.employee'])
+            ->whereIn('id', $ids)
+            ->orderBy('order_number')
+            ->get();
+
+        $company = Auth::user()->employee->company ?? Auth::user()->company;
+
+        return view('fuels.schedule')->with([
+            'company' => $company,
+            'groups' => $fuels->where('authorization', 'approved')->groupBy(fn ($fuel) => $fuel->container_id ? 'c'.$fuel->container_id : 'h'.$fuel->source_horse_id),
+            'skipped' => $fuels->where('authorization', '!=', 'approved'),
+        ]);
+    }
+
     public function print(Fuel $fuel){
 
         if (isset(Auth::user()->employee->company)) {

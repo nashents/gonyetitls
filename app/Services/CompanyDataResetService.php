@@ -61,7 +61,7 @@ class CompanyDataResetService
             'retreads', 'retread_items', 'retread_tyres', 'tyre_assignments', 'tyre_dispatches', 'tyre_purchases', 'tyre_transfers',
         ],
         'Inventory & procurement' => [
-            'closing_stocks', 'opening_stocks', 'stocks',
+            'closing_stocks', 'opening_stocks', 'stocks', 'stock_adjustments', 'stock_adjustment_items',
             'transfers', 'transfer_items', 'inventory_transfers',
             'purchases', 'purchase_products', 'purchase_product_documents',
             'goods_receiveds', 'goods_returneds', 'goods_returned_items',
@@ -205,6 +205,7 @@ class CompanyDataResetService
         '2026_09_30_000003_seed_unsplit_payroll_expense_accounts',
         '2026_10_10_000001_seed_standard_freight_service_types',
         '2026_10_13_000001_seed_opening_balance_equity_account',
+        '2026_10_19_000002_seed_stock_write_off_account',
     ];
 
     /**

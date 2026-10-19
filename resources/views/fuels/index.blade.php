@@ -38,6 +38,7 @@
                         </div>
 
                         @livewire('fuels.index')
+                        @livewire('fuels.bulk-create')
 
 
                     </div>
@@ -50,6 +51,8 @@
     $(document).ready( function () {
         $('#fuelsTable').DataTable();
     } );
+    window.addEventListener('show-bulkFuelModal', event => { $('#bulkFuelModal').modal('show'); });
+    window.addEventListener('hide-bulkFuelModal', event => { $('#bulkFuelModal').modal('hide'); });
     </script>
 @endsection
 

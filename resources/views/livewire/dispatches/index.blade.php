@@ -569,13 +569,17 @@
                                                         };
 
                                                         $count = null;
+                                                        $reserved = 0;
 
                                                         if ($relation) {
                                                             $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                                 ->where('status', 1)
                                                                 ->where('balance', '>', 0)
                                                                 ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                ->sum('balance');
+                                                                ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                                ->get();
+                                                                $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                                $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                         }
 
                                                         $hasCurrentStock = !is_null($count) && $count > 0;
@@ -590,7 +594,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -603,7 +609,9 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
-                                        @if ($max)
+                                        @if ($department == 'tyre')
+                                            <input type="number" class="form-control" wire:model="qty.0" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                        @elseif ($max)
                                             <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
@@ -733,13 +741,17 @@
                                                     };
 
                                                     $count = null;
+                                                    $reserved = 0;
 
                                                     if ($relation) {
                                                         $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                             ->where('status', 1)
                                                             ->where('balance', '>', 0)
                                                             ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                            ->sum('balance');
+                                                            ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                            ->get();
+                                                            $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                            $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                     }
 
                                                     $hasCurrentStock = !is_null($count) && $count > 0;
@@ -755,7 +767,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -768,7 +782,9 @@
                                     <div class="col-md-1">
                                         <div class="form-group">
                                             <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
-                                            @if ($max)
+                                            @if ($department == 'tyre')
+                                                <input type="number" class="form-control" wire:model="qty.$value" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                            @elseif ($max)
                                                 <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Qty" required>
                                             @else
                                                 <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Qty" required>
@@ -910,13 +926,17 @@
                                                     };
 
                                                     $count = null;
+                                                    $reserved = 0;
 
                                                     if ($relation) {
                                                         $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                             ->where('status', 1)
                                                             ->where('balance', '>', 0)
                                                             ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                            ->sum('balance');
+                                                            ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                            ->get();
+                                                            $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                            $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                     }
 
                                                     $hasCurrentStock = !is_null($count) && $count > 0;
@@ -927,7 +947,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -946,11 +968,11 @@
                                                 <option value="" selected>Select Item</option>
                                                     @foreach ($inventories as $inventory)
                                                         <option value="{{$inventory->id}}"
-                                                            @if(in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[0] ?? null) != $inventory->id) 
+                                                            @if((in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[0] ?? null) != $inventory->id) || ($inventory->available_balance <= 0 && ($selectedInventory[0] ?? null) != $inventory->id)) 
                                                                 disabled 
                                                             @endif
                                                             >
-                                                            {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
+                                                            {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}}{{ $inventory->reserved_qty > 0 ? " | Reserved: ".$inventory->reserved_qty." | Available: ".$inventory->available_balance : "" }} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($inventory->total)
                                                                 {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}} {{ number_format((float)($inventory->balance ?? 0) * (float)($inventory->amount ?? 0),2)}}
                                                             @endif
@@ -966,11 +988,11 @@
                                                 <option value="" selected>Select Item</option>
                                                     @foreach ($assets as $asset)
                                                         <option value="{{$asset->id}}"
-                                                            @if(in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[0] ?? null) != $asset->id) 
+                                                            @if((in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[0] ?? null) != $asset->id) || ($asset->available_balance <= 0 && ($selectedAsset[0] ?? null) != $asset->id)) 
                                                                 disabled 
                                                             @endif
                                                             >
-                                                            {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
+                                                            {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}}{{ $asset->reserved_qty > 0 ? " | Reserved: ".$asset->reserved_qty." | Available: ".$asset->available_balance : "" }} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($asset->total)
                                                                 {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{ number_format((float)($asset->balance ?? 0) * (float)($asset->amount ?? 0),2)}}  
                                                             @endif
@@ -999,7 +1021,9 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                        @if ($max)
+                                        @if ($department == 'tyre')
+                                            <input type="number" class="form-control" wire:model="qty.0" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                        @elseif ($max)
                                             <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
@@ -1062,13 +1086,17 @@
                                                             };
 
                                                             $count = null;
+                                                            $reserved = 0;
 
                                                             if ($relation) {
                                                                 $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                                     ->where('status', 1)
                                                                     ->where('balance', '>', 0)
                                                                     ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                    ->sum('balance');
+                                                                    ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                                    ->get();
+                                                                    $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                                    $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                             }
 
                                                             $hasCurrentStock = !is_null($count) && $count > 0;
@@ -1079,7 +1107,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -1098,11 +1128,11 @@
                                                         <option value="" selected>Select Item</option>
                                                             @foreach ($inventories as $inventory)
                                                                 <option value="{{$inventory->id}}"
-                                                                    @if(in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[$value] ?? null) != $inventory->id) 
+                                                                    @if((in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[$value] ?? null) != $inventory->id) || ($inventory->available_balance <= 0 && ($selectedInventory[$value] ?? null) != $inventory->id)) 
                                                                         disabled 
                                                                     @endif
                                                                     >
-                                                                    {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
+                                                                    {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}}{{ $inventory->reserved_qty > 0 ? " | Reserved: ".$inventory->reserved_qty." | Available: ".$inventory->available_balance : "" }} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
                                                                     @if ($inventory->total)
                                                                         {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}}{{ number_format((float)($inventory->balance ?? 0) * (float)($inventory->amount ?? 0),2)}}
                                                                     @endif
@@ -1118,11 +1148,11 @@
                                                         <option value="" selected>Select Item</option>
                                                             @foreach ($assets as $asset)
                                                                 <option value="{{$asset->id}}"
-                                                                    @if(in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[$value] ?? null) != $asset->id) 
+                                                                    @if((in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[$value] ?? null) != $asset->id) || ($asset->available_balance <= 0 && ($selectedAsset[$value] ?? null) != $asset->id)) 
                                                                         disabled 
                                                                     @endif
                                                                     >
-                                                                    {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
+                                                                    {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}}{{ $asset->reserved_qty > 0 ? " | Reserved: ".$asset->reserved_qty." | Available: ".$asset->available_balance : "" }} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
                                                                     @if ($asset->total)
                                                                         {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{ number_format((float)($asset->balance ?? 0) * (float)($asset->amount ?? 0),2)}} 
                                                                     @endif
@@ -1152,7 +1182,9 @@
                                          <div class="col-md-1">
                                             <div class="form-group">
                                                 <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                                @if ($max)
+                                                @if ($department == 'tyre')
+                                                    <input type="number" class="form-control" wire:model="qty.$value" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                                @elseif ($max)
                                                     <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @else
                                                     <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
@@ -1595,13 +1627,17 @@
                                                         };
 
                                                         $count = null;
+                                                        $reserved = 0;
 
                                                         if ($relation) {
                                                             $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                                 ->where('status', 1)
                                                                 ->where('balance', '>', 0)
                                                                 ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                ->sum('balance');
+                                                                ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                                ->get();
+                                                                $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                                $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                         }
 
                                                         $hasCurrentStock = !is_null($count) && $count > 0;
@@ -1616,7 +1652,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -1629,7 +1667,9 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
-                                        @if ($max)
+                                        @if ($department == 'tyre')
+                                            <input type="number" class="form-control" wire:model="qty.0" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                        @elseif ($max)
                                             <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
@@ -1687,13 +1727,17 @@
                                                     };
 
                                                     $count = null;
+                                                    $reserved = 0;
 
                                                     if ($relation) {
                                                         $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                             ->where('status', 1)
                                                             ->where('balance', '>', 0)
                                                             ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                            ->sum('balance');
+                                                            ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                            ->get();
+                                                            $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                            $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                     }
 
                                                     $hasCurrentStock = !is_null($count) && $count > 0;
@@ -1709,7 +1753,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -1722,7 +1768,9 @@
                                     <div class="col-md-1">
                                         <div class="form-group">
                                             <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
-                                            @if ($max)
+                                            @if ($department == 'tyre')
+                                                <input type="number" class="form-control" wire:model="qty.$value" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                            @elseif ($max)
                                                 <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Qty" required>
                                             @else
                                                 <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Qty" required>
@@ -1793,13 +1841,17 @@
                                                     };
 
                                                     $count = null;
+                                                    $reserved = 0;
 
                                                     if ($relation) {
                                                         $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                             ->where('status', 1)
                                                             ->where('balance', '>', 0)
                                                             ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                            ->sum('balance');
+                                                            ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                            ->get();
+                                                            $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                            $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                     }
 
                                                     $hasCurrentStock = !is_null($count) && $count > 0;
@@ -1810,7 +1862,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -1829,11 +1883,11 @@
                                                 <option value="" selected>Select Item</option>
                                                     @foreach ($inventories as $inventory)
                                                         <option value="{{$inventory->id}}"
-                                                            @if(in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[0] ?? null) != $inventory->id) 
+                                                            @if((in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[0] ?? null) != $inventory->id) || ($inventory->available_balance <= 0 && ($selectedInventory[0] ?? null) != $inventory->id)) 
                                                                 disabled 
                                                             @endif
                                                             >
-                                                            {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
+                                                            {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}}{{ $inventory->reserved_qty > 0 ? " | Reserved: ".$inventory->reserved_qty." | Available: ".$inventory->available_balance : "" }} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($inventory->total)
                                                                 {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}} {{ number_format((float)($inventory->balance ?? 0) * (float)($inventory->amount ?? 0),2)}}
                                                             @endif
@@ -1849,11 +1903,11 @@
                                                 <option value="" selected>Select Item</option>
                                                     @foreach ($assets as $asset)
                                                         <option value="{{$asset->id}}"
-                                                            @if(in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[0] ?? null) != $asset->id) 
+                                                            @if((in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[0] ?? null) != $asset->id) || ($asset->available_balance <= 0 && ($selectedAsset[0] ?? null) != $asset->id)) 
                                                                 disabled 
                                                             @endif
                                                             >
-                                                            {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
+                                                            {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}}{{ $asset->reserved_qty > 0 ? " | Reserved: ".$asset->reserved_qty." | Available: ".$asset->available_balance : "" }} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($asset->total)
                                                                 {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{ number_format((float)($asset->balance ?? 0) * (float)($asset->amount ?? 0),2)}}  
                                                             @endif
@@ -1890,7 +1944,9 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                        @if ($max)
+                                        @if ($department == 'tyre')
+                                            <input type="number" class="form-control" wire:model="qty.0" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                        @elseif ($max)
                                             <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
@@ -1950,13 +2006,17 @@
                                                             };
 
                                                             $count = null;
+                                                            $reserved = 0;
 
                                                             if ($relation) {
                                                                 $count = $product->{$relation}()  // 👈 note the () = query, not collection
                                                                     ->where('status', 1)
                                                                     ->where('balance', '>', 0)
                                                                     ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
-                                                                    ->sum('balance');
+                                                                    ->when($relation !== 'tyres', fn($q) => $q->withReservedQty())
+                                                                    ->get();
+                                                                    $reserved = $relation === 'tyres' ? 0 : $count->sum('reserved_qty');
+                                                                    $count = $relation === 'tyres' ? $count->sum('balance') : $count->sum('available_balance');
                                                             }
 
                                                             $hasCurrentStock = !is_null($count) && $count > 0;
@@ -1967,7 +2027,9 @@
                                                         [{{ ucfirst($product->department) }} item]
                                                     @endif
                                                     @if($hasCurrentStock)
-                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }} available{{ $reserved > 0 ? ' (' . $reserved . ' reserved)' : '' }}
+                                                    @elseif($reserved > 0)
+                                                        (all {{ $reserved }} reserved by dispatches awaiting approval)
                                                     @elseif($isForeignDept)
                                                         (no {{ ucfirst($department) }} stock — dispatch via {{ ucfirst($product->department) }} Dispatches)
                                                     @endif
@@ -1986,11 +2048,11 @@
                                                         <option value="" selected>Select Item</option>
                                                             @foreach ($inventories as $inventory)
                                                                 <option value="{{$inventory->id}}"
-                                                                    @if(in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[$value] ?? null) != $inventory->id) 
+                                                                    @if((in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[$value] ?? null) != $inventory->id) || ($inventory->available_balance <= 0 && ($selectedInventory[$value] ?? null) != $inventory->id)) 
                                                                         disabled 
                                                                     @endif
                                                                     >
-                                                                    {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
+                                                                    {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}}{{ $inventory->reserved_qty > 0 ? " | Reserved: ".$inventory->reserved_qty." | Available: ".$inventory->available_balance : "" }} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
                                                                     @if ($inventory->total)
                                                                         {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}}{{ number_format((float)($inventory->balance ?? 0) * (float)($inventory->amount ?? 0),2)}}
                                                                     @endif
@@ -2006,11 +2068,11 @@
                                                         <option value="" selected>Select Item</option>
                                                             @foreach ($assets as $asset)
                                                                 <option value="{{$asset->id}}"
-                                                                    @if(in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[$value] ?? null) != $asset->id) 
+                                                                    @if((in_array($asset->id, $selectedAsset ?? []) && ($selectedAsset[$value] ?? null) != $asset->id) || ($asset->available_balance <= 0 && ($selectedAsset[$value] ?? null) != $asset->id)) 
                                                                         disabled 
                                                                     @endif
                                                                     >
-                                                                    {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
+                                                                    {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}}{{ $asset->reserved_qty > 0 ? " | Reserved: ".$asset->reserved_qty." | Available: ".$asset->available_balance : "" }} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
                                                                     @if ($asset->total)
                                                                         {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{ number_format((float)($asset->balance ?? 0) * (float)($asset->amount ?? 0),2)}} 
                                                                     @endif
@@ -2048,7 +2110,9 @@
                                          <div class="col-md-1">
                                             <div class="form-group">
                                                 <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                                @if ($max)
+                                                @if ($department == 'tyre')
+                                                    <input type="number" class="form-control" wire:model="qty.$value" readonly title="Each tyre is dispatched individually - qty is fixed at 1" style="background-color:#eee; cursor:not-allowed;">
+                                                @elseif ($max)
                                                     <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @else
                                                     <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>

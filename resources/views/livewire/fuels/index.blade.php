@@ -129,6 +129,23 @@
                                 </div>
                             </div>
                             <a href="" data-toggle="modal" data-target="#fuelModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Fuel Order</a>
+                            <div class="btn-group">
+                                <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-bars"></i> Bulk Actions @if (count($selectedRows)) ({{ count($selectedRows) }} selected) @endif <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    @unless (count($selectedRows))
+                                        <li><a href="#" wire:click.prevent="$emitTo('fuels.bulk-create', 'openBulkCreate')"><i class="fas fa-gas-pump"></i> Bulk Create Orders</a></li>
+                                    @endunless
+                                    <li>
+                                        @if (count($selectedRows))
+                                            <a href="#" wire:click.prevent="generateSchedule()"><i class="fa fa-file-text-o"></i> Bulk Generate Order Schedule ({{ count($selectedRows) }})</a>
+                                        @else
+                                            <a href="#" onclick="return false;" title="Tick the fuel orders to put on the schedule first" style="cursor: not-allowed; opacity: 0.5;"><i class="fa fa-file-text-o"></i> Bulk Generate Order Schedule</a>
+                                        @endif
+                                    </li>
+                                </ul>
+                            </div>
                             <a href="#" wire:click="exportFuelsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                             <a href="#" wire:click="exportFuelsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                             <a href="#" wire:click="exportFuelsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -170,6 +187,7 @@
                             <table class="table table-hover table-bordered table-sm align-middle" cellspacing="0" width="100%">
                                 <thead class="thead-light">
                                     <tr>
+                                        <th><input type="checkbox" wire:model="selectPageRows" title="Select this page"></th>
                                         <th>FOrder#</th>
                                         <th>Fuel Request</th>
                                         <th>Date</th>
@@ -203,6 +221,8 @@
                                             <tr wire:key="{{ 'bb3207-159-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($fuel->id ?? '') }}" 
                                                 style="background-color:{{ $rowAccent }}; border-left: 6px solid {{ $borderAccent }};"
                                             >
+
+                                                <td><input type="checkbox" wire:model="selectedRows" value="{{ $fuel->id }}"></td>
 
                                                 {{-- FOrder# --}}
                                                 <td>
@@ -396,16 +416,30 @@
                                                                     </a>
                                                                 </li>
                                                             @endif
-                                                            @if(
-                                                                $fuel->authorization === 'pending'
-                                                                || ($fuel->authorization === 'approved' && $fuel->authorized_by_id == Auth::id())
-                                                            )
-                                                                <li>
+                                                            @php
+                                                                $deleteBlockedReason = null;
+                                                                if ($fuel->authorization === 'rejected') {
+                                                                    $deleteBlockedReason = 'Rejected fuel orders cannot be deleted.';
+                                                                } elseif ($fuel->authorization === 'approved' && $fuel->authorized_by_id != Auth::id()) {
+                                                                    $approver = $fuel->authorized_by_id ? App\Models\User::find($fuel->authorized_by_id) : null;
+                                                                    $approverName = $approver ? trim($approver->name . ' ' . $approver->surname) : '';
+                                                                    $deleteBlockedReason = 'Approved fuel orders can only be deleted by the user who approved them' . ($approverName ? " ({$approverName})" : '') . '.';
+                                                                } elseif (!in_array($fuel->authorization, ['pending', 'approved'], true)) {
+                                                                    $deleteBlockedReason = 'Only pending fuel orders can be deleted (authorization status is not set).';
+                                                                }
+                                                            @endphp
+                                                            <li>
+                                                                @if($deleteBlockedReason)
+                                                                    <a href="#" onclick="return false;" title="{{ $deleteBlockedReason }}"
+                                                                        style="cursor: not-allowed; opacity: 0.5;">
+                                                                        <i class="fa fa-trash color-danger"></i> Delete
+                                                                    </a>
+                                                                @else
                                                                     <a href="#" wire:click.prevent="delete({{ $fuel->id }})">
                                                                         <i class="fa fa-trash color-danger"></i> Delete
                                                                     </a>
-                                                                </li>
-                                                            @endif
+                                                                @endif
+                                                            </li>
                                                         </ul>
                                                     </div>
                                                 </td>
@@ -414,7 +448,7 @@
 
                                         @empty
                                             <tr>
-                                                <td colspan="10" class="text-center text-muted py-3" style="font-size: 17px;">
+                                                <td colspan="11" class="text-center text-muted py-3" style="font-size: 17px;">
                                                     No Fuel Orders Found.
                                                 </td>
                                             </tr>

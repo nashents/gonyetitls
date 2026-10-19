@@ -11,6 +11,7 @@ class Inventory extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+    use \App\Models\Concerns\HasDispatchReservations;
 
     public function bill_expenses(){
         return $this->HasMany('App\Models\BillExpense');

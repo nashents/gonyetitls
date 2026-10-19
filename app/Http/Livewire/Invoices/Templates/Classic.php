@@ -8,7 +8,6 @@ use App\Models\Invoice;
 use App\Models\Tax;
 use App\Http\Livewire\Concerns\HasFiscalDocument;
 use App\Services\FiscalisationService;
-use Barryvdh\DomPDF\Facade\PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -90,12 +89,7 @@ class Classic extends Component
 
     public function generatePdf($id)
     {
-        $pdf = PDF::loadView('invoices.invoice', [
-            'invoice'       => $this->invoice,
-            'company'       => $this->company,
-            'invoice_items' => $this->invoice_items,
-        ]);
-        return $pdf->download('invoice.pdf');
+        return app(\App\Services\Invoices\InvoicePdf::class)->download($this->invoice);
     }
 
     public function render()

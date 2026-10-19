@@ -12,6 +12,7 @@ class Asset extends Model implements Auditable
     use HasFactory, SoftDeletes;
 
     use \OwenIt\Auditing\Auditable;
+    use \App\Models\Concerns\HasDispatchReservations;
 
     public function bill(){
         return $this->hasOne('App\Models\Bill');
