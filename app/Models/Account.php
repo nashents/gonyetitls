@@ -25,7 +25,7 @@ class Account extends Model implements Auditable
     protected static function booted()
     {
         static::updating(function (Account $account) {
-            if (in_array($account->getOriginal('name'), self::PROTECTED_CONTROL_ACCOUNTS, true) && $account->isDirty(self::PROTECTED_FIELDS)) {
+            if (in_array($account->getOriginal('name'), self::PROTECTED_CONTROL_ACCOUNTS, true) && $account->changesProtectedField()) {
                 throw new \RuntimeException("\"{$account->getOriginal('name')}\" is a protected control account and can't be edited or deactivated.");
             }
         });
@@ -34,6 +34,28 @@ class Account extends Model implements Auditable
                 throw new \RuntimeException("\"{$account->name}\" is a protected control account and can't be deleted.");
             }
         });
+    }
+
+    /**
+     * A real change to a protected field. is_locked has no cast, so re-saving a
+     * stored 1 as true (seeders/migrations re-locking) counts as dirty but isn't
+     * a change; locking is always allowed, only unlocking is blocked.
+     */
+    protected function changesProtectedField(): bool
+    {
+        foreach (self::PROTECTED_FIELDS as $field) {
+            if (!$this->isDirty($field)) {
+                continue;
+            }
+            $new = $this->getAttributes()[$field] ?? null;
+            if ($field === 'is_locked' && $new) {
+                continue;
+            }
+            if ((string) $this->getOriginal($field) !== (string) $new) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function isProtectedControl(): bool

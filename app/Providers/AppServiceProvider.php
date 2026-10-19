@@ -81,6 +81,8 @@ class AppServiceProvider extends ServiceProvider
         BillExpense::observe(BillExpenseObserver::class);
         Invoice::observe(InvoiceObserver::class);
         Payment::observe(PaymentObserver::class);
+        \App\Models\InvoicePayment::observe(\App\Observers\InvoicePaymentObserver::class);
+        \App\Models\BillPayment::observe(\App\Observers\BillPaymentObserver::class);
         CreditNote::observe(CreditNoteObserver::class);
         DebitNote::observe(DebitNoteObserver::class);
         Fuel::observe(FuelObserver::class);

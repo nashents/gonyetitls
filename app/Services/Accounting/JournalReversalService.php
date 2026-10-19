@@ -39,6 +39,8 @@ class JournalReversalService
                 'invoice_id'     => $entry->invoice_id,
                 'bill_id'        => $entry->bill_id,
                 'payment_id'     => $entry->payment_id,
+                'invoice_payment_id' => $entry->invoice_payment_id,
+                'bill_payment_id' => $entry->bill_payment_id,
                 'credit_note_id' => $entry->credit_note_id,
                 'payroll_run_id' => $entry->payroll_run_id,
                 'customer_fuel_supply_id' => $entry->customer_fuel_supply_id,

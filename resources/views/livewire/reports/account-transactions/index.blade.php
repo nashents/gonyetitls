@@ -71,14 +71,25 @@
                                                             Transactions
                                                         </button>
                                                     </div>
+                                                    @if ($own_currency)
+                                                    {{-- Bank/cash account with its own currency: statement in that currency, like the customer statement --}}
                                                     <div class="btn-group" style="margin-left: 25px">
-                                                        <a href="{{ route('reports.account_transactions.print', ['account_id' => $account_id, 'from' => $from, 'to' => $to, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
+                                                        <button wire:click.prevent="$set('currency_mode', 'reporting')" class="btn btn-default {{ $currency_mode !== 'account' ? 'border-primary' : '' }} btn-wide btn-rounded" type="button">
+                                                            In {{ auth()->user()->employee?->company?->currency?->name ?? 'reporting currency' }}
+                                                        </button>
+                                                        <button wire:click.prevent="$set('currency_mode', 'account')" class="btn btn-default {{ $currency_mode === 'account' ? 'border-primary' : '' }} btn-wide btn-rounded" type="button">
+                                                            In account currency ({{ $own_currency->name }})
+                                                        </button>
+                                                    </div>
+                                                    @endif
+                                                    <div class="btn-group" style="margin-left: 25px">
+                                                        <a href="{{ route('reports.account_transactions.print', ['account_id' => $account_id, 'from' => $from, 'to' => $to, 'view' => $this->viewMode(), 'currency' => $own_currency ? $currency_mode : 'reporting']) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                                             <i class="fa fa-print"></i> Print
                                                         </a>
-                                                        <a href="{{ route('reports.account_transactions.pdf', ['account_id' => $account_id, 'from' => $from, 'to' => $to, 'view' => $this->viewMode()]) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
+                                                        <a href="{{ route('reports.account_transactions.pdf', ['account_id' => $account_id, 'from' => $from, 'to' => $to, 'view' => $this->viewMode(), 'currency' => $own_currency ? $currency_mode : 'reporting']) }}" target="_blank" class="btn btn-default btn-wide btn-rounded">
                                                             <i class="fa fa-file-pdf-o"></i> Export PDF
                                                         </a>
-                                                        <a href="{{ route('reports.account_transactions.excel', ['account_id' => $account_id, 'from' => $from, 'to' => $to, 'view' => $this->viewMode()]) }}" class="btn btn-default btn-wide btn-rounded">
+                                                        <a href="{{ route('reports.account_transactions.excel', ['account_id' => $account_id, 'from' => $from, 'to' => $to, 'view' => $this->viewMode(), 'currency' => $own_currency ? $currency_mode : 'reporting']) }}" class="btn btn-default btn-wide btn-rounded">
                                                             <i class="fa fa-file-excel-o"></i> Export Excel
                                                         </a>
                                                     </div>

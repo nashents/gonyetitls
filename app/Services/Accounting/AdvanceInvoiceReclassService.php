@@ -56,11 +56,11 @@ class AdvanceInvoiceReclassService
      * for TRIPS_NOT_OFFLOADED, $pendingTrips is filled with the trip numbers
      * still not Offloaded.
      */
-    public function reclassIfEarned(int $invoiceId, ?array &$pendingTrips = null): string
+    public function reclassIfEarned(int $invoiceId, ?array &$pendingTrips = null, ?string $date = null): string
     {
         $pendingTrips = [];
 
-        return DB::transaction(function () use ($invoiceId, &$pendingTrips) {
+        return DB::transaction(function () use ($invoiceId, &$pendingTrips, $date) {
             // Row-lock the invoice for the check-then-post sequence so two
             // near-simultaneous Offload transitions for trips on the same
             // multi-trip invoice can't both post the release.
@@ -91,7 +91,7 @@ class AdvanceInvoiceReclassService
                 return self::TRIPS_NOT_OFFLOADED;
             }
 
-            $this->postReclass($invoice, $deferral);
+            $this->postReclass($invoice, $deferral, $date);
 
             return self::POSTED;
         });
@@ -152,7 +152,7 @@ class AdvanceInvoiceReclassService
         return Trip::whereIn('id', $tripIds->unique())->get(['id', 'trip_number', 'trip_status']);
     }
 
-    protected function postReclass(Invoice $invoice, JournalEntry $deferral): JournalEntry
+    protected function postReclass(Invoice $invoice, JournalEntry $deferral, ?string $date = null): JournalEntry
     {
         // Debit back the account the invoice actually credited, so a renamed
         // "Customer Advances" account (e.g. "Customer Advances (Deferred)")
@@ -184,7 +184,9 @@ class AdvanceInvoiceReclassService
             'company_id'     => $invoice->company_id ? $invoice->company_id : Auth::user()?->employee?->company_id,
             'invoice_id'     => $invoice->id,
             'journal_number' => app(InvoiceJournalService::class)->generateNumber(),
-            'date'           => now(),
+            // Recognized when earned; a re-release after a correction keeps the
+            // original release date (passed in by LedgerResyncService).
+            'date'           => $date ?? now(),
             'reference'      => 'RECLASS-' . $invoice->invoice_number,
             'description'    => "Revenue recognition (advance reclass) - Invoice {$invoice->invoice_number}",
             'is_manual'      => false,

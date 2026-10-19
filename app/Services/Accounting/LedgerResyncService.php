@@ -41,18 +41,38 @@ class LedgerResyncService
     public function resyncInvoice(Invoice $invoice, ?string $reason = null, bool $force = false): JournalEntry
     {
         return DB::transaction(function () use ($invoice, $reason, $force) {
-            $existing = $this->currentEntry(JournalEntry::where('invoice_id', $invoice->id));
+            // The invoice's own posting - not an advance invoice's RECLASS- release.
+            $existing = $this->currentEntry(
+                JournalEntry::where('invoice_id', $invoice->id)->where('reference', 'not like', 'RECLASS-%')
+            );
 
             if (!$force && $existing && $this->isUnchanged($existing, 'Accounts Receivable', (float) $invoice->total, $invoice->exchange_rate, $invoice->currency_id, $invoice->date)) {
                 return $existing;
             }
+
+            // An advance invoice already released to Sales: the release is
+            // reversed below with everything else and must be redone on the
+            // corrected figures, on its original date. Releasing the new
+            // total against the old deferral stranded the difference in
+            // Customer Advances (CEI00001/2 on COMDELTIC).
+            $release = $invoice->invoice_type === 'advance'
+                ? JournalEntry::where('invoice_id', $invoice->id)->where('reference', 'like', 'RECLASS-%')
+                    ->where('status', 'posted')->orderByDesc('id')->get()
+                    ->first(fn ($e) => $this->journalReversal->isLiveEffect($e))
+                : null;
 
             $this->reverseExisting(
                 JournalEntry::where('invoice_id', $invoice->id),
                 $reason ?? "Invoice {$invoice->invoice_number} resynced to current figures"
             );
 
-            return $this->invoiceJournal->post($invoice->fresh());
+            $entry = $this->invoiceJournal->post($invoice->fresh());
+
+            if ($release) {
+                app(AdvanceInvoiceReclassService::class)->reclassIfEarned($invoice->id, $pending, $release->date->toDateString());
+            }
+
+            return $entry;
         });
     }
 

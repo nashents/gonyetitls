@@ -17,6 +17,9 @@ class Index extends Component
     public $to;
     public $details;
     public $summary = "summary";
+    // "reporting" (company currency) or "account" - a bank/cash account's own
+    // currency, like the customer statement. A plain string: safe to round-trip.
+    public $currency_mode = "reporting";
 
     // Report results (balances, transaction rows, currency) are built in
     // render() and passed to the view, never stored as public properties:
@@ -86,13 +89,23 @@ class Index extends Component
         $total_debit = 0;
         $total_credit = 0;
         $transactions = [];
+        $own_currency = null;
 
         if ($this->account_id && isset($this->from) && isset($this->to) && $company) {
             $account = Account::with('account_type.account_type_group')->find($this->account_id);
             $groupName = $account?->account_type?->account_type_group?->name;
             $creditNormal = in_array($groupName, AccountBalanceCalculator::CREDIT_NORMAL_GROUPS, true);
 
-            $calculator = new AccountTransactionsCalculator($company->id, $this->account_id, $this->from, $this->to, $creditNormal);
+            // Own-currency statement only for an account whose currency differs
+            // from the company's (bank/cash accounts).
+            $own_currency = $account?->currency_id && (int) $account->currency_id !== (int) $company->currency_id
+                ? $account->currency : null;
+            if ($own_currency && $this->currency_mode === "account") {
+                $default_currency = $own_currency;
+            }
+
+            $calculator = new AccountTransactionsCalculator($company->id, $this->account_id, $this->from, $this->to, $creditNormal,
+                $own_currency && $this->currency_mode === "account" ? (int) $own_currency->id : null);
 
             $opening_balance = $calculator->openingBalance();
             $transactions = $calculator->transactions($opening_balance);
@@ -112,6 +125,7 @@ class Index extends Component
             'total_debit' => $total_debit,
             'total_credit' => $total_credit,
             'transactions' => $transactions,
+            'own_currency' => $own_currency,
         ]);
     }
 }

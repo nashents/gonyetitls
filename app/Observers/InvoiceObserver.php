@@ -46,6 +46,18 @@ class InvoiceObserver
             app(InvoiceTripFreightSyncService::class)->syncApprovedFreightUpdates($invoice);
             $this->pushToSage($invoice);
             $this->applyCustomerSuppliedFuel($invoice);
+        } elseif ($invoice->authorization === 'approved'
+            && $invoice->isDirty(['total', 'subtotal', 'tax_amount', 'discount_amount', 'exchange_rate', 'currency_id', 'date', 'customer_id'])) {
+            // Edited after approval: the ledger must follow. Only posting at
+            // the approval transition left edited invoices posted at their old
+            // figures (COMDELTIC CEI00001-4: AR / Customer Advances off by
+            // 15-20k each). resyncInvoice() is a no-op if the posting already
+            // matches, and redoes an advance invoice's release.
+            app(\App\Services\Accounting\LedgerResyncService::class)->resyncInvoice(
+                $invoice,
+                "Invoice {$invoice->invoice_number} edited",
+                force: $invoice->isDirty('customer_id') // amounts unchanged, AR customer moved
+            );
         }
     }
 

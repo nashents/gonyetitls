@@ -25,6 +25,8 @@ class JournalEntry extends Model implements Auditable
             'invoice_id',
             'bill_id',
             'payment_id',
+            'invoice_payment_id',
+            'bill_payment_id',
             'payroll_run_id',
             'credit_note_id',
             'debit_note_id',

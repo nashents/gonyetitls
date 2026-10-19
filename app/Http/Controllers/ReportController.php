@@ -627,7 +627,14 @@ class ReportController extends Controller
         $groupName = $account?->account_type?->account_type_group?->name;
         $creditNormal = in_array($groupName, AccountBalanceCalculator::CREDIT_NORMAL_GROUPS, true);
 
-        $calculator = new AccountTransactionsCalculator($company->id ?? 0, $accountId, $from, $to, $creditNormal);
+        // ?currency=account: a bank/cash account's statement in its own currency
+        // (same rule as the Livewire report).
+        $ownCurrency = $account?->currency_id && $company && (int) $account->currency_id !== (int) $company->currency_id
+            ? $account->currency : null;
+        $inOwnCurrency = $ownCurrency && $request->query('currency') === 'account';
+
+        $calculator = new AccountTransactionsCalculator($company->id ?? 0, $accountId, $from, $to, $creditNormal,
+            $inOwnCurrency ? (int) $ownCurrency->id : null);
 
         $openingBalance = $calculator->openingBalance();
         $transactions = $calculator->transactions($openingBalance);
@@ -637,7 +644,7 @@ class ReportController extends Controller
 
         return [
             'company' => $company,
-            'currencyCode' => $company?->currency?->name ?? '',
+            'currencyCode' => $inOwnCurrency ? $ownCurrency->name : ($company?->currency?->name ?? ''),
             'account_name' => $account?->name ?? 'Account',
             'from' => $from,
             'to' => $to,
