@@ -95,11 +95,11 @@
                                     <td>
                                         {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}
                                         <br>
-                                        <small><strong>Tread Depth(<i>mm</i>): </strong> {{number_format($tyre->thread_depth ?? Null,2)}}</small>
+                                        <small><strong>Tread Depth(<i>mm</i>): </strong> {{ is_numeric($tyre->thread_depth) ? number_format((float)$tyre->thread_depth, 2) : ($tyre->thread_depth ?: "-") }}</small>
                                         <br>
-                                        <small><strong>Pressure(<i>psi</i>): </strong> {{number_format($tyre->pressure_psi ?? Null,2)}}</small>
+                                        <small><strong>Pressure(<i>psi</i>): </strong> {{ is_numeric($tyre->pressure_psi) ? number_format((float)$tyre->pressure_psi, 2) : ($tyre->pressure_psi ?: "-") }}</small>
                                         <br>
-                                        <small><strong>Life Span(<i>kms</i>): </strong> {{number_format($tyre->life_span ?? Null,2)}}</small>
+                                        <small><strong>Life Span(<i>kms</i>): </strong> {{ is_numeric($tyre->life_span) ? number_format((float)$tyre->life_span, 2) : ($tyre->life_span ?: "-") }}</small>
 
                                     
                                     </td>
@@ -240,21 +240,21 @@
                                     <td>{{$tyre->qty}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->name : ""}}</td>
                                     <td>
-                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->amount ? $tyre->amount : 0,2)}}  
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format(is_numeric($tyre->amount) ? (float)$tyre->amount : 0, 2)}}  
                                     </td>
                                     <td>
-                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}  
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format(is_numeric($tyre->tax_amount) ? (float)$tyre->tax_amount : 0, 2)}}  
                                     </td>
                                     <td>
-                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->cost ? $tyre->cost : 0,2)}}  
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format(is_numeric($tyre->cost) ? (float)$tyre->cost : 0, 2)}}  
                                     </td>
                                     <td>
-                                         {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total ? $tyre->total : 0,2)}}  
+                                         {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format(is_numeric($tyre->total) ? (float)$tyre->total : 0, 2)}}  
                                         @if (Auth::user()->employee->company->currency_id != $tyre->currency_id)
                                             <br>
                                             <small>
-                                                <strong>Exc Rate:</strong> {{number_format($tyre->exchange_rate,2)}} <br>
-                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($tyre->exchange_amount,2)}}
+                                                <strong>Exc Rate:</strong> {{number_format(is_numeric($tyre->exchange_rate) ? (float)$tyre->exchange_rate : 0, 2)}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format(is_numeric($tyre->exchange_amount) ? (float)$tyre->exchange_amount : 0, 2)}}
                                             </small>
                                         @endif
                                     </td>

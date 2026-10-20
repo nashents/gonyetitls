@@ -29,6 +29,13 @@ class Pending extends Component
     public $authorize;
     public $comments;
 
+    // Bulk authorization
+    public $selectedRows = [];
+    public $selectPageRows = false;
+    public array $pageIds = [];
+    public $bulk_authorize;
+    public $bulk_comments;
+
     public function mount(){
         $this->company = Auth::user()->employee->company;
     }
@@ -83,6 +90,77 @@ class Pending extends Component
         }
 
         return $this->redirectOrStay('goods_receiveds.rejected');
+    }
+
+    // ─── Bulk authorization ──────────────────────────────────────────────────
+
+    public function updatedSelectPageRows($value)
+    {
+        $this->selectedRows = $value ? array_map('strval', $this->pageIds) : [];
+    }
+
+    public function showBulkAuthorize()
+    {
+        $this->bulk_authorize = null;
+        $this->bulk_comments = null;
+        $this->resetErrorBag();
+        $this->dispatchBrowserEvent('show-bulkyAuthorizationModal');
+    }
+
+    /**
+     * Each GRV goes through GoodsReceivedAuthorizationService in its own transaction
+     * (stock release + GL receipt posting), so one failure is skipped with its reason
+     * instead of blocking the rest.
+     */
+    public function bulkAuthorize()
+    {
+        if (! in_array($this->bulk_authorize, ['approved', 'rejected'], true)) {
+            $this->addError('bulk_authorize', 'Please select a decision.');
+            return;
+        }
+
+        $service = app(GoodsReceivedAuthorizationService::class);
+        $grvs = GoodsReceived::whereIn('id', $this->selectedRows)->where('authorization', 'pending')->orderBy('id')->get();
+
+        $done = 0;
+        $skipped = [];
+        foreach ($grvs as $grv) {
+            try {
+                $grv = $service->authorize($grv, $this->bulk_authorize, $this->bulk_comments, Auth::id());
+                $done++;
+            } catch (\Throwable $e) {
+                $message = $e instanceof \Illuminate\Validation\ValidationException ? collect($e->errors())->flatten()->first() : $e->getMessage();
+                \Illuminate\Support\Facades\Log::error("Bulk GRV authorization failed for {$grv->goods_received_number}: ".$e->getMessage());
+                $skipped[] = "{$grv->goods_received_number}: {$message}";
+                continue;
+            }
+
+            try {
+                $user = $grv->user;
+                if ($user?->email) {
+                    Mail::to($user->email)->send(new AuthorizationNotificationMail($this->company, "Goods Received Authorization", $user, $grv));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("GRV {$grv->goods_received_number} authorized but its notification failed: ".$e->getMessage());
+            }
+        }
+
+        $this->reset(['selectedRows', 'selectPageRows']);
+        $this->dispatchBrowserEvent('hide-bulkyAuthorizationModal');
+
+        $verb = $this->bulk_authorize === 'approved' ? 'approved' : 'rejected';
+        if ($skipped) {
+            session()->flash('warning', count($skipped).' GRV(s) not '.$verb.': '.implode(' | ', $skipped));
+        }
+        $this->dispatchBrowserEvent('alert', [
+            'type' => $skipped ? 'warning' : 'success',
+            'message' => "{$done} GRV(s) {$verb}".($verb === 'approved' && $done ? ' & item(s) added to stock' : '')
+                .($skipped ? ', '.count($skipped).' skipped - see the message at the top.' : ' successfully.'),
+        ]);
+
+        if (!$skipped && $done > 0) {
+            return $this->redirectOrStay($verb === 'approved' ? 'goods_receiveds.approved' : 'goods_receiveds.rejected');
+        }
     }
 
     public function render()
@@ -158,6 +236,8 @@ class Pending extends Component
         $goods_receiveds = $base
             ->orderByDesc($this->goods_received_filter)
             ->paginate(10);
+
+        $this->pageIds = $goods_receiveds->pluck('id')->all();
 
         return view('livewire.goods-receiveds.pending', [
             'goods_receiveds' => $goods_receiveds,

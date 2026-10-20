@@ -59,6 +59,7 @@ use App\Models\Vendor;
 use App\Services\Cartrack\CartrackSyncService;
 use App\Services\FanTracker\FanTrackerSyncService;
 use App\Services\Pinpoint\PinpointSyncService;
+use App\Services\EzyTrack\EzyTrackSyncService;
 use App\Services\Sage\Concerns\ResolvesSageIntegration;
 use App\Services\TripCompletionCascadeService;
 use Carbon\Carbon;
@@ -479,6 +480,7 @@ class Create extends Component
     public $odometer_is_live_from_cartrack = false;
     public $odometer_is_live_from_fantracker = false;
     public $odometer_is_live_from_pinpoint = false;
+    public $odometer_is_live_from_ezytrack = false;
     public $fuel_comments;
     public $customer_updates = False;
     public $fuel_consumption_loaded_standard;
@@ -844,6 +846,7 @@ class Create extends Component
                 $this->odometer_is_live_from_cartrack = false;
                 $this->odometer_is_live_from_fantracker = false;
                 $this->odometer_is_live_from_pinpoint = false;
+                $this->odometer_is_live_from_ezytrack = false;
 
                 $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($horse);
                 if (! empty($cartrackSnapshot['mileage'])) {
@@ -859,6 +862,12 @@ class Create extends Component
                         if (! empty($pinpointSnapshot['mileage'])) {
                             $this->odometer = $pinpointSnapshot['mileage'];
                             $this->odometer_is_live_from_pinpoint = true;
+                        } else {
+                            $ezyTrackSnapshot = app(EzyTrackSyncService::class)->currentSnapshot($horse);
+                            if (! empty($ezyTrackSnapshot['mileage'])) {
+                                $this->odometer = $ezyTrackSnapshot['mileage'];
+                                $this->odometer_is_live_from_ezytrack = true;
+                            }
                         }
                     }
                 }
@@ -904,6 +913,7 @@ class Create extends Component
                 $this->odometer_is_live_from_cartrack = false;
                 $this->odometer_is_live_from_fantracker = false;
                 $this->odometer_is_live_from_pinpoint = false;
+                $this->odometer_is_live_from_ezytrack = false;
 
                 $cartrackSnapshot = app(CartrackSyncService::class)->currentSnapshot($vehicle);
                 if (! empty($cartrackSnapshot['mileage'])) {
@@ -919,6 +929,12 @@ class Create extends Component
                         if (! empty($pinpointSnapshot['mileage'])) {
                             $this->odometer = $pinpointSnapshot['mileage'];
                             $this->odometer_is_live_from_pinpoint = true;
+                        } else {
+                            $ezyTrackSnapshot = app(EzyTrackSyncService::class)->currentSnapshot($vehicle);
+                            if (! empty($ezyTrackSnapshot['mileage'])) {
+                                $this->odometer = $ezyTrackSnapshot['mileage'];
+                                $this->odometer_is_live_from_ezytrack = true;
+                            }
                         }
                     }
                 }

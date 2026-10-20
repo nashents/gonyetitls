@@ -47,6 +47,7 @@
                              </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                            @include('includes.bulk-authorize-bar', ['label' => 'dispatch(es)'])
                              <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search dispatches...">
@@ -55,6 +56,7 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm"><input type="checkbox" wire:model="selectPageRows" title="Select all on this page"></th>
                                     <th class="th-sm">Dispatch#
                                     </th>
                                     <th class="th-sm">DispatchedBy
@@ -83,7 +85,8 @@
                                 <tbody>
                                     @forelse ($dispatches as $dispatch)
                                   <tr wire:key="{{ '3df318-84-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($dispatch->id ?? '') }}">
-                                                                    <td>{{$dispatch->dispatch_number}}</td>
+                                    <td><input type="checkbox" wire:model="selectedRows" value="{{ $dispatch->id }}"></td>
+                                    <td>{{$dispatch->dispatch_number}}</td>
                                     <td>{{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}}</td>
                                     <td>{{$dispatch->date}}</td>
                                     <td>
@@ -192,7 +195,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="12">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Pending Dispatches Found ....
                                         </div>
@@ -224,6 +227,8 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    @include('includes.bulk-authorize-modal', ['label' => 'Dispatch(es)', 'note' => 'Approving takes the items out of stock and posts each dispatch bill. Tyre dispatches use the fit positions already on the dispatch; any needing a serial number or no longer in stock are skipped - approve those one at a time.'])
 
      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="authorizationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog modal-lg" role="document">

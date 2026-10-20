@@ -45,6 +45,7 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                            @include('includes.bulk-authorize-bar', ['label' => 'GRV(s)'])
                             <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search GRVs...">
@@ -53,6 +54,7 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm"><input type="checkbox" wire:model="selectPageRows" title="Select all on this page"></th>
                                     <th class="th-sm">GRV#</th>
                                     <th class="th-sm">Department</th>
                                     <th class="th-sm">Vendor</th>
@@ -65,6 +67,7 @@
                                 <tbody>
                                     @forelse ($goods_receiveds as $goods_received)
                                   <tr wire:key="{{ '6751d3-66-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($goods_received->id ?? '') }}">
+                                    <td><input type="checkbox" wire:model="selectedRows" value="{{ $goods_received->id }}"></td>
                                     <td>
                                         {{ucfirst($goods_received->goods_received_number)}}
                                         <br>
@@ -103,7 +106,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Pending GRVs Found ....
                                         </div>
@@ -134,6 +137,8 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    @include('includes.bulk-authorize-modal', ['label' => 'GRV(s)', 'note' => 'Approving adds the items on each GRV to stock and posts the receipt (Spares Inventory / Accounts Payable).'])
 
      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="authorizationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">

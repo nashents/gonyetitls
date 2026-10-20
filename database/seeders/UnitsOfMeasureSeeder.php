@@ -4,21 +4,17 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class UnitsOfMeasureSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
-     *
-     * @return void
+     * The seeded (system) units. These are locked from edits/deletion in the
+     * UOMs screen; users add their own alongside them.
      */
-    public function run(): void
+    public static function units(): array
     {
-        // Try to set a sensible default user_id if you want ownership.
-        // If you don't want that, just leave as null.
-        $userId = null;
-
-        $units = [
+        return [
             // --- Count / Each ---
             ['name' => 'Each',                'abbreviation' => 'ea',   'description' => 'Single item/unit count.'],
             ['name' => 'Piece',               'abbreviation' => 'pc',   'description' => 'Individual piece/item.'],
@@ -70,8 +66,26 @@ class UnitsOfMeasureSeeder extends Seeder
             // --- Workshop / Automotive (useful in your world) ---
             ['name' => 'Set',                 'abbreviation' => 'set',  'description' => 'A group of components sold/used together.'],
         ];
+    }
 
-        foreach ($units as $unit) {
+    public static function abbreviations(): array
+    {
+        return array_column(self::units(), 'abbreviation');
+    }
+
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run(): void
+    {
+        // Try to set a sensible default user_id if you want ownership.
+        // If you don't want that, just leave as null.
+        $userId = null;
+        $system = Schema::hasColumn('units_of_measures', 'is_system') ? ['is_system' => true] : [];
+
+        foreach (self::units() as $unit) {
             // Use abbreviation as a stable unique key (best practice).
             // If you later add a unique index on abbreviation, you’ll be happy you did.
             $existing = DB::table('units_of_measures')
@@ -89,7 +103,7 @@ class UnitsOfMeasureSeeder extends Seeder
                         'abbreviation' => $unit['abbreviation'],
                         'updated_at' => now(),
                         'deleted_at' => null,
-                    ]);
+                    ] + $system);
             } else {
                 DB::table('units_of_measures')->insert([
                     'user_id' => $userId,
@@ -99,7 +113,7 @@ class UnitsOfMeasureSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => now(),
                     'deleted_at' => null,
-                ]);
+                ] + $system);
             }
         }
     }

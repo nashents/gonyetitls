@@ -1047,7 +1047,8 @@
                           @endif
                           <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
                           <li class="{{ request()->routeIs('truck_stops.index') ? 'active' : '' }}"><a href="{{route('truck_stops.index')}}" ><i class="fas fa-stop"></i> <span>Truck Stops</span></a></li>
-                        
+                          <li class="{{ request()->routeIs('units_of_measure.index') ? 'active' : '' }}"><a href="{{route('units_of_measure.index')}}" ><i class="fas fa-balance-scale"></i> <span>UOMs</span></a></li>
+
                       </ul>
                   </li>
                   @endif

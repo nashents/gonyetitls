@@ -816,6 +816,9 @@
                                         @if ($mileage_is_live_from_cartrack)
                                             <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
                                         @endif
+                                        @if ($mileage_is_live_from_ezytrack)
+                                            <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
+                                        @endif
                                         <input type="number" step="any" min="{{$shift_open_mileage}}" class="form-control" wire:model.debounce.300ms="shift_close_mileage" {{ (is_numeric($shift_open_mileage) && $shift_open_mileage > 0) ? '' : 'disabled' }} placeholder="Enter Shift Closing Mileage" required/>
                                         @error('shift_close_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
@@ -1403,6 +1406,9 @@
                                         @if ($mileage_is_live_from_cartrack)
                                             <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
                                         @endif
+                                        @if ($mileage_is_live_from_ezytrack)
+                                            <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
+                                        @endif
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage"  placeholder="Enter Mileage" {{$for == "Trips" ? "required" : ""}}/>
                                         @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
@@ -1620,6 +1626,9 @@
                                         <label for="name">Closing Mileage<span class="required" style="color: red">*</span></label>
                                         @if ($mileage_is_live_from_cartrack)
                                             <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                        @endif
+                                        @if ($mileage_is_live_from_ezytrack)
+                                            <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
                                         @endif
                                          <input type="number" step="any" min="{{$shift_open_mileage}}" class="form-control" wire:model.debounce.300ms="shift_close_mileage" {{ (is_numeric($shift_open_mileage) && $shift_open_mileage > 0) ? '' : 'disabled' }} placeholder="Enter Shift Closing Mileage" required/>
                                         @error('shift_close_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -2552,6 +2561,9 @@
                                         </label>
                                         @if ($mileage_is_live_from_cartrack)
                                             <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                        @endif
+                                        @if ($mileage_is_live_from_ezytrack)
+                                            <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
                                         @endif
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage"  placeholder="Enter Mileage" {{$for == "Trips" ? "required" : ""}}/>
                                         @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror

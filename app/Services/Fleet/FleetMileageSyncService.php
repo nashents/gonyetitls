@@ -26,7 +26,9 @@ use Symfony\Component\Process\PhpExecutableFinder;
  * detached `fleet:sync-mileage` process (Apache mod_php), so users never wait
  * on the tracker APIs.
  *
- * EzyTrack is not covered: its pushed device records carry position only.
+ * EzyTrack is not polled here: it pushes to us, and EzyTrackPositionIngestor
+ * applies each pushed odometer/run-hours reading (Digital Matter FType 27) to
+ * the mapped units as it arrives, via EzyTrackSyncService.
  */
 class FleetMileageSyncService
 {

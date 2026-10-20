@@ -26,6 +26,7 @@ use App\Models\Trip;
 use App\Models\TripExpense;
 use App\Models\Vehicle;
 use App\Services\Cartrack\CartrackSyncService;
+use App\Services\EzyTrack\EzyTrackSyncService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
 use Carbon\Carbon;
@@ -94,6 +95,7 @@ class Index extends Component
     public $quantity = 0 ;
     public $mileage;
     public $mileage_is_live_from_cartrack = false;
+    public $mileage_is_live_from_ezytrack = false;
     public $hours;
     public $date;
     public $fillup;
@@ -879,10 +881,11 @@ class Index extends Component
         }
     }
 
-    /** Overwrite $this->mileage with a live Cartrack reading when the equipment is matched; otherwise keep the stored value. */
+    /** Overwrite $this->mileage with a live Cartrack (then EzyTrack) reading when the equipment is matched; otherwise keep the stored value. */
     protected function applyLiveCartrackMileage($equipment): void
     {
         $this->mileage_is_live_from_cartrack = false;
+        $this->mileage_is_live_from_ezytrack = false;
 
         if (! $equipment) {
             return;
@@ -893,6 +896,14 @@ class Index extends Component
         if (! empty($snapshot['mileage'])) {
             $this->mileage = $snapshot['mileage'];
             $this->mileage_is_live_from_cartrack = true;
+            return;
+        }
+
+        $ezyTrackSnapshot = app(EzyTrackSyncService::class)->currentSnapshot($equipment);
+
+        if (! empty($ezyTrackSnapshot['mileage'])) {
+            $this->mileage = $ezyTrackSnapshot['mileage'];
+            $this->mileage_is_live_from_ezytrack = true;
         }
     }
  

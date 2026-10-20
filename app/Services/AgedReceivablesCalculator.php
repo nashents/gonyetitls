@@ -145,6 +145,47 @@ class AgedReceivablesCalculator
             $grandTotal += $amount;
         }
 
+        // Customer-supplied fuel credits AR (DR fuel / CR AR) the moment it's
+        // posted; only the part allocated to an invoice has come off an
+        // invoice balance above, so the unallocated remainder still reduces
+        // what the customer owes - leaving it out made Aged Receivables
+        // higher than AR in the Trial Balance (COMDELTIC Kings Inter Africa:
+        // USD 3,276.47).
+        $supplyAllocated = '(select COALESCE(SUM(ip.amount+0),0) from invoice_payments ip where ip.customer_fuel_supply_id = customer_fuel_supplies.id and ip.deleted_at is null)';
+
+        $supplies = \App\Models\CustomerFuelSupply::query()
+            ->whereNotNull('customer_id')
+            ->whereDate('date', '<=', $this->asOfDate)
+            ->with('customer:id,name')
+            ->select('customer_fuel_supplies.*')
+            ->selectRaw("{$supplyAllocated} as allocated_total")
+            ->get();
+
+        foreach ($supplies as $supply) {
+            $open = -round((float) $supply->amount - (float) $supply->allocated_total, 2);
+            $amount = $this->reportingAmount($supply->currency_id, number_format($open, 2, '.', ''), (string) $supply->exchange_rate);
+
+            if (abs($amount) < 0.005) {
+                continue;
+            }
+
+            $customerId = $supply->customer_id;
+            $daysOld = Carbon::parse($supply->date)->startOfDay()->diffInDays($asOf->copy()->startOfDay());
+            $bucket = $this->bucketFor($daysOld);
+
+            $rows[$customerId] ??= [
+                'label' => $supply->customer->name ?? 'Uncategorized Customer',
+                'buckets' => array_fill_keys(self::BUCKETS, 0.0),
+                'total' => 0.0,
+            ];
+
+            $rows[$customerId]['buckets'][$bucket] += $amount;
+            $rows[$customerId]['total'] += $amount;
+
+            $grandTotals[$bucket] += $amount;
+            $grandTotal += $amount;
+        }
+
         usort($rows, fn ($a, $b) => $b['total'] <=> $a['total']);
 
         return [$rows, ['buckets' => $grandTotals, 'total' => $grandTotal]];

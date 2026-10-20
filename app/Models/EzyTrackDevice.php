@@ -23,6 +23,13 @@ class EzyTrackDevice extends Model
         'latitude'       => 'float',
         'longitude'      => 'float',
         'speed_kmh'      => 'float',
+        'odometer_km'    => 'float',
+        'run_hours'      => 'float',
+        'run_hours_2'    => 'float',
+        'odometer_at'    => 'datetime',
+        'ignition_on'    => 'boolean',
+        'in_trip'        => 'boolean',
+        'digital_at'     => 'datetime',
     ];
 
     public function hasPosition()

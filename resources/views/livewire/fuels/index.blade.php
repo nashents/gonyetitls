@@ -695,6 +695,9 @@
                                     @if ($mileage_is_live_from_cartrack)
                                         <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
                                     @endif
+                                    @if ($mileage_is_live_from_ezytrack)
+                                        <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
+                                    @endif
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -1181,6 +1184,9 @@
                                     @if ($mileage_is_live_from_cartrack)
                                         <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
                                     @endif
+                                    @if ($mileage_is_live_from_ezytrack)
+                                        <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
+                                    @endif
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -1526,6 +1532,9 @@
                                     @if ($mileage_is_live_from_cartrack)
                                         <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
                                     @endif
+                                    @if ($mileage_is_live_from_ezytrack)
+                                        <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
+                                    @endif
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -1724,6 +1733,9 @@
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
                                     @if ($mileage_is_live_from_cartrack)
                                         <span class="badge badge-success" title="Pulled live from Cartrack">Live from Cartrack</span>
+                                    @endif
+                                    @if ($mileage_is_live_from_ezytrack)
+                                        <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
                                     @endif
                                     <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage">
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror

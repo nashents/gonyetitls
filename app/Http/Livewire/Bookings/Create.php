@@ -24,6 +24,7 @@ use App\Models\Vendor;
 use App\Services\Cartrack\CartrackSyncService;
 use App\Services\FanTracker\FanTrackerSyncService;
 use App\Services\Pinpoint\PinpointSyncService;
+use App\Services\EzyTrack\EzyTrackSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -94,6 +95,7 @@ class Create extends Component
     public $mileage_is_live_from_cartrack = false;
     public $mileage_is_live_from_fantracker = false;
     public $mileage_is_live_from_pinpoint = false;
+    public $mileage_is_live_from_ezytrack = false;
     public $service_types;
     public $service_type_id;
     public $booking_number;
@@ -189,12 +191,13 @@ class Create extends Component
         }
     }
 
-    /** Overwrite $this->mileage with a live Cartrack/FanTracker/Pinpoint reading when the equipment is matched (Cartrack takes precedence, then FanTracker, then Pinpoint); otherwise keep the stored value. */
+    /** Overwrite $this->mileage with a live Cartrack/FanTracker/Pinpoint/EzyTrack reading when the equipment is matched (Cartrack takes precedence, then FanTracker, then Pinpoint, then EzyTrack); otherwise keep the stored value. */
     protected function applyLiveCartrackMileage($equipment): void
     {
         $this->mileage_is_live_from_cartrack = false;
         $this->mileage_is_live_from_fantracker = false;
         $this->mileage_is_live_from_pinpoint = false;
+        $this->mileage_is_live_from_ezytrack = false;
 
         if (! $equipment) {
             return;
@@ -221,6 +224,14 @@ class Create extends Component
         if (! empty($pinpointSnapshot['mileage'])) {
             $this->mileage = $pinpointSnapshot['mileage'];
             $this->mileage_is_live_from_pinpoint = true;
+            return;
+        }
+
+        $ezyTrackSnapshot = app(EzyTrackSyncService::class)->currentSnapshot($equipment);
+
+        if (! empty($ezyTrackSnapshot['mileage'])) {
+            $this->mileage = $ezyTrackSnapshot['mileage'];
+            $this->mileage_is_live_from_ezytrack = true;
         }
     }
 

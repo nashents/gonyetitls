@@ -13,6 +13,7 @@ use App\Models\TripTransportOrder;
 use App\Models\Vehicle;
 use App\Services\Cartrack\CartrackSyncService;
 use App\Services\FanTracker\FanTrackerSyncService;
+use App\Services\EzyTrack\EzyTrackSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -780,6 +781,11 @@ class TripStatusManager extends Component
         $fanTrackerSnapshot = app(FanTrackerSyncService::class)->currentSnapshot($asset);
         if (! empty($fanTrackerSnapshot['mileage'])) {
             return ['mileage' => $fanTrackerSnapshot['mileage'], 'source' => 'fantracker'];
+        }
+
+        $ezyTrackSnapshot = app(EzyTrackSyncService::class)->currentSnapshot($asset);
+        if (! empty($ezyTrackSnapshot['mileage'])) {
+            return ['mileage' => $ezyTrackSnapshot['mileage'], 'source' => 'ezytrack'];
         }
 
         return ['mileage' => $asset->mileage, 'source' => null];

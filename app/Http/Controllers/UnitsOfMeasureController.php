@@ -15,7 +15,7 @@ class UnitsOfMeasureController extends Controller
      */
     public function index()
     {
-        //
+        return view('units_of_measures.index');
     }
 
     /**

@@ -2,14 +2,28 @@
 
 namespace App\Services;
 
-use App\Models\Invoice;
-use App\Models\BillExpense;
 use App\Models\JournalEntryLine;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Shared revenue/expense calculation for the Profit & Loss (Income
  * Statement) report, used by both the live Livewire report and the
- * PDF export so the two never drift apart.
+ * PDF/Excel exports so they never drift apart.
+ *
+ * Built on the general ledger - the same journal lines, filters (company,
+ * status != draft, date range) and reporting-currency conversion as the
+ * Trial Balance, Account Transactions, Balance Sheet and Cash Flow - so an
+ * account's figure here always equals its Trial Balance figure for the
+ * same period. It used to be built from invoice/bill documents instead,
+ * which disagreed with the ledger (COMDELTIC Jan-Oct 2026: Sales 80,863 vs
+ * 202,048): invoice totals include VAT, used only the header account,
+ * counted 0 for foreign invoices without exchange_amount, ignored the
+ * Customer Advances deferral/release, credit notes against invoices,
+ * customer-supplied fuel, etc.
+ *
+ * Cash basis ("Cash Basis (Paid)"): the same ledger lines, minus postings
+ * of invoices/bills that aren't fully paid yet; postings with no invoice
+ * or bill behind them (payroll, journals, FX, customer fuel) always count.
  */
 class IncomeStatementCalculator
 {
@@ -20,6 +34,7 @@ class IncomeStatementCalculator
         private $defaultCurrencyId,
         private ?int $companyId = null
     ) {
+        $this->companyId = $companyId ?? (Auth::user()?->employee?->company_id ?? Auth::user()?->company_id);
     }
 
     /** @deprecated use ReportFormatter::isNumericAmount() */
@@ -47,64 +62,20 @@ class IncomeStatementCalculator
     }
 
     /**
-     * Resolve the amount of a row in the reporting currency: the native
-     * amount when the row is already in the default currency (including
-     * rows with no currency recorded, which are assumed to be in the
-     * default currency), otherwise the pre-converted exchange amount.
-     */
-    private function reportingAmount($currencyId, $nativeAmount, $exchangeAmount): float
-    {
-        $isBaseCurrency = is_null($currencyId) || (int) $currencyId === (int) $this->defaultCurrencyId;
-
-        if ($isBaseCurrency) {
-            return ReportFormatter::isNumericAmount($nativeAmount) ? (float) $nativeAmount : 0.0;
-        }
-
-        return ReportFormatter::isNumericAmount($exchangeAmount) ? (float) $exchangeAmount : 0.0;
-    }
-
-    /**
-     * Income grouped by account, for approved invoices in the date range,
-     * optionally restricted to a specific set of account ids (used to split
-     * the main "Income" section from an "Other Income" section covering
-     * every other Income-group account type - Discount, Other Income, Gain
-     * on Foreign Exchange, Uncategorized Income). Cash basis restricts to
-     * paid invoices, matching the "Cash Basis (Paid)" option shown in the
-     * report type dropdown.
+     * Income grouped by account (credit-normal: credits - debits), optionally
+     * restricted to a set of account ids (the main "Income" section vs
+     * "Other Income").
      *
      * @return array{0: float, 1: array<int, float>}
      */
     public function incomeAmounts(?array $accountIds = null): array
     {
-        $rows = Invoice::whereDate('date', '>=', $this->from)
-            ->whereDate('date', '<=', $this->to)
-            ->where('authorization', 'approved')
-            ->when($this->cashBasis, fn ($q) => $q->where('status', 'Paid'))
-            ->when($accountIds !== null, fn ($q) => $q->whereIn('account_id', $accountIds))
-            ->get(['account_id', 'currency_id', 'total', 'exchange_amount']);
-
-        $byAccount = [];
-        $total = 0.0;
-
-        foreach ($rows as $row) {
-            $amount = $this->reportingAmount($row->currency_id, $row->total, $row->exchange_amount);
-            $total += $amount;
-            $byAccount[$row->account_id] = ($byAccount[$row->account_id] ?? 0) + $amount;
-        }
-
-        [$ledgerTotal, $ledgerByAccount] = $this->ledgerOnlyIncomeAmounts($accountIds);
-        $total += $ledgerTotal;
-        foreach ($ledgerByAccount as $accountId => $amount) {
-            $byAccount[$accountId] = ($byAccount[$accountId] ?? 0) + $amount;
-        }
-
-        return [$total, $byAccount];
+        return $this->ledgerAmounts($accountIds, creditNormal: true);
     }
 
     /**
-     * Expenses (Cost of Goods Sold or Operating Expenses, depending on the
-     * given account ids) grouped by account, for bill expenses posted to
-     * approved bills in the date range. Cash basis restricts to paid bills.
+     * Expenses (Cost of Goods Sold, Operating or Other Expenses, by the given
+     * account ids) grouped by account (debit-normal: debits - credits).
      *
      * @return array{0: float, 1: array<int, float>}
      */
@@ -114,135 +85,46 @@ class IncomeStatementCalculator
             return [0.0, []];
         }
 
-        $rows = BillExpense::whereIn('account_id', $accountIds)
-            ->whereHas('bill', function ($q) {
-                $q->whereDate('bill_date', '>=', $this->from)
-                    ->whereDate('bill_date', '<=', $this->to)
-                    ->where('authorization', 'approved');
-
-                if ($this->cashBasis) {
-                    $q->where('status', 'Paid');
-                }
-            })
-            ->with('bill:id,currency_id')
-            ->get(['id', 'account_id', 'bill_id', 'subtotal_incl', 'exchange_amount']);
-
-        $byAccount = [];
-        $total = 0.0;
-
-        foreach ($rows as $row) {
-            $amount = $this->reportingAmount($row->bill->currency_id ?? null, $row->subtotal_incl, $row->exchange_amount);
-            $total += $amount;
-            $byAccount[$row->account_id] = ($byAccount[$row->account_id] ?? 0) + $amount;
-        }
-
-        [$ledgerTotal, $ledgerByAccount] = $this->ledgerOnlyExpenseAmounts($accountIds);
-        $total += $ledgerTotal;
-        foreach ($ledgerByAccount as $accountId => $amount) {
-            $byAccount[$accountId] = ($byAccount[$accountId] ?? 0) + $amount;
-        }
-
-        return [$total, $byAccount];
+        return $this->ledgerAmounts($accountIds, creditNormal: false);
     }
 
-    /**
-     * Revenue/expense that only ever reaches the general ledger directly -
-     * payroll, realized FX gain/loss, credit/debit notes, manual journal
-     * entries - none of which have an Invoice or BillExpense row behind
-     * them, so incomeAmounts()/expenseAmounts() above would silently drop
-     * them without this. Scoped to entries with no invoice_id/bill_id so
-     * Invoice- and Bill-sourced activity (already counted above) is never
-     * double-counted. Deliberately NOT scoped by horse/trailer/vehicle/
-     * driver/transporter dimension tags - the Horses/Transporters P&L
-     * reports (app/Http/Livewire/Horses/ProfitLoss, .../Transporters/
-     * ProfitLoss) are built entirely from Trip/BillExpense data and never
-     * call this calculator, so nothing here reaches them regardless.
-     *
-     * Always included regardless of the cash/accrual toggle - a ledger
-     * posting has no "unpaid" state of its own to filter on (unlike an
-     * Invoice/Bill), so there's nothing meaningful for cash-basis to
-     * restrict here.
-     */
-    private function ledgerOnlyIncomeAmounts(?array $accountIds = null): array
+    /** @return array{0: float, 1: array<int, float>} */
+    private function ledgerAmounts(?array $accountIds, bool $creditNormal): array
     {
-        if (!$this->companyId) {
+        if (! $this->companyId || ($accountIds !== null && empty($accountIds))) {
             return [0.0, []];
         }
 
+        $base = (int) $this->defaultCurrencyId;
+        $debit = "CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.debit ELSE journal_entry_lines.exchange_debit END";
+        $credit = "CASE WHEN journal_entry_lines.currency_id IS NULL OR journal_entry_lines.currency_id = {$base} THEN journal_entry_lines.credit ELSE journal_entry_lines.exchange_credit END";
+        $net = $creditNormal ? "SUM({$credit}) - SUM({$debit})" : "SUM({$debit}) - SUM({$credit})";
+
         $rows = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
-            ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
-            ->join('account_types', 'account_types.id', '=', 'accounts.account_type_id')
-            ->join('account_type_groups', 'account_type_groups.id', '=', 'account_types.account_type_group_id')
             ->where('journal_entries.company_id', $this->companyId)
             ->where('journal_entries.status', '!=', 'draft')
-            ->where('account_type_groups.name', 'Income')
-            ->whereNull('journal_entries.invoice_id')
+            ->whereDate('journal_entries.date', '>=', $this->from)
+            ->whereDate('journal_entries.date', '<=', $this->to)
             ->when($accountIds !== null, fn ($q) => $q->whereIn('journal_entry_lines.account_id', $accountIds))
-            ->whereDate('journal_entries.date', '>=', $this->from)
-            ->whereDate('journal_entries.date', '<=', $this->to)
-            ->get([
-                'journal_entry_lines.account_id',
-                'journal_entry_lines.currency_id',
-                'journal_entry_lines.debit',
-                'journal_entry_lines.credit',
-                'journal_entry_lines.exchange_debit',
-                'journal_entry_lines.exchange_credit',
-            ]);
+            ->when($this->cashBasis, function ($q) {
+                // Only fully paid invoices/bills; other postings always count.
+                $q->where(fn ($x) => $x->whereNull('journal_entries.invoice_id')
+                    ->orWhereExists(fn ($s) => $s->selectRaw('1')->from('invoices')
+                        ->whereColumn('invoices.id', 'journal_entries.invoice_id')->where('invoices.status', 'Paid')))
+                  ->where(fn ($x) => $x->whereNull('journal_entries.bill_id')
+                    ->orWhereExists(fn ($s) => $s->selectRaw('1')->from('bills')
+                        ->whereColumn('bills.id', 'journal_entries.bill_id')->where('bills.status', 'Paid')));
+            })
+            ->groupBy('journal_entry_lines.account_id')
+            ->selectRaw("journal_entry_lines.account_id, {$net} as amount")
+            ->get();
 
         $byAccount = [];
-        $total = 0.0;
-
         foreach ($rows as $row) {
-            $isBaseCurrency = is_null($row->currency_id) || (int) $row->currency_id === (int) $this->defaultCurrencyId;
-            $debit = $isBaseCurrency ? (float) $row->debit : (float) $row->exchange_debit;
-            $credit = $isBaseCurrency ? (float) $row->credit : (float) $row->exchange_credit;
-
-            $amount = $credit - $debit; // Income accounts are credit-normal
-            $total += $amount;
-            $byAccount[$row->account_id] = ($byAccount[$row->account_id] ?? 0) + $amount;
+            $byAccount[$row->account_id] = (float) $row->amount;
         }
 
-        return [$total, $byAccount];
-    }
-
-    /** Same as ledgerOnlyIncomeAmounts() but for the expense side - see that method's docblock. */
-    private function ledgerOnlyExpenseAmounts(array $accountIds): array
-    {
-        if (!$this->companyId) {
-            return [0.0, []];
-        }
-
-        $rows = JournalEntryLine::query()
-            ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
-            ->whereIn('journal_entry_lines.account_id', $accountIds)
-            ->where('journal_entries.company_id', $this->companyId)
-            ->where('journal_entries.status', '!=', 'draft')
-            ->whereNull('journal_entries.bill_id')
-            ->whereDate('journal_entries.date', '>=', $this->from)
-            ->whereDate('journal_entries.date', '<=', $this->to)
-            ->get([
-                'journal_entry_lines.account_id',
-                'journal_entry_lines.currency_id',
-                'journal_entry_lines.debit',
-                'journal_entry_lines.credit',
-                'journal_entry_lines.exchange_debit',
-                'journal_entry_lines.exchange_credit',
-            ]);
-
-        $byAccount = [];
-        $total = 0.0;
-
-        foreach ($rows as $row) {
-            $isBaseCurrency = is_null($row->currency_id) || (int) $row->currency_id === (int) $this->defaultCurrencyId;
-            $debit = $isBaseCurrency ? (float) $row->debit : (float) $row->exchange_debit;
-            $credit = $isBaseCurrency ? (float) $row->credit : (float) $row->exchange_credit;
-
-            $amount = $debit - $credit; // Expense accounts are debit-normal
-            $total += $amount;
-            $byAccount[$row->account_id] = ($byAccount[$row->account_id] ?? 0) + $amount;
-        }
-
-        return [$total, $byAccount];
+        return [array_sum($byAccount), $byAccount];
     }
 }

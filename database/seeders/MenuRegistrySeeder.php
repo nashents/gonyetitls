@@ -1781,6 +1781,7 @@ class MenuRegistrySeeder extends Seeder
             ['Trip Rates','rates.index','fas fa-list', $any([$all(['inFinance']), $all(['isSuperAdmin'])])],
             ['Trip Types','trip_types.index','fas fa-road', null],
             ['Truck Stops','truck_stops.index','fas fa-stop', null],
+            ['UOMs','units_of_measure.index','fas fa-balance-scale', null],
             ['Worksites','locations.index','fas fa-map-marker', null],
         ];
 

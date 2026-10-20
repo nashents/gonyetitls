@@ -114,6 +114,9 @@
                                             @if ($mileage_is_live_from_pinpoint)
                                                 <span class="badge badge-success" title="Pulled live from Pinpoint">Live from Pinpoint</span>
                                             @endif
+                                            @if ($mileage_is_live_from_ezytrack)
+                                                <span class="badge badge-success" title="Pulled live from EzyTrack">Live from EzyTrack</span>
+                                            @endif
                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" {{$type == "Asset" ? "disabled" : ""}} placeholder="Enter Mileage" required>
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
