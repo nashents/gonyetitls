@@ -52,7 +52,7 @@ class LedgerResyncService
 
             // An advance invoice already released to Sales: the release is
             // reversed below with everything else and must be redone on the
-            // corrected figures, on its original date. Releasing the new
+            // corrected figures (on the invoice date). Releasing the new
             // total against the old deferral stranded the difference in
             // Customer Advances (CEI00001/2 on COMDELTIC).
             $release = $invoice->invoice_type === 'advance'
@@ -69,7 +69,8 @@ class LedgerResyncService
             $entry = $this->invoiceJournal->post($invoice->fresh());
 
             if ($release) {
-                app(AdvanceInvoiceReclassService::class)->reclassIfEarned($invoice->id, $pending, $release->date->toDateString());
+                // Re-released on the invoice date, like any release.
+                app(AdvanceInvoiceReclassService::class)->reclassIfEarned($invoice->id, $pending);
             }
 
             return $entry;

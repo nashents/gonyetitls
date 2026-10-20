@@ -37,6 +37,14 @@ use Illuminate\Support\Facades\Session;
 class ImportsController extends Controller
 {
 
+    // Employees / Drivers templates are generated live so the Roles / Rank dropdowns match this system.
+    public function downloadPeopleTemplate(string $type){
+        abort_unless(in_array($type, PeopleImportTemplate::TYPES, true), 404);
+
+        return (new PeopleImportTemplate($type))->download();
+    }
+
+
     
     public function importEmployees(Request $request){
         $this->validate($request,[

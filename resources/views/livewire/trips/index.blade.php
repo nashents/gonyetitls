@@ -1409,9 +1409,9 @@
                 <br>
                 <div class="form-group">
                     <label for="name">Upload Trip(s) Excel File<span class="required" style="color: red">*</span></label>
+                    @include('includes.import-template-link', ['template' => 'Trips Import File.xlsx'])
                     <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Trips File" required>
                     @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    @include('includes.import-template-link', ['template' => 'Trips Import File.xlsx'])
                 </div>
             </div>
             <div class="modal-footer">

@@ -10,6 +10,7 @@ use App\Exports\VendorStatementExport;
 use Livewire\Component;
 use Maatwebsite\Excel\Excel;
 use App\Services\VendorLedgerService;
+use App\Services\Accounting\TransporterSettlementService;
 
 class Index extends Component
 {
@@ -41,6 +42,9 @@ class Index extends Component
     {
         $this->selectedVendor = null;
         $this->vendor = null;
+        if ($this->selectedType === 'Trip Settlement' && $this->party !== VendorLedgerService::PARTY_TRANSPORTER) {
+            $this->selectedType = null;
+        }
         $this->resetStatement();
     }
 
@@ -158,6 +162,22 @@ class Index extends Component
     {
         return view('livewire.vendor-statements.index', [
             'bills' => $this->bills,
+            'settlement' => $this->settlement(),
         ]);
+    }
+
+    // Built per render (not a public property): it holds models/collections Livewire can't serialise.
+    private function settlement(): array
+    {
+        if ($this->selectedType !== 'Trip Settlement' || $this->party !== VendorLedgerService::PARTY_TRANSPORTER
+            || !$this->selectedVendor || !$this->from || !$this->to) {
+            return [];
+        }
+
+        $transporter = Transporter::find($this->selectedVendor);
+
+        return $transporter
+            ? app(TransporterSettlementService::class)->build($transporter, $this->from, $this->to)
+            : [];
     }
 }

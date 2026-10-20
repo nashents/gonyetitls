@@ -9,7 +9,7 @@
                 <a href="{{route('vendor_statements.print.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
                 <a href="{{route('vendor_statements.pdf.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
                 <a href="{{route('vendor_statements.email.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
-                @elseif(isset($selectedVendor) && (isset($selectedType) && $selectedType == "Account Activity") && isset($from) && isset($to))  
+                @elseif(isset($selectedVendor) && (isset($selectedType) && in_array($selectedType, ["Account Activity", "Trip Settlement"])) && isset($from) && isset($to))
                 <a href="{{route('vendor_statements.print.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
                 <a href="{{route('vendor_statements.pdf.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
                 <a href="{{route('vendor_statements.email.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
@@ -73,6 +73,10 @@
                     $currencies = App\Models\Currency::all();
                     $billed_currencies = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
                 @endphp
+                @if ($selectedType == "Trip Settlement")
+                    <div style="margin-bottom:6px;"><span class="text-gray-light">TRANSPORTER:</span> <strong>{{ $vendor->name }}</strong></div>
+                    @include('vendor_statements._transporter_settlement', ['settlement' => $settlement, 'links' => true])
+                @else
                 @foreach ($currencies as $currency)
                     @if (isset($billed_currencies))
                     @if (in_array($currency->id, $billed_currencies))
@@ -310,6 +314,7 @@
                 @endif
                 @endif
                 @endforeach
+                @endif
              {{-- <center> <footer>{{$company->bill_footer}}</footer></center>   --}}
             </div>
             <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->

@@ -75,6 +75,10 @@ class Index extends Component
 
         $this->dispatchBrowserEvent('hide-importModal');
 
+        if ($unknown = $import->unknownRolesAndRanksMessage()) {
+            session()->flash('warning', $unknown);
+        }
+
         $errors = $import->errors();
 
         if ($errors->isNotEmpty()) {

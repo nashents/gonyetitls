@@ -77,6 +77,10 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                             $currencies = App\Models\Currency::all();
                             $billed_currencies = App\Models\Bill::where($partyColumn ?? 'vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
                         @endphp
+                        @if ($selectedType == "Trip Settlement")
+                            <div style="margin-bottom:6px;">TRANSPORTER: <strong>{{ $vendor->name }}</strong></div>
+                            @include('vendor_statements._transporter_settlement', ['settlement' => $settlement ?? [], 'links' => false])
+                        @else
                         @foreach ($currencies as $currency)
                             @if (isset($billed_currencies))
                             @if (in_array($currency->id, $billed_currencies))
@@ -317,6 +321,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                         @endif
                         @endif
                         @endforeach
+                        @endif
                      {{-- <center> <footer>{{$company->bill_footer}}</footer></center>   --}}
                     </div>
                     <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->

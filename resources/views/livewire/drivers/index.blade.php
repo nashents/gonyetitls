@@ -307,9 +307,9 @@
                         <div class="modal-body">
                             <div class="form-group">
                                 <label for="name">Upload Driver(s) Excel File<span class="required" style="color: red">*</span></label>
+                                @include('includes.import-template-link', ['url' => route('import_templates.people', 'drivers')])
                                 <input type="file" class="form-control" wire:model.debounce.3300ms="importFile" placeholder="Upload Employee File" required>
                                 @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                @include('includes.import-template-link', ['template' => 'Drivers Import File.xlsx'])
                             </div>
                             <div class="mb-10">
                                 <input type="checkbox" wire:model.debounce.300ms="send_creds" class="line-style" />

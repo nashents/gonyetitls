@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Imports\Concerns\AssignsRolesAndRanks;
 use App\Imports\Concerns\SkipsTemplateExampleRows;
 
 use App\Mail\AccountCreationMail;
@@ -30,6 +31,7 @@ use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithLimit;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
 class EmployeesImport implements  ToCollection,SkipsEmptyRows, WithLimit,
@@ -38,9 +40,17 @@ SkipsOnError,
 WithValidation,
 WithChunkReading,
 WithCalculatedFormulas,
-WithBatchInserts
+WithBatchInserts,
+WithMultipleSheets
 {
     use SkipsTemplateExampleRows;
+    use AssignsRolesAndRanks;
+
+    // Only the first sheet holds data; the template's Instructions/Lists sheets are ignored.
+    public function sheets(): array
+    {
+        return [0 => $this];
+    }
 
     use Importable, SkipsErrors;
 
@@ -150,7 +160,7 @@ WithBatchInserts
 
     private function parseGender($value)
     {
-        $gender = ucfirst(strtolower(trim($value)));
+        $gender = ucfirst(strtolower(trim((string) $value)));
 
         return in_array($gender, ['Male', 'Female']) ? $gender : null;
     }
@@ -257,11 +267,13 @@ WithBatchInserts
                 $nextOfKin      = $row->get('nextofkin');
                 $relationship   = $row->get('relationship');
                 $contact        = $row->get('contact');
-              
+                $roles          = $row->get('roles');
+                $rank           = $row->get('rank');
+                $who            = trim("$name $surname");
 
                 DB::transaction(function () use ($row,$name,$surname,$middlename,$email,$gender,$dob,$phone,$idNumber,
                     $country,$city,$suburb,$contract,$startDate,$expiryDate,$streetAddress,$nextOfKin,$relationship,$contact,
-                    $departments,$post
+                    $departments,$post,$roles,$rank,$who
                 ) {
                     $pin = $this->generatePIN();
 
@@ -290,6 +302,16 @@ WithBatchInserts
                     $user->is_admin = '0';
                     $user->active   = '1';
                     $user->email    = $email;
+                    if (filled($phone)) {
+                        $user->phonenumber = $phone;
+                    }
+
+                    // Username defaults to the email, else the phone number; existing logins keep theirs.
+                    if ($isNewUser || blank($user->username)) {
+                        $hasEmail = filled($email);
+                        $user->use_email_as_username = $hasEmail ? 1 : 0;
+                        $user->username = $hasEmail ? trim($email) : (filled($phone) ? trim($phone) : null);
+                    }
 
                     if ($isNewUser) {
                         $user->password = Hash::make($pin);
@@ -297,8 +319,7 @@ WithBatchInserts
 
                     $user->save();
 
-                    // Avoid duplicate pivot records
-                    $user->roles()->syncWithoutDetaching([3]);
+                    $this->assignRoles($user, $roles, $who);
 
                     /*
                     |----------------------
@@ -352,8 +373,7 @@ WithBatchInserts
                    
                    
 
-                    // Avoid duplicate pivot records
-                    $employee->ranks()->syncWithoutDetaching([3]);
+                    $this->assignRanks($employee, $rank, $who);
 
                     if (!empty($departments)) {
                         $departmentNames = array_filter(array_map('trim', explode(',', $departments)));

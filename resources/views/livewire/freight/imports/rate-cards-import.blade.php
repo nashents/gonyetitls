@@ -12,7 +12,7 @@
                             </div>
                         </div>
                         <div class="panel-body">
-                            <a href="#" wire:click.prevent="downloadTemplate" class="btn btn-xs btn-default mb-20"><i class="fa fa-download"></i> Download Template</a>
+                            <a href="#" wire:click.prevent="downloadTemplate" class="btn btn-default border-primary btn-rounded mb-20" style="font-size:15px; padding:8px 18px;"><i class="fa fa-download"></i> Download Template</a>
 
                             <form wire:submit.prevent="import">
                                 <div class="row">

@@ -203,9 +203,9 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="name">Upload Vehicle(s) Excel File</label>
+                            @include('includes.import-template-link', ['template' => 'Vehicles Import File.xlsx'])
                             <input type="file" class="form-control" name="file" placeholder="Upload Vehicle File" >
                             @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            @include('includes.import-template-link', ['template' => 'Vehicles Import File.xlsx'])
                         </div>
                     </div>
                     <div class="modal-footer">

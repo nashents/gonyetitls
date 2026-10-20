@@ -163,9 +163,9 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="name">Upload Employee Leave Data Excel File</label>
+                            @include('includes.import-template-link', ['template' => 'Leave Days Import File.xlsx'])
                             <input type="file" class="form-control" name="file" placeholder="Upload Employee File" >
                             @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            @include('includes.import-template-link', ['template' => 'Leave Days Import File.xlsx'])
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -268,7 +268,31 @@
                     </div>
 
                     <div class="modal-body">
-                        <p>Choose which field(s) to force-update on every active employee's leave records, using each leave type's current defaults. Unchecked fields are left untouched.</p>
+                        <p>Choose which employees and field(s) to force-update on their leave records, using each leave type's current defaults (or the values you enter below). Unchecked fields are left untouched.</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="enforce_staff_type">Apply To</label>
+                                    <select id="enforce_staff_type" class="form-control" wire:model="enforce_staff_type">
+                                        <option value="all">All Employees</option>
+                                        <option value="admin">Admin Employees</option>
+                                        <option value="drivers">Drivers</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="enforce_leave_type_id">Leave Type</label>
+                                    <select id="enforce_leave_type_id" class="form-control" wire:model="enforce_leave_type_id">
+                                        <option value="">All Leave Types</option>
+                                        @foreach ($leave_types as $leave_type)
+                                            <option value="{{ $leave_type->id }}">{{ $leave_type->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="checkbox">
                             <label>
@@ -285,6 +309,36 @@
                                 <input type="checkbox" wire:model="enforce_maximum_leave_days"> Maximum Leave Days
                             </label>
                         </div>
+
+                        @if (filled($enforce_leave_type_id))
+                            <div wire:key="enforce-overrides">
+                                <hr>
+                                <p class="text-muted" style="margin-bottom:8px;">Optional: enter values to use instead of the leave type defaults (e.g. 2.5 accrual for drivers). Leave blank to use the default.</p>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="enforce_accrual_rate_value">Accrual Rate</label>
+                                            <input type="number" step="0.01" min="0" id="enforce_accrual_rate_value" class="form-control" wire:model.defer="enforce_accrual_rate_value" placeholder="Default">
+                                            @error('enforce_accrual_rate_value') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="enforce_leave_days_value">Entitlement</label>
+                                            <input type="number" step="0.01" min="0" id="enforce_leave_days_value" class="form-control" wire:model.defer="enforce_leave_days_value" placeholder="Default">
+                                            @error('enforce_leave_days_value') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="enforce_maximum_leave_days_value">Maximum Days</label>
+                                            <input type="number" step="0.01" min="0" id="enforce_maximum_leave_days_value" class="form-control" wire:model.defer="enforce_maximum_leave_days_value" placeholder="Default">
+                                            @error('enforce_maximum_leave_days_value') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="modal-footer">
@@ -293,7 +347,7 @@
                                 <i class="fa fa-times"></i> Close
                             </button>
 
-                            <button type="button" wire:click="enforceLeaveTypeDefaults()" onclick="return confirm('This will force update the selected field(s) on ALL employee leave records from their leave type defaults, overwriting any manual adjustments. Continue?')" class="btn btn-default border-danger btn-wide btn-rounded">
+                            <button type="button" wire:click="enforceLeaveTypeDefaults()" onclick="return confirm('This will force update the selected field(s) on the chosen employees\' leave records, overwriting any manual adjustments. Continue?')" class="btn btn-default border-danger btn-wide btn-rounded">
                                 <i class="fa fa-refresh"></i> Enforce Selected
                             </button>
                         </div>

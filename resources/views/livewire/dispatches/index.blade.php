@@ -2800,9 +2800,9 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="name">Upload Inventory Issued Excel File<span class="required" style="color: red">*</span></label>
+                    @include('includes.import-template-link', ['template' => 'Dispatches Import File.xlsx'])
                     <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Bills File" required>
                     @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    @include('includes.import-template-link', ['template' => 'Dispatches Import File.xlsx'])
                 </div>
             </div>
             <div class="modal-footer">

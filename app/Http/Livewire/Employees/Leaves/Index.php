@@ -35,7 +35,13 @@ class Index extends Component
     public $enforce_accrual_rate = true;
     public $enforce_leave_days = true;
     public $enforce_maximum_leave_days = true;
-
+    // Enforce scope: 'all', 'admin' or 'drivers' (Employee::scopeOfStaffType), and one leave type or all.
+    public $enforce_staff_type = 'all';
+    public $enforce_leave_type_id;
+    // Optional overrides (one leave type only); blank = use the leave type's default.
+    public $enforce_accrual_rate_value;
+    public $enforce_leave_days_value;
+    public $enforce_maximum_leave_days_value;
 
     public function mount(){
         $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
@@ -52,25 +58,48 @@ class Index extends Component
             return;
         }
 
+        if (!in_array($this->enforce_staff_type, ['all', 'admin', 'drivers'], true)) {
+            $this->enforce_staff_type = 'all';
+        }
+
+        // Overrides only make sense for a single leave type.
+        $overrides = [];
+        if (filled($this->enforce_leave_type_id)) {
+            $this->validate([
+                'enforce_accrual_rate_value' => 'nullable|numeric|min:0',
+                'enforce_leave_days_value' => 'nullable|numeric|min:0',
+                'enforce_maximum_leave_days_value' => 'nullable|numeric|min:0',
+            ]);
+            $overrides = array_filter([
+                'acrual_rate' => $this->enforce_accrual_rate_value,
+                'available_leave_days' => $this->enforce_leave_days_value,
+                'maximum_leave_days' => $this->enforce_maximum_leave_days_value,
+            ], 'filled');
+        }
+
         $enforceAccrualRate = $this->enforce_accrual_rate;
         $enforceLeaveDays = $this->enforce_leave_days;
         $enforceMaximumLeaveDays = $this->enforce_maximum_leave_days;
+        $staffType = $this->enforce_staff_type;
 
-        $leaveTypes = LeaveType::where('active', true)->get();
+        $leaveTypes = LeaveType::where('active', true)
+            ->when(filled($this->enforce_leave_type_id), fn ($q) => $q->where('id', $this->enforce_leave_type_id))
+            ->get();
 
         $enforced = 0;
 
-        DB::transaction(function () use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays) {
+        DB::transaction(function () use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays, $staffType, $overrides) {
             Employee::where('archive', 0)
+                ->ofStaffType($staffType)
                 ->select('id')
-                ->chunkById(200, function ($employees) use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays) {
+                ->chunkById(200, function ($employees) use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays, $overrides) {
                     foreach ($employees as $employee) {
                         foreach ($leaveTypes as $leaveType) {
-                            $defaults = [
+                            $defaults = array_merge([
                                 'acrual_rate' => $leaveType->monthly_accrual_rate ?? 0,
                                 'available_leave_days' => $leaveType->entitlement ?? 0,
                                 'maximum_leave_days' => $leaveType->maximum_leave_days ?? 0,
-                            ];
+                            ], $overrides);
 
                             $employeeLeave = EmployeeLeave::where('employee_id', $employee->id)
                                 ->where('leave_type_id', $leaveType->id)
@@ -121,9 +150,11 @@ class Index extends Component
 
         $this->dispatchBrowserEvent('hide-enforceLeaveTypeDefaultsModal');
 
+        $scopeLabel = ['all' => 'all employees', 'admin' => 'admin employees', 'drivers' => 'drivers'][$staffType];
+
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => "Leave Type Defaults Enforced Successfully!! ({$enforced} record(s) updated)"
+            'message' => "Leave Type Defaults Enforced for {$scopeLabel}!! ({$enforced} record(s) updated)"
         ]);
     }
 

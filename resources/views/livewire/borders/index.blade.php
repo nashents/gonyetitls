@@ -100,9 +100,10 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="file">Upload Border(s) Excel File</label>
+                        @include('includes.import-template-link', ['template' => 'Borders Import File.xlsx'])
                         <input type="file" class="form-control" name="file" placeholder="Upload Border File" >
                         @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        <small class="text-muted">Columns: name, country_a, country_b (country names). Borders that already exist (same name) are updated. Rows whose name starts with # are skipped.<a href="{{ asset('templates/Borders Import File.xlsx') }}" download><i class="fa fa-download"></i> Download template</a></small>
+                        <small class="text-muted">Columns: name, country_a, country_b (country names). Borders that already exist (same name) are updated. Rows whose name starts with # are skipped.</small>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -184,9 +184,10 @@ class AdvanceInvoiceReclassService
             'company_id'     => $invoice->company_id ? $invoice->company_id : Auth::user()?->employee?->company_id,
             'invoice_id'     => $invoice->id,
             'journal_number' => app(InvoiceJournalService::class)->generateNumber(),
-            // Recognized when earned; a re-release after a correction keeps the
-            // original release date (passed in by LedgerResyncService).
-            'date'           => $date ?? now(),
+            // On the invoice's own date (user rule: postings follow the source
+            // document) - dating the release the day the trips were Offloaded
+            // or "Post to Sales" was clicked moved revenue into later months.
+            'date'           => $date ?? ($invoice->date ? substr((string) $invoice->date, 0, 10) : now()->toDateString()),
             'reference'      => 'RECLASS-' . $invoice->invoice_number,
             'description'    => "Revenue recognition (advance reclass) - Invoice {$invoice->invoice_number}",
             'is_manual'      => false,

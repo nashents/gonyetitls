@@ -268,9 +268,9 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="name">Upload Inventory Products Excel File</label>
+                        @include('includes.import-template-link', ['template' => 'Inventory Import File.xlsx'])
                         <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Loading Points File" >
                         @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        @include('includes.import-template-link', ['template' => 'Inventory Import File.xlsx'])
                     </div>
                     <div class="form-group">
                         <label for="opening_date">Opening Balance Date</label>

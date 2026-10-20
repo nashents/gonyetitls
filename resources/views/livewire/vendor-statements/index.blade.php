@@ -61,11 +61,14 @@
                                                         <option value="">Select Type</option>
                                                         <option value="Outstanding Bills">Outstanding Bills</option>
                                                         <option value="Account Activity">Account Activity</option>
+                                                        @if ($party === 'transporter')
+                                                            <option value="Trip Settlement">Trip Settlement (freight, recoverables, due)</option>
+                                                        @endif
                                                     </select>
                                                 </div>
                                             </div>
 
-                                            @if ($selectedType === 'Account Activity')
+                                            @if (in_array($selectedType, ['Account Activity', 'Trip Settlement']))
                                                 <div class="col-lg-2">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">From</span>
@@ -84,7 +87,7 @@
                                         <br><br>
 
                                         {{-- Action Buttons --}}
-                                        @if ($bills && $bills->count() > 0)
+                                        @if (($bills && $bills->count() > 0) || !empty($settlement))
                                             <div class="row">
                                                 <div class="col-md-4"></div>
                                                 <div class="col-md-6">
@@ -95,7 +98,7 @@
                                                                    class="btn btn-default border-primary btn-wide btn-rounded">
                                                                     <i class="fas fa-file-invoice"></i> Preview
                                                                 </a>
-                                                            @elseif ($selectedVendor && $selectedType === 'Account Activity' && $from && $to)
+                                                            @elseif ($selectedVendor && in_array($selectedType, ['Account Activity', 'Trip Settlement']) && $from && $to)
                                                                 <a href="{{ route('vendor_statements.preview.account', ['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to, 'party' => $party]) }}"
                                                                    class="btn btn-default border-primary btn-wide btn-rounded">
                                                                     <i class="fas fa-file-invoice"></i> Preview
@@ -266,6 +269,13 @@
                                 @empty
                                     @include('partials.empty-statement')
                                 @endforelse
+
+                            @elseif ($selectedType === 'Trip Settlement')
+                                @if ($selectedVendor && $from && $to)
+                                    @include('vendor_statements._transporter_settlement', ['settlement' => $settlement, 'links' => true])
+                                @else
+                                    @include('partials.empty-statement')
+                                @endif
 
                             @else
                                 @include('partials.empty-statement')

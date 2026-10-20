@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdateBillRequest;
 use App\Services\VendorLedgerService;
+use App\Services\Accounting\TransporterSettlementService;
+use Carbon\Carbon;
 
 class BillController extends Controller
 {
@@ -122,6 +124,10 @@ class BillController extends Controller
             $data['results'] = $activity['results'] ?? null;
             $data['openingBalances'] = $activity['openingBalances'] ?? [];
             $data['closingBalances'] = $activity['closingBalances'] ?? [];
+        } elseif (isset($selectedVendor) && $selectedType == "Trip Settlement" && $party === VendorLedgerService::PARTY_TRANSPORTER) {
+            $data['settlement'] = ($vendor && $from && $to)
+                ? app(TransporterSettlementService::class)->build($vendor, Carbon::parse($from)->toDateString(), Carbon::parse($to)->toDateString())
+                : [];
         }
 
         return $data;

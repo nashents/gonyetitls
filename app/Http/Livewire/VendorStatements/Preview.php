@@ -9,6 +9,7 @@ use App\Models\Transporter;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Services\VendorLedgerService;
+use App\Services\Accounting\TransporterSettlementService;
 use Carbon\Carbon;
 
 class Preview extends Component
@@ -105,10 +106,16 @@ class Preview extends Component
 
     public function render()
     {
+        // Trip Settlement is transporter-only and built per render (holds models Livewire can't serialise).
+        $settlement = $this->selectedType === 'Trip Settlement' && $this->party === VendorLedgerService::PARTY_TRANSPORTER && $this->from && $this->to
+            ? app(TransporterSettlementService::class)->build($this->vendor, Carbon::parse($this->from)->toDateString(), Carbon::parse($this->to)->toDateString())
+            : [];
+
         return view('livewire.vendor-statements.preview', [
             'bills'               => $this->bills,
             'results'             => $this->results,
             'statementByCurrency' => $this->statementByCurrency,
+            'settlement'          => $settlement,
         ]);
     }
 }

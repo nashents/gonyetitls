@@ -76,6 +76,10 @@ class Index extends Component
         $import->import($file);
 
         $this->dispatchBrowserEvent('hide-importModal');
+
+        if ($unknown = $import->unknownRolesAndRanksMessage()) {
+            session()->flash('warning', $unknown);
+        }
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Drivers Imported Successfully!!"

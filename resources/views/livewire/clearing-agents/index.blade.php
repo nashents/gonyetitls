@@ -113,9 +113,10 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="file">Upload Clearing Agent(s) Excel File</label>
+                        @include('includes.import-template-link', ['template' => 'Clearing Agents Import File.xlsx'])
                         <input type="file" class="form-control" name="file" placeholder="Upload Clearing Agent File" >
                         @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        <small class="text-muted">Columns: name, email, phonenumber, worknumber, country, city, suburb, street_address, borders (comma separated, e.g. Beitbridge, Chirundu). Borders that don't exist are created. Agents that already exist (same name) are updated. Rows whose name starts with # are skipped.<a href="{{ asset('templates/Clearing Agents Import File.xlsx') }}" download><i class="fa fa-download"></i> Download template</a></small>
+                        <small class="text-muted">Columns: name, email, phonenumber, worknumber, country, city, suburb, street_address, borders (comma separated, e.g. Beitbridge, Chirundu). Borders that don't exist are created. Agents that already exist (same name) are updated. Rows whose name starts with # are skipped.</small>
                     </div>
                     <div class="form-group">
                         <label for="border_ids">Attach Border(s) to every agent in the file</label>

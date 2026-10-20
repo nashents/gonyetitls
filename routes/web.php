@@ -325,6 +325,7 @@ Route::get('/drivers/export/excel','ExportsController@exportDriversExcel')->name
 Route::get('/drivers/export/csv','ExportsController@exportDriversCSV')->name('drivers.export.csv');
 Route::get('/drivers/export/pdf','ExportsController@exportDriversPDF')->name('drivers.export.pdf');
 Route::post('/drivers/import','ImportsController@importDrivers')->name('drivers.import');
+Route::get('/import-templates/people/{type}','ImportsController@downloadPeopleTemplate')->name('import_templates.people');
 
 //Employees Import and Export
 Route::get('/employees/export/excel','ExportsController@exportEmployeesExcel')->name('employees.export.excel');
