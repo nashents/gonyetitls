@@ -154,6 +154,11 @@ class TransporterSettlementService
                     'invoices_due'     => $invoicesDue,
                     'net_position'     => round($closing - $invoicesDue, 2),
                     'in_transit_net'   => round($inTransit->sum('net'), 2),
+                    'net_payable_trips' => round($trips->sum('net_payable'), 2),
+                    // What to actually pay the transporter now: everything due to them
+                    // (closing balance) less what they owe back - unpaid invoices to
+                    // them and expenses paid on their behalf not yet recovered.
+                    'net_payable'      => round($closing - $invoicesDue - $trips->sum('unrecovered'), 2),
                 ],
             ];
         }
@@ -209,6 +214,9 @@ class TransporterSettlementService
             'net'                => $net,
             'paid'               => $projected ? 0.0 : round($net - (float) $bill->balance, 2),
             'due'                => $projected ? $net : round((float) $bill->balance, 2),
+            // Still due on the trip less expenses paid for the transporter on it
+            // that were neither deducted nor invoiced - what to pay for this trip.
+            'net_payable'        => round(($projected ? $net : (float) $bill->balance) - max(0, $recoverablesTotal - $deducted - $invoiced), 2),
         ];
     }
 

@@ -23,6 +23,7 @@ use App\Imports\ProvincesImport;
 use App\Imports\ConsigneesImport;
 use App\Imports\ConsignorsImport;
 use App\Imports\InventoriesImport;
+use App\Exports\Templates\PeopleImportTemplate;
 use App\Imports\DestinationsImport;
 use App\Imports\BordersImport;
 use App\Imports\ClearingAgentsImport;

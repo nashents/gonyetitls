@@ -39,8 +39,9 @@
         <tr style="font-weight:bold;"><td style="{{ $td }} background:#eef5fb;">Net position ({{ $t['net_position'] >= 0 ? 'we owe the transporter' : 'transporter owes us' }})</td><td style="{{ $td }} text-align:right; background:#eef5fb;">{{ $money($s, abs($t['net_position'])) }}</td></tr>
         @endif
         @if ($t['unrecovered'] > 0.009)
-        <tr style="color:#b00;"><td style="{{ $td }}">Note: expenses paid for the transporter not yet recovered</td><td style="{{ $td }} text-align:right;">{{ $money($s, $t['unrecovered']) }}</td></tr>
+        <tr><td style="{{ $td }}">Less: expenses paid for the transporter not yet recovered</td><td style="{{ $td }} text-align:right;">{{ $money($s, -$t['unrecovered']) }}</td></tr>
         @endif
+        <tr style="font-weight:bold; font-size:14px;"><td style="{{ $td }} background:#dff0d8;">Net payable to transporter{{ $t['net_payable'] < 0 ? ' (transporter owes us)' : '' }}</td><td style="{{ $td }} text-align:right; background:#dff0d8;">{{ $money($s, abs($t['net_payable'])) }}</td></tr>
         @if ($block['in_transit']->isNotEmpty())
         <tr style="color:#555;"><td style="{{ $td }}">Note: trips in transit, payable once offloaded (not in balance)</td><td style="{{ $td }} text-align:right;">{{ $money($s, $t['in_transit_net']) }}</td></tr>
         @endif
@@ -58,9 +59,10 @@
                 <th {!! $th !!}>Paid For Transporter</th>
                 <th {!! $th !!}>Deducted</th>
                 <th {!! $th !!}>Invoiced</th>
-                <th {!! $th !!}>Net Payable</th>
+                <th {!! $th !!}>Trip Bill (Net)</th>
                 <th {!! $th !!}>Paid</th>
                 <th {!! $th !!}>Due</th>
+                <th {!! $th !!}>Net Payable</th>
             </tr>
         </thead>
         <tbody>
@@ -86,9 +88,10 @@
                     <td style="{{ $td }} text-align:right;">{{ $row['recoverables_total'] > 0 ? $money($s, $row['recoverables_total']) : '-' }}</td>
                     <td style="{{ $td }} text-align:right;">{{ $row['deducted'] > 0 ? $money($s, -$row['deducted']) : '-' }}</td>
                     <td style="{{ $td }} text-align:right;">{{ $row['invoiced'] > 0 ? $money($s, $row['invoiced']) : '-' }}</td>
-                    <td style="{{ $td }} text-align:right; font-weight:bold;">{{ $money($s, $row['net']) }}</td>
+                    <td style="{{ $td }} text-align:right;">{{ $money($s, $row['net']) }}</td>
                     <td style="{{ $td }} text-align:right;">{{ $money($s, $row['paid']) }}</td>
                     <td style="{{ $td }} text-align:right;">{{ $money($s, $row['due']) }}</td>
+                    <td style="{{ $td }} text-align:right; font-weight:bold;">{{ $money($s, $row['net_payable']) }}</td>
                 </tr>
                 @foreach ($row['items'] as $item)
                     <tr style="color:#555;">
@@ -96,7 +99,7 @@
                         <td style="{{ $td }} text-align:center;">{{ $item['date'] ? date('j M Y', strtotime($item['date'])) : '' }}</td>
                         <td style="{{ $td }} padding-left:14px;" colspan="2">- {{ $item['name'] }} <small>(paid by {{ $item['funded'] }})</small></td>
                         <td style="{{ $td }} text-align:right;">{{ $money($s, $item['amount']) }}</td>
-                        <td style="{{ $td }}" colspan="5"></td>
+                        <td style="{{ $td }}" colspan="6"></td>
                     </tr>
                 @endforeach
                 @if ($row['unrecovered'] > 0.009)
@@ -104,11 +107,11 @@
                         <td style="{{ $td }}"></td>
                         <td style="{{ $td }}" colspan="3">Not yet recovered on this trip</td>
                         <td style="{{ $td }} text-align:right;">{{ $money($s, $row['unrecovered']) }}</td>
-                        <td style="{{ $td }}" colspan="5"></td>
+                        <td style="{{ $td }}" colspan="6"></td>
                     </tr>
                 @endif
             @empty
-                <tr><td style="{{ $td }} text-align:center;" colspan="10">No trips offloaded in this period.</td></tr>
+                <tr><td style="{{ $td }} text-align:center;" colspan="11">No trips offloaded in this period.</td></tr>
             @endforelse
         </tbody>
         @if ($block['trips']->isNotEmpty())
@@ -122,6 +125,7 @@
                 <td style="{{ $td }} text-align:right;">{{ $money($s, $t['net_trip_bills']) }}</td>
                 <td style="{{ $td }} text-align:right;">{{ $money($s, $block['trips']->sum('paid')) }}</td>
                 <td style="{{ $td }} text-align:right;">{{ $money($s, $block['trips']->sum('due')) }}</td>
+                <td style="{{ $td }} text-align:right;">{{ $money($s, $t['net_payable_trips']) }}</td>
             </tr>
         </tfoot>
         @endif
