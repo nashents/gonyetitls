@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Imports\Concerns\AssignsRolesAndRanks;
+use App\Imports\Concerns\FillsOnlyFilledCells;
 use App\Imports\Concerns\SkipsTemplateExampleRows;
 
 use App\Imports\EmployeesImport;
@@ -49,6 +50,7 @@ WithMultipleSheets
 {
     use SkipsTemplateExampleRows;
     use AssignsRolesAndRanks;
+    use FillsOnlyFilledCells;
 
     // Only the first sheet holds data; the template's Instructions/Lists sheets are ignored.
     public function sheets(): array
@@ -391,10 +393,7 @@ WithMultipleSheets
             $user->category = 'driver'; // you can change to 'employee' if you really want old behaviour
             $user->is_admin = '0';
             $user->active   = '1';
-            $user->email    = $email;
-            if (filled($phone)) {
-                $user->phonenumber = $phone;
-            }
+            $this->fillFilled($user, ['email' => $email, 'phonenumber' => $phone]);
 
             // Username defaults to the email, else the phone number; existing logins keep theirs.
             if (!$existingUser || blank($user->username)) {
@@ -432,24 +431,25 @@ WithMultipleSheets
 
             $employee->name          = $name;
             $employee->surname       = $surname;
-            if (filled($middlename)) {
-                $employee->middle_name = $middlename;
-            }
-            $employee->gender        = $this->parseGender($gender);
-            $employee->dob           = $this->parseExcelDate($dob);
-            $employee->email         = $email;
-            $employee->phonenumber   = $phone;
-            $employee->idnumber      = $idNumber;
-            $employee->country       = $country;
-            $employee->city          = $city;
-            $employee->suburb        = $suburb;
-            $employee->duration      = is_numeric($contractDuration) ? (int) $contractDuration : null;
-            $employee->start_date    = $this->parseExcelDate($startDate);
-            $employee->expiration    = $this->parseExcelDate($expiryDate);
-            $employee->street_address = $streetAddress;
-            $employee->next_of_kin   = $nextOfKin;
-            $employee->relationship  = $relationship;
-            $employee->contact       = $contact;
+            // Blank cells keep what is already on the record.
+            $this->fillFilled($employee, [
+                'middle_name'    => $middlename,
+                'gender'         => $this->parseGender($gender),
+                'dob'            => $this->parseExcelDate($dob),
+                'email'          => $email,
+                'phonenumber'    => $phone,
+                'idnumber'       => $idNumber,
+                'country'        => $country,
+                'city'           => $city,
+                'suburb'         => $suburb,
+                'duration'       => is_numeric($contractDuration) ? (int) $contractDuration : null,
+                'start_date'     => $this->parseExcelDate($startDate),
+                'expiration'     => $this->parseExcelDate($expiryDate),
+                'street_address' => $streetAddress,
+                'next_of_kin'    => $nextOfKin,
+                'relationship'   => $relationship,
+                'contact'        => $contact,
+            ]);
 
             $postTitle = trim((string) $post);
             if ($postTitle !== '') {
@@ -468,14 +468,18 @@ WithMultipleSheets
 
                 if (!empty($departmentNames)) {
                     $departmentIds = Department::whereIn('name', $departmentNames)->pluck('id')->toArray();
-                    $employee->departments()->sync($departmentIds);
-                    $employee->ensureDefaultDepartment();
+                    // Unmatched names must not wipe the existing departments.
+                    if (!empty($departmentIds)) {
+                        $employee->departments()->sync($departmentIds);
+                        $employee->ensureDefaultDepartment();
+                    }
                 }
             }
 
             $this->updateLeaveDays($employee->id);
 
-            if ($this->send_creds == True) {
+            // Only new logins get a password from $pin, so only they are sent one.
+            if ($this->send_creds == True && !$existingUser) {
                 if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
                     Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
                 }
@@ -519,12 +523,14 @@ WithMultipleSheets
                 $driver->transporter_id = $transporterId;
             }
 
-            $driver->license_number        = $licenseNumber;
-            $driver->passport_number       = $passportNumber;
-            $driver->experience            = $experience;
-            $driver->class                 = $licenseClass;
-            $driver->reference             = $reference;
-            $driver->reference_phonenumber = $referencePhone;
+            $this->fillFilled($driver, [
+                'license_number'        => $licenseNumber,
+                'passport_number'       => $passportNumber,
+                'experience'            => $experience,
+                'class'                 => $licenseClass,
+                'reference'             => $reference,
+                'reference_phonenumber' => $referencePhone,
+            ]);
 
             $driver->save();
 

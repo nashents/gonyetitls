@@ -18,6 +18,7 @@ use App\Models\OffloadingPoint;
 use App\Models\Quotation;
 use App\Models\ShipmentParty;
 use App\Models\Transporter;
+use App\Models\UnitsOfMeasure;
 use App\Models\Vendor;
 use App\Services\Freight\FreightJobService;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,7 @@ class Create extends Component
     public $loading_points;
     public $offloading_points;
     public $cargos;
+    public $uoms;
     public $partyOptions = [];
     public $partyModels = [];
 
@@ -103,6 +105,7 @@ class Create extends Component
         $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
         $this->cargos = Cargo::orderBy('name', 'asc')->get();
+        $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
 
         $this->partyOptions = ShipmentParty::partyTypeOptions();
         $this->partyModels = [
@@ -174,6 +177,9 @@ class Create extends Component
         } elseif ($category === 'cargos') {
             $this->cargos = Cargo::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
+        } elseif ($category === 'uoms') {
+            $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Units of Measure Refreshed Successfully!!.']);
         } elseif ($category === 'loading_points') {
             $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Loading Points Refreshed Successfully!!.']);

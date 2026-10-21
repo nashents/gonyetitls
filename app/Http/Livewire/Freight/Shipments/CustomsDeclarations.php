@@ -8,6 +8,7 @@ use App\Models\Currency;
 use App\Models\CustomsDeclaration;
 use App\Models\CustomsDeclarationLine;
 use App\Models\Shipment;
+use App\Models\UnitsOfMeasure;
 use App\Models\User;
 use App\Services\Freight\CustomsDeclarationService;
 use Livewire\Component;
@@ -19,6 +20,7 @@ class CustomsDeclarations extends Component
     public $countries;
     public $currencies;
     public $users;
+    public $uoms;
 
     // Add Declaration form
     public $customs_office;
@@ -67,6 +69,7 @@ class CustomsDeclarations extends Component
         $this->countries = Country::orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
         $this->users = User::orderBy('name', 'asc')->get();
+        $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
         $this->refreshShipment();
     }
 
@@ -251,6 +254,9 @@ class CustomsDeclarations extends Component
         } elseif ($category === 'currencies') {
             $this->currencies = Currency::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        } elseif ($category === 'uoms') {
+            $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Units of Measure Refreshed Successfully!!.']);
         }
     }
 

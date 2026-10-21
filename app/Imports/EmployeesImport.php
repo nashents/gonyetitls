@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Imports\Concerns\AssignsRolesAndRanks;
+use App\Imports\Concerns\FillsOnlyFilledCells;
 use App\Imports\Concerns\SkipsTemplateExampleRows;
 
 use App\Mail\AccountCreationMail;
@@ -45,6 +46,7 @@ WithMultipleSheets
 {
     use SkipsTemplateExampleRows;
     use AssignsRolesAndRanks;
+    use FillsOnlyFilledCells;
 
     // Only the first sheet holds data; the template's Instructions/Lists sheets are ignored.
     public function sheets(): array
@@ -301,10 +303,7 @@ WithMultipleSheets
                     $user->category = 'employee';
                     $user->is_admin = '0';
                     $user->active   = '1';
-                    $user->email    = $email;
-                    if (filled($phone)) {
-                        $user->phonenumber = $phone;
-                    }
+                    $this->fillFilled($user, ['email' => $email, 'phonenumber' => $phone]);
 
                     // Username defaults to the email, else the phone number; existing logins keep theirs.
                     if ($isNewUser || blank($user->username)) {
@@ -343,22 +342,25 @@ WithMultipleSheets
 
                     $employee->name          = $name;
                     $employee->surname       = $surname;
-                    $employee->middle_name       = $middlename;
-                    $employee->gender        = $this->parseGender($gender);
-                    $employee->dob           = $this->parseExcelDate($dob);
-                    $employee->email         = $email;
-                    $employee->phonenumber   = $phone;
-                    $employee->idnumber      = $idNumber;
-                    $employee->country       = $country;
-                    $employee->city          = $city;
-                    $employee->suburb        = $suburb;
-                    $employee->duration      = is_numeric($contract) ? (int) $contract : null;
-                    $employee->start_date    = $this->parseExcelDate($startDate);
-                    $employee->expiration    = $this->parseExcelDate($expiryDate);
-                    $employee->street_address = $streetAddress;
-                    $employee->next_of_kin   = $nextOfKin;
-                    $employee->relationship  = $relationship;
-                    $employee->contact       = $contact;
+                    // Blank cells keep what is already on the record.
+                    $this->fillFilled($employee, [
+                        'middle_name'    => $middlename,
+                        'gender'         => $this->parseGender($gender),
+                        'dob'            => $this->parseExcelDate($dob),
+                        'email'          => $email,
+                        'phonenumber'    => $phone,
+                        'idnumber'       => $idNumber,
+                        'country'        => $country,
+                        'city'           => $city,
+                        'suburb'         => $suburb,
+                        'duration'       => is_numeric($contract) ? (int) $contract : null,
+                        'start_date'     => $this->parseExcelDate($startDate),
+                        'expiration'     => $this->parseExcelDate($expiryDate),
+                        'street_address' => $streetAddress,
+                        'next_of_kin'    => $nextOfKin,
+                        'relationship'   => $relationship,
+                        'contact'        => $contact,
+                    ]);
 
                     $postTitle = trim((string) $post);
                     if ($postTitle !== '') {
@@ -400,13 +402,27 @@ WithMultipleSheets
                     | same behaviour as your original code
                     |----------------------
                     */
-                    if ($existingPair) {
+                    $jobTitleId   = JobTitle::where('title', $employee->post)->first()?->id ?? null;
+                    $rankId       = $employee->ranks->first()?->id ?? null;
+                    $branchId     = $employee->branch_id ?? null;
+                    $departmentId = $employee->departments->first()?->id ?? null;
+
+                    // Re-uploading the same file must not stack duplicate position rows.
+                    $positionExists = EmployeePosition::where('employee_id', $employee->id)
+                        ->where('job_title_id', $jobTitleId)
+                        ->where('rank_id', $rankId)
+                        ->where('branch_id', $branchId)
+                        ->where('department_id', $departmentId)
+                        ->whereNull('end_date')
+                        ->exists();
+
+                    if ($existingPair && !$positionExists) {
                         $employeePosition = new EmployeePosition;
                         $employeePosition->employee_id   = $employee->id;
-                        $employeePosition->job_title_id  = JobTitle::where('title', $employee->post)->first()?->id ?? null;
-                        $employeePosition->rank_id       = $employee->ranks->first()?->id ?? null;
-                        $employeePosition->branch_id     = $employee->branch_id ?? null;
-                        $employeePosition->department_id = $employee->departments->first()?->id ?? null;
+                        $employeePosition->job_title_id  = $jobTitleId;
+                        $employeePosition->rank_id       = $rankId;
+                        $employeePosition->branch_id     = $branchId;
+                        $employeePosition->department_id = $departmentId;
                         $employeePosition->grade_id      = $employee->grade_id ?? null;
                         $employeePosition->start_date    = $employee->start_date ?? null;
                         $employeePosition->changed_by    = Auth::id();
@@ -415,7 +431,8 @@ WithMultipleSheets
                         $employeePosition->save();
                     }
 
-                     if ($this->send_creds == True) {
+                     // Only new logins get a password from $pin, so only they are sent one.
+                     if ($this->send_creds == True && $isNewUser) {
                         if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
                             Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
                         }

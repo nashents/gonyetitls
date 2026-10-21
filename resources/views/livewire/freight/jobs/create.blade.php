@@ -272,7 +272,7 @@
                                                 <a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-1">
                                             <div class="form-group">
                                                 <label>Description</label>
                                                 <input type="text" class="form-control" wire:model="cargo_rows.{{ $index }}.commodity">
@@ -290,10 +290,17 @@
                                                 <input type="number" step="any" class="form-control" wire:model="cargo_rows.{{ $index }}.quantity">
                                             </div>
                                         </div>
-                                        <div class="col-md-1">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label>UOM</label>
-                                                <input type="text" class="form-control" wire:model="cargo_rows.{{ $index }}.uom">
+                                                <select class="form-control" wire:model="cargo_rows.{{ $index }}.uom">
+                                                    <option value="">Select</option>
+                                                    @foreach ($uoms as $uom)
+                                                        <option value="{{ $uom->abbreviation ?: $uom->name }}">{{ $uom->name }}{{ $uom->abbreviation ? ' ('.$uom->abbreviation.')' : '' }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <small><a href="{{ route('units_of_measure.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                                <a href="#" wire:click.prevent="refresh('uoms')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
                                         <div class="col-md-1">
