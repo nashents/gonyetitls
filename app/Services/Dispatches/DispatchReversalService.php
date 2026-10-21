@@ -120,7 +120,7 @@ class DispatchReversalService
             // Undo the bill + bill expenses raised on approval
             Bill::where('dispatch_id', $dispatch->id)
                 ->get()
-                ->each(fn ($bill) => $this->billDeletion->delete($bill, $reversedById ?? Auth::id(), $reason));
+                ->each(fn ($bill) => $this->billDeletion->delete($bill, $reversedById ?? Auth::id(), $reason, fromSource: true));
 
             $dispatch->authorization = 'rejected';
             $dispatch->reversed_by_id = $reversedById ?? Auth::id();

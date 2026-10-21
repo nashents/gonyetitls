@@ -97,7 +97,7 @@ class Index extends Component
     public $trip_count, $horse_count, $destinations_count, $trailer_count;
     public $vendor_count, $vehicle_count, $assignment_count, $branch_count;
     public $customer_count, $bill_count, $invoice_count, $employee_count;
-    public $attendance_count, $driver_count, $leave_count, $tyre_count;
+    public $attendance_count, $driver_count, $leave_count, $tyre_count, $tyre_fitted_count;
     public $service_count, $inventory_count, $booking_count, $ticket_count;
     public $fuel_supplier_count, $fuel_order_count, $transport_order_count;
     public $inventory_purchases_count, $inventory_dispatches_count;
@@ -198,7 +198,8 @@ class Index extends Component
     public $low_stock_count          = 0;
     public $pending_pos_count        = 0;
     public $pending_requisitions     = 0;
-    public $active_tyres             = 0;
+    public $tyres_in_store           = 0;
+    public $tyres_fitted             = 0;
 
     // ROW 8 · HR
     public $active_employees         = 0;
@@ -593,8 +594,9 @@ class Index extends Component
         $kpis['pending_requisitions'] = Requisition::whereNull('deleted_at')
             ->where('authorization','pending')->count();
 
-        $kpis['active_tyres'] = Tyre::whereNull('deleted_at')
-            ->where('disposed',0)->where('status',1)->count();
+        // Same rules as the Tyres list location filter, so the linked list shows the same count.
+        $kpis['tyres_in_store'] = Tyre::listFilter(['location' => 'in_store'])->count();
+        $kpis['tyres_fitted'] = Tyre::listFilter(['location' => 'fitted'])->count();
 
         // ── HR ───────────────────────────────────────────────────────────
 
@@ -785,7 +787,8 @@ class Index extends Component
         $this->invoice_count            = Invoice::whereYear('date',$year)->count();
         $this->employee_count           = Employee::doesntHave('driver')->where('archive',false)->count();
         $this->driver_count             = Driver::where('archive',false)->count();
-        $this->tyre_count               = Tyre::where('disposed',0)->where('status',1)->count();
+        $this->tyre_count               = Tyre::listFilter(['location' => 'in_store'])->count();
+        $this->tyre_fitted_count        = Tyre::listFilter(['location' => 'fitted'])->count();
         $this->service_count            = Service::count();
         $this->inventory_count          = Inventory::where('disposed',0)->where('status',1)->count();
         $this->product_count            = Product::where('buy',true)->where('department','inventory')->where('status',1)->count();

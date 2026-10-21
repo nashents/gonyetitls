@@ -251,16 +251,6 @@ class Create extends Component
         'selectedProduct.0' => 'required',
         'vendor_id' => 'required',
 
-
-        'assignment_type' => 'required',
-        'trailer_id' => 'required',
-        'vehicle_id' => 'required',
-        'horse_id' => 'required',
-        'tyre_id' => 'required',
-        'starting_odometer' => 'required',
-        'position' => 'required',
-        'axle' => 'required',
-
         'selectedGoodsReceived' => 'required',
         'selectedCurrency' => 'required',
 
@@ -493,26 +483,6 @@ class Create extends Component
               'selectedCurrency' => 'required',
           ]);
 
-          // Every tyre created here goes to the same axle + position, so a non-spare slot can only take one.
-          if ($this->tyre_assignment == True && !TyreAssignment::isSpareSlot($this->axle, $this->position)) {
-              $column = ['Horse' => 'horse_id', 'Trailer' => 'trailer_id', 'Vehicle' => 'vehicle_id'][$this->assignment_type] ?? null;
-              $assetId = $column ? $this->{$column} : null;
-              $total = collect($this->qty ?? [])->sum(fn ($q) => max(0, (int) $q));
-
-              $message = null;
-              if ($column && ($taken = TyreAssignment::activeAtPosition($column, $assetId, $this->axle, $this->position))) {
-                  $message = TyreAssignment::positionTakenMessage($taken);
-              } elseif ($total > 1) {
-                  $message = "Only one tyre can be fitted to {$this->axle} ".(TyreAssignment::POSITIONS[$this->position] ?? $this->position).". Assign the rest from the asset's Tyres tab.";
-              }
-
-              if ($message) {
-                  $this->addError('position', $message);
-                  $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $message]);
-                  return;
-              }
-          }
-
           DB::transaction(function () {
 
           if (isset($this->selectedProduct)) {
@@ -687,79 +657,6 @@ class Create extends Component
 
                     }
 
-                if ($this->tyre_assignment == True && !TyreAssignment::activeForTyre($tyre->id)) {
-
-                $assignment = new TyreAssignment;
-                $assignment->user_id = Auth::user()->id;
-                $assignment->tyre_id = $tyre->id;
-                $assignment->type = $this->assignment_type;
-
-                if ($this->assignment_type == "Horse") {
-                    $assignment->horse_id = $this->horse_id;
-                    $assignment->vehicle_id = null;
-                    $assignment->trailer_id = null;
-                }elseif ($this->assignment_type == "Trailer") {
-                    $assignment->trailer_id = $this->trailer_id;
-                    $assignment->horse_id = null;
-                    $assignment->vehicle_id = null;
-                }elseif ($this->assignment_type == "Vehicle") {
-                    $assignment->vehicle_id = $this->vehicle_id;
-                    $assignment->horse_id = null;
-                    $assignment->trailer_id = null;
-                }
-                $assignment->starting_odometer = $this->starting_odometer;
-                $assignment->position = $this->position;
-                $assignment->axle = $this->axle;
-                $assignment->status = 1;
-                $assignment->save();
-
-                $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
-                $movement->user_id = $assignment->user_id;
-                $movement->tyre_id = $assignment->tyre_id;
-                
-                if ($assignment->horse_id) {
-                    $movement->location = 'Horse';
-                    $movement->horse_id = $assignment->horse_id;
-                } elseif ($assignment->vehicle_id) {
-                    $movement->location = 'Vehicle';
-                    $movement->vehicle_id = $assignment->vehicle_id;
-                } elseif ($assignment->trailer_id) {
-                    $movement->location = 'Trailer';
-                    $movement->trailer_id = $assignment->vehicle_id;
-                }
-                
-                $movement->current_mileage = $assignment->current_mileage;
-                $movement->mileage_moved = $assignment->starting_odometer;
-                $movement->date =   $assignment->date_fitted;
-                $movement->save();
-
-                $mileage = new Mileage;
-                $mileage->user_id = Auth::user()->id;
-                $mileage->tyre_assignment_id = $assignment->id;
-                $mileage->horse_id = $this->horse_id ? $this->horse_id : Null;
-                $mileage->vehicle_id = $this->vehicle_id ? $this->vehicle_id : Null;
-                $mileage->trailer_id = $this->trailer_id ? $this->trailer_id : Null;
-                $mileage->mileage = $this->starting_odometer;
-                $mileage->date = date('Y-m-d');
-                $mileage->category = "Tyre Assignment";
-                $mileage->save();
-        
-                $tyre = Tyre::find($tyre->id);
-                $dispatch = new TyreDispatch;
-                $dispatch->tyre_assignment_id = $assignment->id;
-                $dispatch->tyre_id = $tyre->id;
-                $dispatch->tyre_number = $tyre->tyre_number;
-                $dispatch->serial_number = $tyre->serial_number;
-                $dispatch->width = $tyre->width;
-                $dispatch->aspect_ratio = $tyre->aspect_ratio;
-                $dispatch->diameter =  $tyre->diameter;
-                $dispatch->horse_id = $this->horse_id;
-                $dispatch->vehicle_id = $this->vehicle_id;
-                $dispatch->trailer_id = $this->trailer_id;
-                $dispatch->save();
-
-                $assignment->markTyreOutOfStore();
-                }
 
                 }
 
@@ -768,13 +665,8 @@ class Create extends Component
           }
 
           
-          if ($this->tyre_assignment == True) {
-            Session::flash('success','Tyre(s) Added & Assigned Successfully!!');
-            return redirect()->route('tyres.index');
-          }else {
-            Session::flash('success','Tyre(s) Added Successfully');
-            return redirect()->route('tyres.index');
-          }
+          Session::flash('success','Tyre(s) Added Successfully');
+          return redirect()->route('tyres.index');
 
         });
          

@@ -428,6 +428,10 @@ class Create extends Component
     public $expense_exchange_rate;
     public $expense_exchange_amount;
     public $fuel_order = False;
+    // Fuel Order Details: 'new' raises a fuel order with the trip, 'attach'
+    // links fuel orders captured before the trip existed (trip_id still null).
+    public $fuel_order_mode = 'new';
+    public $attach_fuel_ids = [];
     public $exchange_rates;
 
     //trip timelines
@@ -1641,6 +1645,96 @@ class Create extends Component
         return ($currency == $this->company->currency_id) ? $amount : $exchangeAmount;
     }
 
+    /**
+     * Fuel orders that can be attached to the trip being created: not on a
+     * trip yet, not rejected, and for the selected horse/vehicle when one is
+     * picked (fuel captured at the pump before the trip was entered).
+     */
+    protected function attachableFuelsQuery()
+    {
+        return Fuel::query()
+            ->whereNull('trip_id')
+            ->where(fn ($q) => $q->whereNull('authorization')->orWhere('authorization', '!=', 'rejected'))
+            ->when($this->mode_of_transport === 'Horse' && $this->selectedHorse, fn ($q) => $q->where('horse_id', $this->selectedHorse))
+            ->when($this->mode_of_transport === 'Vehicle' && $this->selectedVehicle, fn ($q) => $q->where('vehicle_id', $this->selectedVehicle));
+    }
+
+    public function updatedFuelOrderMode($value)
+    {
+        $this->attach_fuel_ids = [];
+        if ($value == 'attach' && !$this->fuel_category) {
+            $this->fuel_category = 'Self';
+        }
+    }
+
+    public function getAttachableFuelsProperty()
+    {
+        if (!$this->fuel_order || $this->fuel_order_mode != 'attach') {
+            return collect();
+        }
+
+        return $this->attachableFuelsQuery()
+            ->with(['container', 'currency', 'horse', 'vehicle', 'source_horse'])
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(100)
+            ->get();
+    }
+
+    /**
+     * Links the selected existing fuel orders to the new trip - the same
+     * trip_id + trip expense sync as Fuels\Edit. An already approved order is
+     * re-posted so its cost moves from Fuel - Ops to the trip (Fuel - COGS /
+     * transporter recoverable).
+     */
+    protected function attachExistingFuels(Trip $trip): void
+    {
+        $ids = array_values(array_filter((array) $this->attach_fuel_ids));
+        $fuels = $this->attachableFuelsQuery()
+            ->whereIn('id', $ids)
+            ->orderBy('date')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        if ($fuels->count() != count($ids)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'attach_fuel_ids' => 'One or more of the selected fuel orders is no longer available - it may have just been attached to another trip, or belongs to a different horse/vehicle. Re-select and try again.',
+            ]);
+        }
+
+        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
+
+        foreach ($fuels->values() as $index => $fuel) {
+            $fuel->trip_id = $trip->id;
+            $fuel->driver_id = $trip->driver_id ?: $fuel->driver_id;
+            $fuel->category = $this->fuel_category;
+            // Earliest fill is the trip's initial fill, the rest are top-ups (as BulkCreate).
+            $fuel->fillup = $index === 0 ? 1 : 0;
+            $fuel->save();
+
+            $trip_expense = TripExpense::where('fuel_id', $fuel->id)->where('trip_id', $trip->id)->first() ?? new TripExpense;
+            $trip_expense->user_id = $this->user->id;
+            $trip_expense->trip_id = $trip->id;
+            $trip_expense->fuel_id = $fuel->id;
+            $trip_expense->expense_id = $fuel_expense->id ?? null;
+            $trip_expense->currency_id = $fuel->currency_id;
+            $trip_expense->category = $fuel->category;
+            // fuels.amount is nullable - fall back to quantity * unit_price.
+            $trip_expense->amount = is_numeric($fuel->amount) && (float) $fuel->amount > 0
+                ? (float) $fuel->amount
+                : round((float) $fuel->quantity * (float) $fuel->unit_price, 2);
+            $trip_expense->exchange_rate = $fuel->exchange_rate;
+            $trip_expense->exchange_amount = $fuel->exchange_amount;
+            $trip_expense->date = $trip->start_date ?? $fuel->date;
+            $trip_expense->save();
+
+            if ($fuel->authorization == 'approved') {
+                app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
+            }
+        }
+    }
+
     private function recalculateExpenses($trip_id){
 
         $trip = Trip::find($trip_id);
@@ -2169,6 +2263,26 @@ class Create extends Component
                     "category.{$key}" => 'Customer funded expenses can\'t also be recharged to the customer - use Self or Transporter.',
                 ]);
             }
+        }
+
+        if ($this->fuel_order && $this->fuel_order_mode == 'attach') {
+            $this->validate([
+                'attach_fuel_ids' => 'required|array|min:1',
+                'fuel_category' => 'required|in:Self,Customer,Transporter',
+            ], [
+                'attach_fuel_ids.required' => 'Select at least one fuel order to attach.',
+            ]);
+
+            $customerSupplied = $this->attachableFuelsQuery()
+                ->whereIn('id', (array) $this->attach_fuel_ids)
+                ->where('supplied_by_customer', true)
+                ->exists();
+            if ($customerSupplied && $this->fuel_category == 'Customer') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'fuel_category' => 'Customer funded fuel can\'t also be recharged to the customer - use Self or Transporter.',
+                ]);
+            }
+            return;
         }
 
         if ($this->fuel_order && $this->fuelCustomerFunded) {
@@ -2710,7 +2824,9 @@ class Create extends Component
   
              
 
-                    if ($this->fuel_order) {
+                    if ($this->fuel_order && $this->fuel_order_mode == 'attach') {
+                        $this->attachExistingFuels($trip);
+                    } elseif ($this->fuel_order) {
                         $fuel_fillup = $trip->fuels->where('fillup', 1)->first();
                         
                         $container = Container::find($this->selectedContainer);

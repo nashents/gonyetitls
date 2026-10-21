@@ -313,10 +313,14 @@ class Edit extends Component
         }
         elseif($category == "products"){
            $this->products = Product::query()
-            ->where('status', true)
-            ->when(!$this->all_products, function ($query) {
-                $query->where('buy', true)->where('department', $this->department);
+            ->where(function ($query) {
+                $query->where('status', true)
+                    ->when(!$this->all_products, function ($query) {
+                        $query->where('buy', true)->where('department', $this->department);
+                    });
             })
+            // keep the record's own product listed so the dropdown is never blank on edit
+            ->when($this->selectedProduct, fn ($query) => $query->orWhere('id', $this->selectedProduct))
             ->orderBy('name', 'asc')
             ->get();
             $this->dispatchBrowserEvent('alert',[
@@ -578,10 +582,14 @@ class Edit extends Component
         
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::query()
-            ->where('status', true)
-            ->when(!$this->all_products, function ($query) {
-                $query->where('buy', true)->where('department', $this->department);
+            ->where(function ($query) {
+                $query->where('status', true)
+                    ->when(!$this->all_products, function ($query) {
+                        $query->where('buy', true)->where('department', $this->department);
+                    });
             })
+            // keep the record's own product listed so the dropdown is never blank on edit
+            ->when($this->selectedProduct, fn ($query) => $query->orWhere('id', $this->selectedProduct))
             ->orderBy('name', 'asc')
             ->get();
         $this->vendor_types = VendorType::orderBy('name','asc')->get();

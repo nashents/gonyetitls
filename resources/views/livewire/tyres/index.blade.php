@@ -18,9 +18,48 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-                            <div class="col-md-3" style="float: right; padding-right:0px">
-                                <div class="form-group">
-                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search tyres...">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <select wire:model="location" class="form-control">
+                                            <option value="">All Tyres</option>
+                                            @foreach (\App\Models\Tyre::LIST_LOCATIONS as $locationValue => $locationLabel)
+                                                <option value="{{ $locationValue }}">{{ $locationLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <select wire:model="equipment_type" class="form-control">
+                                            <option value="">Any Equipment</option>
+                                            <option value="Horse">Horse</option>
+                                            <option value="Trailer">Trailer</option>
+                                            <option value="Vehicle">Vehicle</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    @if ($equipment_type)
+                                        <div class="form-group">
+                                            <select wire:model="equipment_id" class="form-control" wire:key="equipment-{{ $equipment_type }}">
+                                                <option value="">All {{ $equipment_type }}s</option>
+                                                @foreach ($equipments as $equipment)
+                                                    <option value="{{ $equipment->id }}">{{ $equipment->identifier_label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search tyres...">
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    @if ($search || $location || $equipment_type)
+                                        <a href="#" wire:click.prevent="clearFilters()" class="btn btn-default btn-sm" title="Clear filters"><i class="fa fa-times"></i> Clear</a>
+                                    @endif
                                 </div>
                             </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">

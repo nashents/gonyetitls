@@ -9,22 +9,27 @@ use App\Models\Bin;
 use App\Models\Currency;
 use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
+use App\Models\Horse;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseProduct;
 use App\Models\Rack;
 use App\Models\Store;
 use App\Models\Tax;
+use App\Models\Trailer;
 use App\Models\Transfer;
 use App\Models\TransferItem;
 use App\Models\Tyre;
+use App\Models\TyreAssignment;
 use App\Models\TyreDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\Fleet\TyreAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -148,6 +153,18 @@ class Edit extends Component
   public $store_id;
   public $selectedAccount;
 
+  // Fitment section: only for a tyre that left stores on an approved dispatch.
+  public $can_fit = false;
+  public $fit_blocker;
+  public $current_assignment_id;
+  public $fit_type;
+  public $fit_unit_id;
+  public $fit_axle;
+  public $fit_position;
+  public $fit_mileage;
+  public $removal_mileage;
+  public $fit_date;
+
     public function mount($id){
           $this->company = Auth::user()->employee->company;
         $keepAccountId = Tyre::find($id)?->account_id;
@@ -211,6 +228,9 @@ class Edit extends Component
         $this->source = $tyre->purchase_id ? "Purchase" : ($tyre->transfer_id ? "Transfer" : "");
         $this->selectedTransfer = $tyre->transfer_id;
         $this->selectedPurchase = $tyre->purchase_id;
+        if ($this->selectedTransfer) {
+          $this->transfer_items = Transfer::find($this->selectedTransfer)?->transfer_items;
+        }
         if ($this->selectedPurchase) {
           $this->vendor_id = Purchase::find($this->selectedPurchase)->vendor->id;
           $this->selectedCurrency = Purchase::find($this->selectedPurchase)->currency->id;
@@ -220,18 +240,170 @@ class Edit extends Component
             $this->vendor_id = $tyre->vendor_id;
             $this->selectedCurrency = $tyre->currency_id;
         }
-       
 
+        $this->mountFitment($tyre);
+      }
+
+      // In-store tyres get no fitment section; out-of-store ones need an approved dispatch to be fitted.
+      protected function mountFitment(Tyre $tyre){
+        $this->can_fit = false;
+        if ($tyre->disposed || (float) $tyre->balance > 0) {
+            return;
+        }
+
+        $dispatchItem = $tyre->lastDispatchItem();
+        if (!$dispatchItem) {
+            $this->fit_blocker = "This tyre has no approved dispatch record, so it can't be fitted to a unit here.";
+            return;
+        }
+
+        $this->can_fit = true;
+        $this->horses = Horse::where('status',1)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::where('status', 1)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::where('status',1)->orderByIdentifier('asc')->get();
+        $this->fit_date = date('Y-m-d');
+
+        if ($current = TyreAssignment::activeForTyre($tyre->id)) {
+            $this->current_assignment_id = $current->id;
+            $this->fit_type = $current->type ?: ($current->horse_id ? 'Horse' : ($current->trailer_id ? 'Trailer' : 'Vehicle'));
+            $this->fit_unit_id = $current->horse_id ?: ($current->trailer_id ?: $current->vehicle_id);
+            $this->fit_axle = $current->axle;
+            $this->fit_position = $current->position;
+        } else {
+            $dispatch = $dispatchItem->dispatch;
+            $this->fit_type = $dispatchItem->fit_type
+                ?: ($dispatch->horse_id ? 'Horse' : ($dispatch->trailer_id ? 'Trailer' : ($dispatch->vehicle_id ? 'Vehicle' : null)));
+            $this->fit_unit_id = $dispatch->horse_id ?: ($dispatch->trailer_id ?: $dispatch->vehicle_id);
+            $this->fit_axle = $dispatchItem->axle;
+            $this->fit_position = $dispatchItem->position;
+        }
+
+        $this->fit_mileage = optional($this->fitUnit())->mileage;
+        $this->removal_mileage = $this->fit_mileage;
+      }
+
+      protected function fitColumn(){
+        return ['Horse' => 'horse_id', 'Trailer' => 'trailer_id', 'Vehicle' => 'vehicle_id'][$this->fit_type] ?? null;
+      }
+
+      protected function fitUnit(){
+        $model = ['Horse' => Horse::class, 'Trailer' => Trailer::class, 'Vehicle' => Vehicle::class][$this->fit_type] ?? null;
+        return $model && $this->fit_unit_id ? $model::find($this->fit_unit_id) : null;
+      }
+
+      protected function currentAssignment(){
+        return $this->current_assignment_id ? TyreAssignment::find($this->current_assignment_id) : null;
+      }
+
+      // Same unit, axle and position as the active fitting: nothing to change.
+      protected function fitmentUnchanged(?TyreAssignment $current){
+        return $current && $this->fitColumn()
+            && $current->{$this->fitColumn()} == $this->fit_unit_id
+            && $current->axle === $this->fit_axle
+            && $current->position === $this->fit_position;
+      }
+
+      protected function fitmentMovesUnit(?TyreAssignment $current){
+        return $current && (!$this->fitColumn() || $current->{$this->fitColumn()} != $this->fit_unit_id);
+      }
+
+      // Another tyre's active assignment sitting where this one is going.
+      public function positionTakenBy(){
+        $column = $this->fitColumn();
+        return $column ? TyreAssignment::activeAtPosition($column, $this->fit_unit_id, $this->fit_axle, $this->fit_position, $this->current_assignment_id) : null;
+      }
+
+      public function updatedFitType(){
+        $this->fit_unit_id = null;
+        $this->fit_mileage = null;
+      }
+
+      public function updatedFitUnitId(){
+        $this->fit_mileage = optional($this->fitUnit())->mileage;
+      }
+
+      // Moves / fits the tyre; any tyre already in the target slot is unassigned at the fitting mileage.
+      protected function saveFitment(Tyre $tyre){
+        if (!$this->can_fit || (!$this->fit_unit_id && !$this->fit_axle && !$this->fit_position)) {
+            return;
+        }
+
+        $current = $this->currentAssignment();
+        if ($this->fitmentUnchanged($current)) {
+            return;
+        }
+
+        $service = new TyreAssignmentService;
+        $reason = 'Moved from Tyres > Edit';
+
+        if ($current) {
+            $ending = $this->fitmentMovesUnit($current) ? $this->removal_mileage : $this->fit_mileage;
+            $service->unassign($current, $ending, $this->fit_date, $reason);
+        }
+
+        if ($taken = $this->positionTakenBy()) {
+            $label = $tyre->serial_number ?: $tyre->tyre_number;
+            $service->unassign($taken, $this->fit_mileage, $this->fit_date, "Replaced by tyre {$label} (Tyres > Edit)");
+        }
+
+        $service->assign($this->fit_type, $this->fit_unit_id, [
+            'tyre_id' => $tyre->id,
+            'axle' => $this->fit_axle,
+            'position' => $this->fit_position,
+            'starting_odometer' => $this->fit_mileage,
+            'date_fitted' => $this->fit_date,
+        ]);
+      }
+
+      protected function validateFitment(){
+        if (!$this->can_fit || (!$this->fit_unit_id && !$this->fit_axle && !$this->fit_position)) {
+            return;
+        }
+
+        $current = $this->currentAssignment();
+        if ($this->fitmentUnchanged($current)) {
+            return;
+        }
+
+        $this->validate([
+            'fit_type' => 'required|in:Horse,Trailer,Vehicle',
+            'fit_unit_id' => 'required',
+            'fit_axle' => 'required',
+            'fit_position' => 'required',
+            'fit_mileage' => 'required|numeric|min:0',
+            'fit_date' => 'required|date',
+            'removal_mileage' => $this->fitmentMovesUnit($current) ? 'required|numeric|min:0' : 'nullable',
+        ], [], [
+            'fit_type' => 'unit type',
+            'fit_unit_id' => 'unit',
+            'fit_axle' => 'axle',
+            'fit_position' => 'position',
+            'fit_mileage' => 'fitting mileage',
+            'fit_date' => 'date',
+            'removal_mileage' => 'removal mileage',
+        ]);
+
+        $ending = $this->fitmentMovesUnit($current) ? $this->removal_mileage : $this->fit_mileage;
+        if ($current && is_numeric($current->starting_odometer) && (float) $ending < (float) $current->starting_odometer) {
+            throw ValidationException::withMessages([
+                $this->fitmentMovesUnit($current) ? 'removal_mileage' : 'fit_mileage' => "Mileage cannot be less than this tyre's fitting mileage ({$current->starting_odometer}).",
+            ]);
+        }
+
+        $taken = $this->positionTakenBy();
+        if ($taken && is_numeric($taken->starting_odometer) && (float) $this->fit_mileage < (float) $taken->starting_odometer) {
+            throw ValidationException::withMessages([
+                'fit_mileage' => "Fitting mileage cannot be less than the fitting mileage ({$taken->starting_odometer}) of the tyre being replaced.",
+            ]);
+        }
       }
       public function updated($value){
           $this->validateOnly($value);
       }
       protected $messages =[
-
-        'selectedProduct.*.required' => 'Product field is required',
         'aspect_ratio.*.required' => 'Aspect Ratio field is required',
         'serial_number.*.required' => 'Serial Number field is required',
-        'selectedProduct.0.required' => 'Product field is required',
+        'selectedProduct.required' => 'Product field is required',
         'aspect_ratio.0.required' => 'Aspect Ratio field is required',
         'serial_number.0.required' => 'Serial Number field is required',
         'vendor_id.required' => 'Select Vendor',
@@ -243,13 +415,12 @@ class Edit extends Component
         'diameter.*' => 'required',
         'serial_number.*' => 'required',
         'type.*' => 'required',
-        'selectedProduct.*' => 'required',
         'aspect_ratio.0' => 'required',
         'type.0' => 'required',
         'width.0' => 'required',
         'diameter.0' => 'required',
         'serial_number.0' => 'required',
-        'selectedProduct.0' => 'required',
+        'selectedProduct' => 'required',
         'vendor_id' => 'required',
         'selectedCurrency' => 'required',
       ];
@@ -430,10 +601,14 @@ public function updatedSelectedTax($id){
         }
         elseif($category == "products"){
            $this->products = Product::query()
-            ->where('status', true)
-            ->when(!$this->all_products, function ($query) {
-                $query->where('buy', true)->where('department', $this->department);
+            ->where(function ($query) {
+                $query->where('status', true)
+                    ->when(!$this->all_products, function ($query) {
+                        $query->where('buy', true)->where('department', $this->department);
+                    });
             })
+            // keep the record's own product listed so the dropdown is never blank on edit
+            ->when($this->selectedProduct, fn ($query) => $query->orWhere('id', $this->selectedProduct))
             ->orderBy('name', 'asc')
             ->get();
             $this->dispatchBrowserEvent('alert',[
@@ -496,7 +671,10 @@ public function updatedSelectedTax($id){
             'selectedCurrency' => 'required',
         ]);
 
-        DB::transaction(function () {
+        $this->validateFitment();
+
+        try {
+        return DB::transaction(function () {
 
               $subtotal = 0;
               $subtotal_incl = 0;
@@ -582,6 +760,8 @@ public function updatedSelectedTax($id){
 
               $tyre->update();
 
+              $this->saveFitment($tyre);
+
               if ($this->to_bills) {
             
             $bill = $tyre->bill;
@@ -665,10 +845,16 @@ public function updatedSelectedTax($id){
             }
         }
 
-        Session::flash('success','Tyre(s) added successfully');
+        Session::flash('success','Tyre(s) updated successfully');
         return redirect()->route('tyres.index');
 
     });
+        } catch (ValidationException $e) {
+            // Service errors (position / ending_odometer / tyre_id) shown on the fitment section.
+            $message = collect($e->errors())->flatten()->first();
+            $this->addError('fitment', $message);
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $message]);
+        }
       }
 
        public function updatedSelectedGoodsReceived($id){
@@ -684,10 +870,14 @@ public function updatedSelectedTax($id){
      
        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::query()
-            ->where('status', true)
-            ->when(!$this->all_products, function ($query) {
-                $query->where('buy', true)->where('department', $this->department);
+            ->where(function ($query) {
+                $query->where('status', true)
+                    ->when(!$this->all_products, function ($query) {
+                        $query->where('buy', true)->where('department', $this->department);
+                    });
             })
+            // keep the record's own product listed so the dropdown is never blank on edit
+            ->when($this->selectedProduct, fn ($query) => $query->orWhere('id', $this->selectedProduct))
             ->orderBy('name', 'asc')
             ->get();
         $this->transfers = Transfer::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
@@ -701,10 +891,17 @@ public function updatedSelectedTax($id){
             ->orderBy('star', 'desc')          // Starred POs first
             ->orderBy('created_at', 'desc')
             ->get();
+        $current = $this->can_fit ? $this->currentAssignment() : null;
+        $fitChanged = $this->can_fit && ($this->fit_unit_id || $this->fit_axle || $this->fit_position) && !$this->fitmentUnchanged($current);
+
         return view('livewire.tyres.edit',[
           'purchases' => $this->purchases,
           'transfers' => $this->transfers,
-          
+          'fit_changed' => $fitChanged,
+          'fit_moves_unit' => $fitChanged && $this->fitmentMovesUnit($current),
+          'current_unit_label' => $current ? $current->locationLabel() : null,
+          'fit_taken' => $fitChanged ? $this->positionTakenBy() : null,
+
         ]);
     }
 }

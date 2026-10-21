@@ -105,6 +105,62 @@ class Tyre extends Model implements Auditable
         return filled($this->serial_number) ? (string) $this->serial_number : 'Not entered';
     }
 
+    const LIST_LOCATIONS = [
+        'in_store' => 'In Store',
+        'fitted' => 'Fitted',
+        'unfitted' => 'Out of Store · Not Fitted',
+        'disposed' => 'Disposed',
+    ];
+
+    /**
+     * Tyres list + its exports: search, location (LIST_LOCATIONS key) and equipment
+     * (type Horse/Trailer/Vehicle, optional unit id) on the tyre's active assignment.
+     * With no search or location, disposed tyres stay hidden.
+     */
+    public function scopeListFilter($query, array $filters)
+    {
+        $search = trim((string) ($filters['search'] ?? ''));
+        $location = $filters['location'] ?? null;
+        $column = ['Horse' => 'horse_id', 'Trailer' => 'trailer_id', 'Vehicle' => 'vehicle_id'][$filters['equipment_type'] ?? ''] ?? null;
+        $equipmentId = $filters['equipment_id'] ?? null;
+
+        return $query->where('retread', 0)
+            ->when($search === '' && !$location, fn ($q) => $q->where('disposed', 0))
+            ->when($location === 'in_store', fn ($q) => $q->inStock())
+            ->when($location === 'fitted', fn ($q) => $q->whereHas('tyre_assignments', fn ($ta) => $ta->where('status', 1)))
+            ->when($location === 'unfitted', fn ($q) => $q
+                ->where(fn ($b) => $b->whereNull('balance')->orWhere('balance', '<=', 0))
+                ->where(fn ($d) => $d->whereNull('disposed')->orWhere('disposed', 0))
+                ->whereDoesntHave('tyre_assignments', fn ($ta) => $ta->where('status', 1)))
+            ->when($location === 'disposed', fn ($q) => $q->where('disposed', 1))
+            ->when($column, fn ($q) => $q->whereHas('tyre_assignments', fn ($ta) => $ta->where('status', 1)
+                ->when($equipmentId, fn ($x) => $x->where($column, $equipmentId), fn ($x) => $x->whereNotNull($column))))
+            ->when($search !== '', function ($q) use ($search) {
+                $like = "%{$search}%";
+
+                $q->where(function ($qq) use ($like) {
+                    $qq->where('tyre_number', 'like', $like)
+                        ->orWhere('serial_number', 'like', $like)
+                        ->orWhere('purchase_date', 'like', $like)
+                        ->orWhere('type', 'like', $like)
+                        ->orWhereHas('product', fn ($p) => $p->where('name', 'like', $like))
+                        ->orWhereHas('product.brand', fn ($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('currency', fn ($c) => $c->where('name', 'like', $like))
+                        ->orWhereHas('store', fn ($s) => $s->where('name', 'like', $like))
+                        ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', $like))
+                        ->orWhereHas('goods_received', fn ($g) => $g->where('goods_received_number', 'like', $like))
+                        ->orWhereHas('tyre_assignments', function ($ta) use ($like) {
+                            $ta->where('status', 1)
+                                ->where(function ($x) use ($like) {
+                                    $x->whereHas('horse', fn ($h) => $h->where('registration_number', 'like', $like))
+                                        ->orWhereHas('vehicle', fn ($v) => $v->where('registration_number', 'like', $like))
+                                        ->orWhereHas('trailer', fn ($t) => $t->where('registration_number', 'like', $like));
+                                });
+                        });
+                });
+            });
+    }
+
     // Dispatchable: available, has stock left and not sitting on a truck.
     public function scopeInStock($query)
     {

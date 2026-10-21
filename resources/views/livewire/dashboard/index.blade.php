@@ -276,9 +276,13 @@
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-send"></i></span><strong class="gd-module-value">{{ $fmt($inventory_dispatches_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Dispatches <span class="gd-module-badge">YTD</span></span>
                         </a>
-                        <a href="{{ route('tyres.index') }}" class="gd-module-count-card">
+                        <a href="{{ route('tyres.index', ['location' => 'in_store']) }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-circle-o"></i></span><strong class="gd-module-value">{{ $fmt($tyre_count ?? 0) }}</strong></div>
-                            <span class="gd-module-label">Active Tyres</span>
+                            <span class="gd-module-label">Tyres In Store</span>
+                        </a>
+                        <a href="{{ route('tyres.index', ['location' => 'fitted']) }}" class="gd-module-count-card">
+                            <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-truck"></i></span><strong class="gd-module-value">{{ $fmt($tyre_fitted_count ?? 0) }}</strong></div>
+                            <span class="gd-module-label">Tyres Fitted</span>
                         </a>
                     @endif
 
@@ -384,7 +388,8 @@
                             <a class="gd-kpi {{ ($low_stock_count ?? 0) > 0 ? 'danger' : 'good' }}" href="{{ route('inventories.index') }}"><span class="icon"><i class="fa fa-warning"></i></span><div class="value">{{ $low_stock_count ?? 0 }}</div><span class="name">Low Stock</span></a>
                             <a class="gd-kpi {{ ($pending_pos_count ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('inventory_purchases.index') }}"><span class="icon"><i class="fa fa-shopping-cart"></i></span><div class="value">{{ $pending_pos_count ?? 0 }}</div><span class="name">Pending POs</span></a>
                             <a class="gd-kpi {{ ($pending_requisitions ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('requisitions.index') }}"><span class="icon"><i class="fa fa-list-alt"></i></span><div class="value">{{ $pending_requisitions ?? 0 }}</div><span class="name">Requisitions</span></a>
-                            <a class="gd-kpi" href="{{ route('tyres.index') }}"><span class="icon"><i class="fa fa-circle-o"></i></span><div class="value">{{ $active_tyres ?? 0 }}</div><span class="name">Active Tyres</span></a>
+                            <a class="gd-kpi" href="{{ route('tyres.index', ['location' => 'in_store']) }}"><span class="icon"><i class="fa fa-circle-o"></i></span><div class="value">{{ $tyres_in_store ?? 0 }}</div><span class="name">Tyres In Store</span></a>
+                            <a class="gd-kpi" href="{{ route('tyres.index', ['location' => 'fitted']) }}"><span class="icon"><i class="fa fa-truck"></i></span><div class="value">{{ $tyres_fitted ?? 0 }}</div><span class="name">Tyres Fitted</span></a>
                         </div>
                     </div>
                 @endif

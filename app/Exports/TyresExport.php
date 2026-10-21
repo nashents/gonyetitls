@@ -33,17 +33,16 @@ class TyresExport implements
 {
     use Exportable;
 
-    public ?string $search;
+    // Same keys as Tyre::scopeListFilter (search, location, equipment_type, equipment_id).
+    public array $filters;
 
-    public function __construct($search = null)
+    public function __construct($search = null, array $filters = [])
     {
-        $this->search = $search ? trim((string)$search) : null;
+        $this->filters = array_merge($filters, ['search' => $search ? trim((string) $search) : null]);
     }
 
     public function query()
     {
-        $search = trim((string) $this->search);
-
         return Tyre::query()
             ->with([
                 'product.brand',
@@ -54,37 +53,7 @@ class TyresExport implements
                 'activeAssignment.trailer',
                 'latestChecklistResult',
             ])
-            ->where('disposed', 0)
-            ->where('retread', 0)
-            ->when($search !== '', function ($q) use ($search) {
-                $like = "%{$search}%";
-
-                $q->where(function ($qq) use ($like) {
-
-                    // Tyre fields
-                    $qq->where('tyre_number', 'like', $like)
-                        ->orWhere('serial_number', 'like', $like)
-                        ->orWhere('purchase_date', 'like', $like)
-                        ->orWhere('type', 'like', $like);
-
-                    // Related models
-                    $qq->orWhereHas('product', fn ($p) => $p->where('name', 'like', $like))
-                        ->orWhereHas('product.brand', fn ($b) => $b->where('name', 'like', $like))
-                        ->orWhereHas('currency', fn ($c) => $c->where('name', 'like', $like))
-                        ->orWhereHas('store', fn ($s) => $s->where('name', 'like', $like))
-                        ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', $like));
-
-                    // Search in active assignments by registration_number
-                    $qq->orWhereHas('tyre_assignments', function ($ta) use ($like) {
-                        $ta->where('status', 1)
-                            ->where(function ($x) use ($like) {
-                                $x->whereHas('horse', fn ($h) => $h->where('registration_number', 'like', $like))
-                                    ->orWhereHas('vehicle', fn ($v) => $v->where('registration_number', 'like', $like))
-                                    ->orWhereHas('trailer', fn ($t) => $t->where('registration_number', 'like', $like));
-                            });
-                    });
-                });
-            })
+            ->listFilter($this->filters)
             ->orderByDesc('created_at');
     }
 

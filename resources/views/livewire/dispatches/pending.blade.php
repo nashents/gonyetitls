@@ -254,7 +254,7 @@
                     </div>
 
                     @if (!empty($fitments) && $authorize == "approved")
-                        <h6>Tyre Fitment <small>(Serial# is required where none is recorded. Fitment is optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest leave stores unfitted, to be fitted in Tyre Assignments)</small></h6>
+                        <h6>Tyre Fitment <small>(Serial# is required where none is recorded. Fitment is optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest are assigned to the ticket's unit without a position on a ticket dispatch, otherwise they leave stores unfitted; set positions later in Tyres &gt; Edit)</small></h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead>

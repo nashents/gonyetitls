@@ -15,7 +15,8 @@ use App\Services\Fleet\TyreAssignmentService;
  * Tyre dispatches take tyres out of stores to a unit (horse / trailer / vehicle on the dispatch).
  * Stores may also say where each tyre goes (axle + position); then approval fits it there and
  * takes off whatever tyre is in that position. Without a position the tyre is out of stores but
- * not fitted, and is fitted later in Tyre Assignments.
+ * not fitted, and is fitted later in Tyre Assignments, except on a ticket (job card) dispatch, where
+ * it is fitted to the ticket's unit with no axle/position.
  */
 class TyreDispatchFitmentService
 {
@@ -179,11 +180,17 @@ class TyreDispatchFitmentService
     public function fit(Dispatch $dispatch, DispatchItem $item): TyreAssignment
     {
         $units = $this->unitsFor($dispatch);
-        $type = $item->fit_type;
+        $withPosition = filled($item->axle) && filled($item->position);
+        // No position (ticket dispatch): the picked unit, else the truck (horse) first.
+        $type = isset($units[$item->fit_type]) ? $item->fit_type : array_key_first($units);
         $assetId = $units[$type] ?? null;
 
-        if (!$assetId || blank($item->axle) || blank($item->position)) {
+        if (!$assetId || (!$withPosition && !$dispatch->ticket_id)) {
             throw new \RuntimeException('Every tyre on a tyre dispatch needs a unit, axle and position.');
+        }
+        if (!$item->fit_type) {
+            $item->fit_type = $type;
+            $item->save();
         }
 
         $odometer = $this->fittingOdometer($dispatch, $type, $assetId);
@@ -191,7 +198,7 @@ class TyreDispatchFitmentService
         $tyre = $item->tyre;
         $label = $tyre ? ($tyre->serial_number ?: $tyre->tyre_number) : $item->tyre_id;
 
-        if ($occupant = $this->occupant($units, $type, $item->axle, $item->position)) {
+        if ($withPosition && ($occupant = $this->occupant($units, $type, $item->axle, $item->position))) {
             $ending = max((float) $odometer, (float) $occupant->starting_odometer);
             $this->assignments->unassign($occupant, $ending, $date, "Replaced by tyre {$label} on dispatch {$dispatch->dispatch_number}");
         }
@@ -202,7 +209,7 @@ class TyreDispatchFitmentService
             'position' => $item->position,
             'starting_odometer' => $odometer,
             'date_fitted' => $date,
-            'description' => "Fitted from dispatch {$dispatch->dispatch_number}",
+            'description' => "Fitted from dispatch {$dispatch->dispatch_number}".($withPosition ? '' : ' (position not set)'),
             'ticket_id' => $dispatch->ticket_id,
             'dispatch_id' => $dispatch->id,
             'dispatch_item_id' => $item->id,

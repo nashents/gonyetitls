@@ -13,7 +13,7 @@
 <div class="row">
     <div class="col-md-4">
         <div class="form-group">
-            <label>Fit To <small class="text-muted">(optional, or fit later in Tyre Assignments)</small></label>
+            <label>Fit To <small class="text-muted">(optional; on a ticket dispatch the tyre is assigned to the ticket's unit anyway)</small></label>
             <select wire:model="fit_type.{{ $row }}" class="form-control">
                 <option value="">Select Unit</option>
                 @foreach ($fitUnitOptions as $type => $label)

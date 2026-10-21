@@ -5,8 +5,11 @@ namespace App\Http\Livewire\Tyres;
 use App\Exports\TyresExport;
 use App\Models\ChecklistResult;
 use App\Models\Dispose;
+use App\Models\Horse;
 use App\Models\Product;
+use App\Models\Trailer;
 use App\Models\Tyre;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -19,7 +22,11 @@ class Index extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public $location;
+    public $equipment_type;
+    public $equipment_id;
+    public $equipments = [];
+    protected $queryString = ['search', 'location', 'equipment_type', 'equipment_id'];
 
     private $tyres;
     public $tyre_id;
@@ -54,17 +61,51 @@ class Index extends Component
 
     public function mount(){
         $this->products = Product::where('department','tyre')->get();
+        $this->loadEquipments();
+    }
+
+    // Filters shared by the list and its exports (see Tyre::scopeListFilter).
+    protected function filters(){
+        return [
+            'search' => $this->search,
+            'location' => $this->location,
+            'equipment_type' => $this->equipment_type,
+            'equipment_id' => $this->equipment_id,
+        ];
+    }
+
+    protected function loadEquipments(){
+        $model = ['Horse' => Horse::class, 'Trailer' => Trailer::class, 'Vehicle' => Vehicle::class][$this->equipment_type] ?? null;
+        $this->equipments = $model ? $model::orderByIdentifier('asc')->get() : [];
+    }
+
+    public function updatingLocation(){
+        $this->resetPage();
+    }
+
+    public function updatedEquipmentType(){
+        $this->equipment_id = null;
+        $this->loadEquipments();
+        $this->resetPage();
+    }
+
+    public function updatingEquipmentId(){
+        $this->resetPage();
+    }
+
+    public function clearFilters(){
+        $this->reset(['search', 'location', 'equipment_type', 'equipment_id', 'equipments']);
         $this->resetPage();
     }
 
     public function exportTyresCSV(Excel $excel){
-        return $excel->download(new TyresExport($this->search), 'tyres_'.now()->format('Y-m-d').'.csv', Excel::CSV);
+        return $excel->download(new TyresExport($this->search, $this->filters()), 'tyres_'.now()->format('Y-m-d').'.csv', Excel::CSV);
     }
     public function exportTyresPDF(Excel $excel){
-        return $excel->download(new TyresExport($this->search), 'tyres_'.now()->format('Y-m-d').'.pdf', Excel::DOMPDF);
+        return $excel->download(new TyresExport($this->search, $this->filters()), 'tyres_'.now()->format('Y-m-d').'.pdf', Excel::DOMPDF);
     }
     public function exportTyresExcel(Excel $excel){
-        return $excel->download(new TyresExport($this->search), 'tyres_'.now()->format('Y-m-d').'.xlsx');
+        return $excel->download(new TyresExport($this->search, $this->filters()), 'tyres_'.now()->format('Y-m-d').'.xlsx');
     }
     
     public function updated($value){
@@ -206,56 +247,18 @@ class Index extends Component
     public function render()
     {
 
-        $search = trim((string) $this->search);
         $tyres = Tyre::query()
             ->with([
                 'product.brand',
                 'user',
                 'goods_received',
-                // load active assignment + its asset relations if you show them in the list
                 'tyre_assignments' => function ($q) {
                     $q->where('status', 1)
                     ->latest()
                     ->with(['horse', 'vehicle', 'trailer']);
                 },
             ])
-            ->where('retread', 0)
-            ->when($search === '', function ($q) {
-                // No search: default listing stays scoped to non-disposed tyres.
-                $q->where('disposed', 0);
-            })
-            ->when($search !== '', function ($q) use ($search) {
-                // Searching: don't restrict to non-disposed — the point of a search is
-                // to find the record (e.g. by tyre#/serial#) even if it's disposed.
-                $like = "%{$search}%";
-
-                $q->where(function ($qq) use ($like) {
-
-                    // Tyre fields
-                    $qq->where('tyre_number', 'like', $like)
-                    ->orWhere('serial_number', 'like', $like)
-                    ->orWhere('purchase_date', 'like', $like)
-                    ->orWhere('type', 'like', $like);
-
-                    // Related models
-                    $qq->orWhereHas('product', fn ($p) => $p->where('name', 'like', $like))
-                    ->orWhereHas('product.brand', fn ($b) => $b->where('name', 'like', $like))
-                    ->orWhereHas('currency', fn ($c) => $c->where('name', 'like', $like))
-                    ->orWhereHas('store', fn ($s) => $s->where('name', 'like', $like))
-                    ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', $like))
-                    ->orWhereHas('goods_received', fn ($g) => $g->where('goods_received_number', 'like', $like));
-
-                    // ✅ Search in active assignments by asset registration_number
-                    $qq->orWhereHas('tyre_assignments', function ($ta) use ($like) {
-                        $ta->where('status', 1)
-                        ->where(function ($x) use ($like) {
-                            $x->whereHas('horse', fn ($h) => $h->where('registration_number', 'like', $like))
-                                ->orWhereHas('vehicle', fn ($v) => $v->where('registration_number', 'like', $like))
-                                ->orWhereHas('trailer', fn ($t) => $t->where('registration_number', 'like', $like));
-                        });
-                    });
-                });
-            })
+            ->listFilter($this->filters())
             ->orderByDesc('created_at')
             ->paginate(10);
 

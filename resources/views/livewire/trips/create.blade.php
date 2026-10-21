@@ -2310,6 +2310,15 @@
                                 @error('fuel_order') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                             @if ($fuel_order == True)
+                            <div class="form-group">
+                                <div class="mb-10">
+                                    <input type="radio" wire:model="fuel_order_mode" value="new" class="line-style" />
+                                    <label for="one" class="radio-label">Create New Fuel Order</label>
+                                    <input type="radio" wire:model="fuel_order_mode" value="attach" class="line-style" />
+                                    <label for="one" class="radio-label">Attach Existing Fuel Order(s)</label>
+                                </div>
+                            </div>
+                            @if ($fuel_order_mode == 'new')
                             @if ($selectedHorse)
                             <div class="form-group">
                                 <label>Fuel Source<span class="required" style="color: red">*</span></label>
@@ -2584,6 +2593,68 @@
                                     </div>
                                 </div>
                             </div>
+                            @else
+                            @php $attachableFuels = $this->attachableFuels; @endphp
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Categories<span class="required" style="color: red">*</span></label>
+                                        <select class="form-control" wire:model.debounce.300ms="fuel_category" required>
+                                            <option value="">Select Category</option>
+                                            <option value="Customer">Customer</option>
+                                            <option value="Self">Self</option>
+                                            <option value="Transporter">Transporter</option>
+                                        </select>
+                                        @error('fuel_category') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <small class="text-muted d-block" style="padding-top: 30px">
+                                        Fuel orders not yet on any trip{{ ($selectedHorse || $selectedVehicle) ? ' for the selected ' . strtolower($mode_of_transport ?? 'unit') : '' }}. Ticked orders are linked to this trip when it is saved.
+                                    </small>
+                                </div>
+                            </div>
+                            @error('attach_fuel_ids') <span class="text-danger error">{{ $message }}</span>@enderror
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Horse/Vehicle</th>
+                                            <th>Station</th>
+                                            <th>Qty (L)</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($attachableFuels as $attachableFuel)
+                                            <tr wire:key="attach-fuel-{{ $attachableFuel->id }}">
+                                                <td><input type="checkbox" wire:model="attach_fuel_ids" value="{{ $attachableFuel->id }}" /></td>
+                                                <td>{{ $attachableFuel->order_number }}</td>
+                                                <td>{{ $attachableFuel->date }}</td>
+                                                <td>{{ optional($attachableFuel->horse)->registration_number ?? optional($attachableFuel->vehicle)->registration_number }}</td>
+                                                <td>{{ optional($attachableFuel->container)->name ?? (optional($attachableFuel->source_horse)->registration_number ? 'Truck ' . $attachableFuel->source_horse->registration_number : '') }}</td>
+                                                <td>{{ $attachableFuel->quantity }}</td>
+                                                <td>{{ optional($attachableFuel->currency)->name }} {{ is_numeric($attachableFuel->amount) ? number_format($attachableFuel->amount, 2) : '' }}</td>
+                                                <td>
+                                                    {{ ucfirst($attachableFuel->authorization ?? 'pending') }}
+                                                    @if ($attachableFuel->supplied_by_customer)
+                                                        <span class="badge badge-info">Customer funded</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="text-center">No unattached fuel orders found{{ ($selectedHorse || $selectedVehicle) ? ' for this ' . strtolower($mode_of_transport ?? 'unit') : '' }}.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            @endif
                             @endif
                           
                             

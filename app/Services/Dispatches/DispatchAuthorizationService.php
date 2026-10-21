@@ -216,8 +216,9 @@ class DispatchAuthorizationService
             $item->position = ($f['position'] ?? null) ?: null;
             $item->save();
 
-            // No position: the tyre leaves stores unfitted and is fitted later in Tyre Assignments.
-            if ($item->axle && $item->position) {
+            // With a position it's fitted there. A ticket (job card) dispatch is fitted to the ticket's unit
+            // even without one; the position is set later in Tyres > Edit. Otherwise it leaves stores unfitted.
+            if (($item->axle && $item->position) || $dispatch->ticket_id) {
                 $this->fitment->fit($dispatch, $item);
             }
         }

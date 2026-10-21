@@ -139,7 +139,7 @@
                                         @if ($source == "Transfer" && $selectedTransfer)
                                             <div class="form-group">
                                                 <label for="country">Product(s) — from this Transfer</label>
-                                                <select wire:model.debounce.300ms="selectedTransferItem.0" class="form-control">
+                                                <select wire:model.debounce.300ms="selectedTransferItem" class="form-control">
                                                     <option value="">Select Product</option>
                                                     @foreach ($transfer_items as $transfer_item)
                                                         <option value="{{$transfer_item->id}}">
@@ -149,7 +149,7 @@
                                                         </option>
                                                     @endforeach
                                                 </select>
-                                                @error('selectedTransferItem.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('selectedTransferItem') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @endif
                                             <div class="form-group">
@@ -159,14 +159,14 @@
                                                         <label for="one" class="radio-label">Show all products</label>
                                                     @error('all_products') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
-                                                <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
+                                                <select wire:model.debounce.300ms="selectedProduct" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($products as $product)
                                                         <option value="{{$product->id}}" @if($product->department !== $department) disabled title="You can't use this product in {{ $department }} — it's a {{ $product->department }} product." @endif> {{ $product->product_number }} - {{ $product->name }} {{ $product->identification_number ? "(".$product->identification_number.")" : "" }} @if($product->department !== $department)&mdash; {{ ucfirst($product->department) }} product, not usable here @endif</option>
                                                     @endforeach
                                                 </select>
                                                  <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                                @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                        
                                     </div>
@@ -388,6 +388,113 @@
                                     </div>
                                 </div>
                             </div>
+
+                            @if ($can_fit)
+                                <h5 class="underline mt-30">Tyre Assignment</h5>
+                                @if ($current_assignment_id)
+                                    <small style="color: green">Currently fitted. Change the unit, axle or position to move this tyre; leave as is to keep it where it is.</small>
+                                @else
+                                    <small style="color: green">Out of stores, not fitted. Pick a unit, axle and position to fit it, or leave blank.</small>
+                                @endif
+                                <div class="mb-10 mt-10">
+                                    <label for="">Assignment For?</label>
+                                    <input type="radio" wire:model="fit_type" value="Horse" class="line-style" />
+                                    <label class="radio-label">Horse</label>
+                                    <input type="radio" wire:model="fit_type" value="Trailer" class="line-style" />
+                                    <label class="radio-label">Trailer</label>
+                                    <input type="radio" wire:model="fit_type" value="Vehicle" class="line-style" />
+                                    <label class="radio-label">Vehicle</label>
+                                    @error('fit_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>{{ $fit_type ? $fit_type : 'Unit' }}</label>
+                                            <select class="form-control" wire:model="fit_unit_id" wire:key="fit-unit-{{ $fit_type }}">
+                                                <option value="">Select {{ $fit_type ? $fit_type : 'Unit' }}</option>
+                                                @if ($fit_type == "Horse")
+                                                    @foreach ($horses as $horse)
+                                                        <option value="{{$horse->id}}">{{$horse->identifier_label}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                    @endforeach
+                                                @elseif ($fit_type == "Trailer")
+                                                    @foreach ($trailers as $trailer)
+                                                        <option value="{{$trailer->id}}">{{$trailer->identifier_label}} {{$trailer->make}} {{$trailer->model}}</option>
+                                                    @endforeach
+                                                @elseif ($fit_type == "Vehicle")
+                                                    @foreach ($vehicles as $vehicle)
+                                                        <option value="{{$vehicle->id}}">{{$vehicle->identifier_label}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                            @error('fit_unit_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Wheel Axle</label>
+                                            <select class="form-control" wire:model="fit_axle">
+                                                <option value="">Select Wheel Axle</option>
+                                                @foreach (\App\Models\TyreAssignment::AXLES as $axleOption)
+                                                    <option value="{{ $axleOption }}">{{ $axleOption }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('fit_axle') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Wheel Position</label>
+                                            <select class="form-control" wire:model="fit_position">
+                                                <option value="">Select Wheel Position</option>
+                                                @foreach (\App\Models\TyreAssignment::POSITIONS as $positionValue => $positionLabel)
+                                                    <option value="{{ $positionValue }}">{{ $positionLabel }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('fit_position') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Date</label>
+                                            <input type="date" class="form-control" wire:model.debounce.300ms="fit_date">
+                                            @error('fit_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                @if ($fit_changed)
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Fitting Mileage</label>
+                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fit_mileage" placeholder="Odometer of the unit it goes on">
+                                                @error('fit_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        @if ($fit_moves_unit)
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Removal Mileage ({{ $current_unit_label }})</label>
+                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="removal_mileage" placeholder="Odometer of the unit it comes off">
+                                                    @error('removal_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                                @if ($fit_taken)
+                                    <div class="alert alert-warning">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        {{ $fit_taken->axle }} {{ \App\Models\TyreAssignment::POSITIONS[$fit_taken->position] ?? $fit_taken->position }}
+                                        on {{ $fit_taken->locationLabel() }} is already assigned to tyre
+                                        {{ optional($fit_taken->tyre)->serial_number ? 'SN# '.$fit_taken->tyre->serial_number : optional($fit_taken->tyre)->tyre_number }}.
+                                        Saving will remove that assignment (the tyre stays out of stores, unfitted).
+                                    </div>
+                                @endif
+                                @error('fitment') <div class="alert alert-danger">{{ $message }}</div> @enderror
+                            @elseif ($fit_blocker)
+                                <h5 class="underline mt-30">Tyre Assignment</h5>
+                                <small style="color: red">{{ $fit_blocker }}</small>
+                            @endif
 
                             <div class="mb-10 mt-10" style="float: right;">
                                 <input type="checkbox" wire:model.debounce.300ms="to_bills" {{$selectedPurchase ? "disabled" : ""}}   class="line-style" />
