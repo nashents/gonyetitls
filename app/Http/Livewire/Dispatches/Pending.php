@@ -311,7 +311,8 @@ class Pending extends Component
             $this->pageIds = $dispatches->pluck('id')->all();
 
         return view('livewire.dispatches.pending',[
-        'dispatches' => $dispatches
+        'dispatches' => $dispatches,
+        'serialRequired' => $this->fitmentService()->serialRequired(),
         ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Imports\Concerns\ResolvesLookups;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\FreightJob;
 use App\Models\FreightServiceType;
 use App\Models\Location;
 use App\Services\Freight\FreightJobService;
@@ -127,6 +128,8 @@ class FreightJobsImport implements ToCollection, SkipsEmptyRows, WithLimit,
                         'destination_country_id' => $destinationCountry->id,
                         'primary_transport_mode' => $mode,
                         'status' => $status,
+                        // Rows already past draft are existing work being loaded in, not new requests.
+                        'authorization' => in_array($status, FreightJob::PRE_APPROVAL_STATUSES, true) ? 'pending' : 'approved',
                         'customer_reference' => $row->get('customer_reference') ?: null,
                         'import_export_type' => $row->get('import_export_type') ?: null,
                         'shipment_type' => $row->get('shipment_type') ?: null,

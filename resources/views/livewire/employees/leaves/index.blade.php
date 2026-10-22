@@ -28,18 +28,10 @@
                             </div>
                            
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                                @include('includes.staff-filters', ['staffType' => true])
                                 <div class="col-md-3" style="float: right; padding-right:0px">
                                     <div class="form-group">
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search employees...">
-                                    </div>
-                                </div>
-                                <div class="col-md-3" style="float: right">
-                                    <div class="form-group">
-                                        <select wire:model="staff_type" class="form-control" title="Also applies to Excel/CSV/PDF exports">
-                                            <option value="all">All Employees</option>
-                                            <option value="drivers">Drivers Only</option>
-                                            <option value="admin">Admin Employees Only</option>
-                                        </select>
                                     </div>
                                 </div>
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
@@ -281,6 +273,19 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="enforce_branch_id">Branch</label>
+                                    <select id="enforce_branch_id" class="form-control" wire:model="enforce_branch_id">
+                                        <option value="">All Branches</option>
+                                        @foreach ($this->staffFilterOptions['branches'] as $branch_option)
+                                            <option value="{{ $branch_option->id }}">{{ $branch_option->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="enforce_leave_type_id">Leave Type</label>

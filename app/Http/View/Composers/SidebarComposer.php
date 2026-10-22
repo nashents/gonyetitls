@@ -851,6 +851,10 @@ class SidebarComposer
        
 
         // Trips
+        // Freight: pending = everything still waiting; approved/rejected = decided today
+        'freight_jobs_pending_count'  => $companyIsFreightForwarder ? \App\Models\FreightJob::where('authorization', 'pending')->count() : 0,
+        'freight_jobs_approved_count' => $companyIsFreightForwarder ? \App\Models\FreightJob::where('authorization', 'approved')->whereDate('authorization_date', Carbon::today())->count() : 0,
+        'freight_jobs_rejected_count' => $companyIsFreightForwarder ? \App\Models\FreightJob::where('authorization', 'rejected')->whereDate('authorization_date', Carbon::today())->count() : 0,
         'trips_pending_count'  => (int) ($tripsPendingCount ?? 0),
         'trips_approved_count' => (int) ($tripsApprovedCount ?? 0),
         'trips_rejected_count' => (int) ($tripsRejectedCount ?? 0),

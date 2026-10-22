@@ -32,6 +32,8 @@
                                         </th>
                                         <th class="th-sm">Authorization
                                         </th>
+                                        <th class="th-sm">Deleted By
+                                        </th>
                                         <th class="th-sm">Action
                                         </th>
                                       </tr>
@@ -58,6 +60,7 @@
                                       <td>{{$fuel->fillup == "1" ? "Initial" : "Top Up"}}</td>
                                       <td>{{$fuel->quantity}}Litres</td>
                                       <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                      <td>{{ $fuel->deleted_by ? trim($fuel->deleted_by->name . " " . $fuel->deleted_by->surname) : "" }}<br><small>{{ $fuel->deleted_at }}</small></td>
                                       <td class="w-10 line-height-35 table-dropdown">
                                           <div class="dropdown">
                                               <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -90,6 +93,7 @@
                                       <td>{{$fuel->fillup == "1" ? "Initial" : "Top Up"}}</td>
                                       <td>{{$fuel->quantity}}Litres</td>
                                       <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                      <td>{{ $fuel->deleted_by ? trim($fuel->deleted_by->name . " " . $fuel->deleted_by->surname) : "" }}<br><small>{{ $fuel->deleted_at }}</small></td>
                                       <td class="w-10 line-height-35 table-dropdown">
                                           <div class="dropdown">
                                               <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

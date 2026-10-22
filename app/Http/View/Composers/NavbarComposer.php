@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\CreditNote;
 use App\Models\Dispatch;
 use App\Models\Fitness;
+use App\Models\FreightJob;
 use App\Models\Fuel;
 use App\Models\FuelRequest;
 use App\Models\GatePass;
@@ -30,6 +31,7 @@ use App\Models\Vehicle;
 use App\Models\WasteCollection;
 use App\Models\WasteDisposal;
 use App\Services\EditAuthorizationService;
+use App\Services\Freight\FreightReminderService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -90,6 +92,7 @@ class NavbarComposer
                 'reminders' => collect(),
                 'expired_reminders' => collect(),
                 'reminders_count' => 0,
+                'freight_reminders' => collect(),
             ]);
             return;
         }
@@ -263,9 +266,14 @@ class NavbarComposer
                 ->values();
         }
 
+        // Freight operations due / overdue (empty unless the company is a freight forwarder)
+        $freight_reminders = app(FreightReminderService::class)->forUser($user);
+        $isFreightCompany = $company && $company->hasCompanyType('Freight Forwarding & Clearing');
+
         $reminders_count = $reminders->count()
             + $expired_reminders->count()
-            + $mileage_reminders->count();
+            + $mileage_reminders->count()
+            + $freight_reminders->count();
 
         // Pending "edit authorization" requests (locked trip/bill edits
         // awaiting a decision) - scoped per-user via the service itself
@@ -286,6 +294,7 @@ class NavbarComposer
             'reminders' => $reminders,
             'expired_reminders' => $expired_reminders,
             'mileage_reminders' => $mileage_reminders,
+            'freight_reminders' => $freight_reminders,
             'reminders_count' => $reminders_count,
             'isEditAuthorizer' => $isEditAuthorizer,
 
@@ -315,6 +324,7 @@ class NavbarComposer
                 'attendances'       => $pendingCounts['attendances'] ?? 0,
                 'overdue_tickets'       => $pendingCounts['overdue_tickets'] ?? 0,
                 'edit_authorizations'   => $editAuthorizationsPendingCount,
+                'freight_jobs'          => $isFreightCompany ? FreightJob::where('authorization', 'pending')->count() : 0,
             ],
         ]);
     }

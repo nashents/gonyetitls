@@ -39,6 +39,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
               \App\Http\Middleware\CheckCompanyStatus::class,
             \App\Http\Middleware\SyncFleetMileage::class,
+            \App\Http\Middleware\SendFreightReminders::class,
         ],
 
         'api' => [

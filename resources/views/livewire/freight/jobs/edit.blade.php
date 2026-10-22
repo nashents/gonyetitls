@@ -191,6 +191,9 @@
                                                 @endforeach
                                             </select>
                                             @error('status') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            @if (! $job->isApproved())
+                                                <small class="text-muted">This job is {{ $job->authorization }} authorization - it can only be Draft or Cancelled until approved.{{ $job->authorization === 'rejected' ? ' Saving sends it for authorization again.' : '' }}</small>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

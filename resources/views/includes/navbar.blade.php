@@ -183,6 +183,7 @@
                                 'attendances' => ['label' => 'Attendance', 'route' => 'attendances.pending', 'icon'  => 'fa-clock-o'],
                                 'overdue_tickets' => ['label' => 'Overdue Ticket','route' => 'tickets.index', 'icon'  => 'fa-wrench'],
                                 'edit_authorizations' => ['label' => 'Edit Authorization', 'route' => 'edit_authorizers.pending', 'icon'  => 'fa-user-clock'],
+                                'freight_jobs' => ['label' => 'Freight Job', 'route' => 'freight.jobs.pending', 'icon'  => 'fa-ship'],
 
                             ];
 
@@ -194,6 +195,7 @@
                                 'Stores' => ['purchases', 'transfers', 'dispatches', 'retreads', 'topups' , 'fuel_requests','fuels'],
                                 'Workshop' => ['bookings','overdue_tickets'],
                                 'HSEQ' => [ 'waste_collections', 'waste_disposals'],
+                                'Freight Forwarding & Clearing' => ['freight_jobs'],
                             ];
 
                             // Build user departments (belongsToMany)
@@ -265,6 +267,8 @@
                                                     }
                                                     if ($key === 'overdue_tickets') {
                                                         $routeParams['overdue'] = 1;
+                                                    }elseif ($key === 'freight_jobs') {
+                                                        // dedicated Pending Freight Jobs page, no params
                                                     }elseif ($key === 'payment_requisitions') {
                                                         $routeParams['payment_notifications'] = 1;
                                                     }
@@ -294,7 +298,7 @@
                                 @endif
                             </a>
 
-                           @php $useTall = (($reminders?->count() + $expired_reminders?->count() + $mileage_reminders?->count()) > 10); @endphp
+                           @php $useTall = (($reminders?->count() + $expired_reminders?->count() + $mileage_reminders?->count() + min(($freight_reminders ?? collect())->count(), 15)) > 10); @endphp
 
                             <ul class="dropdown-menu" style="{{ $useTall ? "overflow-x:auto; height:400px;" : "" }}">
                                 <li style="margin: 10px">
@@ -404,6 +408,29 @@
                                             </a>
                                         </li>
                                         @endforeach
+                                @endif
+
+                                @if (isset($freight_reminders) && $freight_reminders->count() > 0)
+                                    <li role="separator" class="divider"></li>
+
+                                    <li><a href="{{ route('freight.jobs.index') }}"><strong style="color: gray">Freight Operations</strong></a></li>
+
+                                    @foreach ($freight_reminders->take(15) as $freight_reminder)
+                                        @php
+                                            $freight_color = ['overdue' => 'red', 'today' => 'orangered', 'upcoming' => 'goldenrod'][$freight_reminder['severity']] ?? 'gray';
+                                        @endphp
+                                        <li>
+                                            <a href="{{ $freight_reminder['url'] }}">
+                                                <i class="fa {{ $freight_reminder['icon'] }}" style="color: {{ $freight_color }}"></i>
+                                                <strong>{{ $freight_reminder['job_number'] }}</strong>
+                                                &mdash; {{ $freight_reminder['message'] }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+
+                                    @if ($freight_reminders->count() > 15)
+                                        <li><a href="{{ route('freight.jobs.index') }}"><small>+ {{ $freight_reminders->count() - 15 }} more freight reminders &rarr;</small></a></li>
+                                    @endif
                                 @endif
                             </ul>
                         </li>

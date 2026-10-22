@@ -10,6 +10,7 @@ use App\Models\Tyre;
 use App\Models\TyreAssignment;
 use App\Models\Vehicle;
 use App\Services\Fleet\TyreAssignmentService;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Tyre dispatches take tyres out of stores to a unit (horse / trailer / vehicle on the dispatch).
@@ -100,11 +101,14 @@ class TyreDispatchFitmentService
                 continue;
             }
 
-            // A dispatched tyre must be identifiable: ask for the serial if the record has none.
+            // Ask for the serial if the record has none; mandatory only when the
+            // Business Setting is on, but a serial that is entered is always checked.
             if (blank($tyre->serial_number)) {
                 $serial = trim((string) ($row['serial'] ?? ''));
                 if ($serial === '') {
-                    $errors["tyre_serial.{$key}"] = "Enter the serial number for tyre {$tyre->tyre_number}.";
+                    if ($this->serialRequired()) {
+                        $errors["tyre_serial.{$key}"] = "Enter the serial number for tyre {$tyre->tyre_number}.";
+                    }
                 } elseif (isset($serials[strtolower($serial)])) {
                     $errors["tyre_serial.{$key}"] = "Serial {$serial} is entered for two tyres on this dispatch.";
                 } elseif (Tyre::where('serial_number', $serial)->whereKeyNot($tyre->id)->exists()) {
@@ -148,6 +152,16 @@ class TyreDispatchFitmentService
     /**
      * Saves serials entered for tyres that had none (rows already validated).
      */
+    /**
+     * Business Setting "Require Tyre Serial Numbers on Dispatch" (on when no company is known).
+     */
+    public function serialRequired(): bool
+    {
+        $company = optional(optional(Auth::user())->employee)->company;
+
+        return $company ? (bool) ($company->require_tyre_serial_on_dispatch ?? true) : true;
+    }
+
     public function applySerials(array $rows): void
     {
         foreach ($rows as $row) {

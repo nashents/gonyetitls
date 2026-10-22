@@ -827,6 +827,9 @@ Route::resource('incomes','IncomeController');
 Route::resource('deals','DealController');
 Route::resource('corridors','CorridorController');
 Route::resource('clearing_agents','ClearingAgentController');
+Route::get('freight/jobs/authorization/pending','FreightJobController@pending')->name('freight.jobs.pending');
+Route::get('freight/jobs/authorization/approved','FreightJobController@approved')->name('freight.jobs.approved');
+Route::get('freight/jobs/authorization/rejected','FreightJobController@rejected')->name('freight.jobs.rejected');
 Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'job'])->names([
     'index' => 'freight.jobs.index',
     'create' => 'freight.jobs.create',

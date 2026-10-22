@@ -417,16 +417,7 @@
                                                                 </li>
                                                             @endif
                                                             @php
-                                                                $deleteBlockedReason = null;
-                                                                if ($fuel->authorization === 'rejected') {
-                                                                    $deleteBlockedReason = 'Rejected fuel orders cannot be deleted.';
-                                                                } elseif ($fuel->authorization === 'approved' && $fuel->authorized_by_id != Auth::id()) {
-                                                                    $approver = $fuel->authorized_by_id ? App\Models\User::find($fuel->authorized_by_id) : null;
-                                                                    $approverName = $approver ? trim($approver->name . ' ' . $approver->surname) : '';
-                                                                    $deleteBlockedReason = 'Approved fuel orders can only be deleted by the user who approved them' . ($approverName ? " ({$approverName})" : '') . '.';
-                                                                } elseif (!in_array($fuel->authorization, ['pending', 'approved'], true)) {
-                                                                    $deleteBlockedReason = 'Only pending fuel orders can be deleted (authorization status is not set).';
-                                                                }
+                                                                $deleteBlockedReason = $fuel->deleteBlockedReason(Auth::id());
                                                             @endphp
                                                             <li>
                                                                 @if($deleteBlockedReason)

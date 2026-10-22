@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Freight\Jobs;
 
+use App\Http\Livewire\Freight\Jobs\Concerns\AuthorizesFreightJobs;
 use App\Models\Customer;
 use App\Models\FreightJob;
 use App\Models\FreightServiceType;
@@ -11,7 +12,7 @@ use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, AuthorizesFreightJobs;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -25,9 +26,14 @@ class Index extends Component
     public $filter_status;
     public $filter_freight_service_type_id;
     public $filter_customer_id;
+    public $filter_authorization;
+
+    /** Set on the Pending / Approved / Rejected pages: the list is fixed to it. */
+    public $lockedAuthorization;
 
     protected $queryString = [
         'search',
+        'filter_authorization' => ['as' => 'authorization', 'except' => ''],
         'perPage' => ['except' => 15],
         'page' => ['except' => 1],
     ];
@@ -39,8 +45,10 @@ class Index extends Component
     public $customers;
     public $freight_service_types;
 
-    public function mount()
+    public function mount($authorization = null)
     {
+        $this->lockedAuthorization = in_array($authorization, ['pending', 'approved', 'rejected'], true) ? $authorization : null;
+
         $user = Auth::user();
         $this->employee = $user->employee;
 
@@ -120,6 +128,11 @@ class Index extends Component
             $jobs->where('status', $this->filter_status);
         }
 
+        $authorization = $this->lockedAuthorization ?: $this->filter_authorization;
+        if (filled($authorization)) {
+            $jobs->where('authorization', $authorization);
+        }
+
         if (filled($this->filter_freight_service_type_id)) {
             $jobs->where('freight_service_type_id', $this->filter_freight_service_type_id);
         }
@@ -128,10 +141,18 @@ class Index extends Component
             $jobs->where('customer_id', $this->filter_customer_id);
         }
 
+        // Approved / Rejected lists show the latest decisions first.
+        if (in_array($this->lockedAuthorization, ['approved', 'rejected'], true)) {
+            $jobs->orderByDesc('authorization_date');
+        }
         $jobs->latest();
 
+        $jobs = $jobs->paginate($this->perPage);
+        $this->pageIds = $jobs->getCollection()->where('authorization', 'pending')->pluck('id')->all();
+
         return view('livewire.freight.jobs.index', [
-            'jobs' => $jobs->paginate($this->perPage),
+            'jobs' => $jobs,
+            'pendingAuthorizationCount' => FreightJob::where('authorization', 'pending')->count(),
         ]);
     }
 }

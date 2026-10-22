@@ -1732,6 +1732,15 @@ class Index extends Component
     public function destroy(){
         $fuel = Fuel::find($this->fuel_id);
 
+        if (!$fuel || ($reason = $fuel->deleteBlockedReason(Auth::id()))) {
+            $this->dispatchBrowserEvent('hide-deleteModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=> $fuel ? $reason : "Fuel order not found!!"
+            ]);
+            return;
+        }
+
         if($fuel->authorization == "approved"){
 
             $container = $fuel->container;

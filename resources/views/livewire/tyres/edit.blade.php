@@ -394,7 +394,7 @@
                                 @if ($current_assignment_id)
                                     <small style="color: green">Currently fitted. Change the unit, axle or position to move this tyre; leave as is to keep it where it is.</small>
                                 @else
-                                    <small style="color: green">Out of stores, not fitted. Pick a unit, axle and position to fit it, or leave blank.</small>
+                                    <small style="color: green">Out of stores, not fitted. Pick a unit to fit it (axle and position are optional and can be set later), or leave blank.</small>
                                 @endif
                                 <div class="mb-10 mt-10">
                                     <label for="">Assignment For?</label>
@@ -409,7 +409,7 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label>{{ $fit_type ? $fit_type : 'Unit' }}</label>
+                                            <label>{{ $fit_type ? $fit_type : 'Unit' }}<span class="required" style="color: red">*</span></label>
                                             <select class="form-control" wire:model="fit_unit_id" wire:key="fit-unit-{{ $fit_type }}">
                                                 <option value="">Select {{ $fit_type ? $fit_type : 'Unit' }}</option>
                                                 @if ($fit_type == "Horse")
@@ -431,7 +431,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label>Wheel Axle</label>
+                                            <label>Wheel Axle <small class="text-muted">(optional)</small></label>
                                             <select class="form-control" wire:model="fit_axle">
                                                 <option value="">Select Wheel Axle</option>
                                                 @foreach (\App\Models\TyreAssignment::AXLES as $axleOption)
@@ -443,7 +443,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label>Wheel Position</label>
+                                            <label>Wheel Position <small class="text-muted">(optional)</small></label>
                                             <select class="form-control" wire:model="fit_position">
                                                 <option value="">Select Wheel Position</option>
                                                 @foreach (\App\Models\TyreAssignment::POSITIONS as $positionValue => $positionLabel)
@@ -496,11 +496,6 @@
                                 <small style="color: red">{{ $fit_blocker }}</small>
                             @endif
 
-                            <div class="mb-10 mt-10" style="float: right;">
-                                <input type="checkbox" wire:model.debounce.300ms="to_bills" {{$selectedPurchase ? "disabled" : ""}}   class="line-style" />
-                                <label for="one" class="radio-label">Add tyre(s) to bills</label>
-                                @error('to_bills') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="btn-group pull-right mt-10" >

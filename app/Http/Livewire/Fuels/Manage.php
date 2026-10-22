@@ -436,8 +436,13 @@ class Manage extends Component
 
     public function destroy($id)
     {
-        if($id){
-            Fuel::where('id',$id)->delete();
+        $fuel = $id ? Fuel::find($id) : null;
+        if($fuel){
+            if ($reason = $fuel->deleteBlockedReason(Auth::id())) {
+                session()->flash('message', $reason);
+                return;
+            }
+            $fuel->delete();
             session()->flash('message', 'Fuel Deleted Successfully.');
         }
     }

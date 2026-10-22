@@ -150,6 +150,10 @@ class FuelController extends Controller
      */
     public function destroy(Fuel $fuel)
     {
+        if ($reason = $fuel->deleteBlockedReason(Auth::id())) {
+            Session::flash('error', $reason);
+            return redirect()->back();
+        }
         $fuel->delete();
         Session::flash('success','Fuel Order Deleted Successfully!!');
         return redirect()->back();

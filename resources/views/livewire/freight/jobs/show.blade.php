@@ -1,4 +1,25 @@
 <div>
+    @if ($job->authorization !== 'approved')
+        <div class="row mt-30">
+            <div class="col-md-12">
+                <div class="alert alert-{{ $job->authorization === 'rejected' ? 'danger' : 'warning' }}" style="margin-bottom:0">
+                    @if ($job->authorization === 'rejected')
+                        <i class="fa fa-ban"></i> <strong>This freight job was rejected</strong>
+                        {{ $job->authorized_by ? 'by ' . $job->authorized_by->name . ' ' . $job->authorized_by->surname : '' }}
+                        {{ $job->authorization_date ? 'on ' . $job->authorization_date->format('d M Y H:i') : '' }}.
+                        @if ($job->authorization_comments) Reason: {{ $job->authorization_comments }}. @endif
+                        Edit the job and save it to send it for authorization again.
+                    @else
+                        <i class="fa fa-gavel"></i> <strong>This freight job is waiting for authorization.</strong>
+                        It stays in Draft and can't raise bills or invoices until it is approved.
+                        @if ($this->canAuthorize)
+                            <a href="#" wire:click.prevent="authorizeJob({{ $job->id }})" class="btn btn-xs btn-primary" style="margin-left:10px"><i class="fa fa-gavel"></i> Authorize</a>
+                        @endif
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
     <div class="row mt-30">
         <div class="col-md-3">
             <div class="panel border-primary no-border border-3-top">
@@ -26,6 +47,15 @@
                             <tr>
                                 <th>Status</th>
                                 <td><span class="badge bg-info">{{ ucwords(str_replace('_', ' ', $job->status)) }}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Authorization</th>
+                                <td>
+                                    <span class="badge bg-{{ ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger'][$job->authorization] ?? 'default' }}">{{ ucfirst($job->authorization) }}</span>
+                                    @if ($job->authorized_by)
+                                        <br><small class="text-muted">by {{ $job->authorized_by->name }} {{ $job->authorized_by->surname }}{{ $job->authorization_date ? ', ' . $job->authorization_date->format('d M Y') : '' }}</small>
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>Mode</th>
@@ -297,4 +327,6 @@
         </div>
         <!-- /.col-md-9 -->
     </div>
+
+    @include('livewire.freight.jobs.partials.authorization-modals')
 </div>

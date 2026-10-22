@@ -77,11 +77,23 @@ class FreightJob extends Model implements Auditable
     public function charges(){
         return $this->hasMany('App\Models\FreightCharge');
     }
+    public function authorized_by(){
+        return $this->belongsTo('App\Models\User', 'authorized_by_id');
+    }
+
+    /** Statuses a job may hold before it is approved (see FreightJobAuthorizationService). */
+    public const PRE_APPROVAL_STATUSES = ['draft', 'cancelled'];
+
+    public function isApproved(): bool
+    {
+        return $this->authorization === 'approved';
+    }
 
     protected $casts = [
         'opened_at' => 'datetime',
         'completed_at' => 'datetime',
         'closed_at' => 'datetime',
+        'authorization_date' => 'datetime',
         'estimated_revenue' => 'float',
         'estimated_cost' => 'float',
         'estimated_margin' => 'float',
@@ -119,6 +131,10 @@ class FreightJob extends Model implements Auditable
         'actual_cost',
         'actual_margin',
         'status',
+        'authorization',
+        'authorized_by_id',
+        'authorization_date',
+        'authorization_comments',
         'opened_at',
         'completed_at',
         'closed_at',

@@ -89,6 +89,14 @@ Authorization Notification | {{$company->name}}
 														Your goods return {{ $model->goods_returned_number }} has been {{ $model->authorization }}.
 														<a href="{{ $baseUrl }}/goods_returneds/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
+												@elseif ($notification == "Freight Job Authorization")
+													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+														Your freight job {{ $model->job_number }} has been {{ $model->authorization }}.
+														@if ($model->authorization_comments)
+															<br>Comment: {{ $model->authorization_comments }}
+														@endif
+														<a href="{{ $baseUrl }}/freight/jobs/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
+													</p>
 												@endif
 												<br>
 											</td>

@@ -105,7 +105,7 @@
     </table>
 
     <!-- Add/Edit Leg Modal -->
-    <div class="modal fade" id="addLegModal{{ $shipment->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="addLegModal{{ $shipment->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="store">
@@ -222,7 +222,7 @@
     </div>
 
     <!-- Dispatch via Own Fleet Modal -->
-    <div class="modal fade" id="dispatchModal{{ $shipment->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="dispatchModal{{ $shipment->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="dispatch">

@@ -25,12 +25,18 @@ WithDrawings,
 WithCustomStartCell
 {
     use Exportable;
+
+    /** List filters from the Employees page, see Employee::scopeFilterBy(). */
+    public function __construct(protected array $filters = [])
+    {
+    }
+
     /**
     * @return \Illuminate\Support\Collection
     */
     public function query()
     {
-        return Employee::query()->doesntHave('driver')->where('archive', 0)->orderBy('name','asc')->orderBy('surname','asc');
+        return Employee::query()->doesntHave('driver')->where('archive', 0)->filterBy($this->filters)->orderBy('name','asc')->orderBy('surname','asc');
     }
     public function map($employee): array{
 

@@ -29,6 +29,7 @@ class Index extends Component
 
     use WithFileUploads;
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersStaff;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -57,14 +58,14 @@ class Index extends Component
 
     public function exportEmployeesCSV(Excel $excel){
 
-        return $excel->download(new EmployeesExport, 'employees.csv', Excel::CSV);
+        return $excel->download(new EmployeesExport($this->staffFilters()), 'employees'.$this->staffFilterFileSuffix().'.csv', Excel::CSV);
     }
     public function exportEmployeesPDF(Excel $excel){
 
-        return $excel->download(new EmployeesExport, 'employees.pdf', Excel::DOMPDF);
+        return $excel->download(new EmployeesExport($this->staffFilters()), 'employees'.$this->staffFilterFileSuffix().'.pdf', Excel::DOMPDF);
     }
     public function exportEmployeesExcel(Excel $excel){
-        return $excel->download(new EmployeesExport, 'employees.xlsx');
+        return $excel->download(new EmployeesExport($this->staffFilters()), 'employees'.$this->staffFilterFileSuffix().'.xlsx');
     }
 
     public function importEmployees(){
@@ -343,7 +344,8 @@ class Index extends Component
         $query = Employee::query()
             ->with('departments')
             ->doesntHave('driver')
-            ->where('archive', '0');
+            ->where('archive', '0')
+            ->filterBy($this->staffFilters());
 
         if (filled($search)) {
             $query->where(function ($q) use ($search) {

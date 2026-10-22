@@ -125,7 +125,7 @@ class CompanyDataResetService
         'System & access' => ['users', 'admins', 'roles', 'permissions', 'role_user', 'modules', 'sub_modules', 'module_categories', 'module_groups', 'companies', 'settings', 'integration_providers', 'company_integrations', 'integration_mappings'],
     ];
 
-    protected array $systemTables = ['migrations', 'jobs', 'failed_jobs', 'password_resets', 'personal_access_tokens', 'sessions', 'notifications', 'searches', 'login_audits', 'notices', 'checks', 'exchange_rates', 'trainings', 'training_departments', 'training_items', 'training_plans', 'training_requirements', 'metrics', 'data_backups'];
+    protected array $systemTables = ['migrations', 'jobs', 'failed_jobs', 'password_resets', 'personal_access_tokens', 'sessions', 'notifications', 'searches', 'login_audits', 'notices', 'checks', 'exchange_rates', 'trainings', 'training_departments', 'training_items', 'training_plans', 'training_requirements', 'metrics', 'data_backups', 'freight_reminder_digests'];
 
     /**
      * "Keep employees only" mode: the ONLY tables left untouched (besides

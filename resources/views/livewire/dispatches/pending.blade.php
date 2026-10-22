@@ -254,7 +254,7 @@
                     </div>
 
                     @if (!empty($fitments) && $authorize == "approved")
-                        <h6>Tyre Fitment <small>(Serial# is required where none is recorded. Fitment is optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest are assigned to the ticket's unit without a position on a ticket dispatch, otherwise they leave stores unfitted; set positions later in Tyres &gt; Edit)</small></h6>
+                        <h6>Tyre Fitment <small>({{ $serialRequired ? "Serial# is required where none is recorded." : "Serial# is optional where none is recorded." }} Fitment is optional: tyres with an axle and position are fitted on approval and any tyre already there is taken off; the rest are assigned to the ticket's unit without a position on a ticket dispatch, otherwise they leave stores unfitted; set positions later in Tyres &gt; Edit)</small></h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead>
@@ -266,7 +266,7 @@
                                             <td>{{ $fitment['tyre'] }}</td>
                                             <td>
                                                 @if (!empty($fitment['needs_serial']))
-                                                    <input type="text" class="form-control" wire:model.defer="fitments.{{ $itemId }}.serial" placeholder="Required: none recorded" required>
+                                                    <input type="text" class="form-control" wire:model.defer="fitments.{{ $itemId }}.serial" placeholder="{{ $serialRequired ? "Required: none recorded" : "Optional: none recorded" }}" @if ($serialRequired) required @endif>
                                                 @else
                                                     <span class="text-muted">recorded</span>
                                                 @endif

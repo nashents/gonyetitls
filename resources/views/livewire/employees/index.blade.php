@@ -30,6 +30,7 @@
 
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                                @include('includes.staff-filters')
                                 <div class="col-md-3" style="float: right; padding-right:0px">
                                     <div class="form-group">
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search employees...">

@@ -2,11 +2,14 @@
 
 namespace App\Http\Livewire\Freight\Jobs;
 
+use App\Http\Livewire\Freight\Jobs\Concerns\AuthorizesFreightJobs;
 use App\Models\FreightJob;
 use Livewire\Component;
 
 class Show extends Component
 {
+    use AuthorizesFreightJobs;
+
     public $job;
 
     protected $listeners = ['shipmentAdded' => 'refreshJob'];
@@ -31,6 +34,7 @@ class Show extends Component
             'toDestination.country',
             'currency',
             'quotation',
+            'authorized_by',
             'shipments.legs',
             'shipments.loading_point',
             'shipments.offloading_point',
@@ -40,6 +44,11 @@ class Show extends Component
             'shipments.transport_documents',
             'shipments.customs_declarations',
         ])->findOrFail($this->job->id);
+    }
+
+    protected function afterFreightJobAuthorized(): void
+    {
+        $this->refreshJob();
     }
 
     public function render()

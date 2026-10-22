@@ -3,8 +3,8 @@
     <div class="row">
         <div class="col-md-4">
             <div class="form-group">
-                <label>Serial#<span class="required" style="color: red">*</span> <small class="text-muted">(this tyre has none recorded)</small></label>
-                <input type="text" class="form-control" wire:model.defer="tyre_serial.{{ $row }}" placeholder="Enter tyre serial number" required>
+                <label>Serial#@if ($serialRequired)<span class="required" style="color: red">*</span>@endif <small class="text-muted">(this tyre has none recorded{{ $serialRequired ? "" : "; optional" }})</small></label>
+                <input type="text" class="form-control" wire:model.defer="tyre_serial.{{ $row }}" placeholder="Enter tyre serial number" @if ($serialRequired) required @endif>
                 @error('tyre_serial.'.$row) <span class="error" style="color:red">{{ $message }}</span> @enderror
             </div>
         </div>

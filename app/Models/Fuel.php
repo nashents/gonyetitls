@@ -12,6 +12,47 @@ class Fuel extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    protected static function booted()
+    {
+        // Soft delete only writes deleted_at, so stamp who did it with a
+        // direct query (covers every delete path, no extra model events).
+        static::deleted(function (Fuel $fuel) {
+            if (!$fuel->isForceDeleting() && \Illuminate\Support\Facades\Auth::id()) {
+                static::withTrashed()->whereKey($fuel->id)
+                    ->update(['deleted_by_id' => \Illuminate\Support\Facades\Auth::id()]);
+            }
+        });
+        static::restored(function (Fuel $fuel) {
+            static::whereKey($fuel->id)->update(['deleted_by_id' => null]);
+        });
+    }
+
+    /**
+     * Why $userId may not delete this fuel order, or null when allowed.
+     * Only the creator or the user who authorized it can delete.
+     */
+    public function deleteBlockedReason($userId)
+    {
+        if ($this->authorization === 'rejected') {
+            return 'Rejected fuel orders cannot be deleted.';
+        }
+        if (!in_array($this->authorization, ['pending', 'approved'], true)) {
+            return 'Only pending or approved fuel orders can be deleted (authorization status is not set).';
+        }
+        if ($userId && ($userId == $this->user_id || $userId == $this->authorized_by_id)) {
+            return null;
+        }
+
+        $names = User::whereIn('id', array_filter([$this->user_id, $this->authorized_by_id]))->get()
+            ->map(fn ($u) => trim($u->name . ' ' . $u->surname))->filter()->unique()->implode(' / ');
+
+        return 'Fuel orders can only be deleted by the user who created or authorized them' . ($names ? " ({$names})" : '') . '.';
+    }
+
+    public function deleted_by(){
+        return $this->belongsTo('App\Models\User', 'deleted_by_id');
+    }
+
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }

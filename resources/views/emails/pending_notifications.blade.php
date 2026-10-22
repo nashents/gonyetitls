@@ -85,6 +85,11 @@ Pending Authorization | {{$company->name}}
 														Can you please authorize fuel request {{ $model->request_number }}.
 														<a href="{{ $baseUrl }}/fuel_requests/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
 													</p>
+												@elseif ($notification->category == "Freight Job Authorization")
+													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+														Can you please authorize freight job {{ $model->job_number }}{{ $model->customer ? ' for '.$model->customer->name : '' }}.
+														<a href="{{ $baseUrl }}/freight/jobs/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+													</p>
 												@endif
 												<br>
 											</td>

@@ -95,8 +95,22 @@ class Costing extends Component
         ])->findOrFail($this->job->id);
     }
 
+    private function blockedUntilApproved(string $what): bool
+    {
+        if ($this->job->isApproved()) {
+            return false;
+        }
+
+        $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "This freight job must be approved before {$what} can be generated."]);
+        return true;
+    }
+
     public function generateBills(FreightAccountingService $accounting)
     {
+        if ($this->blockedUntilApproved('bills')) {
+            return;
+        }
+
         $result = $accounting->generateBillsFromCosts($this->job);
         $this->refreshJob();
 
@@ -112,6 +126,10 @@ class Costing extends Component
 
     public function generateInvoices(FreightAccountingService $accounting)
     {
+        if ($this->blockedUntilApproved('invoices')) {
+            return;
+        }
+
         $result = $accounting->generateInvoicesFromCharges($this->job);
         $this->refreshJob();
 

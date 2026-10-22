@@ -152,7 +152,7 @@
     </table>
 
     <!-- Add/Edit Cost Modal -->
-    <div class="modal fade" id="costModal{{ $job->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="costModal{{ $job->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="saveCost">
@@ -294,7 +294,7 @@
     </div>
 
     <!-- Add/Edit Charge Modal -->
-    <div class="modal fade" id="chargeModal{{ $job->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="chargeModal{{ $job->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="saveCharge">

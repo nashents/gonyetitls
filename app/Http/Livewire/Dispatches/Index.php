@@ -2064,6 +2064,7 @@ class Index extends Component
             'fitUnitOptions' => $fitUnitOptions,
             'fitWarnings' => $fitWarnings,
             'needsSerial' => $needsSerial,
+            'serialRequired' => $this->fitmentService()->serialRequired(),
         ]);
     }
 }

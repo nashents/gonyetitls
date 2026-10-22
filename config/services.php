@@ -56,4 +56,10 @@ return [
         'php_binary'       => env('FLEET_MILEAGE_SYNC_PHP'),
     ],
 
+    // Daily freight reminders digest, triggered by web traffic (no cron) - see SendFreightReminders middleware.
+    'freight_reminders' => [
+        'enabled'   => env('FREIGHT_REMINDERS_ENABLED', true),
+        'from_hour' => env('FREIGHT_REMINDERS_FROM_HOUR', 7),
+    ],
+
 ];

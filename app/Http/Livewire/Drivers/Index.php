@@ -30,6 +30,7 @@ class Index extends Component
     use WithFileUploads;
     use WithPagination;
     use \App\Http\Livewire\Concerns\PullsFromSage;
+    use \App\Http\Livewire\Concerns\FiltersStaff;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $sageSelected = [];
@@ -59,14 +60,14 @@ class Index extends Component
 
     public function exportDriversCSV(Excel $excel){
 
-        return $excel->download(new DriversExport, 'drivers.csv', Excel::CSV);
+        return $excel->download(new DriversExport($this->staffFilters()), 'drivers'.$this->staffFilterFileSuffix().'.csv', Excel::CSV);
     }
     public function exportDriversPDF(Excel $excel){
 
-        return $excel->download(new DriversExport, 'drivers.pdf', Excel::DOMPDF);
+        return $excel->download(new DriversExport($this->staffFilters()), 'drivers'.$this->staffFilterFileSuffix().'.pdf', Excel::DOMPDF);
     }
     public function exportDriversExcel(Excel $excel){
-        return $excel->download(new DriversExport, 'drivers.xlsx');
+        return $excel->download(new DriversExport($this->staffFilters()), 'drivers'.$this->staffFilterFileSuffix().'.xlsx');
     }
 
     public function importDrivers(){
@@ -303,16 +304,21 @@ class Index extends Component
             ->orWhere('employees.post','like', "%{$search}%")
             ->orWhere('employees.employee_number','like', "%{$search}%")
             ->orWhere('employees.email','like', "%{$search}%")
-            ->orWhere('employees.phonenumber','like', "%{$search}%");
-        });
+            ->orWhere('employees.phonenumber','like', "%{$search}%")
 
-    // related lookups that aren’t on employees (keep these as relationship scopes)
-    $query->orWhereHas('employee.grade', fn ($g) => $g->where('name','like', "%{$search}%"))
-          ->orWhereHas('employee.branch', fn ($b) => $b->where('name','like', "%{$search}%"))
-          ->orWhereHas('employee.departments', fn ($d) => $d->where('name','like', "%{$search}%"))
-          ->orWhereHas('employee.ranks', fn ($d) => $d->where('name','like', "%{$search}%"))
-          ->orWhereHas('employee.user.roles', fn ($ur) => $ur->where('name', 'like', "%{$search}%"));
+            // related lookups that aren’t on employees — kept inside the group so
+            // the archive filter and the list filters still apply to them
+            ->orWhereHas('employee.grade', fn ($g) => $g->where('name','like', "%{$search}%"))
+            ->orWhereHas('employee.branch', fn ($b) => $b->where('name','like', "%{$search}%"))
+            ->orWhereHas('employee.departments', fn ($d) => $d->where('name','like', "%{$search}%"))
+            ->orWhereHas('employee.ranks', fn ($d) => $d->where('name','like', "%{$search}%"))
+            ->orWhereHas('employee.user.roles', fn ($ur) => $ur->where('name', 'like', "%{$search}%"));
+        });
 }
+
+    if ($this->hasStaffFilters()) {
+        $query->whereHas('employee', fn ($e) => $e->filterBy($this->staffFilters()));
+    }
 
 // 🧭 Order by employee name, surname (from the join)
     $drivers = $query->orderBy('employees.name')

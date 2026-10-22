@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\FreightJob;
 use App\Models\FreightServiceType;
 use App\Models\Quotation;
+use App\Services\Freight\FreightJobAuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -95,8 +96,14 @@ class Edit extends Component
             'freight_service_type_id' => 'nullable|integer|exists:freight_service_types,id',
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
-            'status' => 'required|string',
+            'status' => ['required', 'string', \Illuminate\Validation\Rule::in($this->allowedStatuses())],
         ];
+    }
+
+    /** Until the job is approved it can only be draft or cancelled. */
+    private function allowedStatuses(): array
+    {
+        return $this->job->isApproved() ? self::STATUSES : FreightJob::PRE_APPROVAL_STATUSES;
     }
 
     public function refresh($category)
@@ -141,7 +148,10 @@ class Edit extends Component
             'notes' => $this->notes,
         ]);
 
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight Job ' . $this->job->job_number . ' updated successfully!']);
+        $resubmitted = $this->job->authorization === 'rejected';
+        app(FreightJobAuthorizationService::class)->resubmit($this->job);
+
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight Job ' . $this->job->job_number . ' updated successfully!' . ($resubmitted ? ' It has been sent for authorization again.' : '')]);
 
         return redirect()->route('freight.jobs.show', $this->job->id);
     }
@@ -150,7 +160,7 @@ class Edit extends Component
     {
         return view('livewire.freight.jobs.edit', [
             'incoterms' => FreightJob::INCOTERMS,
-            'statuses' => self::STATUSES,
+            'statuses' => $this->allowedStatuses(),
         ]);
     }
 }

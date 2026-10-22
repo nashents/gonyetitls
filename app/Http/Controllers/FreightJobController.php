@@ -16,6 +16,21 @@ class FreightJobController extends Controller
         return view('freight.jobs.index');
     }
 
+    public function pending()
+    {
+        return view('freight.jobs.index', ['authorization' => 'pending']);
+    }
+
+    public function approved()
+    {
+        return view('freight.jobs.index', ['authorization' => 'approved']);
+    }
+
+    public function rejected()
+    {
+        return view('freight.jobs.index', ['authorization' => 'rejected']);
+    }
+
     public function create()
     {
         return view('freight.jobs.create');
@@ -38,7 +53,7 @@ class FreightJobController extends Controller
     public function sheet(FreightJob $job)
     {
         $job->load([
-            'customer', 'freight_service_type', 'fromDestination.country', 'toDestination.country',
+            'user', 'customer', 'freight_service_type', 'fromDestination.country', 'toDestination.country',
             'currency', 'quotation',
             'shipments.loading_point',
             'shipments.offloading_point',
@@ -63,7 +78,7 @@ class FreightJobController extends Controller
     public function billOfLading(FreightJob $job)
     {
         $job->load([
-            'customer', 'fromDestination.country', 'toDestination.country',
+            'user', 'customer', 'fromDestination.country', 'toDestination.country',
             'shipments.containers.shipping_line',
             'shipments.cargo_items',
             'shipments.parties',

@@ -16,6 +16,7 @@ class Settings extends Component
     public $transporter_expense_recovery;
     public $transporter_fuel_recovery;
     public $transporter_fuel_markup;
+    public $require_tyre_serial_on_dispatch;
 
 
 
@@ -30,6 +31,7 @@ class Settings extends Component
         $this->transporter_expense_recovery = $company->transporter_expense_recovery ?: 'deduct';
         $this->transporter_fuel_recovery = $company->transporter_fuel_recovery ?: 'cost';
         $this->transporter_fuel_markup = $company->transporter_fuel_markup ?? 0;
+        $this->require_tyre_serial_on_dispatch = (bool) ($company->require_tyre_serial_on_dispatch ?? true);
 
     }
 
@@ -46,6 +48,7 @@ class Settings extends Component
             : 'deduct';
         $company->transporter_fuel_recovery = $this->transporter_fuel_recovery === 'markup' ? 'markup' : 'cost';
         $company->transporter_fuel_markup = is_numeric($this->transporter_fuel_markup) ? max(0, (float) $this->transporter_fuel_markup) : 0;
+        $company->require_tyre_serial_on_dispatch = (bool) $this->require_tyre_serial_on_dispatch;
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[

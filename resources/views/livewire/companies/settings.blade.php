@@ -5,6 +5,11 @@
             <label for="one" class="radio-label">Enable Requisition Two Step Authorization</label>
             @error('enable_requisition_two_step_authorization') <span class="text-danger error">{{ $message }}</span>@enderror
         </div>
+        <div class="mb-10">
+            <input type="checkbox" wire:model.debounce.300ms="require_tyre_serial_on_dispatch" class="line-style" />
+            <label for="one" class="radio-label">Require Tyre Serial Numbers on Dispatch</label>
+            <br><small class="form-text text-muted">When on, a tyre with no serial number recorded cannot be dispatched until one is entered. When off, the serial can be left blank on dispatch and added later.</small>
+        </div>
         <div class="mb-10 form-group">
             <label for="fleet_identifier_preference">Fleet Identifier</label>
             <select wire:model.debounce.300ms="fleet_identifier_preference" id="fleet_identifier_preference" class="form-control">

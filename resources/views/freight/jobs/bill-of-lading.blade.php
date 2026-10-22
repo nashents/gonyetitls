@@ -1,174 +1,238 @@
-@extends('layouts.previews')
+@extends('layouts.manifest')
+
 @section('title')
     Bill of Lading | {{ $job->job_number }}
 @endsection
+
+@section('extra-css')
+<style>
+  :root { --accent: {{ $company->color ?? '#123bdc' }}; }
+</style>
+@endsection
+
 @section('content')
 
-<div class="container">
-    <div class="card">
-        <div class="card-body">
-            <div id="invoice">
-                <div class="invoice overflow-auto">
-                    <div style="min-width: 600px">
-                        <header>
-                            <div class="row">
-                                <div class="col">
-                                    <a href="javascript:;">
-                                        <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
-                                    </a>
-                                </div>
-                                <div class="col company-details">
-                                    <h4 class="name">
-                                        <a target="_blank" href="javascript:;" style="color: {{ $company->color ?? '#000' }}">
-                                            {{ $company->name }}
-                                        </a>
-                                    </h4>
-                                    <div>{{ $company->street_address }} {{ $company->suburb }} <br>
-                                        {{ $company->city }}, {{ $company->country }}</div>
-                                    <div>{{ $company->phonenumber }}</div>
-                                    <div>{{ $company->email }}</div>
-                                </div>
-                            </div>
-                            <div style="padding-top: 25px; padding-bottom:5px">
-                                <center><h2>BILL OF LADING</h2></center>
-                                <center>
-                                    @if ($document)
-                                        <strong>{{ $document->document_number }}</strong>
-                                    @else
-                                        <span style="color:#c0392b">DRAFT — NOT YET ISSUED</span>
-                                    @endif
-                                </center>
-                            </div>
-                        </header>
-                        <main>
-                            @if (!$shipment)
-                                <p class="text-center">This job has no shipment to draft a Bill of Lading from yet.</p>
-                            @else
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <th class="text-center"><strong>Job Number</strong></th>
-                                        <td class="text-center">{{ $job->job_number }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Shipment Number</strong></th>
-                                        <td class="text-center">{{ $shipment->shipment_number }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Shipper / Exporter</strong></th>
-                                        <td class="text-center">
-                                            {{ $job->customer?->name }}<br>
-                                            {{ $job->customer?->street_address }} {{ $job->customer?->city }} {{ $job->customer?->country }}
-                                        </td>
-                                    </tr>
-                                    @forelse ($shipment->parties as $party)
-                                    <tr>
-                                        <th class="text-center"><strong>{{ $party->role ?: ucfirst(str_replace('_', ' ', $party->party_type)) }}</strong></th>
-                                        <td class="text-center">
-                                            {{ $party->party()?->name }}
-                                            @php $resolved = $party->party(); @endphp
-                                            @if ($resolved && ($resolved->street_address ?? null))
-                                                <br>{{ $resolved->street_address }} {{ $resolved->city ?? '' }} {{ $resolved->country ?? '' }}
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <th class="text-center"><strong>Consignee</strong></th>
-                                        <td class="text-center">—</td>
-                                    </tr>
-                                    @endforelse
-                                    <tr>
-                                        <th class="text-center"><strong>Carrier / Shipping Line</strong></th>
-                                        <td class="text-center">{{ $shipment->containers->first()?->shipping_line?->name ?: ($document->carrier_name ?? '—') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Port of Loading</strong></th>
-                                        <td class="text-center">{{ $job->fromDestination ? trim(($job->fromDestination->country->name ?? '').' '.$job->fromDestination->city) : '—' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Port of Discharge</strong></th>
-                                        <td class="text-center">{{ $job->toDestination ? trim(($job->toDestination->country->name ?? '').' '.$job->toDestination->city) : '—' }}</td>
-                                    </tr>
-                                    @if ($shipment->containers->isNotEmpty())
-                                    <tr>
-                                        <th class="text-center"><strong>Container / Seal No.</strong></th>
-                                        <td class="text-center">
-                                            @foreach ($shipment->containers as $container)
-                                                {{ $container->container_number }} ({{ $container->container_type }}) @if ($container->seal_number) / Seal: {{ $container->seal_number }} @endif<br>
-                                            @endforeach
-                                        </td>
-                                    </tr>
-                                    @endif
-                                    @if ($shipment->cargo_items->isNotEmpty())
-                                    <tr>
-                                        <th class="text-center"><strong>Marks &amp; Numbers / Description of Goods</strong></th>
-                                        <td class="text-center">
-                                            @foreach ($shipment->cargo_items as $cargo)
-                                                {{ $cargo->marks_and_numbers ?: '—' }} — {{ $cargo->commodity }}
-                                                @if ($cargo->hs_code) (HS: {{ $cargo->hs_code }}) @endif<br>
-                                            @endforeach
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Quantity &amp; Packages</strong></th>
-                                        <td class="text-center">
-                                            @foreach ($shipment->cargo_items as $cargo)
-                                                {{ $cargo->quantity }} {{ $cargo->uom }}
-                                                @if ($cargo->packages) ({{ $cargo->packages }} {{ $cargo->package_type ?: 'packages' }}) @endif<br>
-                                            @endforeach
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Gross Weight</strong></th>
-                                        <td class="text-center">
-                                            @foreach ($shipment->cargo_items as $cargo)
-                                                {{ $cargo->gross_weight ? number_format($cargo->gross_weight, 2).' kg' : '—' }}<br>
-                                            @endforeach
-                                        </td>
-                                    </tr>
-                                    @endif
-                                    <tr>
-                                        <th class="text-center"><strong>Freight Terms</strong></th>
-                                        <td class="text-center">{{ ucfirst($shipment->freight_terms ?? '') ?: '—' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Incoterm</strong></th>
-                                        <td class="text-center">{{ \App\Models\FreightJob::INCOTERMS[$shipment->incoterm] ?? ($shipment->incoterm ?: '—') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>No. of Original B/Ls</strong></th>
-                                        <td class="text-center">{{ $document->number_of_originals ?? '—' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Place of Issue</strong></th>
-                                        <td class="text-center">{{ $document->place_of_issue ?? '—' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-center"><strong>Date of Issue</strong></th>
-                                        <td class="text-center">{{ $document && $document->issue_date ? $document->issue_date->format('d M Y') : '—' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            @if (!$document)
-                                <p class="text-center" style="padding-top:15px;color:#c0392b">
-                                    No Bill of Lading has been issued/recorded for this shipment yet. Once the carrier issues the real document,
-                                    record it under this job's Transport Documents tab to replace this draft with the official reference.
-                                </p>
-                            @endif
-                            @endif
-                        </main>
-                        <footer style="position: fixed; bottom: 0px; left: 0px; right: 0px; height: 50px;">{{ ucfirst($company->name) }} Bill of Lading For {{ $job->job_number }}</footer>
-                    </div>
-                    <div></div>
-                </div>
-            </div>
-        </div>
+    <div class="action-bar" data-screen-only>
+      <button class="btn" onclick="window.history.back()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back
+      </button>
+      <button type="button" class="btn" id="btnPrint" data-action="print">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18h12v4H6v-4zM6 14h12v2H6v-2z" />
+        </svg>
+        Print
+      </button>
     </div>
-</div>
-@section('extra-js')
-<script>
-    window.addEventListener("load", window.print());
-</script>
-@endsection
+
+    <section class="manifest" data-entity="bill of lading">
+
+      {{-- ===== Header ===== --}}
+      <header class="manifest__header">
+        <div class="brand">
+          <img class="brand__logo"
+               src="{{ asset('images/uploads/'.$company->logo) }}"
+               alt="Company Logo"
+               onerror="this.style.display='none'" />
+          <div>
+            <div class="brand__name">{{ $company->name }}</div>
+            <div class="brand__meta">
+              {{ $company->street_address }} {{ $company->suburb }}{{ $company->city ? ', '.$company->city : '' }} {{ $company->country }}<br />
+              Tel: {{ $company->phonenumber }}
+            </div>
+          </div>
+        </div>
+
+        <aside class="meta">
+          <div style="float:right; margin-left:8px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode('BL: '.($document->document_number ?? $job->job_number)) }}" alt="QR Code" width="90" height="90" />
+          </div>
+          <h1>Bill of Lading</h1>
+          <dl class="meta-grid">
+            <dt>B/L Number</dt>
+            <dd class="mono">{{ $document->document_number ?? 'DRAFT — NOT YET ISSUED' }}</dd>
+            <dt>Job #</dt>
+            <dd class="mono">{{ $job->job_number }}</dd>
+            <dt>Shipment #</dt>
+            <dd class="mono">{{ $shipment->shipment_number ?? '—' }}</dd>
+            <dt>Date of Issue</dt>
+            <dd>{{ $document && $document->issue_date ? $document->issue_date->format('d M Y') : '—' }}</dd>
+          </dl>
+        </aside>
+      </header>
+
+      <div class="hr"></div>
+
+      @if (!$shipment)
+        <p class="text-center">This job has no shipment to draft a Bill of Lading from yet.</p>
+      @else
+
+      {{-- ===== Shipper & Consignee ===== --}}
+      <section class="grid-2">
+        <div class="card">
+          <h3>Shipper / Exporter</h3>
+          <div class="kv">
+            <div class="k">Name</div>
+            <div class="v">{{ $job->customer?->name }}</div>
+            <div class="k">Address</div>
+            <div class="v">{{ $job->customer?->street_address }} {{ $job->customer?->city }} {{ $job->customer?->country }}</div>
+            <div class="k">Contact</div>
+            <div class="v">{{ $job->customer?->phonenumber }}{{ $job->customer?->email ? ' / '.$job->customer->email : '' }}</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Consignee</h3>
+          @php $consigneeParty = $shipment->parties->firstWhere('party_type', 'consignee'); @endphp
+          @if ($consigneeParty)
+            @php $consignee = $consigneeParty->party(); @endphp
+            <div class="kv">
+              <div class="k">Name</div>
+              <div class="v">{{ $consignee?->name }}</div>
+              @if ($consignee && ($consignee->street_address ?? null))
+              <div class="k">Address</div>
+              <div class="v">{{ $consignee->street_address }} {{ $consignee->city ?? '' }} {{ $consignee->country ?? '' }}</div>
+              @endif
+              @if ($consignee && ($consignee->phonenumber ?? $consignee->email ?? null))
+              <div class="k">Contact</div>
+              <div class="v">{{ $consignee->phonenumber ?? '' }}{{ ($consignee->email ?? null) ? ' / '.$consignee->email : '' }}</div>
+              @endif
+            </div>
+          @else
+            <div class="kv"><div class="k">Name</div><div class="v">—</div></div>
+          @endif
+        </div>
+      </section>
+
+      @php $otherParties = $shipment->parties->where('party_type', '!=', 'consignee'); @endphp
+      @if ($otherParties->isNotEmpty())
+      <div class="card" style="margin-top:12px">
+        <h3>Other Parties</h3>
+        <div class="kv">
+          @foreach ($otherParties as $party)
+            <div class="k">{{ $party->role ?: ucfirst(str_replace('_', ' ', $party->party_type)) }}</div>
+            <div class="v">{{ $party->party()?->name }}</div>
+          @endforeach
+        </div>
+      </div>
+      @endif
+
+      {{-- ===== Carrier & Ports ===== --}}
+      <section class="grid-2">
+        <div class="card">
+          <h3>Carrier / Vessel</h3>
+          <div class="kv">
+            <div class="k">Shipping Line</div>
+            <div class="v">{{ $shipment->containers->first()?->shipping_line?->name ?: ($document->carrier_name ?? '—') }}</div>
+            @if ($shipment->containers->isNotEmpty())
+              @foreach ($shipment->containers as $container)
+                <div class="k">Container / Seal</div>
+                <div class="v">{{ $container->container_number }} ({{ $container->container_type }}){{ $container->seal_number ? ' / Seal: '.$container->seal_number : '' }}</div>
+              @endforeach
+            @endif
+          </div>
+        </div>
+        <div class="card">
+          <h3>Ports &amp; Terms</h3>
+          <div class="kv">
+            <div class="k">Port of Loading</div>
+            <div class="v">{{ $job->fromDestination ? trim(($job->fromDestination->country->name ?? '').' '.$job->fromDestination->city) : '—' }}</div>
+            <div class="k">Port of Discharge</div>
+            <div class="v">{{ $job->toDestination ? trim(($job->toDestination->country->name ?? '').' '.$job->toDestination->city) : '—' }}</div>
+            <div class="k">Freight Terms</div>
+            <div class="v">{{ ucfirst($shipment->freight_terms ?? '') ?: '—' }}</div>
+            <div class="k">Incoterm</div>
+            <div class="v">{{ \App\Models\FreightJob::INCOTERMS[$shipment->incoterm] ?? ($shipment->incoterm ?: '—') }}</div>
+          </div>
+        </div>
+      </section>
+
+      {{-- ===== Cargo ===== --}}
+      @if ($shipment->cargo_items->isNotEmpty())
+      <section class="items">
+        <h3>Marks &amp; Numbers / Description of Goods</h3>
+        <table class="tbl" role="table" aria-label="Cargo Items">
+          <thead>
+            <tr>
+              <th style="width:30px" class="center">#</th>
+              <th style="width:120px">Marks &amp; Numbers</th>
+              <th>Description</th>
+              <th style="width:70px" class="right">Qty</th>
+              <th style="width:60px">Unit</th>
+              <th style="width:90px" class="right">Gross Wt (kg)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @php $totalWeight = 0; @endphp
+            @foreach ($shipment->cargo_items as $cargo)
+              @php $totalWeight += (float) ($cargo->gross_weight ?? 0); @endphp
+              <tr>
+                <td class="center">{{ $loop->iteration }}</td>
+                <td>{{ $cargo->marks_and_numbers ?: '—' }}</td>
+                <td>{{ $cargo->commodity }}{{ $cargo->hs_code ? ' (HS: '.$cargo->hs_code.')' : '' }}</td>
+                <td class="right">{{ $cargo->quantity }}{{ $cargo->packages ? ' / '.$cargo->packages.' '.($cargo->package_type ?: 'pkgs') : '' }}</td>
+                <td>{{ $cargo->uom }}</td>
+                <td class="right">{{ $cargo->gross_weight ? number_format($cargo->gross_weight, 2) : '—' }}</td>
+              </tr>
+            @endforeach
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" class="right"><strong>Total Gross Weight</strong></td>
+              <td class="right"><strong>{{ number_format($totalWeight, 2) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+      @endif
+
+      {{-- ===== Summary ===== --}}
+      <div class="totals">
+        <div class="notes">
+          RECEIVED the goods in apparent good order and condition for carriage subject to the terms and conditions of this Bill of Lading.
+          @if (!$document)
+            <br><strong>No Bill of Lading has been issued/recorded for this shipment yet.</strong> Once the carrier issues the real document, record it under this job's Transport Documents tab to replace this draft with the official reference.
+          @endif
+        </div>
+        <div class="card">
+          <div class="kv">
+            <div class="k">No. of Originals</div>
+            <div class="v">{{ $document->number_of_originals ?? '—' }}</div>
+            <div class="k">Place of Issue</div>
+            <div class="v">{{ $document->place_of_issue ?? '—' }}</div>
+            <div class="k">Freight Payable At</div>
+            <div class="v">{{ $document->freight_payable_at ?? '—' }}</div>
+          </div>
+        </div>
+      </div>
+
+      {{-- ===== Sign-off ===== --}}
+      <section class="signatures">
+        <div class="sig">
+          <div class="label">Shipper (Name &amp; Sign)</div>
+          <div class="line"></div><br>
+          <div class="line"></div>
+        </div>
+        <div class="sig">
+          <div class="label">Master / Agent for Carrier (Name &amp; Sign)</div>
+          <div class="line"></div><br>
+          <div class="line"></div>
+        </div>
+        <div class="sig">
+          <div class="label">Place &amp; Date</div>
+          <div class="line"></div><br>
+          <div class="line"></div>
+        </div>
+      </section>
+
+      {{-- ===== Footer ===== --}}
+      <footer class="manifest__footer">
+        <div><strong>NB:</strong> THIS BILL OF LADING IS SUBJECT TO THE CARRIER'S STANDARD TERMS AND CONDITIONS OF CARRIAGE.</div>
+      </footer>
+
+      @endif
+
+    </section>
+
 @endsection

@@ -26,12 +26,18 @@ WithDrawings,
 WithCustomStartCell
 {
     use Exportable;
+
+    /** List filters from the Drivers page, see Employee::scopeFilterBy(). */
+    public function __construct(protected array $filters = [])
+    {
+    }
+
     /**
     * @return \Illuminate\Support\Collection
     */
     public function query()
     {
-        return Employee::query()->whereHas('driver')->where('archive',False)->orderBy('name','asc')->orderBy('surname','asc');
+        return Employee::query()->whereHas('driver', fn ($d) => $d->where('archive', 0))->where('archive',False)->filterBy($this->filters)->orderBy('name','asc')->orderBy('surname','asc');
     }
     public function map($employee): array{
 

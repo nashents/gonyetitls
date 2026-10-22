@@ -35,7 +35,7 @@
     </table>
 
     <!-- Add Transport Document Modal -->
-    <div class="modal fade" id="addTransportDocumentModal{{ $shipment->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="addTransportDocumentModal{{ $shipment->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="store">

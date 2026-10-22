@@ -20,6 +20,7 @@ use App\Models\ShipmentParty;
 use App\Models\Transporter;
 use App\Models\UnitsOfMeasure;
 use App\Models\Vendor;
+use App\Services\Freight\FreightJobAuthorizationService;
 use App\Services\Freight\FreightJobService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -275,9 +276,11 @@ class Create extends Component
 
         $job = $service->create($jobData, $shipmentData, $cargoRows, $partyRows);
 
+        app(FreightJobAuthorizationService::class)->notifyAuthorizers($job);
+
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => 'Freight Job ' . $job->job_number . ' created successfully!',
+            'message' => 'Freight Job ' . $job->job_number . ' created and sent for authorization.',
         ]);
 
         return redirect()->route('freight.jobs.show', $job->id);

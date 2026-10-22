@@ -99,14 +99,11 @@
                     @endif
                 </td>
                 <td>
-                    @if (!$trip_expense->bill)
-                        <span class="badge bg-secondary"><i class="fa fa-minus"></i> No Bill</span>
-                    @elseif ($trip_expense->bill_paid_status == 'Paid')
-                        <span class="badge bg-success"><i class="fa fa-check"></i> Paid</span>
-                    @elseif ($trip_expense->bill_paid_status == 'Partial')
-                        <span class="badge bg-warning"><i class="fa fa-clock-o"></i> Partial</span>
-                    @else
-                        <span class="badge bg-danger"><i class="fa fa-exclamation-circle"></i> Unpaid</span>
+                    {{-- Bill found directly or through the fuel order; otherwise the reason there is none --}}
+                    @php [$billLabel, $billClass, $billTitle] = $trip_expense->billStatusInfo(); @endphp
+                    <span class="badge {{ $billClass }}" title="{{ $billTitle }}">{{ $billLabel }}</span>
+                    @if ($billBill = $trip_expense->resolvedBill())
+                        <br><small>{{ $billBill->bill_number }}</small>
                     @endif
                 </td>
                 @if ($this->sageEnabled)

@@ -30,6 +30,7 @@ class FreightJobService
             $job = new FreightJob($data);
             $job->job_number = $this->numbers->generate('freight_job', 'FF');
             $job->status = $data['status'] ?? 'draft';
+            $job->authorization = $data['authorization'] ?? 'pending';
             $job->opened_at = $data['opened_at'] ?? now();
             $job->save();
 

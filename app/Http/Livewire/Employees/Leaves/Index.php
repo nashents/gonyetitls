@@ -16,6 +16,7 @@ use Maatwebsite\Excel\Excel;
 class Index extends Component
 {
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersStaff;
     protected $paginationTheme = 'bootstrap';
     public $search;
     // 'all' (default), 'drivers' or 'admin' — applies to the list and every export.
@@ -37,6 +38,8 @@ class Index extends Component
     public $enforce_maximum_leave_days = true;
     // Enforce scope: 'all', 'admin' or 'drivers' (Employee::scopeOfStaffType), and one leave type or all.
     public $enforce_staff_type = 'all';
+    // Optional branch, combinable with the staff type (e.g. admin employees of one branch).
+    public $enforce_branch_id;
     public $enforce_leave_type_id;
     // Optional overrides (one leave type only); blank = use the leave type's default.
     public $enforce_accrual_rate_value;
@@ -81,6 +84,8 @@ class Index extends Component
         $enforceLeaveDays = $this->enforce_leave_days;
         $enforceMaximumLeaveDays = $this->enforce_maximum_leave_days;
         $staffType = $this->enforce_staff_type;
+        $branch = filled($this->enforce_branch_id) ? \App\Models\Branch::find($this->enforce_branch_id) : null;
+        $branchFilter = ['branch_id' => $branch?->id];
 
         $leaveTypes = LeaveType::where('active', true)
             ->when(filled($this->enforce_leave_type_id), fn ($q) => $q->where('id', $this->enforce_leave_type_id))
@@ -88,9 +93,10 @@ class Index extends Component
 
         $enforced = 0;
 
-        DB::transaction(function () use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays, $staffType, $overrides) {
+        DB::transaction(function () use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays, $staffType, $branchFilter, $overrides) {
             Employee::where('archive', 0)
                 ->ofStaffType($staffType)
+                ->filterBy($branchFilter)
                 ->select('id')
                 ->chunkById(200, function ($employees) use ($leaveTypes, &$enforced, $enforceAccrualRate, $enforceLeaveDays, $enforceMaximumLeaveDays, $overrides) {
                     foreach ($employees as $employee) {
@@ -150,7 +156,8 @@ class Index extends Component
 
         $this->dispatchBrowserEvent('hide-enforceLeaveTypeDefaultsModal');
 
-        $scopeLabel = ['all' => 'all employees', 'admin' => 'admin employees', 'drivers' => 'drivers'][$staffType];
+        $scopeLabel = ['all' => 'all employees', 'admin' => 'admin employees', 'drivers' => 'drivers'][$staffType]
+            .($branch ? " in {$branch->name}" : '');
 
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
@@ -160,19 +167,19 @@ class Index extends Component
 
     public function exportEmployeesLeaveCSV(Excel $excel){
 
-        return $excel->download(new EmployeesLeaveExport($this->staff_type), $this->exportFileName('csv'), Excel::CSV);
+        return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('csv'), Excel::CSV);
     }
     public function exportEmployeesLeavePDF(Excel $excel){
 
-        return $excel->download(new EmployeesLeaveExport($this->staff_type), $this->exportFileName('pdf'), Excel::DOMPDF);
+        return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('pdf'), Excel::DOMPDF);
     }
     public function exportEmployeesLeaveExcel(Excel $excel){
-        return $excel->download(new EmployeesLeaveExport($this->staff_type), $this->exportFileName('xlsx'));
+        return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('xlsx'));
     }
 
     private function exportFileName(string $extension): string
     {
-        $suffix = ['drivers' => '_drivers', 'admin' => '_admin'][$this->staff_type] ?? '';
+        $suffix = (['drivers' => '_drivers', 'admin' => '_admin'][$this->staff_type] ?? '').$this->staffFilterFileSuffix();
         return "employees_leave_data{$suffix}.{$extension}";
     }
 
@@ -339,7 +346,7 @@ class Index extends Component
 
     public function render()
     {
-        $query = Employee::query()->ofStaffType($this->staff_type);
+        $query = Employee::query()->ofStaffType($this->staff_type)->filterBy($this->staffFilters());
 
         if (filled($this->search)) {
             // Grouped so the staff-type filter still applies to both search terms.

@@ -223,6 +223,22 @@ class Employee extends Model implements Auditable
         }
         return $query;
     }
+
+    /**
+     * List filters shared by the Employees / Drivers / Leave Days pages and their
+     * exports: ['role_id', 'rank_id', 'department_id', 'branch_id']. Blank = no filter.
+     * Role is the login's role (employee->user->roles).
+     */
+    public function scopeFilterBy($query, array $filters)
+    {
+        $filters = array_filter($filters, 'filled');
+
+        return $query
+            ->when($filters['role_id'] ?? null, fn ($q, $id) => $q->whereHas('user.roles', fn ($r) => $r->where('roles.id', $id)))
+            ->when($filters['rank_id'] ?? null, fn ($q, $id) => $q->whereHas('ranks', fn ($r) => $r->where('ranks.id', $id)))
+            ->when($filters['department_id'] ?? null, fn ($q, $id) => $q->whereHas('departments', fn ($d) => $d->where('departments.id', $id)))
+            ->when($filters['branch_id'] ?? null, fn ($q, $id) => $q->where('employees.branch_id', $id));
+    }
   
     public function fuel_requests(){
         return $this->hasMany('App\Models\FuelRequest');

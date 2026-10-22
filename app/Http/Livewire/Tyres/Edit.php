@@ -299,8 +299,8 @@ class Edit extends Component
       protected function fitmentUnchanged(?TyreAssignment $current){
         return $current && $this->fitColumn()
             && $current->{$this->fitColumn()} == $this->fit_unit_id
-            && $current->axle === $this->fit_axle
-            && $current->position === $this->fit_position;
+            && (string) $current->axle === (string) $this->fit_axle
+            && (string) $current->position === (string) $this->fit_position;
       }
 
       protected function fitmentMovesUnit(?TyreAssignment $current){
@@ -348,8 +348,8 @@ class Edit extends Component
 
         $service->assign($this->fit_type, $this->fit_unit_id, [
             'tyre_id' => $tyre->id,
-            'axle' => $this->fit_axle,
-            'position' => $this->fit_position,
+            'axle' => $this->fit_axle ?: null,
+            'position' => $this->fit_position ?: null,
             'starting_odometer' => $this->fit_mileage,
             'date_fitted' => $this->fit_date,
         ]);
@@ -368,8 +368,8 @@ class Edit extends Component
         $this->validate([
             'fit_type' => 'required|in:Horse,Trailer,Vehicle',
             'fit_unit_id' => 'required',
-            'fit_axle' => 'required',
-            'fit_position' => 'required',
+            'fit_axle' => 'nullable',
+            'fit_position' => 'nullable',
             'fit_mileage' => 'required|numeric|min:0',
             'fit_date' => 'required|date',
             'removal_mileage' => $this->fitmentMovesUnit($current) ? 'required|numeric|min:0' : 'nullable',

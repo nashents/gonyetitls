@@ -237,6 +237,8 @@
                                    <option value="Invoice Authorization">Invoice Authorization</option>
                                    <option value="Purchase Order Authorization">Purchase Order Authorization</option>
                                    <option value="Requisition Authorization">Requisition Authorization</option>
+                                   <option value="Freight Job Authorization">Freight Job Authorization</option>
+                                   <option value="Freight Reminders">Freight Reminders</option>
                                    <option value="Trip Authorization">Trip Authorization</option>
                                </select>
                                @error('category') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -352,6 +354,8 @@
                                     <option value="Invoice Authorization">Invoice Authorization</option>
                                     <option value="Purchase Order Authorization">Purchase Order Authorization</option>
                                     <option value="Requisition Authorization">Requisition Authorization</option>
+                                    <option value="Freight Job Authorization">Freight Job Authorization</option>
+                                    <option value="Freight Reminders">Freight Reminders</option>
                                     <option value="Trip Authorization">Trip Authorization</option>
                                 </select>
                                 @error('category') <span class="error" style="color:red">{{ $message }}</span> @enderror

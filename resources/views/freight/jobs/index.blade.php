@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title')
-    Freight Jobs
+    {{ isset($authorization) ? ucfirst($authorization) . ' ' : '' }}Freight Jobs
 @endsection
 
 @section('body-id')
@@ -20,7 +20,12 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fas fa-ship"></i> Freight Jobs</li>
+            							@if (isset($authorization))
+                                        <li><a href="{{ route('freight.jobs.index') }}"><i class="fas fa-ship"></i> Freight Jobs</a></li>
+                                        <li class="active">{{ ucfirst($authorization) }}</li>
+                                    @else
+                                        <li class="active"> <i class="fas fa-ship"></i> Freight Jobs</li>
+                                    @endif
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -29,7 +34,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('freight.jobs.index')
+                        @livewire('freight.jobs.index', ['authorization' => $authorization ?? null])
                         <!-- /.section -->
 
                     </div>

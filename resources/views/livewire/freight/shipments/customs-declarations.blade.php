@@ -116,7 +116,7 @@
     </table>
 
     <!-- Add Declaration Modal -->
-    <div class="modal fade" id="addDeclarationModal{{ $shipment->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="addDeclarationModal{{ $shipment->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="store">
@@ -246,7 +246,7 @@
     </div>
 
     <!-- Add/Edit Line Modal -->
-    <div class="modal fade" id="lineModal{{ $shipment->id }}" tabindex="-1" role="dialog">
+    <div wire:ignore.self class="modal fade" id="lineModal{{ $shipment->id }}" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <form wire:submit.prevent="saveLine">
