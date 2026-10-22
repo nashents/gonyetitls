@@ -93,7 +93,7 @@ class Approved extends Component
 
             }
             
-            if(($container->balance >= $fuel->quantity) && $container->purchase_type == "Bulk Buy"){
+            if($container && ($container->balance >= $fuel->quantity) && $container->purchase_type == "Bulk Buy"){
                 $container->balance = $container->balance - $fuel->quantity;
                 if(isset($container->account_balance)){
                     $container->account_balance = $container->account_balance - $fuel->amount;

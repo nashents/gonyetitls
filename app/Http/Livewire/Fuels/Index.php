@@ -1745,8 +1745,9 @@ class Index extends Component
 
             $container = $fuel->container;
             
-            if($container->purchase_type == "Bulk Buy"){
-                            
+            // Customer-supplied fuel (or a deleted station) has no container.
+            if($container && $container->purchase_type == "Bulk Buy"){
+
                         if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
                             $container->balance = $container->balance + $fuel->quantity;
                         }
