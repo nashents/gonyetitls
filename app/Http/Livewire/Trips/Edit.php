@@ -77,6 +77,7 @@ class Edit extends Component
 
     public $isLocked = false;
     public $isFinanciallyLocked = false;
+    public $isOnApprovedInvoice = false;
     public $hasActiveEditGrant = false;
     public $activeGrant;
     public $editAuthorizationReason;
@@ -1178,7 +1179,10 @@ class Edit extends Component
         $this->isAdmin = Auth::user()->is_admin();
         $this->isTemporarilyUnlocked = (bool) ($this->trip && $this->trip->isTemporarilyUnlocked());
         $this->isLocked = $this->trip && (int) $this->trip->status === 1 && ! $this->isTemporarilyUnlocked;
-        $this->isFinanciallyLocked = $this->trip && $this->trip->is_financially_locked;
+        // Admins may still correct the financial figures of an invoiced trip
+        // (with a warning that the approved invoice itself isn't changed).
+        $this->isOnApprovedInvoice = $this->trip && $this->trip->is_financially_locked;
+        $this->isFinanciallyLocked = $this->isOnApprovedInvoice && ! $this->isAdmin;
         if ($this->isLocked) {
             $editAuthService = app(EditAuthorizationService::class);
             $this->activeGrant = $editAuthService->activeGrant($this->trip, Auth::user());
@@ -2579,7 +2583,8 @@ class Edit extends Component
         // approved invoice, its rate/freight/currency figures are frozen so
         // finance figures already billed can't be quietly changed, while
         // every other (operational) field on this form still saves normally.
-        $financiallyLocked = $trip && $trip->is_financially_locked;
+        // Admins (is_admin) are exempt and can correct them.
+        $financiallyLocked = $trip && $trip->is_financially_locked && ! Auth::user()->is_admin();
 
         $hasTransportOrders = $trip && $trip->trip_transport_orders()->exists();
 

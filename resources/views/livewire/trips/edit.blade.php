@@ -44,6 +44,11 @@
                                     <strong><i class="fa fa-lock"></i> Financial figures are locked.</strong>
                                     This trip is part of an approved invoice, so its customer rate/freight/currency figures cannot be changed here. Transporter (subcontractor) rate and freight stay editable - saving them updates the transporter payment bill. Operational fields (status, dates, driver, cargo, etc.) can still be updated freely. Changing weight/quantity will not recalculate or save a new freight amount.
                                 </div>
+                            @elseif ($isOnApprovedInvoice)
+                                <div class="alert alert-warning">
+                                    <strong><i class="fa fa-unlock"></i> Admin override - this trip is on an approved invoice.</strong>
+                                    You can change its customer rate/freight/currency figures, but the approved invoice is NOT updated: correct it separately (edit the invoice or raise a credit note) so the trip and the invoice still agree.
+                                </div>
                             @endif
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                  <h6 class="underline mt-20 mb-20"><strong>Order Details</strong></h6>
