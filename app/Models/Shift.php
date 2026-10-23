@@ -99,5 +99,6 @@ class Shift extends Model implements Auditable
         'arrive_workshop_time',
         'total_weight',
         'freight',
+        'comments',
     ];
 }

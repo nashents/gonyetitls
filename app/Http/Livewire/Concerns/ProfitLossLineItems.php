@@ -92,6 +92,8 @@ trait ProfitLossLineItems
         }
 
         $supplies = CustomerFuelSupply::query()
+            // Supplies with a supplier bill (2026-10-23 on) are already a bill line.
+            ->whereNull('bill_id')
             ->whereIn('account_id', $accountIds)
             ->where(function ($q) use ($horseId) {
                 $q->whereHas('trip', fn ($t) => $t->where('horse_id', $horseId))

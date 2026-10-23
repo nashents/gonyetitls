@@ -150,6 +150,7 @@ class Fuel extends Model implements Auditable
         'driver_id',
         'container_id',
         'source_horse_id',
+        'shift_id',
         'fuel_type',
         'is_full_tank',
         'deduct_from',
@@ -167,6 +168,7 @@ class Fuel extends Model implements Auditable
         'fillup',
         'status',
         'comments',
+        'allocation_to',
     ];
 
 }

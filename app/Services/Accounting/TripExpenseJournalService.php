@@ -73,15 +73,12 @@ class TripExpenseJournalService
         }
 
         // Funded By: Customer - the customer paid this cost (typically fuel
-        // captured on the expenses list instead of as a fuel order). No
-        // supplier Bill: DR Trip Expense / CR Accounts Receivable, applied to
-        // the trip's invoice. See CustomerFuelSupplyService.
+        // captured on the expenses list instead of as a fuel order). The
+        // supplier's Bill is still raised (it takes over this line's bill)
+        // but settled by the customer against AR, and the supply is applied
+        // to the trip's invoice. See CustomerFuelSupplyService.
         if ($this->customerFuel->appliesToTripExpense($tripExpense)) {
             return DB::transaction(function () use ($tripExpense) {
-                foreach (Bill::where('trip_expense_id', $tripExpense->id)->get() as $bill) {
-                    $this->customerFuel->removeBill($bill, "Trip expense #{$tripExpense->id} marked as customer funded");
-                }
-
                 return $this->customerFuel->post($this->customerFuel->syncFromTripExpense($tripExpense));
             });
         }

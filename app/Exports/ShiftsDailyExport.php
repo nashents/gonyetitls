@@ -544,10 +544,8 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $oreLongLp = $this->tripCountsByLoadingPoint(clone $oreLongTrips, $lpMap);
 
         $fuelLong = Fuel::query()
-            ->whereHas('shift', fn (Builder $q) =>
-                $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
-                    ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'long_haul'))
-            )
+            ->whereHas('shift', fn (Builder $q) => $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to)))
+            ->where(fn (Builder $f) => $this->applyFuelHaul($f, 'long_haul'))
             ->sum('quantity');
 
         $kmLong = (clone $shiftBase)
@@ -556,7 +554,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ->value('km');
 
         $consLong = (clone $shiftBase)
-            ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'long_haul'))
+            ->where(fn (Builder $s) => $this->applyShiftFuelHaul($s, 'long_haul'))
             ->avg($this->shiftFuelConsumptionColumn);
 
         $oreShortTrips = (clone $tripBase)
@@ -568,10 +566,8 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $oreShortLp = $this->tripCountsByLoadingPoint(clone $oreShortTrips, $lpMap);
 
         $fuelShort = Fuel::query()
-            ->whereHas('shift', fn (Builder $q) =>
-                $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
-                    ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'short_haul'))
-            )
+            ->whereHas('shift', fn (Builder $q) => $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to)))
+            ->where(fn (Builder $f) => $this->applyFuelHaul($f, 'short_haul'))
             ->sum('quantity');
 
         $kmShort = (clone $shiftBase)
@@ -580,7 +576,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ->value('km');
 
         $consShort = (clone $shiftBase)
-            ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', 'short_haul'))
+            ->where(fn (Builder $s) => $this->applyShiftFuelHaul($s, 'short_haul'))
             ->avg($this->shiftFuelConsumptionColumn);
 
         $concTrips = (clone $tripBase)
@@ -632,6 +628,32 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     {
         return $q->whereBetween($this->shiftDateColumn, [$from, $to])
             ->when(filled($this->workType), fn (Builder $q) => $q->where($this->shiftWorkTypeColumn, $this->workType));
+    }
+
+    /**
+     * Fuel order belongs to a haul when its "Allocation To" says so; orders captured
+     * without an allocation fall back to the haulage type of their shift's trips.
+     */
+    protected function applyFuelHaul(Builder $q, string $haul): Builder
+    {
+        return $q->where('allocation_to', $haul)
+            ->orWhere(fn (Builder $f) => $f
+                ->where(fn (Builder $n) => $n->whereNull('allocation_to')->orWhere('allocation_to', ''))
+                ->whereHas('shift.trips', fn (Builder $t) => $t->where('haulage_type', $haul))
+            );
+    }
+
+    /**
+     * Shift-level version of applyFuelHaul() for the consumption average: the shift's
+     * fuel order allocation wins, otherwise its trips' haulage type.
+     */
+    protected function applyShiftFuelHaul(Builder $q, string $haul): Builder
+    {
+        return $q->whereHas('fuel', fn (Builder $f) => $f->where('allocation_to', $haul))
+            ->orWhere(fn (Builder $s) => $s
+                ->whereDoesntHave('fuel', fn (Builder $f) => $f->whereNotNull('allocation_to')->where('allocation_to', '!=', ''))
+                ->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $haul))
+            );
     }
 
     protected function shiftBreakdown(Carbon $from, Carbon $to): array

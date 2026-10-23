@@ -290,6 +290,8 @@ class Index extends Component
     public $mileage_is_live_from_ezytrack = false;
     public $hours;
     public $fuel_comments;
+    public $fuel_allocation_to;
+    public $shift_comments;
     public $fuel_id;
     public $importFile;
     public $shift_tripsimportFile;
@@ -363,6 +365,8 @@ class Index extends Component
         $this->mileage = Null;
         $this->hours = Null;
         $this->fuel_comments = Null;
+        $this->fuel_allocation_to = Null;
+        $this->shift_comments = Null;
         $this->customer_id = Null;
         $this->driver_id = Null;
         $this->selectedTransporter = Null;
@@ -1946,6 +1950,7 @@ class Index extends Component
         $shift->total_fuel = $this->fuel_quantity;
         $shift->open_mileage = $this->shift_open_mileage;
         $shift->close_mileage = $this->shift_close_mileage;
+        $shift->comments = $this->shift_comments;
       
 
         if ($this->for === "Trips") {
@@ -2014,6 +2019,7 @@ class Index extends Component
                 $fuel->fillup = 1;
                 $fuel->status = 1;
                 $fuel->comments = $this->fuel_comments;
+                $fuel->allocation_to = $this->fuel_allocation_to ?: null;
                 $fuel->save();
             
             }
@@ -2097,6 +2103,7 @@ class Index extends Component
     $this->calculated_mileage = $shift->calculated_mileage;
     $this->shift_open_mileage = $shift->open_mileage;
     $this->shift_close_mileage = $shift->close_mileage;
+    $this->shift_comments = $shift->comments;
     $this->shift_open_hours = $shift->shift_open_hours;
     $this->shift_close_hours = $shift->shift_close_hours;
     $this->shift_id = $shift->id;
@@ -2182,6 +2189,7 @@ class Index extends Component
     $this->fuel_exchange_amount = $fuel->exchange_amount;
     $this->fuel_exchange_rate = $fuel->exchange_rate;
      $this->fuel_comments = $fuel->comments;
+    $this->fuel_allocation_to = $fuel->allocation_to;
     $this->fuel_type = $fuel->fuel_type ? ucfirst(strtolower($fuel->fuel_type)) : null;
     $this->is_full_tank = $fuel->is_full_tank;
     $this->deduct_from = $fuel->deduct_from ?: "quantity";
@@ -2247,6 +2255,7 @@ class Index extends Component
             $shift->total_fuel = $this->fuel_quantity;
             $shift->open_mileage = $this->shift_open_mileage;
             $shift->close_mileage = $this->shift_close_mileage;
+            $shift->comments = $this->shift_comments;
 
             if ($this->for === "Trips") {
 
@@ -2331,6 +2340,7 @@ class Index extends Component
                         'fillup'          => 1,
                         'status'          => 1,
                         'comments'        => $this->fuel_comments,
+                        'allocation_to'   => $this->fuel_allocation_to ?: null,
                     ]
                 );
             }

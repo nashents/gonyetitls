@@ -3286,7 +3286,7 @@ class Edit extends Component
 
                     // Funding switched (company <-> customer) or amount changed on an
                     // approved customer-funded fuel: re-post through the service, which
-                    // removes/restores the supplier bill and (re)posts the supply.
+                    // settles/reopens the supplier bill and (re)posts the supply.
                     if ($fuel->authorization == 'approved' && ($fuel->supplied_by_customer || \App\Models\CustomerFuelSupply::where('fuel_id', $fuel->id)->exists())) {
                         app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
                     } elseif ($fuel->authorization == 'approved' && $fuel->container) {

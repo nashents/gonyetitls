@@ -58,7 +58,7 @@ class FuelJournalService
     {
         if ($this->customerFuel->appliesToTopUp($topUp)) {
             return DB::transaction(function () use ($topUp) {
-                $this->removeTopUpBill($topUp, "Top up {$topUp->order_number} marked as customer supplied");
+                // The supply takes over the top-up's supplier bill, settled by the customer.
                 $supply = $this->customerFuel->syncFromTopUp($topUp);
 
                 return $this->customerFuel->post($supply);
@@ -81,7 +81,7 @@ class FuelJournalService
             $bill->bill_number = $bill->bill_number ?? $this->billNumber();
             $bill->container_id = $topUp->container_id;
             $bill->top_up_id = $topUp->id;
-            $bill->vendor_id = $topUp->vendor_id;
+            $bill->vendor_id = app(\App\Services\StationVendorService::class)->forTopUp($topUp);
             $bill->category = 'Fuel Topup';
             $bill->bill_date = $topUp->date;
             $bill->currency_id = $topUp->currency_id;
@@ -154,15 +154,22 @@ class FuelJournalService
      */
     public function postConsumption(Fuel $fuel): JournalEntry
     {
-        // Customer-supplied Once Off Buy fuel: no supplier, so no Bill/AP -
-        // it settles against the customer's receivable instead (DR Fuel -
-        // COGS/Ops, CR AR). A Bulk Buy fuel order is drawn from our own
-        // stock, so it always falls through to the normal inventory
-        // consumption below even if flagged - the customer supply for it is
-        // recorded on the top-up that filled the tank.
+        // Customer-supplied Once Off Buy fuel: the station's bill is raised
+        // as usual but settled by the customer (CustomerFuelSupplyService -
+        // DR Fuel - COGS/Ops / CR AP, then DR AP / CR AR). A Bulk Buy fuel
+        // order is drawn from our own stock, so it always falls through to
+        // the normal inventory consumption below even if flagged - the
+        // customer supply for it is recorded on the top-up that filled the tank.
         if ($this->customerFuel->appliesToFuel($fuel)) {
             return DB::transaction(function () use ($fuel) {
-                $this->removeConsumptionBill($fuel, "Fuel order {$fuel->order_number} marked as customer supplied");
+                // Legacy inline trip-approval bills (trip_expense_id only) - the
+                // supply raises its own bill keyed on fuel_id.
+                $tripExpenseId = optional($fuel->trip_expense)->id;
+                if ($tripExpenseId) {
+                    foreach (Bill::where('trip_expense_id', $tripExpenseId)->whereNull('fuel_id')->get() as $bill) {
+                        $this->removeBill($bill, "Fuel order {$fuel->order_number} marked as customer supplied");
+                    }
+                }
                 $supply = $this->customerFuel->syncFromFuel($fuel);
 
                 return $this->customerFuel->post($supply);
@@ -213,12 +220,11 @@ class FuelJournalService
             $bill->subtotal = $fuel->amount;
             $bill->balance = $this->outstanding($bill, (float) $fuel->amount);
             $bill->authorized_by_id = $bill->authorized_by_id ?? Auth::id();
-            // The fuel's own trip expense names the supplier; a station
-            // linked to a vendor is the fallback. Never overwrite one
-            // already on the bill.
+            // The fuel's own trip expense names the supplier; the station's
+            // vendor is the fallback (created and linked if the station has
+            // none). Never overwrite one already on the bill.
             $bill->vendor_id = $bill->vendor_id
-                ?? optional($fuel->trip_expense)->vendor_id
-                ?? optional($fuel->container)->vendor_id;
+                ?? app(\App\Services\StationVendorService::class)->forFuel($fuel);
             // authorization/to_be_paid deliberately NOT set on this save -
             // see the matching note in postTopUp() above: setting both
             // together here would let BillObserver::created() auto-post

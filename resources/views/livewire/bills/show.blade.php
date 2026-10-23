@@ -316,7 +316,34 @@
                         </tbody>
                     </table>
                     @endif
-                </div>  
+                    @php
+                        $customer_settlements = \App\Models\BillPayment::with('customer_fuel_supply.customer')
+                            ->where('bill_id', $bill->id)
+                            ->where('source', \App\Services\Accounting\CustomerFuelSupplyService::SOURCE)
+                            ->get();
+                    @endphp
+                    @if ($customer_settlements->count() > 0)
+                    <div style="clear: both"></div>
+                    <h5>Paid by Customer</h5>
+                    <table class="table table-bordered table-sm" cellspacing="0" width="100%">
+                        <thead>
+                            <tr><th>Supply#</th><th>Date</th><th>Customer</th><th>Details</th><th>Settled</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($customer_settlements as $customer_settlement)
+                                @php $settled_supply = $customer_settlement->customer_fuel_supply; @endphp
+                                <tr>
+                                    <td><a href="{{ route('customer_fuel_supplies.index', ['search' => $settled_supply ? $settled_supply->supply_number : '']) }}" style="color: blue">{{ $settled_supply ? $settled_supply->supply_number : '' }}</a></td>
+                                    <td>{{ $settled_supply && $settled_supply->date ? $settled_supply->date->format('Y-m-d') : '' }}</td>
+                                    <td>{{ $settled_supply && $settled_supply->customer ? $settled_supply->customer->name : '' }}</td>
+                                    <td>{{ $settled_supply ? $settled_supply->description : '' }}</td>
+                                    <td>{{ $bill->currency ? $bill->currency->symbol : '' }}{{ number_format((float) $customer_settlement->amount, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    @endif
+                </div>
                <div class="row">
                     <div class="col-md-12">
                         <div class="btn-group pull-right mt-10" >

@@ -269,6 +269,8 @@
                                                         @endphp
                                                         @if ($result->transaction_type === 'supplier_journal')
                                                             @include('vendor_statements._supplier_journal_row', ['result' => $result])
+                                                        @elseif ($result->transaction_type === 'customer_settlement')
+                                                            @include('vendor_statements._customer_settlement_row', ['result' => $result])
                                                         @elseif ($result->transaction_type === 'bill')
                                                             <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
                                                             Due {{ $bill->due_date }}

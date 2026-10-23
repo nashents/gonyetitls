@@ -115,7 +115,34 @@ class VendorLedgerService
             ->where('status', 'posted')
             ->whereNull('deleted_at');
 
-        $union = $bills->unionAll($payments);
+        // Bills the customer settled for us (customer funded fuel / trip
+        // expenses - CustomerFuelSupplyService): no cash, but they clear
+        // what we owe the vendor like a payment does.
+        $customerSettlements = DB::table('bill_payments')
+            ->join('bills', 'bills.id', '=', 'bill_payments.bill_id')
+            ->join('customer_fuel_supplies', 'customer_fuel_supplies.id', '=', 'bill_payments.customer_fuel_supply_id')
+            ->select([
+                'bill_payments.id',
+                DB::raw("'customer_settlement' as transaction_type"),
+                'customer_fuel_supplies.supply_number as number',
+                'bills.currency_id',
+                DB::raw('customer_fuel_supplies.date as date'),
+                DB::raw('customer_fuel_supplies.date as transaction_date'),
+                'bill_payments.created_at',
+                DB::raw('CAST(bill_payments.amount AS DECIMAL(20,2)) as amount'),
+                DB::raw('CAST(bill_payments.amount AS DECIMAL(20,2)) as balance'),
+                DB::raw('CAST(bill_payments.amount AS DECIMAL(20,2)) * -1 as signed_amount'),
+                DB::raw('1 as type_priority'),
+            ])
+            ->where('bill_payments.source', \App\Services\Accounting\CustomerFuelSupplyService::SOURCE)
+            ->where("bills.{$column}", $vendorId)
+            ->where('bills.currency_id', $currencyId)
+            ->where('bills.authorization', 'approved')
+            ->whereNull('bills.deleted_at')
+            ->whereNull('bill_payments.deleted_at')
+            ->whereNull('customer_fuel_supplies.deleted_at');
+
+        $union = $bills->unionAll($payments)->unionAll($customerSettlements);
         if ($party !== self::PARTY_TRANSPORTER) {
             $union = $union->unionAll($debitNotes)->unionAll($supplierJournals);
         }

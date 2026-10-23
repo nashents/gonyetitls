@@ -23,4 +23,9 @@ class BillPayment extends Model implements Auditable
     public function supplier_journal(){
         return $this->belongsTo('App\Models\SupplierJournal');
     }
+
+    /** Set when the customer settled the bill (source 'customer_fuel'). */
+    public function customer_fuel_supply(){
+        return $this->belongsTo('App\Models\CustomerFuelSupply')->withTrashed();
+    }
 }

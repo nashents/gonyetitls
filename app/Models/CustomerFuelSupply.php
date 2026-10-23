@@ -95,6 +95,17 @@ class CustomerFuelSupply extends Model implements Auditable
         return $this->hasMany(InvoicePayment::class);
     }
 
+    /** The supplier's bill the customer settled - see CustomerFuelSupplyService. */
+    public function bill()
+    {
+        return $this->belongsTo(Bill::class);
+    }
+
+    public function bill_payments()
+    {
+        return $this->hasMany(BillPayment::class);
+    }
+
     public function journal_entry()
     {
         return $this->hasOne(JournalEntry::class)

@@ -745,6 +745,11 @@ class Show extends Component
                     $fuel->authorized_by_id = Auth::user()->id;
                     $fuel->comments = $this->comments;
                     $fuel->update();
+                    // The expense loop above ran before this approval, so it skipped customer
+                    // funded fuel (posted only once approved) - post it now.
+                    if ($fuel->authorization == "approved" && app(\App\Services\Accounting\CustomerFuelSupplyService::class)->appliesToFuel($fuel)) {
+                        app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                    }
             
                     if ($this->authorize == "approved") {
 

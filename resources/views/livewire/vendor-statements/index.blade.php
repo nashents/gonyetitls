@@ -221,6 +221,8 @@
                                                     <td>
                                                         @if ($result->transaction_type === 'supplier_journal')
                                                             @include('vendor_statements._supplier_journal_row', ['result' => $result])
+                                                        @elseif ($result->transaction_type === 'customer_settlement')
+                                                            @include('vendor_statements._customer_settlement_row', ['result' => $result])
                                                         @elseif ($debit_note)
                                                             Debit Note# {{ $result->number }}
                                                             @if ($debit_note->bill)

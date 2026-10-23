@@ -1216,6 +1216,12 @@
                             @endif
                         @endif
             
+                        <h5 class="underline mt-30">Comments</h5>
+                        <div class="form-group">
+                            <textarea wire:model.debounce.300ms="shift_comments" class="form-control" rows="3" placeholder="Any comments about this shift"></textarea>
+                            @error('shift_comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+
                         <h5 class="underline mt-30">Fuel Order Details</h5>
                         <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="fuel_order"   class="line-style" />
@@ -1322,7 +1328,7 @@
                                 </div>
                             @endif
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="fuel_type">Fuel Type<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.debounce.300ms="fuel_type" required @if($fuel_type_locked) disabled @endif>
@@ -1333,7 +1339,7 @@
                                         @error('fuel_type') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="is_full_tank">Full Tank Refill?<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.defer="is_full_tank" required>
@@ -1342,6 +1348,18 @@
                                             <option value="0">No - Partial Refill</option>
                                         </select>
                                         @error('is_full_tank') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="fuel_allocation_to">Allocation To</label>
+                                        <select class="form-control" wire:model.debounce.300ms="fuel_allocation_to">
+                                            <option value="">Select Allocation</option>
+                                            <option value="long_haul">Long Haul</option>
+                                            <option value="short_haul">Short Haul</option>
+                                        </select>
+                                        <small class="text-muted">Daily production report haul for this fuel</small>
+                                        @error('fuel_allocation_to') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -2373,6 +2391,12 @@
                             @endif
                         @endif
         
+                        <h5 class="underline mt-30">Comments</h5>
+                        <div class="form-group">
+                            <textarea wire:model.debounce.300ms="shift_comments" class="form-control" rows="3" placeholder="Any comments about this shift"></textarea>
+                            @error('shift_comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+
                         <h5 class="underline mt-30">Fuel Order Details</h5>
                         <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="fuel_order"   class="line-style" />
@@ -2479,7 +2503,7 @@
                                 </div>
                             @endif
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="fuel_type">Fuel Type<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.debounce.300ms="fuel_type" required @if($fuel_type_locked) disabled @endif>
@@ -2490,7 +2514,7 @@
                                         @error('fuel_type') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="is_full_tank">Full Tank Refill?<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.defer="is_full_tank" required>
@@ -2499,6 +2523,18 @@
                                             <option value="0">No - Partial Refill</option>
                                         </select>
                                         @error('is_full_tank') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="fuel_allocation_to">Allocation To</label>
+                                        <select class="form-control" wire:model.debounce.300ms="fuel_allocation_to">
+                                            <option value="">Select Allocation</option>
+                                            <option value="long_haul">Long Haul</option>
+                                            <option value="short_haul">Short Haul</option>
+                                        </select>
+                                        <small class="text-muted">Daily production report haul for this fuel</small>
+                                        @error('fuel_allocation_to') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>

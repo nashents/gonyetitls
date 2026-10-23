@@ -4,6 +4,8 @@ namespace App\Services\Accounting;
 
 use App\Models\Account;
 use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\BillPayment;
 use App\Models\Company;
 use App\Models\CustomerFuelSupply;
 use App\Models\Fuel;
@@ -46,6 +48,16 @@ use Illuminate\Support\Facades\DB;
  *
  * It deliberately isn't a Payment row: Payments feed cash flow, receipts,
  * the transactions ledger and bank reconciliation, and no cash moved here.
+ *
+ * Supplier bill (2026-10-23): the customer paid a real supplier (the
+ * station's vendor / the expense line's vendor), so the supply also raises
+ * that supplier's Bill - DR cost / CR Accounts Payable (vendor) - and the
+ * supply itself posts DR Accounts Payable (vendor) / CR Accounts Receivable,
+ * allocated to the bill through bill_payments (source = 'customer_fuel').
+ * The bill shows as paid by the customer, the vendor statement nets to nil,
+ * and the cost is a normal bill line for the horse/transporter P&L. Net
+ * ledger effect is unchanged: DR cost / CR AR. A non-billable trip expense
+ * still raises no bill and posts DR cost / CR AR directly.
  */
 class CustomerFuelSupplyService
 {
@@ -98,8 +110,26 @@ class CustomerFuelSupplyService
             : Account::where('name', 'Fuel - Ops')->firstOrFail();
 
         $supply = CustomerFuelSupply::where('fuel_id', $fuel->id)->first() ?? new CustomerFuelSupply(['fuel_id' => $fuel->id]);
+        $tripExpense = $fuel->trip_expense;
 
-        return $this->fill($supply, [
+        $bill = [
+            'key'             => 'fuel_id',
+            'prefix'          => 'FB',
+            'category'        => $fuel->trip_id ? 'Trip Expense - Fuel Order' : 'Fuel',
+            // Trip expense's supplier, else the station's vendor (created if missing).
+            'vendor_id'       => app(\App\Services\StationVendorService::class)->forFuel($fuel),
+            'fuel_id'         => $fuel->id,
+            'trip_id'         => $fuel->trip_id,
+            'trip_expense_id' => optional($tripExpense)->id,
+            'container_id'    => $fuel->container_id,
+            'horse_id'        => $fuel->horse_id,
+            'vehicle_id'      => $fuel->vehicle_id,
+            'asset_id'        => $fuel->asset_id,
+            'driver_id'       => $fuel->driver_id,
+            'expense_id'      => \App\Models\Expense::where('name', \App\Models\Expense::FUEL_TOPUP)->value('id'),
+        ];
+
+        return $this->fill($supply, $bill, [
             'customer_id'   => $fuel->customer_id,
             'currency_id'   => $fuel->currency_id,
             'exchange_rate' => $this->rate($fuel->exchange_rate),
@@ -131,7 +161,18 @@ class CustomerFuelSupplyService
 
         $supply = CustomerFuelSupply::where('top_up_id', $topUp->id)->first() ?? new CustomerFuelSupply(['top_up_id' => $topUp->id]);
 
-        return $this->fill($supply, [
+        // Like a company-paid top-up's bill: no trip, so it isn't swept up by trip deletion.
+        $bill = [
+            'key'          => 'top_up_id',
+            'prefix'       => 'FB',
+            'category'     => 'Fuel Topup',
+            'vendor_id'    => app(\App\Services\StationVendorService::class)->forTopUp($topUp),
+            'top_up_id'    => $topUp->id,
+            'container_id' => $topUp->container_id,
+            'expense_id'   => \App\Models\Expense::where('name', \App\Models\Expense::FUEL_TOPUP)->value('id'),
+        ];
+
+        return $this->fill($supply, $bill, [
             'customer_id'   => $topUp->customer_id,
             'currency_id'   => $topUp->currency_id,
             'exchange_rate' => $this->rate($topUp->exchange_rate),
@@ -166,8 +207,25 @@ class CustomerFuelSupplyService
         $label = optional($tripExpense->expense)->name ?? optional($tripExpense->allowance)->name ?? 'Trip expense';
 
         $supply = CustomerFuelSupply::where('trip_expense_id', $tripExpense->id)->first() ?? new CustomerFuelSupply(['trip_expense_id' => $tripExpense->id]);
+        $trip = $tripExpense->trip;
 
-        return $this->fill($supply, [
+        // Non-billable expenses (Expenses > Billable unchecked) raise no
+        // supplier bill when company paid either - same here.
+        $bill = app(TripExpenseJournalService::class)->isBillable($tripExpense) ? [
+            'key'             => 'trip_expense_id',
+            'prefix'          => 'TEB',
+            'category'        => 'Trip Expense',
+            'vendor_id'       => $tripExpense->vendor_id,
+            'trip_id'         => $tripExpense->trip_id,
+            'trip_expense_id' => $tripExpense->id,
+            'horse_id'        => optional($trip)->horse_id,
+            'vehicle_id'      => optional($trip)->vehicle_id,
+            'driver_id'       => optional($trip)->driver_id,
+            'expense_id'      => $tripExpense->expense_id,
+            'allowance_id'    => $tripExpense->allowance_id,
+        ] : null;
+
+        return $this->fill($supply, $bill, [
             'customer_id'   => $tripExpense->customer_id,
             'currency_id'   => $tripExpense->currency_id,
             'exchange_rate' => $this->rate($tripExpense->exchange_rate),
@@ -237,6 +295,12 @@ class CustomerFuelSupplyService
                 $this->deallocate($allocation);
             }
 
+            // Release the supplier bill's "settled by customer" allocation.
+            // The bill itself stays for the caller: the company-paid path
+            // takes it over (the vendor is now owed), or the source's
+            // deletion removes it.
+            $this->releaseBillSettlements($supply);
+
             $this->reverseEntries($supply, $reason ?? "Customer fuel supply {$supply->supply_number} voided");
 
             $supply->delete();
@@ -245,9 +309,13 @@ class CustomerFuelSupplyService
 
     // ── Posting ──────────────────────────────────────────────────────────────
 
-    private function fill(CustomerFuelSupply $supply, array $attributes): CustomerFuelSupply
+    /**
+     * $bill describes the supplier Bill the supply raises (see
+     * syncSupplierBill), or null for none.
+     */
+    private function fill(CustomerFuelSupply $supply, ?array $bill, array $attributes): CustomerFuelSupply
     {
-        return DB::transaction(function () use ($supply, $attributes) {
+        return DB::transaction(function () use ($supply, $bill, $attributes) {
             $wasCustomer = $supply->customer_id;
             $wasCurrency = $supply->currency_id;
 
@@ -259,6 +327,12 @@ class CustomerFuelSupplyService
             $postingChanged = !$supply->exists || $supply->isDirty(['customer_id', 'currency_id', 'exchange_rate', 'account_id', 'amount', 'date']);
 
             $supply->save();
+
+            $this->syncSupplierBill($supply, $bill);
+
+            // Bill raised/removed or its vendor changed - the debit side
+            // (AP for that vendor vs the cost account) is now different.
+            $postingChanged = $postingChanged || !$this->entryMatches($supply);
 
             // Allocations only make sense against the same customer's
             // invoices in the same currency - release them if either moved.
@@ -276,6 +350,8 @@ class CustomerFuelSupplyService
                 $this->post($supply);
             }
 
+            $this->settleBill($supply);
+
             $this->autoAllocate($supply);
 
             return $supply->fresh();
@@ -291,12 +367,17 @@ class CustomerFuelSupplyService
         $supply->loadMissing('customer', 'fuel', 'account');
 
         $arAccount = Account::where('name', 'Accounts Receivable')->firstOrFail();
-        $debitAccount = $supply->account ?? Account::findOrFail($supply->account_id);
+        $bill = $this->liveBill($supply);
+        // With a supplier bill the customer settles that bill: DR AP (vendor).
+        $debitAccount = $bill
+            ? Account::where('name', 'Accounts Payable')->firstOrFail()
+            : ($supply->account ?? Account::findOrFail($supply->account_id));
+        $vendorId = $bill ? $bill->vendor_id : null;
         $amount = round((float) $supply->amount, 2);
         $rate = $this->rate($supply->exchange_rate);
         $customerName = optional($supply->customer)->name;
 
-        return DB::transaction(function () use ($supply, $arAccount, $debitAccount, $amount, $rate, $customerName) {
+        return DB::transaction(function () use ($supply, $arAccount, $debitAccount, $vendorId, $bill, $amount, $rate, $customerName) {
             $entry = JournalEntry::create([
                 'company_id'              => $supply->company_id ?? $this->companyId(),
                 'customer_fuel_supply_id' => $supply->id,
@@ -315,6 +396,7 @@ class CustomerFuelSupplyService
 
             $entry->journal_entry_lines()->create([
                 'account_id'      => $debitAccount->id,
+                'vendor_id'       => $vendorId,
                 'horse_id'        => $fuel?->horse_id,
                 'driver_id'       => $fuel?->driver_id,
                 'vehicle_id'      => $fuel?->vehicle_id,
@@ -325,7 +407,9 @@ class CustomerFuelSupplyService
                 'exchange_credit' => 0,
                 'currency_id'     => $supply->currency_id,
                 'exchange_rate'   => $rate,
-                'description'     => "{$debitAccount->name} - customer supplied fuel - {$supply->description}",
+                'description'     => $bill
+                    ? "AP - " . (optional($bill->vendor)->name ?? 'supplier') . " - Bill {$bill->bill_number} settled by {$customerName} - {$supply->description}"
+                    : "{$debitAccount->name} - customer supplied fuel - {$supply->description}",
             ]);
 
             $entry->journal_entry_lines()->create([
@@ -344,6 +428,210 @@ class CustomerFuelSupplyService
 
             return $entry;
         });
+    }
+
+    // ── Supplier bill ────────────────────────────────────────────────────────
+
+    /**
+     * Create/refresh the supplier's Bill for the supply - DR the supply's
+     * cost account / CR Accounts Payable (vendor) - or remove it when $spec
+     * is null. Takes over the bill the company-paid path raised for the same
+     * source (same fuel_id / top_up_id / trip_expense_id), so switching
+     * Funded By back and forth never duplicates it. Refuses when that bill
+     * already has real supplier payments - the vendor would have been paid
+     * for something the customer paid for.
+     *
+     * $spec: key (source column), prefix, category, vendor_id and the
+     * bill's source/dimension columns.
+     */
+    private function syncSupplierBill(CustomerFuelSupply $supply, ?array $spec): ?Bill
+    {
+        $bill = $supply->bill_id ? Bill::find($supply->bill_id) : null;
+        if (!$bill && $spec) {
+            $bill = Bill::where($spec['key'], $spec[$spec['key']])->first();
+        }
+
+        if ($bill && $bill->bill_payments()->where(fn ($q) => $q->whereNull('customer_fuel_supply_id')->orWhere('customer_fuel_supply_id', '!=', $supply->id))->exists()) {
+            throw new \RuntimeException("Bill {$bill->bill_number} already has supplier payments recorded against it - reverse those payments first.");
+        }
+
+        if (!$spec) {
+            if ($bill) {
+                $this->releaseBillSettlements($supply);
+                $this->removeBill($bill, "{$supply->supply_number} raises no supplier bill");
+            }
+            if ($supply->bill_id) {
+                $supply->bill_id = null;
+                $supply->save();
+            }
+
+            return null;
+        }
+
+        // Fresh lookup - the loaded relation may predate an account change.
+        $account = Account::findOrFail($supply->account_id);
+        $amount = round((float) $supply->amount, 2);
+        $rate = $this->rate($supply->exchange_rate);
+        $date =$supply->date ? $supply->date->toDateString() : now()->toDateString();
+
+        $bill = $bill ?? new Bill;
+        $previousDate = $bill->bill_date;
+        $bill->user_id = $bill->user_id ?? Auth::id();
+        $bill->bill_number = $bill->bill_number ?? $this->billNumber($spec['prefix']);
+        $bill->category = $spec['category'];
+        foreach (['fuel_id', 'top_up_id', 'trip_id', 'trip_expense_id', 'container_id', 'horse_id', 'vehicle_id', 'asset_id', 'driver_id'] as $column) {
+            if (array_key_exists($column, $spec)) {
+                $bill->{$column} = $spec[$column];
+            }
+        }
+        // Never blank out a vendor someone set on the bill by hand.
+        $bill->vendor_id = $spec['vendor_id'] ?: $bill->vendor_id;
+        $bill->account_id = $account->id;
+        $bill->account_type_id = $account->account_type_id;
+        $bill->bill_date = $date;
+        $bill->currency_id = $supply->currency_id;
+        $bill->exchange_rate = $rate;
+        $bill->exchange_amount = round($amount * $rate, 2);
+        $bill->subtotal = $amount;
+        $bill->total = $amount;
+        $bill->authorized_by_id = $bill->authorized_by_id ?? Auth::id();
+        $vendorChanged = $bill->exists && $bill->isDirty('vendor_id');
+        $dateChanged = $previousDate !== null && substr((string) $previousDate, 0, 10) !== $date;
+        // authorization/to_be_paid deliberately NOT set on this save - see
+        // FuelJournalService::postTopUp (BillObserver would post before the
+        // BillExpense below exists).
+        $bill->save();
+
+        // One line - drop any other (e.g. a transporter fuel markup line
+        // from when the fuel was company paid).
+        $lines = $bill->bill_expenses()->orderBy('id')->get();
+        $line = $lines->shift() ?? new BillExpense;
+        $linesRemoved = $lines->isNotEmpty();
+        $lines->each->delete();
+
+        $quantity = is_numeric($supply->quantity) && (float) $supply->quantity > 0 ? (float) $supply->quantity : null;
+        $line->user_id = $line->user_id ?? Auth::id();
+        $line->bill_id = $bill->id;
+        $line->currency_id = $bill->currency_id;
+        $line->expense_id = $spec['expense_id'] ?? null;
+        $line->allowance_id = $spec['allowance_id'] ?? null;
+        $line->account_id = $account->id;
+        $line->account_type_id = $account->account_type_id;
+        $line->description = "{$supply->description} - paid by " . (optional($supply->customer)->name ?? 'customer');
+        $line->qty = $quantity ?? 1;
+        $line->amount = $quantity && is_numeric($supply->unit_price) ? $supply->unit_price : $amount;
+        $line->exchange_rate = $rate;
+        $line->exchange_amount = round($amount * $rate, 2);
+        $line->subtotal = $amount;
+        $line->subtotal_incl = $amount;
+        $accountChanged = $line->exists && $line->isDirty(['account_id', 'subtotal']);
+        $line->save();
+
+        $bill->to_be_paid = true;
+        $bill->authorization = 'approved';
+        $bill->save();
+
+        if ((int) $supply->bill_id !== (int) $bill->id) {
+            $supply->bill_id = $bill->id;
+            $supply->save();
+        }
+
+        // resyncBill: reposts only when the bill differs from what's posted
+        // (forced for a date/account/vendor change it can't see itself).
+        app(LedgerResyncService::class)->resyncBill(
+            $bill->fresh(),
+            "Customer funded {$supply->supply_number} - supplier bill posted/updated",
+            $dateChanged || $accountChanged || $vendorChanged || $linesRemoved
+        );
+
+        return $bill;
+    }
+
+    /**
+     * Allocate the supply to its supplier bill (bill_payments, source
+     * 'customer_fuel') so the bill shows as settled by the customer.
+     */
+    private function settleBill(CustomerFuelSupply $supply): void
+    {
+        $bill = $this->liveBill($supply);
+
+        // An allocation left on another bill (the supply moved bills).
+        BillPayment::where('customer_fuel_supply_id', $supply->id)
+            ->when($bill, fn ($q) => $q->where('bill_id', '!=', $bill->id))
+            ->get()
+            ->each(fn ($allocation) => $this->removeBillSettlement($allocation));
+
+        if (!$bill) {
+            return;
+        }
+
+        $allocation = BillPayment::where('customer_fuel_supply_id', $supply->id)->where('bill_id', $bill->id)->first() ?? new BillPayment;
+        $allocation->vendor_id = $bill->vendor_id;
+        $allocation->bill_id = $bill->id;
+        $allocation->customer_fuel_supply_id = $supply->id;
+        $allocation->source = self::SOURCE;
+        $allocation->currency_id = $bill->currency_id;
+        $allocation->amount = round(min((float) $supply->amount, (float) $bill->total), 2);
+        $allocation->save();
+
+        $this->refreshBillBalance($bill);
+    }
+
+    private function releaseBillSettlements(CustomerFuelSupply $supply): void
+    {
+        BillPayment::where('customer_fuel_supply_id', $supply->id)
+            ->get()
+            ->each(fn ($allocation) => $this->removeBillSettlement($allocation));
+    }
+
+    private function removeBillSettlement(BillPayment $allocation): void
+    {
+        $bill = Bill::find($allocation->bill_id);
+        $allocation->delete();
+
+        if ($bill) {
+            $this->refreshBillBalance($bill);
+        }
+    }
+
+    private function refreshBillBalance(Bill $bill): void
+    {
+        $total = round((float) $bill->total, 2);
+        $paid = round((float) $bill->bill_payments()->sum(DB::raw('COALESCE(amount+0,0)')), 2);
+        $balance = round(max(0, $total - $paid), 2);
+
+        $bill->balance = $balance;
+        $bill->status = $balance <= 0 ? 'Paid' : ($balance < $total ? 'Partial' : 'Unpaid');
+        $bill->save();
+    }
+
+    private function liveBill(CustomerFuelSupply $supply): ?Bill
+    {
+        $bill = $supply->bill_id ? Bill::find($supply->bill_id) : null;
+
+        return $bill && $bill->authorization === 'approved' ? $bill : null;
+    }
+
+    /** Whether the posted entry still debits what it should (AP for the bill's vendor, else the cost account). */
+    private function entryMatches(CustomerFuelSupply $supply): bool
+    {
+        $entry = $this->activeEntry($supply);
+        if (!$entry) {
+            return false;
+        }
+
+        $debit = $entry->journal_entry_lines()->where('debit', '>', 0)->first();
+        if (!$debit) {
+            return false;
+        }
+
+        $bill = $this->liveBill($supply);
+        if ($bill) {
+            return (int) $debit->account_id === (int) Account::where('name', 'Accounts Payable')->value('id')
+                && (int) $debit->vendor_id === (int) $bill->vendor_id;
+        }
+
+        return (int) $debit->account_id === (int) $supply->account_id;
     }
 
     private function activeEntry(CustomerFuelSupply $supply): ?JournalEntry
@@ -544,6 +832,14 @@ class CustomerFuelSupplyService
         $next = (int) CustomerFuelSupply::withTrashed()->max('id') + 1;
 
         return 'CFS' . str_pad($next, 5, '0', STR_PAD_LEFT);
+    }
+
+    /** Same numbering as the company-paid bills (FB / TEB + next bill id). */
+    private function billNumber(string $prefix): string
+    {
+        $next = (int) Bill::withTrashed()->max('id') + 1;
+
+        return $prefix . str_pad($next, 5, '0', STR_PAD_LEFT);
     }
 
     private function journalNumber(): string

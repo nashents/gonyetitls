@@ -506,9 +506,7 @@ class Index extends Component
         }
 
         DB::transaction(function () use ($container) {
-            $container->vendor_id = $this->createStationVendor(
-                $container->name, $container->email, $container->phonenumber, $container->address, $container->currency_id
-            )->id;
+            $container->vendor_id = app(\App\Services\StationVendorService::class)->createForStation($container)->id;
             $container->save();
         });
 
