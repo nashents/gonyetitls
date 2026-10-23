@@ -124,6 +124,19 @@
                                     <!-- /input-group -->
                                 </div>
                                 @endif
+                                <div class="col-lg-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                            Status
+                                        </span>
+                                        <select wire:model="filter_authorization" class="form-control" aria-label="...">
+                                            <option value="">All</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="approved">Approved</option>
+                                            <option value="rejected">Rejected</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="col-lg-2">
                                     <a href="#" wire:click.prevent="clearFilters()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-refresh"></i>CLEAR FILTERS</a>
                                 </div>

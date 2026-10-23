@@ -178,6 +178,10 @@ WithCustomStartCell
             }
         }
 
+        if (in_array($filters['authorization'] ?? null, ['pending', 'approved', 'rejected'], true)) {
+            $query->where('authorization', $filters['authorization']);
+        }
+
         if (filled($filters['search'] ?? null)) {
             $search = '%' . $filters['search'] . '%';
 

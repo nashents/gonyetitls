@@ -158,6 +158,8 @@ class Index extends Component
     // Table filters (container_id is the fueling station filter)
     public $filter_type;
     public $filter_equipment_id;
+    // '' = all, else pending | approved | rejected
+    public $filter_authorization = '';
     public $company;
 
     public $role_names;
@@ -199,6 +201,7 @@ class Index extends Component
         return [
             'type' => $this->filter_type,
             'equipment_id' => $this->filter_equipment_id,
+            'authorization' => $this->filter_authorization,
             'search' => $this->search,
         ];
     }
@@ -236,6 +239,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingFilterAuthorization()
+    {
+        $this->resetPage();
+    }
+
     public function updatingFrom()
     {
         $this->resetPage();
@@ -255,6 +263,7 @@ class Index extends Component
         $this->container_id = null;
         $this->filter_type = null;
         $this->filter_equipment_id = null;
+        $this->filter_authorization = '';
 
         $this->resetPage();
 
