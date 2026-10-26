@@ -1176,9 +1176,10 @@ class Edit extends Component
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
 
-        $this->isAdmin = Auth::user()->is_admin();
+        $this->isAdmin = Auth::user()->canOverrideTripLocks();
         $this->isTemporarilyUnlocked = (bool) ($this->trip && $this->trip->isTemporarilyUnlocked());
-        $this->isLocked = $this->trip && (int) $this->trip->status === 1 && ! $this->isTemporarilyUnlocked;
+        // is_admin / Super Admin edit completed trips without unlocking first.
+        $this->isLocked = $this->trip && (int) $this->trip->status === 1 && ! $this->isTemporarilyUnlocked && ! $this->isAdmin;
         // Admins may still correct the financial figures of an invoiced trip
         // (with a warning that the approved invoice itself isn't changed).
         $this->isOnApprovedInvoice = $this->trip && $this->trip->is_financially_locked;
@@ -2424,7 +2425,7 @@ class Edit extends Component
      *  the completed trip for a fixed window instead of a one-time grant.
      */
     public function showUnlockTrip(){
-        if (! Auth::user()->is_admin()) {
+        if (! Auth::user()->canOverrideTripLocks()) {
             return;
         }
 
@@ -2433,7 +2434,7 @@ class Edit extends Component
     }
 
     public function unlockTrip(){
-        if (! Auth::user()->is_admin()) {
+        if (! Auth::user()->canOverrideTripLocks()) {
             abort(403);
         }
 
@@ -2458,7 +2459,7 @@ class Edit extends Component
     }
 
     public function relockTrip(){
-        if (! Auth::user()->is_admin()) {
+        if (! Auth::user()->canOverrideTripLocks()) {
             abort(403);
         }
 
@@ -2569,7 +2570,8 @@ class Edit extends Component
 
         $trip = Trip::find($this->trip_id);
 
-        $locked = $trip && (int) $trip->status === 1 && ! $trip->isTemporarilyUnlocked();
+        $locked = $trip && (int) $trip->status === 1 && ! $trip->isTemporarilyUnlocked()
+            && ! Auth::user()->canOverrideTripLocks();
         $grant = null;
         if ($locked) {
             $grant = app(EditAuthorizationService::class)->activeGrant($trip, Auth::user());
@@ -2584,7 +2586,7 @@ class Edit extends Component
         // finance figures already billed can't be quietly changed, while
         // every other (operational) field on this form still saves normally.
         // Admins (is_admin) are exempt and can correct them.
-        $financiallyLocked = $trip && $trip->is_financially_locked && ! Auth::user()->is_admin();
+        $financiallyLocked = $trip && $trip->is_financially_locked && ! Auth::user()->canOverrideTripLocks();
 
         $hasTransportOrders = $trip && $trip->trip_transport_orders()->exists();
 

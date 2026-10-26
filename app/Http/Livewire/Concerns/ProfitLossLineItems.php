@@ -40,6 +40,37 @@ trait ProfitLossLineItems
         return $rate > 0 ? round($total * $rate, 2) : 0.0;
     }
 
+    /**
+     * The Item column. Lines with no expense/product/inventory - fuel bills
+     * (only bills.fuel_id/top_up_id), allowance lines, tyre/asset lines and
+     * description-only lines - showed a bare "—"; fall back through those,
+     * then the account name. Fallback relations are lazy-loaded (rare rows);
+     * the bill must be selected with fuel_id + top_up_id.
+     */
+    protected function resolveBillExpenseName($bill_expense): string
+    {
+        $productName = fn ($product) => $product ? trim(($product->brand?->name ?? '') . ' ' . ($product->name ?? '')) : '';
+
+        $name = $bill_expense->expense?->name
+            ?: $productName($bill_expense->product)
+            ?: $productName($bill_expense->inventory?->product)
+            ?: ($bill_expense->tyre_id ? trim('Tyre ' . $productName($bill_expense->tyre?->product) . ' ' . ($bill_expense->tyre?->serial_number ?? '')) : '')
+            ?: ($bill_expense->asset_id ? trim('Asset ' . $productName($bill_expense->asset?->product) . ' ' . ($bill_expense->asset?->asset_number ?? '')) : '')
+            ?: ($bill_expense->allowance_id ? trim('Allowance ' . ($bill_expense->allowance?->name ?? '')) : '')
+            ?: trim((string) $bill_expense->description);
+
+        if ($name === '') {
+            $bill = $bill_expense->bill;
+            if ($bill?->fuel_id) {
+                $name = trim('Fuel ' . ($bill->fuel?->order_number ?? ''));
+            } elseif ($bill?->top_up_id) {
+                $name = trim('Fuel top-up ' . ($bill->top_up?->order_number ?? ''));
+            }
+        }
+
+        return $name ?: ($bill_expense->account?->name ?? '—');
+    }
+
     protected function currencyLabel($currency, ?float $originalAmount = null): string
     {
         $label = trim(($currency?->name ?? '') . (! empty($currency?->symbol) ? ' (' . $currency->symbol . ')' : ''));

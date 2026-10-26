@@ -46,7 +46,7 @@
                                 </div>
                             @elseif ($isOnApprovedInvoice)
                                 <div class="alert alert-warning">
-                                    <strong><i class="fa fa-unlock"></i> Admin override - this trip is on an approved invoice.</strong>
+                                    <strong><i class="fa fa-unlock"></i> Admin override - this trip is on an approved{{ $trip && $trip->invoice_documents->where('status', 'Paid')->isNotEmpty() ? ' and paid' : '' }} invoice.</strong>
                                     You can change its customer rate/freight/currency figures, but the approved invoice is NOT updated: correct it separately (edit the invoice or raise a credit note) so the trip and the invoice still agree.
                                 </div>
                             @endif

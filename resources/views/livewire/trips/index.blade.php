@@ -430,7 +430,7 @@
                                                         <li><a href="#" wire:click="bulkSyncToSage" wire:loading.attr="disabled"><i class="fa fa-cloud-upload"></i>Sync selected to Sage</a></li>
                                                         @endif
                                                         <li><a href="#" wire:click.prevent="showBulkMarkCompleted"><i class="fa fa-check-circle"></i>Bulk Mark as Completed</a></li>
-                                                        @if (Auth::user()->is_admin())
+                                                        @if (Auth::user()->canOverrideTripLocks())
                                                         <li><a href="#" wire:click.prevent="showBulkUnlockCompleted"><i class="fa fa-unlock"></i>Bulk Unlock Completed Trips</a></li>
                                                         @endif
                                                     </ul>

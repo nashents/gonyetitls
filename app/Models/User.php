@@ -77,6 +77,15 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
+     * is_admin users and Super Admins are exempt from the trip edit locks:
+     * the completed-trip lock and the approved/paid-invoice financial lock.
+     */
+    public function canOverrideTripLocks(): bool
+    {
+        return $this->is_admin() || $this->isSuperAdmin();
+    }
+
+    /**
      * URL of the user's profile picture, falling back to the default
      * avatar when none is set or the uploaded file was deleted from disk.
      */

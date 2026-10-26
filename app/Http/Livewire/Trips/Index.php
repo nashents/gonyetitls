@@ -614,7 +614,7 @@ class Index extends Component
      *  to now(), so they lock again the moment the window passes.
      */
     public function showBulkUnlockCompleted(){
-        if (! Auth::user()->is_admin()) {
+        if (! Auth::user()->canOverrideTripLocks()) {
             return;
         }
 
@@ -625,7 +625,7 @@ class Index extends Component
     }
 
     public function bulkUnlockCompleted(){
-        if (! Auth::user()->is_admin()) {
+        if (! Auth::user()->canOverrideTripLocks()) {
             abort(403);
         }
 
@@ -646,7 +646,7 @@ class Index extends Component
     }
 
     public function bulkRelockCompleted(){
-        if (! Auth::user()->is_admin()) {
+        if (! Auth::user()->canOverrideTripLocks()) {
             abort(403);
         }
 

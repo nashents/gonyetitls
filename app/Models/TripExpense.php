@@ -54,7 +54,7 @@ class TripExpense extends Model implements Auditable
 
     public function getCanDeleteAttribute()
     {
-        if (auth()->check() && auth()->user()->is_admin()) {
+        if (auth()->check() && auth()->user()->canOverrideTripLocks()) {
             return true;
         }
 
@@ -67,7 +67,7 @@ class TripExpense extends Model implements Auditable
 
     public function getCanEditAttribute()
     {
-        if (auth()->check() && auth()->user()->is_admin()) {
+        if (auth()->check() && auth()->user()->canOverrideTripLocks()) {
             return true;
         }
 

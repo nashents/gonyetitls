@@ -280,7 +280,7 @@ class Preview extends Component
                 'inventory.product:id,name,brand_id',
                 'inventory.product.brand:id,name',
 
-                'bill:id,bill_number,currency_id,bill_date,trip_id,exchange_rate',
+                'bill:id,bill_number,currency_id,bill_date,trip_id,fuel_id,top_up_id,exchange_rate',
                 'bill.currency:id,name,symbol',
                 'bill.trip:id,trip_number,start_date',
             ])
@@ -331,27 +331,6 @@ class Preview extends Component
 
         $pdf = PDF::loadView('horses.statement.pdf', compact('horse', 'from', 'to'));
         return $pdf->download($filename);   // or ->stream($filename)
-    }
-
-    protected function resolveBillExpenseName($bill_expense): string
-    {
-        if ($bill_expense->expense) {
-            return (string) ($bill_expense->expense->name ?? '—');
-        }
-
-        if ($bill_expense->product) {
-            $brand = $bill_expense->product->brand?->name ?? '';
-            $name  = $bill_expense->product->name ?? '';
-            return trim($brand . ' ' . $name) ?: '—';
-        }
-
-        if ($bill_expense->inventory && $bill_expense->inventory->product) {
-            $brand = $bill_expense->inventory->product->brand?->name ?? '';
-            $name  = $bill_expense->inventory->product->name ?? '';
-            return trim($brand . ' ' . $name) ?: '—';
-        }
-
-        return '—';
     }
 
     public function render()
