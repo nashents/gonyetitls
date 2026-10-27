@@ -9,7 +9,6 @@
         .credential-access-section .ca-label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin-bottom: 8px; display: block; }
         .credential-access-section .ca-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; min-height: 30px; }
         .credential-access-section .ca-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 15px; background: #e8f4fd; color: #1f6fa8; font-size: 13px; }
-        .credential-access-section .ca-chip.ca-admin { background: #f1f1f1; color: #666; }
         .credential-access-section .ca-chip a { color: inherit; opacity: .6; cursor: pointer; }
         .credential-access-section .ca-chip a:hover { opacity: 1; text-decoration: none; }
         .credential-access-section .ca-list { max-height: 260px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 6px 10px; }
@@ -26,7 +25,7 @@
                     <h4>Credentials Access</h4>
                     <p>
                         Choose who can see employee PINs and use <strong>Send via Email</strong>, <strong>Send via WhatsApp</strong>
-                        and <strong>Bulk Send Credentials</strong> on Employees and Drivers. Admin accounts always can.
+                        and <strong>Bulk Send Credentials</strong> on Employees and Drivers.
                         Every send is logged, and the email shows a "Shared by" line.
                     </p>
                 </div>
@@ -35,13 +34,14 @@
             <div class="ca-body">
                 <span class="ca-label">Allowed to share ({{ $selected_users->count() }})</span>
                 <div class="ca-chips">
-                    <span class="ca-chip ca-admin"><i class="fa fa-shield"></i> Admin accounts</span>
-                    @foreach ($selected_users as $selected)
+                    @forelse ($selected_users as $selected)
                         <span class="ca-chip" wire:key="ca-chip-{{ $selected->id }}">
                             {{ ucfirst($selected->name) }} {{ ucfirst($selected->surname) }}
                             <a wire:click.prevent="removeSharer({{ $selected->id }})" title="Remove"><i class="fa fa-times"></i></a>
                         </span>
-                    @endforeach
+                    @empty
+                        <small class="text-muted">Nobody selected yet.</small>
+                    @endforelse
                 </div>
 
                 <span class="ca-label">Add people</span>
@@ -50,8 +50,9 @@
                 </div>
                 <div class="ca-list">
                     @forelse ($users as $user)
-                        <label for="credential-sharer-{{ $user->id }}" wire:key="credential-sharer-{{ $user->id }}">
-                            <input type="checkbox" id="credential-sharer-{{ $user->id }}" value="{{ $user->id }}" wire:model="sharer_ids" />
+                        {{-- wire:key and the checkbox id must differ: Livewire matches elements by either --}}
+                        <label for="ca-checkbox-{{ $user->id }}" wire:key="ca-row-{{ $user->id }}">
+                            <input type="checkbox" id="ca-checkbox-{{ $user->id }}" value="{{ $user->id }}" wire:model="sharer_ids" />
                             {{ ucfirst($user->name) }} {{ ucfirst($user->surname) }}
                             @if ($user->username)
                                 <small class="text-muted">({{ $user->username }})</small>

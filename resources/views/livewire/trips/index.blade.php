@@ -18,7 +18,19 @@
         }
         /* The table scrolls inside its own box (both axes) - sticky header
            and frozen columns stick to this box, not the page. */
+        /* Search sits on its own row above the table at any zoom level
+           (it used to float and slide over the table when zoomed in). */
+        .trips-search-bar {
+            clear: both;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .trips-search-bar .form-control { width: 100%; max-width: 520px; }
         .trips-table-scroll {
+            clear: both;
+            position: relative;
+            z-index: 0;
             max-height: 70vh;
             overflow: auto;
             border-bottom: 1px solid #ddd;
@@ -46,6 +58,35 @@
             min-width: 170px;
             max-width: 170px;
             box-shadow: 2px 0 4px rgba(0,0,0,.08);
+        }
+
+        /* Phones/tablets: 550px of frozen columns leaves no room to scroll the
+           rest, so only Trip# stays frozen (narrower); columns 2-3 scroll. */
+        @media (max-width: 991px) {
+            .trips-index-table th:nth-child(2), .trips-index-table td:nth-child(2),
+            .trips-index-table th:nth-child(3), .trips-index-table td:nth-child(3) {
+                position: static;
+                left: auto;
+                box-shadow: none;
+                min-width: 140px;
+                max-width: none;
+            }
+            .trips-index-table thead th:nth-child(2),
+            .trips-index-table thead th:nth-child(3) { position: sticky; top: 0; z-index: 3; }
+            .trips-index-table th:nth-child(1), .trips-index-table td:nth-child(1) {
+                min-width: 160px;
+                max-width: 160px;
+                box-shadow: 2px 0 4px rgba(0,0,0,.08);
+            }
+            .trips-table-scroll { max-height: 75vh; }
+        }
+        @media (max-width: 575px) {
+            .trips-index-table th:nth-child(1), .trips-index-table td:nth-child(1) {
+                min-width: 120px;
+                max-width: 120px;
+            }
+            .trips-index-table { font-size: 12px !important; }
+            .trips-search-bar .form-control { max-width: none; }
         }
 
         .trips-index-legend { background: #fff; padding: 10px 14px; margin: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.3); font-size: 13px; max-height: 320px; overflow-y: auto; }
@@ -448,10 +489,8 @@
                                     @endif
                                     </div>
                                 <br>
-                                <div class="col-md-5" style="float: right; padding-right:0px">
-                                    <div class="form-group">
-                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search: trip#, date(yyyy-mm-dd), transporter,customer,VRN/HRN,CreatedBy,POD#...">
-                                    </div>
+                                <div class="trips-search-bar">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search: trip#, date(yyyy-mm-dd), transporter,customer,VRN/HRN,CreatedBy,POD#...">
                                 </div>
 
                                

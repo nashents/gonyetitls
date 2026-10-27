@@ -102,6 +102,12 @@ class User extends Authenticatable implements Auditable
         return in_array((int) $this->id, $ids, true);
     }
 
+    /** Who may edit the Credentials Access list in Business Settings. */
+    public function canManageCredentialAccess(): bool
+    {
+        return $this->is_admin() || $this->isSuperAdmin();
+    }
+
     /**
      * URL of the user's profile picture, falling back to the default
      * avatar when none is set or the uploaded file was deleted from disk.

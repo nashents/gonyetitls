@@ -179,7 +179,7 @@
         @endif
         <div role="tabpanel" class="tab-pane" id="settings">
             @livewire('companies.settings', ['id' => $company->id])
-            @if (Auth::user()->is_admin())
+            @if (Auth::user()->canManageCredentialAccess())
                 @livewire('companies.credential-access', ['id' => $company->id])
             @endif
         </div>

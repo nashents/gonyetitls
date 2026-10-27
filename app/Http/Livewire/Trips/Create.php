@@ -3460,12 +3460,6 @@ class Create extends Component
     public function updatedUnitPrice(){
         $this->calculateFuelAmount();
     }
-    public function updatedTransporterPrice(){
-        $this->calculateFuelAmount();
-    }
-    public function updatedTransporterTotal(){
-        $this->calculateFuelAmount();
-    }
   
 
     public function calculateFuelAmount(){

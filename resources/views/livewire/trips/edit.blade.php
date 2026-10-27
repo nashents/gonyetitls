@@ -2270,26 +2270,6 @@
                                        </div>
                                  
                                    </div>
-                                   @if ($transporter_agreement == True)
-                                   <div class="row">
-                             
-                                       <div class="col-md-6">
-                                           <div class="form-group">
-                                               <label for="unit_price">Transporter Rate</label>
-                                               <input type="number" step="any" min="0" class="form-control" step="any" min="0"  wire:model.debounce.300ms="transporter_price" placeholder="Enter Transporter Price/Litre" />
-                                               @error('transporter_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                           </div>
-                                       </div>
-                                       <div class="col-md-6">
-                                           <div class="form-group">
-                                               <label for="amount">Transporter Total</label>
-                                               <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="transporter_total" placeholder="Enter Transporter Fuel Total" />
-                                               @error('transporter_total') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                           </div>
-                                       </div>
-                                 
-                                   </div>
-                                   @endif
                                    <div class="row">
                                        <div class="col-md-3">
                                            <div class="form-group">

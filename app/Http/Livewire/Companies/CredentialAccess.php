@@ -10,6 +10,7 @@ use Livewire\Component;
 /**
  * Business Settings > Credentials Access: picks the accounts (besides is_admin
  * users, who always can) allowed to see employee PINs and send login details.
+ * Managed by is_admin and Super Admin users (User::canManageCredentialAccess).
  */
 class CredentialAccess extends Component
 {
@@ -19,7 +20,7 @@ class CredentialAccess extends Component
 
     public function mount($id)
     {
-        abort_unless(Auth::user()->is_admin(), 403);
+        abort_unless(Auth::user()->canManageCredentialAccess(), 403);
 
         $company = Company::find($id);
         $this->company_id = $company->id;
@@ -28,7 +29,7 @@ class CredentialAccess extends Component
 
     public function update()
     {
-        abort_unless(Auth::user()->is_admin(), 403);
+        abort_unless(Auth::user()->canManageCredentialAccess(), 403);
 
         $ids = collect($this->sharer_ids)
             ->filter(fn ($v) => filled($v))
