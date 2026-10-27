@@ -16,6 +16,14 @@
             word-break: break-word;
             overflow-wrap: break-word;
         }
+        /* The table scrolls inside its own box (both axes) - sticky header
+           and frozen columns stick to this box, not the page. */
+        .trips-table-scroll {
+            max-height: 70vh;
+            overflow: auto;
+            border-bottom: 1px solid #ddd;
+        }
+        .trips-table-scroll .trips-index-table { margin-bottom: 0; }
         /* Freeze the header row so column headings stay visible while
            scrolling down through the trip rows. */
         .trips-index-table thead th {
@@ -448,7 +456,7 @@
 
                                
                               
-                                {{-- <div class="table-responsive"> --}}
+                                <div class="trips-table-scroll">
                                     <table class="table  table-striped table-bordered table-sm sortable trips-index-table" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
                                         <thead>
                                             <tr>
@@ -950,8 +958,8 @@
                                         @endforelse
                                         </tbody>
                                     </table>
-                                {{-- </div> --}}
-                 
+                                </div>
+
                                     {{ $trips->links() }}
 
                                 <!-- /.col-md-12 -->

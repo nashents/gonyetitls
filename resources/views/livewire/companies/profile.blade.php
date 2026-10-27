@@ -1,5 +1,16 @@
 <div>
-    <ul class="nav nav-tabs nav-justified" role="tablist">
+    <style>
+        /* Too many tabs to fit on one row: keep them on one line and scroll sideways */
+        .business-settings-tabs { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: thin; border-bottom: 1px solid #ddd; }
+        .business-settings-tabs::-webkit-scrollbar { height: 6px; }
+        .business-settings-tabs::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+        .business-settings-tabs > .nav-tabs { display: flex; flex-wrap: nowrap; border-bottom: 0; }
+        .business-settings-tabs > .nav-tabs > li { float: none; flex: 0 0 auto; margin-bottom: 0; }
+        .business-settings-tabs > .nav-tabs > li > a { white-space: nowrap; margin-bottom: 0; }
+        .business-settings-tabs > .nav-tabs > li > a select { min-width: 180px; }
+    </style>
+    <div class="business-settings-tabs">
+    <ul class="nav nav-tabs" role="tablist">
         @if (Auth::user()->is_admin())
             <li role="presentation" class="active">
                 <a href="#personal" aria-controls="personal" role="tab" data-toggle="tab">
@@ -40,6 +51,7 @@
                 <li role="presentation"><a href="#fix-fuel-order-bills" aria-controls="fix-fuel-order-bills" role="tab" data-toggle="tab">Fix Fuel Order Bills</a></li>
         @endif
     </ul>
+    </div>
     <div class="tab-content bg-white p-15">
         <div role="tabpanel" class="tab-pane active" id="personal">
             <form wire:submit.prevent="update()">
@@ -167,6 +179,9 @@
         @endif
         <div role="tabpanel" class="tab-pane" id="settings">
             @livewire('companies.settings', ['id' => $company->id])
+            @if (Auth::user()->is_admin())
+                @livewire('companies.credential-access', ['id' => $company->id])
+            @endif
         </div>
         <div role="tabpanel" class="tab-pane" id="budgets">
             @livewire('budgets.index', ['id' => $company->id])

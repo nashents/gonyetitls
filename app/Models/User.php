@@ -86,6 +86,23 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
+     * Seeing employee PINs and sending login details (email/WhatsApp) is
+     * limited to is_admin users and the accounts picked under Business
+     * Settings > Credentials Access (companies.credential_sharer_ids).
+     */
+    public function canShareCredentials(): bool
+    {
+        if ($this->is_admin()) {
+            return true;
+        }
+
+        $company = $this->employee?->company ?? Company::first();
+        $ids = array_map('intval', (array) ($company?->credential_sharer_ids ?? []));
+
+        return in_array((int) $this->id, $ids, true);
+    }
+
+    /**
      * URL of the user's profile picture, falling back to the default
      * avatar when none is set or the uploaded file was deleted from disk.
      */

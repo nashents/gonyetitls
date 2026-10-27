@@ -118,4 +118,8 @@ class Company extends Model  implements Auditable
         'street_address',
         'fleet_composition',
     ];
+
+    protected $casts = [
+        'credential_sharer_ids' => 'array',
+    ];
 }

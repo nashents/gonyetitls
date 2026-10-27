@@ -45,17 +45,19 @@
                                         <small class="color-success"><i class="fa fa-arrow-right"></i>{{$employee->user ? $employee->user->username : ""}}</small>
                                     </td>
                                 </tr>
+                                @if ($can_share_credentials)
                                 <tr>
                                     <th>Pin</th>
                                     <td>
                                         <small class="color-success">
-                                            <i class="fa fa-arrow-right"></i> 
+                                            <i class="fa fa-arrow-right"></i>
                                             <span class="pin-blur">
                                                     {{$employee->pin}}
                                             </span>
                                         </small>
                                     </td>
                                 </tr>
+                                @endif
 
                                 <tr>
                                     <th>Use email <br> as username</th>
@@ -68,11 +70,24 @@
                                        </div>
                                     </td>
                                 </tr>
-                                @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                @if ($can_share_credentials && !empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                     <tr>
                                         <th>Share Credentials</th>
                                         <td>
                                             <button type="button" wire:click.prevent="sendCredentials()" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send" : "Resend"}}</button>
+                                        </td>
+                                    </tr>
+                                @endif
+                                @if ($can_share_credentials && $credential_shares->isNotEmpty())
+                                    <tr>
+                                        <th>Shared History</th>
+                                        <td>
+                                            @foreach ($credential_shares as $share)
+                                                <small wire:key="credential-share-{{ $share->id }}">
+                                                    {{ $share->created_at->format('d-m-y H:i') }} &middot; {{ ucfirst($share->channel) }}{{ $share->bulk ? ' (bulk)' : '' }}
+                                                    &middot; by {{ $share->shared_by ? ucfirst($share->shared_by->name).' '.ucfirst($share->shared_by->surname) : 'Unknown' }}
+                                                </small><br>
+                                            @endforeach
                                         </td>
                                     </tr>
                                 @endif

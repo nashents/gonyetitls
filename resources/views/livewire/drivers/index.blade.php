@@ -72,6 +72,7 @@
                                       </tr>
                                     </thead>
                                     @if (isset($drivers))
+                                    @php $canShareCredentials = Auth::user()->canShareCredentials(); @endphp
                                     <tbody>
                                         @forelse ($drivers as $driver)
                                         @if (isset($driver->employee))
@@ -190,13 +191,13 @@
                                                     @endif
                                                     <span class="badge bg-{{$driver->user->active == 1 ? "success" : "danger"}}">{{$driver->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
                                                      <small><strong>Created: </strong> {{Carbon\Carbon::parse($user->created_at)->format('d-m-y')}}</small>
-                                                    @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                                    @if ($canShareCredentials && !empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                                             <br>
                                                             <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user?->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
                                                     @endif
                                                     <br>
-                                                    @if ($whatsappLink)
-                                                        <a  href="{{ $whatsappLink }}" target="_blank"  class="btn btn-default btn-rounded btn-xs mt-5">
+                                                    @if ($canShareCredentials && $whatsappLink)
+                                                        <a  href="{{ $whatsappLink }}" target="_blank" wire:click="logWhatsappShare({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5">
                                                             📲 Send via WhatsApp
                                                         </a>
                                                     @endif

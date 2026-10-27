@@ -6,6 +6,7 @@ use App\Exports\AttendanceRegisterExport;
 use App\Exports\BookingsExport;
 use App\Exports\EmployeesLeaveExport;
 use App\Exports\ShiftsDailyExport;
+use App\Exports\ShiftsRehandlingDailyExport;
 use App\Mail\DailyExportMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -47,10 +48,10 @@ class SendDailyReports extends Command
                 'export' => new ShiftsDailyExport(workType: 'Trips'),
                 'file'   => "shifts-trips-{$date}.xlsx",
             ],
-            // [
-            //     'export' => new ShiftsDailyExport(workType: 'Rehandlings'),
-            //     'file'   => "shift-rehandle-{$date}.xlsx",
-            // ],
+            [
+                'export' => new ShiftsRehandlingDailyExport(),
+                'file'   => "shift-rehandle-{$date}.xlsx",
+            ],
             [
                 'export' => new BookingsExport(),
                 'file'   => "garage_bookings-{$date}.xlsx",

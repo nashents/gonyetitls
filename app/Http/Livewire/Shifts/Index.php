@@ -6,6 +6,7 @@ use App\Exports\MonthlyLoadingPointDailyReportExport;
 use App\Exports\MonthlyShiftActivitiesExport;
 use App\Exports\ShiftActivitiesExport;
 use App\Exports\ShiftsDailyExport;
+use App\Exports\ShiftsRehandlingDailyExport;
 use App\Exports\ShiftsExport;
 use App\Imports\ShiftsImport;
 use App\Imports\ShiftTripsImport;
@@ -1042,6 +1043,9 @@ class Index extends Component
         if ($this->report == "Production Report") {
             return $this->exportShiftsDailyExcel(app(Excel::class));
         }
+        elseif ($this->report == "Rehandling Production Report") {
+            return $this->exportRehandlingDailyExcel(app(Excel::class));
+        }
         elseif ($this->report == "LP Prod Report") {
             return $this->exportMonthlyReport(app(Excel::class));
         }
@@ -1055,6 +1059,10 @@ class Index extends Component
     public function exportShiftsDailyExcel(Excel $excel){
         $this->dispatchBrowserEvent('hide-reportsModal');
         return $excel->download(new ShiftsDailyExport(asAt: Carbon::parse($this->asAt)), 'shifts_daily_'.$this->asAt.'.xlsx');
+    }
+    public function exportRehandlingDailyExcel(Excel $excel){
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new ShiftsRehandlingDailyExport(Carbon::parse($this->asAt)), 'shift_rehandle_'.$this->asAt.'.xlsx');
     }
 
     public function exportMonthlyReport(Excel $excel)

@@ -10,8 +10,9 @@ use App\Models\Allowance;
 use App\Models\Department;
 use Livewire\WithPagination;
 use App\Models\AllowanceDriver;
-use App\Mail\AccountCreationMail;
-use Illuminate\Support\Facades\Mail;
+use App\Models\CredentialShare;
+use App\Services\CredentialShareService;
+use Illuminate\Support\Facades\Auth;
 
 class Show extends Component
 {
@@ -101,9 +102,8 @@ class Show extends Component
 
 
 
-    public function sendCredentials(){
-         if (isset($this->employee->email) && filter_var($this->employee->email, FILTER_VALIDATE_EMAIL)) {
-            Mail::to($this->employee->email)->send(new AccountCreationMail($this->user, $this->company,$this->employee->pin));
+    public function sendCredentials(CredentialShareService $shares){
+         if ($shares->email($this->employee)) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Credentials sent to ".$this->employee->email." successfully!!"
@@ -207,8 +207,14 @@ class Show extends Component
         $this->all_departments = Department::orderBy('name','asc')->get();
         $this->employee = Employee::find($this->employee_id);
         $this->employee_departments = $this->employee->departments;
+        $can_share_credentials = Auth::user()->canShareCredentials();
+        $credential_shares = $can_share_credentials
+            ? CredentialShare::with('shared_by')->where('employee_id', $this->employee_id)->latest()->take(10)->get()
+            : collect();
         if (isset($this->driver)) {
             return view('livewire.employees.show',[
+                'can_share_credentials' => $can_share_credentials,
+                'credential_shares' => $credential_shares,
                 'all_departments' => $this->all_departments,
                 'employee_departments' =>  $this->employee->departments()->orderBy('department_employee.id')->get(),
                 'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10),
@@ -216,6 +222,8 @@ class Show extends Component
             ]);
         }else{
             return view('livewire.employees.show',[
+                'can_share_credentials' => $can_share_credentials,
+                'credential_shares' => $credential_shares,
                 'all_departments' => $this->all_departments,
                 'employee_departments' =>  $this->employee->departments()->orderBy('department_employee.id')->get(),
             ]);

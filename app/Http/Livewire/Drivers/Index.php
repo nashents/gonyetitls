@@ -14,6 +14,7 @@ use App\Models\EmployeePosition;
 use App\Models\Grade;
 use App\Models\JobTitle;
 use App\Models\Rank;
+use App\Services\CredentialShareService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
 use App\Jobs\Sage\SyncDriverToSageJob;
@@ -147,18 +148,19 @@ class Index extends Component
 
  
 
-       public function sendCredentials($id){
+       public function sendCredentials(CredentialShareService $shares, $id){
         $employee = Employee::find($id);
-        $user = $employee->user;
-        $company = $employee->company;
-         if (isset($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
-            Mail::to($employee->email)->send(new AccountCreationMail($user, $company, $employee->pin));
-            $user->sent_credentials = True;
-            $user->update();
+         if ($employee && $shares->email($employee)) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Credentials sent to ".$employee->email." successfully!!"
             ]);
+        }
+    }
+
+    public function logWhatsappShare(CredentialShareService $shares, $id){
+        if ($employee = Employee::find($id)) {
+            $shares->logWhatsapp($employee);
         }
     }
       

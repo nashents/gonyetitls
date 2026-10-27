@@ -2698,13 +2698,14 @@
                                 <select wire:model.debounce.300="report" class="form-control" required>
                                     <option value="">Select Report</option>
                                     <option value="Production Report">Production Report</option>
+                                    <option value="Rehandling Production Report">Rehandling Production Report</option>
                                     <option value="LP Prod Report">LP Prod Report</option>
                                     <option value="Daily Shift Activities Report">Daily Shift Activities Report</option>
                                     <option value="Monthly Shift Activities Report">Monthly Shift Activities Report</option>
                                 </select>
                                 @error('report') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                            @if (isset($report) && $report == "Production Report")
+                            @if (isset($report) && in_array($report, ["Production Report", "Rehandling Production Report"]))
                                 <div class="form-group">
                                     <label for="reason">As At<span class="required" style="color: red">*</span></label>
                                     <input type="date" wire:model.debounce.300="asAt" class="form-control" placeholder="asAt Date " required>

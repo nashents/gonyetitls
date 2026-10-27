@@ -38,6 +38,9 @@ Account Creation | {{$company->name}}
 												<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;"><a href="{{ $company->website }}" style="color:#fcc02d;text-decoration:underline;" target="_blank">Click me to get started</a></p>
 
 												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;color: red">Note: Your PIN is confidential. You may change it to a new one anytime from your dashboard under Profile Settings.</p>
+												@if (!empty($shared_by_name))
+													<p style="margin:0 0 12px 0;font-size:14px;line-height:20px;font-family:Arial,sans-serif;color:#555555;"><strong>Shared by:</strong> {{ $shared_by_name }}</p>
+												@endif
 											</td>
 										</tr>
 

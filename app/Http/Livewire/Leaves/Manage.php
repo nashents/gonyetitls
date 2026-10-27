@@ -88,7 +88,9 @@ class Manage extends Component
     }
 
     public function mount(){
+        // Archived employees can't apply for leave; suspended ones still can
         $this->employees = Employee::with('user')
+        ->where('archive', false)
         ->whereHas('user', function ($query) {
             $query->where('category', '!=', 'admin');
         })
@@ -138,7 +140,7 @@ class Manage extends Component
         $this->available_leave_days = 0;
 
         if (!is_null($id)) {
-            $this->selected_employee = Employee::with('departments')->find($id);
+            $this->selected_employee = Employee::with('departments')->where('archive', false)->find($id);
 
             if (!$this->selected_employee) {
                 return;

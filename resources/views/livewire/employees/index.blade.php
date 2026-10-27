@@ -21,7 +21,9 @@
                                     <a href="#" wire:click="exportEmployeesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportEmployeesCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportEmployeesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-                                    <a href="#" wire:click="bulkSendCredentials()" class="btn btn-default border-primary btn-rounded btn-wide" style="float: right"><i class="fa fa-send-o"></i>Bulk Send Credentails</a> 
+                                    @if (Auth::user()->canShareCredentials())
+                                    <a href="#" wire:click.prevent="bulkSendCredentials()" onclick="confirm('Email login credentials to ALL active employees?') || event.stopImmediatePropagation()" class="btn btn-default border-primary btn-rounded btn-wide" style="float: right"><i class="fa fa-send-o"></i>Bulk Send Credentials</a>
+                                    @endif
                                     @if (Auth::user()->is_admin())
                                     <a href="#" wire:click="setUsernames()" class="btn btn-default border-primary btn-rounded btn-wide" style="float: right"><i class="fa fa-key"></i>Set Usernames</a> 
                                     @endif
@@ -59,6 +61,7 @@
                                       </tr>
                                     </thead>
                                     @if (isset($employees))
+                                    @php $canShareCredentials = Auth::user()->canShareCredentials(); @endphp
                                     <tbody>
                                         @forelse ($employees as $employee)
                                         @php
@@ -157,13 +160,13 @@
                                                         <small>
                                                             <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
                                                         </small> 
-                                                        @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                                        @if ($canShareCredentials && !empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                                                 <br>
                                                                 <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Via Email" : "Resend Via Email"}}</button>
                                                         @endif
                                                         <br>
-                                                        @if ($whatsappLink)
-                                                            <a  href="{{ $whatsappLink }}" target="_blank"  class="btn btn-default btn-rounded btn-xs mt-5">
+                                                        @if ($canShareCredentials && $whatsappLink)
+                                                            <a  href="{{ $whatsappLink }}" target="_blank" wire:click="logWhatsappShare({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5">
                                                                 📲 Send via WhatsApp
                                                             </a>
                                                         @endif
