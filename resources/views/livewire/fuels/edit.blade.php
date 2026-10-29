@@ -65,8 +65,8 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="employees">Trips</label>
-                                               <select wire:model.debounce.300ms="selectedTrip" class="form-control" >
-                                                   <option value="">Select Trip</option>
+                                               <select wire:model="pickTrip" class="form-control" >
+                                                   <option value="">Select trip(s) - pick one to add it</option>
                                                   @foreach ($trips as $trip)
                                                       <option value="{{$trip->id}}">{{ $trip->trip_number }} <strong>From:</strong> {{$trip->loading_point ? $trip->loading_point->name : ""}} <strong>To:</strong> {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
                                                   @endforeach
@@ -75,6 +75,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @include('livewire.fuels._trip_allocations')
                                     @if ($selectedTrip)
                                     <div class="row">
                                         @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy])

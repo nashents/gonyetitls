@@ -483,6 +483,7 @@ class Edit extends Component
     public $selectedCategory;
     public $with_cargos;
     public $fuel_order;
+    public $fuel_split = false;
     public $trip_expenses;
     public $transporter_agreement;
     public $rank_names;
@@ -1397,6 +1398,7 @@ class Edit extends Component
          $this->fuel = $this->trip->fuels->where('fillup',1)->first();
 
          if ($this->fuel) {
+            $this->fuel_split = app(\App\Services\Fuel\FuelTripAllocationService::class)->isSplit($this->fuel);
             $this->fuel_id = $this->fuel->id;
             $this->unit_price = $this->fuel->unit_price;
             $this->selectedFuelCurrency = $this->fuel->currency_id;
@@ -3246,7 +3248,20 @@ class Edit extends Component
 
             $fuel = $trip->fuels->where('fillup',1)->first();
 
-            if (isset($fuel)) {
+            if (isset($fuel) && $this->fuel_split) {
+
+                // Split across trips: edited from Fuel Orders only, so the
+                // order and its other trips' shares stay intact. Count this
+                // trip's share in the totals.
+                $share = TripExpense::where('fuel_id', $fuel->id)->where('trip_id', $trip->id)->first();
+                if ($share) {
+                    $this->addToCategoryTotal(
+                        $share->category,
+                        $share->currency_id == $this->company->currency_id ? $share->amount : $share->exchange_amount
+                    );
+                }
+
+            } elseif (isset($fuel)) {
 
                     $container = Container::find($this->selectedContainer);
 
@@ -3331,6 +3346,7 @@ class Edit extends Component
                     if (isset($trip_expense)) {
                         $trip_expense->currency_id = $this->selectedFuelCurrency;
                         $trip_expense->category = $this->fuel_category;
+                        $trip_expense->quantity = $fuel->quantity;
                         $trip_expense->amount = $this->fuel_amount;
                         $trip_expense->exchange_rate = $this->fuel_exchange_rate;
                         $trip_expense->exchange_amount = $this->fuel_exchange_amount;
@@ -3395,6 +3411,7 @@ class Edit extends Component
                 $trip_expense->user_id = $this->user->id;
                 $trip_expense->trip_id = $trip->id;
                 $trip_expense->fuel_id = $fuel->id;
+                $trip_expense->quantity = $fuel->quantity;
                 $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
                 if (isset($fuel_expense)) {
                     $trip_expense->expense_id = $fuel_expense->id;

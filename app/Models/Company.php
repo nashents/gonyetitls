@@ -75,6 +75,10 @@ class Company extends Model  implements Auditable
     public function default_transporter(){
         return $this->hasOne('App\Models\Transporter')->where('default', true);
     }
+    /** Own fleet + managed transporters: the assets that make up the licensed fleet. */
+    public function fleet_transporters(){
+        return $this->hasMany('App\Models\Transporter')->operational();
+    }
     public function brokers(){
         return $this->hasMany('App\Models\Broker');
     }

@@ -206,6 +206,7 @@ class CompanyDataResetService
         '2026_10_10_000001_seed_standard_freight_service_types',
         '2026_10_13_000001_seed_opening_balance_equity_account',
         '2026_10_19_000002_seed_stock_write_off_account',
+        '2026_10_29_000001_flag_control_accounts',
     ];
 
     /**

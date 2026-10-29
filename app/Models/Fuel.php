@@ -116,6 +116,21 @@ class Fuel extends Model implements Auditable
     public function trip_expense(){
         return $this->hasOne('App\Models\TripExpense');
     }
+    /** One row per trip this order's litres are allocated to (trip_expenses.quantity). */
+    public function trip_allocations(){
+        return $this->hasMany('App\Models\TripExpense')->whereNotNull('trip_id');
+    }
+
+    /** Litres allocated to trips; a legacy row with no quantity carried the whole order. */
+    public function allocatedQuantity(): float
+    {
+        return round((float) $this->trip_allocations->sum(fn ($te) => $te->quantity !== null ? (float) $te->quantity : (float) $this->quantity), 2);
+    }
+
+    public function unallocatedQuantity(): float
+    {
+        return max(0, round((float) $this->quantity - $this->allocatedQuantity(), 2));
+    }
     public function bill(){
         return $this->hasOne('App\Models\Bill');
     }

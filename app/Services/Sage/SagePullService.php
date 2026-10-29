@@ -31,6 +31,7 @@ use App\Services\Sage\Concerns\ManagesMappings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -105,7 +106,7 @@ class SagePullService
     protected function pullCustomers(): array
     {
         $rows = $this->readAll('CUSTOMER', [
-            'CUSTOMERID', 'NAME', 'DISPLAYCONTACT.EMAIL1', 'DISPLAYCONTACT.PHONE1',
+            'CUSTOMERID', 'NAME', 'STATUS', 'DISPLAYCONTACT.EMAIL1', 'DISPLAYCONTACT.PHONE1',
             'DISPLAYCONTACT.MAILADDRESS.CITY', 'DISPLAYCONTACT.MAILADDRESS.COUNTRY',
             'DISPLAYCONTACT.MAILADDRESS.ADDRESS1',
         ], '');
@@ -116,7 +117,7 @@ class SagePullService
     protected function pullVendors(): array
     {
         $rows = $this->readAll('VENDOR', [
-            'VENDORID', 'NAME', 'DISPLAYCONTACT.EMAIL1', 'DISPLAYCONTACT.PHONE1',
+            'VENDORID', 'NAME', 'STATUS', 'DISPLAYCONTACT.EMAIL1', 'DISPLAYCONTACT.PHONE1',
             'DISPLAYCONTACT.MAILADDRESS.CITY', 'DISPLAYCONTACT.MAILADDRESS.COUNTRY',
             'DISPLAYCONTACT.MAILADDRESS.ADDRESS1',
         ], '');
@@ -167,6 +168,9 @@ class SagePullService
                 $record->sage_last_synced_at = now();
                 $record->saveQuietly();
 
+                // Mirror Sage's active/inactive status (archive when inactive).
+                $this->applySageStatus($record, $row['STATUS'] ?? null);
+
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -180,7 +184,7 @@ class SagePullService
 
     protected function pullHorses(): array
     {
-        $rows = $this->readAll('CLASS', ['CLASSID', 'NAME'], $this->classQuery(config('sageintacct.pull.horse_class_prefixes', ['H', 'FHH'])));
+        $rows = $this->readAll('CLASS', ['CLASSID', 'NAME', 'STATUS'], $this->classQuery(config('sageintacct.pull.horse_class_prefixes', ['H', 'FHH'])));
 
         // A horse's parent transporter lives on its PROJECT (SUB - TRUCKS, PARENTID =
         // the transporter project). Build registration → parent-project map so each
@@ -236,7 +240,7 @@ class SagePullService
         // Exclude transporter classes (TRANS-*) which also start with "T".
         $query = $this->classQuery(config('sageintacct.pull.trailer_class_prefixes', ['T', 'FHT'])) . " AND CLASSID NOT LIKE 'TRANS%'";
         // PARENTID carries the trailer's parent CLASS — which may be a HORSE class.
-        $rows  = $this->readAll('CLASS', ['CLASSID', 'NAME', 'PARENTID'], $query);
+        $rows  = $this->readAll('CLASS', ['CLASSID', 'NAME', 'PARENTID', 'STATUS'], $query);
 
         return $this->upsertFleetClass(Trailer::class, 'trailer_class', 'T', $rows, function (Trailer $trailer, array $row) {
             $parentClassId = $row['PARENTID'] ?? null;
@@ -343,6 +347,9 @@ class SagePullService
                     $afterUpsert($record, $row);
                 }
 
+                // Mirror Sage's active/inactive status (archive when inactive).
+                $this->applySageStatus($record, $row['STATUS'] ?? null);
+
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -357,7 +364,7 @@ class SagePullService
     protected function pullTransporters(): array
     {
         $type = (string) config('sageintacct.pull.transporter_project_type', 'SUBCONTRACTOR');
-        $rows = $this->readAll('PROJECT', ['PROJECTID', 'NAME'], "PROJECTTYPE = '{$type}'");
+        $rows = $this->readAll('PROJECT', ['PROJECTID', 'NAME', 'STATUS'], "PROJECTTYPE = '{$type}'");
 
         $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
         foreach ($rows as $row) {
@@ -369,7 +376,7 @@ class SagePullService
             }
 
             try {
-                [$record, $isNew] = $this->upsertTransporterRecord($projectId, $name);
+                [$record, $isNew] = $this->upsertTransporterRecord($projectId, $name, $row['STATUS'] ?? null);
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
                 $s['failed']++;
@@ -380,7 +387,7 @@ class SagePullService
     }
 
     /** Upsert a Transporter from a Sage SUBCONTRACTOR project. @return array{0:Transporter,1:bool} */
-    protected function upsertTransporterRecord(string $projectId, string $name): array
+    protected function upsertTransporterRecord(string $projectId, string $name, ?string $sageStatus = null): array
     {
         $record = Transporter::where('custom_ref', $projectId)
             ->orWhere('name', $name)
@@ -403,6 +410,10 @@ class SagePullService
         $record->saveQuietly();
 
         $this->linkMapping('transporter_project', $record, $projectId, $name);
+
+        // Mirror Sage's active/inactive status (archive when inactive). Null when
+        // resolved as a dependency (horse pull) — status sync owns the transporter pull.
+        $this->applySageStatus($record, $sageStatus);
 
         return [$record, $isNew];
     }
@@ -445,7 +456,7 @@ class SagePullService
         // Pull EVERY Sage employee as a driver, regardless of department — all
         // employees in this client's Sage are drivers.
         $rows = $this->readAll('EMPLOYEE', [
-            'EMPLOYEEID', 'PERSONALINFO.FIRSTNAME', 'PERSONALINFO.LASTNAME', 'PERSONALINFO.PRINTAS',
+            'EMPLOYEEID', 'STATUS', 'PERSONALINFO.FIRSTNAME', 'PERSONALINFO.LASTNAME', 'PERSONALINFO.PRINTAS',
         ], 'RECORDNO > 0');
 
         $s = ['created' => 0, 'linked' => 0, 'skipped' => 0, 'failed' => 0];
@@ -510,6 +521,12 @@ class SagePullService
 
                 // Mapping is keyed on the Employee (entity_type driver_employee).
                 $this->linkMapping('driver_employee', $employee, $empId, trim(($first ?? '') . ' ' . ($last ?? '')));
+
+                // Mirror Sage's active/inactive status onto BOTH the employee and the
+                // driver (archive both when the Sage employee is inactive). Last, so
+                // the user/mapping are set up before an inactive record is archived.
+                $this->applySageStatus($employee, $row['STATUS'] ?? null);
+                $this->applySageStatus($driver, $row['STATUS'] ?? null);
 
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
@@ -993,6 +1010,9 @@ class SagePullService
         $product->saveQuietly();
         $this->linkMapping('product_item', $product, $itemId, $name);
 
+        // Mirror Sage's active/inactive status (archive when inactive).
+        $this->applySageStatus($product, $row['STATUS'] ?? null);
+
         return [$product, $isNew];
     }
 
@@ -1031,12 +1051,14 @@ class SagePullService
                     $store          = new Store();
                     $store->name    = $name;
                     $store->user_id = $this->creatorId;
-                    $store->status  = ((string) ($row['STATUS'] ?? 'active') === 'inactive') ? '0' : '1';
                     $isNew = true;
                 }
                 $store->saveQuietly();
 
                 $this->linkMapping('store_warehouse', $store, $warehouseId, $name);
+
+                // Mirror Sage's active/inactive status (archive when inactive).
+                $this->applySageStatus($store, $row['STATUS'] ?? null);
 
                 $isNew ? $s['created']++ : $s['linked']++;
             } catch (Throwable $e) {
@@ -1274,6 +1296,9 @@ class SagePullService
         }
 
         $expense->saveQuietly();
+
+        // Mirror the Sage item's active/inactive status onto the expense too.
+        $this->applySageStatus($expense, $row['STATUS'] ?? null);
     }
 
     /** Default expense account (first Cost Of Goods Sold account — the Expenses screen's own list). */
@@ -1429,6 +1454,60 @@ class SagePullService
     protected function normaliseLocation(string $v): string
     {
         return trim(preg_replace('/\s+/', ' ', mb_strtolower(trim($v))));
+    }
+
+    /** Caches of which tables have a `status` / `archive` column (one schema query each). */
+    protected array $hasStatusColumn = [];
+    protected array $hasArchiveColumn = [];
+
+    /**
+     * Mirror a Sage master-data record's active/inactive STATUS onto its Gonyeti
+     * model: inactive → status 0 + archive = 1; active → status 1 + archive = 0.
+     * Archiving uses the `archive` boolean column (the SAME pattern as Employees and
+     * Fleet — archived records are hidden from the main list and shown in the Archived
+     * view), NOT a soft delete, so relations (trip→horse etc.) are never blanked out.
+     * No-op when STATUS wasn't pulled (null/blank). Each column is only written when
+     * the table actually has it. Sage is the master, so its status wins.
+     */
+    protected function applySageStatus(Model $model, ?string $sageStatus): void
+    {
+        $sageStatus = trim((string) $sageStatus);
+        if ($sageStatus === '') {
+            return;
+        }
+        $inactive = strcasecmp($sageStatus, 'inactive') === 0;
+        $table    = $model->getTable();
+        $dirty    = false;
+
+        if ($this->tableHasColumn($table, 'status', $this->hasStatusColumn)) {
+            $desired = $inactive ? 0 : 1;
+            if ((string) $model->status !== (string) $desired) {
+                $model->status = $desired;
+                $dirty = true;
+            }
+        }
+
+        if ($this->tableHasColumn($table, 'archive', $this->hasArchiveColumn)) {
+            $desired = $inactive ? 1 : 0;
+            if ((string) $model->archive !== (string) $desired) {
+                $model->archive = $desired;
+                $dirty = true;
+            }
+        }
+
+        if ($dirty) {
+            $model->saveQuietly();
+        }
+    }
+
+    /** Memoised Schema::hasColumn, so a pull doesn't query the schema once per row. */
+    protected function tableHasColumn(string $table, string $column, array &$cache): bool
+    {
+        if (! array_key_exists($table, $cache)) {
+            $cache[$table] = Schema::hasColumn($table, $column);
+        }
+
+        return $cache[$table];
     }
 
     /** Record the Sage link in integration_mappings (fleet entities). */

@@ -235,14 +235,14 @@ class Index extends Component
     {
 
      if (filled($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }else{
-            $this->horses = Horse::with('horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
+            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
         }
           if (filled($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
         }else{
-              $this->vehicles = Vehicle::with('vehicle_make:id,name','vehicle_model:id,name')->orderByIdentifier('asc')->get();
+              $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->orderByIdentifier('asc')->get();
         }
          if (filled($this->searchAsset)) {
             $this->assets = Asset::query()->with('product:id,name','product.brand')->where('disposed', 0)->where('status', 1)
@@ -260,9 +260,9 @@ class Index extends Component
         }
 
         if (filled($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+            $this->trailers = Trailer::operational()->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
         }else{
-            $this->trailers = Trailer::orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::operational()->orderByIdentifier('asc')->get();
         }
         $search = trim((string) $this->search);
 

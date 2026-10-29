@@ -36,6 +36,7 @@ WithCustomStartCell
             return   [
                 $transporter->transporter_number,
                 $transporter->name,
+                $transporter->fleet_type_label,
                 $transporter->phonenumber,
                 $transporter->worknumber,
                 $transporter->email,
@@ -51,6 +52,7 @@ WithCustomStartCell
             return[
                 'Transporter#',
                 'Name ',
+                'Fleet Type',
                 'Phonenumber',
                 'Worknumber',
                 'Email',
@@ -65,7 +67,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:I7')->applyFromArray([
+                $event->sheet->getStyle('A7:J7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

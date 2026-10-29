@@ -29,7 +29,17 @@
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search transporters...">
                                 </div>
-                              
+
+                            </div>
+                            <div class="col-md-2" style="float: right">
+                                <div class="form-group">
+                                    <select wire:model="fleetTypeFilter" class="form-control">
+                                        <option value="">All Fleet Types</option>
+                                        @foreach (\App\Models\Transporter::FLEET_TYPES as $value => $label)
+                                            <option value="{{ $value }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
@@ -68,6 +78,10 @@
                                     <td>{{ucfirst($transporter->name)}}
                                         @if ($transporter->default)
                                         <span class="badge bg-primary">Default</span>
+                                        @elseif ($transporter->fleet_type === \App\Models\Transporter::FLEET_MANAGED)
+                                        <span class="badge bg-info" title="Managed: assets appear in bookings, inspections, workshop and stores, and count toward the fleet plan">Managed</span>
+                                        @else
+                                        <span class="badge bg-secondary" title="Once-off: assets are used on trips only">Once-off</span>
                                         @endif
                                         @if ($this->sageEnabled)
                                             @php $sm = $transporter->sageMapping; $ss = optional($sm)->sync_status; @endphp
@@ -391,6 +405,7 @@
                         <small class="d-block text-muted">Cannot be changed back once saved as default.</small>
                         @error('default') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
+                    @include('livewire.transporters._fleet_type')
 
                     <br>
 
@@ -645,6 +660,7 @@
                         <small class="d-block text-muted">Cannot be changed back once saved as default.</small>
                         @error('default') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
+                    @include('livewire.transporters._fleet_type')
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

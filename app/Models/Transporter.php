@@ -13,6 +13,58 @@ class Transporter extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    /** Own fleet: the company's default transporter. */
+    public const FLEET_OWN = 'own';
+    /** Subcontractor run like the own fleet (bookings, workshop, stores) and counted toward the plan band. */
+    public const FLEET_MANAGED = 'managed';
+    /** Subcontractor used on trips only; its assets are hidden from operational modules. */
+    public const FLEET_ONCE_OFF = 'once_off';
+
+    public const FLEET_TYPES = [
+        self::FLEET_OWN => 'Own Fleet',
+        self::FLEET_MANAGED => 'Managed',
+        self::FLEET_ONCE_OFF => 'Once-off',
+    ];
+
+    /** Fleet types whose assets appear in operational modules and count toward the plan. */
+    public const OPERATIONAL_FLEET_TYPES = [self::FLEET_OWN, self::FLEET_MANAGED];
+
+    protected static function booted()
+    {
+        // `default` and fleet_type stay in step: default <=> own. A demoted
+        // own fleet becomes managed so its assets stay operational.
+        static::saving(function (Transporter $transporter) {
+            if ($transporter->isDirty('default')) {
+                if ($transporter->default) {
+                    $transporter->fleet_type = self::FLEET_OWN;
+                } elseif ($transporter->fleet_type === self::FLEET_OWN) {
+                    $transporter->fleet_type = self::FLEET_MANAGED;
+                }
+            } elseif ($transporter->isDirty('fleet_type')) {
+                $transporter->default = $transporter->fleet_type === self::FLEET_OWN;
+            }
+
+            if (! $transporter->fleet_type) {
+                $transporter->fleet_type = $transporter->default ? self::FLEET_OWN : self::FLEET_ONCE_OFF;
+            }
+        });
+    }
+
+    public function scopeOperational($query)
+    {
+        return $query->whereIn('fleet_type', self::OPERATIONAL_FLEET_TYPES);
+    }
+
+    public function isOperational(): bool
+    {
+        return in_array($this->fleet_type ?: self::FLEET_ONCE_OFF, self::OPERATIONAL_FLEET_TYPES, true);
+    }
+
+    public function getFleetTypeLabelAttribute(): string
+    {
+        return self::FLEET_TYPES[$this->fleet_type] ?? self::FLEET_TYPES[self::FLEET_ONCE_OFF];
+    }
+
     public function bookings(){
         return $this->hasMany('App\Models\Booking');
     }
@@ -144,6 +196,7 @@ class Transporter extends Model implements Auditable
         'status',
         'street_address',
         'default',
+        'fleet_type',
         'custom_ref',
         'customer_id',
     ];

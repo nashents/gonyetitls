@@ -658,8 +658,8 @@ class Index extends Component
  
   
         elseif($category == 'cargos'){
-            if ($this->selectedTransporter) {
-                $this->cargos = Transporter::find($this->selectedTransporter)->cargos->sortBy('name');
+            if ($this->selectedTransporter && $transporter = Transporter::find($this->selectedTransporter)) {
+                $this->cargos = $transporter->cargos->sortBy('name');
             }else{
                 $this->cargos = Cargo::orderBy('name','asc')->get();
             }
@@ -964,9 +964,14 @@ class Index extends Component
 
         public function updatedSelectedTransporter($id)
     {
+        $transporter = blank($id) ? null : Transporter::find($id);
+        if (!$transporter) {
+            $this->selectedTransporter = null;
+            $this->cargos = Cargo::orderBy('name','asc')->get();
+            return;
+        }
         if (!is_null($id) ) {
             $this->selectedTransporter = $id;
-            $transporter = Transporter::find($id);
             $this->cargos = $transporter->cargos->sortBy('name');
 
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {

@@ -2051,7 +2051,11 @@
                                        <label for="one" class="radio-label">Fuel Order</label>
                                        @error('fuel_order') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
-                                   @if ($fuel_order == True)
+                                   @if ($fuel_order == True && $fuel_split)
+                                   <div class="alert alert-info">
+                                       <i class="fa fa-info-circle"></i> Fuel order <strong>{{ $fuel?->order_number }}</strong> is split across trips. Edit its litres and trip allocations from <strong>Fuel Orders</strong>.
+                                   </div>
+                                   @elseif ($fuel_order == True)
                                    @if ($selectedHorse)
                                    <div class="form-group">
                                        <label>Fuel Source<span class="required" style="color: red">*</span></label>

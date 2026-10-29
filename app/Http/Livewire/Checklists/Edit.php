@@ -139,7 +139,7 @@ class Edit extends Component
         $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
         $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
         $this->checklist_items = collect();
-        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::operational()->orderByIdentifier('asc')->get();
         $this->drivers = Driver::query()
                             ->join('employees', 'drivers.employee_id', '=', 'employees.id')
                             ->orderBy('employees.name', 'asc')
@@ -148,8 +148,8 @@ class Edit extends Component
                             ->select('drivers.*') // prevent column conflicts
                             ->get();
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
-        $this->trailers = Trailer::orderByIdentifier('asc')->get();
-        $this->horses = Horse::orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::operational()->orderByIdentifier('asc')->get();
+        $this->horses = Horse::operational()->orderByIdentifier('asc')->get();
 
     }
 

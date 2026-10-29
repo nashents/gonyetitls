@@ -576,12 +576,16 @@ class PaymentJournalService
 
     /**
      * Withdrawal/deposit modals let the user pick any chart-of-accounts entry
-     * as the contra account via transaction_category (which stores the
-     * account NAME, not an id). Falls back to the Uncategorized Expense/
-     * Income account used as the modal's own default.
+     * as the contra account. contra_account_id pins the exact account; older
+     * rows only carry its NAME in transaction_category. Falls back to the
+     * Uncategorized Expense/Income account used as the modal's own default.
      */
     private function resolveContraAccount(Payment $payment, string $fallbackName): Account
     {
+        if ($payment->contra_account_id && $account = Account::find($payment->contra_account_id)) {
+            return $account;
+        }
+
         if ($payment->transaction_category) {
             $account = Account::where('name', $payment->transaction_category)->first();
             if ($account) {

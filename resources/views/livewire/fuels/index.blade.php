@@ -318,6 +318,19 @@
                                                             {{ optional($from?->country)->name }} {{ $from?->city }} —
                                                             {{ optional($to?->country)->name }} {{ $to?->city }}</small>
                                                         </div>
+                                                        @php $fuel_allocations = $fuel->trip_allocations()->with('trip:id,trip_number')->get(); @endphp
+                                                        @if ($fuel_allocations->count() > 1 || $fuel->unallocatedQuantity() > 0)
+                                                            <div class="fuel-meta text-muted">
+                                                                <small><strong>Split:</strong>
+                                                                    @foreach ($fuel_allocations as $allocation)
+                                                                        {{ $allocation->trip?->trip_number }} {{ number_format((float) ($allocation->quantity ?? $fuel->quantity), 2) }} L{{ !$loop->last ? ',' : '' }}
+                                                                    @endforeach
+                                                                    @if ($fuel->unallocatedQuantity() > 0)
+                                                                        | <span class="text-warning">Unallocated {{ number_format($fuel->unallocatedQuantity(), 2) }} L</span>
+                                                                    @endif
+                                                                </small>
+                                                            </div>
+                                                        @endif
                                                     @endif
                                                     @if ($fuel->comments)
                                                         <div class="fuel-meta text-muted">
@@ -609,8 +622,8 @@
                                 <div class="form-group">
                                     <label for="trips">Trips</label>
                                     <input type="text" wire:model.debounce.300ms="searchTrip" placeholder="Search trips..." class="form-control">
-                                    <select wire:model.debounce.300ms="selectedTrip" class="form-control" size="4">
-                                        <option value="">Select Trip</option>
+                                    <select wire:model="pickTrip" class="form-control" size="4">
+                                        <option value="">Select trip(s) - pick one to add it</option>
                                             @foreach ($trips as $trip)
                                             <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}} |
                                                 @if ($trip->horse)
@@ -631,6 +644,7 @@
                                 </div>
                             </div>
                         </div>
+                        @include('livewire.fuels._trip_allocations')
                         @if ($selectedTrip)
                         <div class="row">
                             @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy && !($type == 'Horse' && $fuel_source == 'truck'), 'col' => 'col-md-6'])
@@ -1098,8 +1112,8 @@
                                 <div class="form-group">
                                     <label for="trips">Trips</label>
                                     <input type="text" wire:model.debounce.300ms="searchTrip" placeholder="Search trips..." class="form-control">
-                                    <select wire:model.debounce.300ms="selectedTrip" class="form-control" size="4">
-                                        <option value="">Select Trip</option>
+                                    <select wire:model="pickTrip" class="form-control" size="4">
+                                        <option value="">Select trip(s) - pick one to add it</option>
                                             @foreach ($trips as $trip)
                                             <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}} |
                                                 @if ($trip->horse)
@@ -1120,6 +1134,7 @@
                                 </div>
                             </div>
                         </div>
+                        @include('livewire.fuels._trip_allocations')
                         @if ($selectedTrip)
                         <div class="row">
                             @include('livewire.fuels._customer_supplied', ['part' => 'funding', 'flag' => 'supplied_by_customer', 'customerField' => 'fuel_customer_id', 'customers' => $customers, 'selectable' => !$this->isBulkBuy && !($type == 'Horse' && $fuel_source == 'truck'), 'col' => 'col-md-6'])

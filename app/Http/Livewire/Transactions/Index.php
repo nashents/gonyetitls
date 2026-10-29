@@ -22,6 +22,8 @@ use App\Models\TransactionType;
 use App\Models\Transporter;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Http\Livewire\Concerns\RecordsCashTransactions;
+use App\Services\Accounting\CashTransactionAccounts;
 use App\Services\Accounting\PaymentJournalService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +33,7 @@ use Livewire\WithFileUploads;
 
 class Index extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, RecordsCashTransactions;
 
     public $payments;
     public $payment;
@@ -47,6 +49,7 @@ class Index extends Component
     public $description;
     public $notes;
     public $transaction_category;
+    public $contra_account_id;
     public $transaction_type;
     public $bank_accounts;
     public $bank_account_id;
@@ -453,18 +456,20 @@ class Index extends Component
     public function showDepositModal(){
         $transaction_type = TransactionType::where('name','Deposit')->first();
         $this->transaction_type_id = $transaction_type->id;
-        $this->transaction_category = Account::where('name','Uncategorized Income')->first()->name;
+        $this->contra_account_id = Account::where('name','Uncategorized Income')->value('id');
         $this->dispatchBrowserEvent('show-depositModal');
     }
-   
 
     public function storeDepositTransaction(){
 
+        $this->validateCashTransaction(CashTransactionAccounts::DEPOSIT);
+
         $account = Account::find($this->account_id);
-        $current_balance = $account->balance;
+        $contraAccount = Account::find($this->contra_account_id);
 
         $payment = new Payment;
         $payment->user_id = Auth::user()->id;
+        $payment->company_id = Auth::user()->employee->company_id;
         $payment->payment_number = $this->paymentNumber();
         $payment->account_id = $this->account_id;
         if ($this->customer == TRUE) {
@@ -474,31 +479,30 @@ class Index extends Component
         $payment->transaction_type_id = $this->transaction_type_id;
         $payment->movement = "Crt";
         $payment->description = $this->description;
-       
-        $payment->notes = $this->notes;
-        $payment->currency_id = $account->currency->id;
 
-        $new_transaction_category = str_replace("\n", "", $this->transaction_category);
-        $payment->transaction_category = $new_transaction_category;
+        $payment->notes = $this->notes;
+        $payment->currency_id = $account->currency_id;
+
+        $payment->contra_account_id = $contraAccount->id;
+        $payment->transaction_category = $contraAccount->name;
         $payment->category = 'deposit';
 
-        if(isset($this->customer_id) && isset($this->selectedCurrency) &&   $new_transaction_category == "Customer Deposits"){
+        if(isset($this->customer_id) && isset($this->selectedCurrency) && $contraAccount->name == "Customer Deposits"){
             if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
                 $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
             }else{
                 $payment->drawdown_balance = $this->amount;
             }
         }
-       
+
         $payment->amount = $this->amount;
         $payment->exchange_rate = $this->exchange_rate;
         $payment->exchange_amount = $this->exchange_amount;
-        $payment->save();     
 
-       
-        $account->balance = $current_balance + $this->amount;
-        $account->update();
-        
+        if (!$this->saveCashTransaction($payment, $account, (float) $this->amount, 'Deposit')) {
+            return;
+        }
+
         if(isset($this->receipt)){
             $file = $this->receipt;
             // get file with ext
@@ -520,10 +524,10 @@ class Index extends Component
         }
         $document->status = 1;
         $document->save();
-  
+
 
         }
-       
+
         $this->dispatchBrowserEvent('hide-depositModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -532,7 +536,7 @@ class Index extends Component
         ]);
 
         return redirect(request()->header('Referer'));
-       
+
     }
 
     public function showTransferModal(){
@@ -606,20 +610,24 @@ class Index extends Component
     public function showWithdrawalModal(){
         $transaction_type = TransactionType::where('name','Withdrawal')->first();
         $this->transaction_type_id = $transaction_type->id;
-        $this->transaction_category = Account::where('name','Uncategorized Expense')->first()->name;
+        $this->contra_account_id = Account::where('name','Uncategorized Expense')->value('id');
         $this->dispatchBrowserEvent('show-withdrawalModal');
     }
 
     public function storeWithdrawalTransaction(){
 
-        $account = Account::find($this->account_id);
-        $current_balance = $account->balance;
+        $this->validateCashTransaction(CashTransactionAccounts::WITHDRAWAL);
 
-        if ($current_balance > $this->amount) {
-        
+        $account = Account::find($this->account_id);
+        $contraAccount = Account::find($this->contra_account_id);
+
+        // Withdrawing the whole floating balance is allowed
+        if ((float) $account->balance >= (float) $this->amount) {
+
 
         $payment = new Payment;
         $payment->user_id = Auth::user()->id;
+        $payment->company_id = Auth::user()->employee->company_id;
         $payment->payment_number = $this->paymentNumber();
         $payment->account_id = $this->account_id;
         if ($this->customer == TRUE) {
@@ -632,18 +640,18 @@ class Index extends Component
         $payment->transaction_type_id = $this->transaction_type_id;
         $payment->movement = "Dbt";
         $payment->description = $this->description;
-        $payment->transaction_category = $this->transaction_category;
+        $payment->contra_account_id = $contraAccount->id;
+        $payment->transaction_category = $contraAccount->name;
         $payment->category = 'withdrawal';
         $payment->notes = $this->notes;
-        $payment->currency_id = $account->currency->id;
+        $payment->currency_id = $account->currency_id;
         $payment->amount = $this->amount;
         $payment->exchange_rate = $this->exchange_rate;
         $payment->exchange_amount = $this->exchange_amount;
-        $payment->save();
 
-
-        $account->balance = $current_balance - $this->amount;
-        $account->update();
+        if (!$this->saveCashTransaction($payment, $account, -(float) $this->amount, 'Withdrawal')) {
+            return;
+        }
 
         if(isset($this->receipt)){
             $file = $this->receipt;
@@ -805,6 +813,8 @@ class Index extends Component
    
         return view('livewire.transactions.index',[
             'journal_transaction_account_types' => AccountTypeGroup::with('account_types.accounts')->get(),
+            'deposit_categories'        => app(CashTransactionAccounts::class)->grouped(CashTransactionAccounts::DEPOSIT),
+            'withdrawal_categories'     => app(CashTransactionAccounts::class)->grouped(CashTransactionAccounts::WITHDRAWAL),
             'currencies'                => Currency::all(),
             'dimensionOptions'          => $this->dimensionOptions,
             'totalDebit'                => $this->totalDebit,

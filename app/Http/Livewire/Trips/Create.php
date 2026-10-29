@@ -1717,6 +1717,7 @@ class Create extends Component
             $trip_expense->user_id = $this->user->id;
             $trip_expense->trip_id = $trip->id;
             $trip_expense->fuel_id = $fuel->id;
+            $trip_expense->quantity = $fuel->quantity;
             $trip_expense->expense_id = $fuel_expense->id ?? null;
             $trip_expense->currency_id = $fuel->currency_id;
             $trip_expense->category = $fuel->category;
@@ -2874,6 +2875,7 @@ class Create extends Component
                         $trip_expense->user_id = $this->user->id;
                         $trip_expense->trip_id = $trip->id;
                         $trip_expense->fuel_id = $fuel->id;
+                        $trip_expense->quantity = $fuel->quantity;
                         $trip_expense->expense_id = $fuel_expense->id ?? null;
                         $trip_expense->currency_id = $this->selectedFuelCurrency;
                         $trip_expense->category = $this->fuel_category;

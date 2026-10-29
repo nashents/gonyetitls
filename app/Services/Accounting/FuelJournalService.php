@@ -36,6 +36,9 @@ use Illuminate\Support\Facades\Log;
  */
 class FuelJournalService
 {
+    /** Bill line holding a split order's litres not allocated to any trip. */
+    public const UNALLOCATED_LINE = 'Unallocated fuel (not on a trip)';
+
     public function __construct(
         private BillJournalService $billJournal,
         private JournalReversalService $journalReversal,
@@ -186,10 +189,17 @@ class FuelJournalService
             // markup with the markup credited to Fuel Margin (Business Settings).
             $recovery = app(TripExpenseRecoveryService::class);
             $isTransporterFuel = $recovery->isTransporterFuel($fuel);
+
+            // An order split across trips may leave litres unallocated: only
+            // the allocated share goes to the trip account (and is marked up);
+            // the balance is booked to Fuel - Ops on its own line.
+            [$allocatedQty, $allocatedCost] = $this->tripAllocation($fuel);
+            $unallocatedCost = $fuel->trip_id ? round((float) $fuel->amount - $allocatedCost, 2) : 0.0;
+
             $markup = 0.0;
             if ($isTransporterFuel) {
                 $targetAccount = $recovery->transporterRecoverable();
-                $markup = $recovery->applyFuelMarkup($fuel, optional($fuel->trip)->company ?? optional(optional(Auth::user())->employee)->company);
+                $markup = $recovery->applyFuelMarkup($fuel, optional($fuel->trip)->company ?? optional(optional(Auth::user())->employee)->company, $allocatedCost);
             } else {
                 $targetAccount = $fuel->trip_id
                     ? Account::where('name', 'Fuel - COGS')->firstOrFail()
@@ -201,6 +211,8 @@ class FuelJournalService
             $isOnceOffBuy = optional($fuel->container)->purchase_type === 'Once Off Buy';
 
             $bill = Bill::where('fuel_id', $fuel->id)->first() ?: new Bill;
+            // Line changes only need a forced repost when something was already posted.
+            $hadEntry = $bill->exists && JournalEntry::where('bill_id', $bill->id)->exists();
             $bill->user_id = $bill->user_id ?? Auth::id();
             $bill->bill_number = $bill->bill_number ?? $this->billNumber();
             $bill->fuel_id = $fuel->id;
@@ -235,6 +247,7 @@ class FuelJournalService
 
             $billExpense = $bill->bill_expenses()
                 ->when($marginAccount, fn ($q) => $q->where('account_id', '!=', $marginAccount->id))
+                ->where(fn ($q) => $q->whereNull('description')->orWhere('description', '!=', self::UNALLOCATED_LINE))
                 ->first() ?? new BillExpense;
             $billExpense->user_id = $billExpense->user_id ?? Auth::id();
             $billExpense->bill_id = $bill->id;
@@ -242,9 +255,9 @@ class FuelJournalService
             $billExpense->expense_id = $fuelExpense?->id;
             $billExpense->account_id = $targetAccount->id;
             $billExpense->account_type_id = $targetAccount->account_type_id;
-            $billExpense->qty = $fuel->quantity;
+            $billExpense->qty = $fuel->trip_id ? $allocatedQty : $fuel->quantity;
             $billExpense->amount = $markup > 0 ? $fuel->transporter_price : $fuel->unit_price;
-            $billExpense->subtotal = round((float) $fuel->amount + $markup, 2);
+            $billExpense->subtotal = round(($fuel->trip_id ? $allocatedCost : (float) $fuel->amount) + $markup, 2);
             // A bill built by the old inline trip-approval code was booked to
             // "Trip Expense" - moving it to Fuel - COGS/Ops must repost, since
             // resync otherwise only compares the control account's amount.
@@ -272,6 +285,27 @@ class FuelJournalService
                 $accountChanged = true;
             }
 
+            $unallocatedLine = $bill->bill_expenses()->where('description', self::UNALLOCATED_LINE)->first();
+            if ($unallocatedCost > 0.004) {
+                $opsAccount = Account::where('name', 'Fuel - Ops')->firstOrFail();
+                $unallocatedLine = $unallocatedLine ?? new BillExpense;
+                $accountChanged = $accountChanged || !$unallocatedLine->exists || round((float) $unallocatedLine->subtotal, 2) !== $unallocatedCost;
+                $unallocatedLine->user_id = $unallocatedLine->user_id ?? Auth::id();
+                $unallocatedLine->bill_id = $bill->id;
+                $unallocatedLine->currency_id = $bill->currency_id;
+                $unallocatedLine->expense_id = $fuelExpense?->id;
+                $unallocatedLine->account_id = $opsAccount->id;
+                $unallocatedLine->account_type_id = $opsAccount->account_type_id;
+                $unallocatedLine->description = self::UNALLOCATED_LINE;
+                $unallocatedLine->qty = round((float) $fuel->quantity - $allocatedQty, 2);
+                $unallocatedLine->amount = $fuel->unit_price;
+                $unallocatedLine->subtotal = $unallocatedCost;
+                $unallocatedLine->save();
+            } elseif ($unallocatedLine) {
+                $unallocatedLine->delete();
+                $accountChanged = true;
+            }
+
             // Once Off Buy is a genuine new payable; Bulk Buy consumption
             // draws down inventory already paid for at top-up time - not a
             // new payable.
@@ -280,6 +314,7 @@ class FuelJournalService
             $bill->save();
 
             $bill = $bill->fresh();
+            $accountChanged = $accountChanged && $hadEntry;
 
             // resyncBill*, not a bare post() - postConsumption() is called
             // again whenever the fuel order is edited after approval (see
@@ -307,12 +342,15 @@ class FuelJournalService
             );
         });
 
-        // Transporter fuel is deducted from the trip's transporter payment bill.
-        if ($fuel->trip_id && app(TripExpenseRecoveryService::class)->isTransporterFuel($fuel) && $fuel->trip) {
-            try {
-                app(TransporterPaymentBillService::class)->syncTrip($fuel->trip);
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Transporter bill deductions for fuel order {$fuel->order_number} not refreshed: " . $e->getMessage());
+        // Transporter fuel is deducted from each allocated trip's transporter payment bill.
+        if ($fuel->trip_id && app(TripExpenseRecoveryService::class)->isTransporterFuel($fuel)) {
+            $tripIds = $fuel->trip_allocations()->pluck('trip_id')->push($fuel->trip_id)->unique();
+            foreach (\App\Models\Trip::whereIn('id', $tripIds)->get() as $trip) {
+                try {
+                    app(TransporterPaymentBillService::class)->syncTrip($trip);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Transporter bill deductions for fuel order {$fuel->order_number} on trip {$trip->trip_number} not refreshed: " . $e->getMessage());
+                }
             }
         }
 
@@ -389,6 +427,27 @@ class FuelJournalService
         $paid = $bill->exists ? (float) $bill->bill_payments()->sum('amount') : 0.0;
 
         return max($total - $paid, 0);
+    }
+
+    /**
+     * [litres, cost] of the order allocated to trips (FuelTripAllocationService).
+     * A trip order with no allocation rows, or legacy rows without a quantity,
+     * counts as wholly allocated.
+     */
+    private function tripAllocation(Fuel $fuel): array
+    {
+        $allocations = $fuel->trip_allocations()->get();
+        if (!$fuel->trip_id || $allocations->isEmpty() || $allocations->contains(fn ($te) => $te->quantity === null)) {
+            return [(float) $fuel->quantity, round((float) $fuel->amount, 2)];
+        }
+
+        $orderQty = (float) $fuel->quantity;
+        $qty = min($orderQty, round((float) $allocations->sum('quantity'), 2));
+        $cost = ($orderQty <= 0 || abs($orderQty - $qty) < 0.005)
+            ? (float) $fuel->amount
+            : (float) $fuel->amount * $qty / $orderQty;
+
+        return [$qty, round($cost, 2)];
     }
 
     private function billNumber(): string

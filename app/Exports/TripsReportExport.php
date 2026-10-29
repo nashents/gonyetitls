@@ -658,9 +658,9 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $offloaded_date = $trip->trip_status == "Offloaded" ? $formatDate($trip->trip_status_date) : "";
         }
         
-        $fuel_purchased = ($trip->fuels ?? collect())->where('amount', '!=', null)->where('amount', '!=', '')->sum('amount');
-        $fuel_sold = ($trip->fuels ?? collect())->where('transporter_total', '!=', null)->where('transporter_total', '!=', '')->sum('transporter_total');
-        $fuel_profit = ($trip->fuels ?? collect())->where('profit', '!=', null)->where('profit', '!=', '')->sum('profit');
+        $fuel_purchased = $trip->allocatedFuels()->where('amount', '!=', null)->where('amount', '!=', '')->sum('amount');
+        $fuel_sold = $trip->allocatedFuels()->where('transporter_total', '!=', null)->where('transporter_total', '!=', '')->sum('transporter_total');
+        $fuel_profit = $trip->allocatedFuels()->where('profit', '!=', null)->where('profit', '!=', '')->sum('profit');
 
         $weight = $trip->weight ?: "";
         $quantity = $trip->quantity ?: "";

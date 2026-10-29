@@ -380,9 +380,9 @@ class Edit extends Component
      $this->existing_bookings = $this->selected_equipment?->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
 
           if (filled($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }else{
-            $this->horses = Horse::with('horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
+            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
         }
 
         if (filled($this->searchVendor)) {
@@ -398,9 +398,9 @@ class Edit extends Component
         }
 
         if (filled($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
         }else{
-              $this->vehicles = Vehicle::with('vehicle_make:id,name','vehicle_model:id,name')->orderByIdentifier('asc')->get();
+              $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->orderByIdentifier('asc')->get();
         }
 
         if (filled($this->searchAsset)) {
@@ -419,9 +419,9 @@ class Edit extends Component
         }
 
         if (filled($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+            $this->trailers = Trailer::operational()->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
         }else{
-            $this->trailers = Trailer::orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::operational()->orderByIdentifier('asc')->get();
         }
 
         if (filled($this->searchEmployee)) {

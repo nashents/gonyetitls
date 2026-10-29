@@ -124,11 +124,11 @@ class Index extends Component
         }
 
         if ($value == "horse") {
-            $this->horses =  Horse::where('archive',0)->orderByIdentifier('asc')->get();
+            $this->horses =  Horse::operational()->where('archive',0)->orderByIdentifier('asc')->get();
         }elseif($value == "vehicle"){
-            $this->vehicles = Vehicle::where('archive',0)->orderByIdentifier('asc')->get();
+            $this->vehicles = Vehicle::operational()->where('archive',0)->orderByIdentifier('asc')->get();
         }elseif($value == "trailer"){
-            $this->trailers = Trailer::where('archive',0)->orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::operational()->where('archive',0)->orderByIdentifier('asc')->get();
         }
 
     }
@@ -332,9 +332,9 @@ class Index extends Component
     
         $this->fitness_id = $fitness->id;
 
-        $this->horses =  Horse::where('archive',0)->orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::where('archive',0)->orderByIdentifier('asc')->get();
-        $this->trailers = Trailer::where('archive',0)->orderByIdentifier('asc')->get();
+        $this->horses =  Horse::operational()->where('archive',0)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::operational()->where('archive',0)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::operational()->where('archive',0)->orderByIdentifier('asc')->get();
 
         $this->dispatchBrowserEvent('show-fitnessEditModal');
 
@@ -443,14 +443,14 @@ class Index extends Component
     {
 
         if (filled($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
+            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
         }
         if (filled($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('archive',0)->get();
+            $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('archive',0)->get();
             
         }
         if (filled($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('fleet_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
+            $this->trailers = Trailer::operational()->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('fleet_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
         }
 
         if (filled($this->searchEmployee)) {

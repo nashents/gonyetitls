@@ -8,6 +8,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class InspectionSchedule extends Model implements Auditable
 {
+    use Concerns\GuardsOperationalAssets;
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 }

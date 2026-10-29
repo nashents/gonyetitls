@@ -19,6 +19,7 @@ use App\Models\TransporterContact;
 use Illuminate\Support\Facades\DB;
 use App\Exports\TransportersExport;
 use App\Services\Sage\SageIntegration;
+use App\Services\Fleet\TransporterFleetTypeService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -31,7 +32,8 @@ class Index extends Component
     use WithPagination;
     use \App\Http\Livewire\Concerns\PullsFromSage;
     public $search;
-    protected $queryString = ['search'];
+    public $fleetTypeFilter = '';
+    protected $queryString = ['search', 'fleetTypeFilter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap';
 
     public $cargos;
@@ -57,6 +59,7 @@ class Index extends Component
     public $custom_ref;
     public $default = false;
     public $default_locked = false;
+    public $fleet_type = Transporter::FLEET_ONCE_OFF;
 
     public $transporter_id;
     public $user_id;
@@ -261,6 +264,11 @@ class Index extends Component
         $this->expires_at = [];
         $this->default = false;
         $this->default_locked = false;
+        $this->fleet_type = Transporter::FLEET_ONCE_OFF;
+    }
+    public function updatingFleetTypeFilter()
+    {
+        $this->resetPage();
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -302,7 +310,7 @@ class Index extends Component
         
 
         if ($this->default) {
-            Transporter::where('default', true)->update(['default' => false]);
+            Transporter::where('default', true)->get()->each(fn ($t) => $t->update(['default' => false]));
         }
 
         $transporter = new Transporter;
@@ -323,6 +331,8 @@ class Index extends Component
         $transporter->street_address = $this->street_address;
         $transporter->status = 1;
         $transporter->default = $this->default;
+        $transporter->fleet_type = $this->default ? Transporter::FLEET_OWN
+            : ($this->fleet_type === Transporter::FLEET_MANAGED ? Transporter::FLEET_MANAGED : Transporter::FLEET_ONCE_OFF);
         $transporter->save();
         if (isset($this->cargo_id) && !empty($this->cargo_id)) {
             foreach ($this->cargo_id as $key => $value) {
@@ -446,6 +456,7 @@ class Index extends Component
         $this->transporter_id = $transporter->id;
         $this->default = (bool) $transporter->default;
         $this->default_locked = (bool) $transporter->default;
+        $this->fleet_type = $transporter->fleet_type ?: Transporter::FLEET_ONCE_OFF;
         $this->dispatchBrowserEvent('show-transporterEditModal');
 
     }
@@ -471,10 +482,14 @@ class Index extends Component
             $transporter->street_address = $this->street_address;
             // A transporter's default flag can only go from false to true, never back to false.
             if (!$transporter->default && $this->default) {
-                Transporter::where('default', true)->update(['default' => false]);
+                Transporter::where('default', true)->get()->each(fn ($t) => $t->update(['default' => false]));
                 $transporter->default = true;
             }
             $transporter->update();
+
+            if (! $transporter->default) {
+                app(TransporterFleetTypeService::class)->change($transporter, (string) $this->fleet_type);
+            }
 
             $this->dispatchBrowserEvent('hide-transporterEditModal');
             $this->resetInputFields();
@@ -535,9 +550,13 @@ class Index extends Component
                 });
             }
 
+            if (array_key_exists($this->fleetTypeFilter, Transporter::FLEET_TYPES)) {
+                $query->where('fleet_type', $this->fleetTypeFilter);
+            }
+
             $this->transporters = $query->paginate(10);
 
-       
+
         return view('livewire.transporters.index',[
             'transporters'=> $this->transporters
         ]);

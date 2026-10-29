@@ -100,6 +100,7 @@ class BulkFuelOrderService
         $tripExpense->user_id = $fuel->user_id;
         $tripExpense->trip_id = $trip->id;
         $tripExpense->fuel_id = $fuel->id;
+        $tripExpense->quantity = $fuel->quantity;
         $tripExpense->expense_id = Expense::where('name', Expense::FUEL_TOPUP)->value('id');
         $tripExpense->currency_id = $fuel->currency_id;
         $tripExpense->category = $category;
@@ -112,7 +113,7 @@ class BulkFuelOrderService
     }
 
     // Same figures Fuels\Index::store() writes: cost of sales = the trip's "Self" expenses in company currency.
-    private function recalculateTrip(Trip $trip): void
+    public function recalculateTrip(Trip $trip): void
     {
         $companyCurrencyId = optional(optional(Auth::user()->employee)->company)->currency_id;
 

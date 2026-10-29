@@ -16,12 +16,15 @@ use App\Models\Employee;
 use App\Models\Container;
 use App\Models\Customer;
 use App\Models\TripExpense;
+use App\Http\Livewire\Concerns\HandlesFuelTripAllocations;
+use App\Services\Fuel\FuelTripAllocationService;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 
 class Edit extends Component
 {
     use WithFileUploads;
+    use HandlesFuelTripAllocations;
 
     public $fuels;
     public $fuel_id;
@@ -117,7 +120,7 @@ class Edit extends Component
         $this->category_values = collect();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->employees = Employee::orderBy('name','asc')->get();
-        $this->trips = Trip::where('authorization','approved')->orderBy('trip_number','desc')->latest()->get();
+        $this->trips = collect();
         $this->containers = Container::where('balance','>',0)->orderBy('name','asc')->latest()->get();
         $this->drivers = Driver::latest()->get();
         $this->customers = Customer::orderBy('name','asc')->get(['id','name']);
@@ -128,6 +131,8 @@ class Edit extends Component
         $this->selectedHorse = $fuel->horse_id;
         $this->selectedVehicle = $fuel->vehicle_id;
         $this->selectedTrip = $fuel->trip_id;
+        $this->loadTripAllocations($fuel);
+        $this->loadUnitTrips();
         $this->asset_id = $fuel->asset_id;
         $this->selectedContainer = $fuel->container_id;
         $this->driver_id = $fuel->driver_id;
@@ -159,6 +164,18 @@ class Edit extends Component
             $this->mileage = $this->horse->mileage;
             $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
             }
+        $this->loadUnitTrips();
+        $this->dropOtherUnitTripAllocations();
+    }
+
+    /** Fuel goes into one truck: only that horse's (or vehicle's) trips can be picked. */
+    private function loadUnitTrips(): void
+    {
+        $this->trips = Trip::where('authorization','approved')
+            ->when($this->selectedHorse, fn ($q) => $q->where('horse_id', $this->selectedHorse))
+            ->when(!$this->selectedHorse && $this->selectedVehicle, fn ($q) => $q->where('vehicle_id', $this->selectedVehicle))
+            ->when(!$this->selectedHorse && !$this->selectedVehicle, fn ($q) => $q->whereRaw('0 = 1'))
+            ->orderBy('trip_number','desc')->get();
     }
     public function updatedSelectedContainer($container)
     {
@@ -199,6 +216,8 @@ class Edit extends Component
         $this->vehicle = Vehicle::find($vehicle);
         $this->mileage = $this->vehicle->mileage;
         }
+        $this->loadUnitTrips();
+        $this->dropOtherUnitTripAllocations();
     }
  
     public function updatedSelectedCategory($category)
@@ -248,6 +267,11 @@ class Edit extends Component
                 $this->validate(['fuel_customer_id' => 'required|exists:customers,id']);
             }
 
+            if ($error = $this->tripAllocationError($this->isCustomerSupplied)) {
+                $this->addError('trip_allocations', $error);
+                return;
+            }
+
             $trip = Trip::find($this->selectedTrip);
 
             $fuel = Fuel::find($this->fuel_id);
@@ -275,9 +299,8 @@ class Edit extends Component
 
             $fuel->update();
 
-            if ($fuel->trip_id) {
-                $this->syncTripExpense($fuel, $trip);
-            }
+            // One trip expense per allocated trip; trips taken off the order lose theirs.
+            app(FuelTripAllocationService::class)->sync($fuel, $this->allocationRows(), $fuel->category ?: 'Self');
 
             // Approved already - re-post so a change of funding (company <-> customer)
             // or amount reaches the ledger, same as Fuels\Index::update().
@@ -310,37 +333,6 @@ class Edit extends Component
     // }
     }
 
-    /**
-     * Keeps this fuel order's trip expense in step whenever it's attached (or
-     * re-attached) to a trip — mirrors Fuels\Index::update()'s existing
-     * find-or-create-by-fuel_id pattern for the same relationship.
-     */
-    protected function syncTripExpense(Fuel $fuel, ?Trip $trip): void
-    {
-        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
-
-        $trip_expense = TripExpense::where('fuel_id', $fuel->id)
-            ->where('trip_id', $fuel->trip_id)
-            ->first() ?? new TripExpense;
-
-        $trip_expense->user_id = $fuel->user_id;
-        $trip_expense->trip_id = $fuel->trip_id;
-        $trip_expense->fuel_id = $fuel->id;
-        if ($fuel_expense) {
-            $trip_expense->expense_id = $fuel_expense->id;
-        }
-        $trip_expense->currency_id = $fuel->currency_id;
-        $trip_expense->category = $fuel->category ?: 'Self';
-        // fuels.amount is nullable — fall back to quantity * unit_price rather
-        // than risk copying a null/0 amount onto the trip expense.
-        $trip_expense->amount = is_numeric($fuel->amount) && (float) $fuel->amount > 0
-            ? (float) $fuel->amount
-            : round((float) $fuel->quantity * (float) $fuel->unit_price, 2);
-        $trip_expense->exchange_rate = $fuel->exchange_rate;
-        $trip_expense->exchange_amount = $fuel->exchange_amount;
-        $trip_expense->date = $trip?->start_date ?? $fuel->date;
-        $trip_expense->save();
-    }
     
     public function render()
     {

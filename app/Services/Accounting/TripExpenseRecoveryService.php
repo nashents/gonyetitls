@@ -126,10 +126,11 @@ class TripExpenseRecoveryService
      * Stamp a transporter fuel order with what the transporter is charged
      * (Business Settings: at cost or marked up) and return the markup amount.
      */
-    public function applyFuelMarkup(\App\Models\Fuel $fuel, ?Company $company): float
+    public function applyFuelMarkup(\App\Models\Fuel $fuel, ?Company $company, ?float $allocatedCost = null): float
     {
         $pct = ($company?->transporter_fuel_recovery === 'markup') ? max(0, (float) $company->transporter_fuel_markup) : 0.0;
-        $cost = round((float) $fuel->amount, 2);
+        // Only the litres allocated to trips are recovered (and marked up).
+        $cost = round($allocatedCost ?? (float) $fuel->amount, 2);
         $markup = round($cost * $pct / 100, 2);
 
         $fuel->transporter_price = round((float) $fuel->unit_price * (1 + $pct / 100), 4);
@@ -140,12 +141,22 @@ class TripExpenseRecoveryService
         return $markup;
     }
 
-    /** What the transporter owes for this line: the fuel's transporter total, else the line amount. */
+    /**
+     * What the transporter owes for this line: its amount, plus its share of
+     * the fuel markup when it is one trip's allocation of a fuel order.
+     */
     public function recoveryAmount(TripExpense $tripExpense): float
     {
-        $total = $tripExpense->fuel_id ? (float) optional($tripExpense->fuel)->transporter_total : 0.0;
+        $fuel = $tripExpense->fuel_id ? $tripExpense->fuel : null;
+        $total = (float) optional($fuel)->transporter_total;
+        if ($total <= 0) {
+            return (float) $tripExpense->amount;
+        }
 
-        return $total > 0 ? $total : (float) $tripExpense->amount;
+        // transporter_total = allocated cost + markup; scale this trip's share.
+        $cost = $total - (float) $fuel->profit;
+
+        return $cost > 0 ? round((float) $tripExpense->amount * $total / $cost, 2) : (float) $tripExpense->amount;
     }
 
     /** Company-paid Customer-category lines of a trip in $currencyId - the recharge. */

@@ -112,7 +112,7 @@ class Index extends Component
     public function mount(){
         $this->resetPage();
         $this->days = 1;
-        $this->transporters = Transporter::orderBy('name','asc')->get();
+        $this->transporters = Transporter::operational()->orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
@@ -124,8 +124,8 @@ class Index extends Component
 
     public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->horses = Horse::where('transporter_id',$id)->orderByIdentifier('asc')->get();
-            $this->trailers = Trailer::where('transporter_id',$id)->orderByIdentifier('asc')->get();
+            $this->horses = Horse::operational()->where('transporter_id',$id)->orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::operational()->where('transporter_id',$id)->orderByIdentifier('asc')->get();
            
         }
     }
@@ -285,8 +285,8 @@ class Index extends Component
     $this->status = $workshop_service->status;
     $this->description = $workshop_service->description;
     $this->workshop_service_id = $workshop_service->id;
-    $this->horses = Horse::where('transporter_id', $this->selectedTransporter)->orderByIdentifier('asc')->get();
-    $this->trailers = Trailer::where('transporter_id', $this->selectedTransporter)->orderByIdentifier('asc')->get();
+    $this->horses = Horse::operational()->where('transporter_id', $this->selectedTransporter)->orderByIdentifier('asc')->get();
+    $this->trailers = Trailer::operational()->where('transporter_id', $this->selectedTransporter)->orderByIdentifier('asc')->get();
     $this->dispatchBrowserEvent('show-workshop_serviceEditModal');
 
     }

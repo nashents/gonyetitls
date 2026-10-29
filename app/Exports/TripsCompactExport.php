@@ -362,9 +362,9 @@ WithCustomStartCell
                 $offloading_date = "";
             }     
             
-                $fuel_purchased = $trip->fuels->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
-                $fuel_sold = $trip->fuels->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
-                $fuel_profit = $trip->fuels->where('profit','!=',Null)->where('profit','!=','')->sum('profit');
+                $fuel_purchased = $trip->allocatedFuels()->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
+                $fuel_sold = $trip->allocatedFuels()->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
+                $fuel_profit = $trip->allocatedFuels()->where('profit','!=',Null)->where('profit','!=','')->sum('profit');
             
                 $weight = $trip->weight ? $trip->weight : "";
                 $quantity = $trip->quantity ? $trip->quantity : "";
@@ -510,8 +510,8 @@ WithCustomStartCell
             $currency_symbol = $trip->currency ? $trip->currency->symbol : "";
             $trip_currency =  $currency_name . " " .  $currency_symbol ;
 
-            $fuel = $trip->fuels->where('quantity','!=','')->where('quantity','!=',Null)->sum('quantity');
-            $fuel_amount = $trip->fuels->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
+            $fuel = $trip->allocatedFuels()->where('quantity','!=','')->where('quantity','!=',Null)->sum('quantity');
+            $fuel_amount = $trip->allocatedFuels()->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
 
             $fromRoutes = collect();
             if ($trip->trip_origins && $trip->trip_origins->count()) {

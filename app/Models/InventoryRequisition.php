@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InventoryRequisition extends Model implements Auditable
 {
+    use Concerns\GuardsOperationalAssets;
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 

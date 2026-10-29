@@ -359,7 +359,7 @@ class Index extends Component
     {
         $with = [
             'company_types',
-            'default_transporter' => fn ($q) => $q->withCount(['horses', 'vehicles', 'trailers']),
+            'fleet_transporters' => fn ($q) => $q->withCount(['horses', 'vehicles', 'trailers']),
         ];
         if ($this->user->is_admin()) {
             $this->companies = Company::with($with)->orderBy('name','asc')->get();

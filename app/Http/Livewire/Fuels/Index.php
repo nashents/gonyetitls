@@ -25,7 +25,9 @@ use App\Models\TopUp;
 use App\Models\Trip;
 use App\Models\TripExpense;
 use App\Models\Vehicle;
+use App\Http\Livewire\Concerns\HandlesFuelTripAllocations;
 use App\Services\Cartrack\CartrackSyncService;
+use App\Services\Fuel\FuelTripAllocationService;
 use App\Services\EzyTrack\EzyTrackSyncService;
 use App\Services\Sage\SageIntegration;
 use App\Services\Sage\SageSyncService;
@@ -42,6 +44,7 @@ use Maatwebsite\Excel\Excel;
 class Index extends Component
 {
     use WithFileUploads;
+    use HandlesFuelTripAllocations;
 
     use WithPagination;
 
@@ -425,6 +428,7 @@ class Index extends Component
             $trip_expense->user_id = $fuel->user_id;
             $trip_expense->trip_id = $fuel->trip_id;
             $trip_expense->fuel_id = $fuel->id;
+            $trip_expense->quantity = $fuel->quantity;
             if ($fuel_expense) {
                 $trip_expense->expense_id = $fuel_expense->id;
             }
@@ -587,6 +591,12 @@ class Index extends Component
 
     public function updatedSearchTrip()
     {
+        // Fuel goes into one truck: only its trips can be picked.
+        if (!$this->selectedHorse && !$this->selectedVehicle) {
+            $this->trips = collect();
+            return;
+        }
+
         $search = '%' . $this->searchTrip . '%';
 
         $this->trips = Trip::query()
@@ -750,6 +760,7 @@ class Index extends Component
         $this->horse = Horse::find($id);
         $this->selected_horse = Horse::find($id);
         $this->trips = Trip::with('horse','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('horse_id',$id)->orderBy('created_at','desc')->take(100)->get();
+        $this->dropOtherUnitTripAllocations();
         $this->horse_id = $id;
         $this->mileage = $this->horse->mileage;
         $this->hours = $this->horse->hours;
@@ -882,6 +893,7 @@ class Index extends Component
             $this->vehicle = Vehicle::find($id);
             $this->selected_vehicle = Vehicle::find($id);
             $this->trips = Trip::with('vehicle','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('vehicle_id',$id)->orderBy('created_at','desc')->take(100)->get();
+            $this->dropOtherUnitTripAllocations();
             $this->vehicle_id = $id;
             $this->mileage = $this->vehicle->mileage;
             $this->hours = $this->vehicle->hours;
@@ -1128,6 +1140,12 @@ class Index extends Component
     {
         $this->calculateFuelTotals();
 
+        if ($error = $this->tripAllocationError($this->isCustomerSupplied)) {
+            $this->addError('trip_allocations', $error);
+
+            return false;
+        }
+
         if (!$this->fuelOrderBlocked) {
             return true;
         }
@@ -1149,6 +1167,8 @@ class Index extends Component
         $this->selectedVehicle = Null;
         $this->selectedHorse = Null;
         $this->selectedTrip = Null;
+        $this->trip_allocations = [];
+        $this->pickTrip = Null;
         $this->fuel_category = "Self";
         $this->supplied_by_customer = '0';
         $this->fuel_customer_id = Null;
@@ -1289,94 +1309,9 @@ class Index extends Component
         $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : Null;
         $fuel->save();
 
-        if ($fuel->trip) {
-
-            $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
-        
-            $trip_expense = new TripExpense;
-            $trip_expense->user_id =  $fuel->user_id;
-            $trip_expense->trip_id = $fuel->trip_id;
-            $trip_expense->fuel_id = $fuel->id;
-            if (isset($fuel_expense)) {
-                $trip_expense->expense_id = $fuel_expense->id;
-            }
-            $trip_expense->currency_id = $fuel->currency_id;
-            $trip_expense->category = $this->fuel_category;
-            $trip_expense->amount = $fuel->amount;
-            $trip_expense->exchange_rate = $this->exchange_rate;
-            $trip_expense->exchange_amount = $this->exchange_amount;
-           
-            
-            $trip_expense->save();
-
-            $trip =  Trip::find($fuel->trip_id);
-            $this->trip_expenses = TripExpense::where('trip_id',$fuel->trip_id)->get();
-
-            if(isset($this->trip_expenses)){
-                foreach($this->trip_expenses as $expense){
-                    if ($expense->currency_id == Auth::user()->employee->company->currency_id) {
-                        if ($expense->category == "Transporter") {
-                            if (isset($this->total_transporter_expenses) && is_numeric($expense->amount) ) {
-                                $this->total_transporter_expenses = $this->total_transporter_expenses + $expense->amount;
-                            }
-                        }
-                        elseif ($expense->category == "Customer") {
-                            if (isset($this->total_customer_expenses) && is_numeric($expense->amount) ) {
-                                $this->total_customer_expenses = $this->total_customer_expenses + $expense->amount;
-                            }
-                           
-                        }
-                        elseif ($expense->category == "Self") {
-                            if (isset($this->total_expenses) && is_numeric($expense->amount) ) {
-                                $this->total_expenses = $this->total_expenses + $expense->amount;
-                            }
-                           
-                        }
-                    }else{
-                        if ($expense->category == "Transporter") {
-                            if (isset($this->total_transporter_expenses) && is_numeric($expense->exchange_amount) ) {
-                                $this->total_transporter_expenses = $this->total_transporter_expenses + $expense->exchange_amount;
-                            }
-                            
-                         }
-                         elseif ($expense->category == "Customer") {
-                            if (isset($this->total_customer_expenses) && is_numeric($expense->exchange_amount) ) {
-                                $this->total_customer_expenses = $this->total_customer_expenses + $expense->exchange_amount;
-                            }
-                            
-                         }
-                         elseif ($expense->category == "Self") {
-                            if (isset($this->total_expenses) && is_numeric($expense->exchange_amount) ) {
-                                $this->total_expenses = $this->total_expenses + $expense->exchange_amount;
-                         }
-                            }
-                    }
-                }
-            }
-
-            $this->cost_of_sales = $this->total_expenses;
-            $trip->cost_of_sales = $this->total_expenses;
-            
-            $this->turnover = $trip->turnover;
-        
-            if ((isset($this->cost_of_sales) && is_numeric($this->cost_of_sales) && $this->cost_of_sales > 0) && (isset($this->turnover) && is_numeric($this->turnover) && $this->turnover > 0)) {
-            
-                    $trip->net_profit = $this->turnover - $this->cost_of_sales;
-                    $this->net_profit = $this->turnover - $this->cost_of_sales;
-        
-                    if((is_numeric($this->net_profit) && $this->net_profit > 0) && (is_numeric($this->turnover) && $this->turnover > 0)){
-                        $trip->markup_percentage = (($this->net_profit/$this->cost_of_sales) * 100);
-                        $trip->net_profit_percentage = (($this->net_profit/$this->turnover) * 100);
-                    }
-            
-            }else {
-    
-                $trip->net_profit_percentage = 100 ;
-                $trip->markup_percentage = 100 ;
-            }
-    
-    
-            $trip->update();
+        // One trip expense per allocated trip, each with its share of the order.
+        if (!empty($this->allocationRows())) {
+            app(FuelTripAllocationService::class)->sync($fuel, $this->allocationRows(), $this->fuel_category);
         }
 
 
@@ -1420,12 +1355,17 @@ class Index extends Component
     $this->selectedVehicle = $fuel->vehicle_id;
     $this->vehicle_id = $fuel->vehicle_id;
     $this->is_full_tank = $fuel->is_full_tank;
+    $this->loadTripAllocations($fuel);
     $this->selectedTrip = $fuel->trip_id;
     $this->fuel_category = $fuel->trip_id ? ($fuel->category ?: "Self") : "Self";
     $this->supplied_by_customer = $fuel->supplied_by_customer ? '1' : '0';
     $this->fuel_customer_id = $fuel->customer_id;
     $this->fuel_type = $fuel->fuel_type ? ucfirst(strtolower($fuel->fuel_type)) : null;
-    $this->trips = Trip::where('trip_status','!=','Cancelled')->orderBy('created_at','desc')->orderBy('created_at','desc')->get();
+    $this->trips = Trip::where('trip_status','!=','Cancelled')
+        ->when($fuel->horse_id, fn ($q) => $q->where('horse_id', $fuel->horse_id))
+        ->when(!$fuel->horse_id && $fuel->vehicle_id, fn ($q) => $q->where('vehicle_id', $fuel->vehicle_id))
+        ->when(!$fuel->horse_id && !$fuel->vehicle_id, fn ($q) => $q->whereRaw('0 = 1'))
+        ->orderBy('created_at','desc')->get();
     $this->selectedCurrency = $fuel->currency_id;
     $this->asset_id = $fuel->asset_id;
     $this->selectedContainer = $fuel->container_id;
@@ -1536,116 +1476,10 @@ class Index extends Component
 
             $fuel->update();
 
-            if ($fuel->trip) {
-                
-                $trip_expense = TripExpense::where('fuel_id',$fuel->id)->where('trip_id',$fuel->trip_id)->first();
-                if(isset($trip_expense)){
-                    $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
-            
-                    $trip_expense->user_id =  $fuel->user_id;
-                    $trip_expense->trip_id = $fuel->trip_id;
-                    $trip_expense->fuel_id = $fuel->id;
-                    if (isset($fuel_expense)) {
-                        $trip_expense->expense_id = $fuel_expense->id;
-                    }
-                    $trip_expense->currency_id = $fuel->currency_id;
-                    $trip_expense->category = $this->fuel_category;
-                    $trip_expense->amount = $fuel->amount;
-                    $trip_expense->exchange_rate = $this->exchange_rate;
-                    $trip_expense->exchange_amount = $this->exchange_amount;
-                    $trip_expense->update();
-                }else{
-                    $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->get()->first();
-            
-                    $trip_expense = new TripExpense;
-                    $trip_expense->user_id =  $fuel->user_id;
-                    $trip_expense->trip_id = $fuel->trip_id;
-                    $trip_expense->fuel_id = $fuel->id;
-                    if (isset($fuel_expense)) {
-                        $trip_expense->expense_id = $fuel_expense->id;
-                    }
-                    $trip_expense->currency_id = $fuel->currency_id;
-                    $trip_expense->category = $this->fuel_category;
-                    $trip_expense->amount = $fuel->amount;
-                    $trip_expense->exchange_rate = $this->exchange_rate;
-                    $trip_expense->exchange_amount = $this->exchange_amount;
-                   
-                    $trip_expense->save();
-                }
-
-                $trip =  Trip::find($fuel->trip_id);
-                $this->trip_expenses = TripExpense::where('trip_id',$fuel->trip_id)->get();
-    
-                if(isset($this->trip_expenses)){
-                    foreach($this->trip_expenses as $expense){
-                        if ($expense->currency_id == Auth::user()->employee->company->currency_id) {
-                            if ($expense->category == "Transporter") {
-                                if (isset($this->total_transporter_expenses) && is_numeric($expense->amount) ) {
-                                    $this->total_transporter_expenses = $this->total_transporter_expenses + $expense->amount;
-                                }
-                            }
-                            elseif ($expense->category == "Customer") {
-                                if (isset($this->total_customer_expenses) && is_numeric($expense->amount) ) {
-                                    $this->total_customer_expenses = $this->total_customer_expenses + $expense->amount;
-                                }
-                               
-                            }
-                            elseif ($expense->category == "Self") {
-                                if (isset($this->total_expenses) && is_numeric($expense->amount) ) {
-                                    $this->total_expenses = $this->total_expenses + $expense->amount;
-                                }
-                               
-                            }
-                        }else{
-                            if ($expense->category == "Transporter") {
-                                if (isset($this->total_transporter_expenses) && is_numeric($expense->exchange_amount) ) {
-                                    $this->total_transporter_expenses = $this->total_transporter_expenses + $expense->exchange_amount;
-                                }
-                                
-                             }
-                             elseif ($expense->category == "Customer") {
-                                if (isset($this->total_customer_expenses) && is_numeric($expense->exchange_amount) ) {
-                                    $this->total_customer_expenses = $this->total_customer_expenses + $expense->exchange_amount;
-                                }
-                                
-                             }
-                             elseif ($expense->category == "Self") {
-                                if (isset($this->total_expenses) && is_numeric($expense->exchange_amount) ) {
-                                    $this->total_expenses = $this->total_expenses + $expense->exchange_amount;
-                             }
-                                }
-                        }
-                    }
-                }
-    
-          
-              
-    
-                $this->cost_of_sales = $this->total_expenses;
-                $trip->cost_of_sales = $this->total_expenses;
-                
-                $this->turnover = $trip->turnover;
-            
-                if ((isset($this->cost_of_sales) && is_numeric($this->cost_of_sales) && $this->cost_of_sales > 0) && (isset($this->turnover) && is_numeric($this->turnover) && $this->turnover > 0)) {
-                
-                        $trip->net_profit = $this->turnover - $this->cost_of_sales;
-                        $this->net_profit = $this->turnover - $this->cost_of_sales;
-            
-                        if((is_numeric($this->net_profit) && $this->net_profit > 0) && (is_numeric($this->turnover) && $this->turnover > 0)){
-                            $trip->markup_percentage = (($this->net_profit/$this->cost_of_sales) * 100);
-                            $trip->net_profit_percentage = (($this->net_profit/$this->turnover) * 100);
-                        }
-                
-                }else {
-        
-                    $trip->net_profit_percentage = 100 ;
-                    $trip->markup_percentage = 100 ;
-                }
-        
-        
-                $trip->update();
-
-            }
+            // Re-save the trip allocations: trips removed from the order lose
+            // their fuel expense, and every allocation is re-priced from the
+            // (possibly edited) order amount.
+            app(FuelTripAllocationService::class)->sync($fuel, $this->allocationRows(), $this->fuel_category);
 
             $mileage = Mileage::where('fuel_id',$fuel->id)->first();
             if(isset($mileage)){

@@ -101,13 +101,13 @@ class Show extends Component
         }
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
-        $this->horses = Horse::orderByIdentifier('asc')->where('archive',0)->latest()->get();
+        $this->horses = Horse::operational()->orderByIdentifier('asc')->where('archive',0)->latest()->get();
 
         $this->employees = Employee::orderBy('name','asc')->where('archive',0)->get();
 
-        $this->vehicles = Vehicle::orderByIdentifier('asc')->where('archive',0)->latest()->get();
+        $this->vehicles = Vehicle::operational()->orderByIdentifier('asc')->where('archive',0)->latest()->get();
 
-        $this->trailers = Trailer::orderByIdentifier('asc')->where('archive',0)->latest()->get();
+        $this->trailers = Trailer::operational()->orderByIdentifier('asc')->where('archive',0)->latest()->get();
 
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
     }
@@ -334,14 +334,14 @@ class Show extends Component
     {
 
         if (isset($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }
         if (isset($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
             
         }
         if (isset($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+            $this->trailers = Trailer::operational()->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
         }
 
         if (isset($this->searchEmployee)) {

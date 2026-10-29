@@ -48,6 +48,20 @@
                                     {{ucfirst($fuel->trip ? $fuel->trip->trip_number : "")}} <strong>From:</strong> {{ucfirst($fuel->trip->loading_point ? $fuel->trip->loading_point->name : "")}} <strong>To:</strong> {{ucfirst($fuel->trip->offloading_point ? $fuel->trip->offloading_point->name : "")}}
                                 </td>
                             </tr>
+                            @php $fuel_allocations = $fuel->trip_allocations()->with('trip:id,trip_number')->get(); @endphp
+                            @if ($fuel_allocations->count() > 1 || $fuel->unallocatedQuantity() > 0)
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Trip Allocations</th>
+                                <td class="w-20 line-height-35">
+                                    @foreach ($fuel_allocations as $allocation)
+                                        {{ $allocation->trip?->trip_number }}: {{ number_format((float) ($allocation->quantity ?? $fuel->quantity), 2) }} L ({{ number_format((float) $allocation->amount, 2) }})<br>
+                                    @endforeach
+                                    @if ($fuel->unallocatedQuantity() > 0)
+                                        <span class="text-warning">Unallocated: {{ number_format($fuel->unallocatedQuantity(), 2) }} L (booked to Fuel - Ops)</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
                             @endif
                             @if ($fuel->horse)
                             <tr>

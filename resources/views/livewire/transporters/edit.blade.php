@@ -81,6 +81,7 @@
                                         <small class="d-block text-muted">Cannot be changed back once saved as default.</small>
                                         @error('default') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
+                                    @include('livewire.transporters._fleet_type')
                                 </div>
                                 <div class="modal-footer">
                                     <div class="btn-group" role="group">

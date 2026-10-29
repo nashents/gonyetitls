@@ -50,9 +50,8 @@ class FleetLimitService
 
     /**
      * Whether assets under this transporter count toward the company's plan
-     * band. Only the company's own fleet (its default transporter) is
-     * licensed; third-party transporters are not. A company with no default
-     * transporter flagged falls back to counting all of its transporters.
+     * band: the own fleet (default transporter) and managed subcontractors
+     * are licensed; once-off subcontractors are not.
      */
     public function isTransporterCounted(Company $company, Transporter $transporter): bool
     {
@@ -60,30 +59,45 @@ class FleetLimitService
             return false;
         }
 
-        return $transporter->default || ! $company->default_transporter()->exists();
+        return $transporter->isOperational();
     }
 
     /**
-     * The company's current live fleet count on its own fleet (default
-     * transporter), for whichever asset types its composition counts.
+     * Per fleet type (own / managed) live asset counts for whichever asset
+     * types the company's composition counts, e.g. ['own' => 12, 'managed' => 5].
      */
-    public function currentFleetCount(Company $company): int
+    public function fleetCountsByType(Company $company): array
     {
         $relations = array_map(fn (string $type) => $type.'s', $this->assetTypesCounted($company));
 
-        $query = $company->default_transporter()->exists()
-            ? $company->default_transporter()
-            : $company->transporters();
+        $counts = array_fill_keys(Transporter::OPERATIONAL_FLEET_TYPES, 0);
 
-        $transporters = $query->withCount($relations)->get();
+        $company->transporters()->operational()->withCount($relations)->get()
+            ->each(function (Transporter $transporter) use ($relations, &$counts) {
+                foreach ($relations as $relation) {
+                    $counts[$transporter->fleet_type] += $transporter->{$relation.'_count'};
+                }
+            });
 
-        return $transporters->reduce(function (int $carry, Transporter $transporter) use ($relations) {
-            foreach ($relations as $relation) {
-                $carry += $transporter->{$relation.'_count'};
-            }
+        return $counts;
+    }
 
-            return $carry;
-        }, 0);
+    /**
+     * The company's current live fleet count: own fleet plus managed
+     * transporters, for whichever asset types its composition counts.
+     */
+    public function currentFleetCount(Company $company): int
+    {
+        return array_sum($this->fleetCountsByType($company));
+    }
+
+    /**
+     * Assets a transporter would add to the fleet count if it became managed.
+     */
+    public function transporterFleetCount(Company $company, Transporter $transporter): int
+    {
+        return collect($this->assetTypesCounted($company))
+            ->sum(fn (string $type) => $transporter->{$type.'s'}()->count());
     }
 
     public function remainingCapacity(Company $company): ?int

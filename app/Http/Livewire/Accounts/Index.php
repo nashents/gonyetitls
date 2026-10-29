@@ -19,6 +19,8 @@ use App\Models\TransactionType;
 use App\Models\AccountTypeGroup;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Concerns\RecordsCashTransactions;
+use App\Services\Accounting\CashTransactionAccounts;
 
 class Index extends Component
 {
@@ -30,7 +32,7 @@ class Index extends Component
     public $search;
     protected $queryString = ['search'];
 
-    use WithFileUploads;
+    use WithFileUploads, RecordsCashTransactions;
 
     public $grouped_account_types;
     public $account_types;
@@ -48,6 +50,7 @@ class Index extends Component
     public $transaction_types;
     public $transaction_type_id;
     public $transaction_category;
+    public $contra_account_id;
     public $customer = null;
     public $vendor = null;
     private $accounts;
@@ -60,6 +63,7 @@ class Index extends Component
     public $customers;
     public $customer_id;
     public $vendors;
+    public $vendor_id;
     public $vebdor_id;
     public $categories;
     public $category_id;
@@ -374,171 +378,114 @@ class Index extends Component
     }
 
     public function storeTransaction(){
-        
 
         $transaction_type = TransactionType::find($this->transaction_type_id);
-        $account = Account::find($this->account_id); 
-        $current_balance = $account->balance; 
+        $direction = $this->transactionDirection();
 
-        if (isset($transaction_type)) {
-            if ($transaction_type->name == "Withdrawal") {
-          
-                if ($current_balance >= $this->amount) {
-                    
-                    $payment = new Payment;
-                    $payment->user_id = Auth::user()->id;
-                    $payment->account_id = $this->account_id;
-                    $payment->payment_number = $this->paymentNumber();
-                    if ($this->customer == TRUE) {
-                        $payment->customer_id = $this->customer_id;
-                    }
-                    if ($this->vendor == TRUE) {
-                        $payment->vendor_id = $this->vendor_id;
-                    }
-                    $payment->date = $this->date;
-                    $payment->transaction_type_id = $this->transaction_type_id;
-                    $payment->movement = "Dbt";
-                    $payment->description = $this->description;
-                    $payment->transaction_category = $this->transaction_category;
-                    $payment->notes = $this->notes;
-                    $payment->currency_id = $account->currency->id;
-                    $payment->amount = $this->amount;
-                    $payment->exchange_rate = $this->exchange_rate;
-                    $payment->exchange_amount = $this->exchange_amount;
-                    $payment->save();     
-                    
-            
-                    $account->balance = $current_balance - $this->amount;
-                    $account->update();
-            
-                    if(isset($this->receipt)){
-                        $file = $this->receipt;
-                        // get file with ext
-                        $fileNameWithExt = $file->getClientOriginalName();
-                        //get filename
-                        $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                        //get extention
-                        $extention = $file->getClientOriginalExtension();
-                        //file name to store
-                        $fileNameToStore = $filename.'_'.time().'.'.$extention;
-                        $file->storeAs('/documents', $fileNameToStore, 'my_files');
-            
-                    $document = new Document;
-                    $document->payment_id = $payment->id;
-                    $document->category = 'payment';
-                    $document->title = "Receipt";
-                    if (isset( $fileNameToStore)) {
-                         $document->filename = $fileNameToStore;
-                    }
-                    if(isset($this->expires_at)){
-                        $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
-                        $today = now()->toDateTimeString();
-                        $expire = Carbon::create($this->expires_at)->toDateTimeString();
-                        if ($today <=  $expire) {
-                            $document->status = 1;
-                        }else{
-                            $document->status = 0;
-                        }
-                    }else {
-                    $document->status = 1;
-                    }
-                    $document->save();
-              
-            
-                    }
-            
-                    return redirect()->route('accounts.show',$account->id);
-                }else {
-    
-                    $this->dispatchBrowserEvent('hide-transactionModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Transaction failed, amount to withdraw exceeds floating balance!!"
-                    ]);
-                }
-                
-            }elseif ($transaction_type->name == "Deposit") {
-               
-            $payment = new Payment;
-            $payment->user_id = Auth::user()->id;
-            $payment->account_id = $this->account_id;
-            $payment->payment_number = $this->paymentNumber();
-            if ($this->customer == TRUE) {
-                $payment->customer_id = $this->customer_id;
-            }
-            $payment->date = $this->date;
-            $payment->transaction_type_id = $this->transaction_type_id;
-            $payment->movement = "Crt";
-            $payment->description = $this->description;
-            $payment->notes = $this->notes;
-            $payment->currency_id = $account->currency->id;
-            $new_transaction_category = str_replace("\n", "", $this->transaction_category);
-            $payment->transaction_category = $new_transaction_category;
-            
-            if(isset($this->customer_id) && isset($this->selectedCurrency) &&   $new_transaction_category == "Customer Deposits"){
-                if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
-                    $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
-                }else{
-                    $payment->drawdown_balance = $this->amount;
-                }
-            }
-            $payment->amount = $this->amount;
-            $payment->exchange_rate = $this->exchange_rate;
-            $payment->exchange_amount = $this->exchange_amount;
-            $payment->save();     
-    
-           
-            $account->balance = $current_balance + $this->amount;
-            $account->update();
-            
-            if(isset($this->receipt)){
-                $file = $this->receipt;
-                // get file with ext
-                $fileNameWithExt = $file->getClientOriginalName();
-                //get filename
-                $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                //get extention
-                $extention = $file->getClientOriginalExtension();
-                //file name to store
-                $fileNameToStore = $filename.'_'.time().'.'.$extention;
-                $file->storeAs('/documents', $fileNameToStore, 'my_files');
-    
-            $document = new Document;
-            $document->cash_flow_id = $payment->id;
-            $document->category = 'cash_flow';
-            $document->title = "Receipt";
-            if (isset( $fileNameToStore)) {
-                 $document->filename = $fileNameToStore;
-            }
-            if(isset($this->expires_at)){
-                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
-                $today = now()->toDateTimeString();
-                $expire = Carbon::create($this->expires_at)->toDateTimeString();
-                if ($today <=  $expire) {
-                    $document->status = 1;
-                }else{
-                    $document->status = 0;
-                }
-            }else {
-            $document->status = 1;
-            }
-            $document->save();
-      
-    
-            }
-           
-            $this->dispatchBrowserEvent('hide-depositModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Deposit Transaction Added Successfully!!"
-            ]);
-                return redirect()->route('accounts.show',$account->id);
-            }
-            
-    
+        if (!$direction) {
+            $this->addError('transaction_type_id', 'Select Deposit or Withdrawal.');
+            return;
         }
 
+        $this->validateCashTransaction($direction);
+
+        $account = Account::find($this->account_id);
+        $contraAccount = Account::find($this->contra_account_id);
+
+        // Withdrawing the whole floating balance is allowed
+        if ($direction === CashTransactionAccounts::WITHDRAWAL && (float) $account->balance < (float) $this->amount) {
+            $this->dispatchBrowserEvent('hide-transactionModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Transaction failed, amount to withdraw exceeds floating balance!!"
+            ]);
+            return;
+        }
+
+        $payment = new Payment;
+        $payment->user_id = Auth::user()->id;
+        $payment->company_id = Auth::user()->employee->company_id;
+        $payment->account_id = $this->account_id;
+        $payment->payment_number = $this->paymentNumber();
+        if ($this->customer == TRUE) {
+            $payment->customer_id = $this->customer_id;
+        }
+        if ($direction === CashTransactionAccounts::WITHDRAWAL && $this->vendor == TRUE) {
+            $payment->vendor_id = $this->vendor_id;
+        }
+        $payment->date = $this->date;
+        $payment->transaction_type_id = $transaction_type->id;
+        $payment->movement = $direction === CashTransactionAccounts::DEPOSIT ? "Crt" : "Dbt";
+        $payment->description = $this->description;
+        $payment->notes = $this->notes;
+        $payment->currency_id = $account->currency_id;
+        $payment->contra_account_id = $contraAccount->id;
+        $payment->transaction_category = $contraAccount->name;
+        $payment->category = $direction;
+
+        if($direction === CashTransactionAccounts::DEPOSIT && isset($this->customer_id) && isset($this->selectedCurrency) && $contraAccount->name == "Customer Deposits"){
+            if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
+                $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
+            }else{
+                $payment->drawdown_balance = $this->amount;
+            }
+        }
+        $payment->amount = $this->amount;
+        $payment->exchange_rate = $this->exchange_rate;
+        $payment->exchange_amount = $this->exchange_amount;
+
+        $change = $direction === CashTransactionAccounts::DEPOSIT ? (float) $this->amount : -(float) $this->amount;
+        if (!$this->saveCashTransaction($payment, $account, $change, ucfirst($direction))) {
+            return;
+        }
+
+        if(isset($this->receipt)){
+            $file = $this->receipt;
+            // get file with ext
+            $fileNameWithExt = $file->getClientOriginalName();
+            //get filename
+            $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+            //get extention
+            $extention = $file->getClientOriginalExtension();
+            //file name to store
+            $fileNameToStore = $filename.'_'.time().'.'.$extention;
+            $file->storeAs('/documents', $fileNameToStore, 'my_files');
+
+            $document = new Document;
+            if ($direction === CashTransactionAccounts::DEPOSIT) {
+                $document->cash_flow_id = $payment->id;
+                $document->category = 'cash_flow';
+            } else {
+                $document->payment_id = $payment->id;
+                $document->category = 'payment';
+            }
+            $document->title = "Receipt";
+            $document->filename = $fileNameToStore;
+            if(isset($this->expires_at)){
+                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
+                $document->status = now()->toDateTimeString() <= $document->expires_at ? 1 : 0;
+            }else {
+                $document->status = 1;
+            }
+            $document->save();
+        }
+
+        $this->dispatchBrowserEvent('hide-transactionModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=> ucfirst($direction)." Transaction Added Successfully!!"
+        ]);
+
+        return redirect()->route('accounts.show',$account->id);
+    }
+
+    // Deposit / Withdrawal from the chosen transaction type; null for anything else
+    protected function transactionDirection(): ?string
+    {
+        $name = strtolower((string) optional(TransactionType::find($this->transaction_type_id))->name);
+
+        return in_array($name, [CashTransactionAccounts::DEPOSIT, CashTransactionAccounts::WITHDRAWAL], true) ? $name : null;
     }
 
     public function updatingSearch()
@@ -614,30 +561,22 @@ class Index extends Component
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         });
                 });
-            $this->scopeVisibleAccounts($accountsQuery);
-
-            return view('livewire.invoices.index',[
-                'accounts' => $accountsQuery->orderBy('name','asc')->paginate(10),
-                    'bank_accounts' => $this->bank_accounts,
-                    'customers' => $this->customers,
-                    'vendors' => $this->vendors,
-                    'account_types' => $this->account_types,
-
-
-            ]);
-
         }else{
             $accountsQuery = Account::query();
-            $this->scopeVisibleAccounts($accountsQuery);
-
-            return view('livewire.accounts.index',[
-                'accounts' => $accountsQuery->orderBy('name','asc')->paginate(10),
-                'bank_accounts' => $this->bank_accounts,
-                'customers' => $this->customers,
-                'vendors' => $this->vendors,
-                'account_types' => $this->account_types,
-            ]);
         }
+        $this->scopeVisibleAccounts($accountsQuery);
+
+        $direction = $this->transactionDirection();
+
+        return view('livewire.accounts.index',[
+            'accounts' => $accountsQuery->orderBy('name','asc')->paginate(10),
+            'bank_accounts' => $this->bank_accounts,
+            'customers' => $this->customers,
+            'vendors' => $this->vendors,
+            'account_types' => $this->account_types,
+            // Category options follow the chosen Deposit / Withdrawal type
+            'transaction_categories' => $direction ? app(CashTransactionAccounts::class)->grouped($direction) : collect(),
+        ]);
 
 
     }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Reminder extends Model implements Auditable
 {
+    use Concerns\GuardsOperationalAssets;
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
     

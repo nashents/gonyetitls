@@ -275,11 +275,11 @@ class Index extends Component
                 return ;
             }
             if ($value == "horse") {
-                $this->horses =  Horse::where('archive',0)->orderByIdentifier('asc')->get();
+                $this->horses =  Horse::operational()->where('archive',0)->orderByIdentifier('asc')->get();
             }elseif($value == "vehicle"){
-                $this->vehicles = Vehicle::where('archive',0)->orderByIdentifier('asc')->get();
+                $this->vehicles = Vehicle::operational()->where('archive',0)->orderByIdentifier('asc')->get();
             }elseif($value == "trailer"){
-                $this->trailers = Trailer::where('archive',0)->orderByIdentifier('asc')->get();
+                $this->trailers = Trailer::operational()->where('archive',0)->orderByIdentifier('asc')->get();
             }elseif($value == "asset"){
                 $this->assets = Asset::with('product')->get()->sortBy('product.name');
             }

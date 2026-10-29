@@ -52,12 +52,19 @@
                                     <td>{{$company->pin}}</td>
                                     <td>{{$company->street_address}} {{$company->suburb}} {{$company->city ? ", ".$company->city : ""}} {{$company->country ? $company->country : ""}}</td>
                                     <td>
-                                        @if ($company->default_transporter)
-                                            <span title="Default transporter: {{ $company->default_transporter->name }}">
-                                                <span class="badge bg-primary">{{ $company->default_transporter->horses_count }} Horses</span>
-                                                <span class="badge bg-info">{{ $company->default_transporter->vehicles_count }} Vehicles</span>
-                                                <span class="badge bg-secondary">{{ $company->default_transporter->trailers_count }} Trailers</span>
+                                        @if ($company->fleet_transporters->isNotEmpty())
+                                            @php
+                                                $fleet = $company->fleet_transporters;
+                                                $fleetTotal = fn ($t) => $t->horses_count + $t->vehicles_count + ($company->countsTrailersInFleet() ? $t->trailers_count : 0);
+                                                $ownTotal = $fleet->where('fleet_type', \App\Models\Transporter::FLEET_OWN)->sum($fleetTotal);
+                                                $managedFleet = $fleet->where('fleet_type', \App\Models\Transporter::FLEET_MANAGED);
+                                            @endphp
+                                            <span title="Own fleet + managed transporters{{ $managedFleet->isNotEmpty() ? ': '.$managedFleet->pluck('name')->implode(', ') : '' }}">
+                                                <span class="badge bg-primary">{{ $fleet->sum('horses_count') }} Horses</span>
+                                                <span class="badge bg-info">{{ $fleet->sum('vehicles_count') }} Vehicles</span>
+                                                <span class="badge bg-secondary">{{ $fleet->sum('trailers_count') }} Trailers</span>
                                             </span>
+                                            <small class="d-block text-muted">Own {{ $ownTotal }} · Managed {{ $managedFleet->sum($fleetTotal) }} · Total {{ $fleet->sum($fleetTotal) }}</small>
                                         @else
                                             <span class="text-muted">No default transporter</span>
                                         @endif

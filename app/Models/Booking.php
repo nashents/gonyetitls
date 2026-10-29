@@ -11,6 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Booking extends Model implements Auditable
 {
+    use Concerns\GuardsOperationalAssets;
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 

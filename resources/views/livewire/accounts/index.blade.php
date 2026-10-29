@@ -329,17 +329,17 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Category<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="transaction_category" class="form-control" required>
-                                        <option value="">Select Category Type</option>
-                                        @foreach ($account_types as $account_type)
+                                    <select wire:model.debounce.300ms="contra_account_id" class="form-control" required>
+                                        <option value="">{{ $transaction_categories->isEmpty() ? 'Select Deposit or Withdrawal first' : 'Select Category Type' }}</option>
+                                        @foreach ($transaction_categories as $account_type)
                                         <optgroup label="{{ $account_type->name }}">
                                             @foreach ($account_type->accounts as $account)
-                                                <option value="{{ $account->name }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : "" }}</option>
+                                                <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : "" }}</option>
                                             @endforeach
                                         </optgroup>
                                         @endforeach
                                     </select>
-                                    @error('transaction_category') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    @error('contra_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

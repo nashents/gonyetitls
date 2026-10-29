@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Transporters;
 
 use Livewire\Component;
 use App\Models\Transporter;
+use App\Services\Fleet\TransporterFleetTypeService;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,6 +32,7 @@ class Edit extends Component
     public $worknumber;
     public $default = false;
     public $default_locked = false;
+    public $fleet_type = Transporter::FLEET_ONCE_OFF;
 
     public $transporter_id;
     public $user_id;
@@ -156,16 +158,23 @@ class Edit extends Component
         $this->transporter_id = $transporter->id;
         $this->default = (bool) $transporter->default;
         $this->default_locked = (bool) $transporter->default;
+        $this->fleet_type = $transporter->fleet_type ?: Transporter::FLEET_ONCE_OFF;
     }
 
     public function update()
     {
         if ($this->transporter_id) {
-            try{
+            $fleetTypes = app(TransporterFleetTypeService::class);
             $transporter = Transporter::find($this->transporter_id);
+            if (! $transporter->default && ! $this->default
+                && $reason = $fleetTypes->blockedReason($transporter, (string) $this->fleet_type)) {
+                $this->addError('fleet_type', $reason);
+                return;
+            }
+            try{
             // A transporter's default flag can only go from false to true, never back to false.
             if (!$transporter->default && $this->default) {
-                Transporter::where('default', true)->update(['default' => false]);
+                Transporter::where('default', true)->get()->each(fn ($t) => $t->update(['default' => false]));
             }
             $transporter->update([
                 'user_id' => Auth::user()->id,
@@ -179,6 +188,10 @@ class Edit extends Component
                 'street_address' => $this->street_address,
                 'default' => $transporter->default || $this->default,
             ]);
+
+            if (! $transporter->default) {
+                $fleetTypes->change($transporter, (string) $this->fleet_type);
+            }
 
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

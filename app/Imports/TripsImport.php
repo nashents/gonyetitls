@@ -340,10 +340,6 @@ WithBatchInserts
                     'status'     => 1,
                 ]);
 
-                $loading_point = $this->resolveOrCreate(LoadingPoint::class, $row->get('loading_point'));
-
-                $offloading_point = $this->resolveOrCreate(OffloadingPoint::class, $row->get('offloading_point'));
-
                 $cargo_type = trim((string) $row->get('cargo_type')) ?: null;
 
                 $cargo = $this->resolveOrCreate(Cargo::class, $row->get('cargo'), [
@@ -391,10 +387,35 @@ WithBatchInserts
 
                 $distance = $row->get('distance');
 
+                // ──────────────────────────────────────────────
+                // Loading / offloading points (one or many per trip).
+                // Each figure column holds a matching list by position, e.g.
+                // loading_points "Mine A, Mine B" + weight "20, 14".
+                // ──────────────────────────────────────────────
+                $origins = $this->buildLegs(
+                    LoadingPoint::class,
+                    $row->get('loading_points') ?? $row->get('loading_point'),
+                    $row,
+                    self::LOADED_COLUMNS
+                );
+
+                $destinations = $this->buildLegs(
+                    OffloadingPoint::class,
+                    $row->get('offloading_points') ?? $row->get('offloading_point'),
+                    $row,
+                    self::OFFLOADED_COLUMNS
+                );
+
+                $loaded = $this->legTotals($origins);
+                $offloaded = $this->legTotals($destinations);
+
+                // The trip header runs from the first loading point to the final offloading point
+                $loading_point = $origins[0]['point'];
+                $offloading_point = end($destinations)['point'];
+                $multiple_points = count($origins) > 1 || count($destinations) > 1;
+
                 // weight for Solid cargo, litreage_at_ambient for Liquid cargo
-                $measurement_value = $cargo_type === "Solid"
-                    ? $row->get('weight')
-                    : ($cargo_type === "Liquid" ? $row->get('litreage_at_ambient') : null);
+                $measurement_value = $this->legMeasurement($loaded, $cargo_type);
 
                 $rate = $row->get('rate');
                 $freight = $row->get('freight');
@@ -424,9 +445,12 @@ WithBatchInserts
                 $trip->trip_status = trim($row->get('trip_status'));
                 $trip->rate = $rate;
                 $trip->freight = $freight;
-                $trip->weight = $row->get('weight');
-                $trip->litreage = $row->get('litreage_at_ambient');
-                $trip->litreage_at_20 = $row->get('litreage_at_20');
+                $trip->weight = $loaded['weight'];
+                $trip->quantity = $loaded['quantity'];
+                $trip->litreage = $loaded['litreage'];
+                $trip->litreage_at_20 = $loaded['litreage_at_20'];
+                $trip->offloaded_quantity = $offloaded['quantity'];
+                $trip->multiple_destinations = $multiple_points;
                 $trip->distance = $distance;
 
                 $trip->with_trailer = count($trailer_ids) > 0 ? 1 : 0;
@@ -467,6 +491,11 @@ WithBatchInserts
                     'rate'                    => $rate,
                     'freight'                 => $freight,
                     'distance'                => $distance,
+                    'cargo_type'              => $cargo_type,
+                    'origins'                 => $origins,
+                    'destinations'            => $destinations,
+                    'loaded'                  => $loaded,
+                    'multiple_points'         => $multiple_points,
                 ]);
 
                 // Link Trip <-> Transport Order
@@ -552,11 +581,13 @@ WithBatchInserts
                 $delivery_note->loaded_litreage = $trip->litreage;
                 $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
                 $delivery_note->loaded_weight = $trip->weight;
+                $delivery_note->loaded_quantity = $trip->quantity;
                 $delivery_note->loaded_rate = $trip->rate;
                 $delivery_note->loaded_freight = $trip->freight;
-                $delivery_note->offloaded_weight = $row->get('offloaded_weight');
-                $delivery_note->offloaded_litreage = $row->get('offloaded_litreage_at_ambient');
-                $delivery_note->offloaded_litreage_at_20 = $row->get('offloaded_litreage_at_20');
+                $delivery_note->offloaded_weight = $offloaded['weight'];
+                $delivery_note->offloaded_quantity = $offloaded['quantity'];
+                $delivery_note->offloaded_litreage = $offloaded['litreage'];
+                $delivery_note->offloaded_litreage_at_20 = $offloaded['litreage_at_20'];
                 $delivery_note->save();
 
                 // Update statuses if trip is completed or cancelled
@@ -786,11 +817,12 @@ WithBatchInserts
         $transport_order->start_date = $lookups['start_date'];
         $transport_order->end_date = $lookups['end_date'];
         $transport_order->cargo_details = $row->get('cargo_details') ?: null;
-        $transport_order->multiple_destinations = false;
-        $transport_order->quantity = $row->get('quantity') ?: null;
-        $transport_order->litreage = $row->get('litreage_at_ambient') ?: null;
+        $transport_order->multiple_destinations = $lookups['multiple_points'];
+        $transport_order->quantity = $lookups['loaded']['quantity'];
+        $transport_order->litreage = $lookups['loaded']['litreage'];
+        $transport_order->litreage_at_20 = $lookups['loaded']['litreage_at_20'];
         $transport_order->units_of_measure_id = null;
-        $transport_order->weight = $row->get('weight') ?: null;
+        $transport_order->weight = $lookups['loaded']['weight'];
         $transport_order->status = "Pending";
         $transport_order->rate = $lookups['rate'] ?: null;
         $transport_order->freight = $lookups['freight'] ?: null;
@@ -811,44 +843,168 @@ WithBatchInserts
     {
         TripDestination::where('transport_order_id', $transport_order->id)->delete();
 
-        TripDestination::updateOrCreate(
-            [
+        $single = count($lookups['destinations']) === 1;
+
+        foreach ($lookups['destinations'] as $leg) {
+            // A single drop with no offloaded figures takes the loaded totals (as before)
+            if ($single) {
+                foreach ($leg['figures'] as $field => $value) {
+                    $leg['figures'][$field] = $value ?? $lookups['loaded'][$field];
+                }
+            }
+
+            TripDestination::create([
                 'transport_order_id'  => $transport_order->id,
                 'destination_id'      => $transport_order->to,
-                'offloading_point_id' => $lookups['offloading_point']?->id,
-            ],
-            [
+                'offloading_point_id' => $leg['point']?->id,
                 'user_id'             => Auth::id(),
-                'weight'              => $row->get('offloaded_weight') ?: $row->get('weight'),
-                'quantity'            => $row->get('quantity') ?: null,
+                'weight'              => $leg['figures']['weight'],
+                'quantity'            => $leg['figures']['quantity'],
                 'units_of_measure_id' => null,
-                'litreage'            => $row->get('offloaded_litreage_at_ambient') ?: $row->get('litreage_at_ambient'),
+                'litreage'            => $leg['figures']['litreage'],
+                'litreage_at_20'      => $leg['figures']['litreage_at_20'],
                 'rate'                => $lookups['rate'] ?: null,
-                'freight'             => $lookups['freight'] ?: null,
-            ]
-        );
+                'freight'             => $single ? ($lookups['freight'] ?: null) : $this->legFreight($leg, $lookups),
+            ]);
+        }
     }
 
     public function addOrigins($transport_order, $row, array $lookups)
     {
         TripOrigin::where('transport_order_id', $transport_order->id)->delete();
 
-        TripOrigin::updateOrCreate(
-            [
-                'transport_order_id' => $transport_order->id,
-                'destination_id'     => $transport_order->from,
-                'loading_point_id'   => $lookups['loading_point']?->id,
-            ],
-            [
+        $single = count($lookups['origins']) === 1;
+
+        foreach ($lookups['origins'] as $leg) {
+            TripOrigin::create([
+                'transport_order_id'  => $transport_order->id,
+                'destination_id'      => $transport_order->from,
+                'loading_point_id'    => $leg['point']?->id,
                 'user_id'             => Auth::id(),
-                'weight'              => $row->get('weight') ?: null,
-                'quantity'            => $row->get('quantity') ?: null,
+                'weight'              => $leg['figures']['weight'],
+                'quantity'            => $leg['figures']['quantity'],
                 'units_of_measure_id' => null,
-                'litreage'            => $row->get('litreage_at_ambient') ?: null,
+                'litreage'            => $leg['figures']['litreage'],
+                'litreage_at_20'      => $leg['figures']['litreage_at_20'],
                 'rate'                => $lookups['rate'] ?: null,
-                'freight'             => $lookups['freight'] ?: null,
-            ]
+                'freight'             => $single ? ($lookups['freight'] ?: null) : $this->legFreight($leg, $lookups),
+            ]);
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Multiple loading / offloading points
+    // ──────────────────────────────────────────────
+
+    // Leg field => template column
+    const LOADED_COLUMNS = [
+        'weight'         => 'weight',
+        'quantity'       => 'quantity',
+        'litreage'       => 'litreage_at_ambient',
+        'litreage_at_20' => 'litreage_at_20',
+    ];
+
+    const OFFLOADED_COLUMNS = [
+        'weight'         => 'offloaded_weight',
+        'quantity'       => 'offloaded_quantity',
+        'litreage'       => 'offloaded_litreage_at_ambient',
+        'litreage_at_20' => 'offloaded_litreage_at_20',
+    ];
+
+    /**
+     * One leg per listed point, each carrying the figure at the same position
+     * in every figure column. A row with no point still yields one leg so the
+     * trip keeps its totals.
+     */
+    protected function buildLegs(string $modelClass, $points, Collection $row, array $columns): array
+    {
+        $names = $this->splitList($points);
+        $count = max(1, count($names));
+
+        $figures = [];
+        foreach ($columns as $field => $column) {
+            $figures[$field] = $this->splitAmounts($row->get($column), $count);
+        }
+
+        $legs = [];
+        for ($i = 0; $i < $count; $i++) {
+            $legs[] = [
+                'point'   => $this->resolveOrCreate($modelClass, $names[$i] ?? null),
+                'figures' => array_map(fn($values) => $values[$i] ?? null, $figures),
+            ];
+        }
+
+        return $legs;
+    }
+
+    // Sum each figure across legs; null when no leg has it
+    protected function legTotals(array $legs): array
+    {
+        $totals = [];
+        foreach (array_keys(self::LOADED_COLUMNS) as $field) {
+            $values = array_filter(array_column(array_column($legs, 'figures'), $field), fn($v) => $v !== null);
+            $totals[$field] = $values ? array_sum($values) : null;
+        }
+
+        return $totals;
+    }
+
+    protected function legMeasurement(array $figures, $cargo_type)
+    {
+        return $cargo_type === "Solid"
+            ? $figures['weight']
+            : ($cargo_type === "Liquid" ? $figures['litreage'] : null);
+    }
+
+    // Per-point freight on a multi-point trip; a flat rate belongs to the whole trip
+    protected function legFreight(array $leg, array $lookups)
+    {
+        if ($lookups['freight_calculation'] === 'flat_rate') {
+            return null;
+        }
+
+        return $this->calculateFreight(
+            $lookups['freight_calculation'],
+            $lookups['rate'],
+            $this->legMeasurement($leg['figures'], $lookups['cargo_type']),
+            $lookups['distance']
         );
+    }
+
+    // "Mine A, Mine B" => ['Mine A', 'Mine B']
+    protected function splitList($value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', preg_split('/[,;|]+/', (string) $value)),
+            fn($v) => $v !== ''
+        ));
+    }
+
+    /**
+     * "20, 14" => [20.0, 14.0]. With a single point a thousands-formatted
+     * text figure like "30,000" stays one value.
+     */
+    protected function splitAmounts($value, int $points): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        if (is_numeric($value)) {
+            return [(float) $value];
+        }
+
+        $value = str_replace(' ', '', (string) $value);
+
+        if ($points === 1 && preg_match('/^\d{1,3}(,\d{3})+(\.\d+)?$/', $value)) {
+            return [(float) str_replace(',', '', $value)];
+        }
+
+        return array_map(fn($v) => is_numeric($v) ? (float) $v : null, preg_split('/[,;|]/', $value));
     }
 
     // ──────────────────────────────────────────────

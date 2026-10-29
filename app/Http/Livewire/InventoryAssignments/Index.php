@@ -56,11 +56,11 @@ class Index extends Component
     public function mount(){
         $this->inventories = Inventory::where('qty','>',0)->latest()->get();
         $this->products = Product::orderBy('product_number','asc')->where('department','inventory')->get();
-        $this->horses = Horse::latest()->get();
-        $this->vehicles = Vehicle::latest()->get();
+        $this->horses = Horse::operational()->latest()->get();
+        $this->vehicles = Vehicle::operational()->latest()->get();
         $department = Department::where('name','like', '%'.'Workshop'.'%')->first();
         $this->employees =   $department->employees;
-        $this->trailers = Trailer::latest()->get();
+        $this->trailers = Trailer::operational()->latest()->get();
         $this->qty = 1;
 
         $roles = Auth::user()->roles;

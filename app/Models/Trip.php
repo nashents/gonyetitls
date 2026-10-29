@@ -376,6 +376,44 @@ class Trip extends Model implements Auditable, EditAuthorizable
     public function fuels(){
         return $this->hasMany('App\Models\Fuel');
     }
+
+    /**
+     * Fuel orders with litres on this trip, each scaled to this trip's
+     * allocation (a split order counts only its share of quantity, amount,
+     * transporter_total and profit). Orders linked by fuels.trip_id with no
+     * allocation row count in full. For totals only - the copies aren't saved.
+     */
+    public function allocatedFuels()
+    {
+        $shares = $this->trip_expenses->whereNotNull('fuel_id')->keyBy('fuel_id');
+        $fuels = $this->fuels->keyBy('id');
+        $missing = $shares->keys()->diff($fuels->keys());
+        if ($missing->isNotEmpty()) {
+            $fuels = $fuels->union(Fuel::whereIn('id', $missing)->get()->keyBy('id'));
+        }
+
+        return $fuels->map(function (Fuel $fuel) use ($shares) {
+            $share = $shares->get($fuel->id);
+            $orderQty = (float) $fuel->quantity;
+            if (!$share || $share->quantity === null || $orderQty <= 0 || abs((float) $share->quantity - $orderQty) < 0.005) {
+                return $fuel;
+            }
+
+            $ratio = (float) $share->quantity / $orderQty;
+            // transporter_total/profit cover only the order's allocated litres.
+            $allocatedQty = (float) TripExpense::where('fuel_id', $fuel->id)->whereNotNull('trip_id')->sum('quantity');
+            $recoveredRatio = $allocatedQty > 0 ? (float) $share->quantity / $allocatedQty : 0;
+
+            $copy = clone $fuel;
+            $copy->quantity = round((float) $share->quantity, 2);
+            $copy->amount = round((float) $fuel->amount * $ratio, 2);
+            $copy->exchange_amount = is_numeric($fuel->exchange_amount) ? round((float) $fuel->exchange_amount * $ratio, 2) : $fuel->exchange_amount;
+            $copy->transporter_total = is_numeric($fuel->transporter_total) ? round((float) $fuel->transporter_total * $recoveredRatio, 2) : $fuel->transporter_total;
+            $copy->profit = is_numeric($fuel->profit) ? round((float) $fuel->profit * $recoveredRatio, 2) : $fuel->profit;
+
+            return $copy;
+        })->values();
+    }
     public function fuel(){
         return $this->hasOne('App\Models\Fuel');
     }

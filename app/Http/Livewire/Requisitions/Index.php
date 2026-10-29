@@ -576,9 +576,9 @@ class Index extends Component
 
         $this->assets = Asset::with('product')->get()->sortBy('product.name');
         $this->transporters = Transporter::orderBy('name','asc')->get();
-        $this->horses = Horse::orderByIdentifier('asc')->get();
-        $this->trailers = Trailer::orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
+        $this->horses = Horse::operational()->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::operational()->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::operational()->orderByIdentifier('asc')->get();
         $this->drivers = Driver::all();
 
     }

@@ -402,9 +402,9 @@ WithCustomStartCell
                 
               
             
-            $fuel_purchased = $trip->fuels->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
-            $fuel_sold = $trip->fuels->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
-            $fuel_profit = $trip->fuels->where('profit','!=',Null)->where('profit','!=','')->sum('profit');
+            $fuel_purchased = $trip->allocatedFuels()->where('amount','!=',Null)->where('amount','!=','')->sum('amount');
+            $fuel_sold = $trip->allocatedFuels()->where('transporter_total','!=',Null)->where('transporter_total','!=','')->sum('transporter_total');
+            $fuel_profit = $trip->allocatedFuels()->where('profit','!=',Null)->where('profit','!=','')->sum('profit');
         
             $weight = $trip->weight ? $trip->weight : "";
             $quantity = $trip->quantity ? $trip->quantity : "";

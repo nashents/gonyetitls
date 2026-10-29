@@ -30,6 +30,9 @@ class Payment extends Model implements Auditable
     public function to_account(){
         return $this->belongsTo('App\Models\Account', 'to_account_id');
     }
+    public function contra_account(){
+        return $this->belongsTo('App\Models\Account', 'contra_account_id');
+    }
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
