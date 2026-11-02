@@ -54,6 +54,14 @@ class TripExpense extends Model implements Auditable
 
     public function getCanDeleteAttribute()
     {
+        // A fuel-order line is owned by its fuel order (bill, customer supply,
+        // trip allocation) - change or delete the order instead. Deleting the
+        // line alone removed the bill but left the order and its customer
+        // credit live (CEFO00115 / CFS00076). Applies to admins too.
+        if ($this->fuel_id) {
+            return false;
+        }
+
         if (auth()->check() && auth()->user()->canOverrideTripLocks()) {
             return true;
         }
@@ -67,6 +75,10 @@ class TripExpense extends Model implements Auditable
 
     public function getCanEditAttribute()
     {
+        if ($this->fuel_id) {
+            return false;
+        }
+
         if (auth()->check() && auth()->user()->canOverrideTripLocks()) {
             return true;
         }

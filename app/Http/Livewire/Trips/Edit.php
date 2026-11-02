@@ -1400,7 +1400,7 @@ class Edit extends Component
        
         
          $this->fuel_order = $this->trip->fuel_order;
-         $this->fuel = $this->tripFuelOrder($this->trip);
+         $this->fuel = $this->trip->fuels->where('fillup',1)->first();
 
          if ($this->fuel) {
             $this->fuel_split = app(\App\Services\Fuel\FuelTripAllocationService::class)->isSplit($this->fuel);
@@ -3255,7 +3255,7 @@ class Edit extends Component
 
               if ($this->fuel_order == True) {   
 
-            $fuel = $this->tripFuelOrder($trip);
+            $fuel = $trip->fuels->where('fillup',1)->first();
 
             if (isset($fuel) && $this->fuel_split) {
 
