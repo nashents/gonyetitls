@@ -17,6 +17,10 @@ class ProductController extends Controller
     {
         return view('products.index');
     }
+    public function archived()
+    {
+        return view('products.archived');
+    }
 
     public function all($category)
     {

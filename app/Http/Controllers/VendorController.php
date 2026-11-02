@@ -17,6 +17,10 @@ class VendorController extends Controller
     {
         return view('vendors.index');
     }
+    public function archived()
+    {
+        return view('vendors.archived');
+    }
     public function age()
     {
         return view('vendors.age');

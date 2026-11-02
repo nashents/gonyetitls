@@ -199,6 +199,14 @@ Route::get('employees/leave-days','EmployeeController@leave')->name('employees.l
 Route::get('horses/archived','HorseController@archived')->name('horses.archived');
 Route::get('trailers/archived','TrailerController@archived')->name('trailers.archived');
 Route::get('vehicles/archived','VehicleController@archived')->name('vehicles.archived');
+// Archived master-data pages (Sage inactive → archived). Must precede the resource
+// routes so "{entity}/archived" isn't captured by the resource show route.
+Route::get('transporters/archived','TransporterController@archived')->name('transporters.archived');
+Route::get('customers/archived','CustomerController@archived')->name('customers.archived');
+Route::get('vendors/archived','VendorController@archived')->name('vendors.archived');
+Route::get('products/archived','ProductController@archived')->name('products.archived');
+Route::get('expenses/archived','ExpenseController@archived')->name('expenses.archived');
+Route::get('stores/archived','StoreController@archived')->name('stores.archived');
 Route::get('employees/reports','EmployeeController@reports')->name('employees.reports');
 Route::get('employees/deleted','EmployeeController@deleted')->name('employees.deleted');
 Route::get('employees/archived','EmployeeController@archived')->name('employees.archived');

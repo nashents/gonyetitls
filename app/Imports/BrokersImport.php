@@ -107,7 +107,6 @@ WithBatchInserts
           
             $user->name = $row['name'];
             $user->category  = 'broker';
-            $user->is_admin = '0';
             $user->active = '1';
             $user->email = $row['email'];
             $user->update();

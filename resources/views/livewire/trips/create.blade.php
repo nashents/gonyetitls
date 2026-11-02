@@ -2601,6 +2601,7 @@
                                         <tr>
                                             <th></th>
                                             <th>Order #</th>
+                                            <th>Reference</th>
                                             <th>Date</th>
                                             <th>Horse/Vehicle</th>
                                             <th>Station</th>
@@ -2614,6 +2615,7 @@
                                             <tr wire:key="attach-fuel-{{ $attachableFuel->id }}">
                                                 <td><input type="checkbox" wire:model="attach_fuel_ids" value="{{ $attachableFuel->id }}" /></td>
                                                 <td>{{ $attachableFuel->order_number }}</td>
+                                                <td>{{ $attachableFuel->reference }}</td>
                                                 <td>{{ $attachableFuel->date }}</td>
                                                 <td>{{ optional($attachableFuel->horse)->registration_number ?? optional($attachableFuel->vehicle)->registration_number }}</td>
                                                 <td>{{ optional($attachableFuel->container)->name ?? (optional($attachableFuel->source_horse)->registration_number ? 'Truck ' . $attachableFuel->source_horse->registration_number : '') }}</td>
@@ -2628,7 +2630,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="text-center">No unattached fuel orders found{{ ($selectedHorse || $selectedVehicle) ? ' for this ' . strtolower($mode_of_transport ?? 'unit') : '' }}.</td>
+                                                <td colspan="9" class="text-center">No unattached fuel orders found{{ ($selectedHorse || $selectedVehicle) ? ' for this ' . strtolower($mode_of_transport ?? 'unit') : '' }}.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

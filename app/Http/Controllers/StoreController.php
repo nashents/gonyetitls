@@ -17,6 +17,10 @@ class StoreController extends Controller
     {
         return view('stores.index');
     }
+    public function archived()
+    {
+        return view('stores.archived');
+    }
 
     /**
      * Show the form for creating a new resource.

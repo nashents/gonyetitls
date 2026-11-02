@@ -301,7 +301,10 @@ WithMultipleSheets
                     $isNewUser = !$user->exists;
 
                     $user->category = 'employee';
-                    $user->is_admin = '0';
+                    // Never demote an existing login (e.g. a system admin matched by name).
+                    if ($isNewUser) {
+                        $user->is_admin = '0';
+                    }
                     $user->active   = '1';
                     $this->fillFilled($user, ['email' => $email, 'phonenumber' => $phone]);
 

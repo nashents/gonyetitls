@@ -14,6 +14,7 @@ use App\Models\Trip;
 use App\Services\Fuel\BulkFuelOrderService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 /**
@@ -31,7 +32,7 @@ class BulkCreate extends Component
     public $deduct_from = 'quantity';
     public $fuel_type = 'Diesel';
 
-    // Per truck: horse_id, label, employee_id, trip_id, category, mileage, quantity, is_full_tank, fillup, comments, tank_capacity
+    // Per truck: horse_id, label, employee_id, trip_id, category, mileage, quantity, is_full_tank, fillup, reference, comments, tank_capacity
     public $rows = [];
     public $rowTrips = [];
 
@@ -139,6 +140,7 @@ class BulkCreate extends Component
             'quantity' => '',
             'is_full_tank' => '0',
             'fillup' => '1',
+            'reference' => '',
             'comments' => '',
             'tank_capacity' => $horse->fuel_tank_capacity,
         ];
@@ -171,12 +173,37 @@ class BulkCreate extends Component
     {
         [$index, $field] = array_pad(explode('.', $key, 2), 2, null);
 
+        // Flag a reference already on another fuel order (or another row) as soon as it's typed.
+        if ($field === 'reference') {
+            $this->checkReferences();
+            return;
+        }
+
         if ($field === 'trip_id' && $value) {
             $trip = Trip::with('driver')->find($value);
             if ($trip && optional($trip->driver)->employee_id) {
                 $this->rows[$index]['employee_id'] = $trip->driver->employee_id;
             }
             $this->rows[$index]['fillup'] = Fuel::where('trip_id', $value)->where('fillup', 1)->exists() ? '0' : '1';
+        }
+    }
+
+    private const REFERENCE_RULE = 'nullable|string|max:255|distinct:ignore_case|unique:fuels,reference';
+
+    // Re-checks every row's reference so both rows of a duplicate pair are flagged, and cleared once fixed.
+    private function checkReferences(): void
+    {
+        foreach (array_keys($this->getErrorBag()->messages()) as $key) {
+            if (preg_match('/^rows\.\d+\.reference$/', $key)) {
+                $this->resetErrorBag($key);
+            }
+        }
+
+        $rows = collect($this->rows)->map(fn ($row) => ['reference' => trim((string) ($row['reference'] ?? ''))])->all();
+        $validator = Validator::make(['rows' => $rows], ['rows.*.reference' => self::REFERENCE_RULE], $this->messages);
+
+        foreach ($validator->errors()->messages() as $key => $messages) {
+            $this->addError($key, $messages[0]);
         }
     }
 
@@ -195,6 +222,7 @@ class BulkCreate extends Component
             'rows.*.is_full_tank' => 'required|in:0,1',
             'rows.*.fillup' => 'required|in:0,1',
             'rows.*.category' => 'nullable|in:Self,Transporter,Customer',
+            'rows.*.reference' => self::REFERENCE_RULE,
         ];
 
         if ($this->isBulkBuy) {
@@ -214,6 +242,8 @@ class BulkCreate extends Component
         'rows.*.quantity.required' => 'Enter the litres.',
         'rows.*.quantity.min' => 'Enter the litres.',
         'rows.*.horse_id.distinct' => 'This truck is listed twice.',
+        'rows.*.reference.distinct' => 'This reference is entered on another truck.',
+        'rows.*.reference.unique' => 'This reference is already on another fuel order.',
     ];
 
     // Tank capacity per truck, and the station's balance for the whole batch.
@@ -251,6 +281,10 @@ class BulkCreate extends Component
 
     public function store(BulkFuelOrderService $service)
     {
+        foreach ($this->rows as $i => $row) {
+            $this->rows[$i]['reference'] = trim((string) ($row['reference'] ?? ''));
+        }
+
         $this->validate();
 
         $problems = $this->balanceProblems();

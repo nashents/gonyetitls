@@ -61,6 +61,7 @@ class Index extends Component
 
     use WithPagination;
     use WithFileUploads;
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
    
 
 
@@ -1906,8 +1907,39 @@ class Index extends Component
     }
     
 
+    // Trip references on the shift's trip rows must be unique, in the DB and within the form.
+    protected function validateTripRefs(): void
+    {
+        $seen = [];
+        $rows = [];
+        foreach ((array) $this->current_trip_ref as $key => $ref) {
+            $rows[] = ["current_trip_ref.$key", $ref, $this->shift_trips[$key]->id ?? null];
+        }
+        foreach ((array) $this->trip_ref as $key => $ref) {
+            $rows[] = ["trip_ref.$key", $ref, null];
+        }
+
+        foreach ($rows as [$field, $ref, $tripId]) {
+            $normalised = mb_strtolower(trim((string) $ref));
+            if ($normalised === '') {
+                continue;
+            }
+            if (isset($seen[$normalised])) {
+                $message = "Trip reference \"$ref\" is entered more than once.";
+                $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $message]);
+                throw \Illuminate\Validation\ValidationException::withMessages([$field => $message]);
+            }
+            $seen[$normalised] = true;
+            if ($tripId && trim((string) $ref) === trim((string) Trip::whereKey($tripId)->value('trip_ref'))) {
+                continue; // unchanged legacy ref
+            }
+            $this->assertUniqueReference($field, Trip::class, 'trip_ref', $ref, $tripId, 'trip reference');
+        }
+    }
+
     public function store(){
-       
+
+        $this->validateTripRefs();
 
         // if($this->for == "Trips") {
             $this->validate([
@@ -2164,7 +2196,7 @@ class Index extends Component
             }
         }
 
-    }elseif($this->for == "Rehandlings"){
+    }elseif(in_array($this->for, ["Rehandling", "Rehandlings"], true)){
 
         $this->shift_rehandlings = $shift->rehandlings;
 
@@ -2218,6 +2250,8 @@ class Index extends Component
 
     public function update()
     {
+
+         $this->validateTripRefs();
 
          if($this->for == "Trips") {
             $this->validate([

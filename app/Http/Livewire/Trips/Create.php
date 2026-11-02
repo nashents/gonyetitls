@@ -69,6 +69,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use App\Http\Livewire\Concerns\HandlesTripTrailerLinks;
+use App\Http\Livewire\Concerns\ValidatesUniqueReference;
 use Livewire\WithFileUploads;
 // use Illuminate\Support\Facades\Session;
 
@@ -78,6 +79,7 @@ class Create extends Component
     use WithFileUploads;
     use ResolvesSageIntegration;
     use HandlesTripTrailerLinks;
+    use ValidatesUniqueReference;
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     public $trip_id;
     public $with_quotation = False;
@@ -706,6 +708,10 @@ class Create extends Component
        
     }
 
+    public function updatedTripRef(){
+        $this->checkUniqueReference('trip_ref', Trip::class, 'trip_ref', null, 'trip reference');
+    }
+
     public function updatedSelectedTrip($id){
         if(!is_null($id)){
             $initial_trip = Trip::find($id);
@@ -713,7 +719,6 @@ class Create extends Component
                 $this->selectedTransporter = $initial_trip->transporter_id;
                 $transporter = Transporter::find($initial_trip->transporter_id);
                 $this->cargos = Cargo::orderBy('name','asc')->get();
-                $this->trip_ref = $initial_trip->trip_ref;
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
@@ -2302,6 +2307,11 @@ class Create extends Component
     public function store(){
 
         // $this->validate();
+        $this->assertUniqueReference('trip_ref', Trip::class, 'trip_ref', $this->trip_ref, null, 'trip reference');
+        if (empty($this->selectedTransportOrder)) {
+            // the auto-created transport order carries the trip reference
+            $this->assertUniqueReference('trip_ref', TransportOrder::class, 'custom_ref', $this->trip_ref, null, 'trip reference');
+        }
         $this->validateTripExpenses();
         $this->validateFuelFunding();
         //start trip creation logic

@@ -27,6 +27,7 @@ use App\Models\DeliveryNote;
 use App\Models\LoadingPoint;
 use App\Models\PaymentMethod;
 use App\Models\TransportOrder;
+use App\Rules\UniqueReference;
 use App\Models\OffloadingPoint;
 use App\Models\TripDestination;
 use App\Models\TripTransportOrder;
@@ -60,6 +61,12 @@ WithBatchInserts
     public $trailer_ids;
     public $currency;
     public $payment_account;
+    protected $skippedRows = [];
+
+    public function getSkippedRows(): array
+    {
+        return $this->skippedRows;
+    }
 
     public function __construct()
     {
@@ -312,6 +319,11 @@ WithBatchInserts
                 $trailer_ids = [];
 
                 $trip_ref = trim($row->get('trip_reference'));
+                if (UniqueReference::exists(Trip::class, 'trip_ref', $trip_ref)
+                    || UniqueReference::exists(TransportOrder::class, 'custom_ref', $trip_ref)) {
+                    $this->skippedRows[] = ['ref' => $trip_ref, 'reason' => 'trip reference already in use'];
+                    continue;
+                }
                 $start_date = $this->parseExcelDate($row->get('start_date'));
                 $end_date = $this->parseExcelDate($row->get('offloading_date'));
 

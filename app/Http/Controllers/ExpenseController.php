@@ -17,6 +17,10 @@ class ExpenseController extends Controller
     {
         return view('expenses.index');
     }
+    public function archived()
+    {
+        return view('expenses.archived');
+    }
 
     /**
      * Show the form for creating a new resource.

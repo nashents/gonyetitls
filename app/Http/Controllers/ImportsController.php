@@ -104,7 +104,16 @@ class ImportsController extends Controller
         ini_set('max_execution_time', 300);
         $import = new TripsImport;
         $import->import($file);
-        Session::flash('success','Trip(s) Imported Successfully!!');
+
+        $skipped = $import->getSkippedRows();
+        if (!empty($skipped)) {
+            $summary = collect($skipped)
+                ->map(fn ($skip) => "{$skip['ref']}: {$skip['reason']}")
+                ->implode(' | ');
+            Session::flash('warning', count($skipped).' trip row(s) were skipped: '.$summary);
+        } else {
+            Session::flash('success','Trip(s) Imported Successfully!!');
+        }
         return redirect()->back();
     }
    

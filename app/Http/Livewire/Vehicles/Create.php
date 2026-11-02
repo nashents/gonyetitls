@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Create extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
 
     public $vehicle_type;
@@ -213,7 +214,13 @@ class Create extends Component
 
 
     }
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Vehicle::class, 'custom_ref', null, 'vehicle reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Vehicle::class, 'custom_ref', $this->custom_ref, null, 'vehicle reference');
         if (! $this->refreshFleetLimitStatus()) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',

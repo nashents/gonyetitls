@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
 
     use WithPagination;
@@ -290,7 +291,13 @@ class Index extends Component
         return $pin;
     }
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Transporter::class, 'custom_ref', $this->transporter_id, 'transporter reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Transporter::class, 'custom_ref', $this->custom_ref, null, 'transporter reference');
 
         $this->validate();
         
@@ -463,6 +470,7 @@ class Index extends Component
 
     public function update()
     {
+        $this->assertUniqueReference('custom_ref', \App\Models\Transporter::class, 'custom_ref', $this->custom_ref, $this->transporter_id, 'transporter reference');
 
         DB::transaction(function () {
 
@@ -527,10 +535,23 @@ class Index extends Component
         ]);
     }
 
+    /** Archive a transporter: hide from the list, show under Archived Transporters. */
+    public function archive($id)
+    {
+        $transporter = Transporter::find($id);
+        if ($transporter) {
+            $transporter->archive = 1;
+            $transporter->status  = 0;
+            $transporter->save();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Transporter archived.']);
+        }
+    }
+
     public function render()
     {
 
             $query = Transporter::query()
+            ->where('archive', 0)
             ->with('cargos','corridors','sageMapping','customer')
             ->withCount([
                 'drivers as drivers_count',

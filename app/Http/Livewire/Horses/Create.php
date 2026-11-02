@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Create extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
 
     public $horse_type_id;
@@ -246,7 +247,13 @@ class Create extends Component
             }
         }
     }
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Horse::class, 'custom_ref', null, 'horse reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Horse::class, 'custom_ref', $this->custom_ref, null, 'horse reference');
         if (! $this->refreshFleetLimitStatus()) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',

@@ -17,6 +17,10 @@ class CustomerController extends Controller
     {
         return view('customers.index');
     }
+    public function archived()
+    {
+        return view('customers.archived');
+    }
     
     public function reports(){
         return view('customers.reports');

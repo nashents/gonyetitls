@@ -14,6 +14,12 @@
                             <th class="w-10 text-center line-height-35">Fuel Order#</th>
                             <td class="w-20 line-height-35"> {{$fuel->order_number}}</td>
                         </tr>
+                        @if ($fuel->reference)
+                        <tr>
+                            <th class="w-10 text-center line-height-35">Reference</th>
+                            <td class="w-20 line-height-35">{{$fuel->reference}}</td>
+                        </tr>
+                        @endif
                         <tr>
                             <th class="w-10 text-center line-height-35">Type</th>
                             <td class="w-20 line-height-35">{{ucfirst($fuel->type)}}</td>

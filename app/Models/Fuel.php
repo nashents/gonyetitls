@@ -157,6 +157,7 @@ class Fuel extends Model implements Auditable
   protected $fillable = [
         'user_id',
         'order_number',      // include this only if you allow mass-assigning it
+        'reference',
         'account_id',
         'horse_id',
         'vehicle_id',

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Session;
 
 class Edit extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
 
     public $horse_type;
@@ -237,7 +238,13 @@ class Edit extends Component
             }
         }
     }
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Horse::class, 'custom_ref', $this->horse_id, 'horse reference');
+    }
+
+
     public function update(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Horse::class, 'custom_ref', $this->custom_ref, $this->horse_id, 'horse reference');
         $horse = Horse::withTrashed()->findOrFail($this->horse_id);
         $horse->fleet_number = $this->fleet_number;
         $horse->horse_make_id = $this->selectedMake;

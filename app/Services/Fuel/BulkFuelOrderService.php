@@ -27,7 +27,7 @@ class BulkFuelOrderService
 {
     /**
      * @param array $header container_id, date, currency_id, unit_price, exchange_rate, deduct_from, fuel_type
-     * @param array $rows   horse_id, employee_id, trip_id, category, mileage, quantity, is_full_tank, fillup, comments
+     * @param array $rows   horse_id, employee_id, trip_id, category, mileage, quantity, is_full_tank, fillup, reference, comments
      * @return Collection<int, Fuel>
      */
     public function create(array $header, array $rows, $company): Collection
@@ -73,6 +73,7 @@ class BulkFuelOrderService
         $fuel->exchange_amount = $exchangeRate ? round($exchangeRate * $amount, 2) : null;
         $fuel->odometer = $row['mileage'];
         $fuel->fillup = $row['fillup'];
+        $fuel->reference = trim((string) ($row['reference'] ?? '')) ?: null;
         $fuel->comments = $row['comments'] ?? null;
         $fuel->supplied_by_customer = false;
 

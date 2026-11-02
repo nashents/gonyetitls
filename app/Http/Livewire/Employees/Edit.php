@@ -32,6 +32,7 @@ class Edit extends Component
 {
 
     use WithFileUploads;
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
 
     public $employee;
     public $employee_id;
@@ -294,8 +295,13 @@ class Edit extends Component
 
   
 
+      public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Employee::class, 'custom_ref', $this->employee_id, 'employee reference');
+      }
+
       public function update(){
 
+        $this->assertUniqueReference('custom_ref', \App\Models\Employee::class, 'custom_ref', $this->custom_ref, $this->employee_id, 'employee reference');
         $this->validate();
    
         DB::transaction(function () {

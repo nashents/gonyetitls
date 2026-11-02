@@ -63,6 +63,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use App\Http\Livewire\Concerns\HandlesTripTrailerLinks;
+use App\Http\Livewire\Concerns\ValidatesUniqueReference;
 use Livewire\WithFileUploads;
 
 class Edit extends Component
@@ -70,6 +71,7 @@ class Edit extends Component
     use WithFileUploads;
     use HandlesTripTrailerLinks;
     use ResolvesSageIntegration;
+    use ValidatesUniqueReference;
 
     public $trip;
     public $trip_id;
@@ -617,14 +619,17 @@ class Edit extends Component
     }
 
 
+    public function updatedTripRef(){
+        $this->checkUniqueReference('trip_ref', Trip::class, 'trip_ref', $this->trip_id, 'trip reference');
+    }
+
     public function updatedSelectedTrip($id){
         if(!is_null($id)){
             $initial_trip = Trip::find($id);
             if(isset($initial_trip)){
                 $this->selectedTransporter = $initial_trip->transporter_id;
                 $transporter = Transporter::find($initial_trip->transporter_id);
-              
-                $this->trip_ref = $initial_trip->trip_ref;
+
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
@@ -1395,7 +1400,7 @@ class Edit extends Component
        
         
          $this->fuel_order = $this->trip->fuel_order;
-         $this->fuel = $this->trip->fuels->where('fillup',1)->first();
+         $this->fuel = $this->tripFuelOrder($this->trip);
 
          if ($this->fuel) {
             $this->fuel_split = app(\App\Services\Fuel\FuelTripAllocationService::class)->isSplit($this->fuel);
@@ -2558,6 +2563,10 @@ class Edit extends Component
 
     public function update(){
 
+        // only a changed ref is checked, so legacy duplicates can still be edited
+        if (trim((string) $this->trip_ref) !== trim((string) Trip::whereKey($this->trip_id)->value('trip_ref'))) {
+            $this->assertUniqueReference('trip_ref', Trip::class, 'trip_ref', $this->trip_ref, $this->trip_id, 'trip reference');
+        }
         $this->validateFuelFunding();
 
         DB::transaction(function () {
@@ -3246,7 +3255,7 @@ class Edit extends Component
 
               if ($this->fuel_order == True) {   
 
-            $fuel = $trip->fuels->where('fillup',1)->first();
+            $fuel = $this->tripFuelOrder($trip);
 
             if (isset($fuel) && $this->fuel_split) {
 

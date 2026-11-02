@@ -18,6 +18,10 @@ class TransporterController extends Controller
     {
         return view('transporters.index');
     }
+    public function archived()
+    {
+        return view('transporters.archived');
+    }
     public function rejected()
     {
         return view('transporters.rejected');

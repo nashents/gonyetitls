@@ -23,6 +23,7 @@ use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
     use WithPagination;
     use \App\Http\Livewire\Concerns\PullsFromSage;
@@ -181,7 +182,13 @@ class Index extends Component
         'name' => 'required|unique:customers,name,NULL,id,deleted_at,NULL|string|min:2',
     ];
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Customer::class, 'custom_ref', $this->customer_id, 'customer reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Customer::class, 'custom_ref', $this->custom_ref, null, 'customer reference');
 
        $this->state = "create";
        $customer = null;
@@ -373,6 +380,7 @@ class Index extends Component
 
     public function update()
     {
+        $this->assertUniqueReference('custom_ref', \App\Models\Customer::class, 'custom_ref', $this->custom_ref, $this->customer_id, 'customer reference');
         $this->state = "create";
         DB::transaction(function () {
         if ($this->customer_id) {
@@ -411,12 +419,25 @@ class Index extends Component
         $this->resetPage();
     }
 
+    /** Archive a customer: hide from the list, show under Archived Customers. */
+    public function archive($id)
+    {
+        $customer = Customer::find($id);
+        if ($customer) {
+            $customer->archive = 1;
+            $customer->status  = 0;
+            $customer->save();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Customer archived.']);
+        }
+    }
+
     public function render()
     {
-        
+
              // sleep(1);
 
               $query = Customer::query()
+                ->where('archive', 0)
                 ->with('invoices')
                 ->orderBy('name', 'asc');
 

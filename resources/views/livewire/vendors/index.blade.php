@@ -90,6 +90,7 @@
                                                 <li><a href="#" wire:click="retrySync({{$vendor->id}})" ><i class="fa fa-refresh color-warning"></i> Retry Sage Sync</a></li>
                                                 @endif
                                                 @unless ($this->sageEnabled)
+                                                <li><a href="#" wire:click="archive({{$vendor->id}})" ><i class="fa fa-archive color-primary"></i> Archive</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#vendorDeleteModal{{ $vendor->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endunless
                                             </ul>

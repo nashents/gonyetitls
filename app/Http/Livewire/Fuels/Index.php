@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -103,6 +104,7 @@ class Index extends Component
     public $date;
     public $fillup;
     public $invoice_number;
+    public $reference;
     public $fuel_consumption;
     public $distance;
     public $file;
@@ -964,6 +966,7 @@ class Index extends Component
             'is_full_tank' => 'required|in:0,1',
             'deduct_from' => $this->isBulkBuy ? 'required|in:account,quantity' : 'nullable',
             'invoice_number' => 'nullable',
+            'reference' => ['nullable', 'string', 'max:255', Rule::unique('fuels', 'reference')->ignore($this->fuel_id)],
             'file' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
             'comments' => 'nullable',
         ];
@@ -1191,6 +1194,7 @@ class Index extends Component
         $this->attach_fuel_request = False; 
         $this->type = "Horse";
         $this->invoice_number = Null;
+        $this->reference = Null;
         $this->amount = 0;
         $this->exchange_rate = Null;
         $this->exchange_amount = Null;
@@ -1240,6 +1244,9 @@ class Index extends Component
 
     public function store(){
 
+    // A cancelled edit leaves fuel_id behind; a new order must not inherit it.
+    $this->fuel_id = Null;
+    $this->reference = trim((string) $this->reference) ?: Null;
     $this->validate($this->rules());
 
     if (!$this->guardFuelOrderBeforeSave()) {
@@ -1305,6 +1312,7 @@ class Index extends Component
         $fuel->fillup = $this->fillup;
         $fuel->type = $this->type;
         $fuel->comments = $this->comments;
+        $fuel->reference = $this->reference;
         $fuel->supplied_by_customer = $this->isCustomerSupplied;
         $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : Null;
         $fuel->save();
@@ -1388,6 +1396,7 @@ class Index extends Component
     $this->previous_mileage = $fuel->odometer;
     $this->previous_hours = $fuel->hours;
     $this->comments = $fuel->comments;
+    $this->reference = $fuel->reference;
     $this->amount = $fuel->amount;
     $this->unit_price = $fuel->unit_price;
   
@@ -1407,6 +1416,7 @@ class Index extends Component
 
     public function update()
     {
+        $this->reference = trim((string) $this->reference) ?: Null;
         $this->validate($this->rules());
 
         if (!$this->guardFuelOrderBeforeSave()) {
@@ -1471,6 +1481,7 @@ class Index extends Component
             $fuel->fillup = $this->fillup;
             $fuel->type = $this->type;
             $fuel->comments = $this->comments;
+            $fuel->reference = $this->reference;
             $fuel->supplied_by_customer = $this->isCustomerSupplied;
             $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : Null;
 

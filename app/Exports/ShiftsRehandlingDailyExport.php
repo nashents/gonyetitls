@@ -2,10 +2,13 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\DailyShiftReportHeader;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -14,25 +17,30 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 /**
- * Daily rehandling production per equipment unit (Rehandlings shifts):
+ * Daily rehandling production per equipment unit (Rehandling shifts):
  * Yesterday block (A:G) | grey separator (H) | Month To Date block (I:N).
  *
- * Rows = every horse/vehicle with a Rehandlings shift this month, so both
+ * Rows = every horse/vehicle with a Rehandling shift this month, so both
  * blocks list the same units. Reporting day matches ShiftsDailyExport:
  * 02:00 the previous day to 01:00 on the As At date.
+ *
+ * Rows 1-6 hold the logo and report info; the table starts at row 7.
  */
-class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle
+class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle, WithDrawings, WithCustomStartCell
 {
-    protected const TITLE_ROW = 1;
-    protected const BAND_ROW = 2;
-    protected const HEADER_ROW = 3;
-    protected const DATA_START = 4;
+    use DailyShiftReportHeader;
+
+    protected const TITLE_ROW = 7;
+    protected const BAND_ROW = 8;
+    protected const HEADER_ROW = 9;
+    protected const DATA_START = 10;
 
     protected const RED = 'FF0000';
     protected const GREY = '808080';
 
     protected Carbon $asAt;
     protected int $rowCount = 0;
+    protected array $reportPeriods = [];
 
     public function __construct(?Carbon $asAt = null)
     {
@@ -44,11 +52,21 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
         return 'Rehandling';
     }
 
+    public function startCell(): string
+    {
+        return 'A' . self::TITLE_ROW;
+    }
+
     public function array(): array
     {
         $reportTo = $this->asAt->copy()->startOfDay()->addHour();
         $yFrom = $this->asAt->copy()->subDay()->startOfDay()->addHours(2);
         $mFrom = $this->asAt->copy()->subDay()->startOfMonth()->startOfDay()->addHours(2);
+
+        $this->reportPeriods = [
+            'Period (Yesterday)' => $this->formatWindow($yFrom, $reportTo),
+            'Period (Month To Date)' => $this->formatWindow($mFrom, $reportTo),
+        ];
 
         $yesterday = $this->totalsByEquipment($yFrom, $reportTo);
         $mtd = $this->totalsByEquipment($mFrom, $reportTo);
@@ -111,13 +129,14 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
     }
 
     /**
-     * Rehandlings shifts in the window, summed per equipment unit.
+     * Rehandling shifts in the window, summed per equipment unit.
      */
     protected function totalsByEquipment(Carbon $from, Carbon $to): array
     {
         $shifts = Shift::query()
-            ->where('for', 'Rehandlings')
-            ->whereBetween('shift_start_time', [$from, $to])
+            // The shift form stores "Rehandling"; accept the plural too
+            ->whereIn('for', ['Rehandling', 'Rehandlings'])
+            ->where(fn ($q) => $this->whereShiftStartBetween($q, $from, $to))
             ->with(['rehandlings', 'fuel', 'horse', 'vehicle'])
             ->orderBy('shift_start_time')
             ->get();
@@ -245,10 +264,14 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
                 $totalRow = self::DATA_START + $this->rowCount;
                 $redBorder = ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => self::RED]];
 
+                // Report info beside the logo, above the MTD block
+                $this->writeReportInfo($sheet, 'I', $this->reportPeriods);
+
                 // Title
-                $sheet->mergeCells('A1:N1');
-                $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13);
-                $sheet->getRowDimension(1)->setRowHeight(22);
+                $title = self::TITLE_ROW;
+                $sheet->mergeCells("A{$title}:N{$title}");
+                $sheet->getStyle("A{$title}")->getFont()->setBold(true)->setSize(13);
+                $sheet->getRowDimension($title)->setRowHeight(22);
 
                 // Grey band with the two block titles
                 $sheet->mergeCells("B{$band}:G{$band}");

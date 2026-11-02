@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
@@ -254,8 +255,14 @@ class Index extends Component
         $this->cargo_type = Cargo::find($id)?->type;
     }
 
+    public function updatedReference(){
+        $this->checkUniqueReference('reference', \App\Models\Deal::class, 'reference', $this->deal_id, 'deal reference');
+    }
+
+
     public function store()
     {
+        $this->assertUniqueReference('reference', \App\Models\Deal::class, 'reference', $this->reference, null, 'deal reference');
        
             $this->validate();
 
@@ -325,6 +332,7 @@ class Index extends Component
 
     public function update()
     {
+        $this->assertUniqueReference('reference', \App\Models\Deal::class, 'reference', $this->reference, $this->deal_id, 'deal reference');
         if ($this->deal_id) {
          
                 $this->validate();

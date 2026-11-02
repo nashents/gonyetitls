@@ -36,6 +36,7 @@ use Livewire\WithFileUploads;
 
 class Create extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
 
 
@@ -403,7 +404,13 @@ class Create extends Component
 
     }
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Employee::class, 'custom_ref', null, 'driver reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Employee::class, 'custom_ref', $this->custom_ref, null, 'driver reference');
 
       $driver = null;
       DB::transaction(function () use (&$driver) {

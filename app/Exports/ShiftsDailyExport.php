@@ -2,8 +2,8 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\DailyShiftReportHeader;
 use App\Models\Budget;
-use App\Models\Company;
 use App\Models\Fuel;
 use App\Models\LoadingPoint;
 use App\Models\Shift;
@@ -22,11 +22,11 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle, WithDrawings, WithCustomStartCell
 {
-    protected string $shiftDateColumn = 'shift_start_time';
+    use DailyShiftReportHeader;
+
     protected string $shiftTypeColumn = 'type';
     protected string $shiftWorkTypeColumn = 'for';
     protected string $tripWeightColumn = 'weight';
@@ -43,6 +43,9 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     protected string $lastCol = 'R';
 
     protected array $budgetMap = [];
+
+    // Report info block lines, set in array()
+    protected array $reportPeriods = [];
 
     public function __construct(
         protected string $periodTitle = 'Key Operating Metrics - ',
@@ -70,30 +73,6 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     public function startCell(): string
     {
         return 'A7';
-    }
-
-    public function drawings()
-    {
-        $drawing = new Drawing();
-        $company  = Company::where('is_active',True)->orderBy('created_at','asc')->first();
-
-        if ($company) {
-            $drawing->setName($company->name);
-            $drawing->setDescription($company->name . ' Logo');
-
-            if (file_exists(public_path('/images/uploads/' . $company->logo))) {
-                $drawing->setPath(public_path('/images/uploads/' . $company->logo));
-            } else {
-                $drawing->setPath(public_path('/images/uploads/logo.png'));
-            }
-        } else {
-            $drawing->setPath(public_path('/images/uploads/logo.png'));
-        }
-
-        $drawing->setHeight(90);
-        $drawing->setCoordinates('A2');
-
-        return $drawing;
     }
 
     protected function bootBudgets(): void
@@ -214,6 +193,11 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         
         $mFrom = $asAt->copy()->subDay()->startOfMonth()->startOfDay()->addHours(2);
         $mTo = $reportTo;
+
+        $this->reportPeriods = [
+            'Period (Yesterday)' => $this->formatWindow($yFrom, $yTo),
+            'Period (Month To Date)' => $this->formatWindow($mFrom, $mTo),
+        ];
 
         $mtdBudgetDays = $this->mtdBudgetDays($asAt);
 
@@ -622,11 +606,11 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     }
 
     /**
-     * Shift date window plus the optional work type (shifts.for: Trips / Rehandlings).
+     * Shift date window plus the optional work type (shifts.for: Trips / Rehandling).
      */
     protected function applyShiftScope(Builder $q, Carbon $from, Carbon $to): Builder
     {
-        return $q->whereBetween($this->shiftDateColumn, [$from, $to])
+        return $this->whereShiftStartBetween($q, $from, $to)
             ->when(filled($this->workType), fn (Builder $q) => $q->where($this->shiftWorkTypeColumn, $this->workType));
     }
 
@@ -816,6 +800,10 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
                 $sheet->getRowDimension($spacerRow)->setRowHeight(6);
 
                 $sheet->freezePane("{$this->yStartCol}{$dataStart}");
+
+                // Report info beside the logo (the MTD block starts far right,
+                // after every loading point column)
+                $this->writeReportInfo($sheet, 'C', $this->reportPeriods);
 
                 $sheet->getStyle($rangeAll)->applyFromArray([
                     'borders' => [

@@ -117,6 +117,7 @@
                                             <th style="width: 120px">Full Tank?</th>
                                             <th style="width: 110px">Fill Up</th>
                                             <th class="text-right">Amount</th>
+                                            <th style="min-width: 140px">Reference</th>
                                             <th style="min-width: 140px">Comments</th>
                                             <th></th>
                                         </tr>
@@ -182,6 +183,10 @@
                                                     {{ number_format(round((float) ($row['quantity'] ?: 0) * (float) $unit_price, 2), 2) }}
                                                 </td>
                                                 <td>
+                                                    <input type="text" maxlength="255" wire:model.lazy="rows.{{ $i }}.reference" class="form-control input-sm" placeholder="Optional">
+                                                    @error('rows.'.$i.'.reference') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </td>
+                                                <td>
                                                     <input type="text" wire:model.defer="rows.{{ $i }}.comments" class="form-control input-sm">
                                                 </td>
                                                 <td>
@@ -196,7 +201,7 @@
                                             <th>{{ $this->totalQuantity }} l</th>
                                             <th colspan="2"></th>
                                             <th class="text-right">{{ number_format($this->totalAmount, 2) }}</th>
-                                            <th colspan="2"></th>
+                                            <th colspan="3"></th>
                                         </tr>
                                     </tfoot>
                                 </table>

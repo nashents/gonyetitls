@@ -74,6 +74,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        // Fresh installs only: the seeders below are not idempotent, so a
+        // stray db:seed on a live database duplicates the Basilmark company,
+        // the seeded admin login, roles, branches, accounts, etc.
+        if (\App\Models\Company::query()->exists()) {
+            $this->command?->error('Database already has companies - DatabaseSeeder only runs on a fresh install. Seed a single class with --class instead.');
+            return;
+        }
+
         // \App\Models\User::factory(10)->create();
         $this->call(RoleSeeder::class);
         $this->call(RankSeeder::class);

@@ -198,11 +198,24 @@ class Index extends Component
         ]);
     }
 
+    /** Archive a product: hide from the list, show under Archived Products. */
+    public function archive($id)
+    {
+        $product = Product::find($id);
+        if ($product) {
+            $product->archive = 1;
+            $product->status  = 0;
+            $product->save();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Product archived.']);
+        }
+    }
+
     public function render()
     {
         $products = Product::query()
             ->with(['brand', 'category', 'category_value', 'sageMapping'])
             ->where('department', $this->department)
+            ->where('archive', 0)
             ->where('status', 1)
             ->when(filled($this->search), function ($query) {
                 $search = '%' . trim($this->search) . '%';

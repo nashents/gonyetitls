@@ -241,6 +241,7 @@
                                                 <td>
                                                     <strong>{{ $fuel->order_number }}</strong>@if ($fuel->supplied_by_customer) <span class="badge bg-info" title="Supplied by {{ $fuel->customer ? $fuel->customer->name : 'customer' }} - no supplier bill">Customer fuel</span>@endif
                                                     <div class="fuel-meta text-muted">
+                                                        @if ($fuel->reference)<small><strong>Ref:</strong> {{ $fuel->reference }}</small><br>@endif
                                                         <small><strong>By:</strong> {{ optional($fuel->user)->name }} {{ optional($fuel->user)->surname }}</small><br>
                                                         <small><strong>On:</strong> {{ $fuel->created_at }}</small>
                                                     </div>
@@ -957,14 +958,21 @@
                     </div>
                    
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="reference">Reference</label>
+                                <input type="text" class="form-control" maxlength="255" wire:model.debounce.300ms="reference" placeholder="Enter Reference (optional)">
+                                @error('reference') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="unit_price">Rate</label>
                                 <input type="number" class="form-control" step="any" min="0"  wire:model.debounce.300ms="unit_price" placeholder="Enter Fuel Price" >
                                 @error('unit_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="amount">Total</label>
                                 <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="amount" placeholder="Enter Fillup Total">
@@ -1435,14 +1443,21 @@
                     </div>
                    
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="reference">Reference</label>
+                                <input type="text" class="form-control" maxlength="255" wire:model.debounce.300ms="reference" placeholder="Enter Reference (optional)">
+                                @error('reference') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="unit_price">Rate</label>
                                 <input type="number" class="form-control" step="any" min="0"  wire:model.debounce.300ms="unit_price" placeholder="Enter Fuel Price" >
                                 @error('unit_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="amount">Total</label>
                                 <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="amount" placeholder="Enter Fillup Total">

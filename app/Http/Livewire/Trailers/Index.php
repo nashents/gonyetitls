@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithPagination;
     use \App\Http\Livewire\Concerns\PullsFromSage;
 
@@ -271,7 +272,13 @@ public function activate($id){
     ];
 
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Trailer::class, 'custom_ref', $this->trailer_id, 'trailer reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Trailer::class, 'custom_ref', $this->custom_ref, null, 'trailer reference');
         if (! $this->refreshFleetLimitStatus()) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
@@ -446,6 +453,7 @@ public function activate($id){
 
         public function update()
         {
+        $this->assertUniqueReference('custom_ref', \App\Models\Trailer::class, 'custom_ref', $this->custom_ref, $this->trailer_id, 'trailer reference');
             if ($this->trailer_id) {
                 $trailer = Trailer::find($this->trailer_id);
                 $trailer->user_id = Auth::user()->id;

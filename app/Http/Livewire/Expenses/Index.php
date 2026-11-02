@@ -374,28 +374,43 @@ class Index extends Component
     }
 
 
+    /** Archive an expense: hide from the list, show under Archived Expenses. */
+    public function archive($id)
+    {
+        $expense = Expense::find($id);
+        if ($expense) {
+            $expense->archive = 1;
+            $expense->status  = 0;
+            $expense->save();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Expense archived.']);
+        }
+    }
+
     public function render()
     {
         if (filled($this->search)) {
             return view('livewire.expenses.index',[
                 'expenses' => Expense::query()->with('currency','account','tax','product','product.sageMapping','sageMapping')
-                ->where('name','like', '%'.$this->search.'%')
-                ->orWhere('type','like', '%'.$this->search.'%')
-                ->orWhere('amount','like', '%'.$this->search.'%')
-                ->orWhere('frequency','like', '%'.$this->search.'%')
-                ->orWhere('description','like', '%'.$this->search.'%')
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('account', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
+                ->where('archive', 0)
+                ->where(function ($q) {
+                    $q->where('name','like', '%'.$this->search.'%')
+                    ->orWhere('type','like', '%'.$this->search.'%')
+                    ->orWhere('amount','like', '%'.$this->search.'%')
+                    ->orWhere('frequency','like', '%'.$this->search.'%')
+                    ->orWhere('description','like', '%'.$this->search.'%')
+                    ->orWhereHas('currency', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('account', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    });
                 })
                 ->orderBy('name','asc')->paginate(10),
             ]);
 
         }else{
             return view('livewire.expenses.index',[
-                'expenses' => Expense::with('currency','account','tax','product')->orderBy('name','asc')->paginate(10)
+                'expenses' => Expense::with('currency','account','tax','product')->where('archive', 0)->orderBy('name','asc')->paginate(10)
             ]);
         }
     }

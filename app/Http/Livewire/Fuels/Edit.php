@@ -20,6 +20,7 @@ use App\Http\Livewire\Concerns\HandlesFuelTripAllocations;
 use App\Services\Fuel\FuelTripAllocationService;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class Edit extends Component
 {
@@ -60,6 +61,7 @@ class Edit extends Component
     public $date;
     public $fillup;
     public $invoice_number;
+    public $reference;
     public $fuel_consumption;
     public $distance;
     public $file;
@@ -143,6 +145,7 @@ class Edit extends Component
         $this->type = $fuel->type;
         $this->mileage = $fuel->odometer;
         $this->comments = $fuel->comments;
+        $this->reference = $fuel->reference;
         $this->amount = $fuel->amount;
         $this->unit_price = $fuel->unit_price;
         $this->currency_id = $fuel->currency_id;
@@ -234,7 +237,16 @@ class Edit extends Component
     }
 
     public function updated($value){
+        if ($value === 'reference') {
+            $this->validateOnly('reference', $this->referenceRules());
+            return;
+        }
         $this->validateOnly($value);
+    }
+
+    protected function referenceRules()
+    {
+        return ['reference' => ['nullable', 'string', 'max:255', Rule::unique('fuels', 'reference')->ignore($this->fuel_id)]];
     }
 
     protected $rules = [
@@ -262,6 +274,9 @@ class Edit extends Component
         // try{
  
         if ($this->fuel_id) {
+
+            $this->reference = trim((string) $this->reference) ?: Null;
+            $this->validate($this->referenceRules());
 
             if ($this->isCustomerSupplied) {
                 $this->validate(['fuel_customer_id' => 'required|exists:customers,id']);
@@ -294,6 +309,7 @@ class Edit extends Component
             $fuel->fillup = $this->fillup;
             $fuel->type = $this->type;
             $fuel->comments = $this->comments;
+            $fuel->reference = $this->reference;
             $fuel->supplied_by_customer = $this->isCustomerSupplied;
             $fuel->customer_id = $this->isCustomerSupplied ? $this->fuel_customer_id : null;
 

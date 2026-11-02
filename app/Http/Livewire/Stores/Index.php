@@ -163,20 +163,35 @@ class Index extends Component
         $this->resetPage();
     }
 
+    /** Archive a store: hide from the list, show under Archived Stores. */
+    public function archive($id)
+    {
+        $store = Store::find($id);
+        if ($store) {
+            $store->archive = 1;
+            $store->status  = 0;
+            $store->save();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Store archived.']);
+        }
+    }
+
     public function render()
     {
 
         if (isset($this->search)) {
             return view('livewire.stores.index',[
-                'stores' => Store::with('sageMapping')->where('name','like', '%'.$this->search.'%')
-                ->orWhere('country','like', '%'.$this->search.'%')
-                ->orWhere('city','like', '%'.$this->search.'%')
-                ->orWhere('street_address','like', '%'.$this->search.'%')
+                'stores' => Store::with('sageMapping')->where('archive', 0)
+                ->where(function ($q) {
+                    $q->where('name','like', '%'.$this->search.'%')
+                    ->orWhere('country','like', '%'.$this->search.'%')
+                    ->orWhere('city','like', '%'.$this->search.'%')
+                    ->orWhere('street_address','like', '%'.$this->search.'%');
+                })
                 ->orderBy('name','asc')->paginate(10)
             ]);
         }else{
             return view('livewire.stores.index',[
-                'stores' => Store::with('sageMapping')->orderBy('name','asc')->paginate(10)
+                'stores' => Store::with('sageMapping')->where('archive', 0)->orderBy('name','asc')->paginate(10)
             ]);
         }
        

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
     use WithPagination;
     use \App\Http\Livewire\Concerns\PullsFromSage;
@@ -163,7 +164,13 @@ class Index extends Component
         return $pin;
     }
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Vendor::class, 'custom_ref', $this->vendor_id, 'vendor reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Vendor::class, 'custom_ref', $this->custom_ref, null, 'vendor reference');
 
         $vendor = null;
 
@@ -373,6 +380,7 @@ class Index extends Component
 
     public function update()
     {
+        $this->assertUniqueReference('custom_ref', \App\Models\Vendor::class, 'custom_ref', $this->custom_ref, $this->vendor_id, 'vendor reference');
          DB::transaction(function () {
 
          $this->state = "create";
@@ -405,9 +413,22 @@ class Index extends Component
 
         });
     }
+    /** Archive a vendor: hide from the list, show under Archived Vendors. */
+    public function archive($id)
+    {
+        $vendor = Vendor::find($id);
+        if ($vendor) {
+            $vendor->archive = 1;
+            $vendor->status  = 0;
+            $vendor->save();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendor archived.']);
+        }
+    }
+
     public function render()
-    {  
+    {
            $query = Vendor::query()
+                ->where('archive', 0)
                 ->with('bills')
                 ->orderBy('name', 'asc');
 

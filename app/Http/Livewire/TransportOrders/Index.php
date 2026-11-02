@@ -34,6 +34,7 @@ use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
     use WithFileUploads;
     use WithPagination;
 
@@ -634,7 +635,13 @@ public function getAuthorizer($id){
     }
    
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\TransportOrder::class, 'custom_ref', $this->transport_order_id, 'transport order reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\TransportOrder::class, 'custom_ref', $this->custom_ref, null, 'transport order reference');
 
      
         DB::transaction(function () {
@@ -819,6 +826,7 @@ public function getAuthorizer($id){
     }
     
     public function update(){
+        $this->assertUniqueReference('custom_ref', \App\Models\TransportOrder::class, 'custom_ref', $this->custom_ref, $this->transport_order_id, 'transport order reference');
 
      
         DB::transaction(function () {

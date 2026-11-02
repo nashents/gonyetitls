@@ -28,6 +28,7 @@ use Livewire\Component;
 
 class Create extends Component
 {
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
 
 
     public $quotations;
@@ -660,7 +661,13 @@ public function quotationNumber(){
         }
 
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', \App\Models\Quotation::class, 'custom_ref', null, 'quotation reference');
+    }
+
+
     public function store(){
+        $this->assertUniqueReference('custom_ref', \App\Models\Quotation::class, 'custom_ref', $this->custom_ref, null, 'quotation reference');
         
 
         DB::transaction(function () {

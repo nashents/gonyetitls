@@ -132,6 +132,7 @@
                                                 <li><a href="{{ route('transporters.show', $transporter->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 @unless ($this->sageEnabled)
                                                 <li><a href="#" wire:click="edit({{$transporter->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                <li><a href="#" wire:click="archive({{$transporter->id}})" ><i class="fa fa-archive color-primary"></i> Archive</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#transporterDeleteModal{{ $transporter->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endunless
                                                 @if (! $transporter->customer_id)

@@ -391,7 +391,10 @@ WithMultipleSheets
             $existingUser = $user->exists;
 
             $user->category = 'driver'; // you can change to 'employee' if you really want old behaviour
-            $user->is_admin = '0';
+            // Never demote an existing login (e.g. a system admin matched by name).
+            if (!$existingUser) {
+                $user->is_admin = '0';
+            }
             $user->active   = '1';
             $this->fillFilled($user, ['email' => $email, 'phonenumber' => $phone]);
 

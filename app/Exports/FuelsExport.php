@@ -187,6 +187,7 @@ WithCustomStartCell
 
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', $search)
+                    ->orWhere('reference', 'like', $search)
                     ->orWhere('quantity', 'like', $search)
                     ->orWhere('comments', 'like', $search)
                     ->orWhereHas('horse', function ($q) use ($search) {
@@ -238,6 +239,7 @@ WithCustomStartCell
 
         return [
             $fuel->order_number,
+            $fuel->reference,
             trim(optional($fuel->user)->name . ' ' . optional($fuel->user)->surname),
             $fuel->created_at ? $fuel->created_at->format('Y-m-d H:i') : '',
             $fuel->authorization,
@@ -261,6 +263,7 @@ WithCustomStartCell
     public function headings(): array{
             return[
                 'Order#',
+                'Reference',
                 'Created By',
                 'Created On',
                 'Auth Status',
@@ -288,7 +291,7 @@ WithCustomStartCell
                 $sheet = $event->sheet;
                 $h = $this->headingRow;
 
-                $sheet->getStyle("A{$h}:Q{$h}")->applyFromArray([
+                $sheet->getStyle("A{$h}:R{$h}")->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
@@ -301,7 +304,7 @@ WithCustomStartCell
                 ]);
 
                 $sheet->setCellValue('A7', 'Fuel Summary (fuel & cost figures are for approved orders only)');
-                $sheet->mergeCells('A7:Q7');
+                $sheet->mergeCells('A7:R7');
                 $sheet->getStyle('A7')->applyFromArray(['font' => ['bold' => true, 'size' => 14]]);
 
                 $this->writeBlock($sheet, 'B', 8, ['Overview', ''], $this->summary['overview']);
