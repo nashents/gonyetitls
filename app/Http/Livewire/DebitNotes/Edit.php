@@ -17,7 +17,6 @@ class Edit extends Component
 
     public $bills;
     public $search;
-    protected $queryString = ['search'];
     public $debit_note_reason;
     public $debit_note_number;
     public $selectedBill;

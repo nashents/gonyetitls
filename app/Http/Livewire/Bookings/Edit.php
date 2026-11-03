@@ -67,7 +67,6 @@ class Edit extends Component
     public $breakdowns;
     public $breakdown_id;
     
-    protected $queryString = ['searchProblem','searchVendor','searchAsset','searchVehicle','searchHorse','searchTrailer','searchEmployee','searchMechanic','searchCustomer'];
 
     public $existing_bookings;
     public $company;

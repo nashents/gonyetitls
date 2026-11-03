@@ -20,7 +20,6 @@ class Edit extends Component
 
     public $invoices;
     public $search;
-    protected $queryString = ['search'];
     public $credit_note_reason;
     public $invoice_products;
     public $invoice_product_id;

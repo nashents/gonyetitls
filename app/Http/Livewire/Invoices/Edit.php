@@ -39,7 +39,6 @@ class Edit extends Component
     public $searchTTO;
     public $searchRental;
     public $searchTransportOrder;
-    protected $queryString = ['searchTrip','searchBooking','searchRental','searchTTO'];
     public $from;
     public $to;
 

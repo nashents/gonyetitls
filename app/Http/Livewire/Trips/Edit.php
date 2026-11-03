@@ -445,7 +445,6 @@ class Edit extends Component
     public $searchDriver;
     public $searchTrip;
 
-    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
 
     public $selectedTrip;
     public $trips;
@@ -868,6 +867,9 @@ class Edit extends Component
                         $this->calculation_measurement = "weight";
                     }elseif($this->cargo_type == "Liquid"){
                         $this->calculation_measurement = "litreage_at_20";
+                        if (!($this->with_deal && $this->selectedDeal)) {
+                            $this->units_of_measure_id = UnitsOfMeasure::litreId();
+                        }
                     }
                 }
             }
@@ -1569,7 +1571,7 @@ class Edit extends Component
          $this->start_date = $this->trip->start_date;
          $this->end_date = $this->trip->end_date;
          $this->weight = $this->trip->weight;
-         $this->litreage = $this->trip->litreage;
+         $this->litreage = $this->trip->litreage ?? $this->trip->litreage_at_20;
          $this->litreage_at_20 = $this->trip->litreage_at_20;
          $this->with_cargos = $this->trip->with_cargos;
          $this->transporter_agreement = $this->trip->transporter_agreement;
@@ -1964,7 +1966,7 @@ class Edit extends Component
           'selectedCurrency' => 'required',
           'selectedFrom' => 'required',
           'selectedTo' => 'required',
-          'litreage_at_20' => 'required',
+          'litreage_at_20' => 'nullable',
           'weight' => 'required',
           'freight' => 'required',
           'start_date' => 'required',
@@ -3727,9 +3729,22 @@ class Edit extends Component
        
         $this->calculateFreight();
     }
-    public function updatedLitreageAt20(){
+    public function updatedLitreage(){
        
         $this->calculateFreight();
+    }
+
+    /**
+     * Litres used for the scheduled freight estimate. Trips are scheduled on a
+     * single Litreage figure; litreage_at_20 is only a fallback for older trips.
+     */
+    public function scheduledLitreage()
+    {
+        if (is_numeric($this->litreage)) {
+            return $this->litreage;
+        }
+
+        return is_numeric($this->litreage_at_20) ? $this->litreage_at_20 : 0;
     }
 
     public function calculateFreight()
@@ -3739,11 +3754,7 @@ class Edit extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate * $this->weight;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->freight = $this->rate * $this->litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->freight = $this->rate * $this->litreage;
-                    }
+                    $this->freight = $this->rate * $this->scheduledLitreage();
                 }
             }
         }
@@ -3758,11 +3769,7 @@ class Edit extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate * $this->weight * $this->distance;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->freight = $this->rate * $this->litreage_at_20 * $this->distance ;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->freight = $this->rate * $this->litreage * $this->distance ;
-                    }
+                    $this->freight = $this->rate * $this->scheduledLitreage() * $this->distance;
                    
                 }
             }
@@ -3784,11 +3791,7 @@ class Edit extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate * $this->weight;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage;
-                    }
+                    $this->transporter_freight = $this->transporter_rate * $this->scheduledLitreage();
                  
                 } 
             }
@@ -3803,11 +3806,7 @@ class Edit extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate * $this->weight * $this->distance;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage_at_20 * $this->distance;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage * $this->distance;
-                    }
+                    $this->transporter_freight = $this->transporter_rate * $this->scheduledLitreage() * $this->distance;
                    
                 } 
             }

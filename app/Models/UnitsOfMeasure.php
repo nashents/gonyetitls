@@ -38,6 +38,12 @@ class UnitsOfMeasure extends Model implements Auditable
         });
     }
 
+    /** Id of the seeded Litre unit, the default for liquid cargo. */
+    public static function litreId(): ?int
+    {
+        return static::where('abbreviation', 'L')->orWhere('name', 'Litre')->orderByDesc('is_system')->value('id');
+    }
+
     /** Number of records (trips, orders, notes...) using this unit. */
     public function usageCount(): int
     {

@@ -50,7 +50,6 @@ class Create extends Component
     public $searchTrip;
     public $searchTTO;
     public $searchTransportOrder;
-    protected $queryString = ['searchTrip','searchTTO','searchBooking','searchRental'];
     public $from;
     public $to;
     public $multi_select = False;

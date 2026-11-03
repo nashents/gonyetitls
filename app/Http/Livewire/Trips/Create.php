@@ -80,7 +80,6 @@ class Create extends Component
     use ResolvesSageIntegration;
     use HandlesTripTrailerLinks;
     use ValidatesUniqueReference;
-    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     public $trip_id;
     public $with_quotation = False;
     public $selectedQuotation;
@@ -812,6 +811,9 @@ class Create extends Component
                         $this->calculation_measurement = "weight";
                     }elseif($this->cargo_type == "Liquid"){
                         $this->calculation_measurement = "litreage_at_20";
+                        if (!($this->with_deal && $this->selectedDeal)) {
+                            $this->units_of_measure_id = UnitsOfMeasure::litreId();
+                        }
                     }
                 }
             }
@@ -3088,11 +3090,24 @@ class Create extends Component
       public function updatedQuantity(){
           $this->calculateFreight();
       }
-      public function updatedLitreageAt20(){
+      public function updatedLitreage(){
           $this->calculateFreight();
       }
 
-      public function calculateFreight()
+    /**
+     * Litres used for the scheduled freight estimate. Trips are scheduled on a
+     * single Litreage figure; litreage_at_20 is only a fallback for older trips.
+     */
+    public function scheduledLitreage()
+    {
+        if (is_numeric($this->litreage)) {
+            return $this->litreage;
+        }
+
+        return is_numeric($this->litreage_at_20) ? $this->litreage_at_20 : 0;
+    }
+
+    public function calculateFreight()
     {
        
 
@@ -3101,11 +3116,7 @@ class Create extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate * $this->weight;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->freight = $this->rate * $this->litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->freight = $this->rate * $this->litreage;
-                    }
+                    $this->freight = $this->rate * $this->scheduledLitreage();
                 }
             }
         }
@@ -3120,11 +3131,7 @@ class Create extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate * $this->weight * $this->distance;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->freight = $this->rate * $this->litreage_at_20 * $this->distance ;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->freight = $this->rate * $this->litreage * $this->distance ;
-                    }
+                    $this->freight = $this->rate * $this->scheduledLitreage() * $this->distance;
                    
                 }
             }
@@ -3146,11 +3153,7 @@ class Create extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate * $this->weight;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage;
-                    }
+                    $this->transporter_freight = $this->transporter_rate * $this->scheduledLitreage();
                  
                 } 
             }
@@ -3165,11 +3168,7 @@ class Create extends Component
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate * $this->weight * $this->distance;
                 }elseif($this->cargo_type == "Liquid"){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage_at_20 * $this->distance;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_freight = $this->transporter_rate * $this->litreage * $this->distance;
-                    }
+                    $this->transporter_freight = $this->transporter_rate * $this->scheduledLitreage() * $this->distance;
                    
                 } 
             }

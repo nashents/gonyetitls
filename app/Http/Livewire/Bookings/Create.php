@@ -79,7 +79,6 @@ class Create extends Component
     public $searchProblem;
     public $searchCustomer;
 
-    protected $queryString = ['searchVehicle','searchAsset','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic','searchProblem','searchCustomer'];
 
 
     public $in_date;

@@ -22,7 +22,6 @@ class Create extends Component
 
     public $bills;
     public $search;
-    protected $queryString = ['search'];
     public $reason;
     public $bill;
     public $debit_note_number;

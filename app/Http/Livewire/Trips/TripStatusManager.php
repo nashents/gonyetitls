@@ -162,7 +162,9 @@ class TripStatusManager extends Component
             ?->transport_order
             ?->freight_calculation 
         ?: '';
-        $this->calculation_measurement    = $trip->calculation_measurement ?? '';
+        // Liquid trips choose Ambient vs 20°C here (not at scheduling); default to 20°C.
+        $this->calculation_measurement    = $trip->calculation_measurement
+            ?: (($trip->cargo?->type ?? '') === 'Liquid' ? 'litreage_at_20' : '');
         $this->trip_status_date = $this->toDateTimeLocal($trip->trip_status_date);
         $this->trip_status_description    = $trip->trip_status_description;
         $this->customer_updates           = (bool) ($trip->customer_updates ?? false);

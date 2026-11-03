@@ -28,7 +28,6 @@ class Create extends Component
 
     public $invoices;
     public $search;
-    protected $queryString = ['search'];
     public $reason;
     public $invoice_products;
     public $invoice;

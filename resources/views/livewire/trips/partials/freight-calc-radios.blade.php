@@ -17,3 +17,21 @@
         <span class="text-danger small d-block">{{ $message }}</span>
     @enderror
 </div>
+@if (($cargo_type ?: $trip_cargo_type) === 'Liquid' && in_array($freight_calculation, ['rate_weight', 'rate_weight_distance']))
+    <div class="mb-3">
+        <small class="d-block text-success mb-1">Litreage reading to calculate freight on</small>
+        @foreach ([
+            'litreage_at_ambient' => 'Litreage @ Ambient Temp',
+            'litreage_at_20'      => 'Litreage @ 20 Degrees',
+        ] as $val => $label)
+            <input type="radio"
+                   wire:model="calculation_measurement"
+                   value="{{ $val }}"
+                   class="line-style">
+            <label class="radio-label">{{ $label }}</label>
+        @endforeach
+        @error('calculation_measurement')
+            <span class="text-danger small d-block">{{ $message }}</span>
+        @enderror
+    </div>
+@endif

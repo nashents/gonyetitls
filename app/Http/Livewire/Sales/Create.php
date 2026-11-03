@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Auth;
 class Create extends Component
 {
     public $search;
-    protected $queryString = ['search'];
     public $from;
     public $to;
 

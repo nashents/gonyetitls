@@ -16,7 +16,6 @@ class Edit extends Component
     use WithFileUploads;
 
     public $searchTyre;
-    protected $queryString = ['searchTyre'];
 
     public $tyres;
     public $tyre_id = [];
