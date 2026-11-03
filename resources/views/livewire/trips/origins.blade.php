@@ -83,10 +83,16 @@
                     @if ($trip_origin->litreage)
                         {{number_format($trip_origin->litreage,2)}}   
                     @endif
+                    @if (is_numeric($trip_origin->dip_litreage))
+                        <br><small class="text-muted">Dip: {{ number_format($trip_origin->dip_litreage, 2) }}</small>
+                    @endif
                 </td>
                 <td>
                     @if ($trip_origin->litreage_at_20)
                         {{number_format($trip_origin->litreage_at_20,2)}} 
+                    @endif
+                    @if (is_numeric($trip_origin->dip_litreage_at_20))
+                        <br><small class="text-muted">Dip: {{ number_format($trip_origin->dip_litreage_at_20, 2) }}</small>
                     @endif
                 </td>
                 <td>

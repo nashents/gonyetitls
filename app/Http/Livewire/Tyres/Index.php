@@ -260,6 +260,8 @@ class Index extends Component
             ])
             ->listFilter($this->filters())
             ->orderByDesc('created_at')
+            // Tie-breaker: GRV tyres share created_at, and unstable ties repeat/skip rows across pages.
+            ->orderByDesc('id')
             ->paginate(10);
 
         return view('livewire.tyres.index', compact('tyres'));

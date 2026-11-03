@@ -79,6 +79,20 @@ class TripStatusManager extends Component
     public ?string $comments                      = null;
     public ?int    $legacy_delivery_note_id       = null;
 
+    // ── Liquid dips / shoretank readings (both paths share the field names) ──
+    public   $loaded_dip_litreage           = null;
+    public   $loaded_dip_litreage_at_20     = null;
+    public   $offloaded_dip_litreage        = null;
+    public   $offloaded_dip_litreage_at_20  = null;
+    public   $shoretank_litreage            = null;
+    public   $shoretank_litreage_at_20      = null;
+
+    private const READING_FIELDS = [
+        'loaded_dip_litreage', 'loaded_dip_litreage_at_20',
+        'offloaded_dip_litreage', 'offloaded_dip_litreage_at_20',
+        'shoretank_litreage', 'shoretank_litreage_at_20',
+    ];
+
     protected $listeners = ['openTripStatusModal' => 'status'];
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -255,6 +269,10 @@ class TripStatusManager extends Component
                 'transporter_offloaded_freight' => $this->toFloat($dn->transporter_offloaded_freight) ?? $this->toFloat($dn->transporter_loaded_freight),
                 'comments'                      => $dn->comments,
             ];
+
+            foreach (self::READING_FIELDS as $field) {
+                $this->deliveryNotes[$tto->id][$field] = $this->toFloat($dn->$field);
+            }
         }
     }
 
@@ -307,6 +325,10 @@ class TripStatusManager extends Component
         $this->offloaded_weight           = $this->toFloat($dn->offloaded_weight);
         $this->offloaded_distance         = $this->toFloat($dn->offloaded_distance);
         $this->comments                   = $dn->comments;
+
+        foreach (self::READING_FIELDS as $field) {
+            $this->$field = $this->toFloat($dn->$field);
+        }
 
         if (! $dn->status) {
             $this->offloaded_rate                = $this->toFloat($dn->loaded_rate);
@@ -457,6 +479,9 @@ class TripStatusManager extends Component
             $dn->transporter_offloaded_rate    = $data['transporter_offloaded_rate'];
             $dn->transporter_offloaded_freight = $data['transporter_offloaded_freight'];
             $dn->comments                      = $data['comments'];
+            foreach (self::READING_FIELDS as $field) {
+                $dn->$field = $this->toFloat($data[$field] ?? null);
+            }
             $dn->freight_calculation           = $this->freight_calculation;
             $dn->calculation_measurement       = $this->calculation_measurement;
             $dn->status                        = 1;
@@ -500,6 +525,9 @@ class TripStatusManager extends Component
         $dn->transporter_offloaded_rate    = $this->transporter_offloaded_rate;
         $dn->transporter_offloaded_freight = $this->transporter_offloaded_freight;
         $dn->comments                      = $this->comments;
+        foreach (self::READING_FIELDS as $field) {
+            $dn->$field = $this->toFloat($this->$field);
+        }
         $dn->freight_calculation           = $this->freight_calculation;
         $dn->calculation_measurement       = $this->calculation_measurement;
         $dn->status                        = 1;
@@ -565,6 +593,7 @@ class TripStatusManager extends Component
             'offloaded_weight', 'offloaded_quantity', 'offloaded_litreage',
             'offloaded_litreage_at_20', 'offloaded_distance', 'offloaded_rate',
             'offloaded_freight', 'transporter_offloaded_rate', 'transporter_offloaded_freight',
+            ...self::READING_FIELDS,
         ];
 
         if (in_array($propertyName, $floatProps) && $this->$propertyName === '') {
@@ -596,6 +625,7 @@ class TripStatusManager extends Component
                 'offloaded_weight', 'offloaded_quantity', 'offloaded_litreage', 'offloaded_litreage_at_20',
                 'offloaded_rate', 'offloaded_freight', 'transporter_offloaded_rate', 'transporter_offloaded_freight',
                 'distance', 'offloaded_distance',
+                ...self::READING_FIELDS,
             ];
 
             if (in_array($field, $numericDnFields) && isset($this->deliveryNotes[$ttoId][$field]) && $this->deliveryNotes[$ttoId][$field] === '') {
@@ -898,5 +928,8 @@ class TripStatusManager extends Component
         $this->transporter_offloaded_freight = null;
         $this->comments                      = null;
         $this->legacy_delivery_note_id       = null;
+        foreach (self::READING_FIELDS as $field) {
+            $this->$field = null;
+        }
     }
 }

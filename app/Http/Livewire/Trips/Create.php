@@ -338,6 +338,10 @@ class Create extends Component
     public $offloaded_quantity = [];
     public $offloaded_litreage = [];
     public $offloaded_litreage_at_20 = [];
+    public $offloaded_dip_litreage = [];
+    public $offloaded_dip_litreage_at_20 = [];
+    public $offloaded_shoretank_litreage = [];
+    public $offloaded_shoretank_litreage_at_20 = [];
  
     public $destinations_selectedFrom = [];
     public $destinations_loading_point_id = [];
@@ -348,6 +352,8 @@ class Create extends Component
     public $loaded_quantity = [];
     public $loaded_litreage = [];
     public $loaded_litreage_at_20 = [];
+    public $loaded_dip_litreage = [];
+    public $loaded_dip_litreage_at_20 = [];
 
     public $trip_destinations;
     public $trip_origins;
@@ -1024,6 +1030,11 @@ class Create extends Component
                 $this->offloading_date[] = $trip_destination->offloading_date;
                 $this->offloaded_quantity[] = $trip_destination->quantity;
                 $this->offloaded_litreage[] = $trip_destination->litreage;
+                $this->offloaded_litreage_at_20[] = $trip_destination->litreage_at_20;
+                $this->offloaded_dip_litreage[] = $trip_destination->dip_litreage;
+                $this->offloaded_dip_litreage_at_20[] = $trip_destination->dip_litreage_at_20;
+                $this->offloaded_shoretank_litreage[] = $trip_destination->shoretank_litreage;
+                $this->offloaded_shoretank_litreage_at_20[] = $trip_destination->shoretank_litreage_at_20;
                 $this->destinations_selectedTo[] = $trip_destination->destination_id;
                 $this->destinations_offloading_point_id[] = $trip_destination->offloading_point_id;
                 $this->offloaded_rate[] = $trip_destination->rate;
@@ -1040,6 +1051,9 @@ class Create extends Component
                 $this->loading_date[] = $trip_origin->loading_date;
                 $this->loaded_quantity[] = $trip_origin->quantity;
                 $this->loaded_litreage[] = $trip_origin->litreage;
+                $this->loaded_litreage_at_20[] = $trip_origin->litreage_at_20;
+                $this->loaded_dip_litreage[] = $trip_origin->dip_litreage;
+                $this->loaded_dip_litreage_at_20[] = $trip_origin->dip_litreage_at_20;
                 $this->destinations_selectedFrom[] = $trip_origin->destination_id;
                 $this->destinations_loading_point_id[] = $trip_origin->loading_point_id;
                 $this->loaded_rate[] = $trip_origin->rate;
@@ -1998,6 +2012,11 @@ class Create extends Component
                             'quantity'            => $this->offloaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                             'litreage'            => $this->offloaded_litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->offloaded_litreage_at_20[$key] ?? null,
+                            'dip_litreage'        => $this->offloaded_dip_litreage[$key] ?? null,
+                            'dip_litreage_at_20'  => $this->offloaded_dip_litreage_at_20[$key] ?? null,
+                            'shoretank_litreage'  => $this->offloaded_shoretank_litreage[$key] ?? null,
+                            'shoretank_litreage_at_20' => $this->offloaded_shoretank_litreage_at_20[$key] ?? null,
                             'rate'                => $this->offloaded_rate[$key] ?? null,
                             'freight'             => $this->offloaded_freight[$key] ?? null,
                         ]
@@ -2055,6 +2074,9 @@ class Create extends Component
                             'quantity'            => $this->loaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                             'litreage'            => $this->loaded_litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->loaded_litreage_at_20[$key] ?? null,
+                            'dip_litreage'        => $this->loaded_dip_litreage[$key] ?? null,
+                            'dip_litreage_at_20'  => $this->loaded_dip_litreage_at_20[$key] ?? null,
                             'rate'                => $this->loaded_rate[$key] ?? null,
                             'freight'             => $this->loaded_freight[$key] ?? null,
                         ]

@@ -38,10 +38,19 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4">
+                                            <div class="col-lg-3">
                                                 <div class="input-group">
                                                     <span class="input-group-addon"><i class="fa fa-search"></i></span>
                                                     <input type="text" wire:model.debounce.400ms="horseSearch" class="form-control" placeholder="Search horse by Reg # or Fleet #">
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-3">
+                                                <div class="input-group" title="Which trip date places a trip (its freight and trip costs) in the period. Offloading date = delivery note offloaded date, else the date the trip was set to Offloaded; trips not yet offloaded are left out.">
+                                                    <span class="input-group-addon">Trips By</span>
+                                                    <select wire:model="dateBasis" class="form-control">
+                                                        <option value="offloading">Trip Offloading Date</option>
+                                                        <option value="start">Trip Start Date</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="col-lg-2" style="padding-top: 7px">
@@ -85,7 +94,7 @@
 
                                             @if (!empty($selectedHorse) && !empty($from) && !empty($to))
                                                 <div class="col-lg-2">
-                                                    <a href="{{ route('horses.statement.preview', ['selectedHorse' => $selectedHorse, 'from' => $from, 'to' => $to]) }}"
+                                                    <a href="{{ route('horses.statement.preview', ['selectedHorse' => $selectedHorse, 'from' => $from, 'to' => $to, 'basis' => $dateBasis]) }}"
                                                        class="btn btn-default border-primary btn-rounded btn-wide">
                                                         <i class="fa fa-eye"></i> Preview Report (PDF)
                                                     </a>
@@ -199,6 +208,9 @@
                                                 </p>
                                                 <p style="font-size: 15px;">
                                                     <strong><span style="float:right">To: {{ $to }}</span></strong>
+                                                </p>
+                                                <p style="font-size: 13px;">
+                                                    <span style="float:right" class="text-muted">Trips by {{ $dateBasis === 'start' ? 'start date' : 'offloading date' }}</span>
                                                 </p>
                                             </div>
                                         </div>

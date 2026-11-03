@@ -269,19 +269,19 @@
                                             <div class="row">
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Litreage @ Ambient</label>
+                                                        <label>Litreage @ Ambient Meter Readings</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="loaded_litreage"
-                                                               placeholder="Litreage @ ambient"
+                                                               placeholder="Meter @ ambient"
                                                                {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Litreage @ 20°C</label>
+                                                        <label>Litreage @ 20°C Meter Readings</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="loaded_litreage_at_20"
-                                                               placeholder="Litreage @ 20°C"
+                                                               placeholder="Meter @ 20°C"
                                                                {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
@@ -295,6 +295,26 @@
                                                                 <option value="{{ $uom->id }}">{{ $uom->name }}</option>
                                                             @endforeach
                                                         </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label>Litreage @ Ambient Dips</label>
+                                                        <input type="number" step="any" class="form-control"
+                                                               wire:model.debounce.300ms="loaded_dip_litreage"
+                                                               placeholder="Dips @ ambient"
+                                                               {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label>Litreage @ 20°C Dips</label>
+                                                        <input type="number" step="any" class="form-control"
+                                                               wire:model.debounce.300ms="loaded_dip_litreage_at_20"
+                                                               placeholder="Dips @ 20°C"
+                                                               {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
                                             </div>
@@ -429,18 +449,18 @@
                                                 <div class="row">
                                                     <div class="col-md-4">
                                                         <div class="form-group">
-                                                            <label>Litreage @ Ambient</label>
+                                                            <label>Litreage @ Ambient Meter Readings</label>
                                                             <input type="number" step="any" class="form-control"
                                                                    wire:model.debounce.300ms="offloaded_litreage"
-                                                                   placeholder="Litreage @ ambient">
+                                                                   placeholder="Meter @ ambient">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <div class="form-group">
-                                                            <label>Litreage @ 20°C</label>
+                                                            <label>Litreage @ 20°C Meter Readings</label>
                                                             <input type="number" step="any" class="form-control"
                                                                    wire:model.debounce.300ms="offloaded_litreage_at_20"
-                                                                   placeholder="Litreage @ 20°C">
+                                                                   placeholder="Meter @ 20°C">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-4">
@@ -454,6 +474,40 @@
                                                                     <option value="{{ $uom->id }}">{{ $uom->name }}</option>
                                                                 @endforeach
                                                             </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Litreage @ Ambient Dips</label>
+                                                            <input type="number" step="any" class="form-control"
+                                                                   wire:model.debounce.300ms="offloaded_dip_litreage"
+                                                                   placeholder="Dips @ ambient">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Litreage @ 20°C Dips</label>
+                                                            <input type="number" step="any" class="form-control"
+                                                                   wire:model.debounce.300ms="offloaded_dip_litreage_at_20"
+                                                                   placeholder="Dips @ 20°C">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Shoretank Reading @ Ambient</label>
+                                                            <input type="number" step="any" class="form-control"
+                                                                   wire:model.debounce.300ms="shoretank_litreage"
+                                                                   placeholder="Shoretank @ ambient">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Shoretank Reading @ 20°C</label>
+                                                            <input type="number" step="any" class="form-control"
+                                                                   wire:model.debounce.300ms="shoretank_litreage_at_20"
+                                                                   placeholder="Shoretank @ 20°C">
                                                         </div>
                                                     </div>
                                                 </div>

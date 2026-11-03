@@ -26,7 +26,6 @@ class Invoices extends Component
     public $third_phonenumber;
     public $rates_managed_by_finance;
     public $country;
-    public $allowable_loss_percentage;
     public $website;
     public $city;
     public $invoice_template;
@@ -86,7 +85,6 @@ class Invoices extends Component
         $this->country = $company->country;
         $this->tin_number = $company->tin_number;
         $this->vat_number = $company->vat_number;
-        $this->allowable_loss_percentage = $company->allowable_loss_percentage;
         $this->city = $company->city;
         $this->suburb = $company->suburb;
         $this->period = $company->period;
@@ -145,7 +143,6 @@ class Invoices extends Component
         $company->invoice_template = $this->invoice_template;
         $company->vat_number = $this->vat_number;
         $company->tin_number = $this->tin_number;
-        $company->allowable_loss_percentage = $this->allowable_loss_percentage;
         $company->country = $this->country;
         $company->city = $this->city;
         $company->period = $this->period;

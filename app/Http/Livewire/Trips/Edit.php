@@ -270,6 +270,10 @@ class Edit extends Component
     public $offloaded_quantity = [];
     public $offloaded_litreage = [];
     public $offloaded_litreage_at_20 = [];
+    public $offloaded_dip_litreage = [];
+    public $offloaded_dip_litreage_at_20 = [];
+    public $offloaded_shoretank_litreage = [];
+    public $offloaded_shoretank_litreage_at_20 = [];
    
     public $trip_origins;
     public $destinations_selectedFrom = [];
@@ -281,6 +285,8 @@ class Edit extends Component
     public $loaded_quantity = [];
     public $loaded_litreage = [];
     public $loaded_litreage_at_20 = [];
+    public $loaded_dip_litreage = [];
+    public $loaded_dip_litreage_at_20 = [];
  
  
     public $current_destinations_selectedTo = [];
@@ -292,6 +298,10 @@ class Edit extends Component
     public $current_offloaded_quantity = [];
     public $current_offloaded_litreage = [];
     public $current_offloaded_litreage_at_20 = [];
+    public $current_offloaded_dip_litreage = [];
+    public $current_offloaded_dip_litreage_at_20 = [];
+    public $current_offloaded_shoretank_litreage = [];
+    public $current_offloaded_shoretank_litreage_at_20 = [];
    
    
     public $current_destinations_selectedFrom = [];
@@ -303,6 +313,8 @@ class Edit extends Component
     public $current_loaded_quantity = [];
     public $current_loaded_litreage = [];
     public $current_loaded_litreage_at_20 = [];
+    public $current_loaded_dip_litreage = [];
+    public $current_loaded_dip_litreage_at_20 = [];
 
     public $destinations_inputs = [];
     public $d = 1;
@@ -1307,6 +1319,10 @@ class Edit extends Component
                 $this->current_offloaded_quantity[] = $trip_destination->quantity;
                 $this->current_offloaded_litreage[] = $trip_destination->litreage;
                 $this->current_offloaded_litreage_at_20[] = $trip_destination->litreage_at_20;
+                $this->current_offloaded_dip_litreage[] = $trip_destination->dip_litreage;
+                $this->current_offloaded_dip_litreage_at_20[] = $trip_destination->dip_litreage_at_20;
+                $this->current_offloaded_shoretank_litreage[] = $trip_destination->shoretank_litreage;
+                $this->current_offloaded_shoretank_litreage_at_20[] = $trip_destination->shoretank_litreage_at_20;
                 $this->current_destinations_selectedTo[] = $trip_destination->destination_id;
                 $this->current_destinations_offloading_point_id[] = $trip_destination->offloading_point_id;
                 $this->current_offloaded_rate[] = $trip_destination->rate;
@@ -1326,6 +1342,8 @@ class Edit extends Component
                 $this->current_loaded_quantity[] = $trip_origin->quantity;
                 $this->current_loaded_litreage[] = $trip_origin->litreage;
                 $this->current_loaded_litreage_at_20[] = $trip_origin->litreage_at_20;
+                $this->current_loaded_dip_litreage[] = $trip_origin->dip_litreage;
+                $this->current_loaded_dip_litreage_at_20[] = $trip_origin->dip_litreage_at_20;
                 $this->current_destinations_selectedFrom[] = $trip_origin->destination_id;
                 $this->current_destinations_loading_point_id[] = $trip_origin->loading_point_id;
                 $this->current_loaded_rate[] = $trip_origin->rate;
@@ -1640,6 +1658,11 @@ class Edit extends Component
                             'quantity'            => $this->current_offloaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->validUnitsOfMeasureId($this->current_units_of_measure_id ?? null),
                             'litreage'            => $this->current_offloaded_litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->current_offloaded_litreage_at_20[$key] ?? null,
+                            'dip_litreage'        => $this->current_offloaded_dip_litreage[$key] ?? null,
+                            'dip_litreage_at_20'  => $this->current_offloaded_dip_litreage_at_20[$key] ?? null,
+                            'shoretank_litreage'  => $this->current_offloaded_shoretank_litreage[$key] ?? null,
+                            'shoretank_litreage_at_20' => $this->current_offloaded_shoretank_litreage_at_20[$key] ?? null,
                             'rate'                => $this->current_offloaded_rate[$key] ?? null,
                             'freight'             => $this->current_offloaded_freight[$key] ?? null,
                         ]);
@@ -1670,6 +1693,11 @@ class Edit extends Component
                             'quantity'            => $this->offloaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                             'litreage'            => $this->offloaded_litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->offloaded_litreage_at_20[$key] ?? null,
+                            'dip_litreage'        => $this->offloaded_dip_litreage[$key] ?? null,
+                            'dip_litreage_at_20'  => $this->offloaded_dip_litreage_at_20[$key] ?? null,
+                            'shoretank_litreage'  => $this->offloaded_shoretank_litreage[$key] ?? null,
+                            'shoretank_litreage_at_20' => $this->offloaded_shoretank_litreage_at_20[$key] ?? null,
                             'rate'                => $this->offloaded_rate[$key] ?? null,
                             'freight'             => $this->offloaded_freight[$key] ?? null,
                         ]
@@ -1729,6 +1757,9 @@ class Edit extends Component
                             'quantity'            => $this->current_loaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->validUnitsOfMeasureId($this->current_units_of_measure_id ?? null),
                             'litreage'            => $this->current_loaded_litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->current_loaded_litreage_at_20[$key] ?? null,
+                            'dip_litreage'        => $this->current_loaded_dip_litreage[$key] ?? null,
+                            'dip_litreage_at_20'  => $this->current_loaded_dip_litreage_at_20[$key] ?? null,
                             'rate'                => $this->current_loaded_rate[$key] ?? null,
                             'freight'             => $this->current_loaded_freight[$key] ?? null,
                         ]);
@@ -1757,6 +1788,9 @@ class Edit extends Component
                             'quantity'            => $this->loaded_quantity[$key] ?? null,
                             'units_of_measure_id' => $this->validUnitsOfMeasureId($this->units_of_measure_id ?? null),
                             'litreage'            => $this->loaded_litreage[$key] ?? null,
+                            'litreage_at_20'      => $this->loaded_litreage_at_20[$key] ?? null,
+                            'dip_litreage'        => $this->loaded_dip_litreage[$key] ?? null,
+                            'dip_litreage_at_20'  => $this->loaded_dip_litreage_at_20[$key] ?? null,
                             'rate'                => $this->loaded_rate[$key] ?? null,
                             'freight'             => $this->loaded_freight[$key] ?? null,
                         ]

@@ -72,7 +72,7 @@ class CompanyDataResetService
             'waste_collections', 'waste_collection_items', 'waste_disposals', 'waste_disposal_items',
         ],
         'Sales, invoicing & accounting' => [
-            'delivery_notes', 'orders', 'order_products', 'sale_items', 'sale_payments', 'sales',
+            'delivery_notes', 'trip_document_signatures', 'orders', 'order_products', 'sale_items', 'sale_payments', 'sales',
             'quotation_items', 'quotation_products', 'quotations',
             'invoice_items', 'invoice_payments', 'invoice_products', 'invoices',
             'credit_note_items', 'credit_note_products', 'credit_notes',

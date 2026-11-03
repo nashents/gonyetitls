@@ -28,26 +28,23 @@
                 </td>
             </tr>
         @elseif ($cargo_type === 'Liquid')
-            <tr>
-                <th style="width:30%; padding-left:20px;">Loaded Litreage @ 20°C</th>
-                <td>
-                    @if (is_numeric($dn->loaded_litreage_at_20))
-                        {{ number_format($dn->loaded_litreage_at_20, 2) }} {{ $dn->units_of_measure?->name }}
-                    @else
-                        No Loaded Litreage @ 20°C Recorded
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <th style="width:30%; padding-left:20px;">Loaded Litreage @ Ambient</th>
-                <td>
-                    @if (is_numeric($dn->loaded_litreage))
-                        {{ number_format($dn->loaded_litreage, 2) }} {{ $dn->units_of_measure?->name }}
-                    @else
-                        No Loaded Litreage @ Ambient Recorded
-                    @endif
-                </td>
-            </tr>
+            @foreach ([
+                'loaded_litreage'           => 'Loaded Litreage @ Ambient Meter Readings',
+                'loaded_litreage_at_20'     => 'Loaded Litreage @ 20°C Meter Readings',
+                'loaded_dip_litreage'       => 'Loaded Litreage @ Ambient Dips',
+                'loaded_dip_litreage_at_20' => 'Loaded Litreage @ 20°C Dips',
+            ] as $field => $label)
+                <tr>
+                    <th style="width:30%; padding-left:20px;">{{ $label }}</th>
+                    <td>
+                        @if (is_numeric($dn->$field))
+                            {{ number_format($dn->$field, 2) }} {{ $dn->units_of_measure?->name }}
+                        @else
+                            No {{ $label }} Recorded
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
         @endif
 
         <tr>
@@ -123,26 +120,25 @@
                 </td>
             </tr>
         @elseif ($cargo_type === 'Liquid')
-            <tr>
-                <th style="width:30%; padding-left:20px;">Offloaded Litreage @ Ambient</th>
-                <td>
-                    @if (isset($dn->offloaded_litreage))
-                        {{ $dn->offloaded_litreage }} {{ $dn->units_of_measure?->name }}
-                    @else
-                        No Offloaded Litreage @ Ambient Recorded
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <th style="width:30%; padding-left:20px;">Offloaded Litreage @ 20°C</th>
-                <td>
-                    @if (isset($dn->offloaded_litreage_at_20))
-                        {{ $dn->offloaded_litreage_at_20 }} {{ $dn->units_of_measure?->name }}
-                    @else
-                        No Offloaded Litreage @ 20°C Recorded
-                    @endif
-                </td>
-            </tr>
+            @foreach ([
+                'offloaded_litreage'           => 'Offloaded Litreage @ Ambient Meter Readings',
+                'offloaded_litreage_at_20'     => 'Offloaded Litreage @ 20°C Meter Readings',
+                'offloaded_dip_litreage'       => 'Offloaded Litreage @ Ambient Dips',
+                'offloaded_dip_litreage_at_20' => 'Offloaded Litreage @ 20°C Dips',
+                'shoretank_litreage'           => 'Shoretank Reading @ Ambient',
+                'shoretank_litreage_at_20'     => 'Shoretank Reading @ 20°C',
+            ] as $field => $label)
+                <tr>
+                    <th style="width:30%; padding-left:20px;">{{ $label }}</th>
+                    <td>
+                        @if (is_numeric($dn->$field))
+                            {{ number_format($dn->$field, 2) }} {{ $dn->units_of_measure?->name }}
+                        @else
+                            No {{ $label }} Recorded
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
         @endif
 
         <tr>
@@ -219,13 +215,10 @@
     $quantity_loss       = (is_numeric($dn->loaded_quantity) && is_numeric($dn->offloaded_quantity))
                             ? $dn->loaded_quantity - $dn->offloaded_quantity : null;
 
-    $litreage_loss       = (is_numeric($dn->loaded_litreage) && is_numeric($dn->offloaded_litreage))
-                            ? $dn->loaded_litreage - $dn->offloaded_litreage : null;
+    $allowableLossPct = $trip->allowableLossPercentage();
+    $liquidLossRows   = $cargo_type === 'Liquid' ? $dn->liquidLossRows($allowableLossPct) : [];
 
-    $litreage_at_20_loss = (is_numeric($dn->loaded_litreage_at_20) && is_numeric($dn->offloaded_litreage_at_20))
-                            ? $dn->loaded_litreage_at_20 - $dn->offloaded_litreage_at_20 : null;
-
-    $freight_loss        = (is_numeric($dn->loaded_freight) && is_numeric($dn->offloaded_freight))
+    $freight_loss       = (is_numeric($dn->loaded_freight) && is_numeric($dn->offloaded_freight))
                             ? $dn->loaded_freight - $dn->offloaded_freight : null;
 
     $chargeable_weight_loss   = (is_numeric($weight_loss) && is_numeric($trip->allowable_loss_weight))
@@ -234,8 +227,8 @@
     $chargeable_quantity_loss = (is_numeric($quantity_loss) && is_numeric($trip->allowable_loss_quantity))
                                     ? max(0, $quantity_loss - $trip->allowable_loss_quantity) : null;
 
-    $chargeable_litreage_loss = (is_numeric($litreage_at_20_loss) && is_numeric($trip->allowable_loss_litreage))
-                                    ? max(0, $litreage_at_20_loss - $trip->allowable_loss_litreage) : null;
+    $chargeableLossRate         = $trip->chargeableLossRate();
+    $chargeable_weight_amount   = $trip->chargeableLossAmount($chargeable_weight_loss);
 @endphp
 
 <table class="table table-condensed mb-0 border-top table-striped">
@@ -270,6 +263,26 @@
                 @endif
             </td>
         </tr>
+        @if ($canSeeRates)
+            <tr>
+                <th style="width:30%; padding-left:20px;">Chargeable Loss Rate</th>
+                <td>
+                    @if (! is_null($chargeableLossRate))
+                        {{ $currencyName }} {{ $currencySymbol }}{{ number_format($chargeableLossRate, 2) }} per ton / {{ $uomName ?: 'unit' }}
+                    @else
+                        <span class="text-muted">Not set (customer or Business Settings)</span>
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <th style="width:30%; padding-left:20px;">Chargeable Weight Loss Amount</th>
+                <td>
+                    @if ($chargeable_weight_amount)
+                        <span class="label label-danger">{{ $currencyName }} {{ $currencySymbol }}{{ number_format($chargeable_weight_amount, 2) }}</span>
+                    @endif
+                </td>
+            </tr>
+        @endif
 
         @if ($cargo_type === 'Solid')
             <tr>
@@ -303,45 +316,39 @@
 
         @elseif ($cargo_type === 'Liquid')
             <tr>
-                <th style="width:30%; padding-left:20px;">Litreage Loss @ Ambient</th>
+                <th style="width:30%; padding-left:20px;">Allowable Loss Percentage</th>
                 <td>
-                    @if (is_numeric($litreage_loss))
-                        <span class="label {{ $litreage_loss > 0 ? 'label-danger' : ($litreage_loss == 0 ? 'label-default' : 'label-success') }}">
-                            {{ abs($litreage_loss) }} {{ $uomName }}
-                        </span>
+                    @if ($allowableLossPct)
+                        {{ $allowableLossPct + 0 }}% of loaded litreage
                     @else
-                        No Litreage @ Ambient Loss Recorded
+                        <span class="text-muted">Not set (customer or Business Settings)</span>
                     @endif
                 </td>
             </tr>
-            <tr>
-                <th style="width:30%; padding-left:20px;">Litreage Loss @ 20°C</th>
-                <td>
-                    @if (is_numeric($litreage_at_20_loss))
-                        <span class="label {{ $litreage_at_20_loss > 0 ? 'label-danger' : ($litreage_at_20_loss == 0 ? 'label-default' : 'label-success') }}">
-                            {{ abs($litreage_at_20_loss) }} {{ $uomName }}
-                        </span>
-                    @else
-                        No Litreage @ 20°C Loss Recorded
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <th style="width:30%; padding-left:20px;">Allowable Litreage Loss</th>
-                <td>
-                    @if ($trip->allowable_loss_litreage)
-                        <span class="label label-success">{{ $trip->allowable_loss_litreage }} {{ $uomName }}</span>
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <th style="width:30%; padding-left:20px;">Chargeable Litreage Loss</th>
-                <td>
-                    @if ($chargeable_litreage_loss)
-                        <span class="label label-danger">{{ $chargeable_litreage_loss }} {{ $uomName }}</span>
-                    @endif
-                </td>
-            </tr>
+            @foreach ($liquidLossRows as $row)
+                <tr>
+                    <th style="width:30%; padding-left:20px;">{{ $row['label'] }} Loss</th>
+                    <td>
+                        @if (is_numeric($row['loss']))
+                            <span class="label {{ $row['loss'] > 0 ? 'label-danger' : ($row['loss'] == 0 ? 'label-default' : 'label-success') }}">
+                                {{ number_format(abs($row['loss']), 2) }} {{ $uomName }}{{ $row['loss'] < 0 ? ' gain' : '' }}
+                            </span>
+                            @if (is_numeric($row['allowable']))
+                                &nbsp;Allowable: <span class="label label-success">{{ number_format($row['allowable'], 2) }} {{ $uomName }}</span>
+                                &nbsp;Chargeable:
+                                <span class="label {{ $row['chargeable'] > 0 ? 'label-danger' : 'label-default' }}">{{ number_format($row['chargeable'], 2) }} {{ $uomName }}</span>
+                                @php $rowAmount = $trip->chargeableLossAmount($row['chargeable']); @endphp
+                                @if ($canSeeRates && ! is_null($rowAmount))
+                                    &nbsp;Amount:
+                                    <span class="label {{ $rowAmount > 0 ? 'label-danger' : 'label-default' }}">{{ $currencyName }} {{ $currencySymbol }}{{ number_format($rowAmount, 2) }}</span>
+                                @endif
+                            @endif
+                        @else
+                            No {{ $row['label'] }} Loss Recorded
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
         @endif
 
         @if ($canSeeRates)

@@ -18,11 +18,40 @@ use Carbon\Carbon;
  *    (AGB3978 Aug-2026: 3 of 4 approved orders missing).
  *  - currencyLabel(): "ZAR (R) 19,891.15" - the line's original amount, so
  *    the reporting-currency Amount column isn't read as rand.
+ *  - whereTripInPeriod(): trips fall in the period by start date or by
+ *    offloading date, per the component's $dateBasis (horse P&L, default
+ *    'offloading'); components without one keep start date.
  *
  * Expects $this->default_currency_id, $this->fromDt, $this->toDt.
  */
 trait ProfitLossLineItems
 {
+    /**
+     * Restricts a query on `trips` (a Trip query, a join or a whereHas on the
+     * trip relation) to trips in the report period.
+     *
+     * Offloading date = the latest offloaded_date on the trip's delivery notes
+     * (VARCHAR "2026-09-30T14:30", compared by calendar day); most Offloaded
+     * trips have no delivery-note date (2,800 of 3,375 on 2026-11-03), so those
+     * fall back to trip_status_date - the date the Offloaded status was set.
+     * Trips not yet offloaded have neither and drop out of the period.
+     */
+    protected function whereTripInPeriod($query)
+    {
+        if ((property_exists($this, 'dateBasis') ? $this->dateBasis : 'start') !== 'offloading') {
+            return $query->whereBetween('trips.start_date', [$this->fromDt, $this->toDt]);
+        }
+
+        return $query->whereRaw(
+            "DATE(COALESCE(
+                (SELECT MAX(dn.offloaded_date) FROM delivery_notes dn
+                  WHERE dn.trip_id = trips.id AND dn.deleted_at IS NULL AND dn.offloaded_date <> ''),
+                CASE WHEN trips.trip_status = 'Offloaded' THEN NULLIF(trips.trip_status_date, '') END
+            )) BETWEEN ? AND ?",
+            [Carbon::parse($this->fromDt)->toDateString(), Carbon::parse($this->toDt)->toDateString()]
+        );
+    }
+
     protected function reportingAmount($billExpense, $bill): float
     {
         $total = (float) ($billExpense->subtotal_incl ?: $billExpense->subtotal);
@@ -113,7 +142,7 @@ trait ProfitLossLineItems
 
     /**
      * Customer-supplied fuel for the horse, as P&L line items. Trip-linked
-     * supplies are matched on the trip's start_date (like trip bills, so the
+     * supplies are matched on the trip's period date (like trip bills, so the
      * cost lands in the same period as the freight it earned).
      */
     protected function customerFuelItems(int $horseId, array $accountIds): array
@@ -131,7 +160,7 @@ trait ProfitLossLineItems
                   ->orWhere(fn ($x) => $x->whereNull('trip_id')->whereHas('fuel', fn ($f) => $f->where('horse_id', $horseId)));
             })
             ->where(function ($q) {
-                $q->whereHas('trip', fn ($t) => $t->whereBetween('start_date', [$this->fromDt, $this->toDt]))
+                $q->whereHas('trip', fn ($t) => $this->whereTripInPeriod($t))
                   ->orWhere(fn ($x) => $x->whereNull('trip_id')->whereBetween('date', [$this->fromDt, $this->toDt]));
             })
             ->with(['account.account_type:id,name', 'currency:id,name,symbol', 'trip:id,trip_number', 'fuel:id,order_number', 'customer:id,name'])

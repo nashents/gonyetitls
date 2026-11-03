@@ -25,6 +25,7 @@
                 'selectedHorse' => $selectedHorse,
                 'from' => $from,
                 'to' => $to,
+                'dateBasis' => request('basis', 'offloading'),
                 ])
         </div>
     </div>

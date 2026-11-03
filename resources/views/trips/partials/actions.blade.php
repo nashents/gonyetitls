@@ -40,6 +40,11 @@
                             <i class="fas fa-file color-warning"></i> Manifest
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('trips.delivery_note', $trip->id) }}">
+                            <i class="fas fa-file-signature color-warning"></i> Delivery Note
+                        </a>
+                    </li>
                 @endif
                 @if ($showFreight ?? false)
                     <li>

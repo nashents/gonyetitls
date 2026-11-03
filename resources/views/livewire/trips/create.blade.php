@@ -1109,18 +1109,36 @@
                                             @elseif($cargo_type == "Liquid")
                                                 <div class="col-md-3">
                                                     <div class="form-group">
-                                                        <label for="weight">Litreage @ Ambient</label>
+                                                        <label for="weight">Litreage @ Ambient Meter</label>
                                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage.0" placeholder="Loading Litreage @ Ambient" >
                                                         @error('loaded_litreage.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="form-group">
-                                                        <label for="weight">Litreage @ 20</label>
+                                                        <label for="weight">Litreage @ 20°C Meter</label>
                                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage_at_20.0" placeholder="Loading Litreage @ 20" >
                                                         @error('loaded_litreage_at_20.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="dip_litreage">Litreage @ Ambient Dips</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_dip_litreage.0" placeholder="Dips @ Ambient" >
+                                                        @error('loaded_dip_litreage.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="dip_litreage_at_20">Litreage @ 20°C Dips</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_dip_litreage_at_20.0" placeholder="Dips @ 20°C" >
+                                                        @error('loaded_dip_litreage_at_20.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
                                             @endif
                                             <div class="col-md-3">
                                                 <div class="form-group">
@@ -1208,18 +1226,36 @@
                                                 @elseif($cargo_type == "Liquid")
                                                     <div class="col-md-3">
                                                         <div class="form-group">
-                                                            <label for="weight">Litreage @ Ambient</label>
+                                                            <label for="weight">Litreage @ Ambient Meter</label>
                                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage.{{$value}}" placeholder="Loading Litreage @ Ambient" >
                                                             @error('loaded_litreage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
-                                                            <label for="weight">Litreage @ 20</label>
+                                                            <label for="weight">Litreage @ 20°C Meter</label>
                                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_litreage_at_20.{{$value}}" placeholder="Loading Litreage @ 20" >
                                                             @error('loaded_litreage_at_20.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="dip_litreage">Litreage @ Ambient Dips</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_dip_litreage.{{$value}}" placeholder="Dips @ Ambient" >
+                                                            @error('loaded_dip_litreage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="dip_litreage_at_20">Litreage @ 20°C Dips</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="loaded_dip_litreage_at_20.{{$value}}" placeholder="Dips @ 20°C" >
+                                                            @error('loaded_dip_litreage_at_20.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
                                                 @endif
                                                 <div class="col-md-3">
                                                     <div class="form-group">
@@ -1320,18 +1356,50 @@
                                             @elseif($cargo_type == "Liquid")
                                                 <div class="col-md-3">
                                                     <div class="form-group">
-                                                        <label for="weight">Litreage @ Ambient</label>
+                                                        <label for="weight">Litreage @ Ambient Meter</label>
                                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_litreage.0" placeholder="Offloading Litreage @ Ambient" >
                                                         @error('offloaded_litreage.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="form-group">
-                                                        <label for="weight">Litreage @ 20</label>
+                                                        <label for="weight">Litreage @ 20°C Meter</label>
                                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_litreage_at_20.0" placeholder="Offloading Litreage @ 20" >
                                                         @error('offloaded_litreage_at_20.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="dip_litreage">Litreage @ Ambient Dips</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_dip_litreage.0" placeholder="Dips @ Ambient" >
+                                                        @error('offloaded_dip_litreage.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="dip_litreage_at_20">Litreage @ 20°C Dips</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_dip_litreage_at_20.0" placeholder="Dips @ 20°C" >
+                                                        @error('offloaded_dip_litreage_at_20.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="shoretank_litreage">Shoretank Reading @ Ambient</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_shoretank_litreage.0" placeholder="Shoretank @ Ambient" >
+                                                        @error('offloaded_shoretank_litreage.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="shoretank_litreage_at_20">Shoretank Reading @ 20°C</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_shoretank_litreage_at_20.0" placeholder="Shoretank @ 20°C" >
+                                                        @error('offloaded_shoretank_litreage_at_20.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
                                             @endif
                                             <div class="col-md-3">
                                                 <div class="form-group">
@@ -1419,18 +1487,50 @@
                                                 @elseif($cargo_type == "Liquid")
                                                     <div class="col-md-3">
                                                         <div class="form-group">
-                                                            <label for="weight">Litreage @ Ambient</label>
+                                                            <label for="weight">Litreage @ Ambient Meter</label>
                                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_litreage.{{$value}}" placeholder="Offloading Litreage @ Ambient" >
                                                             @error('offloaded_litreage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
-                                                            <label for="weight">Litreage @ 20</label>
+                                                            <label for="weight">Litreage @ 20°C Meter</label>
                                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_litreage_at_20.{{$value}}" placeholder="Offloading Litreage @ 20" >
                                                             @error('offloaded_litreage_at_20.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="dip_litreage">Litreage @ Ambient Dips</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_dip_litreage.{{$value}}" placeholder="Dips @ Ambient" >
+                                                            @error('offloaded_dip_litreage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="dip_litreage_at_20">Litreage @ 20°C Dips</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_dip_litreage_at_20.{{$value}}" placeholder="Dips @ 20°C" >
+                                                            @error('offloaded_dip_litreage_at_20.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="shoretank_litreage">Shoretank Reading @ Ambient</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_shoretank_litreage.{{$value}}" placeholder="Shoretank @ Ambient" >
+                                                            @error('offloaded_shoretank_litreage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="shoretank_litreage_at_20">Shoretank Reading @ 20°C</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="offloaded_shoretank_litreage_at_20.{{$value}}" placeholder="Shoretank @ 20°C" >
+                                                            @error('offloaded_shoretank_litreage_at_20.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
                                                 @endif
                                                 <div class="col-md-3">
                                                     <div class="form-group">

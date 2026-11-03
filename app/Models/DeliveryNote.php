@@ -40,6 +40,37 @@ class DeliveryNote extends Model implements Auditable
     ];
 
     /**
+     * Liquid loss rows per reading method: meter (loaded vs offloaded meter), dips (loaded vs
+     * offloaded dips) and shoretank (loaded meter vs shoretank). Allowable = the trip's
+     * allowable loss % of the loaded figure; chargeable = loss above that allowance.
+     */
+    public function liquidLossRows(?float $allowablePct): array
+    {
+        $pairs = [
+            ['Meter Readings @ Ambient',   'loaded_litreage',           'offloaded_litreage'],
+            ['Meter Readings @ 20°C',      'loaded_litreage_at_20',     'offloaded_litreage_at_20'],
+            ['Dips @ Ambient',             'loaded_dip_litreage',       'offloaded_dip_litreage'],
+            ['Dips @ 20°C',                'loaded_dip_litreage_at_20', 'offloaded_dip_litreage_at_20'],
+            ['Shoretank vs Meter @ Ambient', 'loaded_litreage',         'shoretank_litreage'],
+            ['Shoretank vs Meter @ 20°C',  'loaded_litreage_at_20',     'shoretank_litreage_at_20'],
+        ];
+
+        $rows = [];
+        foreach ($pairs as [$label, $loadedField, $offloadedField]) {
+            $loaded    = is_numeric($this->$loadedField) ? (float) $this->$loadedField : null;
+            $offloaded = is_numeric($this->$offloadedField) ? (float) $this->$offloadedField : null;
+
+            $loss       = (! is_null($loaded) && ! is_null($offloaded)) ? round($loaded - $offloaded, 3) : null;
+            $allowable  = ($allowablePct && $loaded > 0) ? round($loaded * $allowablePct / 100, 3) : null;
+            $chargeable = (! is_null($loss) && ! is_null($allowable)) ? max(0, round($loss - $allowable, 3)) : null;
+
+            $rows[] = compact('label', 'loaded', 'offloaded', 'loss', 'allowable', 'chargeable');
+        }
+
+        return $rows;
+    }
+
+    /**
      * The delivery note for one trip/transport-order pair. Also matches the orphan note that
      * Trips\Create used to write without a trip_id (keyed only by trip_transport_order_id) and
      * adopts it onto the trip - otherwise callers created a second note beside it, and

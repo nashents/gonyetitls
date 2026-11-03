@@ -74,10 +74,10 @@
     <div class="row">
         <div class="col-md-4">
             <div class="form-group">
-                <label>Litreage @ Ambient</label>
+                <label>Litreage @ Ambient Meter Readings</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_litreage"
-                       placeholder="Litreage @ ambient"
+                       placeholder="Meter @ ambient"
                        {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                 @error("deliveryNotes.$ttoId.loaded_litreage")
                     <span class="text-danger small">{{ $message }}</span>
@@ -86,10 +86,10 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
-                <label>Litreage @ 20°C</label>
+                <label>Litreage @ 20°C Meter Readings</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_litreage_at_20"
-                       placeholder="Litreage @ 20°C"
+                       placeholder="Meter @ 20°C"
                        {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                 @error("deliveryNotes.$ttoId.loaded_litreage_at_20")
                     <span class="text-danger small">{{ $message }}</span>
@@ -107,6 +107,32 @@
                         <option value="{{ $uom->id }}">{{ $uom->name }}</option>
                     @endforeach
                 </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Litreage @ Ambient Dips</label>
+                <input type="number" step="any" class="form-control"
+                       wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_dip_litreage"
+                       placeholder="Dips @ ambient"
+                       {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
+                @error("deliveryNotes.$ttoId.loaded_dip_litreage")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Litreage @ 20°C Dips</label>
+                <input type="number" step="any" class="form-control"
+                       wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_dip_litreage_at_20"
+                       placeholder="Dips @ 20°C"
+                       {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
+                @error("deliveryNotes.$ttoId.loaded_dip_litreage_at_20")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
             </div>
         </div>
     </div>

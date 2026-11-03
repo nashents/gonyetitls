@@ -25,6 +25,9 @@ Route::get('/logout', 'LoginController@logout')->name('logout');
 Route::get('/forgot-password','LoginController@forgotPassword')->name('forgot-password');
 Route::get('/{token}/reset-password/{id}', 'LoginController@resetPassword')->name('reset-password');
 
+// Delivery note e-sign link for parties without a login (temporary signed URL).
+Route::get('/delivery-notes/{trip}/sign', 'TripController@deliveryNoteSign')->middleware('signed')->name('trips.delivery_note.sign');
+
 Route::get('/portal/login', 'Portal\LoginController@login')->name('customer.login');
 Route::post('/portal/login', 'Portal\LoginController@postLogin')->name('customer.postLogin');
 Route::get('/portal/logout', 'Portal\LoginController@logout')->name('customer.logout');
@@ -227,6 +230,7 @@ Route::get('creditors/report','VendorController@creditorsReports')->name('credit
 Route::get('trips/deleted','TripController@deleted')->name('trips.deleted');
 Route::get('trips/{trip}/trip-sheet','TripController@preview')->name('trips.trip_sheet');
 Route::get('trips/{trip}/manifest','TripController@manifest')->name('trips.manifest');
+Route::get('trips/{trip}/delivery-note','TripController@deliveryNote')->name('trips.delivery_note');
 Route::get('inspections/{inspection}/preview','InspectionController@preview')->name('inspections.preview');
 Route::get('trips/{trip}/print','TripController@print')->name('trips.print');
 

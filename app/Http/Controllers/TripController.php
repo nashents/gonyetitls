@@ -171,6 +171,20 @@ class TripController extends Controller
           ]);
     }
     
+    public function deliveryNote(Trip $trip){
+        return view('trips.delivery_note')->with([
+            'trip' => $trip,
+          ]);
+    }
+
+    // Public e-sign page reached through the signed link from the delivery note.
+    public function deliveryNoteSign(Trip $trip){
+        return view('trips.delivery_note')->with([
+            'trip' => $trip,
+            'token' => \App\Http\Livewire\Trips\DeliveryNoteDocument::tokenFor($trip->id),
+          ]);
+    }
+
     public function preview(Trip $trip){
         return view('trips.preview')->with([
             'trip' => $trip,

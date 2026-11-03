@@ -138,7 +138,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $this->role_names[] = $role->name;
         }
 
-        $base = $this->query();
+        $base = $this->filteredTripQuery();
 
         // Financial metrics
         $money = (clone $base)->selectRaw("
@@ -433,13 +433,21 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         return $query;
     }
 
-    public function query()
+    /** Filters + search, without query()'s sort join - the summary metrics add their own joins. */
+    public function filteredTripQuery()
     {
         $trips = $this->baseTripQuery();
 
         if (filled($this->search)) {
             $this->applyTripSearch($trips);
         }
+
+        return $trips;
+    }
+
+    public function query()
+    {
+        $trips = $this->filteredTripQuery();
 
         if ($this->trip_filter === 'offloaded_date') {
             $trips->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
@@ -1032,94 +1040,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
                 | Report meta line on Row 1
                 |--------------------------------------------------------------------------
                 */
-                $filters = [];
-
-                if (!empty($this->search)) {
-                    $filters[] = 'Search: ' . $this->search;
-                }
-
-                if (!empty($this->from) && !empty($this->to)) {
-                    $filters[] = 'Date Range: ' . $this->from . ' to ' . $this->to;
-                } elseif (!empty($this->from)) {
-                    $filters[] = 'From: ' . $this->from;
-                } elseif (!empty($this->to)) {
-                    $filters[] = 'To: ' . $this->to;
-                }
-
-                if (!empty($this->trip_type)) {
-                    $filters[] = 'Trip Type: ' . (is_object($this->trip_type) && isset($this->trip_type->name)
-                        ? $this->trip_type->name
-                        : $this->trip_type);
-                }
-
-                if (!empty($this->customer)) {
-                    $filters[] = 'Customer: ' . (is_object($this->customer) && isset($this->customer->name)
-                        ? $this->customer->name
-                        : $this->customer);
-                }
-                if (!empty($this->cargo)) {
-                    $filters[] = 'Cargo: ' . (is_object($this->cargo) && isset($this->cargo->name)
-                        ? $this->cargo->name
-                        : $this->cargo);
-                }
-
-                if (!empty($this->transporter)) {
-                    $filters[] = 'Transporter: ' . (is_object($this->transporter) && isset($this->transporter->name)
-                        ? $this->transporter->name
-                        : $this->transporter);
-                }
-
-                if (!empty($this->driver)) {
-                    $filters[] = 'Driver: ' . (is_object($this->driver) && isset($this->driver->employee)
-                        ? $this->driver->employee?->name ." ".$this->driver->employee?->surname
-                        : $this->driver);
-                }
-
-                if (!empty($this->horse)) {
-                    $filters[] = 'Horse: ' . (is_object($this->horse) && isset($this->horse->registration_number)
-                        ? $this->horse->identifier_label
-                        : $this->horse);
-                }
-
-
-                if (!empty($this->origin)) {
-                    $filters[] = 'Origin: ' . (is_object($this->origin) && isset($this->origin->country)
-                        ? $this->origin->country ." ".$this->origin->city
-                        : $this->origin);
-                }
-
-                if (!empty($this->destination)) {
-                    $filters[] = 'Destination: ' . (is_object($this->destination) && isset($this->destination->country)
-                        ? $this->destination->country ." ".$this->destination->city
-                        : $this->destination);
-                }
-
-              
-                if (!empty($this->route)) {
-                    $filters[] = 'Route: ' . (is_object($this->route) && isset($this->route->name)
-                        ? $this->route->name
-                        : $this->route);
-                }
-
-                if (!empty($this->trip_status)) {
-                    $filters[] = 'Status: ' . $this->trip_status;
-                }
-
-                if (!empty($this->currency)) {
-                    $filters[] = 'Currency: ' . (is_object($this->currency) && isset($this->currency->name)
-                        ? $this->currency->name
-                        : $this->currency);
-                }
-
-                $filtersText = !empty($filters) ? implode(' | ', $filters) : '';
-
-                $generatedText = 'This report was generated on ' . now()->format('d M Y H:i') . ' by ' . Auth::user()->name ." ".Auth::user()->surname;
-
-                if ($filtersText !== '') {
-                    $generatedText .= '. Applied filters: ' . $filtersText . '.';
-                } else {
-                    $generatedText .= '.';
-                }
+                $generatedText = $this->reportMetaText();
 
                 $sheet->mergeCells('A1:BX1');
                 $sheet->setCellValue('A1', $generatedText);
@@ -1261,6 +1182,101 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT);
             },
         ];
+    }
+
+    /** "Generated on ... by ... Applied filters: ..." line shown above the report. */
+    protected function reportMetaText(): string
+    {
+        $filters = [];
+
+        if (!empty($this->search)) {
+            $filters[] = 'Search: ' . $this->search;
+        }
+
+        if (!empty($this->from) && !empty($this->to)) {
+            $filters[] = 'Date Range: ' . $this->from . ' to ' . $this->to;
+        } elseif (!empty($this->from)) {
+            $filters[] = 'From: ' . $this->from;
+        } elseif (!empty($this->to)) {
+            $filters[] = 'To: ' . $this->to;
+        }
+
+        if (!empty($this->trip_type)) {
+            $filters[] = 'Trip Type: ' . (is_object($this->trip_type) && isset($this->trip_type->name)
+                ? $this->trip_type->name
+                : $this->trip_type);
+        }
+
+        if (!empty($this->customer)) {
+            $filters[] = 'Customer: ' . (is_object($this->customer) && isset($this->customer->name)
+                ? $this->customer->name
+                : $this->customer);
+        }
+        if (!empty($this->cargo)) {
+            $filters[] = 'Cargo: ' . (is_object($this->cargo) && isset($this->cargo->name)
+                ? $this->cargo->name
+                : $this->cargo);
+        }
+
+        if (!empty($this->transporter)) {
+            $filters[] = 'Transporter: ' . (is_object($this->transporter) && isset($this->transporter->name)
+                ? $this->transporter->name
+                : $this->transporter);
+        }
+
+        if (!empty($this->driver)) {
+            $filters[] = 'Driver: ' . (is_object($this->driver) && isset($this->driver->employee)
+                ? $this->driver->employee?->name ." ".$this->driver->employee?->surname
+                : $this->driver);
+        }
+
+        if (!empty($this->horse)) {
+            $filters[] = 'Horse: ' . (is_object($this->horse) && isset($this->horse->registration_number)
+                ? $this->horse->identifier_label
+                : $this->horse);
+        }
+
+
+        if (!empty($this->origin)) {
+            $filters[] = 'Origin: ' . (is_object($this->origin) && isset($this->origin->country)
+                ? ($this->origin->country->name ?? "") ." ".$this->origin->city
+                : $this->origin);
+        }
+
+        if (!empty($this->destination)) {
+            $filters[] = 'Destination: ' . (is_object($this->destination) && isset($this->destination->country)
+                ? ($this->destination->country->name ?? "") ." ".$this->destination->city
+                : $this->destination);
+        }
+
+      
+        if (!empty($this->route)) {
+            $filters[] = 'Route: ' . (is_object($this->route) && isset($this->route->name)
+                ? $this->route->name
+                : $this->route);
+        }
+
+        if (!empty($this->trip_status)) {
+            $filters[] = 'Status: ' . $this->trip_status;
+        }
+
+        if (!empty($this->currency)) {
+            $filters[] = 'Currency: ' . (is_object($this->currency) && isset($this->currency->name)
+                ? $this->currency->name
+                : $this->currency);
+        }
+
+        $filtersText = !empty($filters) ? implode(' | ', $filters) : '';
+
+        $generatedText = 'This report was generated on ' . now()->format('d M Y H:i') . ' by ' . Auth::user()->name ." ".Auth::user()->surname;
+
+        if ($filtersText !== '') {
+            $generatedText .= '. Applied filters: ' . $filtersText . '.';
+        } else {
+            $generatedText .= '.';
+        }
+
+        return $generatedText;
     }
 
     protected function buildPerformanceRating(): string

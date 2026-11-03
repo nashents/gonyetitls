@@ -83,10 +83,22 @@
                             @if ($trip_destination->litreage)
                                 {{number_format($trip_destination->litreage,2)}}   
                             @endif
+                            @if (is_numeric($trip_destination->dip_litreage))
+                                <br><small class="text-muted">Dip: {{ number_format($trip_destination->dip_litreage, 2) }}</small>
+                            @endif
+                            @if (is_numeric($trip_destination->shoretank_litreage))
+                                <br><small class="text-muted">Shoretank: {{ number_format($trip_destination->shoretank_litreage, 2) }}</small>
+                            @endif
                         </td>
                         <td>
                             @if ($trip_destination->litreage_at_20)
                                 {{number_format($trip_destination->litreage_at_20,2)}} 
+                            @endif
+                            @if (is_numeric($trip_destination->dip_litreage_at_20))
+                                <br><small class="text-muted">Dip: {{ number_format($trip_destination->dip_litreage_at_20, 2) }}</small>
+                            @endif
+                            @if (is_numeric($trip_destination->shoretank_litreage_at_20))
+                                <br><small class="text-muted">Shoretank: {{ number_format($trip_destination->shoretank_litreage_at_20, 2) }}</small>
                             @endif
                         </td>
                         <td>

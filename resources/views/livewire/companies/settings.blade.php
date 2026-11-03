@@ -58,6 +58,40 @@
                 @endif
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-10 form-group">
+                    <label for="allowable_loss_percentage">Allowable Loss %</label>
+                    <input type="number" step="any" min="0" max="100" wire:model.debounce.300ms="allowable_loss_percentage" id="allowable_loss_percentage" class="form-control" placeholder="e.g. 0.5">
+                    <small class="form-text text-muted">Default share of the loaded weight / litreage (@20°C) a trip may lose before the loss becomes chargeable. A customer's own Allowable Loss % (Customers > Edit) overrides this; customers left blank use this default.</small>
+                    @error('allowable_loss_percentage') <span class="text-danger error">{{ $message }}</span>@enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label>&nbsp;</label><br>
+                <button type="button" class="btn btn-default btn-rounded" wire:click="applyToCustomers('allowable_loss_percentage')"
+                    onclick="confirm('Set this allowable loss % on EVERY customer, replacing their current values?') || event.stopImmediatePropagation()">
+                    <i class="fa fa-users"></i> Apply to All Customers
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-10 form-group">
+                    <label for="chargeable_loss_rate">Chargeable Loss Rate</label>
+                    <input type="number" step="any" min="0" wire:model.debounce.300ms="chargeable_loss_rate" id="chargeable_loss_rate" class="form-control" placeholder="e.g. 1.20">
+                    <small class="form-text text-muted">Amount charged per ton / litre of chargeable loss, in the trip's currency. Chargeable Loss Amount = chargeable loss × this rate. A customer's own rate (Customers > Edit) overrides this; customers left blank use this default.</small>
+                    @error('chargeable_loss_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label>&nbsp;</label><br>
+                <button type="button" class="btn btn-default btn-rounded" wire:click="applyToCustomers('chargeable_loss_rate')"
+                    onclick="confirm('Set this chargeable loss rate on EVERY customer, replacing their current values?') || event.stopImmediatePropagation()">
+                    <i class="fa fa-users"></i> Apply to All Customers
+                </button>
+            </div>
+        </div>
         <div class="btn-group" role="group" style="float: right;">
             <button type="submit" class="btn btn-success btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
         </div>

@@ -239,16 +239,10 @@ class Pending extends Component
         if ($this->notificationsOnly) {
             $base->whereYear($this->dispatch_filter, now()->year);
         }else{
+            // No default "this month" restriction: pending dispatches hold stock, so all of them must stay visible.
             $base->when(filled($this->from) && filled($this->to), function ($q) {
                 $q->whereDate($this->dispatch_filter, '>=', $this->from)
                 ->whereDate($this->dispatch_filter, '<=', $this->to);
-            }, function ($q) {
-                // Skip the default "this month" restriction while searching so matches
-                // outside the current period (e.g. by product/inventory/tyre/asset #) aren't hidden.
-                if (! filled($this->search)) {
-                    $q->whereMonth($this->dispatch_filter, Carbon::now()->month)
-                    ->whereYear($this->dispatch_filter, Carbon::now()->year);
-                }
             });
         }
 

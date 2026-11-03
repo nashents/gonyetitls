@@ -40,6 +40,7 @@ class Index extends Component
     public $name;
     public $initials;
     public $allowable_loss_percentage;
+    public $chargeable_loss_rate;
     public $phonenumber;
     public $currencies;
     public $currency_id;
@@ -160,6 +161,7 @@ class Index extends Component
         $this->name = "";
         $this->initials = "";
         $this->allowable_loss_percentage = "";
+        $this->chargeable_loss_rate = "";
         $this->vat_number = "";
         $this->tin_number = "";
         $this->currency_id = "";
@@ -180,6 +182,7 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:customers,name,NULL,id,deleted_at,NULL|string|min:2',
+        'chargeable_loss_rate' => 'nullable|numeric|min:0',
     ];
 
     public function updatedCustomRef(){
@@ -208,6 +211,7 @@ class Index extends Component
         $customer->vat_number = $this->vat_number;
         $customer->tin_number = $this->tin_number;
         $customer->allowable_loss_percentage = $this->allowable_loss_percentage;
+        $customer->chargeable_loss_rate = is_numeric($this->chargeable_loss_rate) ? $this->chargeable_loss_rate : null;
         $customer->worknumber = $this->worknumber;
         $customer->country = $this->country;
         $customer->city = $this->city;
@@ -366,6 +370,7 @@ class Index extends Component
     $this->custom_ref = $customer->custom_ref;
     $this->country = $customer->country;
     $this->allowable_loss_percentage = $customer->allowable_loss_percentage;
+    $this->chargeable_loss_rate = $customer->chargeable_loss_rate;
     $this->vat_number = $customer->vat_number;
     $this->tin_number = $customer->tin_number;
     $this->initials = $customer->initials;
@@ -391,6 +396,7 @@ class Index extends Component
             $customer->phonenumber = $this->phonenumber;
             $customer->worknumber = $this->worknumber;
             $customer->allowable_loss_percentage = $this->allowable_loss_percentage;
+            $customer->chargeable_loss_rate = is_numeric($this->chargeable_loss_rate) ? $this->chargeable_loss_rate : null;
             $customer->vat_number = $this->vat_number;
             $customer->custom_ref = $this->custom_ref;
             $customer->tin_number = $this->tin_number;

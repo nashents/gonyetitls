@@ -110,6 +110,10 @@
                                 <div class="date" style="padding-bottom:3px;">
                                     <strong>To:</strong> {{ \Carbon\Carbon::parse($to)->format('d F Y') }}
                                 </div>
+
+                                <div class="date" style="padding-bottom:3px;">
+                                    <strong>Trips by:</strong> {{ $dateBasis === 'start' ? 'Start Date' : 'Offloading Date' }}
+                                </div>
                             </div>
                         </div>
 

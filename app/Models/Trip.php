@@ -316,6 +316,84 @@ class Trip extends Model implements Auditable, EditAuthorizable
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }
+
+    /**
+     * Allowable loss % for this trip: the customer's own percentage, else
+     * the company default from Business Settings > Settings. Null when
+     * neither is set (no allowance - every loss is chargeable as before).
+     */
+    public function allowableLossPercentage(): ?float
+    {
+        $customerPct = $this->customer ? $this->customer->allowable_loss_percentage : null;
+        if (is_numeric($customerPct)) {
+            return (float) $customerPct;
+        }
+
+        $companyPct = $this->company ? $this->company->allowable_loss_percentage : null;
+
+        return is_numeric($companyPct) ? (float) $companyPct : null;
+    }
+
+    /**
+     * Amount charged per unit (ton / litre) of chargeable loss, in the trip's
+     * currency: customer's own rate, else the Business Settings default.
+     */
+    public function chargeableLossRate(): ?float
+    {
+        $customerRate = $this->customer ? $this->customer->chargeable_loss_rate : null;
+        if (is_numeric($customerRate)) {
+            return (float) $customerRate;
+        }
+
+        $companyRate = $this->company ? $this->company->chargeable_loss_rate : null;
+
+        return is_numeric($companyRate) ? (float) $companyRate : null;
+    }
+
+    /** Chargeable loss amount for a chargeable loss quantity; null when no rate is set. */
+    public function chargeableLossAmount($chargeableLoss): ?float
+    {
+        $rate = $this->chargeableLossRate();
+
+        return (! is_null($rate) && is_numeric($chargeableLoss)) ? round(max(0, $chargeableLoss) * $rate, 2) : null;
+    }
+
+    /**
+     * allowable_loss_weight / allowable_loss_litreage: a value stored on the
+     * trip wins (legacy data); otherwise it is the allowable loss % of the
+     * loaded weight / litreage @20 (delivery note first, trip as fallback).
+     * Every chargeable-loss calculation (delivery note, exports) reads these.
+     */
+    public function getAllowableLossWeightAttribute($value)
+    {
+        if (is_numeric($value) && $value > 0) {
+            return $value;
+        }
+
+        $dn = $this->delivery_note;
+
+        return $this->percentageAllowance($dn ? $dn->loaded_weight : null, $this->weight) ?? $value;
+    }
+
+    public function getAllowableLossLitreageAttribute($value)
+    {
+        if (is_numeric($value) && $value > 0) {
+            return $value;
+        }
+
+        $dn = $this->delivery_note;
+        $loaded = $dn ? (is_numeric($dn->loaded_litreage_at_20) && $dn->loaded_litreage_at_20 > 0 ? $dn->loaded_litreage_at_20 : $dn->loaded_litreage) : null;
+
+        return $this->percentageAllowance($loaded, $this->litreage_at_20 ?: $this->litreage) ?? $value;
+    }
+
+    private function percentageAllowance($loaded, $fallback): ?float
+    {
+        $base = is_numeric($loaded) && $loaded > 0 ? (float) $loaded : (is_numeric($fallback) ? (float) $fallback : 0);
+        $pct = $base > 0 ? $this->allowableLossPercentage() : null;
+
+        return $pct ? round($base * $pct / 100, 3) : null;
+    }
     /** Sage Intacct project mapping for this trip (status badge / sync state). */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')
@@ -349,6 +427,11 @@ class Trip extends Model implements Auditable, EditAuthorizable
     {
         return $this->hasOne(DeliveryNote::class)
                     ->whereNull('trip_transport_order_id');
+    }
+
+    public function document_signatures()
+    {
+        return $this->hasMany(TripDocumentSignature::class);
     }
 
     public function shipment_leg()

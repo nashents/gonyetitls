@@ -31,6 +31,9 @@ class Index extends Component
     public $fromDt;
     public $toDt;
 
+    // Which trip date places a trip in the period: 'offloading' or 'start' - see whereTripInPeriod().
+    public $dateBasis = 'offloading';
+
     public $company;
     public $default_currency;
     public $default_currency_id;
@@ -150,6 +153,14 @@ class Index extends Component
     public function updatedFrom()         { $this->recalculate(); }
     public function updatedTo()           { $this->recalculate(); }
 
+    public function updatedDateBasis()
+    {
+        if (! in_array($this->dateBasis, ['offloading', 'start'], true)) {
+            $this->dateBasis = 'offloading';
+        }
+        $this->recalculate();
+    }
+
     public function generateStatement()
     {
         $this->recalculate();
@@ -197,7 +208,7 @@ class Index extends Component
             ->where('horse_id', $horseId)
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            ->where(fn ($q) => $this->whereTripInPeriod($q))
             ->count();
 
         [$this->total_fuel_orders, $this->total_fuel, $this->uncosted_fuel_orders] = $this->fuelStats((int) $horseId);
@@ -207,7 +218,7 @@ class Index extends Component
             ->where('horse_id', $horseId)
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            ->where(fn ($q) => $this->whereTripInPeriod($q))
             ->where('currency_id', $this->default_currency_id)
             ->sum('freight');
 
@@ -215,7 +226,7 @@ class Index extends Component
             ->where('horse_id', $horseId)
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            ->where(fn ($q) => $this->whereTripInPeriod($q))
             ->where('currency_id', '!=', $this->default_currency_id)
             ->sum('exchange_customer_freight'); // assumed already in reporting currency
 
@@ -279,7 +290,7 @@ class Index extends Component
 
     /**
      * Flat BillExpense line items, filtered correctly.
-     * - COGS: uses trips.start_date (matches revenue)
+     * - COGS: trip-linked bills use the trip's period date (matches revenue)
      * - OPEX: uses bills.bill_date
      */
     protected function fetchExpenseItemsFlat($accounts, bool $tripOnly, bool $excludeAllowances): array
@@ -302,15 +313,14 @@ class Index extends Component
             })
             ->when($tripOnly, function ($x) {
                 // COGS bills tied to a trip (fuel, tolls, etc.) date-match against
-                // that trip's start_date to align with the revenue it earned. But a
+                // that trip's period date to align with the revenue it earned. But a
                 // COGS-categorized bill entered directly against the horse — e.g.
                 // driver salaries — never gets a trip_id at all (Bills\Create
                 // doesn't set one), so it needs its own bill_date to fall back on
                 // instead of being silently excluded from COGS altogether.
                 $x->where(function ($y) {
                     $y->where(function ($z) {
-                        $z->whereNotNull('bills.trip_id')
-                          ->whereBetween('trips.start_date', [$this->fromDt, $this->toDt]);
+                        $this->whereTripInPeriod($z->whereNotNull('bills.trip_id'));
                     })->orWhere(function ($z) {
                         $z->whereNull('bills.trip_id')
                           ->whereBetween('bills.bill_date', [$this->fromDt, $this->toDt]);

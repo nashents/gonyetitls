@@ -158,6 +158,10 @@
                                     <td class="w-20 line-height-35">{{$customer->allowable_loss_percentage ? $customer->allowable_loss_percentage."%" : ""}}</td>
                                 </tr>
                                 <tr>
+                                    <th class="w-10 text-center line-height-35">Chargeable Loss Rate</th>
+                                    <td class="w-20 line-height-35">{{ is_numeric($customer->chargeable_loss_rate) ? number_format($customer->chargeable_loss_rate, 2) : "" }}</td>
+                                </tr>
+                                <tr>
                                     <th class="w-10 text-center line-height-35">Status</th>
                                     <td class="w-20 line-height-35"><span class="badge bg-{{$customer->status == 1 ? "success" : "danger"}}">{{$customer->status == 1 ? "Active" : "Inactive"}}</span></td>
                                 </tr>

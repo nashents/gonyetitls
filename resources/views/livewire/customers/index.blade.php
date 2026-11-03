@@ -343,8 +343,17 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="tin_number">Allowable Loss Percentage</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowable_loss_percentage" placeholder="Enter Allowable Loss % For Trips" >
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowable_loss_percentage" placeholder="Blank = Business Settings default" >
                                 @error('allowable_loss_percentage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="chargeable_loss_rate">Chargeable Loss Rate</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="chargeable_loss_rate" placeholder="Per ton / litre. Blank = Business Settings default" >
+                                @error('chargeable_loss_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
@@ -547,8 +556,17 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="tin_number">Allowable Loss Percentage</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowable_loss_percentage" placeholder="Enter Allowable Loss % For Trips" >
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowable_loss_percentage" placeholder="Blank = Business Settings default" >
                                 @error('allowable_loss_percentage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="chargeable_loss_rate">Chargeable Loss Rate</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="chargeable_loss_rate" placeholder="Per ton / litre. Blank = Business Settings default" >
+                                @error('chargeable_loss_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

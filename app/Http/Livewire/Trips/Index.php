@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Trips;
 
+use App\Exports\ManifestReportExport;
 use App\Exports\PodTracker;
 use App\Exports\TripsReportExport;
 use App\Imports\TripsImport;
@@ -666,6 +667,23 @@ class Index extends Component
     public function exportPodTrackerExcel(Excel $excel){
 
         return $excel->download(new PodTracker($this->from, $this->to, $this->trip_filter, $this->search,), 'pod_tracking_' .time().'.xlsx');
+    }
+    public function exportManifestExcel(Excel $excel){
+        return $excel->download(new ManifestReportExport($this->from, $this->to, $this->trip_filter, $this->search,
+         [
+            'horse_id'            => $this->filter_horse_id,
+            'driver_id'           => $this->filter_driver_id,
+            'customer_id'         => $this->filter_customer_id,
+            'cargo_id'            => $this->filter_cargo_id,
+            'from_destination_id' => $this->filter_from,
+            'to_destination_id'   => $this->filter_to,
+            'consignee_id'        => $this->filter_consignee_id,
+            'trip_type_id'        => $this->filter_trip_type_id,
+            'transporter_id'      => $this->filter_transporter_id,
+            'route_id'            => $this->filter_route_id,
+            'trip_status'         => $this->filter_trip_status,
+        ]
+        ), 'manifest_report_' .time().'.xlsx');
     }
     public function exportTripsCSV(Excel $excel){
    

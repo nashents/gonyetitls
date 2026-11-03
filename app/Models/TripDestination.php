@@ -55,6 +55,10 @@ class TripDestination extends Model implements Auditable
         'units_of_measure_id',
         'litreage',
         'litreage_at_20',
+        'dip_litreage',
+        'dip_litreage_at_20',
+        'shoretank_litreage',
+        'shoretank_litreage_at_20',
         'rate',
         'freight',
     ];

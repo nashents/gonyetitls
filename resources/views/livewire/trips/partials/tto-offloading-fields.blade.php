@@ -70,10 +70,10 @@
     <div class="row">
         <div class="col-md-4">
             <div class="form-group">
-                <label>Litreage @ Ambient</label>
+                <label>Litreage @ Ambient Meter Readings</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.offloaded_litreage"
-                       placeholder="Litreage @ ambient">
+                       placeholder="Meter @ ambient">
                 @error("deliveryNotes.$ttoId.offloaded_litreage")
                     <span class="text-danger small">{{ $message }}</span>
                 @enderror
@@ -81,10 +81,10 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
-                <label>Litreage @ 20°C</label>
+                <label>Litreage @ 20°C Meter Readings</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.offloaded_litreage_at_20"
-                       placeholder="Litreage @ 20°C">
+                       placeholder="Meter @ 20°C">
                 @error("deliveryNotes.$ttoId.offloaded_litreage_at_20")
                     <span class="text-danger small">{{ $message }}</span>
                 @enderror
@@ -101,6 +101,52 @@
                         <option value="{{ $uom->id }}">{{ $uom->name }}</option>
                     @endforeach
                 </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label>Litreage @ Ambient Dips</label>
+                <input type="number" step="any" class="form-control"
+                       wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.offloaded_dip_litreage"
+                       placeholder="Dips @ ambient">
+                @error("deliveryNotes.$ttoId.offloaded_dip_litreage")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label>Litreage @ 20°C Dips</label>
+                <input type="number" step="any" class="form-control"
+                       wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.offloaded_dip_litreage_at_20"
+                       placeholder="Dips @ 20°C">
+                @error("deliveryNotes.$ttoId.offloaded_dip_litreage_at_20")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label>Shoretank Reading @ Ambient</label>
+                <input type="number" step="any" class="form-control"
+                       wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.shoretank_litreage"
+                       placeholder="Shoretank @ ambient">
+                @error("deliveryNotes.$ttoId.shoretank_litreage")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label>Shoretank Reading @ 20°C</label>
+                <input type="number" step="any" class="form-control"
+                       wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.shoretank_litreage_at_20"
+                       placeholder="Shoretank @ 20°C">
+                @error("deliveryNotes.$ttoId.shoretank_litreage_at_20")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
             </div>
         </div>
     </div>
