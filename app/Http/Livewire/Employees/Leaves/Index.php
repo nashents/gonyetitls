@@ -46,6 +46,15 @@ class Index extends Component
     public $enforce_leave_days_value;
     public $enforce_maximum_leave_days_value;
 
+    // Leave setup check: lists active employees whose record for one leave type is missing or incomplete.
+    public $diag_leave_type_id;
+    public $diag_staff_type = 'all';
+    public $diag_branch_id;
+    public $diag_zero_as_missing = true;
+    public $diag_ran = false;
+    // Set when the edit modal was opened from the check, so saving returns to it.
+    public $from_diagnostics = false;
+
     public function mount(){
         $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
         $this->resetPage();
@@ -165,6 +174,75 @@ class Index extends Component
         ]);
     }
 
+    public function runLeaveDiagnostics()
+    {
+        $this->validate(['diag_leave_type_id' => 'required|exists:leave_types,id'], [], ['diag_leave_type_id' => 'leave type']);
+
+        if (!in_array($this->diag_staff_type, ['all', 'admin', 'drivers'], true)) {
+            $this->diag_staff_type = 'all';
+        }
+
+        $this->diag_ran = true;
+    }
+
+    public function updatedDiagLeaveTypeId()
+    {
+        $this->diag_ran = false;
+    }
+
+    /**
+     * Rows for the leave setup check: [employee, missing field labels, has_record].
+     * Missing = no employee_leaves row, or a null (or, optionally, zero/negative) value.
+     * Accrual rate is only checked on accruable leave types.
+     */
+    public function getDiagnosticResultsProperty()
+    {
+        $leaveType = LeaveType::find($this->diag_leave_type_id);
+        if (!$this->diag_ran || !$leaveType) {
+            return collect();
+        }
+
+        $fields = array_filter([
+            'acrual_rate' => $leaveType->is_accruable ? 'Accrual Rate' : null,
+            'available_leave_days' => 'Leave Days',
+            'maximum_leave_days' => 'Maximum Leave Days',
+        ]);
+
+        $employees = Employee::query()
+            ->activeStaff()
+            ->ofStaffType($this->diag_staff_type)
+            ->filterBy(['branch_id' => $this->diag_branch_id])
+            ->with('branch:id,name')
+            ->orderBy('name')->orderBy('surname')->orderBy('id')
+            ->get(['id', 'name', 'surname', 'employee_number', 'post', 'branch_id']);
+
+        $records = EmployeeLeave::where('leave_type_id', $leaveType->id)
+            ->whereIn('employee_id', $employees->pluck('id'))
+            ->get()
+            ->keyBy('employee_id');
+
+        $isMissing = fn ($value) => is_null($value) || ($this->diag_zero_as_missing && (float) $value <= 0);
+
+        return $employees->map(function ($employee) use ($records, $fields, $isMissing) {
+            $record = $records->get($employee->id);
+            $missing = $record
+                ? array_values(array_filter($fields, fn ($label, $column) => $isMissing($record->$column), ARRAY_FILTER_USE_BOTH))
+                : array_values($fields);
+
+            return ['employee' => $employee, 'missing' => $missing, 'has_record' => (bool) $record];
+        })->filter(fn ($row) => !empty($row['missing']))->values();
+    }
+
+    public function fixFromDiagnostics($employeeId)
+    {
+        $this->showLeave($employeeId);
+        $this->from_diagnostics = true;
+        $this->leave_type_id = $this->diag_leave_type_id;
+        $this->updatedLeaveTypeId($this->leave_type_id);
+
+        $this->dispatchBrowserEvent('hide-leaveDiagnosticsModal');
+    }
+
     public function exportEmployeesLeaveCSV(Excel $excel){
 
         return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('csv'), Excel::CSV);
@@ -200,6 +278,7 @@ class Index extends Component
         $this->accrual_rate = null;
         $this->leave_days = null;
         $this->maximum_leave_days = null;
+        $this->from_diagnostics = false;
     }
 
     public function showLeave($id)
@@ -285,6 +364,11 @@ class Index extends Component
 
         $this->dispatchBrowserEvent('hide-leaveDaysModal');
 
+        // Back to the (re-run) check so the next record can be fixed.
+        if ($this->from_diagnostics) {
+            $this->dispatchBrowserEvent('show-leaveDiagnosticsModal');
+        }
+
         $this->resetInputFields();
 
         $this->dispatchBrowserEvent('alert', [
@@ -346,7 +430,8 @@ class Index extends Component
 
     public function render()
     {
-        $query = Employee::query()->ofStaffType($this->staff_type)->filterBy($this->staffFilters());
+        // Suspended and archived employees are excluded, searching included.
+        $query = Employee::query()->activeStaff()->ofStaffType($this->staff_type)->filterBy($this->staffFilters());
 
         if (filled($this->search)) {
             // Grouped so the staff-type filter still applies to both search terms.
@@ -354,8 +439,6 @@ class Index extends Component
                 $q->where('employee_number','like', '%'.$this->search.'%')
                   ->orWhere(DB::raw("concat(name, ' ', surname)"),'like', '%'.$this->search.'%');
             });
-        } else {
-            $query->where('archive', 0);
         }
 
         return view('livewire.employees.leaves.index',[

@@ -517,7 +517,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to));
 
         $tripBase = Trip::query()
-            ->whereHas('shift', fn (Builder $q) => $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to)));
+            ->whereIn('shift_id', $this->shiftIdsIn($from, $to));
 
         $oreLongTrips = (clone $tripBase)
             ->where('haulage_type', 'long_haul')
@@ -528,7 +528,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $oreLongLp = $this->tripCountsByLoadingPoint(clone $oreLongTrips, $lpMap);
 
         $fuelLong = Fuel::query()
-            ->whereHas('shift', fn (Builder $q) => $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to)))
+            ->whereIn('shift_id', $this->shiftIdsIn($from, $to))
             ->where(fn (Builder $f) => $this->applyFuelHaul($f, 'long_haul'))
             ->sum('quantity');
 
@@ -550,7 +550,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $oreShortLp = $this->tripCountsByLoadingPoint(clone $oreShortTrips, $lpMap);
 
         $fuelShort = Fuel::query()
-            ->whereHas('shift', fn (Builder $q) => $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to)))
+            ->whereIn('shift_id', $this->shiftIdsIn($from, $to))
             ->where(fn (Builder $f) => $this->applyFuelHaul($f, 'short_haul'))
             ->sum('quantity');
 
@@ -570,12 +570,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $concActual = (clone $concTrips)->sum($this->tripWeightColumn);
 
         $fuelConc = Fuel::query()
-            ->whereHas('shift', fn (Builder $q) =>
-                $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
-                    ->whereHas('trips', fn (Builder $t) =>
-                        $t->whereHas('cargo', fn (Builder $c) => $c->where('name', 'Platinum Concentrate'))
-                    )
-            )
+            ->whereIn('shift_id', (clone $concTrips)->select('shift_id'))
             ->sum('quantity');
 
         return [
@@ -603,6 +598,18 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ],
             'fuel_conc' => (float) $fuelConc,
         ];
+    }
+
+    /**
+     * Ids of the shifts in the window as a subquery: filtering trips/fuels by
+     * whereIn(shift_id) starts from the few matching shifts instead of testing
+     * every trip/fuel row with whereHas('shift').
+     */
+    protected function shiftIdsIn(Carbon $from, Carbon $to): Builder
+    {
+        return Shift::query()
+            ->select('id')
+            ->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to));
     }
 
     /**
@@ -659,24 +666,15 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
                 ->count(),
 
             'morning_loads' => Trip::query()
-                ->whereHas('shift', function ($q) use ($from, $to) {
-                    $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
-                        ->where($this->shiftTypeColumn, 'Morning');
-                })
+                ->whereIn('shift_id', $this->shiftIdsIn($from, $to)->where($this->shiftTypeColumn, 'Morning'))
                 ->count(),
 
             'night_loads' => Trip::query()
-                ->whereHas('shift', function ($q) use ($from, $to) {
-                    $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
-                        ->where($this->shiftTypeColumn, 'Night');
-                })
+                ->whereIn('shift_id', $this->shiftIdsIn($from, $to)->where($this->shiftTypeColumn, 'Night'))
                 ->count(),
 
             'backshift_loads' => Trip::query()
-                ->whereHas('shift', function ($q) use ($from, $to) {
-                    $q->where(fn (Builder $s) => $this->applyShiftScope($s, $from, $to))
-                        ->where($this->shiftTypeColumn, 'Backshift');
-                })
+                ->whereIn('shift_id', $this->shiftIdsIn($from, $to)->where($this->shiftTypeColumn, 'Backshift'))
                 ->count(),
         ];
     }

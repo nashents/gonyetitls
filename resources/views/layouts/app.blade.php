@@ -1525,6 +1525,14 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-leaveDiagnosticsModal', event => {
+                $('#leaveDiagnosticsModal').modal('show');
+            })
+            window.addEventListener('hide-leaveDiagnosticsModal', event => {
+                $('#leaveDiagnosticsModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-restoreModal', event => {
                 $('#restoreModal').modal('show');
             })

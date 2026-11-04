@@ -20,6 +20,7 @@
                                     {{-- @if (Auth::user()->is_admin()) --}}
                                         <a href="#" data-toggle="modal" data-target="#enforceLeaveTypeDefaultsModal" class="btn btn-default border-danger btn-rounded btn-wide"><i class="fa fa-refresh"></i>Enforce Leave Type Defaults</a>
                                     {{-- @endif --}}
+                                    <a href="#" data-toggle="modal" data-target="#leaveDiagnosticsModal" class="btn btn-default border-warning btn-rounded btn-wide"><i class="fa fa-stethoscope"></i>Leave Setup Check</a>
                                     <a href="" data-toggle="modal" data-target="#leavesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                     <a href="#" wire:click="exportEmployeesLeaveExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportEmployeesLeaveCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
@@ -356,6 +357,126 @@
                                 <i class="fa fa-refresh"></i> Enforce Selected
                             </button>
                         </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="leaveDiagnosticsModal" tabindex="-1" role="dialog" aria-labelledby="leaveDiagnosticsModalLabel" data-backdrop-color="blue">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="leaveDiagnosticsModalLabel">
+                            <i class="fa fa-stethoscope"></i> Leave Setup Check
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </h4>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>Pick a leave type to list every active employee (suspended and archived excluded) whose leave record for it is missing, or whose accrual rate, leave days or maximum leave days are not set.</p>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="diag_leave_type_id">Leave Type<span class="required" style="color: red">*</span></label>
+                                    <select id="diag_leave_type_id" class="form-control" wire:model="diag_leave_type_id">
+                                        <option value="">Select Leave Type</option>
+                                        @foreach ($leave_types as $leave_type)
+                                            <option value="{{ $leave_type->id }}">{{ $leave_type->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('diag_leave_type_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="diag_staff_type">Employees</label>
+                                    <select id="diag_staff_type" class="form-control" wire:model="diag_staff_type">
+                                        <option value="all">All Employees</option>
+                                        <option value="admin">Admin Employees</option>
+                                        <option value="drivers">Drivers</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="diag_branch_id">Branch</label>
+                                    <select id="diag_branch_id" class="form-control" wire:model="diag_branch_id">
+                                        <option value="">All Branches</option>
+                                        @foreach ($this->staffFilterOptions['branches'] as $branch_option)
+                                            <option value="{{ $branch_option->id }}">{{ $branch_option->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label>&nbsp;</label>
+                                <div class="checkbox" style="margin-top:0;">
+                                    <label><input type="checkbox" wire:model="diag_zero_as_missing"> Treat 0 as not set</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" wire:click="runLeaveDiagnostics()" class="btn btn-default border-primary btn-wide btn-rounded">
+                            <i class="fa fa-search"></i> Run Check
+                        </button>
+
+                        @if ($diag_ran)
+                            @php $diagnosticResults = $this->diagnosticResults; @endphp
+                            <div wire:key="leave-diagnostics-results" style="margin-top:15px;">
+                                @if ($diagnosticResults->isEmpty())
+                                    <div class="alert alert-success" style="margin-bottom:0;">
+                                        <i class="fa fa-check"></i> All matching employees have this leave type fully set up.
+                                    </div>
+                                @else
+                                    <p><strong>{{ $diagnosticResults->count() }}</strong> employee(s) need attention.</p>
+                                    <div style="max-height:400px; overflow-y:auto;">
+                                        <table class="table table-striped table-bordered table-sm" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Employee</th>
+                                                    <th>Emp#</th>
+                                                    <th>Branch</th>
+                                                    <th>Not Set</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($diagnosticResults as $row)
+                                                    <tr wire:key="leave-diag-{{ $row['employee']->id }}">
+                                                        <td>{{ ucfirst($row['employee']->name ?? '') }} {{ ucfirst($row['employee']->surname ?? '') }}</td>
+                                                        <td>{{ $row['employee']->employee_number }}</td>
+                                                        <td>{{ $row['employee']->branch?->name }}</td>
+                                                        <td>
+                                                            @if ($row['has_record'])
+                                                                @foreach ($row['missing'] as $field)
+                                                                    <span class="label label-warning">{{ $field }}</span>
+                                                                @endforeach
+                                                            @else
+                                                                <span class="label label-danger">No leave record</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <a href="#" wire:click.prevent="fixFromDiagnostics({{ $row['employee']->id }})" class="btn btn-xs btn-default border-success"><i class="fa fa-edit color-success"></i> Fix</a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                            <i class="fa fa-times"></i> Close
+                        </button>
                     </div>
 
                 </div>

@@ -2256,9 +2256,7 @@
                                             </div>
                                             <div class="col-md-1">
                                                 <div class="form-group" style="margin-top: 29px; ">
-                                                    @if ($shiftRehandlings->isEmpty())
-                                                        <a href="#" wire:click.prevent="removeRehandlingShow({{ $value->id }})" ><i class="fa fa-trash color-danger"></i></a>
-                                                    @endif
+                                                    <a href="#" wire:click.prevent="removeRehandlingShow({{ $value->id }})" ><i class="fa fa-trash color-danger"></i></a>
                                                 </div>
                                             </div> 
                                         </div>

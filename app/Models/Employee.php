@@ -225,6 +225,15 @@ class Employee extends Model implements Auditable
     }
 
     /**
+     * Current staff only: not suspended (status 0, see EmployeeController::deactivate)
+     * and not archived.
+     */
+    public function scopeActiveStaff($query)
+    {
+        return $query->where('employees.status', 1)->where('employees.archive', 0);
+    }
+
+    /**
      * List filters shared by the Employees / Drivers / Leave Days pages and their
      * exports: ['role_id', 'rank_id', 'department_id', 'branch_id']. Blank = no filter.
      * Role is the login's role (employee->user->roles).

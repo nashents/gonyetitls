@@ -30,7 +30,12 @@ WithCustomStartCell
 {
     use Exportable;
 
+    protected const NO_DEPARTMENT = 'No Department';
+
     protected Collection $leaveTypes;
+
+    /** Sheet row numbers of the department header rows, styled in AfterSheet. */
+    protected array $departmentRows = [];
 
     /** 'all' (default), 'drivers' or 'admin' — see Employee::scopeOfStaffType(). */
     protected string $staffType;
@@ -64,12 +69,12 @@ WithCustomStartCell
             ->get()
             ->groupBy('employee_id');
 
-        return EmployeeLeave::query()
+        $employees = EmployeeLeave::query()
             ->whereHas('employee', function ($query) {
-                $query->where('status', 1)->ofStaffType($this->staffType)->filterBy($this->filters);
+                $query->activeStaff()->ofStaffType($this->staffType)->filterBy($this->filters);
             })
             ->whereIn('leave_type_id', $this->leaveTypes->pluck('id'))
-            ->with(['employee', 'leave_type'])
+            ->with(['employee.departments', 'leave_type'])
             ->orderBy('employee_id')
             ->get()
             ->groupBy('employee_id')
@@ -84,14 +89,58 @@ WithCustomStartCell
                     ];
                 });
 
+                $employee = $employeeLeaves->first()->employee;
+
                 return (object) [
-                    'employee' => $employeeLeaves->first()->employee,
+                    'employee' => $employee,
+                    'department' => $this->departmentName($employee),
                     'leave_data' => $leaveDataByType,
                 ];
-            })
-            ->values();
+            });
+
+        // Group per department (A-Z, unassigned last), employees A-Z within each,
+        // with a header row in front of every department.
+        $rows = collect();
+        $this->departmentRows = [];
+        $sheetRow = 9; // data starts below the two heading rows at A7:A8
+
+        $employees
+            ->groupBy('department')
+            ->sortBy(fn ($group, $department) => [$department === self::NO_DEPARTMENT ? 1 : 0, strtolower($department)])
+            ->each(function ($group, $department) use ($rows, &$sheetRow) {
+                $rows->push((object) ['department_header' => $department . ' (' . $group->count() . ')']);
+                $this->departmentRows[] = $sheetRow++;
+
+                $group->sortBy(fn ($row) => strtolower($row->employee->name . ' ' . $row->employee->surname))
+                    ->each(function ($row) use ($rows, &$sheetRow) {
+                        $rows->push($row);
+                        $sheetRow++;
+                    });
+            });
+
+        return $rows;
+    }
+
+    /**
+     * The department an employee is listed under: the filtered department when
+     * the export is filtered by one, otherwise their default department.
+     */
+    protected function departmentName($employee): string
+    {
+        $departments = $employee->departments;
+        $filteredId = $this->filters['department_id'] ?? null;
+
+        $department = ($filteredId ? $departments->firstWhere('id', $filteredId) : null)
+            ?? $departments->firstWhere('pivot.is_default', true)
+            ?? $departments->first();
+
+        return $department->name ?? self::NO_DEPARTMENT;
     }
     public function map($row): array{
+
+            if (isset($row->department_header)) {
+                return [$row->department_header];
+            }
 
             $data = [
                 $row->employee->employee_number,
@@ -157,6 +206,17 @@ WithCustomStartCell
                         ],
                     ]
                 ]);
+
+                foreach ($this->departmentRows as $row) {
+                    $event->sheet->mergeCells("A{$row}:{$lastColumn}{$row}");
+                    $event->sheet->getStyle("A{$row}:{$lastColumn}{$row}")->applyFromArray([
+                        'font' => ['bold' => true],
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['argb' => 'FFD9E1F2'],
+                        ],
+                    ]);
+                }
             },
         ];
     }
