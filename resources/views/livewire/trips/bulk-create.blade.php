@@ -6,7 +6,7 @@
                     <h4 class="modal-title" id="bulkTripsLabel"><i class="fa fa-truck"></i> Bulk Schedule Trips
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
                     </h4>
-                    <small class="text-muted">Each truck becomes its own trip with its own transport order, awaiting authorization under Pending. Fuel, expenses and allowances are added per trip afterwards.</small>
+                    <small class="text-muted">Each truck becomes its own trip with its own transport order, awaiting authorization under Pending. Trip expenses can be added below; fuel and allowances are added per trip afterwards.</small>
                 </div>
                 <form wire:submit.prevent="store()">
                     <div class="modal-body">
@@ -179,6 +179,8 @@
                                 </div>
                             @endforeach
                         @endif
+
+                        @include('livewire.trips._bulk_expenses')
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>

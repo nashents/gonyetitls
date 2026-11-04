@@ -30,158 +30,21 @@ WithCustomStartCell
     /**
     * @return \Illuminate\Support\Collection
     */
-    public $from;
-    public $to;
-    public $requisition_filter;
-    public $search;
-    public $department_ids;
+    public $filters;
 
-   
-
-    public function __construct($from, $to, $requisition_filter, $search)
+    /**
+     * @param array $filters Requisition::scopeListFilter filters, as on the Index screen
+     */
+    public function __construct(array $filters)
     {
-    
-            $this->from = $from;
-            $this->to = $to;
-            $this->requisition_filter = $requisition_filter;
-            $this->search = $search;
-    
-
-            $departments = Auth::user()->employee->departments;
-            foreach ($departments as $department) {
-                $this->department_ids[] = $department->id;
-            }
-          
-           
+        $this->filters = $filters;
     }
+
     public function query()
-    { 
-        $user = Auth::user();
-        $employee = $user->employee;
-        $departments = $employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = $user->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = $employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names)){
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                    ->where('requisition_number','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->requisition_filter,'desc');
-                }else {
-                    return requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc');
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
-                ->whereYear($this->requisition_filter, date('Y'))
-                ->where('requisition_number','like', '%'.$this->search.'%')
-                ->orWhere('status','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhereHas('trip', function ($query) {
-                    return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->requisition_filter,'desc');
-            }
-            else {
-               
-                return Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
-                ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc');
-              
-            }
-           
-        }else{
-
-            //not super admin
-
-           
-
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                    ->where('user_id',Auth::user()->id)
-                    ->orWhereIn('department_id', $this->department_ids)
-                    ->where('requisition_number','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->requisition_filter,'desc');
-                }else {
-                    return Requisition::query()->with('employee','department','trip','currency','payments')
-                    ->where('user_id',Auth::user()->id)
-                    ->orWhereIn('department_id', $this->department_ids)
-                    ->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc');
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
-                ->where('user_id',Auth::user()->id)
-                ->orWhereIn('department_id', $this->department_ids)
-                ->whereYear($this->requisition_filter, date('Y'))
-                ->where('requisition_number','like', '%'.$this->search.'%')
-                ->orWhere('status','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhereHas('trip', function ($query) {
-                    return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->requisition_filter,'desc');
-            }
-            else {
-               
-                return Requisition::query()->with('employee','department','trip','currency','payments')
-                    ->where('user_id',Auth::user()->id)
-                    ->orWhereIn('department_id', $this->department_ids)
-                    ->whereMonth($this->requisition_filter, date('m'))
-                    ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc');
-              
-            }
-           
-        }
-       
-       
+    {
+        return Requisition::query()
+            ->with(['user', 'employee.departments', 'requisition_items.expense', 'currency', 'purchase', 'purchase_orders'])
+            ->listFilter(Auth::user(), $this->filters);
     }
 
 
@@ -197,8 +60,8 @@ WithCustomStartCell
                     $employee =  $employee_name." ".  $employee_surname;
                     $symbol = $requisition->currency ? $requisition->currency->symbol : "";
                     $currency = $requisition->currency ? $requisition->currency->name : "";
-                    $total =  number_format($requisition->total,2);
-                    $paid =  number_format($requisition->paid,2);
+                    $total =  number_format($requisition->total ?? 0,2);
+                    $paid =  number_format($requisition->paid ?? 0,2);
 
                     if ($requisition->requisition_items) {
                         foreach ($requisition->requisition_items as $item) {
@@ -218,8 +81,18 @@ WithCustomStartCell
          
                
       
+                $isPo = $requisition->type == 'po_requisition';
+                $po_status = "";
+                if ($isPo) {
+                    $po_numbers = collect([$requisition->purchase])->merge($requisition->purchase_orders)
+                        ->filter()->unique('id')->pluck('purchase_number')->implode(', ');
+                    $po_status = $requisition->hasPurchaseOrder() ? 'PO Attached ('.$po_numbers.')' : 'Awaiting PO';
+                }
+
                 return   [
                     $requisition->requisition_number ,
+                    $isPo ? 'PO Requisition' : 'Payment Requisition',
+                    $po_status,
                     $user ,
                     $employee ,
                     $department ,
@@ -238,6 +111,8 @@ WithCustomStartCell
     public function headings(): array{
             return[
                 'Requisition#',
+                'Type',
+                'PO Status',
                 'CreatedBy',
                 'Requested By',
                 'Department',
@@ -252,7 +127,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:J7')->applyFromArray([
+                $event->sheet->getStyle('A7:L7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

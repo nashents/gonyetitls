@@ -22,6 +22,8 @@ class RequisitionController extends Controller
 
     public function deleted()
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
         return view('requisitions.deleted');
     }
     public function rejected()

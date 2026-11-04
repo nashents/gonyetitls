@@ -946,6 +946,7 @@ Route::get('requisitions/{purchase}/export-to-pdf','RequisitionController@genera
 Route::get('requisitions/authorization/pending','RequisitionController@pending')->name('requisitions.pending');
 Route::get('requisitions/authorization/approved','RequisitionController@approved')->name('requisitions.approved');
 Route::get('requisitions/authorization/rejected','RequisitionController@rejected')->name('requisitions.rejected');
+Route::get('requisitions/authorization/deleted','RequisitionController@deleted')->name('requisitions.deleted');
 
 Route::get('fuel_requests/authorization/pending','FuelRequestController@pending')->name('fuel_requests.pending');
 Route::get('fuel_requests/authorization/approved','FuelRequestController@approved')->name('fuel_requests.approved');

@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Bookings | @if (Auth::user()->employee->company)
+    Deleted Requisitions | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -21,10 +21,6 @@
 
 @section('content')
 
-
-
-
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -35,31 +31,29 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-trash"></i> Deleted Bookings</li>
+            							<li><a href="{{route('requisitions.index')}}"><i class="fa fa-list"></i> All Requisitions</a></li>
+            							<li class="active"> <i class="fa fa-trash"></i> Deleted Requisitions</li>
             						</ul>
                                 </div>
-                                <!-- /.col-md-6 -->
-
                             </div>
                             <!-- /.row -->
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('bookings.deleted')
-                        <!-- /.section -->
+                        @livewire('requisitions.deleted')
 
                     </div>
                     <!-- /.main-page -->
-
-        <!-- ========== PAGE JS FILES ========== -->
-
 
 @endsection
 
 @section('extra-js')
     <script>
-    $(document).ready( function () {
-        $('#bookingsTable').DataTable();
-    } );
+        window.addEventListener('show-requisitionRestoreModal', event => {
+            $('#requisitionRestoreModal').modal('show');
+        });
+        window.addEventListener('hide-requisitionRestoreModal', event => {
+            $('#requisitionRestoreModal').modal('hide');
+        });
     </script>
 @endsection

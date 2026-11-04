@@ -47,8 +47,32 @@
                                         <!-- /input-group -->
                                     </div>
                                     @endif
-                                   
+
                                     <!-- /input-group -->
+                                </div>
+                                <div class="row" style="margin-top: 10px; margin-bottom: 10px">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Type</span>
+                                            <select wire:model="type_filter" class="form-control">
+                                                <option value="">All Requisitions</option>
+                                                <option value="po_requisition">Purchase (PO) Requisitions</option>
+                                                <option value="payment_requisition">Payment Requisitions</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @if ($type_filter !== 'payment_requisition')
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">PO Progress</span>
+                                            <select wire:model="po_status_filter" class="form-control">
+                                                <option value="">All</option>
+                                                <option value="attached">PO Attached (acted on)</option>
+                                                <option value="awaiting">Awaiting PO (not acted on)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @endif
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
@@ -115,6 +139,17 @@
                                                 @else
                                                     Payment Requisition
                                                 @endif <br>
+                                                @if ($requisition->type == "po_requisition")
+                                                    @if ($requisition->hasPurchaseOrder())
+                                                        <span class="label label-success"><i class="fas fa-check"></i> PO Attached</span>
+                                                        @foreach (collect([$requisition->purchase])->merge($requisition->purchase_orders)->filter()->unique('id') as $po)
+                                                            <a href="{{ route('purchases.show', $po->id) }}" target="_blank" style="color: blue">{{ $po->purchase_number }}</a>
+                                                        @endforeach
+                                                    @else
+                                                        <span class="label label-warning"><i class="fas fa-hourglass-half"></i> Awaiting PO</span>
+                                                    @endif
+                                                    <br>
+                                                @endif
                                                 <strong>CreatedBy:</strong> {{ucfirst($requisition->user ? $requisition->user->name : "")}} {{ucfirst($requisition->user ? $requisition->user->surname : "")}} <br>
                                                 <strong>CreatedOn:</strong> {{$requisition->created_at}}
                                             </small>

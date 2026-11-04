@@ -486,7 +486,7 @@
               ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
               ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
               $requisitionsDeletedCount = App\Models\Requisition::onlyTrashed()
-              ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+              ->whereDate('deleted_at', \Carbon\Carbon::today())->count();
               // $department = App\Models\Department::where('name','Finance')->first();
               //         if (isset($department)) {
               //             $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',Auth::user()->employee->id)->first();
@@ -511,6 +511,13 @@
                           <span class="label label-success ml-5">{{$requisitionsRejectedCount}}</span>
                           @endif
                       </a></li>
+                      @if (in_array('Super Admin', $role_names))
+                      <li><a href="{{route('requisitions.deleted')}}"><i class="fas fa-trash "></i> <span>Deleted Requisitions</span>
+                          @if ($requisitionsDeletedCount>0)
+                          <span class="label label-danger ml-5">{{$requisitionsDeletedCount}}</span>
+                          @endif
+                      </a></li>
+                      @endif
                   </ul>
               </li>
               <li class="has-children {{ request()->routeIs('product_services.all',['category' => 'bills']) ? 'active' : '' }}" >

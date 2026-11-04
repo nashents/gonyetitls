@@ -57,6 +57,10 @@ class Index extends Component
     public $to;
 
     public $requisition_filter;
+    // '' | po_requisition | payment_requisition
+    public $type_filter = '';
+    // '' | attached | awaiting — PO requisitions only
+    public $po_status_filter = '';
     public $accounts;
     public $expense_accounts;
     public $account;
@@ -280,13 +284,26 @@ class Index extends Component
     
     
     public function exportRequisitionCSV(Excel $excel){
-        return $excel->download(new RequisitionExport($this->from, $this->to, $this->requisition_filter,   $this->search), 'requisitions_' .time().'.csv', Excel::CSV);
+        return $excel->download(new RequisitionExport($this->listFilters()), 'requisitions_' .time().'.csv', Excel::CSV);
     }
     public function exportRequisitionPDF(Excel $excel){
-        return $excel->download(new RequisitionExport($this->from, $this->to, $this->requisition_filter,  $this->search), 'requisitions_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new RequisitionExport($this->listFilters()), 'requisitions_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportRequisitionExcel(Excel $excel){
-        return $excel->download(new RequisitionExport($this->from, $this->to, $this->requisition_filter,  $this->search), 'requisitions_' .time().'.xlsx');
+        return $excel->download(new RequisitionExport($this->listFilters()), 'requisitions_' .time().'.xlsx');
+    }
+
+    // Same filters for the table and every export (Requisition::scopeListFilter)
+    protected function listFilters(): array
+    {
+        return [
+            'date_column' => $this->requisition_filter,
+            'from'        => $this->from,
+            'to'          => $this->to,
+            'search'      => $this->search,
+            'type'        => $this->type_filter,
+            'po_status'   => $this->po_status_filter,
+        ];
     }
 
     public function findUser($id){
@@ -1736,7 +1753,21 @@ class Index extends Component
     public function updatingSearch()
     {
         $this->resetPage();
-        
+
+    }
+
+    public function updatingTypeFilter($value)
+    {
+        // The PO progress dropdown is hidden for payment requisitions
+        if ($value === 'payment_requisition') {
+            $this->po_status_filter = '';
+        }
+        $this->resetPage();
+    }
+
+    public function updatingPoStatusFilter()
+    {
+        $this->resetPage();
     }
 
     public function updatingSearchTrip()
@@ -1794,71 +1825,9 @@ class Index extends Component
     {
       
 
-     // ✅ Force an Eloquent user model instance
-    $user = User::query()
-        ->with(['employee.departments', 'roles', 'employee.ranks'])
-        ->findOrFail(Auth::id());
-
-    $employee        = $user->employee;
-
-    $departmentNames = $employee?->departments?->pluck('name')->all() ?? [];
-    $roleNames       = $user->roles->pluck('name')->all();
-
-    $isFinanceOrSuper = in_array('Finance', $departmentNames, true)
-        || in_array('Super Admin', $roleNames, true);
-
     $base = Requisition::query()
-        ->with(['employee', 'department', 'trip', 'currency', 'payments'])
-        ->orderBy($this->requisition_filter, 'desc');
-
-    // Non-finance/non-super: restrict to their departments
-    if (! $isFinanceOrSuper) {
-        $base->whereIn('department_id', (array) $this->department_ids);
-    }
-
-     // Date filter: range OR default current month/year — skipped while searching so
-     // matches outside the current period aren't hidden.
-        if (filled($this->from) && filled($this->to)) {
-            $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
-        } elseif (! filled($this->search)) {
-            $base->whereMonth($this->requisition_filter, now()->month)
-                ->whereYear($this->requisition_filter, now()->year);
-        }
-
-    // Search (GROUPED OR CONDITIONS) — critical fix
-    if (filled($this->search)) {
-        $term = trim($this->search);
-
-        $base->where(function ($q) use ($term) {
-            $like = "%{$term}%";
-
-            $q->where('requisition_number', 'like', $like)
-              ->orWhere('subject', 'like', $like)
-              ->orWhere('description', 'like', $like)
-              ->orWhere('status', 'like', $like)
-              ->orWhere('date', 'like', $like)
-              ->orWhere('total', 'like', $like)
-
-              ->orWhereHas('requisition_items.expense', function ($qq) use ($like) {
-                  $qq->where('name', 'like', $like);
-              })
-
-              ->orWhereHas('trip', function ($qq) use ($like) {
-                  $qq->where('trip_number', 'like', $like)
-                     ->orWhereHas('horse', function ($hhh) use ($like) {
-                         $hhh->where('registration_number', 'like', $like);
-                     });
-              })
-
-              ->orWhereHas('employee', function ($qq) use ($term) {
-                  $qq->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%{$term}%");
-              })
-
-              ->orWhereHas('currency', function ($qq) use ($like) {
-                  $qq->where('name', 'like', $like);
-              });
-        });
-    }
+        ->with(['employee', 'department', 'trip', 'currency', 'payments', 'purchase', 'purchase_orders'])
+        ->listFilter(Auth::user(), $this->listFilters());
 
     return view('livewire.requisitions.index', [
         'requisitions' => $base->paginate(10),

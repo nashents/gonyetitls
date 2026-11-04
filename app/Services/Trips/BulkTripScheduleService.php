@@ -42,7 +42,8 @@ class BulkTripScheduleService
      *                     consignee_id, consignor_id, currency_id, exchange_rate, from, to, loading_point_id,
      *                     offloading_point_id, distance, units_of_measure_id, freight_calculation, rate, cargo_details,
      *                     trip_status, transporter_agreement, transporter_rate, horse_id, driver_id, trailer_ids,
-     *                     trip_ref, start_date, weight, quantity, litreage, comments
+     *                     trip_ref, start_date, weight, quantity, litreage, comments,
+     *                     expenses (expense_id, funded_by, category, payment_method_id, currency_id, exchange_rate, vendor_id, amount)
      * @return Collection<int, Trip>
      */
     public function create(array $trips, $company): Collection
@@ -269,9 +270,41 @@ class BulkTripScheduleService
             $tripExpense->save();
         }
 
+        foreach ($t['expenses'] ?? [] as $line) {
+            $this->addExpense($trip, $line, $t['start_date'], $company);
+        }
+
         $this->recalculateTrip($trip, $company);
 
         return $trip;
+    }
+
+    // Same row Trips\Create::store() writes for a ticked trip expense. Funded by: 0 company, 1 customer
+    // (settles against the trip customer at approval), 2 transporter (record only, category Transporter).
+    private function addExpense(Trip $trip, array $line, $date, $company): void
+    {
+        $fundedBy = (string) ($line['funded_by'] ?? '0');
+        $foreign = $line['currency_id'] != $company->currency_id;
+        $rate = $foreign && is_numeric($line['exchange_rate'] ?? null) ? (float) $line['exchange_rate'] : null;
+
+        $tripExpense = new TripExpense;
+        $tripExpense->user_id = Auth::id();
+        $tripExpense->trip_id = $trip->id;
+        $tripExpense->expense_id = $line['expense_id'];
+        $tripExpense->currency_id = $line['currency_id'];
+        $tripExpense->vendor_id = $line['vendor_id'] ?: null;
+        $tripExpense->payment_method_id = $line['payment_method_id'] ?: null;
+        $tripExpense->category = $fundedBy === '2' ? 'Transporter' : $line['category'];
+        if ($fundedBy === '1') {
+            $tripExpense->supplied_by_customer = true;
+            $tripExpense->customer_id = $trip->customer_id;
+        }
+        $tripExpense->funded_by_transporter = $fundedBy === '2';
+        $tripExpense->amount = $line['amount'];
+        $tripExpense->exchange_rate = $rate;
+        $tripExpense->exchange_amount = $rate ? round($rate * $line['amount'], 2) : 0;
+        $tripExpense->date = $date;
+        $tripExpense->save();
     }
 
     // Same figures Trips\Create::recalculateExpenses() writes: cost of sales = the trip's "Self" expenses in company currency.

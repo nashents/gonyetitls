@@ -436,9 +436,12 @@ class Create extends Component
     public $expense_exchange_amount;
     public $fuel_order = False;
     // Fuel Order Details: 'new' raises a fuel order with the trip, 'attach'
-    // links fuel orders captured before the trip existed (trip_id still null).
+    // allocates litres of fuel orders captured before the trip existed - an
+    // unattached order, or the unallocated balance of one already split.
     public $fuel_order_mode = 'new';
     public $attach_fuel_ids = [];
+    // Litres of each ticked order going to this trip, keyed by fuel id.
+    public $attach_fuel_quantities = [];
     public $exchange_rates;
 
     //trip timelines
@@ -1667,25 +1670,67 @@ class Create extends Component
     }
 
     /**
-     * Fuel orders that can be attached to the trip being created: not on a
-     * trip yet, not rejected, and for the selected horse/vehicle when one is
-     * picked (fuel captured at the pump before the trip was entered).
+     * Litres of a fuel order already allocated to trips. A legacy allocation
+     * with no quantity carries the whole order, as does an order on a trip
+     * with no allocation rows at all (its trip expense was deleted).
+     */
+    protected function allocatedFuelLitresSql(): string
+    {
+        return 'COALESCE((SELECT SUM(COALESCE(te.quantity, fuels.quantity)) FROM trip_expenses te'
+            . ' WHERE te.fuel_id = fuels.id AND te.trip_id IS NOT NULL AND te.deleted_at IS NULL),'
+            . ' CASE WHEN fuels.trip_id IS NULL THEN 0 ELSE fuels.quantity END)';
+    }
+
+    /**
+     * Fuel orders that can go to the trip being created: not rejected, for
+     * the selected horse/vehicle when one is picked (fuel captured at the
+     * pump before the trip was entered), and either on no trip yet or with
+     * litres still unallocated. Customer-supplied fuel can only go to one
+     * trip, so it is offered only while unattached.
      */
     protected function attachableFuelsQuery()
     {
+        $allocated = $this->allocatedFuelLitresSql();
+
         return Fuel::query()
-            ->whereNull('trip_id')
+            ->select('fuels.*')
+            ->selectRaw("{$allocated} as allocated_litres")
             ->where(fn ($q) => $q->whereNull('authorization')->orWhere('authorization', '!=', 'rejected'))
+            ->where(fn ($q) => $q->whereNull('trip_id')
+                ->orWhere(fn ($q) => $q->where(fn ($q) => $q->whereNull('supplied_by_customer')->orWhere('supplied_by_customer', false))
+                    ->whereRaw("fuels.quantity - {$allocated} > 0.005")))
             ->when($this->mode_of_transport === 'Horse' && $this->selectedHorse, fn ($q) => $q->where('horse_id', $this->selectedHorse))
             ->when($this->mode_of_transport === 'Vehicle' && $this->selectedVehicle, fn ($q) => $q->where('vehicle_id', $this->selectedVehicle));
+    }
+
+    /** Litres of $fuel (loaded by attachableFuelsQuery) not yet on any trip. */
+    protected function availableFuelLitres(Fuel $fuel): float
+    {
+        return max(0, round((float) $fuel->quantity - (float) $fuel->allocated_litres, 2));
     }
 
     public function updatedFuelOrderMode($value)
     {
         $this->attach_fuel_ids = [];
+        $this->attach_fuel_quantities = [];
         if ($value == 'attach' && !$this->fuel_category) {
             $this->fuel_category = 'Self';
         }
+    }
+
+    /** A newly ticked order defaults to all of its unallocated litres. */
+    public function updatedAttachFuelIds()
+    {
+        $ids = array_map('intval', array_filter((array) $this->attach_fuel_ids));
+        $quantities = array_intersect_key((array) $this->attach_fuel_quantities, array_flip($ids));
+
+        $missing = array_diff($ids, array_keys(array_filter($quantities, fn ($qty) => is_numeric($qty))));
+        if ($missing) {
+            foreach ($this->attachableFuelsQuery()->whereIn('fuels.id', $missing)->get() as $fuel) {
+                $quantities[$fuel->id] = $this->availableFuelLitres($fuel);
+            }
+        }
+        $this->attach_fuel_quantities = $quantities;
     }
 
     public function getAttachableFuelsProperty()
@@ -1695,61 +1740,88 @@ class Create extends Component
         }
 
         return $this->attachableFuelsQuery()
-            ->with(['container', 'currency', 'horse', 'vehicle', 'source_horse'])
+            ->with(['container', 'currency', 'horse', 'vehicle', 'source_horse', 'trip'])
             ->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
             ->limit(100)
-            ->get();
+            ->get()
+            ->each(fn (Fuel $fuel) => $fuel->available_litres = $this->availableFuelLitres($fuel));
     }
 
     /**
-     * Links the selected existing fuel orders to the new trip - the same
-     * trip_id + trip expense sync as Fuels\Edit. An already approved order is
-     * re-posted so its cost moves from Fuel - Ops to the trip (Fuel - COGS /
-     * transporter recoverable).
+     * Why the ticked orders/litres can't go to this trip, keyed by field, or
+     * null. $fuels: the ticked orders loaded by attachableFuelsQuery.
+     */
+    protected function attachFuelAllocationErrors($fuels): ?array
+    {
+        $ids = array_values(array_filter((array) $this->attach_fuel_ids));
+        if ($fuels->count() != count($ids)) {
+            return ['attach_fuel_ids' => 'One or more of the selected fuel orders is no longer available - it may have just been fully allocated to another trip, or belongs to a different horse/vehicle. Re-select and try again.'];
+        }
+
+        foreach ($fuels as $fuel) {
+            $qty = $this->attach_fuel_quantities[$fuel->id] ?? null;
+            $available = $this->availableFuelLitres($fuel);
+            if (!is_numeric($qty) || (float) $qty <= 0) {
+                return ["attach_fuel_quantities.{$fuel->id}" => "Enter the litres of order {$fuel->order_number} going to this trip."];
+            }
+            if ((float) $qty - $available > 0.005) {
+                return ["attach_fuel_quantities.{$fuel->id}" => "Only {$available} L of order {$fuel->order_number} is unallocated."];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Allocates the entered litres of each ticked fuel order to the new trip
+     * through FuelTripAllocationService (the same split as Fuels\Edit). An
+     * unattached order takes the form's category and this trip as its first
+     * trip; one already split keeps its category (one category per order).
+     * An approved order is re-posted so the allocated cost moves from
+     * Fuel - Ops to the trip (Fuel - COGS / transporter recoverable).
      */
     protected function attachExistingFuels(Trip $trip): void
     {
         $ids = array_values(array_filter((array) $this->attach_fuel_ids));
         $fuels = $this->attachableFuelsQuery()
-            ->whereIn('id', $ids)
+            ->whereIn('fuels.id', $ids)
             ->orderBy('date')
             ->orderBy('id')
             ->lockForUpdate()
             ->get();
 
-        if ($fuels->count() != count($ids)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'attach_fuel_ids' => 'One or more of the selected fuel orders is no longer available - it may have just been attached to another trip, or belongs to a different horse/vehicle. Re-select and try again.',
-            ]);
+        if ($errors = $this->attachFuelAllocationErrors($fuels)) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
 
-        $fuel_expense = Expense::where('name', Expense::FUEL_TOPUP)->first();
+        $allocations = app(\App\Services\Fuel\FuelTripAllocationService::class);
+        $firstFill = true;
 
-        foreach ($fuels->values() as $index => $fuel) {
-            $fuel->trip_id = $trip->id;
-            $fuel->driver_id = $trip->driver_id ?: $fuel->driver_id;
-            $fuel->category = $this->fuel_category;
-            // Earliest fill is the trip's initial fill, the rest are top-ups (as BulkCreate).
-            $fuel->fillup = $index === 0 ? 1 : 0;
-            $fuel->save();
+        foreach ($fuels as $listed) {
+            // A plain model - the listed one carries the allocated_litres select.
+            $fuel = Fuel::find($listed->id);
+            $unattached = !$fuel->trip_id;
 
-            $trip_expense = TripExpense::where('fuel_id', $fuel->id)->where('trip_id', $trip->id)->first() ?? new TripExpense;
-            $trip_expense->user_id = $this->user->id;
-            $trip_expense->trip_id = $trip->id;
-            $trip_expense->fuel_id = $fuel->id;
-            $trip_expense->quantity = $fuel->quantity;
-            $trip_expense->expense_id = $fuel_expense->id ?? null;
-            $trip_expense->currency_id = $fuel->currency_id;
-            $trip_expense->category = $fuel->category;
-            // fuels.amount is nullable - fall back to quantity * unit_price.
-            $trip_expense->amount = is_numeric($fuel->amount) && (float) $fuel->amount > 0
-                ? (float) $fuel->amount
-                : round((float) $fuel->quantity * (float) $fuel->unit_price, 2);
-            $trip_expense->exchange_rate = $fuel->exchange_rate;
-            $trip_expense->exchange_amount = $fuel->exchange_amount;
-            $trip_expense->date = $trip->start_date ?? $fuel->date;
-            $trip_expense->save();
+            $rows = $allocations->rowsFor($fuel);
+            $rows[] = ['trip_id' => $trip->id, 'quantity' => (float) $this->attach_fuel_quantities[$fuel->id]];
+            if ($error = $allocations->validationError($rows, $fuel->quantity, (bool) $fuel->supplied_by_customer, $fuel->horse_id, $fuel->vehicle_id)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "attach_fuel_quantities.{$fuel->id}" => "Order {$fuel->order_number}: {$error}",
+                ]);
+            }
+
+            if ($unattached) {
+                $fuel->driver_id = $trip->driver_id ?: $fuel->driver_id;
+                // Earliest fill is the trip's initial fill, the rest are top-ups (as BulkCreate).
+                $fuel->fillup = $firstFill ? 1 : 0;
+                $firstFill = false;
+            }
+
+            $allocations->sync($fuel, $rows, $unattached ? $this->fuel_category : ($fuel->category ?: 'Self'));
+
+            TripExpense::where('fuel_id', $fuel->id)->where('trip_id', $trip->id)
+                ->update(['user_id' => $this->user->id, 'date' => $trip->start_date ?? $fuel->date]);
 
             if ($fuel->authorization == 'approved') {
                 app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
@@ -2303,11 +2375,13 @@ class Create extends Component
                 'attach_fuel_ids.required' => 'Select at least one fuel order to attach.',
             ]);
 
-            $customerSupplied = $this->attachableFuelsQuery()
-                ->whereIn('id', (array) $this->attach_fuel_ids)
-                ->where('supplied_by_customer', true)
-                ->exists();
-            if ($customerSupplied && $this->fuel_category == 'Customer') {
+            $attachFuels = $this->attachableFuelsQuery()->whereIn('fuels.id', (array) $this->attach_fuel_ids)->get();
+            if ($errors = $this->attachFuelAllocationErrors($attachFuels)) {
+                throw \Illuminate\Validation\ValidationException::withMessages($errors);
+            }
+
+            // Customer-supplied orders are always unattached, so they take the form's category.
+            if ($attachFuels->contains(fn ($fuel) => $fuel->supplied_by_customer) && $this->fuel_category == 'Customer') {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'fuel_category' => 'Customer funded fuel can\'t also be recharged to the customer - use Self or Transporter.',
                 ]);

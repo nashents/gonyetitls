@@ -179,7 +179,7 @@
                             <br>
 
                             @if (Auth::user()->is_admin() && count($unresolvableFuelTripExpenses) > 0)
-                                <div class="alert alert-danger" style="font-size:12px;">
+                                <div class="alert alert-danger" style="font-size:12px; clear: both;">
                                     <strong><i class="fa fa-exclamation-triangle"></i> {{ count($unresolvableFuelTripExpenses) }} fuel order(s) have no price recorded anywhere</strong>
                                     (no amount, quantity, or unit price to compute from) — the "Fix Trip Expenses" button can't fill these in on its own. Open each one and enter the real cost:
                                     <br>
@@ -191,7 +191,7 @@
                                 </div>
                             @endif
                             {{-- Legend --}}
-                            <div class="mb-10" style="font-size:12px;">
+                            <div class="mb-10" style="font-size:12px; clear: both;">
                                 <span class="badge badge-success">&nbsp;</span> Initial fill
                                 &nbsp;&nbsp;
                                 <span class="badge badge-warning">&nbsp;</span> Top Up

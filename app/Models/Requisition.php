@@ -16,6 +16,102 @@ class Requisition extends Model implements Auditable
     public function purchase(){
         return $this->belongsTo('App\Models\Purchase');
     }
+    // POs raised from this requisition (Purchases form sets purchases.requisition_id)
+    public function purchase_orders(){
+        return $this->hasMany('App\Models\Purchase');
+    }
+
+    /**
+     * A PO is "attached" either way round: picked on the requisition
+     * (requisitions.purchase_id) or the PO created against it (purchases.requisition_id).
+     */
+    public function scopeWithPurchaseOrder($query)
+    {
+        return $query->where(fn ($q) => $q->whereHas('purchase')->orWhereHas('purchase_orders'));
+    }
+
+    public function scopeWithoutPurchaseOrder($query)
+    {
+        return $query->whereDoesntHave('purchase')->whereDoesntHave('purchase_orders');
+    }
+
+    public function hasPurchaseOrder(): bool
+    {
+        return $this->purchase !== null || $this->purchase_orders->isNotEmpty();
+    }
+
+    /**
+     * Requisitions > Index list — shared by the screen and RequisitionExport so
+     * downloads always match what's on screen.
+     *
+     * $filters: date_column, from, to, search, type (po_requisition|payment_requisition),
+     * po_status (attached|awaiting).
+     */
+    public function scopeListFilter($query, User $user, array $filters)
+    {
+        $dateColumn = ($filters['date_column'] ?? null) ?: 'created_at';
+        $from       = $filters['from'] ?? null;
+        $to         = $filters['to'] ?? null;
+        $search     = trim((string) ($filters['search'] ?? ''));
+        $type       = $filters['type'] ?? '';
+        $poStatus   = $filters['po_status'] ?? '';
+
+        $user->loadMissing(['employee.departments', 'roles']);
+        $departments = $user->employee?->departments ?? collect();
+
+        $isFinanceOrSuper = $departments->contains('name', 'Finance')
+            || $user->roles->contains('name', 'Super Admin');
+
+        // Non-finance/non-super: restrict to their departments
+        if (! $isFinanceOrSuper) {
+            $query->whereIn('department_id', $departments->pluck('id')->all());
+        }
+
+        if ($type === 'po_requisition') {
+            $query->where('type', 'po_requisition');
+        } elseif ($type === 'payment_requisition') {
+            // Untyped (legacy) rows display as payment requisitions
+            $query->where(fn ($q) => $q->where('type', 'payment_requisition')->orWhereNull('type'));
+        }
+
+        // PO progress only applies to PO requisitions
+        if ($poStatus === 'attached') {
+            $query->where('type', 'po_requisition')->withPurchaseOrder();
+        } elseif ($poStatus === 'awaiting') {
+            $query->where('type', 'po_requisition')->withoutPurchaseOrder();
+        }
+
+        // Date range OR default current month/year — skipped while searching or
+        // checking PO progress so older matches / outstanding POs aren't hidden.
+        if (filled($from) && filled($to)) {
+            $query->whereBetween($dateColumn, [$from, $to]);
+        } elseif ($search === '' && ! filled($poStatus)) {
+            $query->whereMonth($dateColumn, now()->month)
+                ->whereYear($dateColumn, now()->year);
+        }
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+
+            $query->where(function ($q) use ($like) {
+                $q->where('requisition_number', 'like', $like)
+                    ->orWhere('subject', 'like', $like)
+                    ->orWhere('description', 'like', $like)
+                    ->orWhere('status', 'like', $like)
+                    ->orWhere('date', 'like', $like)
+                    ->orWhere('total', 'like', $like)
+                    ->orWhereHas('requisition_items.expense', fn ($qq) => $qq->where('name', 'like', $like))
+                    ->orWhereHas('trip', function ($qq) use ($like) {
+                        $qq->where('trip_number', 'like', $like)
+                            ->orWhereHas('horse', fn ($hhh) => $hhh->where('registration_number', 'like', $like));
+                    })
+                    ->orWhereHas('employee', fn ($qq) => $qq->where(\DB::raw("concat(name, ' ', surname)"), 'like', $like))
+                    ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', $like));
+            });
+        }
+
+        return $query->orderBy($dateColumn, 'desc')->orderBy('id', 'desc');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

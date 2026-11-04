@@ -11,16 +11,20 @@ use App\Models\Customer;
 use App\Models\Destination;
 use App\Models\Driver;
 use App\Models\ExchangeRate;
+use App\Models\Expense;
 use App\Models\Horse;
 use App\Models\LoadingPoint;
 use App\Models\OffloadingPoint;
+use App\Models\PaymentMethod;
 use App\Models\Trailer;
 use App\Models\TrailerAssignment;
 use App\Models\TransportOrder;
 use App\Models\Transporter;
 use App\Models\Trip;
+use App\Models\TripExpense;
 use App\Models\TripType;
 use App\Models\UnitsOfMeasure;
+use App\Models\Vendor;
 use App\Rules\UniqueReference;
 use App\Services\Trips\BulkTripScheduleService;
 use Carbon\Carbon;
@@ -80,6 +84,10 @@ class BulkCreate extends Component
     // weight, quantity, litreage, comments, transporter_agreement, transporter_rate + JOB_FIELDS
     public $rows = [];
 
+    // Trip expenses: key, expense_id, funded_by, category, payment_method_id, currency_id, exchange_rate, vendor_id,
+    // amount, all_trips, horse_ids. Each line is added to every trip, or only to the ticked trucks.
+    public $expenseLines = [];
+
     // Truck picker
     public $truckSearch;
     public $pickerTransporterId;
@@ -96,7 +104,7 @@ class BulkCreate extends Component
 
     public function open()
     {
-        $this->reset(array_merge(self::JOB_FIELDS, ['transporter_rate', 'rows', 'truckSearch', 'pickerTransporterId', 'pickedHorses']));
+        $this->reset(array_merge(self::JOB_FIELDS, ['transporter_rate', 'rows', 'expenseLines', 'truckSearch', 'pickerTransporterId', 'pickedHorses']));
         $this->sameJob = true;
         $this->freight_calculation = 'flat_rate';
         $this->trip_status = 'Scheduled';
@@ -261,6 +269,92 @@ class BulkCreate extends Component
         $this->checkReferences();
     }
 
+    public function addExpenseLine()
+    {
+        $this->expenseLines[] = [
+            'key' => uniqid(),
+            'expense_id' => '',
+            'funded_by' => '0',
+            'category' => 'Self',
+            'payment_method_id' => '',
+            'currency_id' => optional($this->company)->currency_id,
+            'exchange_rate' => null,
+            'vendor_id' => '',
+            'amount' => '',
+            'all_trips' => true,
+            'horse_ids' => [],
+        ];
+    }
+
+    public function removeExpenseLine($index)
+    {
+        unset($this->expenseLines[$index]);
+        $this->expenseLines = array_values($this->expenseLines);
+    }
+
+    // Picking an expense fills its defaults the way Trips\Create::mount() does: the master's currency, amount and
+    // payment method, and the category/vendor last used for that expense on a trip.
+    public function updatedExpenseLines($value, $key)
+    {
+        [$index, $field] = array_pad(explode('.', $key, 2), 2, null);
+
+        if ($field === 'expense_id' && $value && ($expense = Expense::find($value))) {
+            $last = TripExpense::where('expense_id', $expense->id)->latest('id')->first(['category', 'vendor_id']);
+            $this->expenseLines[$index] = array_merge($this->expenseLines[$index], [
+                'category' => optional($last)->category ?? $expense->category ?? 'Self',
+                'currency_id' => $expense->currency_id ?: optional($this->company)->currency_id,
+                'amount' => $expense->amount ?? '',
+                'payment_method_id' => $expense->payment_method_id ?? '',
+                'vendor_id' => optional($last)->vendor_id ?? '',
+            ]);
+            $this->expenseLines[$index]['exchange_rate'] = $this->isForeign($this->expenseLines[$index]['currency_id'])
+                ? ($expense->exchange_rate ?: $this->defaultExchangeRate($this->expenseLines[$index]['currency_id']))
+                : null;
+        } elseif ($field === 'currency_id') {
+            $this->expenseLines[$index]['exchange_rate'] = $this->defaultExchangeRate($value);
+        } elseif ($field === 'funded_by' && $value === '2') {
+            $this->expenseLines[$index]['category'] = 'Transporter';
+        }
+    }
+
+    // The expense lines a truck's trip gets.
+    private function expensesFor($horseId): array
+    {
+        return collect($this->expenseLines)
+            ->filter(fn ($line) => $line['all_trips'] || in_array((string) $horseId, array_map('strval', (array) $line['horse_ids']), true))
+            ->values()
+            ->all();
+    }
+
+    private function expenseRules(): array
+    {
+        $rules = [];
+        $horseIds = collect($this->rows)->pluck('horse_id')->map(fn ($id) => (string) $id)->all();
+
+        foreach ($this->expenseLines as $k => $line) {
+            $prefix = "expenseLines.$k.";
+            $rules[$prefix.'expense_id'] = 'required|exists:expenses,id';
+            $rules[$prefix.'funded_by'] = 'required|in:0,1,2';
+            $rules[$prefix.'category'] = 'required|in:Self,Customer,Transporter';
+            $rules[$prefix.'currency_id'] = 'required|exists:currencies,id';
+            $rules[$prefix.'vendor_id'] = 'required|exists:vendors,id';
+            $rules[$prefix.'payment_method_id'] = 'nullable|exists:payment_methods,id';
+            $rules[$prefix.'amount'] = 'required|numeric|min:0.01';
+            if ($this->isForeign($line['currency_id'])) {
+                $rules[$prefix.'exchange_rate'] = 'required|numeric|min:0.0001';
+            }
+            if (! $line['all_trips']) {
+                $rules[$prefix.'horse_ids'] = ['required', 'array', function ($attribute, $value, $fail) use ($horseIds) {
+                    if (! array_intersect(array_map('strval', (array) $value), $horseIds)) {
+                        $fail('Tick at least one truck.');
+                    }
+                }];
+            }
+        }
+
+        return $rules;
+    }
+
     private function jobRules(string $prefix, array $job): array
     {
         return [
@@ -311,7 +405,7 @@ class BulkCreate extends Component
             }
         }
 
-        return $rules;
+        return $rules + $this->expenseRules();
     }
 
     protected $messages = [
@@ -327,6 +421,9 @@ class BulkCreate extends Component
         'rows.*.distance.required' => 'Enter the distance.',
         'rows.*.exchange_rate.required' => 'Enter the conversion rate.',
         'rows.*.*.required' => 'Required.',
+        'expenseLines.*.amount.min' => 'Enter the amount.',
+        'expenseLines.*.horse_ids.required' => 'Tick at least one truck.',
+        'expenseLines.*.*.required' => 'Required.',
         'distance.required' => 'Enter the distance for this freight calculation.',
     ];
 
@@ -420,6 +517,7 @@ class BulkCreate extends Component
             $trips[] = array_merge($row, $job, [
                 'trip_status' => $this->trip_status,
                 'transporter_agreement' => (bool) $row['transporter_agreement'],
+                'expenses' => $this->expensesFor($row['horse_id']),
             ]);
         }
 
@@ -489,6 +587,9 @@ class BulkCreate extends Component
             'loadingPoints' => LoadingPoint::orderBy('name')->get(['id', 'name']),
             'offloadingPoints' => OffloadingPoint::orderBy('name')->get(['id', 'name']),
             'unitsOfMeasures' => UnitsOfMeasure::orderBy('name')->get(['id', 'name']),
+            'expenses' => Expense::orderBy('name')->get(['id', 'name']),
+            'vendors' => $this->expenseLines ? Vendor::orderBy('name')->get(['id', 'name']) : collect(),
+            'paymentMethods' => PaymentMethod::orderBy('name')->get(['id', 'name']),
             'trucks' => $trucks,
             'drivers' => $drivers,
             'trailers' => $trailers,
