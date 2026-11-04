@@ -144,13 +144,15 @@ class Preview extends Component
             })
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
-            ->when($this->basis === 'cash', fn ($x) => $x->whereNotNull('paid_at'))
+            // Cash basis: payments received in the period, by payment date (see Index.php).
+            ->when($this->basis === 'cash', function ($x) {
+                $x->with(['trip_payments' => fn ($p) => $p->whereBetween('payment_date', [$this->fromDt->toDateString(), $this->toDt->toDateString()])])
+                  ->whereHas('trip_payments', fn ($p) => $p->whereBetween('payment_date', [$this->fromDt->toDateString(), $this->toDt->toDateString()]));
+            }, fn ($x) => $x->whereBetween('start_date', [$this->fromDt, $this->toDt]))
             ->get([
-                'id', 'currency_id',
+                'id', 'currency_id', 'exchange_rate',
                 'freight', 'exchange_customer_freight',
                 'transporter_agreement', 'transporter_freight', 'exchange_transporter_freight',
-                'amount_paid', 'exchange_amount_paid',
             ]);
 
         $this->total_trips = $matchingTrips->count();
@@ -160,9 +162,8 @@ class Preview extends Component
             $sameCurrency = ((int) $trip->currency_id === (int) $this->default_currency_id);
 
             if ($this->basis === 'cash') {
-                $totalIncome += $sameCurrency
-                    ? (float) $trip->amount_paid
-                    : (float) ($trip->exchange_amount_paid ?? $trip->amount_paid);
+                $totalIncome += (float) $trip->trip_payments->sum(fn ($payment) => $payment->exchange_amount
+                    ?? ($sameCurrency ? $payment->trip_amount : $payment->trip_amount * (float) ($trip->exchange_rate ?: 1)));
                 continue;
             }
 

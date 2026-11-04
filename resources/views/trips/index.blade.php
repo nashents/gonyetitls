@@ -42,6 +42,7 @@
                         <!-- /.container-fluid -->
 
                         @livewire('trips.index')
+                        @livewire('trips.bulk-create')
                         <!-- /.section -->
 
                     </div>
@@ -58,6 +59,7 @@
     $(document).ready( function () {
         $('#tripsTable').DataTable();
     } );
+    window.addEventListener('show-bulkTripsModal', event => { $('#bulkTripsModal').modal('show'); });
     </script>
 
     <script async defer

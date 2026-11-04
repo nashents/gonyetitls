@@ -1151,15 +1151,15 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label for="name">Close Time</label>
-                                                    <input type="time" class="form-control" wire:model.debounce.300ms="stop_time.{{$value}}" placeholder="Enter Close Time"/>
+                                                    <label for="name">Close Time<span class="required" style="color: red">*</span></label>
+                                                    <input type="time" class="form-control" wire:model.debounce.300ms="stop_time.{{$value}}" placeholder="Enter Close Time" required/>
                                                     @error('stop_time.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label for="name">Close Hours</label>
-                                                    <input type="text" class="form-control" wire:model.debounce.300ms="ending_hours.{{$value}}" placeholder="Enter Close Engine Hours" />
+                                                    <label for="name">Close Hours<span class="required" style="color: red">*</span></label>
+                                                    <input type="text" class="form-control" wire:model.debounce.300ms="ending_hours.{{$value}}" placeholder="Enter Close Engine Hours" required />
                                                     @error('ending_hours.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
@@ -2206,15 +2206,15 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label for="name">Close Time</label>
-                                                    <input type="time" class="form-control" wire:model.debounce.300ms="current_stop_time.{{$key}}" placeholder="Enter Close Time"/>
+                                                    <label for="name">Close Time<span class="required" style="color: red">*</span></label>
+                                                    <input type="time" class="form-control" wire:model.debounce.300ms="current_stop_time.{{$key}}" placeholder="Enter Close Time" required/>
                                                     @error('current_stop_time.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label for="name">Close Hours</label>
-                                                    <input type="text" class="form-control" wire:model.debounce.300ms="current_ending_hours.{{$key}}" placeholder="Enter Close Engine Hours" />
+                                                    <label for="name">Close Hours<span class="required" style="color: red">*</span></label>
+                                                    <input type="text" class="form-control" wire:model.debounce.300ms="current_ending_hours.{{$key}}" placeholder="Enter Close Engine Hours" required />
                                                     @error('current_ending_hours.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
@@ -2326,15 +2326,15 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label for="name">Close Time</label>
-                                                    <input type="time" class="form-control" wire:model.debounce.300ms="stop_time.{{$value}}" placeholder="Enter Close Time"/>
+                                                    <label for="name">Close Time<span class="required" style="color: red">*</span></label>
+                                                    <input type="time" class="form-control" wire:model.debounce.300ms="stop_time.{{$value}}" placeholder="Enter Close Time" required/>
                                                     @error('stop_time.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label for="name">Close Hours</label>
-                                                    <input type="text" class="form-control" wire:model.debounce.300ms="ending_hours.{{$value}}" placeholder="Enter Close Engine Hours" />
+                                                    <label for="name">Close Hours<span class="required" style="color: red">*</span></label>
+                                                    <input type="text" class="form-control" wire:model.debounce.300ms="ending_hours.{{$value}}" placeholder="Enter Close Engine Hours" required />
                                                     @error('ending_hours.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>

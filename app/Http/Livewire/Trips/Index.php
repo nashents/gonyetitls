@@ -23,6 +23,7 @@ use App\Models\Trailer;
 use App\Models\Transporter;
 use App\Models\Trip;
 use App\Models\TripLocation;
+use App\Models\TripPayment;
 use App\Models\TripStatus;
 use App\Models\TripType;
 use App\Models\User;
@@ -32,6 +33,7 @@ use App\Services\Integrations\IntegrationGate;
 use App\Services\Sage\SageSyncService;
 use App\Services\Sage\SageIntegration;
 use App\Services\TripCompletionCascadeService;
+use App\Services\Accounting\TripPaymentService;
 use App\Jobs\Sage\SyncTripToSageJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -422,6 +424,10 @@ class Index extends Component
     public $mark_completed;
     public $payment_amount_type = 'full';
     public $paid_amount;
+    public $payment_date;
+    public $payment_currency_id;
+    public $payment_exchange_rate;
+    public $payment_notes;
 
     protected $listeners = ['tripStatusUpdated' => '$refresh', 'tripNoteAdded' => '$refresh'];
 
@@ -499,16 +505,34 @@ class Index extends Component
         }
 
         $this->trip_id = $id;
-        $this->trip = Trip::find($id);
+        $this->trip = Trip::with(['currency:id,name,symbol', 'trip_payments.currency:id,name,symbol'])->find($id);
         $this->payment_amount_type = 'full';
-        $this->paid_amount = $this->trip ? number_format((float) $this->trip->freight, 2, '.', '') : null;
+        $this->payment_date = now()->format('Y-m-d');
+        $this->payment_currency_id = $this->trip?->currency_id;
+        $this->payment_exchange_rate = null;
+        $this->payment_notes = null;
+        $this->paid_amount = $this->trip ? number_format(app(TripPaymentService::class)->outstanding($this->trip), 2, '.', '') : null;
+        $this->resetErrorBag();
         $this->dispatchBrowserEvent('show-paidModal');
     }
 
+    // "Full" pays off whatever is still outstanding, in the trip's currency.
     public function updatedPaymentAmountType($value){
         if ($value === 'full' && $this->trip) {
-            $this->paid_amount = number_format((float) $this->trip->freight, 2, '.', '');
+            $this->payment_currency_id = $this->trip->currency_id;
+            $this->payment_exchange_rate = null;
+            $this->paid_amount = number_format(app(TripPaymentService::class)->outstanding($this->trip), 2, '.', '');
         }
+    }
+
+    public function updatedPaymentCurrencyId(){
+        $this->payment_exchange_rate = null;
+    }
+
+    public function paymentIsCrossCurrency(): bool
+    {
+        return $this->trip && $this->trip->currency_id && $this->payment_currency_id
+            && (int) $this->payment_currency_id !== (int) $this->trip->currency_id;
     }
 
     public function markPaid(){
@@ -519,37 +543,52 @@ class Index extends Component
             return;
         }
 
-        $amount = $this->payment_amount_type === 'full'
-            ? (float) $trip->freight
-            : (float) $this->paid_amount;
+        $cross = $this->paymentIsCrossCurrency();
 
         $this->validate([
-            'paid_amount' => 'required_if:payment_amount_type,custom|nullable|numeric|min:0.01',
-        ], [], ['paid_amount' => 'Amount Paid']);
+            'payment_date' => 'required|date',
+            'payment_currency_id' => 'nullable|exists:currencies,id',
+            'paid_amount' => 'required|numeric|min:0.01',
+            'payment_exchange_rate' => ($cross ? 'required' : 'nullable') . '|numeric|gt:0',
+        ], [], [
+            'paid_amount' => 'Amount Paid',
+            'payment_date' => 'Payment Date',
+            'payment_currency_id' => 'Payment Currency',
+            'payment_exchange_rate' => 'Exchange Rate',
+        ]);
 
-        if ($amount <= 0) {
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'error',
-                'message'=>"Please enter a valid amount paid."
-            ]);
-            return;
-        }
-
-        DB::transaction(function () use ($trip, $amount) {
-            $trip->amount_paid = $amount;
-            $trip->exchange_amount_paid = $trip->exchange_rate
-                ? $amount * (float) $trip->exchange_rate
-                : null;
-            $trip->paid_at = now();
-            $trip->paid_by = Auth::user()->id;
-            $trip->payment_status = $amount >= ((float) $trip->freight - 0.01) ? 'Paid' : 'Partial';
-            $trip->update();
+        DB::transaction(function () use ($trip, $cross) {
+            app(TripPaymentService::class)->record(
+                $trip,
+                $this->payment_date,
+                $this->payment_currency_id ?: $trip->currency_id,
+                (float) $this->paid_amount,
+                $cross ? (float) $this->payment_exchange_rate : null,
+                ['notes' => $this->payment_notes ?: null]
+            );
         });
 
         $this->dispatchBrowserEvent('hide-paidModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Trip Marked As Paid Successfully!!"
+            'message'=>"Trip Payment Recorded Successfully!!"
+        ]);
+    }
+
+    // Only manually recorded payments; invoice payments are removed by deleting the receipt.
+    public function deleteTripPayment($id){
+        $payment = TripPayment::where('trip_id', $this->trip_id)->where('source', 'manual')->find($id);
+
+        if (!$payment) {
+            return;
+        }
+
+        DB::transaction(fn () => app(TripPaymentService::class)->delete($payment));
+
+        $this->showPaid($this->trip_id);
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip Payment Deleted Successfully!!"
         ]);
     }
 

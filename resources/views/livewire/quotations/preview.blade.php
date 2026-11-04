@@ -96,6 +96,9 @@
                             </div>
                             <div class="col invoice-details">
                                 <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$quotation->quotation_number}}</div>
+                                @if ($quotation->custom_ref)
+                                    <div class="date" style="padding-bottom: 3px"><strong>Reference:</strong> {{$quotation->custom_ref}}</div>
+                                @endif
                                 <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$quotation->date}}</div>
                                 <div class="date" style="padding-bottom: 3px"><strong>Valid Until:</strong> {{$quotation->expiry}}</div>
                                 <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$quotation->currency ? $quotation->currency->name : ""}}</div>

@@ -259,15 +259,16 @@ class Index extends Component
             })
             ->where('authorization', 'approved')
             ->where('trip_status', '!=', 'Cancelled')
-            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
-            // Cash basis: only trips marked Paid (via the Trips index "Mark as Paid"
-            // action) count as income, and only for the amount actually paid.
-            ->when($this->basis === 'cash', fn ($x) => $x->whereNotNull('paid_at'))
+            // Cash basis: income is each trip payment received in the period (Trips
+            // "Mark as Paid" + invoice receipts), by payment date — not trip start date.
+            ->when($this->basis === 'cash', function ($x) {
+                $x->with(['trip_payments' => fn ($p) => $p->whereBetween('payment_date', [$this->fromDt->toDateString(), $this->toDt->toDateString()])])
+                  ->whereHas('trip_payments', fn ($p) => $p->whereBetween('payment_date', [$this->fromDt->toDateString(), $this->toDt->toDateString()]));
+            }, fn ($x) => $x->whereBetween('start_date', [$this->fromDt, $this->toDt]))
             ->get([
-                'id', 'currency_id',
+                'id', 'currency_id', 'exchange_rate',
                 'freight', 'exchange_customer_freight',
                 'transporter_agreement', 'transporter_freight', 'exchange_transporter_freight',
-                'amount_paid', 'exchange_amount_paid',
             ]);
 
         $this->total_trips = $matchingTrips->count();
@@ -277,9 +278,7 @@ class Index extends Component
             $sameCurrency = ((int) $trip->currency_id === (int) $this->default_currency_id);
 
             if ($this->basis === 'cash') {
-                $totalIncome += $sameCurrency
-                    ? (float) $trip->amount_paid
-                    : (float) ($trip->exchange_amount_paid ?? $trip->amount_paid);
+                $totalIncome += $this->tripPaymentsIncome($trip, $sameCurrency);
                 continue;
             }
 
@@ -335,6 +334,18 @@ class Index extends Component
         $this->net_profit_percentage = ($this->total_income != 0)
             ? ($this->net_profit / $this->total_income) * 100
             : 0;
+    }
+
+    /** Reporting-currency total of a trip's payments loaded for the period. */
+    protected function tripPaymentsIncome(Trip $trip, bool $sameCurrency): float
+    {
+        return (float) $trip->trip_payments->sum(function ($payment) use ($trip, $sameCurrency) {
+            if ($payment->exchange_amount !== null) {
+                return $payment->exchange_amount;
+            }
+
+            return $sameCurrency ? $payment->trip_amount : $payment->trip_amount * (float) ($trip->exchange_rate ?: 1);
+        });
     }
 
     /**

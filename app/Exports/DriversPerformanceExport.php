@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use App\Models\Trip;
 use App\Models\Horse;
 use App\Models\Shift;

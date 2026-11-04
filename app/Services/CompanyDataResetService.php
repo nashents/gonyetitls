@@ -40,7 +40,7 @@ class CompanyDataResetService
     protected array $wipeTables = [
         'Trips & fleet operations' => [
             'trips', 'trip_origins', 'trip_destinations', 'trip_transport_orders', 'trip_returns',
-            'trip_positions', 'trip_locations', 'trip_expenses', 'trip_truck_stop', 'trip_statuses',
+            'trip_positions', 'trip_locations', 'trip_expenses', 'trip_payments', 'trip_truck_stop', 'trip_statuses',
             'trailer_trip', 'border_trip', 'clearing_agent_trip', 'invoice_trips',
             'gate_passes', 'gate_pass_trailer', 'allowance_drivers', 'hours',
             'bookings', 'booking_employee', 'shifts', 'loading_point_shift', 'offloading_point_shift',

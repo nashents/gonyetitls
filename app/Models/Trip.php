@@ -65,6 +65,11 @@ class Trip extends Model implements Auditable, EditAuthorizable
         return $this->belongsTo(User::class, 'paid_by');
     }
 
+    /** Individual payments received; amount_paid/paid_at are their totals (TripPaymentService). */
+    public function trip_payments(){
+        return $this->hasMany(TripPayment::class)->orderBy('payment_date')->orderBy('id');
+    }
+
     /** True while an admin's temporary unlock window (see unlockTrip()) is still active. */
     public function isTemporarilyUnlocked(): bool
     {

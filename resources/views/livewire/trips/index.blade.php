@@ -89,6 +89,11 @@
             .trips-search-bar .form-control { max-width: none; }
         }
 
+        .trips-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .trips-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .trips-toolbar .btn { margin: 0 !important; white-space: nowrap; }
+        .trips-toolbar .btn i { margin-right: 5px; }
+
         .trips-index-legend { background: #fff; padding: 10px 14px; margin: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.3); font-size: 13px; max-height: 320px; overflow-y: auto; }
         .trips-index-legend strong { display: block; margin-bottom: 6px; font-size: 13px; }
         .trips-index-legend .legend-row { display: flex; align-items: center; margin-bottom: 4px; white-space: nowrap; }
@@ -445,21 +450,22 @@
                                             </div>
                                         @endif
 
-                                        <div class="row mt-15">
-                                            <div class="col-md-5">
-                                                <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
+                                        <div class="mt-15 trips-toolbar">
+                                            <div class="trips-toolbar-group">
+                                                <a href="{{ route('trips.create') }}"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-plus-square-o"></i>Trip</a>
+                                                <a href="#" wire:click.prevent="$emitTo('trips.bulk-create', 'openBulkTrips')" class="btn btn-default border-primary btn-rounded btn-wide" title="Schedule several trucks on the same job at once"><i class="fa fa-truck"></i>Bulk Schedule</a>
                                                 <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                                 <a href="#" wire:click.prevent="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                                 <a href="#" wire:click.prevent="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                                 <a href="#" wire:click.prevent="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="trips-toolbar-more">
                                             <div class="dropdown">
                                                     <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menu12" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                                                         <i class="fa fa-bars"></i> More Actions
                                                         <span class="caret"></span>
                                                     </button>
-                                                    <ul class="dropdown-menu bg-gray" aria-labelledby="menu12" style="float: right;" >
+                                                    <ul class="dropdown-menu dropdown-menu-right bg-gray" aria-labelledby="menu12">
                                                         <li><a href="#"  wire:click="editLocations()"><i class="fa fa-refresh"></i>Bulk Status Update</a></li>
                                                         <li><a href="{{ route('trip_groups.index') }}"><i class="fa fa-map-marker"></i>Trip Tracking</a></li>
                                                         @if (isset($from) && isset($to))
@@ -1120,33 +1126,120 @@
 
                         <div class="modal-body">
 
+                            @php
+                                $tripCurrencyLabel = $trip && $trip->currency ? $trip->currency->name.' '.$trip->currency->symbol : '';
+                                $tripPaidTotal = $trip ? (float) $trip->trip_payments->sum('trip_amount') : 0;
+                                $payCurrency = $payment_currency_id ? $currencies?->firstWhere('id', $payment_currency_id) : null;
+                                $crossCurrency = $trip && $trip->currency_id && $payment_currency_id && (int) $payment_currency_id !== (int) $trip->currency_id;
+                            @endphp
+
                             <div class="form-group">
                                 <label>
-                                    Freight Amount:
-                                    {{ $trip && $trip->currency ? $trip->currency->name.' '.$trip->currency->symbol : '' }}
-                                    {{ $trip ? number_format((float) $trip->freight, 2) : '' }}
+                                    Freight Amount: {{ $tripCurrencyLabel }} {{ $trip ? number_format((float) $trip->freight, 2) : '' }}
+                                    <br>
+                                    Paid To Date: {{ $tripCurrencyLabel }} {{ number_format($tripPaidTotal, 2) }}
+                                    &nbsp;|&nbsp;
+                                    Outstanding: {{ $tripCurrencyLabel }} {{ $trip ? number_format(max(0, (float) $trip->freight - $tripPaidTotal), 2) : '' }}
                                 </label>
                             </div>
 
+                            @if ($trip && $trip->trip_payments->count())
+                                <div class="table-responsive mb-10">
+                                    <table class="table table-sm table-bordered" style="font-size: 12px">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Paid</th>
+                                                <th>Rate</th>
+                                                <th>In Trip Ccy</th>
+                                                <th>Source</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($trip->trip_payments as $tp)
+                                                <tr wire:key="trip-payment-{{ $tp->id }}">
+                                                    <td>{{ $tp->payment_date?->format('d M Y') }}</td>
+                                                    <td>{{ $tp->currency?->name }} {{ $tp->currency?->symbol }}{{ number_format($tp->amount, 2) }}</td>
+                                                    <td>{{ (int) $tp->currency_id !== (int) $trip->currency_id ? number_format($tp->exchange_rate, 4) : '-' }}</td>
+                                                    <td>{{ $trip->currency?->symbol }}{{ number_format($tp->trip_amount, 2) }}</td>
+                                                    <td>{{ $tp->source == 'invoice' ? ($tp->notes ?: 'Invoice') : 'Manual' }}</td>
+                                                    <td>
+                                                        @if ($tp->source == 'manual')
+                                                            <a href="" wire:click.prevent="deleteTripPayment({{ $tp->id }})"
+                                                               onclick="confirm('Delete this payment?') || event.stopImmediatePropagation()"
+                                                               title="Delete"><i class="fa fa-trash color-danger"></i></a>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+
+                            <h5><strong>Record A Payment</strong></h5>
+
                             <div class="mb-10">
                                 <input type="radio" wire:model="payment_amount_type" value="full" class="line-style" id="paidTypeFull" />
-                                <label for="paidTypeFull" class="radio-label">Full Freight Amount</label>
+                                <label for="paidTypeFull" class="radio-label">Full Outstanding Amount</label>
                                 <input type="radio" wire:model="payment_amount_type" value="custom" class="line-style" id="paidTypeCustom" />
                                 <label for="paidTypeCustom" class="radio-label">Custom Amount</label>
                             </div>
 
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Payment Date<span class="required" style="color: red">*</span></label>
+                                        <input type="date" class="form-control" wire:model.defer="payment_date" required>
+                                        @error('payment_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Payment Currency<span class="required" style="color: red">*</span></label>
+                                        <select class="form-control" wire:model="payment_currency_id" {{ $payment_amount_type == 'full' ? 'disabled' : '' }}>
+                                            @foreach ($currencies ?? [] as $currency)
+                                                <option value="{{ $currency->id }}">{{ $currency->name }} {{ $currency->symbol }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('payment_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Amount Paid {{ $payCurrency ? '('.$payCurrency->name.')' : '' }}<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" min="0.01"
+                                               class="form-control"
+                                               wire:model.debounce.300ms="paid_amount"
+                                               {{ $payment_amount_type == 'full' ? 'disabled' : '' }}
+                                               required>
+                                        @error('paid_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                @if ($crossCurrency)
+                                    <div class="col-md-6" wire:key="trip-payment-rate">
+                                        <div class="form-group">
+                                            <label>Exchange Rate<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" min="0" class="form-control"
+                                                   wire:model.debounce.300ms="payment_exchange_rate"
+                                                   placeholder="1 {{ $payCurrency?->name }} = ? {{ $trip->currency?->name }}" required>
+                                            @error('payment_exchange_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            <small>1 {{ $payCurrency?->name }} = ? {{ $trip->currency?->name }}</small>
+                                            @if (is_numeric($paid_amount) && is_numeric($payment_exchange_rate))
+                                                <br><small>Counts as {{ $trip->currency?->symbol }}{{ number_format($paid_amount * $payment_exchange_rate, 2) }} against the trip</small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
                             <div class="form-group">
-                                <label>Amount Paid<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0.01"
-                                       class="form-control"
-                                       wire:model.debounce.300ms="paid_amount"
-                                       {{ $payment_amount_type == 'full' ? 'disabled' : '' }}
-                                       required>
-                                @error('paid_amount')
-                                    <span class="error" style="color:red">
-                                        {{ $message }}
-                                    </span>
-                                @enderror
+                                <label>Notes</label>
+                                <input type="text" class="form-control" wire:model.defer="payment_notes" maxlength="255" placeholder="e.g. POP / reference">
                             </div>
 
                         </div>

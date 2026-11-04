@@ -930,7 +930,6 @@ public function quotationNumber(){
         if($this->cost_total){
 
             $total_cost = collect($this->cost_total)->sum();
-            dd($total_cost);
             if(is_numeric($total_cost)){
                 $this->total = $this->total + $total_cost;
             }

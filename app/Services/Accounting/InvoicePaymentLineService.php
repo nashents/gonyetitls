@@ -7,6 +7,7 @@ use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
 use App\Models\InvoicePaymentItem;
 use App\Models\Trip;
+use App\Models\TripPayment;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -78,47 +79,61 @@ class InvoicePaymentLineService
 
             if ($item->trip) {
                 $row->trip_amount = $this->toTripCurrency($amount, $invoice, $item->trip);
-                $this->adjustTrip($item->trip, $row->trip_amount);
             }
 
             $row->save();
+
+            if ($item->trip) {
+                $this->recordTripPayment($item->trip, $row, $invoicePayment, $invoice);
+            }
         }
     }
 
     /** Takes a payment's line split back off its trips and removes it. */
     public function reverse(InvoicePayment $invoicePayment): void
     {
+        $trips = app(TripPaymentService::class);
+
         foreach ($invoicePayment->items()->with('trip')->get() as $row) {
-            if ($row->trip && $row->trip_amount) {
-                $this->adjustTrip($row->trip, -$row->trip_amount);
-            }
+            TripPayment::where('invoice_payment_item_id', $row->id)->delete();
             $row->delete();
+
+            if ($row->trip) {
+                $trips->recalculate($row->trip);
+            }
         }
     }
 
-    protected function adjustTrip(Trip $trip, float $delta): void
+    /** Adds the line split to the trip's payment history, dated on the payment. */
+    protected function recordTripPayment(Trip $trip, InvoicePaymentItem $row, InvoicePayment $invoicePayment, Invoice $invoice): void
     {
-        $paid = max(0, round((float) $trip->amount_paid + $delta, 2));
-        $freight = (float) $trip->freight;
+        $trips = app(TripPaymentService::class);
+        $payment = $invoicePayment->payment;
+        $amount = (float) $row->amount;
+        $base = $trips->baseCurrencyId($trip);
 
-        $trip->amount_paid = $paid > 0 ? $paid : null;
-        $trip->exchange_amount_paid = $paid > 0 && $trip->exchange_rate
-            ? round($paid * (float) $trip->exchange_rate, 2)
-            : null;
+        $extra = [
+            'source' => 'invoice',
+            'invoice_payment_item_id' => $row->id,
+            'notes' => 'Invoice ' . $invoice->invoice_number,
+            'user_id' => $payment?->user_id ?? Auth::id(),
+        ];
 
-        if ($paid <= 0) {
-            $trip->payment_status = null;
-            $trip->paid_at = null;
-            $trip->paid_by = null;
-        } else {
-            $trip->payment_status = $paid >= $freight - 0.01 ? 'Paid' : 'Partial';
-            if ($delta > 0) {
-                $trip->paid_at = now();
-                $trip->paid_by = Auth::id();
-            }
+        // Cross-currency receipts carry their effective invoice → reporting rate on the payment.
+        if ((int) $invoice->currency_id === (int) $base) {
+            $extra['exchange_amount'] = round($amount, 2);
+        } elseif (is_numeric($payment?->exchange_rate) && $payment->exchange_rate > 0) {
+            $extra['exchange_amount'] = round($amount * (float) $payment->exchange_rate, 2);
         }
 
-        $trip->save();
+        $trips->record(
+            $trip,
+            $payment?->date ? \Carbon\Carbon::parse($payment->date)->toDateString() : now()->toDateString(),
+            $invoice->currency_id,
+            $amount,
+            $amount > 0 ? (float) $row->trip_amount / $amount : 1.0,
+            $extra
+        );
     }
 
     /**

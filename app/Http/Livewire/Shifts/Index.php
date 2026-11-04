@@ -346,6 +346,10 @@ class Index extends Component
     }
     public function remove($i)
     {
+        // Rehandling rows are saved by work_id key, so drop it with the row
+        if (isset($this->inputs[$i])) {
+            unset($this->work_id[$this->inputs[$i]]);
+        }
         unset($this->inputs[$i]);
     }
 
@@ -1817,7 +1821,7 @@ class Index extends Component
                 
                 $rehandling->currency_id = $this->selectedCurrency;
                 if (isset($this->current_location_id[$key])){
-                    $rehandling->location_id = $this->current_ocation_id[$key];
+                    $rehandling->location_id = $this->current_location_id[$key];
                 }
                 if (isset($this->current_work_id[$key])){
                     $rehandling->work_id = $this->current_work_id[$key];
@@ -1937,9 +1941,44 @@ class Index extends Component
         }
     }
 
+    /**
+     * Rehandling works need Close Time + Close Hours: the rehandling
+     * production report derives man hours / DHI runs from the times.
+     */
+    protected function validateRehandlingCloseFields(bool $includeExisting = false): void
+    {
+        if (! in_array($this->for, ["Rehandling", "Rehandlings"], true)) {
+            return;
+        }
+
+        $rules = [];
+        $attributes = [];
+
+        foreach ((array) $this->inputs as $key) {
+            $rules["stop_time.{$key}"] = 'required';
+            $rules["ending_hours.{$key}"] = 'required|numeric|min:0';
+            $attributes["stop_time.{$key}"] = 'close time';
+            $attributes["ending_hours.{$key}"] = 'close hours';
+        }
+
+        if ($includeExisting && $this->shift_rehandlings) {
+            foreach ($this->shift_rehandlings as $key => $rehandling) {
+                $rules["current_stop_time.{$key}"] = 'required';
+                $rules["current_ending_hours.{$key}"] = 'required|numeric|min:0';
+                $attributes["current_stop_time.{$key}"] = 'close time';
+                $attributes["current_ending_hours.{$key}"] = 'close hours';
+            }
+        }
+
+        if ($rules) {
+            $this->validate($rules, [], $attributes);
+        }
+    }
+
     public function store(){
 
         $this->validateTripRefs();
+        $this->validateRehandlingCloseFields();
 
         // if($this->for == "Trips") {
             $this->validate([
@@ -2205,12 +2244,14 @@ class Index extends Component
                 $this->current_location_id[] = $rehandling->location_id;
                 $this->current_work_id[] = $rehandling->work_id;
                 $this->current_start_time[] = $rehandling->start_time;
-                $this->current_open_mileage[] = $rehandling->open_mileage;
-                $this->current_close_mileage[] = $rehandling->close_mileage;
-                $this->current_open_hours[] = $rehandling->open_hours;
-                $this->current_close_hours[] = $rehandling->close_hours;
+                $this->current_starting_mileage[] = $rehandling->open_mileage;
+                $this->current_ending_mileage[] = $rehandling->close_mileage;
+                $this->current_starting_hours[] = $rehandling->open_hours;
+                $this->current_ending_hours[] = $rehandling->close_hours;
                 $this->current_stop_time[] = $rehandling->stop_time;
+                $this->current_selectedCargo[] = $rehandling->cargo_id;
                 $this->current_weight[] = $rehandling->weight;
+                $this->current_loads[] = $rehandling->loads;
                 $this->current_freight[] = $rehandling->freight;
             }
         }
@@ -2252,6 +2293,7 @@ class Index extends Component
     {
 
          $this->validateTripRefs();
+         $this->validateRehandlingCloseFields(true);
 
          if($this->for == "Trips") {
             $this->validate([

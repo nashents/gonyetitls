@@ -17,6 +17,12 @@
                             <th class="w-10 text-center line-height-35">Quotation#</th>
                             <td class="w-20 line-height-35"> {{$quotation->quotation_number}}</td>
                         </tr>
+                        @if ($quotation->custom_ref)
+                        <tr>
+                            <th class="w-10 text-center line-height-35">Reference</th>
+                            <td class="w-20 line-height-35"> {{$quotation->custom_ref}}</td>
+                        </tr>
+                        @endif
                       
                         <tr>
                             <th class="w-10 text-center line-height-35">Created By</th>
