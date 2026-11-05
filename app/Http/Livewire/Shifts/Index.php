@@ -1753,8 +1753,8 @@ class Index extends Component
     }
 
     public function updatedSelectedHorse($id){
-        if (!is_null($id)) {
-            $horse = Horse::find($id);
+        $horse = filled($id) ? Horse::find($id) : null;
+        if ($horse) {
             $this->shift_open_mileage = $horse->mileage;
             $this->mileage = $horse->mileage;
             $this->applyLiveCartrackMileage($horse);
@@ -1771,8 +1771,8 @@ class Index extends Component
     }
 
     public function updatedSelectedVehicle($id){
-        if (!is_null($id)) {
-            $vehicle = Vehicle::find($id);
+        $vehicle = filled($id) ? Vehicle::find($id) : null;
+        if ($vehicle) {
             $this->shift_open_mileage = $vehicle->mileage;
             $this->mileage = $vehicle->mileage;
             $this->applyLiveCartrackMileage($vehicle);

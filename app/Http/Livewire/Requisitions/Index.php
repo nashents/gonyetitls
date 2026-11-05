@@ -1770,6 +1770,21 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingRequisitionFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTo()
+    {
+        $this->resetPage();
+    }
+
     public function updatingSearchTrip()
     {
         $this->resetPage();

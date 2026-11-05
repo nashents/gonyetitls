@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -49,7 +50,9 @@ class Requisition extends Model implements Auditable
      */
     public function scopeListFilter($query, User $user, array $filters)
     {
-        $dateColumn = ($filters['date_column'] ?? null) ?: 'created_at';
+        // created_at (Created At) or date (the requisition's own Y-m-d date)
+        $dateColumn = in_array($filters['date_column'] ?? null, ['created_at', 'date'], true)
+            ? $filters['date_column'] : 'created_at';
         $from       = $filters['from'] ?? null;
         $to         = $filters['to'] ?? null;
         $search     = trim((string) ($filters['search'] ?? ''));
@@ -83,8 +86,13 @@ class Requisition extends Model implements Auditable
 
         // Date range OR default current month/year — skipped while searching or
         // checking PO progress so older matches / outstanding POs aren't hidden.
+        // whereDate so the To day is included in full for created_at
         if (filled($from) && filled($to)) {
-            $query->whereBetween($dateColumn, [$from, $to]);
+            $query->whereDate($dateColumn, '>=', $from)->whereDate($dateColumn, '<=', $to);
+        } elseif (filled($from)) {
+            $query->whereDate($dateColumn, '>=', $from);
+        } elseif (filled($to)) {
+            $query->whereDate($dateColumn, '<=', $to);
         } elseif ($search === '' && ! filled($poStatus)) {
             $query->whereMonth($dateColumn, now()->month)
                 ->whereYear($dateColumn, now()->year);
@@ -105,7 +113,7 @@ class Requisition extends Model implements Auditable
                         $qq->where('trip_number', 'like', $like)
                             ->orWhereHas('horse', fn ($hhh) => $hhh->where('registration_number', 'like', $like));
                     })
-                    ->orWhereHas('employee', fn ($qq) => $qq->where(\DB::raw("concat(name, ' ', surname)"), 'like', $like))
+                    ->orWhereHas('employee', fn ($qq) => $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $like))
                     ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', $like));
             });
         }

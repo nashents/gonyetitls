@@ -358,7 +358,7 @@ class SidebarComposer
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $requisitionsDeletedCount = Requisition::onlyTrashed()
-        ->whereDate('created_at', Carbon::today())->get()->count();
+        ->whereDate('deleted_at', Carbon::today())->count();
         $asset_purchasesPendingCount = Purchase::where('authorization','pending')
         ->where('department','asset')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -818,6 +818,7 @@ class SidebarComposer
         'requisitions_pending_count'  => (int) ($requisitionsPendingCount ?? 0),
         'requisitions_approved_count' => (int) ($requisitionsApprovedCount ?? 0),
         'requisitions_rejected_count' => (int) ($requisitionsRejectedCount ?? 0),
+        'requisitions_deleted_count'  => (int) ($requisitionsDeletedCount ?? 0),
 
         // Gatepasses (Security)
         'gate_passes_pending_count'  => (int) ($gate_passesPendingCount ?? 0),

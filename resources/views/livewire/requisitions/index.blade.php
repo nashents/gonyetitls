@@ -15,86 +15,70 @@
                                     @include('includes.messages')
                                 </div>
                                 <div class="panel-title">
+                                    {{-- Row 1: all filters (wraps on smaller screens) --}}
                                     <div class="row">
-                                    <div class="col-lg-3">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                            Filter By
-                                            </span>
-                                            <select wire:model.debounce.300ms="requisition_filter" class="form-control" aria-label="..." >
-                                                <option value="created_at">Requisition Created At</option>
-                                            </select>
+                                        <div class="col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 10px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Filter By</span>
+                                                <select wire:model="requisition_filter" class="form-control">
+                                                    <option value="created_at">Requisition Created At</option>
+                                                    <option value="date">Requisition Date</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    @if ($requisition_filter == "created_at")
-                                    <div class="col-lg-2" style="margin-right: 7px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                                From
-                                            </span>
-                                            <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                        <div class="col-sm-6 col-md-4 col-lg-2" style="margin-bottom: 10px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">From</span>
+                                                <input type="date" wire:model.debounce.300ms="from" class="form-control">
+                                            </div>
                                         </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    <div class="col-lg-2" style="margin-left: 30px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                                To
-                                            </span>
-                                            <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                        <div class="col-sm-6 col-md-4 col-lg-2" style="margin-bottom: 10px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">To</span>
+                                                <input type="date" wire:model.debounce.300ms="to" class="form-control">
+                                            </div>
                                         </div>
-                                        <!-- /input-group -->
+                                        <div class="col-sm-6 col-md-4 col-lg-2" style="margin-bottom: 10px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Type</span>
+                                                <select wire:model="type_filter" class="form-control">
+                                                    <option value="">All</option>
+                                                    <option value="po_requisition">Purchase (PO)</option>
+                                                    <option value="payment_requisition">Payment</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        @if ($type_filter !== 'payment_requisition')
+                                        <div class="col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 10px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">PO Progress</span>
+                                                <select wire:model="po_status_filter" class="form-control">
+                                                    <option value="">All</option>
+                                                    <option value="attached">PO Attached (acted on)</option>
+                                                    <option value="awaiting">Awaiting PO (not acted on)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
-                                    @endif
-
-                                    <!-- /input-group -->
-                                </div>
-                                <div class="row" style="margin-top: 10px; margin-bottom: 10px">
-                                    <div class="col-lg-3">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">Type</span>
-                                            <select wire:model="type_filter" class="form-control">
-                                                <option value="">All Requisitions</option>
-                                                <option value="po_requisition">Purchase (PO) Requisitions</option>
-                                                <option value="payment_requisition">Payment Requisitions</option>
-                                            </select>
+                                    {{-- Row 2: actions + search --}}
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-8 col-lg-9" style="margin-bottom: 10px">
+                                            <a href="#" data-toggle="modal" data-target="#requisitionModal"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Requisition</a>
+                                            <a href="#" wire:click.prevent="exportRequisitionExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                            <a href="#" wire:click.prevent="exportRequisitionCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                            <a href="#" wire:click.prevent="exportRequisitionPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                        </div>
+                                        <div class="col-sm-12 col-md-4 col-lg-3" style="margin-bottom: 10px">
+                                            <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search requisitions...">
                                         </div>
                                     </div>
-                                    @if ($type_filter !== 'payment_requisition')
-                                    <div class="col-lg-3">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">PO Progress</span>
-                                            <select wire:model="po_status_filter" class="form-control">
-                                                <option value="">All</option>
-                                                <option value="attached">PO Attached (acted on)</option>
-                                                <option value="awaiting">Awaiting PO (not acted on)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    @endif
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <a href="#" data-toggle="modal" data-target="#requisitionModal"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Requisition</a>
-                                        <a href="#" wire:click.prevent="exportRequisitionExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                        <a href="#" wire:click.prevent="exportRequisitionCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                        <a href="#" wire:click.prevent="exportRequisitionPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
-                                    </div>
-                                   
-                                </div>
                               
                                
                                 </div>
                                
                             </div>
                             <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
-                                <div class="col-md-3" style="float: right; padding-right:0px">
-                                    <div class="form-group">
-                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search requisitions...">
-                                    </div>
-
-                                </div>
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <th class="th-sm">Requisition#
