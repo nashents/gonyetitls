@@ -206,7 +206,6 @@
                                     <label for="name">Serial#</label>
                                     <input type="text" class="form-control"
                                         wire:model.debounce.300ms="serial_number"
-                                        @if((int)$qty > 1) disabled @endif
                                         placeholder="Serial#/UniqueID" />
                                     @error('serial_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>

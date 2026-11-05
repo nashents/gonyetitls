@@ -357,6 +357,14 @@ class Edit extends Component
         $this->validateOnly($value);
     }
 
+    /** A serial number identifies ONE unit, so qty is locked to 1. */
+    public function updatedSerialNumber($value)
+    {
+        if (filled($value)) {
+            $this->qty = 1;
+        }
+    }
+
     protected $rules = [
         'selectedProduct' => 'required',
         'purchase_date' => 'required',
@@ -406,6 +414,10 @@ class Edit extends Component
 
 
     public function update(){
+        // A serialised record is always a single unit.
+        if (filled($this->serial_number)) {
+            $this->qty = 1;
+        }
 
     $this->validate();
 

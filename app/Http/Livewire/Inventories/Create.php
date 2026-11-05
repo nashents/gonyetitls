@@ -528,7 +528,7 @@ class Create extends Component
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
                 $this->measurement[$key] = $purchase_product->product->unit_of_measure;
-                $this->qty[$key] = $purchase_product->qty;
+                $this->qty[$key] = filled($this->serial_number[$key] ?? null) ? 1 : $purchase_product->qty;
                 $this->weight[$key] = 1;
                 if($purchase_product->tax_id){
                     $this->selectedTax[$key] = $purchase_product->tax_id;
@@ -579,7 +579,7 @@ class Create extends Component
                 }
               
                
-                $this->qty[$key] = $transfer_item->qty;
+                $this->qty[$key] = filled($this->serial_number[$key] ?? null) ? 1 : $transfer_item->qty;
                
 
                 if($transfer_item->tax_id){
@@ -652,6 +652,12 @@ class Create extends Component
 
 
     public function store(){
+        // Serialised rows are always a single unit (the qty input is disabled, enforce it here too).
+        foreach ((array) $this->serial_number as $key => $serial) {
+            if (filled($serial)) {
+                $this->qty[$key] = 1;
+            }
+        }
 
         $this->validate();
 

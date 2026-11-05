@@ -527,6 +527,10 @@ class Edit extends Component
 
 
     public function update(){
+        // A serialised record is always a single unit.
+        if (filled($this->serial_number)) {
+            $this->qty = 1;
+        }
 
         $this->validate();
 

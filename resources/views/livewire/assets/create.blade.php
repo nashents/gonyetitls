@@ -172,24 +172,16 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="name">Serial#</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial# / UniqueID"/>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" placeholder="Serial# / UniqueID"/>
                                             @error('serial_number.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
                                         <div class="col-md-2">
-                                            @if (filled($serial_number))
-                                            <div class="form-group">
-                                                <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  disabled required/>
-                                                @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
-                                            @else
                                             <div class="form-group">
                                                 <label for="name">Qty <span class="required" style="color: red">*</span></label>
-                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  required/>
+                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.0" {{ filled($serial_number[0] ?? null) ? 'disabled' : '' }} required/>
                                                 @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
-                                            @endif
                                         </div>
                                        
                                         <div class="col-md-2">
@@ -238,7 +230,7 @@
                             
                                 
                                         @foreach ($inputs as $key => $value)
-                                         <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                         <div wire:key="row-{{ $value }}" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                         <div class="row">
                                             <div class="col-md-5">
                                                 @if ($selectedPurchase)
@@ -311,24 +303,16 @@
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="name">Serial#</label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
+                                                <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" placeholder="Serial#/UniqueID"/>
                                                 @error('serial_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-1">
-                                            @if (filled($serial_number))
                                             <div class="form-group">
                                                 <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  disabled required/>
+                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}" {{ filled($serial_number[$value] ?? null) ? 'disabled' : '' }} required/>
                                                 @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
-                                            @else
-                                            <div class="form-group">
-                                                <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required/>
-                                                @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
-                                            @endif
                                            
                                         </div>
                                         <div class="col-md-2">
