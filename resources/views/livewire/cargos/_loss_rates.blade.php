@@ -2,6 +2,13 @@
 @php $ownFleetName = app(\App\Services\LossRateService::class)->ownFleetName(); @endphp
 <div class="row">
     <div class="col-md-12">
+        <div class="form-group" style="margin-bottom:5px;">
+            <input type="checkbox" wire:model.defer="status" id="cargo_status_{{ $cargo_id ?? 'new' }}" class="line-style">
+            <label class="radio-label" for="cargo_status_{{ $cargo_id ?? 'new' }}">Active</label>
+            <small class="text-muted">&nbsp;Inactive cargos can no longer be picked on trips, orders, quotes etc. or in Loss Rates. Existing records keep theirs.</small>
+        </div>
+    </div>
+    <div class="col-md-12">
         <h6 style="margin-top:5px;"><strong>Loss Allowance &amp; Chargeable Rates</strong>
             <small class="text-muted">Blank = Business Settings default.</small></h6>
     </div>

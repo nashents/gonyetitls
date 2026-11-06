@@ -29,7 +29,7 @@ class LossRatesExport implements WithMultipleSheets
     public function sheets(): array
     {
         $service = app(LossRateService::class);
-        $cargos = Cargo::orderBy('name')->orderBy('id')->get();
+        $cargos = Cargo::active()->orderBy('name')->orderBy('id')->get();
         $customers = $service->customersQuery($this->company)->get();
         $service->agreements();
 

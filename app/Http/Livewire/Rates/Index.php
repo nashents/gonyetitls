@@ -59,7 +59,7 @@ class Index extends Component
         $this->cargo_type = "Solid";
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
@@ -115,7 +115,7 @@ class Index extends Component
             ]);
         }
         elseif($category == 'cargos'){
-            $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Cargos Refreshed Successfully!!."

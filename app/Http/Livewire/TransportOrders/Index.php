@@ -374,7 +374,7 @@ class Index extends Component
         $this->consignors = Consignor::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
       
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
@@ -1236,7 +1236,7 @@ public function getAuthorizer($id){
             ]);
         }
         elseif($category == 'cargos'){
-            $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Cargos Refreshed Successfully!!."

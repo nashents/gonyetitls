@@ -46,7 +46,7 @@ class RateCards extends Component
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
         $this->locations = Location::orderBy('name', 'asc')->get();
-        $this->cargos = Cargo::orderBy('name', 'asc')->get();
+        $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
     }
 
@@ -135,7 +135,7 @@ class RateCards extends Component
             $this->locations = Location::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
         } elseif ($category === 'cargos') {
-            $this->cargos = Cargo::orderBy('name', 'asc')->get();
+            $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargos Refreshed Successfully!!.']);
         } elseif ($category === 'currencies') {
             $this->currencies = Currency::orderBy('name', 'asc')->get();

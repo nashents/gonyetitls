@@ -1401,7 +1401,7 @@ class Edit extends Component
         $this->consignees = Consignee::orderBy('name','asc')->get();
         $this->consignors = Consignor::orderBy('name','asc')->get();
         $this->brokers = Broker::orderBy('name','asc')->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
@@ -1893,7 +1893,7 @@ class Edit extends Component
                 ->orderBy('employee_name','asc')->get();
 
                 $transporter = Transporter::find($shift->transporter_id);
-                $this->cargos = Cargo::orderBy('name','asc')->get();
+                $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
                 $this->selectedStatus = "Offloaded";
                 $trip_type = TripType::where('name','Local')->first();
                 $this->selectedTripType = $trip_type ? $trip_type->id : Null;
@@ -4241,7 +4241,7 @@ class Edit extends Component
                 ]);
             }
             elseif($category == 'cargos'){
-                 $this->cargos = Cargo::orderBy('name','asc')->get();
+                 $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Cargos Refreshed Successfully!!."

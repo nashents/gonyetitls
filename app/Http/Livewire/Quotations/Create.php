@@ -284,7 +284,7 @@ public function updatedSelectedCargo($id){
             ]);
         }
         elseif($category == 'cargos'){
-            $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Cargos Refreshed Successfully!!."
@@ -369,7 +369,7 @@ public function quotationNumber(){
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->cost_items = CostItem::orderBy('name','asc')->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
@@ -981,7 +981,7 @@ public function quotationNumber(){
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
           $this->cost_items = CostItem::orderBy('name','asc')->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');

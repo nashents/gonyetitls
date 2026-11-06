@@ -579,7 +579,7 @@ class BulkCreate extends Component
             'customers' => Customer::orderBy('name')->get(['id', 'name']),
             'transporters' => Transporter::where('authorization', 'approved')->orderBy('name')->get(['id', 'name']),
             'tripTypes' => TripType::orderBy('name')->get(['id', 'name']),
-            'cargos' => Cargo::orderBy('name')->get(['id', 'name', 'type']),
+            'cargos' => Cargo::selectable()->orderBy('name')->get(['id', 'name', 'type']),
             'consignees' => Consignee::orderBy('name')->get(['id', 'name']),
             'consignors' => Consignor::orderBy('name')->get(['id', 'name']),
             'currencies' => Currency::orderBy('name')->get(['id', 'name']),

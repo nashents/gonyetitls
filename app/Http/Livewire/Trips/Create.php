@@ -726,7 +726,7 @@ class Create extends Component
             if(isset($initial_trip)){
                 $this->selectedTransporter = $initial_trip->transporter_id;
                 $transporter = Transporter::find($initial_trip->transporter_id);
-                $this->cargos = Cargo::orderBy('name','asc')->get();
+                $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
                 $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
@@ -1440,7 +1440,7 @@ class Create extends Component
         $this->consignors = Consignor::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->brokers = Broker::orderBy('name','asc')->latest()->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
@@ -3893,7 +3893,7 @@ class Create extends Component
             ]);
         }
         elseif($category == 'cargos'){
-            $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->cargos = Cargo::selectable($this->selectedCargo)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Cargos Refreshed Successfully!!."

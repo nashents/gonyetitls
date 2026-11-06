@@ -43,7 +43,7 @@ class Cargos extends Component
     public function mount($id){
         $this->transporter = Transporter::find($id);
         $this->transporter_id = $id;
-        $this->cargos = Cargo::latest()->get();
+        $this->cargos = Cargo::selectable()->latest()->get();
         $this->transporter_cargos =  $this->transporter->cargos;
     }
 

@@ -12,6 +12,31 @@ class Cargo extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    protected $casts = ['status' => 'boolean'];
+
+    /** Active cargos (Cargos list / form). Inactive ones are hidden from pickers and Loss Rates. */
+    public function scopeActive($query)
+    {
+        return $query->where('status', true);
+    }
+
+    /**
+     * Cargos offered in pickers: active ones, plus any ids passed in (the
+     * record's current cargo on an edit form, so it isn't silently dropped).
+     * List filters / reports don't use this, so history stays filterable.
+     */
+    public function scopeSelectable($query, ...$keep)
+    {
+        $keep = array_values(array_filter(\Illuminate\Support\Arr::flatten($keep), fn ($id) => is_numeric($id)));
+
+        return $query->where(function ($q) use ($keep) {
+            $q->where('status', true);
+            if ($keep) {
+                $q->orWhereIn('id', $keep);
+            }
+        });
+    }
+
     public function capacities(){
         return $this->hasMany('App\Models\Capacity');
     }
@@ -61,6 +86,7 @@ class Cargo extends Model implements Auditable
         'type',
         'measurement',
         'risk',
+        'status',
         'allowable_loss_percentage',
         'own_fleet_chargeable_loss_rate',
         'subcontractor_chargeable_loss_rate',

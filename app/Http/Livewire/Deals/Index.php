@@ -64,7 +64,7 @@ class Index extends Component
 
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
-        $this->cargos = Cargo::orderBy('name', 'asc')->get();
+        $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->units_of_measures = UnitsOfMeasure::orderBy('name', 'asc')->get();
     }
 

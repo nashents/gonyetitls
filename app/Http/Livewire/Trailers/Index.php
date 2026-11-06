@@ -196,7 +196,7 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->trailer_types = TrailerType::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
@@ -587,7 +587,7 @@ public function activate($id){
 
     public function render()
     {
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->trailer_types = TrailerType::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();

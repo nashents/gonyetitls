@@ -24,6 +24,16 @@
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search cargos...">
                                 </div>
                             </div>
+                            <div class="col-md-2" style="float: right;">
+                                <div class="form-group">
+                                    <select wire:model="statusFilter" class="form-control">
+                                        <option value="">All cargos</option>
+                                        <option value="active">Active only</option>
+                                        <option value="inactive">Inactive only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="clear: both;"></div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
@@ -39,6 +49,8 @@
                                     </th>
                                     <th class="th-sm">Risk
                                     </th>
+                                    <th class="th-sm">Status
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -53,6 +65,13 @@
                                     <td>{{$cargo->sku}}</td>
                                     <td>{{$cargo->measurement}}</td>
                                     <td>{{$cargo->risk}}</td>
+                                    <td>
+                                        @if ($cargo->status ?? true)
+                                            <span class="label label-success">Active</span>
+                                        @else
+                                            <span class="label label-default">Inactive</span>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -62,6 +81,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('cargos.show', $cargo->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$cargo->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                <li><a href="#" wire:click.prevent="toggleStatus({{ $cargo->id }})"><i class="fa {{ ($cargo->status ?? true) ? 'fa-toggle-off color-danger' : 'fa-toggle-on color-success' }}"></i> {{ ($cargo->status ?? true) ? 'Deactivate' : 'Activate' }}</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#cargoDeleteModal{{ $cargo->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
@@ -70,7 +90,7 @@
                                   </tr>
                                 @empty
                                   <tr>
-                                    <td colspan="7">
+                                    <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Cargos Found ....
                                         </div>

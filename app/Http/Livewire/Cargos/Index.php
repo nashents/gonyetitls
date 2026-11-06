@@ -34,6 +34,8 @@ class Index extends Component
     public $allowable_loss_percentage;
     public $own_fleet_chargeable_loss_rate;
     public $subcontractor_chargeable_loss_rate;
+    public $status = true;          // form: active / inactive
+    public $statusFilter = '';      // list: '' all | active | inactive
 
     private const LOSS_FIELDS = [
         'allowable_loss_percentage' => 'nullable|numeric|min:0|max:100',
@@ -103,6 +105,28 @@ class Index extends Component
         }
         $this->measurement = '';
         $this->transporter_id = [] ;
+        $this->status = true;
+    }
+
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    /** Quick Activate / Deactivate from the list. */
+    public function toggleStatus($id)
+    {
+        $cargo = Cargo::find($id);
+        if (! $cargo) {
+            return;
+        }
+        $cargo->status = ! $cargo->status;
+        $cargo->save();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "{$cargo->name} " . ($cargo->status ? 'activated' : 'deactivated') . '!!',
+        ]);
     }
 
     public function exportCargosCSV(Excel $excel){
@@ -134,6 +158,7 @@ class Index extends Component
         $cargo->group = $this->group;
         $cargo->type = $this->type;
         $cargo->risk = $this->risk;
+        $cargo->status = (bool) $this->status;
         $this->fillLossFields($cargo);
         $cargo->save();
 
@@ -163,6 +188,7 @@ class Index extends Component
     $this->group = $cargo->group;
     $this->risk = $cargo->risk;
     $this->cargo_id = $cargo->id;
+    $this->status = (bool) ($cargo->status ?? true);
     foreach (array_keys(self::LOSS_FIELDS) as $field) {
         $this->$field = is_numeric($cargo->$field) ? $cargo->$field + 0 : null;
     }
@@ -186,6 +212,7 @@ class Index extends Component
             $cargo->sku = $this->sku;
             $cargo->type = $this->type;
             $cargo->risk = $this->risk;
+            $cargo->status = (bool) $this->status;
             $this->fillLossFields($cargo);
             $cargo->update();
 
@@ -203,15 +230,13 @@ class Index extends Component
 
     public function render()
     {
-        if (filled($this->search)) {
-            return view('livewire.cargos.index',[
-            'cargos'=> Cargo::where('name','like', '%'.$this->search.'%')->orderBy('name','asc')->paginate(10)
-            ]);
-        }else{
-                return view('livewire.cargos.index',[
-                'cargos'=> Cargo::orderBy('name','asc')->paginate(10)
-                ]);
-        }
-        
+        $cargos = Cargo::query()
+            ->when(filled($this->search), fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'))
+            ->when($this->statusFilter === 'active', fn ($q) => $q->where('status', true))
+            ->when($this->statusFilter === 'inactive', fn ($q) => $q->where('status', false))
+            ->orderBy('name', 'asc')->orderBy('id')
+            ->paginate(10);
+
+        return view('livewire.cargos.index', ['cargos' => $cargos]);
     }
 }

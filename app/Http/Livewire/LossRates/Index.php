@@ -206,13 +206,13 @@ class Index extends Component
         return view('livewire.loss-rates.index', $data + [
             'company' => $company,
             'ownFleetName' => $service->ownFleetName(),
-            'cargoTypes' => Cargo::whereNotNull('type')->distinct()->orderBy('type')->pluck('type'),
+            'cargoTypes' => Cargo::active()->whereNotNull('type')->distinct()->orderBy('type')->pluck('type'),
         ]);
     }
 
     private function allowancesData(LossRateService $service, $company): array
     {
-        $cargos = Cargo::query()
+        $cargos = Cargo::active()
             ->when($this->cargoType, fn ($q) => $q->where('type', $this->cargoType))
             ->when(filled($this->cargoSearch), fn ($q) => $q->where('name', 'like', '%' . $this->cargoSearch . '%'))
             ->orderBy('name')->orderBy('id')->get();
@@ -278,7 +278,7 @@ class Index extends Component
 
     private function ratesData(LossRateService $service, $company): array
     {
-        $cargos = Cargo::query()
+        $cargos = Cargo::active()
             ->when(filled($this->search), fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->when($this->cargoType, fn ($q) => $q->where('type', $this->cargoType))
             ->orderBy('name')->orderBy('id')->get();

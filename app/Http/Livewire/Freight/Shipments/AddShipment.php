@@ -46,7 +46,7 @@ class AddShipment extends Component
         $this->locations = Location::orderBy('name', 'asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
-        $this->cargos = Cargo::orderBy('name', 'asc')->get();
+        $this->cargos = Cargo::selectable()->orderBy('name','asc')->get();
 
         $this->partyOptions = ShipmentParty::partyTypeOptions();
         $this->partyModels = [
@@ -91,7 +91,7 @@ class AddShipment extends Component
             $this->locations = Location::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
         } elseif ($category === 'cargos') {
-            $this->cargos = Cargo::orderBy('name', 'asc')->get();
+            $this->cargos = Cargo::selectable()->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
         } elseif ($category === 'loading_points') {
             $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();

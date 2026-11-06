@@ -105,7 +105,7 @@ class Create extends Component
             ->get();
         $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
-        $this->cargos = Cargo::orderBy('name', 'asc')->get();
+        $this->cargos = Cargo::selectable()->orderBy('name','asc')->get();
         $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
 
         $this->partyOptions = ShipmentParty::partyTypeOptions();
@@ -176,7 +176,7 @@ class Create extends Component
             $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Destinations Refreshed Successfully!!.']);
         } elseif ($category === 'cargos') {
-            $this->cargos = Cargo::orderBy('name', 'asc')->get();
+            $this->cargos = Cargo::selectable()->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
         } elseif ($category === 'uoms') {
             $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();

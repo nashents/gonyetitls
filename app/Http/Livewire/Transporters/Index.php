@@ -162,7 +162,7 @@ class Index extends Component
     public function mount(){
 
         $this->corridors = Corridor::orderBy('name','asc')->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
 
     }

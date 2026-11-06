@@ -82,7 +82,7 @@ private function resetInputFields(){
         $this->total = $this->quotation->total;
         $this->subtotal = $this->quotation->subtotal;
         $this->quotation_items = $this->quotation->quotation_items;
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');

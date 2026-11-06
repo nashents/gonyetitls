@@ -539,7 +539,7 @@ class Index extends Component
                         ->select('drivers.*') // important!
                         ->get();
         $this->horses = Horse::selectable()->where('archive', 0)->orderByIdentifier('asc')->get();
-        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->cargos = Cargo::selectable($this->selectedCargo, $this->cargo_id)->orderBy('name','asc')->get();
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
         $this->vehicles = Vehicle::selectable()->where('archive', 0)->orderByIdentifier('asc')->get();
         $this->containers = Container::orderBy('name','asc')->get();
@@ -666,7 +666,7 @@ class Index extends Component
             if ($this->selectedTransporter && $transporter = Transporter::find($this->selectedTransporter)) {
                 $this->cargos = $transporter->cargos->sortBy('name');
             }else{
-                $this->cargos = Cargo::orderBy('name','asc')->get();
+                $this->cargos = Cargo::selectable($this->selectedCargo, $this->cargo_id)->orderBy('name','asc')->get();
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -972,7 +972,7 @@ class Index extends Component
         $transporter = blank($id) ? null : Transporter::find($id);
         if (!$transporter) {
             $this->selectedTransporter = null;
-            $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->cargos = Cargo::selectable($this->selectedCargo, $this->cargo_id)->orderBy('name','asc')->get();
             return;
         }
         if (!is_null($id) ) {
