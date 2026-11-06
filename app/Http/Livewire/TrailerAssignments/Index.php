@@ -69,7 +69,7 @@ class Index extends Component
 
     public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->horses = Horse::query()
+            $this->horses = Horse::selectable()
             ->with(['horse_make:id,name', 'horse_model:id,name'])
             ->where('transporter_id', $id)
             ->where('status', 1)
@@ -77,7 +77,7 @@ class Index extends Component
             ->orderByIdentifier('asc')
             ->get();
 
-             $this->trailers = Trailer::query()
+             $this->trailers = Trailer::selectable()
             ->where('transporter_id', $id)
             ->where('status', 1)
             ->where('service', 0)
@@ -132,7 +132,7 @@ class Index extends Component
         $this->trailer_id = $assignment->trailer_id;
         $this->starting_odometer = $assignment->starting_odometer;
         $this->ending_odometer = $assignment->ending_odometer;
-        $this->horses = Horse::query()
+        $this->horses = Horse::selectable()
             ->with(['horse_make:id,name', 'horse_model:id,name'])
             ->where('transporter_id', $id)
             ->where('status', 1)
@@ -143,7 +143,7 @@ class Index extends Component
             ->orderByIdentifier('asc')
             ->get();
 
-        $this->trailers = Trailer::query()
+        $this->trailers = Trailer::selectable()
         ->where('transporter_id', $id)
         ->where('status', 1)
         ->where('service', 0)

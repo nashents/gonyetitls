@@ -154,12 +154,19 @@
                                     <td class="w-20 line-height-35">{{$customer->street_address}}</td>
                                 </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Allowable Loss %</th>
-                                    <td class="w-20 line-height-35">{{$customer->allowable_loss_percentage ? $customer->allowable_loss_percentage."%" : ""}}</td>
+                                    <th class="w-10 text-center line-height-35">Allowable Loss % (all cargos)</th>
+                                    <td class="w-20 line-height-35">{{ \App\Services\LossRateService::formatPct($customer->allowable_loss_percentage) }}</td>
                                 </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Chargeable Loss Rate</th>
-                                    <td class="w-20 line-height-35">{{ is_numeric($customer->chargeable_loss_rate) ? number_format($customer->chargeable_loss_rate, 2) : "" }}</td>
+                                    <th class="w-10 text-center line-height-35">Allowable Loss % per Cargo</th>
+                                    <td class="w-20 line-height-35">
+                                        @forelse ($customer->cargoLossAllowances()->with('cargo')->get()->sortBy(fn ($a) => $a->cargo?->name) as $allowance)
+                                            <span class="label label-info" style="display:inline-block; margin:2px 0;">{{ $allowance->cargo?->name }}: {{ \App\Services\LossRateService::formatPct($allowance->allowable_loss_percentage) }}</span>
+                                        @empty
+                                            <span class="text-muted">None</span>
+                                        @endforelse
+                                        <a href="{{ route('loss_rates.index') }}?search={{ urlencode($customer->name) }}" class="btn btn-default btn-xs"><i class="fa fa-edit"></i> Edit in Loss Rates</a>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Status</th>

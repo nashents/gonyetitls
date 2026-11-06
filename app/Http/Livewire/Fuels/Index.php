@@ -313,8 +313,8 @@ class Index extends Component
         $this->company = Auth::user()->employee->company;
         $this->fuel_filter = "created_at";
 
-        $this->horses = Horse::orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable()->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::selectable()->orderByIdentifier('asc')->get();
         $this->assets = Asset::query()
             ->join('products', 'assets.product_id', '=', 'products.id')
             ->select('assets.*')
@@ -329,7 +329,7 @@ class Index extends Component
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->trips = collect();
         $this->containers = Container::orderBy('name','asc')->get();
-        $this->drivers = Driver::latest()->get();
+        $this->drivers = Driver::selectable()->latest()->get();
         $this->customers = Customer::orderBy('name','asc')->get(['id','name']);
 
         $this->refreshTripExpenseCounts();
@@ -495,7 +495,7 @@ class Index extends Component
     {
         $term = trim((string) $this->searchHorse);
 
-        $query = Horse::query()
+        $query = Horse::selectable()
             ->with('horse_make:id,name', 'horse_model:id,name')
             ->where('registration_number', 'like', "%{$term}%")
             ->where('archive', 0);
@@ -509,7 +509,7 @@ class Index extends Component
     {
         $term = trim((string) $this->searchVehicle);
 
-        $query = Vehicle::query()
+        $query = Vehicle::selectable()
             ->with('vehicle_make:id,name', 'vehicle_model:id,name')
             ->where('registration_number', 'like', "%{$term}%")
             ->where('archive', 0);

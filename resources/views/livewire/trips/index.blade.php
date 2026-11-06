@@ -1537,7 +1537,7 @@
             <form wire:submit.prevent="importTrips"  enctype="multipart/form-data">
             <div class="modal-body">
                 <small style="color: green">
-                    1) Complete fields as is in the system eg Loading Point GMB Eastlea should be GMB Eastlea in the system, else the system will not recognize the location.
+                    1) Transporters, horses, trailers, drivers, customers, cargos, loading/offloading points and fuel stations are matched ignoring spaces and capitals (eg "GMB Eastlea" = "gmbeastlea") and created when not found - check the spelling, as a typo creates a new record.
                     <br>
                     2) Check and remove duplications in the system in horse, trailers, drivers, locations, cargos etc, to avoid confusing the system.
                     <br>
@@ -1546,6 +1546,8 @@
                     4) Make sure to all dates in your excel file esp the start_date.
                     <br>
                     5) Lets limit to 2500 Trips per upload.
+                    <br>
+                    6) order_ref / deal_ref / fuel_order_number create the order, deal or fuel order on the first row and attach later rows with the same ref. Fuel and expenses are "Self" for the default transporter, "Transporter" for any other; transporter_rate / transporter_freight apply to non-default transporters only.
                 </small>
                 <br>
                 <div class="form-group">

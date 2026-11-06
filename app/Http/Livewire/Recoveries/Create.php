@@ -48,7 +48,7 @@ class Create extends Component
         $this->deductions = Deduction::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->trips = collect();
-        $this->drivers = Driver::query()->with('employee:id,name,surname')
+        $this->drivers = Driver::selectable()->with('employee:id,name,surname')
         ->withAggregate('employee','name')
         ->orderBy('employee_name','asc')->get();
 

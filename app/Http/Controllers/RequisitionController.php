@@ -22,8 +22,7 @@ class RequisitionController extends Controller
 
     public function deleted()
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
-
+        // Open to all; rows are scoped per user in Requisitions\Deleted
         return view('requisitions.deleted');
     }
     public function rejected()

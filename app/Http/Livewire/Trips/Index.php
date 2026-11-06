@@ -787,11 +787,29 @@ class Index extends Component
         $import = new TripsImport;
         $import->import($file);
 
+        $line = fn ($rows) => collect($rows)->map(fn ($skip) => "{$skip['ref']}: {$skip['reason']}")->implode(' | ');
+        $skipped = $import->getSkippedRows();
+        $warnings = $import->getWarnings();
+        $created = collect($import->getCreated())
+            ->map(fn ($names, $type) => count($names).' '.$type.'(s): '.implode(', ', $names))
+            ->implode('; ');
+        $created = $created ? ' New master data created - '.$created.'.' : '';
+
         $this->dispatchBrowserEvent('hide-tripsImportModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Trip(s) Imported Successfully!!"
-        ]);
+        if (!empty($skipped) || !empty($warnings)) {
+            session()->flash('warning', trim(
+                (empty($skipped) ? '' : count($skipped).' trip row(s) were skipped: '.$line($skipped).'. ')
+                .(empty($warnings) ? '' : 'Imported with warnings: '.$line($warnings).'.')
+                .$created
+            ));
+        } elseif ($created) {
+            session()->flash('success', 'Trip(s) Imported Successfully!!'.$created);
+        } else {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Trip(s) Imported Successfully!!"
+            ]);
+        }
 
         return redirect(request()->header('Referer'));
     }

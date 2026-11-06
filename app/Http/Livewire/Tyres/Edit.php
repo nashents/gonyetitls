@@ -258,9 +258,9 @@ class Edit extends Component
         }
 
         $this->can_fit = true;
-        $this->horses = Horse::operational()->where('status',1)->orderByIdentifier('asc')->get();
-        $this->trailers = Trailer::operational()->where('status', 1)->orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::operational()->where('status',1)->orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable()->operational()->where('status',1)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::selectable()->operational()->where('status', 1)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::selectable()->operational()->where('status',1)->orderByIdentifier('asc')->get();
         $this->fit_date = date('Y-m-d');
 
         if ($current = TyreAssignment::activeForTyre($tyre->id)) {

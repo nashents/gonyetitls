@@ -64,8 +64,8 @@ class NavbarComposer
             'payment_requisitions'     => Requisition::where('type','payment_requisition')->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'fuels'         => Fuel::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'fuel_requests'         => FuelRequest::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'loans'            => Loan::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'leaves'           => Leave::where('management_decision', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'loans'            => Loan::visibleTo()->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'leaves'           => Leave::visibleTo()->where('management_decision', 'pending')->whereYear('created_at',date('Y'))->count(),
             'attendances'      => Attendance::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'overdue_tickets' => Booking::query()
                 ->where('status', 1)   // or whatever your "open" status is

@@ -940,7 +940,7 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Pending Requisitions','slug'=>'pending-requisitions','icon'=>'fas fa-clock','route_name'=>'requisitions.pending','sort_order'=>20,'badge_key'=>'requisitions_pending_count','visibility'=>$reqManageVis]);
         $upsertSub($m, ['name'=>'Approved Requisitions','slug'=>'approved-requisitions','icon'=>'fas fa-check','route_name'=>'requisitions.approved','sort_order'=>30,'badge_key'=>'requisitions_approved_count','visibility'=>$reqManageVis]);
         $upsertSub($m, ['name'=>'Rejected Requisitions','slug'=>'rejected-requisitions','icon'=>'fas fa-ban','route_name'=>'requisitions.rejected','sort_order'=>40,'badge_key'=>'requisitions_rejected_count','visibility'=>$reqManageVis]);
-        $upsertSub($m, ['name'=>'Deleted Requisitions','slug'=>'deleted-requisitions','icon'=>'fas fa-trash','route_name'=>'requisitions.deleted','sort_order'=>50,'badge_key'=>'requisitions_deleted_count','visibility'=>$any([$all(['isSuperAdmin'])])]);
+        $upsertSub($m, ['name'=>'Deleted Requisitions','slug'=>'deleted-requisitions','icon'=>'fas fa-trash','route_name'=>'requisitions.deleted','sort_order'=>50,'badge_key'=>'requisitions_deleted_count','visibility'=>null]);
 
         // ----------------------------
         // GROUP: Accounting (Finance or Super)

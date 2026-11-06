@@ -48,6 +48,33 @@ class Requisition extends Model implements Auditable
      * $filters: date_column, from, to, search, type (po_requisition|payment_requisition),
      * po_status (attached|awaiting).
      */
+    /**
+     * Deleted Requisitions visibility: Super Admin sees all; department heads
+     * see their headed departments' requisitions; everyone sees their own
+     * (created by them, or raised for them as the requesting employee).
+     */
+    public function scopeDeletedVisibleTo($query, User $user)
+    {
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        $employeeId = $user->employee?->id;
+        $headedDepartmentIds = $employeeId
+            ? DepartmentHead::where('employee_id', $employeeId)->pluck('department_id')->all()
+            : [];
+
+        return $query->where(function ($q) use ($user, $employeeId, $headedDepartmentIds) {
+            $q->where('user_id', $user->id);
+            if ($employeeId) {
+                $q->orWhere('employee_id', $employeeId);
+            }
+            if ($headedDepartmentIds) {
+                $q->orWhereIn('department_id', $headedDepartmentIds);
+            }
+        });
+    }
+
     public function scopeListFilter($query, User $user, array $filters)
     {
         // created_at (Created At) or date (the requisition's own Y-m-d date)

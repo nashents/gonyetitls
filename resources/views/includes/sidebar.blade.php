@@ -124,6 +124,8 @@
                             ->filter(function ($m) use ($groupVis, $inheritVis, $menuCtx, $sageActive, $sageLockedRoutes) {
                                 if (!($m->is_active ?? true)) return false;
                                 if ($sageActive && in_array($m->route_name, $sageLockedRoutes, true)) return false;
+                                // "HR access: drivers only" users: hide payroll + admin-staff screens
+                                if (\App\Support\HrAccess::isBlockedRoute($m->route_name)) return false;
 
                                 $mVis = $inheritVis($m->visibility, $groupVis);
                                 return Menu::isVisible($mVis, $menuCtx);
@@ -173,6 +175,7 @@
                                         ->filter(function ($s) use ($moduleVis, $inheritVis, $menuCtx, $sageActive, $sageLockedRoutes) {
                                             if (!($s->is_active ?? true)) return false;
                                             if ($sageActive && in_array($s->route_name, $sageLockedRoutes, true)) return false;
+                                            if (\App\Support\HrAccess::isBlockedRoute($s->route_name)) return false;
 
                                             $sVis = $inheritVis($s->visibility, $moduleVis);
                                             return Menu::isVisible($sVis, $menuCtx);

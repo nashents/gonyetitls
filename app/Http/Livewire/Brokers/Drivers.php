@@ -43,7 +43,7 @@ class Drivers extends Component
     public function mount($id){
         $this->broker = Broker::find($id);
         $this->broker_id = $id;
-        $this->drivers = Driver::latest()->get();
+        $this->drivers = Driver::selectable()->latest()->get();
         $this->broker_drivers =  $this->broker->drivers;
     }
 

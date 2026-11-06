@@ -161,7 +161,7 @@ class SidebarComposer
 
         // Helper: base query for this user’s visibility + week range
         $weeklyLeavesQuery = function () use ($canSeeAllLeaves, $isHOD, $startOfWeek, $endOfWeek) {
-            $query = Leave::query();
+            $query = Leave::query()->visibleTo();
 
             if ($canSeeAllLeaves) {
                 // Management: all leaves
@@ -192,7 +192,7 @@ class SidebarComposer
             ->count();
 
         // Deleted leaves (today), still respecting visibility
-        $deletedQuery = Leave::onlyTrashed();
+        $deletedQuery = Leave::onlyTrashed()->visibleTo();
 
         if ($canSeeAllLeaves) {
             // management sees all deleted
@@ -290,16 +290,16 @@ class SidebarComposer
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
 
-        $loansPendingCount = Loan::where('authorization','pending')
+        $loansPendingCount = Loan::visibleTo()->where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $loansApprovedCount = Loan::where('authorization','approved')
+        $loansApprovedCount = Loan::visibleTo()->where('authorization','approved')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $loansRejectedCount = Loan::where('authorization','rejected')
+        $loansRejectedCount = Loan::visibleTo()->where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $loansDeletedCount = Loan::onlyTrashed()
+        $loansDeletedCount = Loan::onlyTrashed()->visibleTo()
         ->whereDate('created_at', Carbon::today())->get()->count();
         $payrollsPendingCount = Payroll::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -357,7 +357,8 @@ class SidebarComposer
         $requisitionsRejectedCount = Requisition::where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $requisitionsDeletedCount = Requisition::onlyTrashed()
+        // Same per-user scope as the Deleted Requisitions page
+        $requisitionsDeletedCount = Requisition::onlyTrashed()->deletedVisibleTo($logged_in_user)
         ->whereDate('deleted_at', Carbon::today())->count();
         $asset_purchasesPendingCount = Purchase::where('authorization','pending')
         ->where('department','asset')

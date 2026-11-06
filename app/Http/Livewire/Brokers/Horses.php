@@ -43,7 +43,7 @@ class Horses extends Component
     public function mount($id){
         $this->broker = Broker::find($id);
         $this->broker_id = $id;
-        $this->horses = Horse::latest()->get();
+        $this->horses = Horse::selectable()->latest()->get();
         $this->broker_horses =  $this->broker->horses;
     }
 

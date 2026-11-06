@@ -195,7 +195,7 @@ class Edit extends Component
    public function updatedSelectedHorse($id){
         if (!is_null($id)) {
            $horse = Horse::find($id);
-           $this->selected_equipment = Horse::with('bookings')->find($id);
+           $this->selected_equipment = Horse::selectable($this->selectedHorse)->with('bookings')->find($id);
           
            $this->mileage = $horse ? $horse->mileage : "";
            $this->hours = $horse ? $horse->hours : "";
@@ -211,7 +211,7 @@ class Edit extends Component
     public function updatedSelectedTrailer($id){
         if (!is_null($id)) {
            $trailer = Trailer::find($id);
-            $this->selected_equipment = Trailer::with('bookings')->find($id);
+            $this->selected_equipment = Trailer::selectable($this->selectedTrailer)->with('bookings')->find($id);
            $this->mileage = $trailer ? $trailer->mileage : "";
            
         }
@@ -220,7 +220,7 @@ class Edit extends Component
     public function updatedSelectedVehicle($id){
         if (!is_null($id)) {
            $vehicle = Vehicle::find($id);
-            $this->selected_equipment = Vehicle::with('bookings')->find($id);
+            $this->selected_equipment = Vehicle::selectable($this->selectedVehicle)->with('bookings')->find($id);
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
         }
@@ -379,9 +379,9 @@ class Edit extends Component
      $this->existing_bookings = $this->selected_equipment?->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
 
           if (filled($this->searchHorse)) {
-            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::selectable($this->selectedHorse)->operational()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }else{
-            $this->horses = Horse::operational()->with('horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
+            $this->horses = Horse::selectable($this->selectedHorse)->operational()->with('horse_make:id,name','horse_model:id,name')->orderByIdentifier('asc')->get();
         }
 
         if (filled($this->searchVendor)) {
@@ -397,9 +397,9 @@ class Edit extends Component
         }
 
         if (filled($this->searchVehicle)) {
-            $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::selectable($this->selectedVehicle)->operational()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
         }else{
-              $this->vehicles = Vehicle::operational()->with('vehicle_make:id,name','vehicle_model:id,name')->orderByIdentifier('asc')->get();
+              $this->vehicles = Vehicle::selectable($this->selectedVehicle)->operational()->with('vehicle_make:id,name','vehicle_model:id,name')->orderByIdentifier('asc')->get();
         }
 
         if (filled($this->searchAsset)) {
@@ -418,9 +418,9 @@ class Edit extends Component
         }
 
         if (filled($this->searchTrailer)) {
-            $this->trailers = Trailer::operational()->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+            $this->trailers = Trailer::selectable($this->selectedTrailer)->operational()->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
         }else{
-            $this->trailers = Trailer::operational()->orderByIdentifier('asc')->get();
+            $this->trailers = Trailer::selectable($this->selectedTrailer)->operational()->orderByIdentifier('asc')->get();
         }
 
         if (filled($this->searchEmployee)) {

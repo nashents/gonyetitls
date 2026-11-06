@@ -213,6 +213,19 @@ class Employee extends Model implements Auditable
      * Limit to drivers ("drivers": has a Driver record) or admin staff
      * ("admin": no Driver record); anything else leaves the query untouched.
      */
+    /**
+     * HR records this user may see. Drivers-only HR users (users.hr_drivers_only,
+     * see App\Support\HrAccess) get drivers only — including drivers whose Driver
+     * row was soft-deleted, so the Deleted/Archived lists still work.
+     */
+    public function scopeVisibleTo($query, $user = null)
+    {
+        if (\App\Support\HrAccess::driversOnly($user)) {
+            return $query->whereHas('driver', fn ($d) => $d->withTrashed());
+        }
+        return $query;
+    }
+
     public function scopeOfStaffType($query, $type)
     {
         if ($type === 'drivers') {

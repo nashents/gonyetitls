@@ -211,6 +211,7 @@
                             </div>
                         </div>
                     </div>
+                    @include('livewire.cargos._loss_rates')
                    
                    
                     <div style="height: 400px; overflow: auto">
@@ -341,6 +342,7 @@
                             </div>
                         </div>
                     </div>
+                    @include('livewire.cargos._loss_rates')
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>

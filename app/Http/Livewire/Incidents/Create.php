@@ -438,9 +438,9 @@ class Create extends Component
             if (!is_null($id)) {
                 $this->transporter = Transporter::find($id);
                 if (isset($this->transporter)) {
-                    $this->horses = $this->transporter->horses->where('service', 0);
-                    $this->vehicles = $this->transporter->vehicles->where('service', 0);
-                    $this->drivers = Driver::withAggregate('employee','name')->where('transporter_id',$id)
+                    $this->horses = $this->transporter->horses()->selectable()->where('service', 0)->get();
+                    $this->vehicles = $this->transporter->vehicles()->selectable()->where('service', 0)->get();
+                    $this->drivers = Driver::selectable()->withAggregate('employee','name')->where('transporter_id',$id)
                     ->orderBy('employee_name','asc')->latest()->get();
                 }
                 
@@ -687,13 +687,13 @@ class Create extends Component
     {
 
         if (isset($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }
         if (isset($this->searchcustomer)) {
             $this->customers = Customer::where('name', 'LIKE', "%".$this->searchCustomer."%")->get();
         }
         if (isset($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
             
         }
        

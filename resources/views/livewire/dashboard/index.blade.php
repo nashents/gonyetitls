@@ -398,11 +398,16 @@
                     <div class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-users"></i> Human Resources</h5><span class="gd-panel-note">People, drivers and payroll</span></div>
                         <div class="gd-kpi-grid">
+                            @php $hrDriversOnly = auth()->user()?->hrDriversOnly(); @endphp
+                            @unless ($hrDriversOnly)
                             <a class="gd-kpi" href="{{ route('employees.index') }}"><span class="icon"><i class="fa fa-users"></i></span><div class="value">{{ $active_employees ?? 0 }}</div><span class="name">Active Staff</span></a>
+                            @endunless
                             <a class="gd-kpi" href="{{ route('drivers.index') }}"><span class="icon"><i class="fa fa-id-badge"></i></span><div class="value">{{ $active_drivers ?? 0 }}</div><span class="name">Active Drivers</span></a>
                             <a class="gd-kpi" href="{{ route('leaves.manage') }}"><span class="icon"><i class="fa fa-plane"></i></span><div class="value">{{ $employees_on_leave ?? 0 }}</div><span class="name">On Leave Today</span></a>
                             <a class="gd-kpi {{ ($pending_leave_requests ?? 0) > 0 ? 'warn' : 'good' }}" href="{{ route('leaves.pending') }}"><span class="icon"><i class="fa fa-hourglass-half"></i></span><div class="value">{{ $pending_leave_requests ?? 0 }}</div><span class="name">Pending Leave</span></a>
+                            @unless ($hrDriversOnly)
                             <a class="gd-kpi warn" href="#"><span class="icon"><i class="fa fa-money"></i></span><div class="value">{{ $money($payroll_cost_mtd ?? 0) }}</div><span class="name">Payroll Cost MTD</span></a>
+                            @endunless
                             <a class="gd-kpi {{ ($outstanding_loans ?? 0) > 0 ? 'warn' : 'good' }}" href="#"><span class="icon"><i class="fa fa-credit-card"></i></span><div class="value">{{ $money($outstanding_loans ?? 0) }}</div><span class="name">Outstanding Loans</span></a>
                         </div>
                     </div>

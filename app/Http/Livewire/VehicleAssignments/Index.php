@@ -73,7 +73,7 @@ class Index extends Component
 
      public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->vehicles = Vehicle::query()
+            $this->vehicles = Vehicle::selectable()
             ->where('transporter_id', $id)
             ->where('status', 1)
             ->where('service', 0)
@@ -127,7 +127,7 @@ class Index extends Component
         $this->selectedTransporter = $assignment->transporter_id;
         $this->selectedVehicle = $assignment->vehicle_id;
         $this->employee_id = $assignment->employee_id;
-        $this->vehicles = Vehicle::query()
+        $this->vehicles = Vehicle::selectable()
             ->where('transporter_id', $this->selectedTransporter)
             ->where('status', 1)
             ->where('service', 0)

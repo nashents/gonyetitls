@@ -58,8 +58,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Editing a record must never re-stamp its author as the editor.
+        \Illuminate\Support\Facades\Event::listen(
+            'eloquent.updating: *',
+            [\App\Support\PreserveRecordCreator::class, 'handle']
+        );
 
-        
         Builder::macro('search', function($field, $string){
             return $string ? $this->where($field, 'like', '%'.$string.'%') : $this;
         });

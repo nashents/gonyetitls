@@ -3,10 +3,18 @@
 namespace App\Imports;
 
 use App\Imports\Concerns\SkipsTemplateExampleRows;
+use App\Imports\Concerns\ChecksFleetLimit;
 
 use Carbon\Carbon;
 use App\Models\Bill;
+use App\Models\Deal;
+use App\Models\Fuel;
 use App\Models\Trip;
+use App\Models\Container;
+use App\Services\Fuel\FuelTripAllocationService;
+use App\Services\Accounting\FuelJournalService;
+use App\Services\Accounting\TripExpenseRecoveryService;
+use App\Services\Accounting\TransporterPaymentBillService;
 use App\Models\Cargo;
 use App\Models\Horse;
 use App\Models\Driver;
@@ -55,17 +63,249 @@ WithBatchInserts
 {
     use SkipsTemplateExampleRows;
 
-    use Importable, SkipsErrors;
+    use Importable, SkipsErrors, ChecksFleetLimit;
 
     public $company;
     public $trailer_ids;
     public $currency;
     public $payment_account;
     protected $skippedRows = [];
+    // Rows imported with something left out (e.g. a fuel order line)
+    protected $warnings = [];
+
+    // Ref# (lower-cased) => record already created/updated by an earlier row of this upload
+    protected $ordersSeen = [];
+    protected $dealsSeen = [];
+    protected $fuelsSeen = [];
+
+    // Master data created by this upload, by type
+    protected $created = [];
 
     public function getSkippedRows(): array
     {
         return $this->skippedRows;
+    }
+
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
+    // First filled value among header aliases (our snake_case names or the manifest's headings)
+    protected function cell(Collection $row, array $keys)
+    {
+        foreach ($keys as $key) {
+            $value = $row->get($key);
+            if ($value !== null && $value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    // 1530 / "1,530.50" => float, blank/text => null
+    protected function toNumber($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $value = str_replace([',', ' '], '', (string) $value);
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
+    protected function initials(): string
+    {
+        $words = explode(' ', (string) $this->company?->name);
+
+        return isset($words[1][0]) ? $words[0][0] . $words[1][0] : ($words[0][0] ?? '');
+    }
+
+    // ──────────────────────────────────────────────
+    // Deal (DealRef# / DealQty): the first row with a DealRef#
+    // creates the deal (or updates DealQty on an existing one);
+    // every later row with it just attaches.
+    // ──────────────────────────────────────────────
+    protected function resolveDeal(Collection $row, array $ctx): ?Deal
+    {
+        $ref = trim((string) $this->cell($row, ['deal_ref', 'dealref', 'deal_reference']));
+        if ($ref === '') {
+            return null;
+        }
+
+        $key = mb_strtolower($ref);
+        if (isset($this->dealsSeen[$key])) {
+            return $this->dealsSeen[$key];
+        }
+
+        $qty = $this->toNumber($this->cell($row, ['deal_qty', 'dealqty', 'deal_quantity']));
+        $qtyField = $ctx['cargo_type'] === 'Liquid' ? 'litreage' : ($ctx['cargo_type'] === 'Solid' ? 'weight' : 'quantity');
+
+        $deal = Deal::whereRaw('LOWER(TRIM(reference)) = ?', [$key])->first();
+
+        if (!$deal) {
+            $deal = new Deal;
+            $deal->user_id = Auth::id();
+            $deal->company_id = $this->company->id;
+            $deal->customer_id = $ctx['customer']?->id;
+            $deal->currency_id = $ctx['currency']?->id;
+            $deal->cargo_id = $ctx['cargo']?->id;
+            $deal->start_date = $ctx['start_date'];
+            $deal->end_date = $ctx['end_date'];
+            $last = Deal::orderBy('id', 'desc')->value('id') ?? 0;
+            $deal->deal_number = $this->initials() . 'D' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+            $deal->reference = $ref;
+            $deal->status = 1;
+        }
+
+        if ($qty !== null) {
+            $deal->$qtyField = $qty;
+        }
+        $deal->save();
+
+        return $this->dealsSeen[$key] = $deal;
+    }
+
+    // ──────────────────────────────────────────────
+    // Fuel orders. FuelOrder# may list several orders
+    // ("FO1, FO2") with the figure columns matched by position.
+    // ──────────────────────────────────────────────
+    protected function importFuelOrders(Trip $trip, Collection $row, string $category, $trip_ref): void
+    {
+        // Template headings: fuel_order_ref / _qty / _amt / _retail_amt (rates = amount / qty)
+        $numbers = $this->splitList($this->cell($row, ['fuel_order_ref', 'foref', 'fuel_order_number', 'fuel_order', 'fuelorder']));
+        if (!$numbers) {
+            return;
+        }
+
+        $count = count($numbers);
+        $column = fn (array $keys) => $this->splitAmounts($this->cell($row, $keys), $count);
+        $qtys = $column(['foqty', 'fuel_order_qty', 'fuelorder_qty', 'fuel_order_quantity']);
+        $rates = $column(['forate', 'fuel_order_rate', 'fuelorder_rate']);
+        $retailRates = $column(['foretailrate', 'fuel_order_retail_rate', 'fuelorder_retail_rate']);
+        $amounts = $column(['foamt', 'fuel_order_amount', 'fuel_order_amt', 'fuelorderamt', 'fuelorder_amt']);
+        $retailAmounts = $column(['foretailamt', 'fuel_order_retail_amount', 'fuel_order_retail_amt', 'fuelorder_retail_amt']);
+
+        $station = $this->resolveStation(
+            $this->cell($row, ['fuel_station', 'station']),
+            $trip->currency_id ? Currency::find($trip->currency_id) : $this->currency
+        );
+
+        foreach ($numbers as $i => $number) {
+            $qty = $qtys[$i] ?? null;
+            $rate = $rates[$i] ?? null;
+            $amount = $amounts[$i] ?? null;
+
+            if (!$qty && $rate && $amount) {
+                $qty = round($amount / $rate, 2);
+            }
+            if (!$rate && $qty && $amount) {
+                $rate = round($amount / $qty, 4);
+            }
+            if (!$amount && $qty && $rate) {
+                $amount = round($qty * $rate, 2);
+            }
+            if (!$qty || $qty <= 0 || !$rate) {
+                $this->warnings[] = ['ref' => $trip_ref, 'reason' => "fuel order {$number} needs a quantity and a rate or amount - not imported"];
+                continue;
+            }
+
+            $retailRate = $retailRates[$i] ?? null;
+            if (!$retailRate && !empty($retailAmounts[$i])) {
+                $retailRate = round($retailAmounts[$i] / $qty, 4);
+            }
+
+            $this->importFuelOrder($trip, $number, (float) $qty, (float) $rate, (float) $amount, $retailRate, $category, $station, $trip_ref);
+        }
+    }
+
+    /**
+     * The first row naming a fuel order creates it (or overwrites one no trip
+     * uses yet); later rows - or an order already on trips - add their trip
+     * as another allocation and grow the order by their litres and amount.
+     */
+    protected function importFuelOrder(Trip $trip, string $number, float $qty, float $rate, float $amount, $retailRate, string $category, $station, $trip_ref): void
+    {
+        $allocations = app(FuelTripAllocationService::class);
+        $key = mb_strtolower($number);
+
+        $fuel = $this->fuelsSeen[$key] ?? Fuel::where(function ($q) use ($key) {
+            $q->whereRaw('LOWER(TRIM(reference)) = ?', [$key])
+              ->orWhereRaw('LOWER(TRIM(order_number)) = ?', [$key]);
+        })->first();
+
+        $rows = $fuel ? $allocations->rowsFor($fuel) : [];
+        $adding = !empty($rows);
+        $rows[] = ['trip_id' => $trip->id, 'quantity' => $qty];
+        $newQty = $adding ? round((float) $fuel->quantity + $qty, 2) : $qty;
+
+        if ($error = $allocations->validationError($rows, $newQty, (bool) $fuel?->supplied_by_customer, $fuel?->horse_id ?: $trip->horse_id)) {
+            $this->warnings[] = ['ref' => $trip_ref, 'reason' => "fuel order {$number}: {$error}"];
+            return;
+        }
+
+        if (!$fuel) {
+            $fuel = new Fuel;
+            $fuel->user_id = Auth::id();
+            $last = Fuel::withTrashed()->max('id') ?? 0;
+            $fuel->order_number = $this->initials() . 'FO' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+            $fuel->reference = $number;
+            $fuel->authorization = 'pending';
+            $fuel->supplied_by_customer = false;
+            $fuel->is_full_tank = false;
+            $fuel->comments = 'Imported historical fuel order';
+        }
+
+        if ($adding) {
+            $fuel->amount = round((float) $fuel->amount + $amount, 2);
+            $fuel->quantity = $newQty;
+            $fuel->unit_price = round($fuel->amount / $newQty, 4);
+        } else {
+            $fuel->quantity = $qty;
+            $fuel->unit_price = $rate;
+            $fuel->amount = $amount;
+            $fuel->currency_id = $trip->currency_id ?: $this->company->currency_id;
+            $fuel->horse_id = $trip->horse_id;
+            $fuel->vehicle_id = $trip->horse_id ? null : $trip->vehicle_id;
+            $fuel->type = $trip->horse_id ? 'Horse' : ($trip->vehicle_id ? 'Vehicle' : ($fuel->type ?: 'Horse'));
+            $fuel->driver_id = $trip->driver_id;
+            $fuel->employee_id = $trip->driver?->employee_id;
+            $fuel->date = $trip->start_date ? $trip->start_date->format('Y-m-d') : now()->toDateString();
+            $fuel->container_id = $station?->id ?? $fuel->container_id;
+        }
+        $fuel->deduct_from = $fuel->deduct_from ?: 'quantity';
+        $fuel->fuel_type = $fuel->fuel_type ?: 'Diesel';
+        if ($fuel->currency_id == $this->company->currency_id) {
+            $fuel->exchange_rate = null;
+            $fuel->exchange_amount = null;
+        }
+        $fuel->save();
+
+        // Allocations: trip expenses (Fuel - COGS) split by litres, cost of sales refreshed
+        $allocations->sync($fuel, $rows, $category);
+
+        // Historical order: approved now that it is on its trip(s)
+        if ($fuel->authorization !== 'approved') {
+            $fuel->authorization = 'approved';
+            $fuel->authorized_by_id = Auth::id();
+            $fuel->authorization_date = now();
+            $fuel->reason = 'Imported historical fuel order';
+            $fuel->save();
+        }
+
+        // Retail = what the transporter is charged; used as the markup when posting
+        $fuel->retailPriceOverride = $retailRate ? (float) $retailRate : null;
+        app(FuelJournalService::class)->postConsumptionSafely($fuel);
+
+        // Own-fleet fuel isn't recharged, but keep the retail figures for the manifest
+        if ($retailRate && !app(TripExpenseRecoveryService::class)->isTransporterFuel($fuel)) {
+            $fuel->transporter_price = round((float) $retailRate, 4);
+            $fuel->transporter_total = round((float) $retailRate * (float) $fuel->quantity, 2);
+            $fuel->saveQuietly();
+        }
+
+        $this->fuelsSeen[$key] = $fuel;
     }
 
     public function __construct()
@@ -256,36 +496,322 @@ WithBatchInserts
     }
 
     // ──────────────────────────────────────────────
-    // Find by fuzzy name match, create if missing
+    // Master data: find ignoring spaces + case, create if missing
     // ──────────────────────────────────────────────
     protected $lookupCache = [];
 
-    protected function resolveOrCreate(string $modelClass, $name, array $extra = [])
+    // "ADK 4533" / "adk4533" => "adk4533"
+    protected function normalise($value): string
     {
-        $name = is_string($name) ? trim($name) : $name;
+        return mb_strtolower(preg_replace('/\s+/u', '', (string) $value));
+    }
+
+    /**
+     * Match on $columns ignoring spaces and case: an exact match first, then a
+     * "contains" match only when it is the one record that contains it (so
+     * "ADK453" never silently picks "ADK4533" over "ADK4534").
+     */
+    protected function findNormalised(string $modelClass, $value, array $columns = ['name'])
+    {
+        $norm = $this->normalise($value);
+        if ($norm === '') {
+            return null;
+        }
+
+        // spaces, tabs and non-breaking spaces (pasted from Excel) all ignored
+        $expr = fn ($column) => "REPLACE(REPLACE(REPLACE(LOWER(`{$column}`), ' ', ''), CHAR(9 USING utf8mb4), ''), CHAR(194, 160 USING utf8mb4), '')";
+
+        $exact = $modelClass::where(function ($q) use ($columns, $expr, $norm) {
+            foreach ($columns as $column) {
+                $q->orWhereRaw($expr($column) . ' = ?', [$norm]);
+            }
+        })->orderBy('id')->first();
+        if ($exact) {
+            return $exact;
+        }
+
+        $like = $modelClass::where(function ($q) use ($columns, $expr, $norm) {
+            foreach ($columns as $column) {
+                $q->orWhereRaw($expr($column) . ' LIKE ?', ['%' . addcslashes($norm, '%_\\') . '%']);
+            }
+        })->limit(2)->get();
+
+        return $like->count() === 1 ? $like->first() : null;
+    }
+
+    /**
+     * Find by name (spaces/case ignored) or create with $create attributes.
+     * An existing record only has its blank $fill attributes filled in.
+     */
+    protected function resolveOrCreate(string $modelClass, $name, array $create = [], array $fill = [])
+    {
+        $name = is_string($name) ? trim(preg_replace('/\s+/u', ' ', $name)) : $name;
 
         if (!$name) {
             return null;
         }
 
-        $cacheKey = $modelClass . '|' . strtolower($name);
+        $cacheKey = $modelClass . '|' . $this->normalise($name);
 
         if (isset($this->lookupCache[$cacheKey])) {
             return $this->lookupCache[$cacheKey];
         }
 
-        // 1️⃣ Fuzzy match first (same behaviour as before)
-        $record = $modelClass::where('name', 'LIKE', '%' . $name . '%')->first();
+        $record = $this->findNormalised($modelClass, $name);
 
-        // 2️⃣ Create if not found
         if (!$record) {
-            $record = $modelClass::create(array_merge([
-                'name'    => $name,
-                'user_id' => Auth::id(),
-            ], $extra));
+            $record = new $modelClass;
+            $columns = $this->columnsOf($record->getTable());
+            $record->forceFill(array_intersect_key(
+                array_merge(['name' => $name, 'user_id' => Auth::id()], $create, $fill),
+                array_flip($columns)
+            ));
+            $record->save();
+            $this->created[class_basename($modelClass)][] = $name;
+        } else {
+            $this->fillBlanks($record, $fill);
         }
 
         return $this->lookupCache[$cacheKey] = $record;
+    }
+
+    protected $columnCache = [];
+
+    protected function columnsOf(string $table): array
+    {
+        return $this->columnCache[$table] ??= \Illuminate\Support\Facades\Schema::getColumnListing($table);
+    }
+
+    // Set only attributes that are empty on the record (never overwrite)
+    protected function fillBlanks($record, array $values): void
+    {
+        foreach ($values as $key => $value) {
+            if (($record->$key === null || $record->$key === '') && $value !== null && $value !== '') {
+                $record->$key = $value;
+            }
+        }
+        if ($record->isDirty()) {
+            $record->save();
+        }
+    }
+
+    // <company initials><prefix><next id>, the numbering every master screen uses
+    protected function nextNumber(string $modelClass, string $prefix): string
+    {
+        $query = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($modelClass))
+            ? $modelClass::withTrashed() : $modelClass::query();
+
+        return $this->initials() . $prefix . str_pad(((int) $query->max('id')) + 1, 5, '0', STR_PAD_LEFT);
+    }
+
+    protected function resolveTransporter($name)
+    {
+        return $this->resolveOrCreate(Transporter::class, $name, [
+            'user_id'            => null, // a transporter's user is its own login
+            'creator_id'         => Auth::id(),
+            'transporter_number' => $this->nextNumber(Transporter::class, 'T'),
+            'authorization'      => 'approved',
+            'status'             => 1,
+        ], [
+            'company_id' => $this->company->id,
+        ]);
+    }
+
+    protected function resolveCustomer($name)
+    {
+        return $this->resolveOrCreate(Customer::class, $name, [
+            'user_id'         => null, // a customer's user is its own login
+            'creator_id'      => Auth::id(),
+            'customer_number' => $this->nextNumber(Customer::class, 'V'),
+            'status'          => 1,
+        ], [
+            'company_id' => $this->company->id,
+        ]);
+    }
+
+    // Currencies are matched on code or full name; an unknown one is never created
+    protected function resolveCurrency($value, $trip_ref)
+    {
+        if (!filled($value)) {
+            return $this->currency;
+        }
+
+        $key = Currency::class . '|' . $this->normalise($value);
+        if (!array_key_exists($key, $this->lookupCache)) {
+            $this->lookupCache[$key] = $this->findNormalised(Currency::class, $value, ['name', 'fullname', 'symbol']);
+        }
+        if (!$this->lookupCache[$key]) {
+            $this->warnings[] = ['ref' => $trip_ref, 'reason' => "currency \"{$value}\" not found - company currency used"];
+        }
+
+        return $this->lookupCache[$key] ?: $this->currency;
+    }
+
+    /**
+     * Horse by registration (spaces/case ignored), created under the row's
+     * transporter when missing; an existing horse with no transporter gets it.
+     */
+    protected function resolveHorse($registration, $transporter, $trip_ref)
+    {
+        $registration = trim(preg_replace('/\s+/u', ' ', (string) $registration));
+        if ($registration === '') {
+            return null;
+        }
+
+        $key = Horse::class . '|' . $this->normalise($registration);
+        if (array_key_exists($key, $this->lookupCache)) {
+            return $this->lookupCache[$key];
+        }
+
+        $horse = $this->findNormalised(Horse::class, $registration, ['registration_number']);
+
+        if (!$horse) {
+            if (!$this->fleetRoom('horse', $transporter, $registration, $trip_ref)) {
+                return $this->lookupCache[$key] = null;
+            }
+            $horse = new Horse;
+            $horse->user_id = Auth::id();
+            $horse->horse_number = $this->nextNumber(Horse::class, 'H');
+            $horse->registration_number = $registration;
+            $horse->transporter_id = $transporter?->id;
+            $horse->status = 1;
+            $horse->save();
+            $this->fleetAdded($transporter);
+            $this->created['Horse'][] = $registration;
+        } else {
+            $this->fillBlanks($horse, ['transporter_id' => $transporter?->id]);
+        }
+
+        return $this->lookupCache[$key] = $horse;
+    }
+
+    protected function resolveTrailer($registration, $transporter, $trip_ref)
+    {
+        $registration = trim(preg_replace('/\s+/u', ' ', (string) $registration));
+        if ($registration === '') {
+            return null;
+        }
+
+        $key = Trailer::class . '|' . $this->normalise($registration);
+        if (array_key_exists($key, $this->lookupCache)) {
+            return $this->lookupCache[$key];
+        }
+
+        $trailer = $this->findNormalised(Trailer::class, $registration, ['registration_number']);
+
+        if (!$trailer) {
+            if (!$this->fleetRoom('trailer', $transporter, $registration, $trip_ref)) {
+                return $this->lookupCache[$key] = null;
+            }
+            $trailer = new Trailer;
+            $trailer->user_id = Auth::id();
+            $trailer->trailer_number = $this->nextNumber(Trailer::class, 'T');
+            $trailer->registration_number = $registration;
+            $trailer->transporter_id = $transporter?->id;
+            $trailer->status = 1;
+            $trailer->save();
+            $this->fleetAdded($transporter);
+            $this->created['Trailer'][] = $registration;
+        } else {
+            $this->fillBlanks($trailer, ['transporter_id' => $transporter?->id]);
+        }
+
+        return $this->lookupCache[$key] = $trailer;
+    }
+
+    /**
+     * Driver by full name (spaces/case ignored, middle name optional). A new
+     * one is an Employee + Driver record under the row's transporter - no
+     * login is created (add one from Drivers when needed).
+     */
+    protected function resolveDriver($fullName, $transporter)
+    {
+        $fullName = trim(preg_replace('/\s+/u', ' ', (string) $fullName));
+        if ($fullName === '') {
+            return null;
+        }
+
+        $key = Driver::class . '|' . $this->normalise($fullName);
+        if (array_key_exists($key, $this->lookupCache)) {
+            return $this->lookupCache[$key];
+        }
+
+        $norm = $this->normalise($fullName);
+        $strip = fn ($sql) => "REPLACE(LOWER({$sql}), ' ', '')";
+        $employees = Employee::whereRaw($strip("CONCAT(COALESCE(name,''), COALESCE(surname,''))") . ' = ?', [$norm])
+            ->orWhereRaw($strip("CONCAT(COALESCE(name,''), COALESCE(middle_name,''), COALESCE(surname,''))") . ' = ?', [$norm])
+            ->orWhereRaw($strip("CONCAT(COALESCE(surname,''), COALESCE(name,''))") . ' = ?', [$norm])
+            ->orderBy('id')->get();
+        // Prefer the employee who is already a driver
+        $employee = $employees->first(fn ($e) => $e->driver) ?? $employees->first();
+
+        $parts = explode(' ', $fullName);
+        $surname = count($parts) > 1 ? array_pop($parts) : '';
+        $name = implode(' ', $parts);
+
+        if (!$employee) {
+            $employee = new Employee;
+            $employee->company_id = $this->company->id;
+            $employee->creator_id = Auth::id();
+            $employee->employee_number = $this->nextNumber(Employee::class, 'E');
+            $employee->name = $name;
+            $employee->surname = $surname;
+            $employee->post = 'Driver';
+            $employee->status = 1;
+            $employee->save();
+            $this->created['Driver'][] = $fullName;
+        }
+
+        $driver = $employee->driver;
+        if (!$driver) {
+            $driver = new Driver;
+            $driver->company_id = $employee->company_id ?: $this->company->id;
+            $driver->creator_id = Auth::id();
+            $driver->user_id = $employee->user_id;
+            $driver->employee_id = $employee->id;
+            $driver->driver_number = $this->nextNumber(Driver::class, 'D');
+            $driver->transporter_id = $transporter?->id;
+            $driver->status = 1;
+            $driver->save();
+        } else {
+            $this->fillBlanks($driver, ['transporter_id' => $transporter?->id]);
+        }
+
+        return $this->lookupCache[$key] = $driver;
+    }
+
+    // Fuel station by name; a missing one is created as a Once Off Buy station
+    protected function resolveStation($name, $currency)
+    {
+        return $this->resolveOrCreate(Container::class, $name, [
+            'container_number' => $this->nextNumber(Container::class, 'FS'),
+            'purchase_type'    => 'Once Off Buy',
+            'fuel_type'        => 'Diesel',
+        ], [
+            'currency_id' => $currency?->id,
+        ]);
+    }
+
+    // Business Settings fleet limit (same check as the Horses/Trailers imports)
+    protected function fleetRoom(string $type, $transporter, $registration, $trip_ref): bool
+    {
+        if ($this->canAddToFleet($this->company, $type, $transporter)) {
+            return true;
+        }
+        $this->warnings[] = ['ref' => $trip_ref, 'reason' => "{$type} {$registration} not created - fleet limit reached"];
+
+        return false;
+    }
+
+    protected function fleetAdded($transporter): void
+    {
+        $this->registerFleetAddition($this->company, $transporter);
+    }
+
+    // What the upload created, by type: ['Horse' => ['ADK4533', ...], ...]
+    public function getCreated(): array
+    {
+        return array_map(fn ($names) => array_values(array_unique($names)), $this->created);
     }
 
     public function limit(): int
@@ -313,44 +839,40 @@ WithBatchInserts
                     continue;
                 }
 
+                // One row = one trip with its order, deal, fuel and bills: all or nothing
+                DB::transaction(fn () => $this->importRow($row));
+            }
+        }
+    }
+
+    protected function importRow(Collection $row): void
+    {
                 $trip_number = $this->tripNumber();
                 $user_id = Auth::id();
                 $company_id = $this->company->id;
                 $trailer_ids = [];
 
-                $trip_ref = trim($row->get('trip_reference'));
+                $trip_ref = trim((string) $row->get('trip_reference'));
+                $order_ref = trim((string) $this->cell($row, ['order_ref', 'orderref', 'order_reference']));
+
+                // Without an OrderRef# the trip ref becomes the order's custom ref (as before)
                 if (UniqueReference::exists(Trip::class, 'trip_ref', $trip_ref)
-                    || UniqueReference::exists(TransportOrder::class, 'custom_ref', $trip_ref)) {
+                    || ($order_ref === '' && UniqueReference::exists(TransportOrder::class, 'custom_ref', $trip_ref))) {
                     $this->skippedRows[] = ['ref' => $trip_ref, 'reason' => 'trip reference already in use'];
-                    continue;
+                    return;
                 }
                 $start_date = $this->parseExcelDate($row->get('start_date'));
                 $end_date = $this->parseExcelDate($row->get('offloading_date'));
 
-                $driver_name = trim($row->get('driver'));
-                $driver = null;
+                // Master data: found ignoring spaces/case, created when missing.
+                // Transporter first - new horses/trailers/drivers go under it.
+                $transporter = $this->resolveTransporter($row->get('transporter'));
 
-                if ($driver_name) {
-                    $name_parts = explode(' ', $driver_name);
-                    if (count($name_parts) >= 2) {
-                        $name = $name_parts[0];
-                        $surname = $name_parts[1] ?? $name_parts[2] ?? null;
-                        if ($surname) {
-                            $employee = Employee::where('name', 'LIKE', "%$name%")
-                                ->where('surname', 'LIKE', "%$surname%")
-                                ->first();
-                            $driver = $employee?->driver;
-                        }
-                    }
-                }
-
-                $horse = Horse::where('registration_number', 'LIKE', '%' . trim($row->get('horse_registration_number')) . '%')->first();
+                $driver = $this->resolveDriver($row->get('driver'), $transporter);
+                $horse = $this->resolveHorse($row->get('horse_registration_number'), $transporter, $trip_ref);
                 $vehicle = $horse?->vehicle;
 
-                $customer = $this->resolveOrCreate(Customer::class, $row->get('customer'), [
-                    'company_id' => $company_id,
-                    'status'     => 1,
-                ]);
+                $customer = $this->resolveCustomer($row->get('customer'));
 
                 $cargo_type = trim((string) $row->get('cargo_type')) ?: null;
 
@@ -361,28 +883,29 @@ WithBatchInserts
                 // Row-level cargo_type drives the freight calculation; fall back to the Cargo record's type
                 $cargo_type = $cargo_type ?: $cargo?->type;
 
-                $transporter = $this->resolveOrCreate(Transporter::class, $row->get('transporter'), [
-                    'company_id' => $company_id,
-                    'status'     => 1,
-                ]);
+                // Own fleet (default transporter, or none): fuel + expenses are "Self".
+                // Any other transporter: they are "Transporter" (recovered from them).
+                $own_fleet = !$transporter || $transporter->default;
+                $expense_category = $own_fleet ? 'Self' : 'Transporter';
 
                 $trip_type = $this->resolveOrCreate(TripType::class, $row->get('trip_type'));
 
                 // Fallback to company currency if blank/unknown
-                $currency = $this->resolveOrCreate(Currency::class, $row->get('currency')) ?? $this->currency;
+                $currency = $this->resolveCurrency($row->get('currency'), $trip_ref);
 
-                // Trailer IDs
+                // Trailer IDs (created under the row's transporter when missing)
                 $trailer_ids = [];
                 $trailer_regs = array_map(
                     'trim',
-                    preg_split('/[,\/]+/', $row->get('trailer_reg_numbers') ?? '', -1, PREG_SPLIT_NO_EMPTY)
+                    preg_split('/[,\/;|]+/', (string) $row->get('trailer_reg_numbers'), -1, PREG_SPLIT_NO_EMPTY)
                 );
                 foreach ($trailer_regs as $reg) {
-                    $trailer = Trailer::where('registration_number', 'LIKE', '%' . trim($reg) . '%')->first();
+                    $trailer = $this->resolveTrailer($reg, $transporter, $trip_ref);
                     if ($trailer) {
                         $trailer_ids[] = $trailer->id;
                     }
                 }
+                $trailer_ids = array_values(array_unique($trailer_ids));
 
                 $freight_calculation = trim((string) $row->get('freight_calculation_method')) ?: null;
                 if (!in_array($freight_calculation, ['flat_rate', 'rate_weight', 'rate_weight_distance', 'rate_distance'])) {
@@ -437,6 +960,23 @@ WithBatchInserts
                     $freight = $this->calculateFreight($freight_calculation, $rate, $measurement_value, $distance);
                 }
 
+                // Subcontracted trips: what we owe the transporter
+                $transporter_rate = $own_fleet ? null : $this->toNumber($row->get('transporter_rate'));
+                $transporter_freight = $own_fleet ? null : $this->toNumber($row->get('transporter_freight'));
+                if (!$own_fleet && $transporter_freight === null && $transporter_rate !== null) {
+                    $transporter_freight = $this->calculateFreight($freight_calculation, $transporter_rate, $measurement_value, $distance);
+                }
+                $transporter_agreement = !$own_fleet && $transporter_freight > 0;
+
+                $deal = $this->resolveDeal($row, [
+                    'customer'   => $customer,
+                    'cargo'      => $cargo,
+                    'cargo_type' => $cargo_type,
+                    'currency'   => $currency,
+                    'start_date' => $start_date,
+                    'end_date'   => $end_date,
+                ]);
+
                 $trip = new Trip();
                 $trip->trip_number = $trip_number;
                 $trip->user_id = $user_id;
@@ -464,6 +1004,10 @@ WithBatchInserts
                 $trip->offloaded_quantity = $offloaded['quantity'];
                 $trip->multiple_destinations = $multiple_points;
                 $trip->distance = $distance;
+                $trip->deal_id = $deal?->id;
+                $trip->transporter_agreement = $transporter_agreement;
+                $trip->transporter_rate = $transporter_rate;
+                $trip->transporter_freight = $transporter_freight;
 
                 $trip->with_trailer = count($trailer_ids) > 0 ? 1 : 0;
                 $trip->with_customer_rates = "custom";
@@ -486,9 +1030,10 @@ WithBatchInserts
                 }
 
                 // ──────────────────────────────────────────────
-                // Create Transport Order for this trip row
+                // Transport Order: OrderRef# finds/creates it; later rows
+                // with the same OrderRef# attach their trip to it.
                 // ──────────────────────────────────────────────
-                $transport_order = $this->createTransportOrder($trip, $row, [
+                $lookups = [
                     'customer'                => $customer,
                     'cargo'                   => $cargo,
                     'trip_type'               => $trip_type,
@@ -508,10 +1053,27 @@ WithBatchInserts
                     'destinations'            => $destinations,
                     'loaded'                  => $loaded,
                     'multiple_points'         => $multiple_points,
+                    'order_ref'               => $order_ref,
+                    'deal'                    => $deal,
+                    'transporter_rate'        => $transporter_rate,
+                    'transporter_freight'     => $transporter_freight,
+                ];
+
+                [$transport_order, $attached] = $this->resolveTransportOrder($row, $lookups);
+
+                // Link Trip <-> Transport Order with this row's share
+                $trip_transport_order = $this->createTripTransportOrder($trip, $transport_order, [
+                    'quantity' => $loaded['quantity'],
+                    'weight'   => $loaded['weight'],
+                    'litreage' => $loaded['litreage'],
+                    'freight'  => $freight,
+                    'rate'     => $rate,
+                    'deal_id'  => $deal?->id ?? $transport_order->deal_id,
                 ]);
 
-                // Link Trip <-> Transport Order
-                $trip_transport_order = $this->createTripTransportOrder($trip, $transport_order);
+                // Loading/offloading legs for this trip (an attached order keeps the earlier trips' legs)
+                $this->addOrigins($transport_order, $row, $lookups, !$attached, $trip, $trip_transport_order);
+                $this->addDestinations($transport_order, $row, $lookups, !$attached, $trip, $trip_transport_order);
 
                 // Authorize all transport orders linked to this trip
                 $this->authorizeTransportOrders($trip);
@@ -520,6 +1082,7 @@ WithBatchInserts
                 // Trip Expenses
                 // ──────────────────────────────────────────────
                 $expenseColumn = $row->get('expenses');
+                $imported_expense_ids = [];
 
                 if ($expenseColumn && $trip) {
 
@@ -564,29 +1127,64 @@ WithBatchInserts
                                 'amount' => 0,
                                 'currency_id' => $this->currency->id,
                                 'user_id' => Auth::user()->id,
-                                'category' => "Self",
+                                'category' => $expense_category,
                                 'payment_method_id' => PaymentMethod::where('name', 'Cash')->first()?->id,
                             ]
                         );
 
                         $tripExpense->increment('amount', $amount);
+                        $imported_expense_ids[] = $tripExpense->id;
                     }
 
                     // Create approved Bill + BillExpense + Payment per trip expense
-                    foreach ($trip->trip_expenses()->get() as $trip_expense) {
+                    foreach (TripExpense::whereIn('id', array_unique($imported_expense_ids))->get() as $trip_expense) {
                         $bill = $this->createTripExpenseBill($trip, $trip_expense);
                         if ($bill) {
                             $this->recordImportPayment($bill, $trip_expense);
                         }
                     }
                 }
-                
+
+                // ──────────────────────────────────────────────
+                // Fuel orders (FuelOrder# ...): created or updated by
+                // their number, allocated to this trip and posted
+                // ──────────────────────────────────────────────
+                $this->importFuelOrders($trip, $row, $expense_category, $trip_ref);
+
+                // ──────────────────────────────────────────────
+                // Transporter Payment (subcontracted trips): the bill
+                // owed to the transporter, posted once Offloaded
+                // ──────────────────────────────────────────────
+                if ($transporter_agreement) {
+                    $foreign = $currency && $currency->id != $this->company->currency_id;
+
+                    $payment_expense = new TripExpense;
+                    $payment_expense->user_id = $user_id;
+                    $payment_expense->trip_id = $trip->id;
+                    $payment_expense->transporter_id = $transporter->id;
+                    $payment_expense->expense_id = Expense::where('name', 'Transporter Payment')->value('id');
+                    $payment_expense->currency_id = $currency?->id;
+                    $payment_expense->category = 'Self';
+                    $payment_expense->amount = $transporter_freight;
+                    $payment_expense->exchange_rate = $foreign ? null : 1;
+                    $payment_expense->exchange_amount = $foreign ? null : $transporter_freight;
+                    $payment_expense->date = $start_date;
+                    $payment_expense->save();
+
+                    $warning = null;
+                    app(TransporterPaymentBillService::class)->syncTrip($trip->fresh(), $warning);
+                    if ($warning) {
+                        $this->warnings[] = ['ref' => $trip_ref, 'reason' => $warning];
+                    }
+                }
+
                 // ──────────────────────────────────────────────
                 // Delivery Note (linked to the TTO)
                 // ──────────────────────────────────────────────
                 $delivery_note = new DeliveryNote();
                 $delivery_note->user_id = $user_id;
                 $delivery_note->trip_id = $trip->id;
+                $delivery_note->transport_order_id = $transport_order->id;
                 $delivery_note->trip_transport_order_id = $trip_transport_order?->id;
                 $delivery_note->loaded_date = $trip->start_date;
                 $delivery_note->offloaded_date = $trip->end_date;
@@ -623,7 +1221,15 @@ WithBatchInserts
                     }
                 }
 
-                $cost_of_sales = $trip->trip_expenses->sum('amount');
+                // Cost of sales = the trip's "Self" expenses in company currency
+                // (Transporter lines are recovered from the transporter)
+                $trip->refresh();
+                $cost_of_sales = TripExpense::where('trip_id', $trip->id)->where('category', 'Self')->get()
+                    ->sum(function (TripExpense $expense) {
+                        $value = $expense->currency_id == $this->company->currency_id ? $expense->amount : $expense->exchange_amount;
+
+                        return is_numeric($value) ? (float) $value : 0;
+                    });
                 $trip->cost_of_sales = $cost_of_sales;
                 $turnover = $trip->turnover;
 
@@ -644,8 +1250,6 @@ WithBatchInserts
                 }
 
                 $trip->update();
-            }
-        }
     }
 
     // ──────────────────────────────────────────────
@@ -801,14 +1405,53 @@ WithBatchInserts
     // ──────────────────────────────────────────────
     // Transport Order creation (import version)
     // ──────────────────────────────────────────────
-    public function createTransportOrder($trip, $row, array $lookups)
+    /**
+     * [order, attached]. Blank OrderRef# => a new order per trip (custom ref =
+     * trip ref, as before). Otherwise the first row with that OrderRef#
+     * creates the order - or overwrites an existing one no trip uses yet -
+     * and every later row (or an order already on trips) attaches its trip,
+     * adding its figures to the order's totals.
+     */
+    protected function resolveTransportOrder(Collection $row, array $lookups): array
     {
-        $transport_order = new TransportOrder;
-        $transport_order->transport_order_number = $this->transportOrderNumber();
-        $transport_order->custom_ref = $lookups['trip_ref'];
+        $ref = $lookups['order_ref'];
+
+        if ($ref === '') {
+            return [$this->createTransportOrder(null, $row, $lookups), false];
+        }
+
+        $key = mb_strtolower($ref);
+        $order = $this->ordersSeen[$key]
+            ?? TransportOrder::whereRaw('LOWER(TRIM(custom_ref)) = ?', [$key])->first();
+
+        if ($order && (isset($this->ordersSeen[$key]) || TripTransportOrder::where('transport_order_id', $order->id)->exists())) {
+            foreach (['quantity', 'weight', 'litreage', 'litreage_at_20'] as $field) {
+                if ($lookups['loaded'][$field] !== null) {
+                    $order->$field = round((float) $order->$field + (float) $lookups['loaded'][$field], 2);
+                }
+            }
+            foreach (['freight' => 'freight', 'transporter_freight' => 'transporter_freight'] as $field => $key2) {
+                if (is_numeric($lookups[$key2])) {
+                    $order->$field = round((float) $order->$field + (float) $lookups[$key2], 2);
+                }
+            }
+            $order->deal_id = $order->deal_id ?: $lookups['deal']?->id;
+            $order->save();
+
+            return [$this->ordersSeen[$key] = $order, true];
+        }
+
+        return [$this->ordersSeen[$key] = $this->createTransportOrder($order, $row, $lookups), false];
+    }
+
+    public function createTransportOrder($existing, $row, array $lookups)
+    {
+        $transport_order = $existing ?: new TransportOrder;
+        $transport_order->transport_order_number = $transport_order->transport_order_number ?: $this->transportOrderNumber();
+        $transport_order->custom_ref = ($lookups['order_ref'] ?? '') !== '' ? $lookups['order_ref'] : $lookups['trip_ref'];
         $transport_order->bill_of_entry = $row->get('bill_of_entry') ?: null;
-        $transport_order->user_id = Auth::id();
-        $transport_order->deal_id = null;
+        $transport_order->user_id = $transport_order->user_id ?: Auth::id();
+        $transport_order->deal_id = $lookups['deal']?->id;
         $transport_order->company_id = $this->company->id ?: null;
         $transport_order->quotation_id = null;
         $transport_order->with_customer_rates = "custom";
@@ -838,22 +1481,21 @@ WithBatchInserts
         $transport_order->status = "Pending";
         $transport_order->rate = $lookups['rate'] ?: null;
         $transport_order->freight = $lookups['freight'] ?: null;
-        $transport_order->transporter_rate = null;
-        $transport_order->transporter_freight = null;
+        $transport_order->transporter_rate = $lookups['transporter_rate'] ?? null;
+        $transport_order->transporter_freight = $lookups['transporter_freight'] ?? null;
         $transport_order->exchange_rate = null;
         $transport_order->exchange_customer_freight = null;
         $transport_order->distance = $lookups['distance'] ?: null;
         $transport_order->save();
 
-        $this->addDestinations($transport_order, $row, $lookups);
-        $this->addOrigins($transport_order, $row, $lookups);
-
         return $transport_order;
     }
 
-    public function addDestinations($transport_order, $row, array $lookups)
+    public function addDestinations($transport_order, $row, array $lookups, bool $replace = true, $trip = null, $trip_transport_order = null)
     {
-        TripDestination::where('transport_order_id', $transport_order->id)->delete();
+        if ($replace) {
+            TripDestination::where('transport_order_id', $transport_order->id)->delete();
+        }
 
         $single = count($lookups['destinations']) === 1;
 
@@ -867,6 +1509,8 @@ WithBatchInserts
 
             TripDestination::create([
                 'transport_order_id'  => $transport_order->id,
+                'trip_id'             => $trip?->id,
+                'trip_transport_order_id' => $trip_transport_order?->id,
                 'destination_id'      => $transport_order->to,
                 'offloading_point_id' => $leg['point']?->id,
                 'user_id'             => Auth::id(),
@@ -881,15 +1525,19 @@ WithBatchInserts
         }
     }
 
-    public function addOrigins($transport_order, $row, array $lookups)
+    public function addOrigins($transport_order, $row, array $lookups, bool $replace = true, $trip = null, $trip_transport_order = null)
     {
-        TripOrigin::where('transport_order_id', $transport_order->id)->delete();
+        if ($replace) {
+            TripOrigin::where('transport_order_id', $transport_order->id)->delete();
+        }
 
         $single = count($lookups['origins']) === 1;
 
         foreach ($lookups['origins'] as $leg) {
             TripOrigin::create([
                 'transport_order_id'  => $transport_order->id,
+                'trip_id'             => $trip?->id,
+                'trip_transport_order_id' => $trip_transport_order?->id,
                 'destination_id'      => $transport_order->from,
                 'loading_point_id'    => $leg['point']?->id,
                 'user_id'             => Auth::id(),
@@ -991,7 +1639,7 @@ WithBatchInserts
         }
 
         return array_values(array_filter(
-            array_map('trim', preg_split('/[,;|]+/', (string) $value)),
+            array_map('trim', preg_split('/[,;|\r\n]+/', (string) $value)),
             fn($v) => $v !== ''
         ));
     }
@@ -1010,19 +1658,20 @@ WithBatchInserts
             return [(float) $value];
         }
 
-        $value = str_replace(' ', '', (string) $value);
+        $value = trim(str_replace(' ', '', (string) $value));
 
         if ($points === 1 && preg_match('/^\d{1,3}(,\d{3})+(\.\d+)?$/', $value)) {
             return [(float) str_replace(',', '', $value)];
         }
 
-        return array_map(fn($v) => is_numeric($v) ? (float) $v : null, preg_split('/[,;|]/', $value));
+        return array_map(fn($v) => is_numeric($v) ? (float) $v : null, preg_split('/\r\n|[,;|\r\n]/', $value));
     }
 
     // ──────────────────────────────────────────────
     // Trip <-> Transport Order link (import version)
     // ──────────────────────────────────────────────
-    public function createTripTransportOrder($trip, $transport_order)
+    // $allocation: this trip's quantity/weight/litreage/freight/rate/deal_id on the order
+    public function createTripTransportOrder($trip, $transport_order, array $allocation)
     {
         $trip_transport_order = TripTransportOrder::firstOrNew([
             'trip_id'            => $trip->id,
@@ -1030,12 +1679,12 @@ WithBatchInserts
         ]);
 
         $trip_transport_order->tto_number          = $this->ttoNumber();
-        $trip_transport_order->allocated_quantity  = $transport_order->quantity;
-        $trip_transport_order->allocated_weight    = $transport_order->weight;
-        $trip_transport_order->allocated_litreage  = $transport_order->litreage;
-        $trip_transport_order->allocated_freight   = $transport_order->freight;
-        $trip_transport_order->deal_id             = $transport_order->deal_id;
-        $trip_transport_order->allocated_rate      = $transport_order->rate;
+        $trip_transport_order->allocated_quantity  = $allocation['quantity'];
+        $trip_transport_order->allocated_weight    = $allocation['weight'];
+        $trip_transport_order->allocated_litreage  = $allocation['litreage'];
+        $trip_transport_order->allocated_freight   = $allocation['freight'];
+        $trip_transport_order->deal_id             = $allocation['deal_id'];
+        $trip_transport_order->allocated_rate      = $allocation['rate'];
         $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id ?: null;
         $trip_transport_order->currency_id         = $transport_order->currency_id;
         $trip_transport_order->exchange_rate       = $transport_order->exchange_rate;

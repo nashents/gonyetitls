@@ -89,7 +89,7 @@
                                             {{$trailer->identifier_label}}
                                         </td>
                                         <td>{{$trailer->year}}</td>
-                                        <td><span class="badge bg-{{$trailer->status == 1 ? "success" : "danger"}}">{{$trailer->status == 1 ? "Available" : "Unavailable"}}</span></td>
+                                        <td><span class="badge bg-{{$trailer->status == 1 ? "success" : "danger"}}">{{$trailer->status == 1 ? "Available" : "Unavailable"}}</span>@if($trailer->deactivated_at) <span class="badge bg-secondary">Deactivated</span>@endif</td>
                                         <td><span class="badge bg-{{$trailer->service == 0 ? "success" : "danger"}}">{{$trailer->service == 0 ? "Fit for use" : "In Service"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -115,7 +115,7 @@
                                                     @unless ($this->sageEnabled)
                                                     <li><a href="#" data-toggle="modal" data-target="#trailerDeleteModal{{$trailer->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endunless
-                                                    @if ($trailer->status == 1)
+                                                    @if (is_null($trailer->deactivated_at))
                                                     <li><a href="{{route('trailers.deactivate',$trailer->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else
                                                     <li><a href="{{route('trailers.activate',$trailer->id)}}" ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>

@@ -12,7 +12,7 @@ class Age extends Component
     public $employees;
 
     public function mount(){
-        $this->employees = Employee::orderBy('name','asc')->get();
+        $this->employees = Employee::visibleTo()->orderBy('name','asc')->get();
     }
 
     public function exportEmployeesAgeCSV(Excel $excel){

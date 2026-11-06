@@ -542,9 +542,9 @@ class Index extends Component
         $this->vehicles = collect();
         if ($department === 'tyre') {
             $this->expand = true; // tyres are always dispatched as specific tyres
-            $this->horses = Horse::operational()->where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
-            $this->trailers = Trailer::operational()->where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
-            $this->vehicles = Vehicle::operational()->where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
+            $this->horses = Horse::selectable()->operational()->where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
+            $this->trailers = Trailer::selectable()->operational()->where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
+            $this->vehicles = Vehicle::selectable()->operational()->where('status', 1)->where('archive', 0)->orderByIdentifier()->get();
         }
       
        

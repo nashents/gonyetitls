@@ -38,6 +38,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \App\Http\Middleware\DropUnnamedLivewireUpdates::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\HrDriversOnlyGuard::class,
               \App\Http\Middleware\CheckCompanyStatus::class,
             \App\Http\Middleware\SyncFleetMileage::class,
             \App\Http\Middleware\SendFreightReminders::class,

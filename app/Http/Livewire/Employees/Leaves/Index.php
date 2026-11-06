@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Employees\Leaves;
 
 use App\Exports\EmployeesLeaveExport;
+use App\Support\HrAccess;
 use App\Models\Employee;
 use App\Models\EmployeeLeave;
 use App\Models\Leave;
@@ -57,6 +58,10 @@ class Index extends Component
 
     public function mount(){
         $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
+        if (HrAccess::driversOnly()) {
+            // Drivers-only HR users: every list, check and enforce run on drivers
+            $this->staff_type = $this->enforce_staff_type = $this->diag_staff_type = 'drivers';
+        }
         $this->resetPage();
     }
 
@@ -92,7 +97,7 @@ class Index extends Component
         $enforceAccrualRate = $this->enforce_accrual_rate;
         $enforceLeaveDays = $this->enforce_leave_days;
         $enforceMaximumLeaveDays = $this->enforce_maximum_leave_days;
-        $staffType = $this->enforce_staff_type;
+        $staffType = HrAccess::staffType($this->enforce_staff_type);
         $branch = filled($this->enforce_branch_id) ? \App\Models\Branch::find($this->enforce_branch_id) : null;
         $branchFilter = ['branch_id' => $branch?->id];
 
@@ -210,7 +215,7 @@ class Index extends Component
 
         $employees = Employee::query()
             ->activeStaff()
-            ->ofStaffType($this->diag_staff_type)
+            ->ofStaffType(HrAccess::staffType($this->diag_staff_type))
             ->filterBy(['branch_id' => $this->diag_branch_id])
             ->with('branch:id,name')
             ->orderBy('name')->orderBy('surname')->orderBy('id')
@@ -245,14 +250,14 @@ class Index extends Component
 
     public function exportEmployeesLeaveCSV(Excel $excel){
 
-        return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('csv'), Excel::CSV);
+        return $excel->download(new EmployeesLeaveExport(HrAccess::staffType($this->staff_type), $this->staffFilters()), $this->exportFileName('csv'), Excel::CSV);
     }
     public function exportEmployeesLeavePDF(Excel $excel){
 
-        return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('pdf'), Excel::DOMPDF);
+        return $excel->download(new EmployeesLeaveExport(HrAccess::staffType($this->staff_type), $this->staffFilters()), $this->exportFileName('pdf'), Excel::DOMPDF);
     }
     public function exportEmployeesLeaveExcel(Excel $excel){
-        return $excel->download(new EmployeesLeaveExport($this->staff_type, $this->staffFilters()), $this->exportFileName('xlsx'));
+        return $excel->download(new EmployeesLeaveExport(HrAccess::staffType($this->staff_type), $this->staffFilters()), $this->exportFileName('xlsx'));
     }
 
     private function exportFileName(string $extension): string
@@ -287,6 +292,7 @@ class Index extends Component
 
         $this->employee_id = $id;
         $this->employee = Employee::find($id);
+        HrAccess::authorizeEmployee($this->employee);
 
         $this->dispatchBrowserEvent('show-leaveDaysModal');
     }
@@ -339,6 +345,7 @@ class Index extends Component
             'maximum_leave_days' => 'required|numeric|min:0',
         ]);
 
+        HrAccess::authorizeEmployee($this->employee_id);
         $leaveType = LeaveType::find($this->leave_type_id);
 
         EmployeeLeave::updateOrCreate(
@@ -431,7 +438,7 @@ class Index extends Component
     public function render()
     {
         // Suspended and archived employees are excluded, searching included.
-        $query = Employee::query()->activeStaff()->ofStaffType($this->staff_type)->filterBy($this->staffFilters());
+        $query = Employee::query()->activeStaff()->ofStaffType(HrAccess::staffType($this->staff_type))->filterBy($this->staffFilters());
 
         if (filled($this->search)) {
             // Grouped so the staff-type filter still applies to both search terms.

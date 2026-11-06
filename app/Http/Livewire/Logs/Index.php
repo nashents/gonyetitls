@@ -40,7 +40,7 @@ class Index extends Component
 
     public function mount(){
         $this->logs = Log::where('employee_id',Auth::user()->employee->id)->latest()->get();
-        $this->vehicles = Vehicle::orderByIdentifier('asc')->where('status', 1)
+        $this->vehicles = Vehicle::selectable()->orderByIdentifier('asc')->where('status', 1)
         ->where('service',0)->get();
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->selectedEmployee = Auth::user()->employee->id;
@@ -342,7 +342,7 @@ class Index extends Component
     {
 
         if (isset($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')   ->where('status', 1)
+            $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')   ->where('status', 1)
             ->where('service',0)->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();  
         }
 

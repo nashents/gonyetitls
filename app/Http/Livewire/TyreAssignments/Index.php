@@ -55,9 +55,9 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->vehicles = Vehicle::operational()->where('archive', 0)->where('status',1)->orderByIdentifier('asc')->get();
-        $this->trailers = Trailer::operational()->where('archive', 0)->where('status', 1)->orderByIdentifier('asc')->get();
-        $this->horses = Horse::operational()->where('archive', 0)->where('status',1)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::selectable()->operational()->where('archive', 0)->where('status',1)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::selectable()->operational()->where('archive', 0)->where('status', 1)->orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable()->operational()->where('archive', 0)->where('status',1)->orderByIdentifier('asc')->get();
     }
 
     private function resetInputFields(){

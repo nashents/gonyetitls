@@ -82,15 +82,15 @@ class Breakdowns extends Component
 
     public function updatedSelectedTransporter($transporter){
         if (!is_null($transporter)) {
-            $this->horses = Horse::where('transporter_id',$transporter)
+            $this->horses = Horse::selectable()->where('transporter_id',$transporter)
             ->where('status', 1)
             ->where('service',0)
             ->orderByIdentifier('asc')->latest()->get();
-            $this->trailers = Trailer::where('transporter_id',$transporter)
+            $this->trailers = Trailer::selectable()->where('transporter_id',$transporter)
             ->where('status', 1)
             ->where('service',0)
             ->orderByIdentifier('asc')->latest()->get();
-            $this->drivers = Driver::where('transporter_id',$transporter)
+            $this->drivers = Driver::selectable()->where('transporter_id',$transporter)
             ->withAggregate('employee','name')
             ->where('status', 1)
             ->orderBy('employee_name','asc')->latest()->get();
@@ -233,9 +233,9 @@ class Breakdowns extends Component
         $this->trip_id = $breakdown_assignment->trip_id;
         $this->trip = Trip::find($this->trip_id);
         $this->selectedTransporter = $breakdown_assignment->transporter_id;
-        $this->assignment_horses = Horse::where('transporter_id',$this->selectedTransporter)->get();
-        $this->trailers = Trailer::where('transporter_id',$this->selectedTransporter)->get();
-        $this->drivers = Driver::where('transporter_id',$this->selectedTransporter)->get();
+        $this->assignment_horses = Horse::selectable()->where('transporter_id',$this->selectedTransporter)->get();
+        $this->trailers = Trailer::selectable()->where('transporter_id',$this->selectedTransporter)->get();
+        $this->drivers = Driver::selectable()->where('transporter_id',$this->selectedTransporter)->get();
         $this->driver_id = $breakdown_assignment->driver_id;
         $this->horse_id = $breakdown_assignment->horse_id;
         $this->description = $breakdown_assignment->description;

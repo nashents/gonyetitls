@@ -615,7 +615,7 @@ class Index extends Component
             ->whereNotNull('employee_id')->whereBetween('expires_at',[$today,$in30d])
             ->where('closed',0)->count();
 
-        $kpis['pending_leave_requests'] = Leave::whereNull('deleted_at')
+        $kpis['pending_leave_requests'] = Leave::visibleTo()->whereNull('deleted_at')
             ->where('status','pending')->count();
 
         $kpis['payroll_cost_mtd'] = (float) PayrollSalary::whereNull('deleted_at')
@@ -624,7 +624,7 @@ class Index extends Component
                 ->where('year', (string) Carbon::now()->year))
             ->sum(DB::raw('COALESCE(net+0,0)'));
 
-        $kpis['outstanding_loans'] = (float) Loan::whereNull('deleted_at')
+        $kpis['outstanding_loans'] = (float) Loan::visibleTo()->whereNull('deleted_at')
         ->where('currency_id',$cur)
             ->where('authorization','approved')->where('status','Unpaid')
             ->sum(DB::raw('COALESCE(balance+0,0)'));

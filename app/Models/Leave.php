@@ -42,6 +42,15 @@ class Leave extends Model implements Auditable
         'available_leave_days',
     ];
 
+    /** Drivers-only HR users (App\Support\HrAccess) see driver leave only. */
+    public function scopeVisibleTo($query, $user = null)
+    {
+        if (\App\Support\HrAccess::driversOnly($user)) {
+            return $query->whereHas('employee', fn ($e) => $e->withTrashed()->visibleTo($user));
+        }
+        return $query;
+    }
+
     public function scopeFilterLeaves($query, $filter = null, $from = null, $to = null, $search = null)
     {
         $today = Carbon::today();

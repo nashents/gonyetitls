@@ -323,36 +323,35 @@ class Trip extends Model implements Auditable, EditAuthorizable
     }
 
     /**
-     * Allowable loss % for this trip: the customer's own percentage, else
-     * the company default from Business Settings > Settings. Null when
-     * neither is set (no allowance - every loss is chargeable as before).
+     * Loss terms for this trip (see LossRateService):
+     *  allowance: Customer + Cargo -> Customer (all cargos) -> Cargo -> default
+     *  rate:      Cargo own-fleet / subcontractor rate -> default for that kind
+     * allowance / rate are ['value' => ?float, 'source' => ?string].
      */
-    public function allowableLossPercentage(): ?float
+    public function lossTerms(): array
     {
-        $customerPct = $this->customer ? $this->customer->allowable_loss_percentage : null;
-        if (is_numeric($customerPct)) {
-            return (float) $customerPct;
+        if (! $this->lossTermsCache) {
+            $service = app(\App\Services\LossRateService::class);
+            $this->lossTermsCache = [
+                'allowance' => $service->allowance($this->customer, $this->cargo, $this->company),
+                'rate' => $service->rate($this->cargo, $this->transporter, $this->company),
+                'own_fleet' => $service->isOwnFleet($this->transporter),
+            ];
         }
 
-        $companyPct = $this->company ? $this->company->allowable_loss_percentage : null;
-
-        return is_numeric($companyPct) ? (float) $companyPct : null;
+        return $this->lossTermsCache;
     }
 
-    /**
-     * Amount charged per unit (ton / litre) of chargeable loss, in the trip's
-     * currency: customer's own rate, else the Business Settings default.
-     */
+    /** Allowable loss % (a percent: 0.3 = 0.003). Null when nothing is set - every loss is chargeable. */
+    public function allowableLossPercentage(): ?float
+    {
+        return $this->lossTerms()['allowance']['value'];
+    }
+
+    /** Amount per unit (ton / litre) of chargeable loss, in the trip's currency. */
     public function chargeableLossRate(): ?float
     {
-        $customerRate = $this->customer ? $this->customer->chargeable_loss_rate : null;
-        if (is_numeric($customerRate)) {
-            return (float) $customerRate;
-        }
-
-        $companyRate = $this->company ? $this->company->chargeable_loss_rate : null;
-
-        return is_numeric($companyRate) ? (float) $companyRate : null;
+        return $this->lossTerms()['rate']['value'];
     }
 
     /** Chargeable loss amount for a chargeable loss quantity; null when no rate is set. */
@@ -362,6 +361,9 @@ class Trip extends Model implements Auditable, EditAuthorizable
 
         return (! is_null($rate) && is_numeric($chargeableLoss)) ? round(max(0, $chargeableLoss) * $rate, 2) : null;
     }
+
+    /** Per-request memo for the resolved loss terms (not an attribute). */
+    protected array $lossTermsCache = [];
 
     /**
      * allowable_loss_weight / allowable_loss_litreage: a value stored on the

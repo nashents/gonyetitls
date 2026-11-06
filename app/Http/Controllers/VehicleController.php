@@ -78,6 +78,7 @@ class VehicleController extends Controller
     public function deactivate(Vehicle $vehicle){
         // $vehicle = Vehicle::find($id);
         $vehicle->status = 0 ;
+        $vehicle->deactivated_at = now();
         $vehicle->update();
         Session::flash('success','Vehicle Successfully Deactivated');
         return redirect(route('vehicles.index'));
@@ -86,6 +87,7 @@ class VehicleController extends Controller
     public function activate(Vehicle $vehicle){
         // $vehicle = Vehicle::find($id);
         $vehicle->status = 1 ;
+        $vehicle->deactivated_at = null;
         $vehicle->update();
         Session::flash('success','Vehicle Successfully Activated');
         return redirect(route('vehicles.index'));

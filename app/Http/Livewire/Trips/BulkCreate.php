@@ -531,7 +531,7 @@ class BulkCreate extends Component
     // Same availability rule as Trips\Create::updatedSelectedStatus(): in-progress statuses need free, unserviced assets.
     private function assetQuery(string $model)
     {
-        return $model::query()
+        return $model::selectable()
             ->where('archive', 0)
             ->when(! in_array($this->trip_status, BulkTripScheduleService::AVAILABLE_STATUSES, true), function ($q) use ($model) {
                 $q->where('status', 1);

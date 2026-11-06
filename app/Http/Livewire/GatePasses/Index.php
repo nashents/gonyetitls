@@ -105,9 +105,9 @@ class Index extends Component
         $this->visitors = Visitor::orderBy('created_at','desc')->get();
         $this->trips = Trip::latest()->whereYear('start_date',date('Y'))->get();
         $this->groups = Group::orderBy('created_at','desc')->get();
-        $this->horses = Horse::orderByIdentifier('asc')->get();
-        $this->drivers = Driver::with('employee:id,name,surname')->latest()->get();
-        $this->trailers = Trailer::latest()->get();
+        $this->horses = Horse::selectable()->orderByIdentifier('asc')->get();
+        $this->drivers = Driver::selectable()->with('employee:id,name,surname')->latest()->get();
+        $this->trailers = Trailer::selectable()->latest()->get();
     }
 
     public function gate_passNumber(){

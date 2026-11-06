@@ -78,7 +78,7 @@ class Edit extends Component
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->destinations = Destination::latest()->get();
         $this->trips = $this->driver->trips;
-        $this->drivers = Driver::where('status', 1)->orderBy('driver_number','asc')->get();
+        $this->drivers = Driver::selectable($this->selectedDriver)->where('status', 1)->orderBy('driver_number','asc')->get();
         $this->date = $recovery->date;
         $this->trip_id = $recovery->trip_id;
         $this->type = $recovery->type;

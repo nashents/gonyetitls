@@ -314,7 +314,7 @@ class BulkCreate extends Component
     {
         $taken = collect($this->rows)->pluck('horse_id')->all();
 
-        $trucks = Horse::where('status', 1)->where('archive', 0)
+        $trucks = Horse::selectable()->where('status', 1)->where('archive', 0)
             ->whereNotIn('id', $taken)
             ->when(filled($this->truckSearch), function ($q) {
                 $term = '%'.$this->truckSearch.'%';

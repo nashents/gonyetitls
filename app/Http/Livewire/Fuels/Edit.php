@@ -115,8 +115,8 @@ class Edit extends Component
 
         }
 
-        $this->horses = Horse::where('service',0)->orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::where('service',0)->orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable($this->selectedHorse)->where('service',0)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::selectable($this->selectedVehicle)->where('service',0)->orderByIdentifier('asc')->get();
         $this->assets = Asset::latest()->get();
         $this->categories = Category::latest()->get();
         $this->category_values = collect();
@@ -124,7 +124,7 @@ class Edit extends Component
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->trips = collect();
         $this->containers = Container::where('balance','>',0)->orderBy('name','asc')->latest()->get();
-        $this->drivers = Driver::latest()->get();
+        $this->drivers = Driver::selectable($this->driver_id)->latest()->get();
         $this->customers = Customer::orderBy('name','asc')->get(['id','name']);
 
         

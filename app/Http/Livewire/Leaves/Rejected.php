@@ -61,6 +61,7 @@ class Rejected extends Component
 
      
         $leave = Leave::find($this->leave_id);
+        \App\Support\HrAccess::authorizeEmployee($leave?->employee_id);
         if ($this->category == "hr") {
 
         $leave->management_id = Auth::user()->id;
@@ -157,8 +158,8 @@ class Rejected extends Component
             ($isAdmin && $inHrDept) ||
             ($isManagement && $inHrDept);
 
-        // Base query
-        $query = Leave::query();
+        // Base query — drivers-only HR users (App\Support\HrAccess) see driver leave only
+        $query = Leave::query()->visibleTo();
 
         if ($canSeeAllPending) {
             $query->where('management_decision', 'rejected');

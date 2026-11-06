@@ -13,7 +13,7 @@ class Archived extends Component
     public $employee_id;
   
     public function mount(){
-        $this->employees = Employee::where('archive','1')
+        $this->employees = Employee::where('archive','1')->visibleTo()
                                     ->orderBy('employee_number', 'desc')->get();
       }
 
@@ -23,11 +23,12 @@ class Archived extends Component
     }
     public function update(){
         $employee =  Employee::withTrashed()->find($this->employee_id);
+        \App\Support\HrAccess::authorizeEmployee($employee);
         $employee->archive = 0;
         $employee->update();
         Session::flash('success','Employee Restored Successfully!!');
         $this->dispatchBrowserEvent('hide-employeeRestoreModal');
-        return redirect()->route('employees.index');
+        return redirect()->route(\App\Support\HrAccess::driversOnly() ? 'drivers.index' : 'employees.index');
     }
 
     public function render()

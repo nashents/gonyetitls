@@ -24,6 +24,7 @@ class Show extends Component
     public function mount($id){
         $this->loan_id = $id;
         $this->loan = Loan::find($id);
+        \App\Support\HrAccess::authorizeLoan($this->loan);
         
     }
 

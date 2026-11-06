@@ -16,7 +16,7 @@ class Reports extends Component
     public function search(){
 
         $this->search = TRUE;
-        $this->leaves = Leave::whereBetween('created_at',[$this->from, $this->to] )
+        $this->leaves = Leave::visibleTo()->whereBetween('created_at',[$this->from, $this->to] )
         ->latest()->get();
 
     }

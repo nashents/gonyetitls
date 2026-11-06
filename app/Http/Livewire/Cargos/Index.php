@@ -31,7 +31,23 @@ class Index extends Component
     public $measurement;
     public $measurements;
     public $chargeable_loss;
- 
+    public $allowable_loss_percentage;
+    public $own_fleet_chargeable_loss_rate;
+    public $subcontractor_chargeable_loss_rate;
+
+    private const LOSS_FIELDS = [
+        'allowable_loss_percentage' => 'nullable|numeric|min:0|max:100',
+        'own_fleet_chargeable_loss_rate' => 'nullable|numeric|min:0',
+        'subcontractor_chargeable_loss_rate' => 'nullable|numeric|min:0',
+    ];
+
+    private function fillLossFields(Cargo $cargo): void
+    {
+        foreach (array_keys(self::LOSS_FIELDS) as $field) {
+            $cargo->$field = is_numeric($this->$field) ? $this->$field : null;
+        }
+    }
+
 
     public $cargo_id;
     public $user_id;
@@ -82,6 +98,9 @@ class Index extends Component
         $this->sku = '';
         $this->risk = '';
         $this->chargeable_loss = '';
+        foreach (array_keys(self::LOSS_FIELDS) as $field) {
+            $this->$field = null;
+        }
         $this->measurement = '';
         $this->transporter_id = [] ;
     }
@@ -102,7 +121,7 @@ class Index extends Component
         $this->validate([
             'transporter_id' => 'array',
             'transporter_id.*' => 'integer',
-        ]);
+        ] + self::LOSS_FIELDS);
             
         DB::transaction(function () {
 
@@ -115,6 +134,7 @@ class Index extends Component
         $cargo->group = $this->group;
         $cargo->type = $this->type;
         $cargo->risk = $this->risk;
+        $this->fillLossFields($cargo);
         $cargo->save();
 
         if (!empty($this->transporter_id)) {
@@ -143,6 +163,9 @@ class Index extends Component
     $this->group = $cargo->group;
     $this->risk = $cargo->risk;
     $this->cargo_id = $cargo->id;
+    foreach (array_keys(self::LOSS_FIELDS) as $field) {
+        $this->$field = is_numeric($cargo->$field) ? $cargo->$field + 0 : null;
+    }
     $this->dispatchBrowserEvent('show-cargoEditModal');
 
     }
@@ -150,6 +173,8 @@ class Index extends Component
 
     public function update()
     {
+          $this->validate(self::LOSS_FIELDS);
+
           DB::transaction(function () {
 
         if ($this->cargo_id) {
@@ -161,6 +186,7 @@ class Index extends Component
             $cargo->sku = $this->sku;
             $cargo->type = $this->type;
             $cargo->risk = $this->risk;
+            $this->fillLossFields($cargo);
             $cargo->update();
 
             $this->dispatchBrowserEvent('hide-cargoEditModal');

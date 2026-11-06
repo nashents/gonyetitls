@@ -61,6 +61,7 @@ class Show extends Component
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
         $this->all_departments = Department::orderBy('name','asc')->get();
         $this->employee = Employee::with('leaves','documents','dependants','departments','driver')->find($id);
+        \App\Support\HrAccess::authorizeEmployee($this->employee);
         $this->user = $this->employee->user;
         $this->company = $this->employee->company;
         $this->employee_id = $id;

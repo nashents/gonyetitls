@@ -36,7 +36,7 @@ class Myallocation extends Component
     public function mount(){
         $this->allocations = Allocation::where('employee_id', Auth::user()->employee->id)->latest()->get();
         $this->employees = Employee::all();
-        $this->vehicles = Vehicle::all();
+        $this->vehicles = Vehicle::selectable()->get();
         $this->containers = Container::all();
     }
 

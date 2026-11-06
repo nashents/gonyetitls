@@ -63,7 +63,7 @@
                                             <td>{{$horse->chasis_number}}</td>
                                             <td>{{$horse->engine_number}}</td>
                                             <td>{{$horse->year}}</td>
-                                            <td><span class="badge bg-{{$horse->status == 1 ? "success" : "danger"}}">{{$horse->status == 1 ? "Available" : "Unavailable"}}</span></td>
+                                            <td><span class="badge bg-{{$horse->status == 1 ? "success" : "danger"}}">{{$horse->status == 1 ? "Available" : "Unavailable"}}</span>@if($horse->deactivated_at) <span class="badge bg-secondary">Deactivated</span>@endif</td>
                                             <td><span class="badge bg-{{$horse->service == 0 ? "success" : "danger"}}">{{$horse->status == 0 ? "Fit for use" : "In Service"}}</span></td>
                                             <td class="w-10 line-height-35 table-dropdown">
                                                 <div class="dropdown">
@@ -75,7 +75,7 @@
                                                         <li><a href="{{route('horses.show', $horse->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                         <li><a href="{{route('horses.edit', $horse->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                         <li><a href="#" data-toggle="modal" data-target="#horseDeleteModal{{$horse->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                                        @if ($horse->status == 1)
+                                                        @if (is_null($horse->deactivated_at))
                                                         <li><a href="{{route('horses.deactivate', $horse->id)}}"  ><i class="fa fa-toggle-off color-danger"></i>Deactivate</a></li>
                                                         @else
                                                         <li><a href="{{route('horses.activate', $horse->id)}}"  ><i class="fa fa-toggle-on color-success"></i>Activate</a></li>

@@ -12,6 +12,13 @@ class Fuel extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    /**
+     * Not a column. A retail (transporter) price per litre to post with
+     * instead of the Business Settings markup - set by the trips import from
+     * the FuelOrder Retail Rate column (TripExpenseRecoveryService::applyFuelMarkup).
+     */
+    public ?float $retailPriceOverride = null;
+
     protected static function booted()
     {
         // Soft delete only writes deleted_at, so stamp who did it with a

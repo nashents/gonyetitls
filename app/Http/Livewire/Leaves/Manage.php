@@ -90,6 +90,7 @@ class Manage extends Component
     public function mount(){
         // Archived employees can't apply for leave; suspended ones still can
         $this->employees = Employee::with('user')
+        ->visibleTo()
         ->where('archive', false)
         ->whereHas('user', function ($query) {
             $query->where('category', '!=', 'admin');
@@ -140,7 +141,7 @@ class Manage extends Component
         $this->available_leave_days = 0;
 
         if (!is_null($id)) {
-            $this->selected_employee = Employee::with('departments')->where('archive', false)->find($id);
+            $this->selected_employee = Employee::with('departments')->visibleTo()->where('archive', false)->find($id);
 
             if (!$this->selected_employee) {
                 return;
@@ -167,6 +168,7 @@ class Manage extends Component
             $isBackdated = $start->lt($now->startOfDay()); // Before today
             $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
 
+            \App\Support\HrAccess::authorizeEmployee($this->selected_employee);
             $leave = new Leave;
             $leave->user_id = Auth::user()->id;
             $leave->employee_id = $this->selected_employee->id;
@@ -237,7 +239,8 @@ class Manage extends Component
 
     public function edit($id){
         $leave = Leave::find($id);
-       
+        \App\Support\HrAccess::authorizeEmployee($leave?->employee_id);
+
         $this->leave_id = $leave->id;
         $this->user_id = $leave->user_id;
       
@@ -272,6 +275,8 @@ class Manage extends Component
             $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
 
             $leave =  Leave::find($this->leave_id);
+            \App\Support\HrAccess::authorizeEmployee($leave?->employee_id);
+            \App\Support\HrAccess::authorizeEmployee($this->selected_employee);
             $leave->user_id = Auth::user()->id;
             $leave->employee_id = $this->selected_employee->id;
             $leave->to = $this->to;
@@ -475,6 +480,7 @@ class Manage extends Component
             
 
            $leaves = Leave::with('employee','user','department','leave_type')
+            ->visibleTo()
             ->filterLeaves($this->leave_filter, $this->range_from, $this->range_to, $this->search)
             ->orderBy('created_at', 'desc')
             ->paginate(10);

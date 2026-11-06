@@ -43,11 +43,11 @@ class Inspections extends Component
         $this->gate_pass_id = $id;
         $this->checklists = Checklist::where('gate_pass_id',$id)->get();
         $this->checklist_items = ChecklistItem::latest()->get();
-        $this->vehicles = Vehicle::latest()->get();
-        $this->drivers = Driver::latest()->get();
+        $this->vehicles = Vehicle::selectable()->latest()->get();
+        $this->drivers = Driver::selectable()->latest()->get();
         $this->employees = Employee::latest()->get();
-        $this->trailers = Trailer::latest()->get();
-        $this->horses = Horse::latest()->get();
+        $this->trailers = Trailer::selectable()->latest()->get();
+        $this->horses = Horse::selectable()->latest()->get();
     }
 
     

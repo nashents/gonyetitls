@@ -126,7 +126,7 @@
                                             {{$vehicle->next_service_hours ? $vehicle->next_service_hours."Hours" : ""}}
                                         </td>
                                         <td><span class="badge bg-{{$vehicle->service == 0 ? "success" : "danger"}}">{{$vehicle->service == 0 ? "Fit for use" : "In Service"}}</span></td>
-                                        <td><span class="badge bg-{{$vehicle->status == 1 ? "success" : "danger"}}">{{$vehicle->status == 1 ? "Available" : "Intransit"}}</span></td>
+                                        <td><span class="badge bg-{{$vehicle->status == 1 ? "success" : "danger"}}">{{$vehicle->status == 1 ? "Available" : "Intransit"}}</span>@if($vehicle->deactivated_at) <span class="badge bg-secondary">Deactivated</span>@endif</td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -137,7 +137,7 @@
                                                     <li><a href="{{route('vehicles.show', $vehicle->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     <li><a href="{{route('vehicles.edit', $vehicle->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#vehicleDeleteModal{{$vehicle->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                                    @if ($vehicle->status == 1)
+                                                    @if (is_null($vehicle->deactivated_at))
                                                         <li><a href="{{route('vehicles.deactivate', $vehicle->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else
                                                         <li><a href="{{route('vehicles.activate', $vehicle->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>

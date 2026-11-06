@@ -30,6 +30,7 @@ class Pending extends Component
     }
     public function authorize($id){
         $loan = Loan::find($id);
+        \App\Support\HrAccess::authorizeLoan($loan);
         $this->loan_id = $loan->id;
         $this->loan = $loan;
         $this->dispatchBrowserEvent('show-authorizationModal');
@@ -38,6 +39,7 @@ class Pending extends Component
       public function update(){
       try{
             $loan = Loan::find($this->loan_id);
+            \App\Support\HrAccess::authorizeLoan($loan);
             $loan->authorized_by_id = Auth::user()->id;
             $loan->authorization = $this->authorize;
             $loan->reason = $this->comments;
@@ -72,7 +74,7 @@ catch(\Exception $e){
     {
        
         return view('livewire.loans.pending',[
-            'loans' => Loan::where('authorization', 'pending')->orderBy('created_at','desc')->paginate(10)
+            'loans' => Loan::visibleTo()->where('authorization', 'pending')->orderBy('created_at','desc')->paginate(10)
         ]);
     }
 }

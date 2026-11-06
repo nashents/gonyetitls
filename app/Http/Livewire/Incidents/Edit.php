@@ -397,9 +397,9 @@ class Edit extends Component
         }
 
          if (isset($this->selectedTransporter)) {
-            $this->horses = Horse::where('transporter_id', $this->selectedTransporter)->where('service', 0)->get();
-            $this->vehicles = Vehicle::where('transporter_id', $this->selectedTransporter)->where('service', 0)->get(); 
-            $this->drivers = Driver::withAggregate('employee','name')->where('transporter_id',$this->selectedTransporter)
+            $this->horses = Horse::selectable($this->selectedHorse)->where('transporter_id', $this->selectedTransporter)->where('service', 0)->get();
+            $this->vehicles = Vehicle::selectable($this->selectedVehicle)->where('transporter_id', $this->selectedTransporter)->where('service', 0)->get(); 
+            $this->drivers = Driver::selectable($this->driver_id)->withAggregate('employee','name')->where('transporter_id',$this->selectedTransporter)
                     ->orderBy('employee_name','asc')->latest()->get();
         } else {
             $this->vehicles = collect();
@@ -526,9 +526,9 @@ class Edit extends Component
             if (!is_null($id)) {
                 $this->transporter = Transporter::find($id);
                 if (isset($this->transporter)) {
-                    $this->horses = $this->transporter->horses->where('service', 0);
-                    $this->vehicles = $this->transporter->vehicles->where('service', 0);
-                    $this->drivers = Driver::withAggregate('employee','name')->where('transporter_id',$id)
+                    $this->horses = $this->transporter->horses()->selectable($this->selectedHorse)->where('service', 0)->get();
+                    $this->vehicles = $this->transporter->vehicles()->selectable($this->selectedVehicle)->where('service', 0)->get();
+                    $this->drivers = Driver::selectable($this->driver_id)->withAggregate('employee','name')->where('transporter_id',$id)
                     ->orderBy('employee_name','asc')->latest()->get();
                 }
                 
@@ -770,13 +770,13 @@ class Edit extends Component
     {
 
         if (isset($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::selectable($this->selectedHorse)->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }
         if (isset($this->searchcustomer)) {
             $this->customers = Customer::where('name', 'LIKE', "%".$this->searchCustomer."%")->get();
         }
         if (isset($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::selectable($this->selectedVehicle)->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
             
         }
        

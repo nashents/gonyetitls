@@ -12,9 +12,31 @@
                         </div>
                         <div class="panel-body p-20">
 
+                            @if ($selectedRows)
+                            <div class="row" style="margin-left:3px; margin-bottom:10px;">
+                                <div class="col-lg-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="leaveBulkMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                            <i class="fa fa-bars"></i> Bulk Actions
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu bg-gray" aria-labelledby="leaveBulkMenu">
+                                            <li><a href="#" wire:click.prevent="showBulkyAuthorize()"><i class="fa fa-gavel"></i> Authorize Leave Applications</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6" style="margin-top: 3px; margin-left: -20px;">
+                                    <span>selected {{ count($selectedRows) }} leave application(s) to authorize.</span>
+                                </div>
+                            </div>
+                            @endif
+
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
+                                        <th class="th-sm">
+                                            <input type="checkbox" wire:model="selectPageRows" title="Select all on this page">
+                                        </th>
                                          <th class="th-sm">Employee
                                         </th>
                                         <th class="th-sm">Type
@@ -46,6 +68,11 @@
                                 <tbody>
                                     @forelse ($leaves as $leave)
                                   <tr wire:key="{{ '4f191b-47-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leave->id ?? '') }}">
+                                      <td>
+                                        @if (Auth::user()->employee->id !== $leave->employee_id)
+                                            <input type="checkbox" wire:model="selectedRows" value="{{ $leave->id }}">
+                                        @endif
+                                      </td>
                                       <td>
                                         {{ucfirst($leave->employee ? $leave->employee->name : '')}} {{ucfirst($leave->employee ? $leave->employee->surname : '')}}
                                         @if ($leave->department)
@@ -109,7 +136,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="13">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Leave Applications Found ....
                                         </div>
@@ -225,6 +252,10 @@
                     </div>
                 </div>
                 @endif
+                <div class="form-group">
+                    <input type="checkbox" wire:model.defer="stay_on_page" class="line-style" id="stay_on_page" />
+                    <label for="stay_on_page" class="radio-label">Stay on this page after authorizing (don't redirect to Approved/Rejected)</label>
+                </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -232,6 +263,45 @@
                         <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
                     </div>
                     <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bulkyAuthorizationModal" tabindex="-1" role="dialog" aria-labelledby="leaveBulkModalLabel" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="leaveBulkModalLabel"><i class="fa fa-gavel"></i> Bulk Authorize Leave Applications<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="authorizeSelectedRows">
+                <div class="modal-body">
+                    <p><small>{{ count($selectedRows ?? []) }} application(s) selected. Your decision is recorded at your authorization level (HR or HOD); your own applications are skipped.</small></p>
+                    <div class="form-group">
+                        <label for="bulk_decision">Decision</label>
+                        <select id="bulk_decision" wire:model.defer="decision" class="form-control" required>
+                            <option value="">Select Decision</option>
+                            <option value="approved">Approve</option>
+                            <option value="rejected">Reject</option>
+                        </select>
+                        @error('decision') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="bulk_reason">Reason</label>
+                        <textarea id="bulk_reason" wire:model.defer="reason" class="form-control" cols="30" rows="4"></textarea>
+                        @error('reason') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" wire:model.defer="stay_on_page" class="line-style" id="stay_on_page_bulk" />
+                        <label for="stay_on_page_bulk" class="radio-label">Stay on this page after authorizing (don't redirect to Approved/Rejected)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="authorizeSelectedRows"><i class="fa fa-save"></i>Save</button>
+                    </div>
                 </div>
             </form>
             </div>

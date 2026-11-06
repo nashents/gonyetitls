@@ -45,9 +45,9 @@ class Breakdowns extends Component
     public function mount($driver){
     $this->driver = $driver;
     $this->trips = collect();
-    $this->trailers = Trailer::orderByIdentifier('asc')->get();
-    $this->horses = Horse::orderByIdentifier('asc')->get();
-    $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
+    $this->trailers = Trailer::selectable()->orderByIdentifier('asc')->get();
+    $this->horses = Horse::selectable()->orderByIdentifier('asc')->get();
+    $this->vehicles = Vehicle::selectable()->orderByIdentifier('asc')->get();
 
     }
 

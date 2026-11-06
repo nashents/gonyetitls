@@ -82,6 +82,9 @@ class Edit extends Component
     public $relationship;
     public $contact;
     public $use_email_as_username;
+    // "HR access: drivers only" (users.hr_drivers_only, App\Support\HrAccess) — set by is_admin / Super Admin only
+    public $hr_drivers_only = false;
+    public $can_set_hr_restriction = false;
     public $grades;
     public $grade_id;
     
@@ -124,6 +127,7 @@ class Edit extends Component
     public function mount($id){
         $this->employee_id = $id;
         $employee = Employee::find($id);
+        \App\Support\HrAccess::authorizeEmployee($employee);
         $this->ranks = Rank::all();
         $this->documents = $employee->documents;
         foreach($this->documents as $key => $value){
@@ -143,6 +147,8 @@ class Edit extends Component
         $user = $employee->user;
         $this->user = $user;
         $this->user_id = $user->id;
+        $this->hr_drivers_only = (bool) $user->hr_drivers_only;
+        $this->can_set_hr_restriction = Auth::user()->is_admin() || Auth::user()->isSuperAdmin();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
@@ -312,6 +318,10 @@ class Edit extends Component
           $user->category = 'employee';
           $user->email = $this->email;
           $user->phonenumber = $this->phonenumber;
+          // Re-checked server-side: the public flag alone must not let anyone toggle it
+          if (Auth::user()->is_admin() || Auth::user()->isSuperAdmin()) {
+              $user->hr_drivers_only = (bool) $this->hr_drivers_only;
+          }
           $user->use_email_as_username = $this->use_email_as_username;
           if ($this->use_email_as_username == TRUE) {
             $user->username = $this->email;

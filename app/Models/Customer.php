@@ -87,6 +87,11 @@ class Customer extends Authenticatable implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    /** Allowable loss % agreed per cargo (Loss Rates table). */
+    public function cargoLossAllowances(){
+        return $this->hasMany(CustomerCargoLossAllowance::class);
+    }
+
     public function company(){
         return $this->belongsTo('App\Models\Company');
     }

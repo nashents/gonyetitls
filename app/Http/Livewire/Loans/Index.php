@@ -48,7 +48,7 @@ class Index extends Component
     public $payment_per_month;
 
     public function mount(){
-        $this->employees = Employee::orderBy('name')->get();
+        $this->employees = Employee::visibleTo()->orderBy('name')->get();
         $this->vendors = Vendor::orderBy('name')->get();
         $this->liability_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Liabilities & Credit Cards');
@@ -131,6 +131,7 @@ class Index extends Component
 
         $loan = new Loan;
         $loan->user_id = Auth::user()->id;
+        if ($this->employee_id) { \App\Support\HrAccess::authorizeEmployee($this->employee_id); }
         $loan->employee_id = $this->employee_id;
         $loan->vendor_id = $this->vendor_id;
         $loan->account_id = $this->account_id;
@@ -168,6 +169,7 @@ class Index extends Component
 
     public function edit($id){
         $loan = Loan::find($id);
+        \App\Support\HrAccess::authorizeLoan($loan);
         $this->loan_id = $id;
         $this->loan_type_id = $loan->loan_type_id;
         $this->amount = $loan->amount;
@@ -189,10 +191,12 @@ class Index extends Component
     public function update(){
         try{
         $loan =  Loan::find($this->loan_id);
+        \App\Support\HrAccess::authorizeLoan($loan);
         $loan->loan_type_id = $this->loan_type_id;
         $loan->currency_id = $this->currency_id;
         $loan->interest = $this->interest;
         $loan->vendor_id = $this->vendor_id;
+        if ($this->employee_id) { \App\Support\HrAccess::authorizeEmployee($this->employee_id); }
         $loan->employee_id = $this->employee_id;
         $loan->account_id = $this->account_id;
         $loan->movement = $this->movement;
@@ -244,7 +248,7 @@ class Index extends Component
           
         }
         $this->vendors = Vendor::orderBy('name')->get();
-          $this->employees = Employee::orderBy('name')->get();
+          $this->employees = Employee::visibleTo()->orderBy('name')->get();
         $this->liability_accounts = Account::active()->whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Liabilities & Credit Cards');
         })->orderBy('name','asc')->get();
@@ -253,7 +257,7 @@ class Index extends Component
         })->orderBy('name','asc')->get();
         $this->loan_types = LoanType::orderBy('name')->get();
         return view('livewire.loans.index',[
-            'loans' => Loan::orderBy('created_at','desc')->paginate(10),
+            'loans' => Loan::visibleTo()->orderBy('created_at','desc')->paginate(10),
             'total' => $this->total,
             'payment_per_month' => $this->payment_per_month,
             'vendors' => $this->vendors,

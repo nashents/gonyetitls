@@ -106,13 +106,20 @@ class ImportsController extends Controller
         $import->import($file);
 
         $skipped = $import->getSkippedRows();
-        if (!empty($skipped)) {
-            $summary = collect($skipped)
-                ->map(fn ($skip) => "{$skip['ref']}: {$skip['reason']}")
-                ->implode(' | ');
-            Session::flash('warning', count($skipped).' trip row(s) were skipped: '.$summary);
+        $warnings = $import->getWarnings();
+        $created = collect($import->getCreated())
+            ->map(fn ($names, $type) => count($names).' '.$type.'(s): '.implode(', ', $names))
+            ->implode('; ');
+        $created = $created ? ' New master data created - '.$created.'.' : '';
+        if (!empty($skipped) || !empty($warnings)) {
+            $line = fn ($rows) => collect($rows)->map(fn ($skip) => "{$skip['ref']}: {$skip['reason']}")->implode(' | ');
+            Session::flash('warning', trim(
+                (empty($skipped) ? '' : count($skipped).' trip row(s) were skipped: '.$line($skipped).'. ')
+                .(empty($warnings) ? '' : 'Imported with warnings: '.$line($warnings).'.')
+                .$created
+            ));
         } else {
-            Session::flash('success','Trip(s) Imported Successfully!!');
+            Session::flash('success','Trip(s) Imported Successfully!!'.$created);
         }
         return redirect()->back();
     }

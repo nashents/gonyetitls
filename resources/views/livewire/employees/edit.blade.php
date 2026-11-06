@@ -233,6 +233,23 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if ($can_set_hr_restriction)
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label style="font-weight:normal">
+                                                <input type="checkbox" wire:model.defer="hr_drivers_only">
+                                                <strong>HR access: drivers only</strong>
+                                            </label>
+                                            <small class="form-text text-muted d-block">
+                                                Limits this user's HR access to drivers: driver records, driver leave (capture &amp; approve), driver loans and payslips.
+                                                Admin staff records, admin leave and payroll are blocked. Everything outside HR is unaffected.
+                                                Has no effect on is_admin users or Super Admins.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
                                        <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">

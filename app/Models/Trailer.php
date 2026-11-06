@@ -14,6 +14,7 @@ class Trailer extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
     use HasFleetIdentifier;
+    use Concerns\SelectableAsset;
 
     public function trailer_documents(){
         return $this->hasMany('App\Models\TrailerDocument');

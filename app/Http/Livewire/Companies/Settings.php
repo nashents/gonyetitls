@@ -19,8 +19,14 @@ class Settings extends Component
     public $transporter_fuel_markup;
     public $require_tyre_serial_on_dispatch;
     public $allowable_loss_percentage;
-    public $chargeable_loss_rate;
+    public $own_fleet_chargeable_loss_rate;
+    public $subcontractor_chargeable_loss_rate;
 
+    /** Default chargeable loss rates by who carried the load (cargo rates override). */
+    private const LOSS_RATE_FIELDS = [
+        'own_fleet_chargeable_loss_rate' => 'nullable|numeric|min:0',
+        'subcontractor_chargeable_loss_rate' => 'nullable|numeric|min:0',
+    ];
 
 
 
@@ -36,15 +42,16 @@ class Settings extends Component
         $this->transporter_fuel_markup = $company->transporter_fuel_markup ?? 0;
         $this->require_tyre_serial_on_dispatch = (bool) ($company->require_tyre_serial_on_dispatch ?? true);
         $this->allowable_loss_percentage = $company->allowable_loss_percentage;
-        $this->chargeable_loss_rate = $company->chargeable_loss_rate;
+        foreach (array_keys(self::LOSS_RATE_FIELDS) as $field) {
+            $this->$field = is_numeric($company->$field) ? $company->$field + 0 : null;
+        }
 
     }
 
     public function update(){
         $this->validate([
             'allowable_loss_percentage' => 'nullable|numeric|min:0|max:100',
-            'chargeable_loss_rate' => 'nullable|numeric|min:0',
-        ]);
+        ] + self::LOSS_RATE_FIELDS);
 
         $company = Company::find($this->company_id);
         $company->enable_requisition_two_step_authorization = $this->enable_requisition_two_step_authorization;
@@ -59,7 +66,9 @@ class Settings extends Component
         $company->transporter_fuel_markup = is_numeric($this->transporter_fuel_markup) ? max(0, (float) $this->transporter_fuel_markup) : 0;
         $company->require_tyre_serial_on_dispatch = (bool) $this->require_tyre_serial_on_dispatch;
         $company->allowable_loss_percentage = is_numeric($this->allowable_loss_percentage) ? $this->allowable_loss_percentage : null;
-        $company->chargeable_loss_rate = is_numeric($this->chargeable_loss_rate) ? $this->chargeable_loss_rate : null;
+        foreach (array_keys(self::LOSS_RATE_FIELDS) as $field) {
+            $company->$field = is_numeric($this->$field) ? $this->$field : null;
+        }
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[
@@ -70,14 +79,12 @@ class Settings extends Component
     }
     
     /**
-     * Saves one loss default (allowable % or chargeable rate) and copies it
-     * onto every customer. Customers can still be adjusted one by one
-     * afterwards (Customers > Edit).
+     * Saves the default allowable loss % and copies it onto every customer
+     * (all-cargos value). Customer + cargo agreements are left alone.
      */
     public function applyToCustomers($field){
         $rules = [
             'allowable_loss_percentage' => 'required|numeric|min:0|max:100',
-            'chargeable_loss_rate'      => 'required|numeric|min:0',
         ];
         if (! isset($rules[$field])) {
             return;
@@ -107,7 +114,8 @@ class Settings extends Component
     {
         $this->company = Company::find($this->company_id);
         return view('livewire.companies.settings',[
-            'company' => $this->company
+            'company' => $this->company,
+            'ownFleetName' => app(\App\Services\LossRateService::class)->ownFleetName(),
         ]);
     }
 }

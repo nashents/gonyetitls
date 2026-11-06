@@ -14,7 +14,7 @@ class Deleted extends Component
     public $employee_id;
 
     public function mount(){
-        $this->employees = Employee::onlyTrashed()->latest()->get();
+        $this->employees = Employee::onlyTrashed()->visibleTo()->latest()->get();
     }
 
     public function restore($id){
@@ -23,6 +23,7 @@ class Deleted extends Component
     }
     public function update(){
         $employee =  Employee::withTrashed()->find($this->employee_id);
+        \App\Support\HrAccess::authorizeEmployee($employee);
         $user_id = $employee->user_id;
         $driver_id = $employee->driver ? $employee->driver->id : "";
         Employee::withTrashed()->find($this->employee_id)->restore();
@@ -33,7 +34,7 @@ class Deleted extends Component
       
         Session::flash('success','Employee Restored Successfully!!');
         $this->dispatchBrowserEvent('hide-employeeRestoreModal');
-        return redirect()->route('employees.index');
+        return redirect()->route(\App\Support\HrAccess::driversOnly() ? 'drivers.index' : 'employees.index');
     }
     public function render()
     {

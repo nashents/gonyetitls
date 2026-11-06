@@ -128,12 +128,20 @@ class TripExpenseRecoveryService
      */
     public function applyFuelMarkup(\App\Models\Fuel $fuel, ?Company $company, ?float $allocatedCost = null): float
     {
-        $pct = ($company?->transporter_fuel_recovery === 'markup') ? max(0, (float) $company->transporter_fuel_markup) : 0.0;
+        // An explicit retail price (trips import) sets the markup; otherwise Business Settings.
+        $retail = (float) $fuel->retailPriceOverride;
+        $unitPrice = (float) $fuel->unit_price;
+        if ($retail > 0 && $unitPrice > 0) {
+            $pct = max(0, ($retail / $unitPrice - 1) * 100);
+        } else {
+            $retail = 0;
+            $pct = ($company?->transporter_fuel_recovery === 'markup') ? max(0, (float) $company->transporter_fuel_markup) : 0.0;
+        }
         // Only the litres allocated to trips are recovered (and marked up).
         $cost = round($allocatedCost ?? (float) $fuel->amount, 2);
         $markup = round($cost * $pct / 100, 2);
 
-        $fuel->transporter_price = round((float) $fuel->unit_price * (1 + $pct / 100), 4);
+        $fuel->transporter_price = $retail > 0 ? round(max($retail, $unitPrice), 4) : round($unitPrice * (1 + $pct / 100), 4);
         $fuel->transporter_total = $cost + $markup;
         $fuel->profit = $markup;
         $fuel->saveQuietly();

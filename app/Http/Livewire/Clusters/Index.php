@@ -33,8 +33,8 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->horses = Horse::orderByIdentifier('asc')->get();
-        $this->trailers = Trailer::orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable()->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::selectable()->orderByIdentifier('asc')->get();
     }
 
    

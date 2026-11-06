@@ -39,7 +39,9 @@
                                     <th class="th-sm">Total</th>
                                     <th class="th-sm">Auth</th>
                                     <th class="th-sm">Deleted By</th>
+                                    @if ($canRestore)
                                     <th class="th-sm">Actions</th>
+                                    @endif
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -113,6 +115,7 @@
                                         <br>
                                         <small>{{$requisition->deleted_at}}</small>
                                     </td>
+                                    @if ($canRestore)
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -124,10 +127,11 @@
                                             </ul>
                                         </div>
                                     </td>
+                                    @endif
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="{{ $canRestore ? 9 : 8 }}">
                                         <div style="text-align:center; color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Deleted Requisitions Found ....
                                         </div>

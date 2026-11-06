@@ -31,7 +31,7 @@ WithCustomStartCell
     */
     public function query()
     {
-        return Employee::query();
+        return Employee::query()->visibleTo();
     }
     public function map($employee): array{
         

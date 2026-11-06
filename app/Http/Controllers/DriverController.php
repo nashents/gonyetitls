@@ -88,6 +88,7 @@ class DriverController extends Controller
             $employee->update();
         }
         $driver->status = 0 ;
+        $driver->deactivated_at = now();
         $driver->update();
         Session::flash('success','Driver Successfully Deactivated');
         return redirect(route('drivers.index'));
@@ -100,6 +101,7 @@ class DriverController extends Controller
             $employee->update();
         }
         $driver->status = 1 ;
+        $driver->deactivated_at = null;
         $driver->update();
         Session::flash('success','Driver Successfully Activated');
         return redirect(route('drivers.index'));

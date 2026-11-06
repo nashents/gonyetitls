@@ -105,8 +105,8 @@ class Manage extends Component
 
         $this->fuel_filter = "created_at";
 
-        $this->horses = Horse::where('service',0)->orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::where('service',0)->orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable()->where('service',0)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::selectable()->where('service',0)->orderByIdentifier('asc')->get();
         $this->assets = Asset::latest()->get();
         $this->categories = Category::latest()->get();
         $this->category_values = collect();
@@ -114,7 +114,7 @@ class Manage extends Component
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->trips = Trip::with('horse','destination')->where('authorization','approved')->orderBy('created_at','desc')->take(100)->get();
         $this->containers = Container::where('balance','>',0)->orderBy('name','asc')->latest()->get();
-        $this->drivers = Driver::latest()->get();
+        $this->drivers = Driver::selectable()->latest()->get();
 
     }
 

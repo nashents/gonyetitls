@@ -269,8 +269,9 @@
                 <td>
                     @if (! is_null($chargeableLossRate))
                         {{ $currencyName }} {{ $currencySymbol }}{{ number_format($chargeableLossRate, 2) }} per ton / {{ $uomName ?: 'unit' }}
+                        <small class="text-muted">({{ $trip->lossTerms()['rate']['source'] }})</small>
                     @else
-                        <span class="text-muted">Not set (customer or Business Settings)</span>
+                        <span class="text-muted">Not set for {{ $trip->lossTerms()['own_fleet'] ? 'own fleet' : 'subcontractor' }} trips (cargo or Business Settings)</span>
                     @endif
                 </td>
             </tr>
@@ -319,9 +320,10 @@
                 <th style="width:30%; padding-left:20px;">Allowable Loss Percentage</th>
                 <td>
                     @if ($allowableLossPct)
-                        {{ $allowableLossPct + 0 }}% of loaded litreage
+                        {{ \App\Services\LossRateService::formatPct($allowableLossPct) }} of loaded litreage
+                        <small class="text-muted">({{ $trip->lossTerms()['allowance']['source'] }})</small>
                     @else
-                        <span class="text-muted">Not set (customer or Business Settings)</span>
+                        <span class="text-muted">Not set (customer, cargo or Business Settings)</span>
                     @endif
                 </td>
             </tr>
@@ -350,6 +352,7 @@
                 </tr>
             @endforeach
         @endif
+
 
         @if ($canSeeRates)
             <tr>

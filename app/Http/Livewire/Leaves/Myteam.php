@@ -17,7 +17,7 @@ class Myteam extends Component
         $baseDepartmentIds = $this->employee->departments->pluck('id')->toArray();
         $this->employee_department_ids = $baseDepartmentIds;
 
-        $this->employees = Employee::with(['departments', 'leaves'])->whereHas('departments', function ($query) use ($baseDepartmentIds) {
+        $this->employees = Employee::with(['departments', 'leaves'])->visibleTo()->whereHas('departments', function ($query) use ($baseDepartmentIds) {
                                     $query->whereIn('departments.id', $baseDepartmentIds);
                                     })
                                     ->where('id', '!=', $this->employee->id) // optional: exclude the current employee

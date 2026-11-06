@@ -73,7 +73,7 @@ class Index extends Component
     ];
     public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->horses = Horse::query()
+            $this->horses = Horse::selectable()
             ->with(['horse_make:id,name', 'horse_model:id,name'])
             ->where('transporter_id', $id)
             ->where('status', 1)
@@ -84,7 +84,7 @@ class Index extends Component
             ->orderByIdentifier('asc')
             ->get();
 
-            $this->drivers = Driver::query()
+            $this->drivers = Driver::selectable()
             ->with('employee:id,name,surname')
             ->where('drivers.transporter_id', $id)   // ✅ qualify
             ->where('drivers.status', 1)             // ✅ qualify
@@ -149,7 +149,7 @@ class Index extends Component
         $this->start_date = $assignment->start_date;
         $this->end_date = $assignment->end_date;
         $this->comments = $assignment->comments;
-        $this->horses = Horse::query()
+        $this->horses = Horse::selectable()
             ->with(['horse_make:id,name', 'horse_model:id,name'])
             ->where('transporter_id', $this->selectedTransporter)
             ->where('status', 1)
@@ -160,7 +160,7 @@ class Index extends Component
             ->orderByIdentifier('asc')
             ->get();
 
-            $this->drivers = Driver::query()
+            $this->drivers = Driver::selectable()
             ->with('employee:id,name,surname')
             ->where('drivers.transporter_id',  $this->selectedTransporter)   // ✅ qualify
             ->where('drivers.status', 1)             // ✅ qualify

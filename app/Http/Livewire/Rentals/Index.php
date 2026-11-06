@@ -87,7 +87,7 @@ class Index extends Component
 
     public function updatedSelectedTransporter($transporterId)
     {
-       $this->vehicles = Vehicle::query()->where('transporter_id', $transporterId)
+       $this->vehicles = Vehicle::selectable()->where('transporter_id', $transporterId)
                         ->where('status', 1)
                         ->where('service',0)
                         ->where('archive',0)
@@ -96,7 +96,7 @@ class Index extends Component
 
     public function updatedSelectedCustomer($customerId)
     {
-        $this->drivers = Driver::where('customer_id', $customerId)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
+        $this->drivers = Driver::selectable()->where('customer_id', $customerId)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
     }
 
      public function rentalNumber(){
@@ -161,7 +161,7 @@ class Index extends Component
         
         elseif($category == 'vehicles'){
             if(!is_null($this->selectedTransporter)){
-                    $this->vehicles = Vehicle::query()->where('transporter_id',$this->selectedTransporter)
+                    $this->vehicles = Vehicle::selectable()->where('transporter_id',$this->selectedTransporter)
                             ->where('status', 1)
                             ->where('service',0)
                             ->where('archive',0)
@@ -175,7 +175,7 @@ class Index extends Component
         
         elseif($category == 'drivers'){
             if (isset($this->selectedCustomer) && !is_null($this->selectedCustomer)) {
-                $this->drivers = Driver::where('customer_id', $this->selectedCustomer)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
+                $this->drivers = Driver::selectable()->where('customer_id', $this->selectedCustomer)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -289,7 +289,7 @@ class Index extends Component
         $this->selectedCustomer = $rental->customer_id;
         $this->selectedTransporter = $rental->transporter_id;
         if(!is_null($this->selectedTransporter)){
-             $this->vehicles = Vehicle::query()->where('transporter_id', $this->selectedTransporter)
+             $this->vehicles = Vehicle::selectable()->where('transporter_id', $this->selectedTransporter)
                         ->where('status', 1)
                         ->where('service',0)
                         ->where('archive',0)
@@ -297,7 +297,7 @@ class Index extends Component
         }
        
         if (isset($this->selectedCustomer) && !is_null($this->selectedCustomer)) {
-            $this->drivers = Driver::where('customer_id', $this->selectedCustomer)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
+            $this->drivers = Driver::selectable()->where('customer_id', $this->selectedCustomer)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
         }
         $this->driver_id = $rental->driver_id;
         $this->selectedVehicle = $rental->vehicle_id;

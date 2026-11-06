@@ -58,7 +58,9 @@
                                     @unless ($sageActive)
                                     <li><a href="{{ route('drivers.create') }}"><i class="fa fa-plus-square-o"></i>Driver</a></li>
                                     @endunless
+                                    @unless (\App\Support\HrAccess::isBlockedRoute('employees.create'))
                                     <li><a href="{{ route('employees.create') }}"><i class="fa fa-plus-square-o"></i>Employee</a></li>
+                                    @endunless
                                 @endif
 
                                 @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))

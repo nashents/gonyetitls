@@ -45,6 +45,7 @@ WithCustomStartCell
     public function query()
     {
         return Leave::query()
+        ->visibleTo()
         ->with(['employee', 'user', 'department', 'leave_type'])
         ->filterLeaves($this->filter, $this->from, $this->to, $this->search)
         ->orderBy('created_at', 'desc');

@@ -29,6 +29,7 @@ class Approved extends Component
 
       public function authorize($id){
         $loan = Loan::find($id);
+        \App\Support\HrAccess::authorizeLoan($loan);
         $this->loan_id = $loan->id;
         $this->dispatchBrowserEvent('show-authorizationModal');
       }
@@ -36,6 +37,7 @@ class Approved extends Component
       public function update(){
         
         $loan = Loan::find($this->loan_id);
+        \App\Support\HrAccess::authorizeLoan($loan);
         $loan->authorized_by_id = Auth::user()->id;
         $loan->authorization = $this->authorize;
         $loan->reason = $this->comments;
@@ -51,7 +53,7 @@ class Approved extends Component
     public function render()
     {
       return view('livewire.loans.approved',[
-        'loans' => Loan::where('authorization', 'approved')->orderBy('created_at','desc')->paginate(10)
+        'loans' => Loan::visibleTo()->where('authorization', 'approved')->orderBy('created_at','desc')->paginate(10)
     ]);
     }
 }

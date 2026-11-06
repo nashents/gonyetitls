@@ -71,11 +71,11 @@ class Add extends Component
         $this->checklist_categories = ChecklistCategory::latest()->get();
         $this->checklist_sub_categories = ChecklistSubCategory::latest()->get();
         $this->checklist_items = collect();
-        $this->vehicles = Vehicle::operational()->orderByIdentifier('asc')->get();
-        $this->drivers = Driver::latest()->get();
+        $this->vehicles = Vehicle::selectable()->operational()->orderByIdentifier('asc')->get();
+        $this->drivers = Driver::selectable()->latest()->get();
         $this->employees = Employee::latest()->get();
-        $this->trailers = Trailer::operational()->orderByIdentifier('asc')->get();
-        $this->horses = Horse::operational()->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::selectable()->operational()->orderByIdentifier('asc')->get();
+        $this->horses = Horse::selectable()->operational()->orderByIdentifier('asc')->get();
     }
 
     

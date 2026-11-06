@@ -43,7 +43,7 @@ class Trailers extends Component
     public function mount($id){
         $this->broker = Broker::find($id);
         $this->broker_id = $id;
-        $this->trailers = Trailer::latest()->get();
+        $this->trailers = Trailer::selectable()->latest()->get();
         $this->broker_trailers =  $this->broker->trailers;
     }
 

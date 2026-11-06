@@ -46,6 +46,7 @@ class Documents extends Component
 
     public function mount($id){
     $this->employee = Employee::find($id);
+    \App\Support\HrAccess::authorizeEmployee($this->employee);
     $this->documents = Document::where('employee_id', $this->employee->id)->latest()->get();
     }
 

@@ -268,8 +268,10 @@
                                 <div class="form-group">
                                     <label for="enforce_staff_type">Apply To</label>
                                     <select id="enforce_staff_type" class="form-control" wire:model="enforce_staff_type">
+                                        @unless (auth()->user()->hrDriversOnly())
                                         <option value="all">All Employees</option>
                                         <option value="admin">Admin Employees</option>
+                                        @endunless
                                         <option value="drivers">Drivers</option>
                                     </select>
                                 </div>
@@ -396,8 +398,10 @@
                                 <div class="form-group">
                                     <label for="diag_staff_type">Employees</label>
                                     <select id="diag_staff_type" class="form-control" wire:model="diag_staff_type">
+                                        @unless (auth()->user()->hrDriversOnly())
                                         <option value="all">All Employees</option>
                                         <option value="admin">Admin Employees</option>
+                                        @endunless
                                         <option value="drivers">Drivers</option>
                                     </select>
                                 </div>

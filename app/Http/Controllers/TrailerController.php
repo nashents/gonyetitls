@@ -47,6 +47,7 @@ class TrailerController extends Controller
     public function deactivate(Trailer $trailer){
         // $trailer = trailer::find($id);
         $trailer->status = 0 ;
+        $trailer->deactivated_at = now();
         $trailer->update();
         Session::flash('success','Trailer Successfully Deactivated');
         return redirect(route('trailers.index'));
@@ -80,6 +81,7 @@ class TrailerController extends Controller
     public function activate(Trailer $trailer){
         // $trailer = trailer::find($id);
         $trailer->status = 1 ;
+        $trailer->deactivated_at = null;
         $trailer->update();
         Session::flash('success','Trailer Successfully Activated');
         return redirect(route('trailers.index'));

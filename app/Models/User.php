@@ -59,6 +59,7 @@ class User extends Authenticatable implements Auditable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'hr_drivers_only' => 'boolean',
     ];
 
     public function is_admin(){
@@ -74,6 +75,12 @@ class User extends Authenticatable implements Auditable
     public function isSuperAdmin(): bool
     {
         return $this->roles()->where('name', 'Super Admin')->exists();
+    }
+
+    /** "HR access: drivers only" restriction in effect — see App\Support\HrAccess. */
+    public function hrDriversOnly(): bool
+    {
+        return \App\Support\HrAccess::driversOnly($this);
     }
 
     /**

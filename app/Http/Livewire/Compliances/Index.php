@@ -54,7 +54,7 @@ class Index extends Component
       
         $this->routes = Route::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->drivers = Driver::where('archive',0)->get();
+        $this->drivers = Driver::selectable()->where('archive',0)->get();
         $this->employees = Employee::where('archive',0)->orderBy('name','asc')->get();
     }
 
@@ -106,7 +106,7 @@ class Index extends Component
         }
        
        elseif ($category == "drivers") {
-            $this->drivers = Driver::query()
+            $this->drivers = Driver::selectable()
                 ->where('archive', 0)
                 ->whereHas('employee') // optional safety: only drivers that actually have an employee
                 ->with('employee:id,name,surname') // eager load to avoid N+1

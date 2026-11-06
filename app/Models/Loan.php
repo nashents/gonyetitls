@@ -15,6 +15,19 @@ class Loan extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    /**
+     * Drivers-only HR users (App\Support\HrAccess) see driver loans only among
+     * staff loans; vendor/business loans (no employee) are finance, not HR, and stay visible.
+     */
+    public function scopeVisibleTo($query, $user = null)
+    {
+        if (\App\Support\HrAccess::driversOnly($user)) {
+            return $query->where(fn ($q) => $q->whereNull('employee_id')
+                ->orWhereHas('employee', fn ($e) => $e->withTrashed()->visibleTo($user)));
+        }
+        return $query;
+    }
+
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Driver extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use Concerns\SelectableAsset;
 
     use \OwenIt\Auditing\Auditable;
 

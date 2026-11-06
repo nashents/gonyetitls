@@ -183,7 +183,7 @@
                                                     @endforeach
                                                 @endif
                                         </td>
-                                        <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Intransit"}}</span></td>
+                                        <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Intransit"}}</span>@if($driver->deactivated_at) <span class="badge bg-secondary">Deactivated</span>@endif</td>
                                         <td>
                                                 @if ($driver->user)
                                                     @if ($driver->user->username)
@@ -243,7 +243,7 @@
                                                     @unless ($this->sageEnabled)
                                                     <li><a href="#" data-toggle="modal" data-target="#driverDeleteModal{{$driver->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endunless
-                                                    @if ($driver->status == 1)
+                                                    @if (is_null($driver->deactivated_at))
                                                     <li><a href="{{route('drivers.deactivate',$driver->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else
                                                     <li><a href="{{route('drivers.activate',$driver->id)}}" ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>

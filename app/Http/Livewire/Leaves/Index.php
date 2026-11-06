@@ -226,7 +226,10 @@ class Index extends Component
 
     public function edit($id){
         $leave = Leave::find($id);
-       
+        if ($leave && $leave->employee_id != Auth::user()->employee?->id) {
+            \App\Support\HrAccess::authorizeEmployee($leave->employee_id);
+        }
+
         $this->leave_id = $leave->id;
         $this->user_id = $leave->user_id;
       
@@ -258,6 +261,9 @@ class Index extends Component
                     $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
 
                     $leave =  Leave::find($this->leave_id);
+                    if ($leave && $leave->employee_id != Auth::user()->employee?->id) {
+                        \App\Support\HrAccess::authorizeEmployee($leave->employee_id);
+                    }
                     $leave->user_id = Auth::user()->id;
                     $leave->employee_id = $this->selected_employee->id;
                     $leave->to = $this->to;
@@ -416,8 +422,12 @@ class Index extends Component
     {
         
         if (filled($this->search)) {
+             // Drivers-only HR users: driver leave plus their own (App\Support\HrAccess)
+             $ownEmployeeId = Auth::user()->employee?->id;
+             $restricted = \App\Support\HrAccess::driversOnly();
              return view('livewire.leaves.index',[
-                'leaves' => Leave::where('days', 'like', '%' . $this->search . '%')
+                'leaves' => Leave::when($restricted, fn ($q) => $q->where(fn ($w) => $w->visibleTo()->orWhere('employee_id', $ownEmployeeId)))
+                    ->where(fn ($q) => $q->where('days', 'like', '%' . $this->search . '%')
                     ->orWhere('reason','like', '%' . $this->search . '%')
                     ->orWhereHas('employee', function ($q) {
                         $q->where(DB::raw("concat(name, ' ', surname)"), 'like', '%' . $this->search . '%');
@@ -430,7 +440,7 @@ class Index extends Component
                     })
                     ->orWhereHas('leave_type', function ($q) {
                         $q->where('name', 'like', '%' . $this->search . '%');
-                    })->paginate(10)
+                    }))->paginate(10)
             ]);
           
         }else{

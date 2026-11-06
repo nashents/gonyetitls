@@ -309,10 +309,10 @@ class Edit extends Component
         $this->expenses = Expense::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
-        $this->drivers = Driver::all();
-        $this->horses = Horse::orderByIdentifier('asc')->get();
-        $this->trailers = Trailer::orderByIdentifier('asc')->get();
-        $this->vehicles = Vehicle::orderByIdentifier('asc')->get();
+        $this->drivers = Driver::selectable($this->bill?->driver_id)->get();
+        $this->horses = Horse::selectable($this->bill?->horse_id)->orderByIdentifier('asc')->get();
+        $this->trailers = Trailer::selectable($this->bill?->trailer_id)->orderByIdentifier('asc')->get();
+        $this->vehicles = Vehicle::selectable($this->bill?->vehicle_id)->orderByIdentifier('asc')->get();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type', function($q){
             $q->where('name', 'Income');
@@ -743,7 +743,7 @@ class Edit extends Component
         $this->expenses = Expense::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
-        $this->drivers = Driver::all();
+        $this->drivers = Driver::selectable($this->bill?->driver_id)->get();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type', function($q){
             $q->where('name', 'Income');

@@ -626,6 +626,7 @@ Route::resource('employees','EmployeeController');
 Route::resource('training_plans','TrainingPlanController');
 Route::resource('waste_collections','WasteCollectionController');
 Route::resource('units_of_measure','UnitsOfMeasureController');
+Route::get('/loss-rates', 'LossRateController@index')->name('loss_rates.index');
 Route::resource('waste_disposals','WasteDisposalController');
 Route::resource('account_activity','AccountActivityController');
 Route::resource('disposes','DisposeController');

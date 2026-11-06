@@ -9,9 +9,10 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Super Admin only: soft-deleted requisitions, both PO (purchase) and
- * payment requisitions, with a Restore action. Restoring brings back the
- * requisition and the items deleted with it; it posts nothing.
+ * Soft-deleted requisitions, both PO (purchase) and payment requisitions.
+ * Who sees what: Requisition::scopeDeletedVisibleTo (own / headed
+ * departments / Super Admin all). Restore is Super Admin only; it brings back
+ * the requisition and the items deleted with it, and posts nothing.
  */
 class Deleted extends Component
 {
@@ -23,13 +24,10 @@ class Deleted extends Component
     public $type_filter = '';
     public $requisition_id;
 
-    public function mount()
-    {
-        abort_unless(Auth::user()->isSuperAdmin(), 403);
-    }
-
     public function restore($id)
     {
+        abort_unless(Auth::user()->isSuperAdmin(), 403);
+
         $this->requisition_id = $id;
         $this->dispatchBrowserEvent('show-requisitionRestoreModal');
     }
@@ -73,9 +71,7 @@ class Deleted extends Component
 
     public function render()
     {
-        abort_unless(Auth::user()->isSuperAdmin(), 403);
-
-        $query = Requisition::onlyTrashed()->with([
+        $query = Requisition::onlyTrashed()->deletedVisibleTo(Auth::user())->with([
             'user', 'employee', 'department', 'currency', 'trip', 'booking',
             // Items are soft-deleted along with their requisition
             'requisition_items' => fn ($q) => $q->withTrashed(),
@@ -108,6 +104,7 @@ class Deleted extends Component
 
         return view('livewire.requisitions.deleted', [
             'requisitions' => $query->orderBy('deleted_at', 'desc')->orderBy('id', 'desc')->paginate(10),
+            'canRestore'   => Auth::user()->isSuperAdmin(),
         ]);
     }
 }

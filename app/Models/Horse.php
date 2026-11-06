@@ -14,6 +14,7 @@ class Horse extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
     use HasFleetIdentifier;
+    use Concerns\SelectableAsset;
 
     public function clusters()   { return $this->hasOne(Cluster::class); } // if one horse can be in many clusters
 

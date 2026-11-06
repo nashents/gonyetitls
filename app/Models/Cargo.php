@@ -61,5 +61,8 @@ class Cargo extends Model implements Auditable
         'type',
         'measurement',
         'risk',
+        'allowable_loss_percentage',
+        'own_fleet_chargeable_loss_rate',
+        'subcontractor_chargeable_loss_rate',
     ];
 }

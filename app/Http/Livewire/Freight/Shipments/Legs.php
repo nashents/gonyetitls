@@ -219,13 +219,13 @@ class Legs extends Component
             return;
         }
 
-        $this->dispatch_horses = Horse::where('transporter_id', $id)
+        $this->dispatch_horses = Horse::selectable()->where('transporter_id', $id)
             ->where('status', 1)->where('service', 0)->where('archive', 0)
             ->orderByIdentifier('asc')->get();
-        $this->dispatch_vehicles = Vehicle::where('transporter_id', $id)
+        $this->dispatch_vehicles = Vehicle::selectable()->where('transporter_id', $id)
             ->where('status', 1)->where('service', 0)->where('archive', 0)
             ->orderByIdentifier('asc')->get();
-        $this->dispatch_drivers = Driver::with('employee:id,name,surname')
+        $this->dispatch_drivers = Driver::selectable()->with('employee:id,name,surname')
             ->where('transporter_id', $id)->where('archive', 0)->get();
     }
 

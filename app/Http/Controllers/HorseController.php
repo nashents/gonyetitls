@@ -420,6 +420,7 @@ class HorseController extends Controller
     public function deactivate(Horse $horse){
         // $horse = horse::find($id);
         $horse->status = 0 ;
+        $horse->deactivated_at = now();
         $horse->update();
         Session::flash('success','Horse Deactivated Successfully!!');
         return redirect(route('horses.index'));
@@ -455,6 +456,7 @@ class HorseController extends Controller
     public function activate(Horse $horse){
         // $horse = horse::find($id);
         $horse->status = 1 ;
+        $horse->deactivated_at = null;
         $horse->update();
         Session::flash('success','Horse Activated Successfully!!');
         return redirect(route('horses.index'));

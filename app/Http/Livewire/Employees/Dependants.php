@@ -22,6 +22,7 @@ class Dependants extends Component
     public function mount($id){
         $this->employee_id = $id;
         $this->employee = Employee::find($id);
+        \App\Support\HrAccess::authorizeEmployee($this->employee);
         $this->dependants = Dependant::where('employee_id',$this->employee_id)->orderBy('name','asc')->orderBy('surname','asc')->get();
       
     }

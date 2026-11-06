@@ -645,12 +645,12 @@ class Create extends Component
     public function updatedAllHorses($status){
         if(!is_null($status)){
             if($status == True){
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
               
             }else{
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
                
@@ -663,13 +663,13 @@ class Create extends Component
         if(!is_null($status)){
             if($status == True){
              
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
                
             }else{
                 
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
                
@@ -682,12 +682,12 @@ class Create extends Component
         if(!is_null($status)){
             if($status == True){
                
-                $this->trailers = Trailer::where('archive',0)
+                $this->trailers = Trailer::selectable()->where('archive',0)
                 ->orderByIdentifier('asc')->get();
                
             }else{
               
-                $this->trailers = Trailer::where('transporter_id',$this->selectedTransporter)
+                $this->trailers = Trailer::selectable()->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
               
@@ -701,12 +701,12 @@ class Create extends Component
 
         if(!is_null($status)){
             if($status == True){
-                $this->drivers = Driver::query()->with('employee:id,name,surname')
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')
                 ->withAggregate('employee','name')
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
             }else{
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
@@ -727,16 +727,16 @@ class Create extends Component
                 $this->selectedTransporter = $initial_trip->transporter_id;
                 $transporter = Transporter::find($initial_trip->transporter_id);
                 $this->cargos = Cargo::orderBy('name','asc')->get();
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->trailers = Trailer::where('transporter_id',$initial_trip->transporter_id)
+                $this->trailers = Trailer::selectable()->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$initial_trip->transporter_id)
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')->where('transporter_id',$initial_trip->transporter_id)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
@@ -1075,36 +1075,36 @@ class Create extends Component
          
 
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->trailers = Trailer::where('transporter_id',$id)
+                $this->trailers = Trailer::selectable()->where('transporter_id',$id)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')->where('transporter_id',$id)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
             }else{
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->trailers = Trailer::where('transporter_id',$id)
+                $this->trailers = Trailer::selectable()->where('transporter_id',$id)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')->where('transporter_id',$id)
                 ->withAggregate('employee','name')
                 ->where('status', 1)
                 ->where('archive',0)
@@ -1124,21 +1124,13 @@ class Create extends Component
                 $broker = Broker::find($id);
                 if(isset($broker)){
                     if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-                        $this->horses = $broker->horses->where('archive',0);
-                        $this->trailers = $broker->trailers->where('archive',0);
-                        $this->drivers = $broker->drivers->where('archive',0);
+                        $this->horses = $broker->horses()->selectable()->get();
+                        $this->trailers = $broker->trailers()->selectable()->get();
+                        $this->drivers = $broker->drivers()->selectable()->get();
                     }else{
-                        $this->horses = $broker->horses
-                        ->where('status', 1)
-                        ->where('archive',0)
-                        ->where('service',0);
-                        $this->trailers = $broker->trailers
-                        ->where('status', 1)
-                        ->where('archive',0)
-                        ->where('service',0);
-                        $this->drivers = $broker->drivers
-                        ->where('status', 1)
-                        ->where('archive',0);
+                        $this->horses = $broker->horses()->selectable()->where('horses.status', 1)->where('horses.service', 0)->get();
+                        $this->trailers = $broker->trailers()->selectable()->where('trailers.status', 1)->where('trailers.service', 0)->get();
+                        $this->drivers = $broker->drivers()->selectable()->where('drivers.status', 1)->get();
                     }
                 }
                
@@ -3341,7 +3333,7 @@ class Create extends Component
    
     public function updatedSelectedStatus($status){
         
-        $query = Horse::query()
+        $query = Horse::selectable()
             ->with('horse_make:id,name', 'horse_model:id,name')
             ->where('archive', 0);
 
@@ -3362,7 +3354,7 @@ class Create extends Component
             ->orderByIdentifier('asc')
             ->get();
         
-        $query = Vehicle::query()
+        $query = Vehicle::selectable()
             ->with('vehicle_make:id,name', 'vehicle_model:id,name')
             ->where('archive', 0);
 
@@ -3389,7 +3381,7 @@ class Create extends Component
     {
         $term = trim((string) $this->searchHorse);
 
-        $query = Horse::query()
+        $query = Horse::selectable()
             ->with('horse_make:id,name', 'horse_model:id,name')
             ->where('registration_number', 'like', "%{$term}%")
             ->where('archive', 0);
@@ -3416,7 +3408,7 @@ class Create extends Component
     {
         $term = trim((string) $this->searchVehicle);
 
-        $query = Vehicle::query()
+        $query = Vehicle::selectable()
             ->with('vehicle_make:id,name', 'vehicle_model:id,name')
             ->where('registration_number', 'like', "%{$term}%")
             ->where('archive', 0);
@@ -3442,7 +3434,7 @@ class Create extends Component
         {
             $term = trim((string) $this->searchDriver);
 
-            $query = Driver::query()
+            $query = Driver::selectable()
                 ->with('employee:id,name,surname')
                 ->join('employees', 'drivers.employee_id', '=', 'employees.id')  // for sorting
                 ->select('drivers.*')                                            // avoid column conflicts
@@ -3479,7 +3471,7 @@ class Create extends Component
         {
             $term = trim((string) $this->searchTrailer);
 
-            $query = Trailer::query()
+            $query = Trailer::selectable()
                 ->where('registration_number', 'like', "%{$term}%")
                 ->where('archive', 0);
 
@@ -3731,11 +3723,11 @@ class Create extends Component
         }
         elseif($category == 'horses'){
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
             }else{
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                $this->horses = Horse::selectable()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
@@ -3749,13 +3741,13 @@ class Create extends Component
         elseif($category == 'vehicles'){
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
               
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
        
             }else{
               
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                $this->vehicles = Vehicle::selectable()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
@@ -3770,13 +3762,13 @@ class Create extends Component
         elseif($category == 'trailers'){
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                
-                $this->trailers = Trailer::where('transporter_id',$this->selectedTransporter)
+                $this->trailers = Trailer::selectable()->where('transporter_id',$this->selectedTransporter)
                 ->where('archive',0)
                 ->orderByIdentifier('asc')->get();
                
             }else{
                
-                $this->trailers = Trailer::where('transporter_id',$this->selectedTransporter)
+                $this->trailers = Trailer::selectable()->where('transporter_id',$this->selectedTransporter)
                 ->where('status', 1)
                 ->where('service',0)
                 ->where('archive',0)
@@ -3790,12 +3782,12 @@ class Create extends Component
         }
         elseif($category == 'drivers'){
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
                 ->withAggregate('employee','name')
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
             }else{
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                $this->drivers = Driver::selectable()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
                 ->withAggregate('employee','name')
                 ->where('status', 1)
                 ->where('archive',0)
