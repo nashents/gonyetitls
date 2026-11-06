@@ -29,8 +29,33 @@ class Transporter extends Model implements Auditable
     /** Fleet types whose assets appear in operational modules and count toward the plan. */
     public const OPERATIONAL_FLEET_TYPES = [self::FLEET_OWN, self::FLEET_MANAGED];
 
+    /**
+     * Next "<company initials>T<5-digit>" number, e.g. FLT00012. Uses the max
+     * id incl. soft-deleted rows so a number is never reused.
+     */
+    public static function nextTransporterNumber($companyId = null): string
+    {
+        $company = $companyId ? Company::find($companyId) : null;
+        $company = $company ?: optional(optional(auth()->user())->employee)->company;
+
+        $words = preg_split('/\s+/', trim((string) optional($company)->name)) ?: [];
+        $initials = strtoupper(($words[0][0] ?? '') . ($words[1][0] ?? ''));
+
+        $next = ((int) static::withTrashed()->max('id')) + 1;
+
+        return $initials . 'T' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+    }
+
     protected static function booted()
     {
+        // Every transporter gets a number, whichever screen/import/sync made
+        // it — quick-creates (e.g. the old trips import) used to leave it blank.
+        static::creating(function (Transporter $transporter) {
+            if (blank($transporter->transporter_number)) {
+                $transporter->transporter_number = static::nextTransporterNumber($transporter->company_id);
+            }
+        });
+
         // `default` and fleet_type stay in step: default <=> own. A demoted
         // own fleet becomes managed so its assets stay operational.
         static::saving(function (Transporter $transporter) {
