@@ -1324,6 +1324,8 @@ class Edit extends Component
             return;
         }
 
+        $this->normalizeBaseCurrencyRate();
+
         DB::transaction(function () {
             
             if ($this->invoice_id) {
@@ -2513,10 +2515,25 @@ class Edit extends Component
                     ->where('status', 1)
                     ->where('expiry', '>', Carbon::today())
                     ->first();
-                if ($predefined_exchange_rate) {   
-                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
-                }
+                // Never carry the previously picked currency's rate over.
+                $this->exchange_rate = $predefined_exchange_rate ? $predefined_exchange_rate->exchange_rate : null;
+            } else {
+                // Reporting currency: always 1. A rate left over from e.g.
+                // ZAR picked earlier used to be saved on the USD invoice
+                // (TPI00007 -> 31,920 FX loss on payment).
+                $this->exchange_rate = 1;
             }
+        }
+    }
+
+    /**
+     * Save-time guard: an invoice in the company's own currency is stored
+     * with rate 1 whatever the (hidden) rate field holds.
+     */
+    private function normalizeBaseCurrencyRate(): void
+    {
+        if ($this->selectedCurrency && $this->company && (int) $this->selectedCurrency === (int) $this->company->currency_id) {
+            $this->exchange_rate = 1;
         }
     }
 

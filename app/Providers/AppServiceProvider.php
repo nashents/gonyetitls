@@ -64,6 +64,14 @@ class AppServiceProvider extends ServiceProvider
             [\App\Support\PreserveRecordCreator::class, 'handle']
         );
 
+        // Anything saved in the reporting currency gets exchange rate 1 -
+        // a rate left over from a foreign currency picked earlier on the
+        // form is never stored (TPI00007's 31,920 FX loss).
+        \Illuminate\Support\Facades\Event::listen(
+            'eloquent.saving: *',
+            [\App\Support\BaseCurrencyRate::class, 'handle']
+        );
+
         Builder::macro('search', function($field, $string){
             return $string ? $this->where($field, 'like', '%'.$string.'%') : $this;
         });
