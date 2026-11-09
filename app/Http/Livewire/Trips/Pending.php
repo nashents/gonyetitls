@@ -668,7 +668,7 @@ class Pending extends Component
                  }
 
 
-                if ($this->trip->fuel_order == True) {
+                if ($this->trip->fuel_order == True && $this->trip->fuel) {
 
                     $fuel = Fuel::find($this->trip->fuel->id);
                     $fuel->authorization = $this->authorize;
@@ -723,7 +723,7 @@ class Pending extends Component
                         $user = User::find($trip->user_id);
                         $this->fuel_station_email = $fuel->container ? $fuel->container->email : "";
                         $this->station_name = $fuel->container ? $fuel->container->name : "";
-                        $this->fuel_order_date = $fuel->datze;
+                        $this->fuel_order_date = $fuel->date;
                         $this->order_number = $fuel->order_number;
                         $this->driver = $fuel->driver;
                         $this->horse = $fuel->horse;
@@ -732,7 +732,7 @@ class Pending extends Component
                         $this->fuel_type = $fuel->container ? $fuel->container->fuel_type : "";
                         $this->fuel_order_quantity = $fuel->quantity;
                         $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
-                        $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
+                        $this->checked_by = trim(($fuel->user?->employee?->name ?? "") . ' ' . ($fuel->user?->employee?->surname ?? ""));
                         $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
             
                         if (isset($this->fuel_station_email) && $this->fuel_station_email != "") {
@@ -1099,7 +1099,7 @@ class Pending extends Component
                             }
                         }
 
-                        if ($this->trip->fuel_order == True) {
+                        if ($this->trip->fuel_order == True && $this->trip->fuel) {
 
                             $fuel = Fuel::find($this->trip->fuel->id);
                             $fuel->authorization = $this->authorize;
@@ -1172,7 +1172,7 @@ class Pending extends Component
                                 $user = User::find($trip->user_id);
                                 $this->fuel_station_email = $fuel->container ? $fuel->container->email : "";
                                 $this->station_name = $fuel->container ? $fuel->container->name : "";
-                                $this->fuel_order_date = $fuel->datze;
+                                $this->fuel_order_date = $fuel->date;
                                 $this->order_number = $fuel->order_number;
                                 $this->driver = $fuel->driver;
                                 $this->horse = $fuel->horse;
@@ -1181,7 +1181,7 @@ class Pending extends Component
                                 $this->fuel_type = $fuel->container ? $fuel->container->fuel_type : "";
                                 $this->fuel_order_quantity = $fuel->quantity;
                                 $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
-                                $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
+                                $this->checked_by = trim(($fuel->user?->employee?->name ?? "") . ' ' . ($fuel->user?->employee?->surname ?? ""));
                                 $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
                     
                                 if (isset($this->fuel_station_email) && $this->fuel_station_email != "") {
