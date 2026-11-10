@@ -32,6 +32,9 @@ class Index extends Component
     public $taxable = 1;
     public $accounts;
     public $account_id;
+    // seeded (no creator) or system-default allowances: everything editable
+    // except the name, which seeders/code look rows up by
+    public $name_locked = false;
 
     public function mount(){
         $this->allowances = Allowance::orderBy('name','asc')->get();
@@ -65,6 +68,7 @@ class Index extends Component
         $this->type = '';
         $this->taxable = 1;
         $this->account_id = '';
+        $this->name_locked = false;
     }
 
     public function store(){
@@ -125,6 +129,8 @@ class Index extends Component
     $this->account_id = $allowance->account_id;
     $this->allowance_id = $allowance->id;
     $this->status = $allowance->status;
+    $this->name_locked = self::nameLocked($allowance);
+    $this->resetErrorBag();
     $this->dispatchBrowserEvent('show-allowanceEditModal');
 
     }
@@ -135,8 +141,11 @@ class Index extends Component
         if ($this->allowance_id) {
             try{
             $allowance = Allowance::find($this->allowance_id);
-            $allowance->user_id = Auth::user()->id;
-            $allowance->name = $this->name;
+            // user_id is the creator — not re-stamped, or a seeded row would
+            // turn into a user-owned one (name unlocked, Delete shown).
+            if (!self::nameLocked($allowance)) {
+                $allowance->name = $this->name;
+            }
             $allowance->calculate_by = $this->calculate_by;
             $allowance->currency_id = $this->currency_id;
             $allowance->calculate_on = $this->calculate_on;
@@ -186,6 +195,11 @@ class Index extends Component
         }
     }
 
+
+    private static function nameLocked(Allowance $allowance): bool
+    {
+        return $allowance->user_id === null || (bool) $allowance->default;
+    }
 
     public function render()
     {

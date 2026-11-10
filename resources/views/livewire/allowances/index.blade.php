@@ -70,8 +70,9 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                @if ($allowance->user_id != Null || Auth::user()->is_admin())
+                                                {{-- Edit is open on seeded rows too (e.g. to flip Taxable); their name is locked in the modal --}}
                                                 <li><a href="#"  wire:click="edit({{$allowance->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @if ($allowance->user_id != Null || Auth::user()->is_admin())
                                                 @if (!$allowance->default)
                                                 <li><a href="#" data-toggle="modal" data-target="#allowanceDeleteModal{{ $allowance->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
@@ -258,7 +259,8 @@
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="name">Name<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required @if($name_locked) disabled title="System allowance - name can't be changed" @endif />
+                                @if ($name_locked)<small class="text-muted">System allowance - name can't be changed</small>@endif
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
