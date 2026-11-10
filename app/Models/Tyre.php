@@ -201,6 +201,19 @@ class Tyre extends Model implements Auditable
             });
     }
 
+    /**
+     * In-store tyres an admin may fit as opening tyres (no dispatch, no value) -
+     * see OpeningTyreFitmentService. Not on any live dispatch and not fitted.
+     */
+    public function scopeOpeningFittable($query)
+    {
+        return $query->where('balance', '>', 0)
+            ->where(fn ($q) => $q->whereNull('disposed')->orWhere('disposed', 0))
+            ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
+            ->whereDoesntHave('dispatch_items.dispatch', fn ($d) => $d->whereNull('reversed_at')
+                ->where(fn ($a) => $a->whereNull('authorization')->orWhere('authorization', '!=', 'rejected')));
+    }
+
     // Why this tyre can't be fitted right now, or null when it can.
     public function assignmentBlocker(): ?string
     {

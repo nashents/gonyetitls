@@ -165,6 +165,20 @@
                             </div>
                         </div>
                     </div>
+                    @if ($this->canFitOpening())
+                        <div class="form-group">
+                            <label style="font-weight:normal">
+                                <input type="checkbox" wire:model="includeOpening"> Also list <strong>in-store</strong> tyres (opening tyres - fitted without a dispatch)
+                            </label>
+                            @if ($includeOpening)
+                                <div class="alert alert-warning" style="margin:5px 0 0">
+                                    Tyres marked <strong>[IN STORE - OPENING]</strong> are taken out of stores with <strong>no dispatch and no value</strong>:
+                                    their bills are reversed (own bill deleted, line removed from the GRV bill and the GRV bill re-posted) and their cost is set to 0.
+                                    Use this only for old tyres that were already on the fleet.
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                     @error('assignRows') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     <table class="table table-bordered table-sm">
                         <thead>
@@ -182,7 +196,7 @@
                                     <select class="form-control" wire:model.defer="assignRows.{{ $i }}.tyre_id">
                                         <option value="">Select Tyre</option>
                                         @foreach ($availableTyres as $availableTyre)
-                                            <option value="{{ $availableTyre->id }}">{{ $availableTyre->tyre_number }} {{ $availableTyre->product && $availableTyre->product->brand ? $availableTyre->product->brand->name : "" }} {{ $availableTyre->product ? $availableTyre->product->name : "" }} SN#: {{ $availableTyre->serial_label }} - {{ $availableTyre->width }}/{{ $availableTyre->aspect_ratio }} R {{ $availableTyre->diameter }}</option>
+                                            <option value="{{ $availableTyre->id }}">{{ $availableTyre->is_opening ? '[IN STORE - OPENING] ' : '' }}{{ $availableTyre->tyre_number }} {{ $availableTyre->product && $availableTyre->product->brand ? $availableTyre->product->brand->name : "" }} {{ $availableTyre->product ? $availableTyre->product->name : "" }} SN#: {{ $availableTyre->serial_label }} - {{ $availableTyre->width }}/{{ $availableTyre->aspect_ratio }} R {{ $availableTyre->diameter }}</option>
                                         @endforeach
                                     </select>
                                     @error('assignRows.'.$i.'.tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

@@ -9,7 +9,9 @@ use App\Models\Trailer;
 use App\Models\Tyre;
 use App\Models\TyreAssignment;
 use App\Models\Vehicle;
+use App\Services\Fleet\OpeningTyreFitmentService;
 use App\Services\Fleet\TyreAssignmentService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -39,6 +41,8 @@ class TyreAssignments extends Component
     public $date_fitted;
     public $assign_comments;
     public $tyreSearch;
+    // Admins: also list in-store tyres and fit them as opening tyres (no dispatch, no value, bills reversed).
+    public $includeOpening = false;
 
     // Bulk unassign
     public $selected = [];
@@ -80,6 +84,7 @@ class TyreAssignments extends Component
         $this->date_fitted = date('Y-m-d');
         $this->assign_comments = '';
         $this->tyreSearch = '';
+        $this->includeOpening = false;
         $this->dispatchBrowserEvent('show-assetTyreAssignModal');
     }
 
@@ -131,10 +136,20 @@ class TyreAssignments extends Component
         }
 
         $service = app(TyreAssignmentService::class);
+        $opening = app(OpeningTyreFitmentService::class);
         // All or nothing: one unavailable tyre rolls back the whole batch.
-        DB::transaction(function () use ($service) {
+        DB::transaction(function () use ($service, $opening) {
             foreach ($this->assignRows as $i => $row) {
                 try {
+                    // An in-store tyre is fitted as an opening tyre: out of stores at no value, its bills reversed.
+                    $tyre = Tyre::find($row['tyre_id']);
+                    if ($tyre && (float) $tyre->balance > 0) {
+                        if (!$this->canFitOpening()) {
+                            throw ValidationException::withMessages(['tyre_id' => 'This tyre is still in stores - dispatch it first.']);
+                        }
+                        $opening->release($tyre, $this->assign_comments);
+                    }
+
                     $service->assign($this->type, $this->equipmentId, [
                         'tyre_id' => $row['tyre_id'],
                         'axle' => $row['axle'],
@@ -214,6 +229,11 @@ class TyreAssignments extends Component
             'type' => 'success',
             'message' => $count.' Tyre(s) Unassigned Successfully!! '.number_format($distance).'Kms added to tyre distance.'
         ]);
+    }
+
+    public function canFitOpening(): bool
+    {
+        return (bool) optional(Auth::user())->canOverrideTripLocks();
     }
 
     public function selectAll($ids){
@@ -303,6 +323,28 @@ class TyreAssignments extends Component
                 )
                 ->orderBy('serial_number')
                 ->get();
+
+            // Admins: in-store tyres too, fitted as opening tyres (no dispatch, no value).
+            if ($this->includeOpening && $this->canFitOpening()) {
+                $openingTyres = Tyre::query()
+                    ->with('product.brand')
+                    ->openingFittable()
+                    ->where('retread', 0)
+                    ->when($term !== '', function ($q) use ($term, $picked) {
+                        $like = "%{$term}%";
+                        $q->where(function ($q) use ($like, $picked) {
+                            $q->where('serial_number', 'like', $like)
+                              ->orWhere('tyre_number', 'like', $like)
+                              ->orWhereHas('product', fn ($p) => $p->where('name', 'like', $like)
+                                  ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like)))
+                              ->orWhereIn('id', $picked);
+                        });
+                    })
+                    ->orderBy('serial_number')
+                    ->get()
+                    ->each(fn ($tyre) => $tyre->setAttribute('is_opening', true));
+                $availableTyres = $availableTyres->concat($openingTyres);
+            }
         }
 
         return view('livewire.tyres.tyre-assignments',[
