@@ -7,7 +7,9 @@ use App\Models\Account;
 use App\Models\Currency;
 use App\Models\Allowance;
 use App\Models\Tax;
+use App\Services\Payroll\SalaryPayeService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Index extends Component
 {
@@ -151,19 +153,30 @@ class Index extends Component
             $allowance->taxable = (bool) $this->taxable;
             $allowance->account_id = $this->account_id;
             $allowance->status = $this->status;
+            $taxableChanged = $allowance->isDirty('taxable');
             $allowance->update();
+
+            // PAYE on salary templates is stored, not live — re-run it on
+            // every salary carrying this allowance so future payroll runs
+            // pick up the new Taxable setting.
+            $message = "Allowance Updated Successfully!!";
+            if ($taxableChanged) {
+                $count = (new SalaryPayeService())->recalculateForAllowance($allowance);
+                $message .= " PAYE recalculated on {$count} salar" . ($count === 1 ? 'y' : 'ies') . ".";
+            }
 
             $this->dispatchBrowserEvent('hide-allowanceEditModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Allowance Updated Successfully!!"
+                'message'=>$message
             ]);
 
 
             // return redirect()->route('allowances.index');
             }
             catch(\Exception $e){
+            Log::error('Allowance update failed: '.$e->getMessage());
             $this->dispatchBrowserEvent('hide-allowanceEditModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',

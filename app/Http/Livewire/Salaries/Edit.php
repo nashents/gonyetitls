@@ -10,7 +10,7 @@ use App\Models\Employee;
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\SalaryItem;
-use App\Models\TaxBracket;
+use App\Services\Payroll\SalaryPayeService;
 use App\Models\SalaryDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +54,10 @@ class Edit extends Component
     public $total_allowances = 0;
     public $total_deductions = 0;
     public $frequency;
+
+    // allowance_id:/deduction_id:<id> => [[currency_id, exchange_rate], ...]
+    // of the rows being replaced on save (request-local, not wire state)
+    private array $carriedFx = [];
 
     public $inputs = [];
     public $i = 1;
@@ -218,6 +222,19 @@ class Edit extends Component
                 // removable), so it represents the complete intended state —
                 // replace the existing rows with it rather than appending, or
                 // every save would duplicate everything already there.
+                //
+                // The form has no per-row currency, so carry each row's
+                // currency/exchange rate (set on Create) over to its
+                // replacement — otherwise a USD allowance on a ZiG salary
+                // would silently become a ZiG amount.
+                $this->carriedFx = SalaryItem::where('salary_id', $this->salary_id)
+                    ->where(fn ($q) => $q->whereNotNull('allowance_id')->orWhereNotNull('deduction_id'))
+                    ->whereNotNull('currency_id')
+                    ->get()
+                    ->groupBy(fn ($item) => $item->allowance_id ? 'allowance_id:'.$item->allowance_id : 'deduction_id:'.$item->deduction_id)
+                    ->map(fn ($items) => $items->map(fn ($item) => [$item->currency_id, $item->exchange_rate])->values()->all())
+                    ->all();
+
                 SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('allowance_id')->delete();
                 SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('loan_id')->delete();
                 // Deductions include PAYE/AIDS Levy alongside manual ones —
@@ -247,22 +264,23 @@ class Edit extends Component
                 // (not just what changed this session) so gross/net/PAYE stay
                 // correct even when this edit didn't re-touch every existing
                 // allowance/deduction.
-                $this->total_allowances = (float) SalaryItem::where('salary_id', $this->salary_id)
-                    ->whereNotNull('allowance_id')->sum('amount');
-                $this->total_deductions = (float) SalaryItem::where('salary_id', $this->salary_id)
-                    ->where(function ($q) {
-                        $q->whereNotNull('deduction_id')->orWhereNotNull('loan_id');
-                    })->sum('amount');
+                // Foreign-currency rows count at their exchange amount, the
+                // same way Salaries Create totals them.
+                $companyCurrencyId = SalaryPayeService::companyCurrencyId($salary);
+                $items = SalaryItem::where('salary_id', $this->salary_id)->get();
+                $this->total_allowances = $items->whereNotNull('allowance_id')
+                    ->sum(fn ($item) => SalaryPayeService::itemValue($item, $companyCurrencyId));
+                $this->total_deductions = $items->filter(fn ($item) => $item->deduction_id || $item->loan_id)
+                    ->sum(fn ($item) => SalaryPayeService::itemValue($item, $companyCurrencyId));
 
                 // Calculate Gross Salary
                 $gross = $this->basic + $this->total_allowances;
 
                 // Process PAYE & AIDS Levy - on gross less non-taxable allowances
                 if ($this->paye) {
-                    $nonTaxable = (float) SalaryItem::where('salary_id', $this->salary_id)
-                        ->whereHas('allowance', fn ($q) => $q->where('taxable', false))
-                        ->sum('amount');
-                    $this->processPayeAndAidsLevy(max(0, $gross - $nonTaxable));
+                    $payeService = new SalaryPayeService();
+                    $taxable = max(0, $gross - $payeService->nonTaxableAllowances($this->salary_id, $companyCurrencyId));
+                    $this->total_deductions += $payeService->applyPaye($salary, $taxable);
                 }
 
                 // Final Salary Calculation
@@ -290,10 +308,17 @@ class Edit extends Component
             if (!empty($items)) {
                 foreach ($items as $key => $item) {
                     if (!empty($item) && isset($amounts[$key])) {
+                        $fxKey = $column.':'.$item;
+                        [$currencyId, $rate] = !empty($this->carriedFx[$fxKey])
+                            ? array_shift($this->carriedFx[$fxKey])
+                            : [null, null];
                         SalaryItem::create([
                             'salary_id' => $this->salary_id,
                             $column => $item,
                             'amount' => $amounts[$key],
+                            'currency_id' => $currencyId,
+                            'exchange_rate' => $rate,
+                            'exchange_amount' => $rate ? $rate * $amounts[$key] : null,
                         ]);
                         $total += $amounts[$key];
                     }
@@ -302,55 +327,6 @@ class Edit extends Component
             return $total;
         }
     
-        // Helper function to process PAYE and AIDS Levy
-        private function processPayeAndAidsLevy($gross) {
-
-            // tax_brackets.lower_band/upper_band are stored as strings. Binding
-            // $gross as a PHP float (rather than an int) against those VARCHAR
-            // columns makes MySQL's implicit cast pick the wrong row — it was
-            // matching the unbounded top bracket (upper_band IS NULL) instead
-            // of the correct one, producing a negative amount that the
-            // `$paye_var > 0` guard below then silently skipped. Casting both
-            // sides explicitly to DECIMAL avoids that regardless of $gross's
-            // PHP type.
-            $tax_bracket = TaxBracket::where('currency_id', $this->currency_id)
-                ->where('frequency', $this->frequency)
-                ->where(function ($query) use ($gross) {
-                    $query->whereRaw('CAST(lower_band AS DECIMAL(18,2)) <= ?', [$gross])->orWhereNull('lower_band');
-                })
-                ->where(function ($query) use ($gross) {
-                    $query->whereRaw('CAST(upper_band AS DECIMAL(18,2)) >= ?', [$gross])->orWhereNull('upper_band');
-                })
-                ->first();
-
-            if ($tax_bracket && is_numeric($tax_bracket->percentage)) {
-                $gross_percentage = $gross * ($tax_bracket->percentage / 100);
-                $paye_var = $gross_percentage - ($tax_bracket->rate ?? 0);
-
-                if ($paye_var > 0) {
-                  
-                    $payeDeduction = Deduction::where('name', 'PAYE')->first();
-                    SalaryItem::create([
-                        'salary_id' => $this->salary_id,
-                        'deduction_id' => $payeDeduction->id,
-                        'amount' => $paye_var,
-                    ]);
-                    $this->total_deductions += $paye_var;
-                    
-                    if ($this->aids_levy) {
-                        $aidsLevyDeduction = Deduction::where('name', 'AIDS Levy')->first();
-                        $aids_levy_var = $paye_var * 0.03;
-                        SalaryItem::create([
-                            'salary_id' => $this->salary_id,
-                            'deduction_id' => $aidsLevyDeduction->id,
-                            'amount' => $aids_levy_var,
-                        ]);
-                        $this->total_deductions += $aids_levy_var;
-                    }
-                }
-            }
-        }
-
     public function render()
     {
         return view('livewire.salaries.edit');

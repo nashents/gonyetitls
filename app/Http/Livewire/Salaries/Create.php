@@ -12,7 +12,7 @@ use App\Models\Recovery;
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\SalaryItem;
-use App\Models\TaxBracket;
+use App\Services\Payroll\SalaryPayeService;
 use App\Models\SalaryDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -454,7 +454,9 @@ class Create extends Component
                 
                 // Process PAYE & AIDS Levy - on gross less non-taxable allowances
                 if ($this->paye) {
-                    $this->processPayeAndAidsLevy(max(0, $gross - $this->nonTaxableAllowances()));
+                    $payeService = new SalaryPayeService();
+                    $taxable = max(0, $gross - $payeService->nonTaxableAllowances($this->salary_id, $this->company->currency_id));
+                    $this->total_deductions += $payeService->applyPaye($salary, $taxable, $this->exchange_rate);
                 }
 
                 // Process NSSA, NEC and Pension statutory contributions
@@ -522,77 +524,6 @@ class Create extends Component
             return $total;
         }
     
-        /**
-         * This salary's allowances marked not PAYE-taxable, valued the same
-         * way total_allowances is (company currency).
-         */
-        private function nonTaxableAllowances(): float {
-            return (float) SalaryItem::where('salary_id', $this->salary_id)
-                ->whereHas('allowance', fn ($q) => $q->where('taxable', false))
-                ->get()
-                ->sum(fn ($item) => $item->currency_id && $item->currency_id != $this->company->currency_id
-                    ? (float) $item->exchange_amount
-                    : (float) $item->amount);
-        }
-
-        // Helper function to process PAYE and AIDS Levy
-        private function processPayeAndAidsLevy($gross) {
-         
-            $tax_bracket = TaxBracket::where('currency_id', $this->selectedCurrency)
-                ->where('frequency', $this->frequency)
-                ->where(function ($query) use ($gross) {
-                    $query->where('lower_band', '<=', $gross)->orWhereNull('lower_band');
-                })
-                ->where(function ($query) use ($gross) {
-                    $query->where('upper_band', '>=', $gross)->orWhereNull('upper_band');
-                })
-                ->first();
-            
-            
-            if ($tax_bracket && is_numeric($tax_bracket->percentage)) {
-              
-                $gross_percentage = $gross * ($tax_bracket->percentage / 100);
-             
-                $paye_var = $gross_percentage - ($tax_bracket->rate ?? 0);
-              
-                if ($paye_var > 0) {
-                  
-                    $payeDeduction = Deduction::firstOrCreate(
-                        ['name' => 'PAYE'], 
-                        ['status' => 1]
-                    );
-                    $exchange_amount = $this->exchange_rate * $paye_var;
-                    SalaryItem::create([
-                        'salary_id' => $this->salary_id,
-                        'deduction_id' => $payeDeduction->id,
-                        'amount' => $paye_var,
-                        'exchange_rate' => $this->exchange_rate,
-                        'exchange_amount' =>  $exchange_amount,
-                    ]);
-                    $this->total_deductions += $paye_var;
-                    
-                    if ($this->aids_levy) {
-
-                        $aidsLevyDeduction = Deduction::firstOrCreate(
-                            ['name' => 'AIDS Levy'], 
-                            ['status' => 1]
-                        );
-
-                        $aids_levy_var = $paye_var * 0.03;
-                        $exchange_amount = $this->exchange_rate *  $aids_levy_var;
-                        SalaryItem::create([
-                            'salary_id' => $this->salary_id,
-                            'deduction_id' => $aidsLevyDeduction->id,
-                            'amount' => $aids_levy_var,
-                            'exchange_rate' => $this->exchange_rate,
-                            'exchange_amount' =>  $exchange_amount,
-                        ]);
-                        $this->total_deductions += $aids_levy_var;
-                    }
-                }
-            }
-        }
-
         // Helper function to process NSSA, NEC and Pension statutory contributions.
         // Each is independently no-op (returns zero) if no rate/assignment is
         // configured for this employee, so it's always safe to call.
