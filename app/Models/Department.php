@@ -44,6 +44,10 @@ class Department extends Model implements Auditable
     public function employees(){
         return $this->belongsToMany('App\Models\Employee');
     }
+    /** Employees whose DEFAULT department this is (leave/payroll/attendance use this). */
+    public function defaultEmployees(){
+        return $this->belongsToMany('App\Models\Employee')->withPivot('is_default')->wherePivot('is_default', true);
+    }
     public function job_titles(){
         return $this->hasMany('App\Models\JobTitle');
     }

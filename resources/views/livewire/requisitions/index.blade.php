@@ -38,6 +38,7 @@
                                                 <input type="date" wire:model.debounce.300ms="to" class="form-control">
                                             </div>
                                         </div>
+                                        @include('partials.auth-status-filter', ['class' => 'col-sm-6 col-md-4 col-lg-2', 'style' => 'margin-bottom: 10px'])
                                         <div class="col-sm-6 col-md-4 col-lg-2" style="margin-bottom: 10px">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Type</span>

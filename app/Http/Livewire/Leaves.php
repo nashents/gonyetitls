@@ -87,7 +87,10 @@ class Leaves extends Component
             $rank_names[] = $rank->name;
         }
 
-        if (Auth::user()->employee->departments->first()) {
+        // Leave is always booked against the employee's default department.
+        $defaultDepartment = Auth::user()->employee->defaultDepartment();
+
+        if ($defaultDepartment) {
             $leave = new Leave;
             $leave->user_id = $this->user_id;
             $leave->to = $this->to;
@@ -100,7 +103,7 @@ class Leaves extends Component
                 $leave->management_decision = 'pending';
             }else {
                 $department_heads = DepartmentHead::latest()->get();
-                $department = Auth::user()->employee->departments->first();
+                $department = $defaultDepartment;
                 if ($department) {
                     $department_with_department_head = DepartmentHead::where('department_id',$department->id)->first();
                 }
@@ -126,7 +129,7 @@ class Leaves extends Component
             }
 
             $leave->leave_type_id = $this->leave_type_id;
-            $leave->department_id = Auth::user()->employee->departments->first()->id;
+            $leave->department_id = $defaultDepartment->id;
             $leave->days = $days;
             $leave->reason = $this->reason;
             $leave->save();

@@ -57,8 +57,11 @@ class BookingsExport implements
     // Layout
     protected int $tableStartRow = 10; // computed dynamically
 
-    public function __construct($booking_status = null, $search = null, $from = null, $to = null, $filter = null, $search_id = null, $station_id = null, $service_type_id = null, $employee_id = null, $problem_category_id = null)
+    public $auth_status;
+
+    public function __construct($booking_status = null, $search = null, $from = null, $to = null, $filter = null, $search_id = null, $station_id = null, $service_type_id = null, $employee_id = null, $problem_category_id = null, $auth_status = null)
     {
+        $this->auth_status = $auth_status;
         $this->booking_status = $booking_status;
         $this->search         = $search;
         $this->from           = $from;
@@ -154,6 +157,7 @@ class BookingsExport implements
         if (!empty($this->station_id)) {
            $query->where('station_id', $this->station_id);
         }
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($query, $this->auth_status, 'bookings.authorization');
         if (!empty($this->problem_category_id)) {
            $query->where('problem_category_id', $this->problem_category_id);
         }

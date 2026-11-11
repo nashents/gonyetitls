@@ -26,6 +26,7 @@ class Index extends Component
 
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -327,6 +328,7 @@ class Index extends Component
                 });
             })
 
+            ->tap(fn ($q) => $this->applyAuthStatus($q))
             ->latest()
             ->paginate(10);
         return view('livewire.fuel-requests.index',[

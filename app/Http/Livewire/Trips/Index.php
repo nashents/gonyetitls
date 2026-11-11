@@ -48,6 +48,7 @@ class Index extends Component
     use WithFileUploads;
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public function paginationView()
@@ -721,6 +722,7 @@ class Index extends Component
             'transporter_id'      => $this->filter_transporter_id,
             'route_id'            => $this->filter_route_id,
             'trip_status'         => $this->filter_trip_status,
+            'auth_status'         => $this->auth_status,
         ]
         ), 'manifest_report_' .time().'.xlsx');
     }
@@ -739,6 +741,7 @@ class Index extends Component
             'transporter_id'      => $this->filter_transporter_id,
             'route_id'            => $this->filter_route_id,
             'trip_status'         => $this->filter_trip_status,
+            'auth_status'         => $this->auth_status,
         ]
         ), 'trips_' .time().'.csv', Excel::CSV);
     }
@@ -758,6 +761,7 @@ class Index extends Component
             'transporter_id'      => $this->filter_transporter_id,
             'route_id'            => $this->filter_route_id,
             'trip_status'         => $this->filter_trip_status,
+            'auth_status'         => $this->auth_status,
         ]
         ), 'trips_' .time().'.pdf', Excel::DOMPDF);
     }
@@ -775,6 +779,7 @@ class Index extends Component
             'transporter_id'      => $this->filter_transporter_id,
             'route_id'            => $this->filter_route_id,
             'trip_status'         => $this->filter_trip_status,
+            'auth_status'         => $this->auth_status,
         ]
         ), 'trips_' .time().'.xlsx');
     }
@@ -1921,6 +1926,8 @@ class Index extends Component
                 $trips->where($column, $this->{$property});
             }
         }
+
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($trips, $this->auth_status, 'trips.authorization');
 
         /*
         |--------------------------------------------------------------------------

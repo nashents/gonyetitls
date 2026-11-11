@@ -33,6 +33,7 @@
                                             <input type="date" wire:model.debounce.300ms="to" class="form-control">
                                         </div>
                                     </div>
+                                    @include('partials.auth-status-filter')
                                 </div>
                                 <a href="{{ route('goods_returneds.new', ['department' => $department]) }}" class="btn btn-default">
                                     <i class="fa fa-plus-square-o"></i> Goods Returned Voucher

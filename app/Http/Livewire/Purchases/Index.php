@@ -43,6 +43,7 @@ class Index extends Component
     use WithFileUploads;
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -246,13 +247,13 @@ class Index extends Component
     }
 
     public function exportPurchasesCSV(Excel $excel){
-        return $excel->download(new PurchasesExport($this->from, $this->to, $this->purchase_filter, $this->department,  $this->search), 'purchase_orders' .time().'.csv', Excel::CSV);
+        return $excel->download(new PurchasesExport($this->from, $this->to, $this->purchase_filter, $this->department,  $this->search, $this->auth_status), 'purchase_orders' .time().'.csv', Excel::CSV);
     }
     public function exportPurchasesPDF(Excel $excel){
-        return $excel->download(new PurchasesExport($this->from, $this->to, $this->purchase_filter,$this->department,  $this->search), 'purchase_orders' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new PurchasesExport($this->from, $this->to, $this->purchase_filter,$this->department,  $this->search, $this->auth_status), 'purchase_orders' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportPurchasesExcel(Excel $excel){
-        return $excel->download(new PurchasesExport($this->from, $this->to, $this->purchase_filter, $this->department, $this->search), 'purchase_orders' .time().'.xlsx');
+        return $excel->download(new PurchasesExport($this->from, $this->to, $this->purchase_filter, $this->department, $this->search, $this->auth_status), 'purchase_orders' .time().'.xlsx');
     }
 
     public function vendorNumber(){
@@ -1191,6 +1192,8 @@ class Index extends Component
                 });
             });
         }
+
+        $this->applyAuthStatus($query);
 
         $purchases = $query
             ->orderBy($this->purchase_filter, 'desc')

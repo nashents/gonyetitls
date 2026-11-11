@@ -111,6 +111,9 @@ class Requisition extends Model implements Auditable
             $query->where('type', 'po_requisition')->withoutPurchaseOrder();
         }
 
+        // Auth Status filter (pending / approved / rejected)
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($query, $filters['auth_status'] ?? null, 'requisitions.authorization');
+
         // Date range OR default current month/year — skipped while searching or
         // checking PO progress so older matches / outstanding POs aren't hidden.
         // whereDate so the To day is included in full for created_at

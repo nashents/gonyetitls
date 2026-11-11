@@ -8,6 +8,7 @@ use Livewire\Component;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     public $debit_notes;
 
     public function mount(){
@@ -79,6 +80,9 @@ class Index extends Component
 
     public function render()
     {
+        // Reloaded on every render so the Auth Status filter applies
+        $this->debit_notes = $this->applyAuthStatus(DebitNote::with('journal_entry'))->latest()->get();
+
         return view('livewire.debit-notes.index');
     }
 }

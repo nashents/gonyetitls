@@ -78,6 +78,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                        @include('partials.auth-status-filter')
                                         <!-- /input-group -->
                                     </div>
                                 @if ($notDriver)

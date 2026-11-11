@@ -11,6 +11,7 @@ class Index extends Component
 {
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public $search;
@@ -116,6 +117,8 @@ class Index extends Component
         $query = GoodsReturned::query()
             ->with(['vendor', 'employee', 'user', 'goods_received', 'goods_returned_items'])
             ->where('department', $this->department);
+
+        $this->applyAuthStatus($query);
 
         // Date filter — skip the default "this month" restriction while searching so
         // matches outside the current period aren't hidden.

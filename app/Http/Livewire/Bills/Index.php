@@ -42,6 +42,7 @@ class Index extends Component
     use WithFileUploads;
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -219,7 +220,7 @@ class Index extends Component
 
 
     public function exportBillsCSV(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->tax_status,  $this->search), 'bills_' .time().'.csv', Excel::CSV);
+        return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->search), 'bills_' .time().'.csv', Excel::CSV);
     }
     public function exportBillsPDF(Excel $excel){
         return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->search), 'bills_' .time().'.pdf', Excel::DOMPDF);
@@ -263,6 +264,7 @@ class Index extends Component
       $this->status = request()->query('status');
         $this->range = request()->query('range');
         $this->authorization = request()->query('authorization');
+        $this->auth_status = in_array($this->authorization, ['pending', 'approved', 'rejected'], true) ? $this->authorization : '';
         $this->company = Auth::user()->employee->company;
         $this->resetPage();
         $this->recalculateBills();
@@ -973,9 +975,7 @@ class Index extends Component
         if ($this->asset_id != "") {
             $base->where('asset_id', $this->asset_id);
         }
-        if (filled($this->authorization)) {
-            $base->where('authorization', $this->authorization);
-        }
+        $this->applyAuthStatus($base);
 
         return $base;
     }
@@ -994,6 +994,7 @@ class Index extends Component
             'asset_id' => $this->asset_id,
             'vehicle_id' => $this->vehicle_id,
             'trip_id' => $this->trip_id,
+            'auth_status' => $this->auth_status,
         ];
 
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {

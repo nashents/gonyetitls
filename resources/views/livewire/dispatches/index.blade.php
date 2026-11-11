@@ -44,6 +44,7 @@
                                         </div>
                                         <!-- /input-group -->
                                     </div>
+                                    @include('partials.auth-status-filter')
                                 </div>
                                 <a href="#" data-toggle="modal" data-target="#dispatchModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Dispatch</a>
                                 <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>

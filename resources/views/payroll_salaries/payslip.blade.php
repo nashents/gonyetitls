@@ -33,7 +33,7 @@
                                 <div class="row contacts">
                                     <div class="col invoice-to">
                                         <h6 class="to"><strong>Emp.:</strong> {{$employee->employee_number ? "(".$employee->employee_number.")" : "" }} {{$employee->name}} {{$employee->surname}} </h6>
-                                        <div class="text-gray-light"><strong>Dpt.:</strong> {{$employee->departments->first()->name}}</div>
+                                        <div class="text-gray-light"><strong>Dpt.:</strong> {{ $payroll_salary->department?->name ?? $employee->defaultDepartment()?->name }}</div>
                                         <div class="text-gray-light">Title.:<strong></strong> {{$employee->post}}</div>
                                         <div class="address"><strong>Add.:</strong> {{$employee->street_address}} {{$employee->suburb}}, {{$employee->city}}, {{$employee->country}}</div>
                                         <div class="email"><strong>Email.:</strong> {{$employee->email}}</div>

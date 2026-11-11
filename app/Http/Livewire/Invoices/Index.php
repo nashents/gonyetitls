@@ -46,6 +46,7 @@ class Index extends Component
 
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public $search;
@@ -174,6 +175,7 @@ class Index extends Component
         $this->status = request()->query('status');
         $this->range = request()->query('range');
         $this->authorization = request()->query('authorization');
+        $this->auth_status = in_array($this->authorization, ['pending', 'approved', 'rejected'], true) ? $this->authorization : '';
         $this->resetPage();
         $this->invoice_filter = "created_at";
         $this->tax_status = "all";
@@ -1452,6 +1454,7 @@ class Index extends Component
             'invoice_filter' => $this->invoice_filter,
             'tax_status' => $this->tax_status,
             'currency_id' => $this->currency_id,
+            'auth_status' => $this->auth_status,
         ];
 
         $now            = Carbon::now();
@@ -1520,9 +1523,7 @@ class Index extends Component
                     ->orWhere('tax_amount', '');
                 });
             }
-            if (filled($this->authorization)) {
-                $query->where('authorization', $this->authorization);
-            }
+            $this->applyAuthStatus($query);
            
 
             return view('livewire.invoices.index', [

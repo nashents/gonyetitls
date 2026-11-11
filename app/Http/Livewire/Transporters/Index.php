@@ -31,6 +31,7 @@ class Index extends Component
     use WithFileUploads;
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     use \App\Http\Livewire\Concerns\PullsFromSage;
     public $search;
     public $fleetTypeFilter = '';
@@ -137,14 +138,14 @@ class Index extends Component
 
     public function exportTransportersCSV(Excel $excel){
 
-        return $excel->download(new TransportersExport, 'transporters.csv', Excel::CSV);
+        return $excel->download(new TransportersExport($this->auth_status), 'transporters.csv', Excel::CSV);
     }
     public function exportTransportersPDF(Excel $excel){
 
-        return $excel->download(new TransportersExport, 'transporters.pdf', Excel::DOMPDF);
+        return $excel->download(new TransportersExport($this->auth_status), 'transporters.pdf', Excel::DOMPDF);
     }
     public function exportTransportersExcel(Excel $excel){
-        return $excel->download(new TransportersExport, 'transporters.xlsx');
+        return $excel->download(new TransportersExport($this->auth_status), 'transporters.xlsx');
     }
 
     /** Whether the acting user's company has an active Sage integration. */
@@ -575,7 +576,7 @@ class Index extends Component
                 $query->where('fleet_type', $this->fleetTypeFilter);
             }
 
-            $this->transporters = $query->paginate(10);
+            $this->transporters = $this->applyAuthStatus($query)->paginate(10);
 
 
         return view('livewire.transporters.index',[

@@ -60,6 +60,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     use WithFileUploads;
     use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
    
@@ -2474,6 +2475,7 @@ class Index extends Component
             'filter_offloading_point_id' => $this->filter_offloading_point_id,
             'filter_shift_type' => $this->filter_shift_type,
             'filter_for' => $this->filter_for,
+            'auth_status' => $this->auth_status,
         ];
 
         if ((isset($this->fuel_exchange_rate) && $this->fuel_exchange_rate > 0 && is_numeric($this->fuel_exchange_rate)) && (isset($this->fuel_amount) && $this->fuel_amount > 0 && is_numeric($this->fuel_amount)) ) {
@@ -2591,6 +2593,8 @@ class Index extends Component
                     });
             });
         });
+
+        $this->applyAuthStatus($baseQuery);
 
         return view('livewire.shifts.index', [
             'shifts' => $baseQuery

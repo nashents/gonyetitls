@@ -38,6 +38,7 @@ class Index extends Component
     use WithFileUploads;
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $perPage = 10;
     protected $queryString = [
@@ -1450,7 +1451,7 @@ public function getAuthorizer($id){
             $transport_orders->orderBy($this->transport_order_filter, 'desc');
 
         return view('livewire.transport-orders.index',[
-            'transport_orders' => $transport_orders->paginate($this->perPage)
+            'transport_orders' => $this->applyAuthStatus($transport_orders)->paginate($this->perPage)
         ]);
     }
 }

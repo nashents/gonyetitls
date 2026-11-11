@@ -47,8 +47,11 @@ class AttendanceRegisterExport implements
     protected $departmentHeaderRows = [];
     protected $departmentSubtotalRows = [];
 
-    public function __construct($from = null, $to = null, $department_id = null, $search = null, $attendance_filter)
+    public $auth_status;
+
+    public function __construct($from = null, $to = null, $department_id = null, $search = null, $attendance_filter = 'created_at', $auth_status = null)
     {
+        $this->auth_status = $auth_status;
         $this->from = $from;
         $this->attendance_filter = $attendance_filter;
         $this->to = $to;
@@ -114,9 +117,34 @@ class AttendanceRegisterExport implements
         $baseQuery = AttendanceRegister::query()
             ->with([
                 'employee:id,employee_number,name,surname',
+                'employee.default_departments:departments.id,departments.name',
                 'attendance:id,attendance_number,date,department_id',
                 'attendance.department:id,name',
             ])
+
+            // One row per employee per day: when an employee was marked on
+            // several department registers for the same date, keep only the
+            // one marked under their DEFAULT department.
+            ->where(function (Builder $q) {
+                $q->whereExists(function ($e) {
+                    $e->select(DB::raw(1))
+                        ->from('department_employee as de')
+                        ->join('attendances as a_def', 'a_def.department_id', '=', 'de.department_id')
+                        ->whereColumn('a_def.id', 'attendance_registers.attendance_id')
+                        ->whereColumn('de.employee_id', 'attendance_registers.employee_id')
+                        ->where('de.is_default', true);
+                })->orWhereNotExists(function ($e) {
+                    $e->select(DB::raw(1))
+                        ->from('attendance_registers as ar2')
+                        ->join('attendances as a2', 'a2.id', '=', 'ar2.attendance_id')
+                        ->join('attendances as a_self', 'a_self.date', '=', 'a2.date')
+                        ->whereColumn('a_self.id', 'attendance_registers.attendance_id')
+                        ->whereColumn('ar2.employee_id', 'attendance_registers.employee_id')
+                        ->whereColumn('ar2.id', '!=', 'attendance_registers.id')
+                        ->whereNull('ar2.deleted_at')
+                        ->whereNull('a2.deleted_at');
+                });
+            })
 
             // Filter by parent Attendance date
             ->when($from || $to, function (Builder $q) use ($from, $to) {
@@ -131,11 +159,14 @@ class AttendanceRegisterExport implements
                 });
             })
 
-            // Department filter is on Attendance
+            // Auth status of the parent attendance register (index table filter)
+            ->when(filled($this->auth_status), function (Builder $q) {
+                $q->whereHas('attendance', fn (Builder $a) => \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($a, $this->auth_status));
+            })
+
+            // Department filter is on the employee's DEFAULT department
             ->when(filled($this->department_id), function (Builder $q) {
-                $q->whereHas('attendance', function (Builder $a) {
-                    $a->where('department_id', $this->department_id);
-                });
+                $q->whereHas('employee', fn (Builder $e) => $e->inDefaultDepartment($this->department_id));
             })
 
             // Search
@@ -171,7 +202,7 @@ class AttendanceRegisterExport implements
         $records = $this->query()->get();
 
         $grouped = $records
-            ->groupBy(fn ($row) => $row->attendance?->department?->name ?: 'Unassigned')
+            ->groupBy(fn ($row) => $this->departmentName($row))
             ->sortKeys();
 
         $rows = collect();
@@ -214,8 +245,14 @@ class AttendanceRegisterExport implements
             $row->source ?? 'manual',
             $row->notes ?? '',
             $row->created_at ? $row->created_at->format('Y-m-d H:i') : '',
-            $row->attendance?->department?->name ?? '-', // department the attendance was marked under
+            $this->departmentName($row, '-'),
         ];
+    }
+
+    /** The employee's default department (never a secondary one). */
+    protected function departmentName($row, string $none = 'Unassigned'): string
+    {
+        return $row->employee?->default_departments->first()?->name ?: $none;
     }
 
     public function headings(): array

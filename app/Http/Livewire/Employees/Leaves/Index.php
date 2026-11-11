@@ -438,7 +438,7 @@ class Index extends Component
     public function render()
     {
         // Suspended and archived employees are excluded, searching included.
-        $query = Employee::query()->activeStaff()->ofStaffType(HrAccess::staffType($this->staff_type))->filterBy($this->staffFilters());
+        $query = Employee::query()->activeStaff()->ofStaffType(HrAccess::staffType($this->staff_type))->filterBy($this->staffFilters(), true);
 
         if (filled($this->search)) {
             // Grouped so the staff-type filter still applies to both search terms.

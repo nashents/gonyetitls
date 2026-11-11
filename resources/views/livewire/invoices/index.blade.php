@@ -45,6 +45,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                        @include('partials.auth-status-filter')
                                          <div class="col-lg-3">
                                         <div class="input-group">
                                             <span class="input-group-addon">Transporters</span>

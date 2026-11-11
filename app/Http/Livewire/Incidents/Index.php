@@ -11,6 +11,7 @@ class Index extends Component
 {
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public $search;
@@ -108,6 +109,8 @@ class Index extends Component
 
         $query = Incident::query()
             ->with(['customer', 'trip', 'horse', 'trailer', 'vehicle']);
+
+        $this->applyAuthStatus($query);
 
         // Access control
         if (! $isAdmin) {

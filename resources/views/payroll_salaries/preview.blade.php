@@ -56,7 +56,7 @@ Payslip | @if (Auth::user()->employee->company)
                             <div class="row contacts">
                                 <div class="col invoice-to">
                                     <h6 class="to">Emp: {{$employee->employee_number }} {{$employee->name}} {{$employee->surname}} </h6>
-                                    <div class="text-gray-light">Dpt: {{$employee->departments->first()?->name}}</div>
+                                    <div class="text-gray-light">Dpt: {{ $payroll_salary->department?->name ?? $employee->defaultDepartment()?->name }}</div>
                                     <div class="text-gray-light">Title: {{$employee->post}}</div>
                                     <div class="address">Add.: {{$employee->street_address}} {{$employee->suburb}}, {{$employee->city}}, {{$employee->country}}</div>
                                     <div class="email">Email.: {{$employee->email}}</div>

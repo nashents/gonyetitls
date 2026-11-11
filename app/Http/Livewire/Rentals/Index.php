@@ -20,6 +20,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     public $search;
     public $from;
     public $to;
@@ -377,7 +378,7 @@ class Index extends Component
 
     public function render()
     {
-        $base = Rental::query()->with('customer', 'transporter', 'currency','vehicle', 'driver');
+        $base = $this->applyAuthStatus(Rental::query()->with('customer', 'transporter', 'currency','vehicle', 'driver'));
         $this->rentals = $base->orderByDesc('created_at')->paginate(10);
         return view('livewire.rentals.index',[
             'rentals' => $this->rentals

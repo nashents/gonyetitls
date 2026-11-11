@@ -23,6 +23,7 @@ use Maatwebsite\Excel\Excel;
 class Index extends Component
 {
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     use \App\Http\Livewire\Concerns\SyncsBookingJobCard;
 
     protected $paginationTheme = 'bootstrap';
@@ -110,13 +111,13 @@ class Index extends Component
 
 
     public function exportBookingsCSV(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id), 'bookings_'.time().'.csv', Excel::CSV);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id, $this->auth_status), 'bookings_'.time().'.csv', Excel::CSV);
     }
     public function exportBookingsPDF(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id), 'bookings_'.time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id, $this->auth_status), 'bookings_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportBookingsExcel(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id), 'bookings_'.time().'.xlsx');
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id, $this->auth_status), 'bookings_'.time().'.xlsx');
     }
 
 
@@ -265,6 +266,8 @@ class Index extends Component
     {
         $query = Booking::query()
             ->with(['ticket.sageMapping','inspection','horse','trailer','vehicle']);
+
+        $this->applyAuthStatus($query);
 
         // Date window
         if ($this->from && $this->to) {

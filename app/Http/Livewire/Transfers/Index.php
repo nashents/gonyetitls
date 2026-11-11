@@ -20,6 +20,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $searchInventory;
@@ -544,7 +545,7 @@ class Index extends Component
                 ->orderByDesc($this->transfer_filter);
 
             return view('livewire.transfers.index', [
-                'transfers' => $query->paginate(10),
+                'transfers' => $this->applyAuthStatus($query)->paginate(10),
             ]);
        
     }

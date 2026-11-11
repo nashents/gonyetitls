@@ -45,6 +45,7 @@ class Index extends Component
 
     use WithFileUploads;
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $from;
@@ -673,17 +674,29 @@ class Index extends Component
         return response()->download($path, $filename)->deleteFileAfterSend(true);
     }
 
+    /** The table's current filters, so exports match what's on screen. */
+    private function exportFilters(): array
+    {
+        return [
+            'from' => $this->from,
+            'to' => $this->to,
+            'dispatch_filter' => $this->dispatch_filter,
+            'search' => $this->search,
+            'auth_status' => $this->auth_status,
+        ];
+    }
+
     public function exportDispatchesCSV(Excel $excel){
 
-        return $excel->download(new DispatchesExport($this->department), 'dispatches.csv', Excel::CSV);
+        return $excel->download(new DispatchesExport($this->department, $this->exportFilters()), 'dispatches.csv', Excel::CSV);
     }
     public function exportDispatchesPDF(Excel $excel){
 
-        return $excel->download(new DispatchesExport($this->department), 'dispatches.pdf', Excel::DOMPDF);
+        return $excel->download(new DispatchesExport($this->department, $this->exportFilters()), 'dispatches.pdf', Excel::DOMPDF);
     }
     public function exportDispatchesExcel(Excel $excel){
 
-        return $excel->download(new DispatchesExport($this->department), 'dispatches.xlsx');
+        return $excel->download(new DispatchesExport($this->department, $this->exportFilters()), 'dispatches.xlsx');
     }
 
     public function updatedDispatchFor($value){
@@ -1968,72 +1981,12 @@ class Index extends Component
             $base = Dispatch::query()->with(['ticket','horse','vehicle','trailer','employee','department','branch'])
                         ->where('department',$this->department);
 
-            $base->when(filled($this->from) && filled($this->to), function ($q) {
-                    $q->whereDate($this->dispatch_filter, '>=', $this->from)
-                    ->whereDate($this->dispatch_filter, '<=', $this->to);
-                }, function ($q) {
-                    // Skip the default "this month" restriction while searching so matches
-                    // outside the current period (e.g. by product/inventory/tyre/asset #) aren't hidden.
-                    if (! filled($this->search)) {
-                        $q->whereMonth($this->dispatch_filter, Carbon::now()->month)
-                        ->whereYear($this->dispatch_filter, Carbon::now()->year);
-                    }
-                });
-
-               // Search filter (grouped to keep AND/OR logic correct)
-            $base->when(filled($this->search), function ($q) {
-                $term = '%'.$this->search.'%';
-
-                $q->where(function ($qq) use ($term) {
-                    $qq->where('dispatch_number', 'like', $term)
-                    ->orWhere('authorization', 'like', $term)
-                    ->orWhere('date', 'like', $term)
-                    ->orWhereHas('ticket', function ($sub) use ($term) {
-                        $sub->where('ticket_number', 'like', $term);
-                    })
-                    ->orWhereHas('horse', function ($sub) use ($term) {
-                        $sub->where('registration_number', 'like', $term)
-                        ->orWhere('fleet_number', 'like', $term);
-                    })
-                    ->orWhereHas('store', function ($sub) use ($term) {
-                        $sub->where('name', 'like', $term);
-                    })
-                    ->orWhereHas('vehicle', function ($sub) use ($term) {
-                        $sub->where('registration_number', 'like', $term)
-                        ->orWhere('fleet_number', 'like', $term);
-                    })
-                    ->orWhereHas('trailer', function ($sub) use ($term) {
-                        $sub->where('registration_number', 'like', $term)
-                        ->where('fleet_number', 'like', $term);
-                    })
-                    ->orWhereHas('employee', function ($sub) use ($term) {
-                        $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
-                    })
-                    ->orWhereHas('dispatch_items.product', function ($sub) use ($term) {
-                        $sub->where('product_number', 'like', $term)
-                        ->orWhere('name', 'like', $term)
-                        ->orWhere('identification_number', 'like', $term);
-                    })
-                    ->orWhereHas('dispatch_items.product.brand', function ($sub) use ($term) {
-                        $sub->where('name', 'like', $term);
-                    })
-                    ->orWhereHas('dispatch_items.inventory', function ($sub) use ($term) {
-                        $sub->where('inventory_number', 'like', $term)
-                        ->orWhere('serial_number', 'like', $term);
-                    })
-                    ->orWhereHas('dispatch_items.tyre', function ($sub) use ($term) {
-                        $sub->where('tyre_number', 'like', $term)
-                        ->orWhere('serial_number', 'like', $term);
-                    })
-                    ->orWhereHas('dispatch_items.asset', function ($sub) use ($term) {
-                        $sub->where('asset_number', 'like', $term)
-                        ->orWhere('serial_number', 'like', $term);
-                    });
-                });
-            });
+            // Same date / search / auth status filters the export applies
+            DispatchesExport::applyFilters($base, $this->exportFilters());
 
             $dispatches = $base
                 ->orderByDesc($this->dispatch_filter)
+                ->orderByDesc('id')
                 ->paginate(10);
 
 

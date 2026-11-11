@@ -223,6 +223,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                        @include('partials.auth-status-filter')
                                         <div class="col-lg-3" >
                                             <div class="input-group">
                                                <a href="#" wire:click.prevent="clearFilters()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-refresh"></i>CLEAR FILTERS</a>

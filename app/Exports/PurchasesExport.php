@@ -36,118 +36,51 @@ WithCustomStartCell
     public $department;
    
 
-    public function __construct($from, $to, $purchase_filter,$department, $search)
+    public $auth_status;
+
+    public function __construct($from, $to, $purchase_filter, $department, $search, $auth_status = null)
     {
-    
-            $this->from = $from;
-            $this->to = $to;
-            $this->purchase_filter = $purchase_filter;
-            $this->search = $search;
-            $this->department = $department;
-          
-           
+        $this->from = $from;
+        $this->to = $to;
+        $this->purchase_filter = $purchase_filter ?: 'created_at';
+        $this->search = $search;
+        $this->department = $department;
+        $this->auth_status = $auth_status;
     }
+
+    /**
+     * Same filters as the purchase orders table (Purchases\Index::render):
+     * department, date range (default this month unless searching),
+     * grouped search and auth status.
+     */
     public function query()
-    { 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                if ($this->department == "asset") {
-                    return Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->whereBetween($this->purchase_filter,[$this->from, $this->to] )
-                    ->where('department',$this->department)
-                    ->where('purchase_number','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('booking', function ($query) {
-                        return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('purchase_products.product', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                   
-                    ->orderBy($this->purchase_filter,'desc');
-                }else{
-                    return Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereBetween($this->purchase_filter,[$this->from, $this->to] )
-                    ->where('department',$this->department)
-                    ->where('purchase_number','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('booking', function ($query) {
-                        return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('purchase_products.product', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                   
-                    ->orderBy($this->purchase_filter,'desc');
-                }
-      
-            }else{
-                if ($this->department == "asset") {
-                    return Purchase::query()->with('vendor','purchase_products','purchase_products.product')->whereBetween($this->purchase_filter,[$this->from, $this->to] )->orderBy($this->purchase_filter,'desc');
-                }else{
-                    return Purchase::query()->with('vendor','purchase_products','purchase_products.product')->where('department',$this->department)->whereBetween($this->purchase_filter,[$this->from, $this->to] )->orderBy($this->purchase_filter,'desc');
-                }
-              
-               
-            }
-           
-        }elseif ($this->search) {
-            if ($this->department == "asset") {
-                return Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->whereMonth($this->purchase_filter, date('m'))
-                ->whereYear($this->purchase_filter, date('Y'))
-                ->where('department',$this->department)
-                ->where('purchase_number','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhere('description','like', '%'.$this->search.'%')
-                ->orWhereHas('booking', function ($query) {
-                    return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vendor', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('purchase_products.product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-               
-                ->orderBy($this->purchase_filter,'desc');
-            }else{
-                return Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereMonth($this->purchase_filter, date('m'))
-                ->whereYear($this->purchase_filter, date('Y'))
-                ->where('department',$this->department)
-                ->where('purchase_number','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhere('description','like', '%'.$this->search.'%')
-                ->orWhereHas('booking', function ($query) {
-                    return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vendor', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('purchase_products.product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-               
-                ->orderBy($this->purchase_filter,'desc');
-            }
-           
+    {
+        $query = Purchase::query()
+            ->with('vendor', 'booking', 'purchase_products', 'purchase_products.product')
+            ->where('department', $this->department);
+
+        if (filled($this->from) && filled($this->to)) {
+            $query->whereBetween($this->purchase_filter, [$this->from, $this->to]);
+        } elseif (blank($this->search)) {
+            $query->whereYear($this->purchase_filter, now()->year)
+                ->whereMonth($this->purchase_filter, now()->month);
         }
-        else {
-            if ($this->department == "asset") {
-                return Purchase::query()->with('vendor','purchase_products','purchase_products.product')->whereMonth($this->purchase_filter, date('m'))
-                ->whereYear($this->purchase_filter, date('Y'))->orderBy($this->purchase_filter,'desc');
-            }else{
-                return Purchase::query()->with('vendor','purchase_products','purchase_products.product')->where('department',$this->department)->whereMonth($this->purchase_filter, date('m'))
-                ->whereYear($this->purchase_filter, date('Y'))->orderBy($this->purchase_filter,'desc');
-            }
+
+        if (filled($this->search)) {
+            $search = '%' . $this->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('purchase_number', 'like', $search)
+                    ->orWhere('date', 'like', $search)
+                    ->orWhere('description', 'like', $search)
+                    ->orWhereHas('vendor', fn ($sub) => $sub->where('name', 'like', $search))
+                    ->orWhereHas('booking', fn ($sub) => $sub->where('booking_number', 'like', $search))
+                    ->orWhereHas('purchase_products.product', fn ($sub) => $sub->where('name', 'like', $search));
+            });
         }
-       
-       
+
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($query, $this->auth_status);
+
+        return $query->orderBy($this->purchase_filter, 'desc');
     }
 
 

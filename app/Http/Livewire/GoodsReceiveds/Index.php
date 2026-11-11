@@ -21,6 +21,7 @@ class Index extends Component
 
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $searchPurchase;
@@ -416,6 +417,8 @@ class Index extends Component
                     });
             });
         });
+
+        $this->applyAuthStatus($query);
 
         return view('livewire.goods-receiveds.index', [
             'goods_receiveds' => $query

@@ -163,6 +163,22 @@ class Employee extends Model implements Auditable
     }
 
     /**
+     * Only the department flagged is_default. Leave, payroll and attendance
+     * (and their reports) use this so an employee in several departments is
+     * counted once.
+     */
+    public function default_departments(){
+        return $this->belongsToMany('App\Models\Department')->withPivot('is_default')->withTimestamps()
+            ->wherePivot('is_default', true);
+    }
+
+    /** Employees whose DEFAULT department is $departmentId (other memberships ignored). */
+    public function scopeInDefaultDepartment($query, $departmentId)
+    {
+        return $query->whereHas('default_departments', fn ($d) => $d->where('departments.id', $departmentId));
+    }
+
+    /**
      * The department payroll costs are reported against. Falls back to the
      * earliest assignment when none is flagged.
      */
@@ -251,14 +267,16 @@ class Employee extends Model implements Auditable
      * exports: ['role_id', 'rank_id', 'department_id', 'branch_id']. Blank = no filter.
      * Role is the login's role (employee->user->roles).
      */
-    public function scopeFilterBy($query, array $filters)
+    public function scopeFilterBy($query, array $filters, bool $defaultDepartmentOnly = false)
     {
         $filters = array_filter($filters, 'filled');
 
         return $query
             ->when($filters['role_id'] ?? null, fn ($q, $id) => $q->whereHas('user.roles', fn ($r) => $r->where('roles.id', $id)))
             ->when($filters['rank_id'] ?? null, fn ($q, $id) => $q->whereHas('ranks', fn ($r) => $r->where('ranks.id', $id)))
-            ->when($filters['department_id'] ?? null, fn ($q, $id) => $q->whereHas('departments', fn ($d) => $d->where('departments.id', $id)))
+            ->when($filters['department_id'] ?? null, fn ($q, $id) => $defaultDepartmentOnly
+                ? $q->inDefaultDepartment($id)
+                : $q->whereHas('departments', fn ($d) => $d->where('departments.id', $id)))
             ->when($filters['branch_id'] ?? null, fn ($q, $id) => $q->where('employees.branch_id', $id));
     }
   

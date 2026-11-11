@@ -104,10 +104,8 @@
                                                 <td>{{$employee->gender}}</td>
                                                 <td>{{$employee->email}}</td>
                                                 <td>
-                                                    @foreach ($employee->departments as $department)
-                                                        @if (in_array($department->id, $employee_department_ids))
-                                                            <li>{{ $department->name }}</li>
-                                                        @endif
+                                                    @foreach ($employee->default_departments as $department)
+                                                        <li>{{ $department->name }}</li>
                                                     @endforeach
                                                 </td>
                                                 <td>{{$employee->post}}</td> 

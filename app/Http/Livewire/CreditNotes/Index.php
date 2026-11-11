@@ -21,6 +21,7 @@ class Index extends Component
     use WithFileUploads;
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public $credit_note;
@@ -251,7 +252,7 @@ class Index extends Component
     public function render()
     {
         return view('livewire.credit-notes.index', [
-            'credit_notes' => CreditNote::with('journal_entry')->latest()->paginate(10),
+            'credit_notes' => $this->applyAuthStatus(CreditNote::with('journal_entry'))->latest()->paginate(10),
         ]);
     }
 }

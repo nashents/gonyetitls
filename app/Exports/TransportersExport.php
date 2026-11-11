@@ -25,12 +25,17 @@ WithDrawings,
 WithCustomStartCell
 {
     use Exportable;
-    /**
-    * @return \Illuminate\Support\Collection
-    */
+
+    public $auth_status;
+
+    public function __construct($auth_status = null)
+    {
+        $this->auth_status = $auth_status;
+    }
+
     public function query()
     {
-        return Transporter::query();
+        return \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus(Transporter::query(), $this->auth_status);
     }
     public function map($transporter): array{
             return   [

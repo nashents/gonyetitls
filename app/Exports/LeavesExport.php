@@ -46,7 +46,7 @@ WithCustomStartCell
     {
         return Leave::query()
         ->visibleTo()
-        ->with(['employee', 'user', 'department', 'leave_type'])
+        ->with(['employee.default_departments', 'user', 'department', 'leave_type'])
         ->filterLeaves($this->filter, $this->from, $this->to, $this->search)
         ->orderBy('created_at', 'desc');
     }
@@ -81,7 +81,8 @@ WithCustomStartCell
 
             return   [
                 $employee_full_name,
-                $leave->department ? $leave->department->name : "",
+                // Employee's default department; the stored one only if they have none.
+                $leave->employee?->default_departments->first()?->name ?? ($leave->department ? $leave->department->name : ""),
                 $leave->leave_type ? $leave->leave_type->name : "",
                 $leave->created_at ? Carbon::parse($leave->created_at)->format('d F Y') : "",
                 $start ? $start->format('d F Y') : "",

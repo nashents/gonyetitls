@@ -44,6 +44,7 @@ class Index extends Component
     use WithFileUploads;
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $searchTrip;
@@ -303,6 +304,7 @@ class Index extends Component
             'search'      => $this->search,
             'type'        => $this->type_filter,
             'po_status'   => $this->po_status_filter,
+            'auth_status' => $this->auth_status,
         ];
     }
 

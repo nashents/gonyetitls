@@ -69,7 +69,10 @@ class BillsExport implements
         $this->horse_id       = $filters['horse_id'];
         $this->currency_id    = $filters['currency_id'];
         $this->vehicle_id     = $filters['vehicle_id'];
+        $this->auth_status    = $filters['auth_status'] ?? null;
     }
+
+    public $auth_status;
 
 
     protected function billFilterColumn(): string
@@ -174,6 +177,8 @@ class BillsExport implements
         if ($this->asset_id !== "" && $this->asset_id !== null) {
             $q->where('asset_id', $this->asset_id);
         }
+
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($q, $this->auth_status, 'bills.authorization');
 
         return $q;
     }

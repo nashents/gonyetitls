@@ -25,6 +25,7 @@ class Index extends Component
 
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public $search;
@@ -478,64 +479,36 @@ class Index extends Component
         }
 
   
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return view('livewire.sales.index',[
-                        'sales' => Sale::query()->with(['customer:id,name','currency'])->whereBetween($this->sale_filter,[$this->from, $this->to] )
-                        ->where('sale_number','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('expiry','like', '%'.$this->search.'%')
-                        ->orWhere('authorization','like', '%'.$this->search.'%')
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->sale_filter,'desc')->paginate(10),
-                        'sale_filter' => $this->sale_filter,
-                        'current_balance' => $this->current_balance
-                    ]);
-                }else {
-                    return view('livewire.sales.index',[
-                        'sales' => Sale::query()->with(['customer:id,name','currency'])->whereBetween($this->sale_filter,[$this->from, $this->to] )->orderBy($this->sale_filter,'desc')->paginate(10),
-                        'sale_filter' => $this->sale_filter,
-                        'current_balance' => $this->current_balance
-                    ]);
-                }
-               
+            $query = Sale::query()->with(['customer:id,name','currency']);
+
+            if (filled($this->from) && filled($this->to)) {
+                $query->whereBetween($this->sale_filter, [$this->from, $this->to]);
+            } elseif (! filled($this->search)) {
+                $query->whereMonth($this->sale_filter, date('m'))
+                    ->whereYear($this->sale_filter, date('Y'));
             }
-            elseif (isset($this->search)) {
-               
-                return view('livewire.sales.index',[
-                    'sales' => Sale::query()->with(['customer:id,name','currency'])
-                    ->where('sale_number','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('expiry','like', '%'.$this->search.'%')
-                        ->orWhere('authorization','like', '%'.$this->search.'%')
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->sale_filter,'desc')->paginate(10),
-                        'sale_filter' => $this->sale_filter,
-                        'current_balance' => $this->current_balance
-                ]);
+
+            // Grouped so the search ORs can't escape the date / auth status filters
+            if (filled($this->search)) {
+                $term = '%'.$this->search.'%';
+                $query->where(function ($q) use ($term) {
+                    $q->where('sale_number', 'like', $term)
+                        ->orWhere('status', 'like', $term)
+                        ->orWhere('date', 'like', $term)
+                        ->orWhere('expiry', 'like', $term)
+                        ->orWhere('authorization', 'like', $term)
+                        ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', $term))
+                        ->orWhereHas('currency', fn ($c) => $c->where('name', 'like', $term));
+                });
             }
-            else {
-               
-                return view('livewire.sales.index',[
-                    'sales' => Sale::query()->with(['customer:id,name','currency'])->whereMonth($this->sale_filter, date('m'))
-                    ->whereYear($this->sale_filter, date('Y'))->orderBy($this->sale_filter,'desc')->paginate(10),
-                    'sale_filter' => $this->sale_filter,
-                    'current_balance' => $this->current_balance
-                ]);
-              
-            }
+
+            $this->applyAuthStatus($query);
+
+            return view('livewire.sales.index',[
+                'sales' => $query->orderBy($this->sale_filter,'desc')->paginate(10),
+                'sale_filter' => $this->sale_filter,
+                'current_balance' => $this->current_balance
+            ]);
         
 
     }

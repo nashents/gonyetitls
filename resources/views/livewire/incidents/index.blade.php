@@ -33,6 +33,7 @@
                                             <input type="date" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control">
                                         </div>
                                     </div>
+                                    @include('partials.auth-status-filter')
                                 </div>
                             </div>
 

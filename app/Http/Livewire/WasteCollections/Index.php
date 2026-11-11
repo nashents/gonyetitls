@@ -21,6 +21,7 @@ class Index extends Component
     use WithFileUploads;
 
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -271,7 +272,7 @@ class Index extends Component
 
     public function render()
     {
-        $query = WasteCollection::query()->with('waste_collection_items');
+        $query = $this->applyAuthStatus(WasteCollection::query()->with('waste_collection_items'));
         $waste_collections = $query->orderBy('created_at','desc')->paginate(10);
         return view('livewire.waste-collections.index',[
             'waste_collections' => $waste_collections

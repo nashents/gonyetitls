@@ -41,6 +41,7 @@
                                     </select>
                                 </div>
                             </div>
+                            @include('partials.auth-status-filter', ['class' => 'col-md-3', 'style' => 'float: right; margin-bottom: 15px'])
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>

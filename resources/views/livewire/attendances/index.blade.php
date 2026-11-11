@@ -49,6 +49,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                        @include('partials.auth-status-filter')
                                         <!-- /input-group -->
                                         <div class="col-lg-3">
                                             <div class="input-group">

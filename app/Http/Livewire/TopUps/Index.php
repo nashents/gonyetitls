@@ -17,6 +17,7 @@ use App\Mail\PendingNotificationEmails;
 
 class Index extends Component
 {
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     public $top_ups;
     public $order_number;
     public $top_up_id;
@@ -247,7 +248,7 @@ class Index extends Component
 
     public function render()
     {
-        $this->top_ups = TopUp::orderBy('created_at','desc')->get();
+        $this->top_ups = $this->applyAuthStatus(TopUp::query())->orderBy('created_at','desc')->get();
         if ($this->quantity != null && $this->rate != null) {
             $this->amount = $this->quantity * $this->rate;
         }

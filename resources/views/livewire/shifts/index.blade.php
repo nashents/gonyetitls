@@ -41,6 +41,7 @@
                                             <input type="datetime-local" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
                                         </div>
                                     </div>
+                                    @include('partials.auth-status-filter')
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <span class="input-group-addon">

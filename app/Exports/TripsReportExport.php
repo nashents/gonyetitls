@@ -63,6 +63,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
     public $transporter_id;
     public $route_id;
     public $trip_status;
+    public $auth_status;
 
     // Summary metrics
     protected int $totalTrips = 0;
@@ -125,6 +126,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         $this->route_id            = $filters['route_id'] ?? null;
         $this->route = Route::find($this->route_id);
         $this->trip_status  = $filters['trip_status'] ?? null;
+        $this->auth_status  = $filters['auth_status'] ?? null;
 
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
@@ -385,6 +387,8 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         if (filled($this->trip_status)) {
             $trips->where('trips.trip_status', $this->trip_status);
         }
+
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($trips, $this->auth_status, 'trips.authorization');
 
         return $trips;
     }
@@ -1258,6 +1262,10 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
         if (!empty($this->trip_status)) {
             $filters[] = 'Status: ' . $this->trip_status;
+        }
+
+        if (!empty($this->auth_status)) {
+            $filters[] = 'Auth Status: ' . ucfirst($this->auth_status);
         }
 
         if (!empty($this->currency)) {

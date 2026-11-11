@@ -19,6 +19,7 @@ class Index extends Component
 {
      use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
  
@@ -56,13 +57,13 @@ class Index extends Component
     }
 
     public function exportAttendanceRegisterCSV(Excel $excel){
-        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter), 'attendance_register_' .time().'.csv', Excel::CSV);
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter, $this->auth_status), 'attendance_register_' .time().'.csv', Excel::CSV);
     }
     public function exportAttendanceRegisterPDF(Excel $excel){
-        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter), 'attendance_register_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter, $this->auth_status), 'attendance_register_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportAttendanceRegisterExcel(Excel $excel){
-        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter), 'attendance_register_' .time().'.xlsx');
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter, $this->auth_status), 'attendance_register_' .time().'.xlsx');
     }
 
 
@@ -97,7 +98,9 @@ class Index extends Component
             return;
         }
 
-        $query = $this->selected_department->employees()
+        // Default department only, so an employee in several departments is
+        // marked on one register, never two or three.
+        $query = $this->selected_department->defaultEmployees()
             ->where('archive', 0);
 
         if ($this->selected_department->name === 'Transport & Logistics') {
@@ -302,6 +305,7 @@ class Index extends Component
             ->when($this->department_id, function($q){
                  $q->where('department_id', $this->department_id);
             })
+            ->tap(fn ($q) => $this->applyAuthStatus($q))
             ->when($search !== '', function ($q) use ($search) {
 
                 $q->where(function ($qq) use ($search) {

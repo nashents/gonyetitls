@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 class Index extends Component
 {
     use WithPagination;
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -257,7 +258,7 @@ class Index extends Component
         })->orderBy('name','asc')->get();
         $this->loan_types = LoanType::orderBy('name')->get();
         return view('livewire.loans.index',[
-            'loans' => Loan::visibleTo()->orderBy('created_at','desc')->paginate(10),
+            'loans' => $this->applyAuthStatus(Loan::visibleTo())->orderBy('created_at','desc')->paginate(10),
             'total' => $this->total,
             'payment_per_month' => $this->payment_per_month,
             'vendors' => $this->vendors,

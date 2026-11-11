@@ -25,6 +25,7 @@ class Index extends Component
     use WithPagination;
 
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -442,7 +443,7 @@ class Index extends Component
             if (filled($this->search)) {
                 
                  return view('livewire.gate-passes.index',[
-                'individual_gate_passes' => GatePass::with('branch:id,name')
+                'individual_gate_passes' => $this->applyAuthStatus(GatePass::query())->with('branch:id,name')
                 ->whereBetween('created_at',[$this->from, $this->to])
                 ->where('type','Individual')
                 ->where(function ($query) {
@@ -475,11 +476,11 @@ class Index extends Component
             ]);
             }else{
                  return view('livewire.gate-passes.index',[
-                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
+                'trip_gate_passes' => $this->applyAuthStatus(GatePass::query())->with('trip','horse','driver','branch:id,name')
                 ->whereBetween('created_at',[$this->from, $this->to])
                 ->where('type','Trip')
                 ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
-                'individual_gate_passes' => GatePass::with('branch:id,name')
+                'individual_gate_passes' => $this->applyAuthStatus(GatePass::query())->with('branch:id,name')
                 ->whereBetween('created_at',[$this->from, $this->to])
                 ->where('type','Individual')
                 ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
@@ -489,7 +490,7 @@ class Index extends Component
             // Skip the default "this month/this year" restriction while searching
             // so matches outside the current period aren't hidden.
              return view('livewire.gate-passes.index',[
-                'individual_gate_passes' => GatePass::with('branch:id,name')
+                'individual_gate_passes' => $this->applyAuthStatus(GatePass::query())->with('branch:id,name')
                 ->where('type','Individual')
                 ->where(function ($query) {
                     $query->where('gate_pass_number','like', '%'.$this->search.'%')
@@ -521,12 +522,12 @@ class Index extends Component
             ]);
         }else{
             return view('livewire.gate-passes.index',[
-                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
+                'trip_gate_passes' => $this->applyAuthStatus(GatePass::query())->with('trip','horse','driver','branch:id,name')
                 ->whereMonth('created_at',date('m'))
                 ->whereYear('created_at',date('Y'))
                 ->where('type','Trip')
                 ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
-                'individual_gate_passes' => GatePass::with('branch:id,name')
+                'individual_gate_passes' => $this->applyAuthStatus(GatePass::query())->with('branch:id,name')
                 ->whereMonth('created_at',date('m'))
                 ->whereYear('created_at',date('Y'))
                 ->where('type','Individual')->orderBy($this->gate_pass_filter,'desc')->paginate(10),

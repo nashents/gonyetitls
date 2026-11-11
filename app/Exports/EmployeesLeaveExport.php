@@ -71,10 +71,10 @@ WithCustomStartCell
 
         $employees = EmployeeLeave::query()
             ->whereHas('employee', function ($query) {
-                $query->activeStaff()->ofStaffType($this->staffType)->filterBy($this->filters);
+                $query->activeStaff()->ofStaffType($this->staffType)->filterBy($this->filters, true);
             })
             ->whereIn('leave_type_id', $this->leaveTypes->pluck('id'))
-            ->with(['employee.departments', 'leave_type'])
+            ->with(['employee.default_departments', 'leave_type'])
             ->orderBy('employee_id')
             ->get()
             ->groupBy('employee_id')
@@ -121,20 +121,10 @@ WithCustomStartCell
         return $rows;
     }
 
-    /**
-     * The department an employee is listed under: the filtered department when
-     * the export is filtered by one, otherwise their default department.
-     */
+    /** The department an employee is listed under: always their default department. */
     protected function departmentName($employee): string
     {
-        $departments = $employee->departments;
-        $filteredId = $this->filters['department_id'] ?? null;
-
-        $department = ($filteredId ? $departments->firstWhere('id', $filteredId) : null)
-            ?? $departments->firstWhere('pivot.is_default', true)
-            ?? $departments->first();
-
-        return $department->name ?? self::NO_DEPARTMENT;
+        return $employee->default_departments->first()?->name ?? self::NO_DEPARTMENT;
     }
     public function map($row): array{
 

@@ -12,6 +12,7 @@ class Index extends Component
 
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     public $search;
@@ -85,7 +86,7 @@ class Index extends Component
     {
 
         return view('livewire.retreads.index',[
-            'retreads' => Retread::orderBy('created_at','desc')->paginate(10)
+            'retreads' => $this->applyAuthStatus(Retread::query())->orderBy('created_at','desc')->paginate(10)
         ]);
     }
 }

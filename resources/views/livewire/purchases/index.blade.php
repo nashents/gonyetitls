@@ -45,6 +45,7 @@
                                     </div>
                                     <!-- /input-group -->
                                 </div>
+                                @include('partials.auth-status-filter')
                           
                               
                                

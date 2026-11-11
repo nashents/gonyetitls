@@ -62,7 +62,10 @@ class SalesExport implements
         $this->customer_id    = $filters['customer_id'];
         $this->transporter_id = $filters['transporter_id'];
         $this->currency_id    = $filters['currency_id'];
+        $this->auth_status    = $filters['auth_status'] ?? null;
     }
+
+    public $auth_status;
 
     /**
      * ✅ Always qualify the filter column (prevents ambiguous column errors when joining)
@@ -134,6 +137,8 @@ class SalesExport implements
                    ->orWhere('invoices.tax_amount', '');
             });
         }
+
+        \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($q, $this->auth_status, 'invoices.authorization');
 
         return $q;
     }

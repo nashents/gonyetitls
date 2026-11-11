@@ -23,6 +23,7 @@ class Index extends Component
 
     use WithPagination;
 
+    use \App\Http\Livewire\Concerns\FiltersAuthStatus;
     protected $paginationTheme = 'bootstrap';
 
     protected $recoveries;
@@ -310,6 +311,8 @@ class Index extends Component
         ->when($this->driver?->id, function ($q) {
         $q->where('driver_id', $this->driver->id);
         });
+
+        $this->applyAuthStatus($query);
 
         // Ordering
         $query->orderByDesc('recovery_number');

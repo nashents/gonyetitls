@@ -2,8 +2,10 @@
 
 namespace App\Exports;
 
+use App\Http\Livewire\Concerns\FiltersAuthStatus;
 use App\Models\Dispatch;
 use App\Models\DispatchItem;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -34,6 +36,10 @@ WithCustomStartCell
 
     protected $department;
 
+    // Filters from the dispatches table (see applyFilters):
+    // from, to, dispatch_filter (date column), search, auth_status
+    protected array $filters = [];
+
     // Summary metrics
     protected int $totalDispatches = 0;
     protected float $totalQty = 0;
@@ -42,16 +48,20 @@ WithCustomStartCell
     protected array $popularStores = [];
     protected array $popularVendors = [];
     protected array $popularBranches = [];
+    protected array $itemsDispatched = [];
 
-    public function __construct($department = null)
+    public function __construct($department = null, array $filters = [])
     {
         $this->department = $department;
+        $this->filters = $filters;
 
         $base = $this->baseQuery();
 
-        $this->totalDispatches = (clone $base)->count();
+        $dispatchIds = (clone $base)->pluck('dispatches.id');
 
-        $this->totalQty = (float) DispatchItem::whereIn('dispatch_id', (clone $base)->pluck('id'))->sum('qty');
+        $this->totalDispatches = $dispatchIds->count();
+
+        $this->totalQty = (float) DispatchItem::whereIn('dispatch_id', $dispatchIds)->sum('qty');
 
         $this->valueByCurrency = (clone $base)
             ->join('currencies', 'currencies.id', '=', 'dispatches.currency_id')
@@ -61,8 +71,8 @@ WithCustomStartCell
             ->toArray();
 
         $this->statusBreakdown = (clone $base)
-            ->select('authorization', DB::raw('COUNT(*) as total'))
-            ->groupBy('authorization')
+            ->select('dispatches.authorization', DB::raw('COUNT(*) as total'))
+            ->groupBy('dispatches.authorization')
             ->pluck('total', 'authorization')
             ->toArray();
 
@@ -92,14 +102,169 @@ WithCustomStartCell
             ->limit(5)
             ->get(['branches.name as name', DB::raw('COUNT(*) as total')])
             ->toArray();
+
+        $this->itemsDispatched = $this->buildItemsDispatched($dispatchIds);
     }
 
     protected function baseQuery()
     {
-        return Dispatch::query()
-            ->when($this->department, function ($q) {
-                $q->where('department', $this->department);
+        return static::applyFilters(
+            Dispatch::query()->when($this->department, function ($q) {
+                $q->where('dispatches.department', $this->department);
+            }),
+            $this->filters
+        );
+    }
+
+    /**
+     * Date range / search / auth status exactly as the dispatches table
+     * applies them (Dispatches\Index::render uses this too), so the export
+     * matches what the user is looking at.
+     */
+    public static function applyFilters($query, array $filters)
+    {
+        $column = in_array($filters['dispatch_filter'] ?? null, ['created_at', 'date'], true)
+            ? $filters['dispatch_filter']
+            : 'created_at';
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+        $search = $filters['search'] ?? null;
+
+        if (filled($from) && filled($to)) {
+            $query->whereDate("dispatches.{$column}", '>=', $from)
+                ->whereDate("dispatches.{$column}", '<=', $to);
+        } elseif (! filled($search)) {
+            // Default "this month", lifted while searching so matches
+            // outside the current period (e.g. by product) still show.
+            $query->whereMonth("dispatches.{$column}", Carbon::now()->month)
+                ->whereYear("dispatches.{$column}", Carbon::now()->year);
+        }
+
+        if (filled($search)) {
+            $term = '%' . $search . '%';
+            $query->where(function ($qq) use ($term) {
+                $qq->where('dispatches.dispatch_number', 'like', $term)
+                    ->orWhere('dispatches.authorization', 'like', $term)
+                    ->orWhere('dispatches.date', 'like', $term)
+                    ->orWhereHas('ticket', fn ($sub) => $sub->where('ticket_number', 'like', $term))
+                    ->orWhereHas('horse', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                            ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('store', fn ($sub) => $sub->where('name', 'like', $term))
+                    ->orWhereHas('vehicle', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                            ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('trailer', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                            ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('employee', fn ($sub) => $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term))
+                    ->orWhereHas('dispatch_items.product', function ($sub) use ($term) {
+                        $sub->where('product_number', 'like', $term)
+                            ->orWhere('name', 'like', $term)
+                            ->orWhere('identification_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.product.brand', fn ($sub) => $sub->where('name', 'like', $term))
+                    ->orWhereHas('dispatch_items.inventory', function ($sub) use ($term) {
+                        $sub->where('inventory_number', 'like', $term)
+                            ->orWhere('serial_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.tyre', function ($sub) use ($term) {
+                        $sub->where('tyre_number', 'like', $term)
+                            ->orWhere('serial_number', 'like', $term);
+                    })
+                    ->orWhereHas('dispatch_items.asset', function ($sub) use ($term) {
+                        $sub->where('asset_number', 'like', $term)
+                            ->orWhere('serial_number', 'like', $term);
+                    });
             });
+        }
+
+        FiltersAuthStatus::filterByAuthStatus($query, $filters['auth_status'] ?? null, 'dispatches.authorization');
+
+        return $query;
+    }
+
+    /** The product behind a dispatch line (inventory / asset / tyre / direct product). */
+    protected static function itemProduct($dispatch_item)
+    {
+        if ($dispatch_item->inventory) {
+            return $dispatch_item->inventory->product;
+        }
+        if ($dispatch_item->asset) {
+            return $dispatch_item->asset->product;
+        }
+        if ($dispatch_item->tyre) {
+            return $dispatch_item->tyre->product;
+        }
+
+        return $dispatch_item->product;
+    }
+
+    /** "D00009 Sinopec 15W40 Diesel Engine Oil (200L)" */
+    protected static function itemLabel($product): string
+    {
+        if (! $product) {
+            return 'Unknown item';
+        }
+
+        return trim(($product->product_number ? $product->product_number . ' ' : '') . $product->name);
+    }
+
+    protected static function formatQty($qty): string
+    {
+        return rtrim(rtrim(number_format((float) $qty, 2, '.', ''), '0'), '.');
+    }
+
+    /** Total qty dispatched per item across the filtered dispatches, largest first. */
+    protected function buildItemsDispatched($dispatchIds): array
+    {
+        return DispatchItem::whereIn('dispatch_id', $dispatchIds)
+            ->with(['product', 'inventory.product', 'asset.product', 'tyre.product'])
+            ->get()
+            ->groupBy(fn ($item) => static::itemLabel(static::itemProduct($item)))
+            ->map(fn ($items, $label) => ['name' => $label, 'total' => static::formatQty($items->sum('qty')), 'sort' => (float) $items->sum('qty')])
+            ->sortByDesc('sort')
+            ->values()
+            ->all();
+    }
+
+    /** "Generated on ... by ... Applied filters: ..." line, same format as the Trips report. */
+    protected function reportMetaText(): string
+    {
+        $filters = [];
+
+        if ($this->department) {
+            $filters[] = 'Department: ' . ucfirst($this->department);
+        }
+
+        $column = ($this->filters['dispatch_filter'] ?? 'created_at') === 'date' ? 'Dispatch Date' : 'Dispatch Created At';
+        $from = $this->filters['from'] ?? null;
+        $to = $this->filters['to'] ?? null;
+        $search = $this->filters['search'] ?? null;
+
+        if (filled($from) && filled($to)) {
+            $filters[] = "{$column}: " . Carbon::parse($from)->format('d M Y') . ' to ' . Carbon::parse($to)->format('d M Y');
+        } elseif (! filled($search)) {
+            $filters[] = "{$column}: " . now()->format('F Y');
+        } else {
+            $filters[] = "{$column}: All dates";
+        }
+
+        if (filled($search)) {
+            $filters[] = 'Search: ' . $search;
+        }
+
+        $status = $this->filters['auth_status'] ?? null;
+        $filters[] = 'Auth Status: ' . (filled($status) ? ucfirst($status) : 'All');
+
+        $user = Auth::user();
+
+        return 'This report was generated on ' . now()->format('d M Y H:i')
+            . ' by ' . trim(($user->name ?? '') . ' ' . ($user->surname ?? ''))
+            . '. Applied filters: ' . implode(' | ', $filters) . '.';
     }
 
     /**
@@ -115,7 +280,8 @@ WithCustomStartCell
                 'dispatch_items.product', 'dispatch_items.inventory.product',
                 'dispatch_items.asset.product', 'dispatch_items.tyre.product',
             ])
-            ->orderByDesc('date');
+            ->orderByDesc('dispatches.date')
+            ->orderByDesc('dispatches.id');
     }
 
     public function map($dispatch): array
@@ -123,18 +289,9 @@ WithCustomStartCell
         $requested_by = \App\Models\Employee::find($dispatch->requested_by_id);
         $authorized_by = \App\Models\User::find($dispatch->authorized_by_id);
 
-        $items = $dispatch->dispatch_items->map(function ($dispatch_item) {
-            if ($dispatch_item->inventory) {
-                return $dispatch_item->inventory->product ? $dispatch_item->inventory->product->name : "";
-            } elseif ($dispatch_item->asset) {
-                return $dispatch_item->asset->product ? $dispatch_item->asset->product->name : "";
-            } elseif ($dispatch_item->tyre) {
-                return $dispatch_item->tyre->product ? $dispatch_item->tyre->product->name : "";
-            } elseif ($dispatch_item->product) {
-                return $dispatch_item->product->name;
-            }
-            return "";
-        })->filter()->implode("\n");
+        $items = $dispatch->dispatch_items
+            ->map(fn ($dispatch_item) => static::itemLabel(static::itemProduct($dispatch_item)) . ' (' . static::formatQty($dispatch_item->qty) . ')')
+            ->implode("\n");
 
         return [
             $dispatch->dispatch_number,
@@ -179,7 +336,7 @@ WithCustomStartCell
             'Trailer',
             'Vendor',
             'Narration',
-            'Items',
+            'Items (Qty)',
             'Qty',
             'Currency',
             'Total',
@@ -193,12 +350,14 @@ WithCustomStartCell
     /**
      * Cap the width of free-text / multi-value columns so their content
      * wraps and expands the row downwards instead of stretching the column.
+     * D also holds the summary values (popular stores, items dispatched...).
      */
     public function columnWidths(): array
     {
         return [
+            'D' => 50, // Dispatched By + summary values
             'N' => 30, // Narration
-            'O' => 35, // Items
+            'O' => 45, // Items (Qty)
             'V' => 30, // Comments
         ];
     }
@@ -245,6 +404,15 @@ WithCustomStartCell
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
+                // Generated on / by + applied filters (same line as the Trips report)
+                $sheet->mergeCells('A1:V1');
+                $sheet->setCellValue('A1', $this->reportMetaText());
+                $sheet->getStyle('A1:V1')->applyFromArray([
+                    'font' => ['italic' => true, 'size' => 10],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+                ]);
+                $sheet->getRowDimension(1)->setRowHeight(30);
+
                 // Summary block, starting under the logo
                 $row = 7;
 
@@ -283,6 +451,11 @@ WithCustomStartCell
 
                 $sheet->setCellValue("C{$row}", 'Popular Branches');
                 $sheet->setCellValue("D{$row}", $this->pairLine($this->popularBranches));
+                $row++;
+
+                // Item + total qty dispatched, e.g. "D00009 Sinopec 15W40 ... (1000), A00003 ... (500)"
+                $sheet->setCellValue("C{$row}", 'Items Dispatched (Qty)');
+                $sheet->setCellValue("D{$row}", $this->pairLine($this->itemsDispatched));
 
                 $summaryEnd = $row;
 
@@ -292,6 +465,7 @@ WithCustomStartCell
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['rgb' => 'FCE4D6'],
                     ],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_TOP],
                 ]);
                 $sheet->getStyle("D{$summaryStart}:D{$summaryEnd}")
                     ->getAlignment()
@@ -314,6 +488,7 @@ WithCustomStartCell
 
                 // Multi-line item lists / narration / comments should wrap and
                 // grow the row height downwards rather than widen the column.
+                $sheet->getStyle('D:D')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
                 $sheet->getStyle('N:N')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
                 $sheet->getStyle('O:O')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
                 $sheet->getStyle('V:V')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
@@ -341,7 +516,7 @@ WithCustomStartCell
 
     public function startCell(): string
     {
-        // Title (row 7) + 7 summary metrics (rows 8-14) + 1 blank row (15) = headings on row 16
-        return 'A16';
+        // Title (row 7) + 8 summary metrics (rows 8-15) + 1 blank row (16) = headings on row 17
+        return 'A17';
     }
 }

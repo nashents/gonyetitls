@@ -72,6 +72,7 @@ class ManifestReportExport extends TripsReportExport
         $this->transporter_id      = $filters['transporter_id'] ?? null;
         $this->route_id            = $filters['route_id'] ?? null;
         $this->trip_status         = $filters['trip_status'] ?? null;
+        $this->auth_status         = $filters['auth_status'] ?? null;
 
         // Names for the "Applied filters" line
         $this->horse       = Horse::find($this->horse_id);
