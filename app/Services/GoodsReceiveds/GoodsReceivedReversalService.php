@@ -111,7 +111,7 @@ class GoodsReceivedReversalService
 
             // Supplier bill + its Spares Inventory / AP journal
             if ($bill = $this->bill($goodsReceived)) {
-                $this->billDeletion->delete($bill, $userId, $reason);
+                $this->billDeletion->delete($bill, $userId, $reason, fromSource: true);
             }
 
             // Received goods leave stock

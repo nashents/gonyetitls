@@ -112,7 +112,7 @@ class TripDeletionService
 
             foreach ($trip->requisitions as $requisition) {
                 if ($requisition->bill && ! $requisition->bill->trashed()) {
-                    $this->billDeletion->delete($requisition->bill, $deletedById, $reasonText);
+                    $this->billDeletion->delete($requisition->bill, $deletedById, $reasonText, fromSource: true);
                 }
             }
 
