@@ -32,6 +32,7 @@ class Index extends Component
     use WithPagination;
     use \App\Http\Livewire\Concerns\PullsFromSage;
     use \App\Http\Livewire\Concerns\FiltersStaff;
+    use \App\Http\Livewire\Concerns\ManagesPositionDepartments;
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $sageSelected = [];
@@ -96,6 +97,7 @@ class Index extends Component
         $this->grade_id = "";
         $this->branch_id = "";
         $this->department_id = "";
+        $this->resetPositionDepartments();
         $this->rank_id = "";
         $this->job_title_id = "";
         $this->change_reason = "";
@@ -184,14 +186,23 @@ class Index extends Component
             $this->job_title_id = JobTitle::where('title',$this->selected_employee->post)->first()?->id;
             $this->rank_id = $this->selected_employee->ranks->first()?->id;
         }
-        
+
+        $this->loadPositionDepartments($this->selected_employee, $this->department_id);
+
         $this->dispatchBrowserEvent('show-changePositionModal');
        
 
       }
       
       public function changeUpdate(){
-        
+
+        if (! $selection = $this->validatedPositionDepartments()) {
+            return;
+        }
+        [$department_ids, $default_department_id] = $selection;
+        // The position record carries the default department.
+        $this->department_id = $default_department_id;
+
         $employee_position  = new EmployeePosition;
         $employee_position->employee_id = $this->employee_id ?? Null;
         $employee_position->job_title_id = $this->job_title_id ?? Null;
@@ -214,8 +225,7 @@ class Index extends Component
         $employee->update();
         $employee->ranks()->detach();
         $employee->ranks()->sync($this->rank_id);
-        $employee->departments()->sync($this->department_id);
-        $employee->ensureDefaultDepartment();
+        $this->syncPositionDepartments($employee, $department_ids, $default_department_id);
 
         $this->dispatchBrowserEvent('hide-changePositionModal');
         $this->resetInputFields();

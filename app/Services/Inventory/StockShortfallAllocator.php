@@ -4,6 +4,7 @@ namespace App\Services\Inventory;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Takes stock that a batch (inventory / asset row) could not supply from the other batches of
@@ -22,6 +23,14 @@ class StockShortfallAllocator
     public const TABLES = ['inventories' => 'inventory_id', 'assets' => 'asset_id'];
 
     private const EPSILON = 0.0001;
+
+    /** [table.column => exists] - not every install has every column (assets.store_id is missing on some). */
+    private static array $columns = [];
+
+    public static function hasColumn(string $table, string $column): bool
+    {
+        return self::$columns["{$table}.{$column}"] ??= Schema::hasColumn($table, $column);
+    }
 
     /**
      * Work out where $qty can come from. Nothing is written.
@@ -125,15 +134,19 @@ class StockShortfallAllocator
     /** Batches of the same product and store that still show stock, oldest first, with their reserved qty. */
     private function batches(string $table, object $source, bool $ownFirst): Collection
     {
-        if (!$source->product_id) {
+        if (!$source->product_id || !self::hasColumn($table, 'balance')) {
             return collect();
         }
+
+        // A table with no store column is treated as one store.
+        $byStore = self::hasColumn($table, 'store_id');
+        $storeId = $source->store_id ?? null;
 
         $fk = self::TABLES[$table];
 
         $batches = DB::table("{$table} as b")
             ->where('b.product_id', $source->product_id)
-            ->when($source->store_id, fn ($q) => $q->where('b.store_id', $source->store_id), fn ($q) => $q->whereNull('b.store_id'))
+            ->when($byStore, fn ($q) => $storeId ? $q->where('b.store_id', $storeId) : $q->whereNull('b.store_id'))
             ->whereNull('b.deleted_at')
             ->whereRaw('b.balance + 0 > 0')
             ->when(!$ownFirst, fn ($q) => $q->where('b.id', '!=', $source->id))

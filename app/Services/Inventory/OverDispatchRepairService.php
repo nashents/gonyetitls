@@ -88,12 +88,24 @@ class OverDispatchRepairService
 
         $surplus = $this->countSurplus($table);
 
+        // Not every install has every column (assets.store_id is missing on some). Without a
+        // received quantity or a balance there is nothing to measure or correct.
+        $has = fn (string $column) => StockShortfallAllocator::hasColumn($table, $column);
+        if (!$has('qty') || !$has('balance') || !$has('product_id')) {
+            return collect();
+        }
+
+        $columns = ['b.id', 'b.product_id', 'b.qty', 'x.dispatched', 'p.name as product'];
+        foreach (['store_id', 'weight'] as $optional) {
+            $columns[] = $has($optional) ? "b.{$optional}" : DB::raw("NULL as {$optional}");
+        }
+
         return DB::table("{$table} as b")
             ->joinSub($dispatched, 'x', 'x.batch_id', '=', 'b.id')
             ->leftJoin('products as p', 'p.id', '=', 'b.product_id')
             ->whereNull('b.deleted_at')
             ->orderBy('b.id')
-            ->get(['b.id', 'b.product_id', 'b.store_id', 'b.qty', 'b.weight', 'x.dispatched', 'p.name as product'])
+            ->get($columns)
             ->map(function ($batch) use ($handled, $surplus) {
                 // Without a received quantity there is nothing to measure against.
                 if (!is_numeric($batch->qty)) {

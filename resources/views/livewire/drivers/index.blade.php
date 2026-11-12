@@ -342,7 +342,7 @@
                         Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <div style="padding-left: 20px; padding-right:10px;">
-                    <small style="color:green"> PS: if the user has access to modules in different departments after this change you have to add more departments to the user`s account via employees -> employee view -> departments tab -> add department</small>
+                    <small style="color:green"> PS: if the driver needs access to modules in different departments, add each of those departments below and mark one as the default. Leave, payroll and attendance use the default department only.</small>
                 </div>
                 
                 <form wire:submit.prevent="changeUpdate()" >
@@ -377,7 +377,7 @@
                   
                     </div>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Ranks</label>
                                 <select class="form-control" wire:model.debounce.300ms="rank_id" >
@@ -389,19 +389,7 @@
                                 @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="title">Departments</label>
-                                <select class="form-control" wire:model.debounce.300ms="department_id">
-                                    <option value="">Select Department</option>
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department->id }}"> {{$department->name }} </option>
-                                    @endforeach
-                                </select>
-                                @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Branches</label>
                                 <select class="form-control" wire:model.debounce.300ms="branch_id" >
@@ -415,6 +403,7 @@
                             </div>
                         </div>
                     </div>
+                    @include('livewire.partials.position-departments')
                     <div class="row">
                          <div class="col-md-6">
                             <div class="form-group">
