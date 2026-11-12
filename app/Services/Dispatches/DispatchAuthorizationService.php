@@ -13,6 +13,7 @@ use App\Models\TicketExpense;
 use App\Models\TicketInventory;
 use App\Models\Tyre;
 use App\Services\Accounting\InventoryJournalService;
+use App\Services\Inventory\StockShortfallAllocator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -187,11 +188,20 @@ class DispatchAuthorizationService
             }
 
             // Reduce the balance / contents
-            $item->balance = max(0, (float) $item->balance - (float) $dispatch_item->qty);
+            $qty = (float) $dispatch_item->qty;
+            $onHand = max(0, (float) $item->balance);
+            $item->balance = max(0, round($onHand - $qty, 4));
             if ($item->balance <= 0) {
                 $item->status = 0;
             }
             $item->save();
+
+            // The batch held less than the line (other dispatches emptied it first): the rest
+            // comes off the next batches of the product, so the store total still drops by qty.
+            $short = round($qty - $onHand, 4);
+            if ($short > 0 && !$item instanceof Tyre) {
+                app(StockShortfallAllocator::class)->cover($item->getTable(), $item, $short, 'approval', $dispatch_item->id);
+            }
         }
 
         if ($dispatch->department == "tyre") {

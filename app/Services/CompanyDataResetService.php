@@ -61,7 +61,7 @@ class CompanyDataResetService
             'retreads', 'retread_items', 'retread_tyres', 'tyre_assignments', 'tyre_dispatches', 'tyre_purchases', 'tyre_transfers',
         ],
         'Inventory & procurement' => [
-            'closing_stocks', 'opening_stocks', 'stocks', 'stock_adjustments', 'stock_adjustment_items',
+            'closing_stocks', 'opening_stocks', 'stocks', 'stock_adjustments', 'stock_adjustment_items', 'stock_shortfall_allocations',
             'transfers', 'transfer_items', 'inventory_transfers',
             'purchases', 'purchase_products', 'purchase_product_documents',
             'goods_receiveds', 'goods_returneds', 'goods_returned_items',

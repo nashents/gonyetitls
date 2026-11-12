@@ -12,6 +12,7 @@ use App\Models\TicketInventory;
 use App\Models\Tyre;
 use App\Models\TyreAssignment;
 use App\Services\Accounting\BillDeletionService;
+use App\Services\Inventory\StockShortfallAllocator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -82,7 +83,9 @@ class DispatchReversalService
                 }
 
                 if ($item) {
-                    $item->balance = (float) $item->balance + (float) $dispatch_item->qty;
+                    // Stock this line took from other batches goes back to those batches.
+                    $fromOthers = $item instanceof Tyre ? 0 : app(StockShortfallAllocator::class)->release($dispatch_item->id);
+                    $item->balance = (float) $item->balance + max(0, (float) $dispatch_item->qty - $fromOthers);
 
                     if ($item->balance > 0 && (int) $item->status === 0) {
                         $item->status = 1;
