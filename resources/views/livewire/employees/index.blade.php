@@ -136,6 +136,10 @@
                                                     @if ($defaultDepartment)
                                                         <span class="label label-success" title="Default department">{{ $defaultDepartment->name }}</span>
                                                     @endif
+                                                    {{-- The department filter matches ANY membership, so list the others too. --}}
+                                                    @foreach ($employee->departments->where('id', '!=', $defaultDepartment?->id) as $otherDepartment)
+                                                        <span class="label label-default" title="Additional department">{{ $otherDepartment->name }}</span>
+                                                    @endforeach
                                                     <br>
                                                     <strong>Post: </strong>{{$employee->post}} <br>
                                                     @if ($employee->department_head)
@@ -297,7 +301,7 @@
                         Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <div style="padding-left: 20px; padding-right:10px;">
-                    <small style="color:green"> PS: if the user has access to modules in different departments after this change you have to add more departments to the user`s account via employees -> employee view -> departments tab -> add department</small>
+                    <small style="color:green"> PS: if the employee needs access to modules in different departments, add each of those departments below and mark one as the default. Leave, payroll and attendance use the default department only.</small>
                 </div>
                 
                 <form wire:submit.prevent="changeUpdate()" >
@@ -332,7 +336,7 @@
                   
                     </div>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Ranks</label>
                                 <select class="form-control" wire:model.debounce.300ms="rank_id" >
@@ -344,19 +348,7 @@
                                 @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="title">Departments</label>
-                                <select class="form-control" wire:model.debounce.300ms="department_id">
-                                    <option value="">Select Department</option>
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department->id }}"> {{$department->name }} </option>
-                                    @endforeach
-                                </select>
-                                @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Branches</label>
                                 <select class="form-control" wire:model.debounce.300ms="branch_id" >
@@ -367,6 +359,61 @@
                                 </select>
                                  <small><a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> <a href="#" wire:click.prevent="refresh('branches')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('branch_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Departments</label>
+                                <select class="form-control" wire:model="department_picker">
+                                    <option value="">+ Add a department</option>
+                                    @foreach ($departments as $department)
+                                        @if (! in_array($department->id, $department_ids ?? []))
+                                            <option value="{{ $department->id }}">{{ $department->name }}{{ $department->is_locked ? ' (Core)' : '' }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                @error('department_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
+
+                                @if (! empty($department_ids))
+                                    <table class="table table-bordered table-condensed" style="margin-top:10px; margin-bottom:5px;">
+                                        <thead>
+                                            <tr>
+                                                <th>Department</th>
+                                                <th class="text-center" style="width:110px;">Default</th>
+                                                <th class="text-center" style="width:60px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($department_ids as $selected_department_id)
+                                                @php $selected_department = $departments->firstWhere('id', $selected_department_id); @endphp
+                                                <tr wire:key="position-department-{{ $selected_department_id }}">
+                                                    <td>
+                                                        {{ $selected_department ? $selected_department->name : 'Department #'.$selected_department_id }}
+                                                        @if ($selected_department && $selected_department->is_locked)
+                                                            <span class="label label-primary" title="Core system department"><i class="fa fa-lock"></i> Core</span>
+                                                        @else
+                                                            <span class="label label-default" title="Custom department - does not grant system access on its own">Custom</span>
+                                                        @endif
+                                                        @if ((int) $default_department_id === (int) $selected_department_id)
+                                                            <span class="label label-success">Default</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <input type="radio" name="default_department_id" wire:model="default_department_id" value="{{ $selected_department_id }}" title="Make this the default department">
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <a href="#" wire:click.prevent="removeDepartment({{ $selected_department_id }})" title="Remove department"><i class="fa fa-trash color-danger"></i></a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                    <small class="text-muted">The default department is used for leave, payroll and attendance. Include at least one <strong>Core</strong> department so the employee can view their part of the system.</small>
+                                @else
+                                    <br><small class="text-muted">No departments selected yet.</small>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -16,6 +16,14 @@
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
+                            <div class="alert alert-info">
+                                <i class="fa fa-info-circle"></i>
+                                Departments marked <span class="label label-primary"><i class="fa fa-lock"></i> Core</span> are built into the system and cannot be renamed or deleted.
+                                They control what an employee can view and access in the system. You can create and assign your own
+                                <span class="label label-default">Custom</span> departments, but every employee must also be assigned
+                                at least one <strong>Core</strong> department to be able to view their part of the system.
+                            </div>
+
                             <table id="departmentsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
@@ -34,7 +42,14 @@
                                 <tbody>
                                     @foreach ($departments as $department)
                                   <tr wire:key="{{ 'c502ef-35-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($department->id ?? '') }}">
-                                    <td>{{$department->name}}</td>
+                                    <td>
+                                        {{$department->name}}
+                                        @if ($department->is_locked)
+                                            <span class="label label-primary" title="Core system department - seeded and locked. Assign employees to a core department so they can view the system."><i class="fa fa-lock"></i> Core</span>
+                                        @else
+                                            <span class="label label-default" title="Custom department - does not grant system access on its own. Also assign a core department.">Custom</span>
+                                        @endif
+                                    </td>
                                     <td>{{$department->department_code}}</td>
                                     <td>{{$department->description}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

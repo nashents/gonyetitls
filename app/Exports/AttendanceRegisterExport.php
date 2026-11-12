@@ -42,10 +42,10 @@ class AttendanceRegisterExport implements
     public $totals;
     public $notesTotals;
 
-    // Row numbers (absolute sheet rows) of the department banner/subtotal rows,
+    // Row numbers (absolute sheet rows) of the department and team banner rows,
     // populated by collection() so registerEvents() can style/merge them.
     protected $departmentHeaderRows = [];
-    protected $departmentSubtotalRows = [];
+    protected $teamHeaderRows = [];
 
     public $auth_status;
 
@@ -118,6 +118,8 @@ class AttendanceRegisterExport implements
             ->with([
                 'employee:id,employee_number,name,surname',
                 'employee.default_departments:departments.id,departments.name',
+                'employee.teams' => fn ($t) => $t->where('teams.status', 1)->orderBy('teams.name'),
+                'employee.teams.departments:departments.id',
                 'attendance:id,attendance_number,date,department_id',
                 'attendance.department:id,name',
             ])
@@ -209,19 +211,66 @@ class AttendanceRegisterExport implements
         $currentRow = 9; // data starts immediately after the heading row (startCell 'A8')
 
         foreach ($grouped as $departmentName => $departmentRows) {
-            $rows->push($this->bannerRow("{$departmentName} — {$departmentRows->count()} record" . ($departmentRows->count() === 1 ? '' : 's')));
+            $rows->push($this->bannerRow("{$departmentName} ({$departmentRows->count()})"));
             $this->departmentHeaderRows[] = $currentRow++;
 
-            foreach ($departmentRows as $row) {
-                $rows->push($this->mapRow($row));
-                $currentRow++;
+            // Under each department, group by team. Staff without a team are
+            // listed last under "No Team"; a department where nobody has a team
+            // gets no team rows at all.
+            $teams = $departmentRows
+                ->groupBy(fn ($row) => $this->teamName($row))
+                ->sortKeysUsing(fn ($a, $b) => strnatcasecmp($this->teamLabel((string) $a), $this->teamLabel((string) $b)));
+
+            if ($teams->has('')) {
+                $teams->put('', $teams->pull(''));
             }
 
-            $rows->push($this->bannerRow("Subtotal — {$departmentName}: {$departmentRows->count()} record" . ($departmentRows->count() === 1 ? '' : 's')));
-            $this->departmentSubtotalRows[] = $currentRow++;
+            $hasTeams = $teams->keys()->filter(fn ($name) => $name !== '')->isNotEmpty();
+
+            foreach ($teams as $teamName => $teamRows) {
+                if ($hasTeams) {
+                    $rows->push($this->bannerRow($this->teamLabel((string) $teamName) . " ({$teamRows->count()})"));
+                    $this->teamHeaderRows[] = $currentRow++;
+                }
+
+                foreach ($teamRows as $row) {
+                    $rows->push($this->mapRow($row));
+                    $currentRow++;
+                }
+            }
         }
 
         return $rows;
+    }
+
+    /**
+     * The team an attendance row is listed under. An employee can sit in
+     * several teams, but must appear once: prefer an active team linked to
+     * their default department, else their first active team by name.
+     * '' = no team.
+     */
+    protected function teamName($row): string
+    {
+        $teams = $row->employee?->teams ?? collect();
+        if ($teams->isEmpty()) {
+            return '';
+        }
+
+        $departmentId = $row->employee->default_departments->first()?->id;
+
+        $team = ($departmentId ? $teams->first(fn ($t) => $t->departments->contains('id', $departmentId)) : null)
+            ?? $teams->first();
+
+        return trim((string) $team->name);
+    }
+
+    protected function teamLabel(string $teamName): string
+    {
+        if ($teamName === '') {
+            return 'No Team';
+        }
+
+        return stripos($teamName, 'team') === 0 ? $teamName : "Team {$teamName}";
     }
 
     protected function bannerRow(string $label): array
@@ -341,14 +390,14 @@ class AttendanceRegisterExport implements
                     ]);
                 }
 
-                // Department subtotal rows
-                foreach ($this->departmentSubtotalRows as $row) {
+                // Team banner rows (inside each department)
+                foreach ($this->teamHeaderRows as $row) {
                     $sheet->mergeCells("A{$row}:L{$row}");
                     $event->sheet->getStyle("A{$row}:L{$row}")->applyFromArray([
-                        'font' => ['italic' => true],
-                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
-                        'borders' => [
-                            'top' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                        'font' => ['bold' => true, 'italic' => true, 'size' => 12, 'color' => ['argb' => 'FF0070C0']],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => '92D050'],
                         ],
                     ]);
                 }

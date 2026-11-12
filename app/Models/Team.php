@@ -23,6 +23,11 @@ class Team extends Model implements Auditable
         return $this->belongsToMany('App\Models\Employee');
     }
 
+    /** Departments this team belongs to (a team can sit under several). */
+    public function departments(){
+        return $this->belongsToMany('App\Models\Department')->withTimestamps();
+    }
+
     protected $fillable = [
         'user_id',
         'name',

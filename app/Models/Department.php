@@ -48,6 +48,9 @@ class Department extends Model implements Auditable
     public function defaultEmployees(){
         return $this->belongsToMany('App\Models\Employee')->withPivot('is_default')->wherePivot('is_default', true);
     }
+    public function teams(){
+        return $this->belongsToMany('App\Models\Team')->withTimestamps();
+    }
     public function job_titles(){
         return $this->hasMany('App\Models\JobTitle');
     }

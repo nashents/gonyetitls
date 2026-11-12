@@ -40,6 +40,12 @@ class Index extends Component
     public $selected_employee;
     public $departments;
     public $department_id;
+    /** Change Position modal: every department the employee belongs to. */
+    public $department_ids = [];
+    /** Change Position modal: which of $department_ids is the default one. */
+    public $default_department_id;
+    /** Change Position modal: the "add a department" dropdown. */
+    public $department_picker = '';
     public $ranks;
     public $rank_id;
     public $branches;
@@ -108,6 +114,9 @@ class Index extends Component
         $this->grade_id = Null;
         $this->branch_id = Null;
         $this->department_id = Null;
+        $this->department_ids = [];
+        $this->default_department_id = Null;
+        $this->department_picker = '';
         $this->rank_id = Null;
         $this->job_title_id = Null;
         $this->change_reason = Null;
@@ -243,8 +252,29 @@ class Index extends Component
         $this->resetPage();
     }
 
+      /** Picking a department in the Change Position modal adds it to the list. */
+      public function updatedDepartmentPicker($value){
+        $id = (int) $value;
+        if ($id && ! in_array($id, $this->department_ids)) {
+            $this->department_ids[] = $id;
+            if (! $this->default_department_id) {
+                $this->default_department_id = $id;
+            }
+        }
+        $this->department_picker = '';
+      }
+
+      public function removeDepartment($id){
+        $id = (int) $id;
+        $this->department_ids = array_values(array_filter($this->department_ids, fn ($d) => (int) $d !== $id));
+        if ((int) $this->default_department_id === $id) {
+            $this->default_department_id = $this->department_ids[0] ?? Null;
+        }
+      }
+
       public function changePosition($id){
         $this->employee_id = $id;
+        $this->resetErrorBag();
         
         $this->selected_employee = Employee::find($id);
         $employee_position = EmployeePosition::where('employee_id',$id)->latest()->first();
@@ -263,6 +293,18 @@ class Index extends Component
             $this->job_title_id = JobTitle::where('title',$this->selected_employee->post)->first()?->id;
             $this->rank_id = $this->selected_employee->ranks->first()?->id;
         }
+
+        // Departments come from the employee's actual memberships (with the
+        // flagged default); the position's department is only a fallback.
+        $this->department_ids = $this->selected_employee->departments()
+            ->orderBy('department_employee.id')->pluck('departments.id')
+            ->map(fn ($d) => (int) $d)->all();
+        $this->default_department_id = $this->selected_employee->defaultDepartment()?->id;
+        if (empty($this->department_ids) && $this->department_id) {
+            $this->department_ids = [(int) $this->department_id];
+            $this->default_department_id = (int) $this->department_id;
+        }
+        $this->department_picker = '';
         
         $this->dispatchBrowserEvent('show-changePositionModal');
        
@@ -270,6 +312,15 @@ class Index extends Component
       }
       
       public function changeUpdate(){
+
+        $department_ids = array_values(array_unique(array_map('intval', $this->department_ids ?? [])));
+        $default_department_id = (int) $this->default_department_id ?: Null;
+        if ($department_ids && ! in_array($default_department_id, $department_ids)) {
+            $this->addError('department_ids', 'Choose which department is the default one.');
+            return;
+        }
+        // The position record carries the default department.
+        $this->department_id = $default_department_id;
         
         $employee_position  = new EmployeePosition;
         $employee_position->employee_id = $this->employee_id ?? Null;
@@ -293,7 +344,10 @@ class Index extends Component
         $employee->update();
         $employee->ranks()->detach();
         $employee->ranks()->sync($this->rank_id);
-        $employee->departments()->sync($this->department_id);
+        $employee->departments()->sync($department_ids);
+        if ($default_department_id) {
+            $employee->setDefaultDepartment($default_department_id);
+        }
         $employee->ensureDefaultDepartment();
 
         $this->dispatchBrowserEvent('hide-changePositionModal');

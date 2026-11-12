@@ -20,10 +20,22 @@
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search teams...">
                                 </div>
                             </div>
+                            <div class="col-md-3" style="float: right;">
+                                <div class="form-group">
+                                    <select wire:model="filter_department_id" class="form-control">
+                                        <option value="">All Departments</option>
+                                        @foreach ($departments as $department)
+                                            <option value="{{$department->id}}">{{$department->name}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Name
+                                    </th>
+                                    <th class="th-sm">Departments
                                     </th>
                                     <th class="th-sm">Team Members
                                     </th>
@@ -38,6 +50,11 @@
                                     @forelse ($teams as $team)
                                   <tr wire:key="{{ '9eebc8-38-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($team->id ?? '') }}">
                                     <td>{{$team->name}}</td>
+                                    <td>
+                                        @foreach ($team->departments as $department)
+                                            <span class="label label-success">{{$department->name}}</span>
+                                        @endforeach
+                                    </td>
                                     <td>
                                         @foreach ($team->employees as $employee)
                                             {{$employee->name}} {{$employee->surname}} <br>
@@ -60,7 +77,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="4">
+                                    <td colspan="5">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Teams Found ....
                                         </div>
@@ -105,6 +122,16 @@
                         <label for="name">Name<span class="required" style="color: red">*</span></label>
                         <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Team Name" required />
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="department_id">Departments</label>
+                        <select class="form-control" wire:model.debounce.300ms="department_id" multiple>
+                                @foreach ($departments as $department)
+                                    <option value="{{$department->id}}">{{$department->name}}</option>
+                                @endforeach
+                        </select>
+                        <small style="color:green">Hold ctrl and click to select every department this team belongs to</small>
+                        @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-group">
                         <label for="name">Team Members</label>
@@ -160,6 +187,16 @@
                                 @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="department_id">Departments</label>
+                        <select class="form-control" wire:model.debounce.300ms="department_id" multiple>
+                                @foreach ($departments as $department)
+                                    <option value="{{$department->id}}">{{$department->name}}</option>
+                                @endforeach
+                        </select>
+                        <small style="color:green">Hold ctrl and click to select every department this team belongs to</small>
+                        @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-group">
                         <label for="name">Status<span class="required" style="color: red">*</span></label>
