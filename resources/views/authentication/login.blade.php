@@ -47,6 +47,10 @@
 
                             <hr>
 
+                            @include('includes.integration-strip')
+
+                            <hr>
+
                             <p class="text-muted text-center mb-n"><small>Copyright © Gonyeti ERP {{date('Y')}}</small></p>
                         </div>
                         <!-- /.login-box -->

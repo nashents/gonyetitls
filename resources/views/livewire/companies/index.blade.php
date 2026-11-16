@@ -80,6 +80,13 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('companies.show',$company->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$company->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @if (Auth::user()->is_admin())
+                                                    @if ($company->status == 1)
+                                                        <li><a href="#" onclick="confirm('Suspend {{ addslashes($company->name) }}? Its users will be logged out and unable to sign in.') || event.stopImmediatePropagation()" wire:click.prevent="toggleStatus({{$company->id}})" ><i class="fa fa-ban color-danger"></i> Suspend</a></li>
+                                                    @else
+                                                        <li><a href="#" wire:click.prevent="toggleStatus({{$company->id}})" ><i class="fa fa-check-circle color-success"></i> Activate</a></li>
+                                                    @endif
+                                                @endif
                                                 <li><a href="#" data-toggle="modal" data-target="#companyDeleteModal{{ $company->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>

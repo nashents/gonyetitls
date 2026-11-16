@@ -26,6 +26,7 @@ class Edit extends Component
 {
     use WithFileUploads;
     use HandlesFuelTripAllocations;
+    use \App\Http\Livewire\Concerns\ConfirmsFuelFundingReversal;
 
     public $fuels;
     public $fuel_id;
@@ -290,6 +291,18 @@ class Edit extends Component
             $trip = Trip::find($this->selectedTrip);
 
             $fuel = Fuel::find($this->fuel_id);
+
+            // Supplier bill already settled and the fuel is becoming customer
+            // funded - nothing is saved until the reversal is confirmed.
+            if ($this->fundingReversalNeedsConfirmation($fuel, (bool) $this->isCustomerSupplied)) {
+                return;
+            }
+
+            // One transaction: a refused re-post must not leave the order
+            // saved as customer funded while the ledger still says company.
+            try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($fuel, $trip) {
+
             $fuel->vehicle_id = $this->selectedVehicle;
             $fuel->employee_id = $this->employee_id;
             $fuel->horse_id = $this->selectedHorse;
@@ -321,12 +334,14 @@ class Edit extends Component
             // Approved already - re-post so a change of funding (company <-> customer)
             // or amount reaches the ledger, same as Fuels\Index::update().
             if ($fuel->authorization == 'approved') {
-                try {
-                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
-                } catch (\RuntimeException $e) {
-                    $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $e->getMessage()]);
-                    return;
-                }
+                $this->applyFundingReversal($fuel, (bool) $this->isCustomerSupplied);
+                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+            }
+
+            });
+            } catch (\RuntimeException $e) {
+                $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => $e->getMessage()]);
+                return;
             }
 
             $this->dispatchBrowserEvent('alert',[

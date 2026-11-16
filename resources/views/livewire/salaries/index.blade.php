@@ -13,6 +13,9 @@
                          
                             <div class="panel-title">
                                 <a href="{{route('salaries.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Salary</a>
+                                @can('create', App\Models\Salary::class)
+                                <a href="" data-toggle="modal" data-target="#salariesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                @endcan
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -174,9 +177,35 @@
         <!-- /.container-fluid -->
     </section>
 
-
-
-
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="salariesImportModal" tabindex="-1" role="dialog" aria-labelledby="salariesImportLabel" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="salariesImportLabel"><i class="fa fa-upload"></i>Import Salaries <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form action="{{ route('salaries.import') }}" method="POST" enctype="multipart/form-data">
+                    {{ csrf_field() }}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="file">Upload Salaries Excel File</label>
+                        @include('includes.import-template-link', ['template' => 'Salaries Import File.xlsx', 'url' => route('salaries.import_template')])
+                        <div class="text-muted" style="font-size:13px; margin-bottom:10px;">
+                            The template lists every employee without a salary and has a column for each allowance and deduction. See its "Instructions" sheet. Employees who already have a salary are updated, not duplicated.
+                        </div>
+                        <input type="file" class="form-control" name="file" accept=".xlsx,.xls" required>
+                        @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn btn-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Import</button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 
 </div>

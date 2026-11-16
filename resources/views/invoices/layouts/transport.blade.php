@@ -82,6 +82,9 @@
                     @if ($invoice->sales_order_number)
                         <tr><td class="k">SO No:</td><td class="v">{{ $invoice->sales_order_number }}</td></tr>
                     @endif
+                    @if ($invoice->custom_ref)
+                        <tr><td class="k">Ref No:</td><td class="v">{{ $invoice->custom_ref }}</td></tr>
+                    @endif
                 </table>
             </td>
         </tr>

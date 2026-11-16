@@ -356,8 +356,9 @@
                                                         @endforeach
                                                     @endif
                                                 </select>
+                                                @error('party_rows.' . $index . '.party_id') <span class="text-danger error">{{ $message }}</span> @enderror
                                                 @php
-                                                    $partyRoutes = ['customer' => 'customers.index', 'vendor' => 'vendors.index', 'consignee' => 'consignees.index', 'broker' => 'brokers.index', 'agent' => 'agents.index', 'transporter' => 'transporters.index', 'clearing_agent' => 'clearing_agents.index'];
+                                                    $partyRoutes =['customer' => 'customers.index', 'vendor' => 'vendors.index', 'consignee' => 'consignees.index', 'broker' => 'brokers.index', 'agent' => 'agents.index', 'transporter' => 'transporters.index', 'clearing_agent' => 'clearing_agents.index'];
                                                 @endphp
                                                 @if (!empty($row['party_type']) && isset($partyRoutes[$row['party_type']]))
                                                     <small><a href="{{ route($partyRoutes[$row['party_type']]) }}" target="_blank"><i class="fa fa-plus-square-o"></i> New {{ ucfirst(str_replace('_', ' ', $row['party_type'])) }}</a></small>
@@ -384,6 +385,7 @@
                                                     <option value="inspection_agent">Inspection Agent</option>
                                                     <option value="container_depot">Container Depot</option>
                                                 </select>
+                                                @error('party_rows.' . $index . '.role') <span class="text-danger error">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-2">

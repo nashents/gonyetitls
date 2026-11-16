@@ -176,8 +176,8 @@
                                                     <strong>S.O.#:</strong> {{$invoice->sales_order_number}}
                                                     <br>
                                                 @endif
-                                                @if ($invoice->pat_number)
-                                                    <strong>PAT#:</strong>{{$invoice->pat_number}}
+                                                @if ($invoice->custom_ref)
+                                                    <strong>Ref#:</strong> {{$invoice->custom_ref}}
                                                     <br>
                                                 @endif
                                                 @if($invoice->purchase_order_number)

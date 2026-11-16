@@ -1,6 +1,6 @@
 @extends('layouts.main')
 @section('title')
-Quotation Preview | {{Auth::user()->employee->company->name}} 
+{{ ($document ?? '') === 'sales_order' ? 'Sales Order' : 'Quotation' }} Preview | {{Auth::user()->employee->company->name}} 
 @endsection
 
 @section('content')
@@ -9,7 +9,8 @@ Quotation Preview | {{Auth::user()->employee->company->name}}
         <div class="card-body">
             @livewire('quotations.preview', ['quotation' => $quotation,
             'company' => $company,
-            'quotation_items' => $quotation_items,])
+            'quotation_items' => $quotation_items,
+            'document' => $document ?? 'quotation',])
         </div>
     </div>
 </div>

@@ -321,6 +321,15 @@ class MenuRegistrySeeder extends Seeder
             'sort_order' => 10,
             'visibility' => null, // inherit
         ]);
+        // Gonyeti's own billing of its clients (license invoices, payments, reminders)
+        $upsertSub($m, [
+            'name' => 'Client Billing',
+            'slug' => 'client-billing',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'billing.index',
+            'sort_order' => 20,
+            'visibility' => null, // inherit
+        ]);
 
         // Reminders
          $m = $upsertModule($g, [
@@ -2421,7 +2430,18 @@ class MenuRegistrySeeder extends Seeder
             'route_name' => 'company-profile',
             'route_params'=> ['company' => '{company_id}'], // ✅ MUST match {company}
             'sort_order' => 20,
-            'visibility' => null,
+            // System admins use the all-companies dropdown above instead.
+            'visibility' => ['any' => [['none_flags' => ['isSystemAdmin']]]],
+        ]);
+
+        // The client's own Gonyeti account: package, license invoices and payments.
+        $upsertModule($g, [
+            'name' => 'Billing & Subscription',
+            'slug' => 'billing-subscription',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'billing.account',
+            'sort_order' => 25,
+            'visibility' => null, // inherit the Business Settings group visibility
         ]);
 
         // // Create new business

@@ -53,7 +53,8 @@
                             </div>
 
                             <div style="padding-top: 20px; padding-bottom: 5px">
-                                <center><h2>QUOTATION</h2></center>
+                                @php $isSalesOrder = ($document ?? null) === 'sales_order' && $quotation->isSalesOrder(); @endphp
+                                <center><h2>{{ $isSalesOrder ? 'SALES ORDER' : 'QUOTATION' }}</h2></center>
                             </div>
                         </header>
                         <main>
@@ -93,12 +94,21 @@
                                 </div>
                                
                                     <div class="col invoice-details">
-                                        <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$quotation->quotation_number}}</div>
-                                        @if ($quotation->custom_ref)
-                                            <div class="date" style="padding-bottom: 3px"><strong>Reference:</strong> {{$quotation->custom_ref}}</div>
+                                        @if ($isSalesOrder)
+                                            <div class="date" style="padding-bottom: 3px"> <strong>Sales Order No.:</strong> {{$quotation->sales_order_number}}</div>
+                                            @if ($quotation->sales_order_ref)
+                                                <div class="date" style="padding-bottom: 3px"><strong>Reference:</strong> {{$quotation->sales_order_ref}}</div>
+                                            @endif
+                                            <div class="date" style="padding-bottom: 3px"><strong>Quotation No.:</strong> {{$quotation->quotation_number}}</div>
+                                            <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$quotation->sales_order_date}}</div>
+                                        @else
+                                            <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$quotation->quotation_number}}</div>
+                                            @if ($quotation->custom_ref)
+                                                <div class="date" style="padding-bottom: 3px"><strong>Reference:</strong> {{$quotation->custom_ref}}</div>
+                                            @endif
+                                            <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$quotation->date}}</div>
+                                            <div class="date" style="padding-bottom: 3px"><strong>Valid Until:</strong> {{$quotation->expiry}}</div>
                                         @endif
-                                        <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$quotation->date}}</div>
-                                        <div class="date" style="padding-bottom: 3px"><strong>Valid Until:</strong> {{$quotation->expiry}}</div>
                                         <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$quotation->currency ? $quotation->currency->name : ""}}</div>
                                     </div>
                                 </div>
@@ -202,7 +212,7 @@
                                         @endif
                                         <tr>
                                             <td colspan="4"></td>
-                                            <td colspan="2">QUOTATION TOTAL {{ $quotation->currency ? $quotation->currency->name : "" }} </td>
+                                            <td colspan="2">{{ $isSalesOrder ? 'SALES ORDER' : 'QUOTATION' }} TOTAL{{ $quotation->currency ? $quotation->currency->name : "" }} </td>
                                             <td>
                                                 @if ($quotation->total)
                                                       {{ $quotation->currency ? $quotation->currency->symbol : "" }}{{number_format($quotation->total,2)}}

@@ -40,7 +40,7 @@ class Containers extends Component
 
     private function refreshShipment()
     {
-        $this->shipment = Shipment::with(['containers.shipping_line', 'containers.milestones', 'containers.cargo_items', 'containers.exposures.currency', 'cargo_items'])
+        $this->shipment = Shipment::with(['containers.shipping_line', 'containers.milestones.creator', 'containers.cargo_items', 'containers.exposures.currency', 'cargo_items'])
             ->findOrFail($this->shipment->id);
     }
 

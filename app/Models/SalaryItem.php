@@ -53,6 +53,10 @@ class SalaryItem extends Model implements Auditable
         'movement',
         'amount',
         'percentage',
+        // Set by Salaries Create/Edit and SalaryPayeService on every item;
+        // without these a foreign-currency item is valued at 0 in totals.
+        'exchange_rate',
+        'exchange_amount',
     ];
    
 }

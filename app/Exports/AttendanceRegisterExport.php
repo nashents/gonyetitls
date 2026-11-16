@@ -118,6 +118,7 @@ class AttendanceRegisterExport implements
             ->with([
                 'employee:id,employee_number,name,surname',
                 'employee.default_departments:departments.id,departments.name',
+                'employee.driver:id,employee_id',
                 'employee.teams' => fn ($t) => $t->where('teams.status', 1)->orderBy('teams.name'),
                 'employee.teams.departments:departments.id',
                 'attendance:id,attendance_number,date,department_id',
@@ -203,14 +204,24 @@ class AttendanceRegisterExport implements
     {
         $records = $this->query()->get();
 
-        $grouped = $records
+        // Drivers are listed in one "Drivers" group of their own and never
+        // under a department, so a driver appears exactly once.
+        [$driverRows, $staffRows] = $records->partition(fn ($row) => $row->employee?->driver !== null);
+
+        $grouped = $staffRows
             ->groupBy(fn ($row) => $this->departmentName($row))
-            ->sortKeys();
+            ->sortKeys()
+            ->map(fn ($departmentRows, $name) => [$name, $departmentRows])
+            ->values();
+
+        if ($driverRows->isNotEmpty()) {
+            $grouped->push(['Drivers', $driverRows]);
+        }
 
         $rows = collect();
         $currentRow = 9; // data starts immediately after the heading row (startCell 'A8')
 
-        foreach ($grouped as $departmentName => $departmentRows) {
+        foreach ($grouped as [$departmentName, $departmentRows]) {
             $rows->push($this->bannerRow("{$departmentName} ({$departmentRows->count()})"));
             $this->departmentHeaderRows[] = $currentRow++;
 

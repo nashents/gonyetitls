@@ -355,6 +355,37 @@ class Index extends Component
             });
         }
 
+    /**
+     * Quick action on the list: flip a company between Active (1) and
+     * Suspended (0). Same permission as the Status field on the edit form -
+     * system admins only. CheckCompanyStatus logs the company's users out on
+     * their next request once it is suspended.
+     */
+    public function toggleStatus($id)
+    {
+        if (! $this->user->is_admin()) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => "You are not allowed to change a company's status.",
+            ]);
+            return;
+        }
+
+        $company = Company::find($id);
+        if (! $company) {
+            return;
+        }
+
+        $activate = $company->status != 1;
+        $company->status = $activate ? 1 : 0;
+        $company->save();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => $company->name.($activate ? ' Activated Successfully!!' : ' Suspended Successfully!!'),
+        ]);
+    }
+
     public function render()
     {
         $with = [

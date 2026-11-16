@@ -113,8 +113,8 @@
                     @if ($invoice->purchase_order_number)
                     <div class="date" style="padding-bottom: 3px"> <strong>P.O No.:</strong> {{$invoice->purchase_order_number}}</div>
                     @endif
-                    @if ($invoice->pat_number)
-                    <div class="date" style="padding-bottom: 3px"> <strong>PAT No.:</strong> {{$invoice->pat_number}}</div>
+                    @if ($invoice->custom_ref)
+                    <div class="date" style="padding-bottom: 3px"> <strong>Ref No.:</strong> {{$invoice->custom_ref}}</div>
                     @endif
                     <div class="date" style="padding-bottom: 3px"><strong>Invoice Date:</strong> {{$invoice->date}}</div>
                     @if ($invoice->expiry)

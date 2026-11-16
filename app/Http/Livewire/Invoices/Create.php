@@ -45,6 +45,9 @@ use Livewire\Component;
 
 class Create extends Component
 {
+    use \App\Http\Livewire\Concerns\AttachesSalesOrder;
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
+
     public $searchBooking;
     public $searchRental;
     public $searchTrip;
@@ -126,8 +129,7 @@ class Create extends Component
     public $values = "scheduled";
     public $footer;
     public $purchase_order_number;
-    public $sales_order_number;
-    public $pat_number;
+    public $custom_ref;
     public $selectedAccount = [];
         //discount vars
     
@@ -1398,6 +1400,10 @@ class Create extends Component
         return $safe;
     }
 
+    public function updatedCustomRef(){
+        $this->checkUniqueReference('custom_ref', Invoice::class, 'custom_ref', null, 'invoice reference');
+    }
+
     public function store(){
 
         if ($this->transporterDeductModeBlocks()) {
@@ -1424,6 +1430,8 @@ class Create extends Component
             return;
         }
 
+        $this->assertUniqueReference('custom_ref', Invoice::class, 'custom_ref', $this->custom_ref, null, 'invoice reference');
+
         $this->normalizeBaseCurrencyRate();
 
         DB::transaction(function () {
@@ -1443,8 +1451,9 @@ class Create extends Component
                 $invoice->expiry = $this->expiry;
                 $invoice->invoicing_values = $this->values;
                 $invoice->purchase_order_number = $this->purchase_order_number;
+                $invoice->quotation_id = $this->quotation_id ?: null;
                 $invoice->sales_order_number = $this->sales_order_number;
-                $invoice->pat_number = $this->pat_number;
+                $invoice->custom_ref = trim((string) $this->custom_ref) !== '' ? trim($this->custom_ref) : null;
                 $invoice->source = $this->source;
                 $invoice->memo = $this->memo;
                 $invoice->footer = $this->footer;

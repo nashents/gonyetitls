@@ -1,5 +1,14 @@
 
 <div>
+    <style>
+        /* Quotation = warning, Sales Order = success; border is a deeper shade of the row colour */
+        table.quotations-table > tbody > tr.row-quote > td { background-color: #fcf8e3 !important; border-top: 1px solid #f0ad4e !important; border-bottom: 1px solid #f0ad4e !important; }
+        table.quotations-table > tbody > tr.row-quote > td:first-child { border-left: 4px solid #f0ad4e !important; }
+        table.quotations-table > tbody > tr.row-quote > td:last-child { border-right: 1px solid #f0ad4e !important; }
+        table.quotations-table > tbody > tr.row-so > td { background-color: #dff0d8 !important; border-top: 1px solid #5cb85c !important; border-bottom: 1px solid #5cb85c !important; }
+        table.quotations-table > tbody > tr.row-so > td:first-child { border-left: 4px solid #5cb85c !important; }
+        table.quotations-table > tbody > tr.row-so > td:last-child { border-right: 1px solid #5cb85c !important; }
+    </style>
     <section class="section">
         <x-loading/>
         <div class="container-fluid">
@@ -17,11 +26,24 @@
                                         <div class="col-lg-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">
+                                                Show
+                                                </span>
+                                                <select wire:model="document_type" class="form-control" aria-label="...">
+                                                    <option value="all">All (Quotations &amp; Sales Orders)</option>
+                                                    <option value="quotation">Quotations Only</option>
+                                                    <option value="sales_order">Sales Orders Only</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
                                                 Filter By
                                                 </span>
                                                 <select wire:model.debounce.300ms="quotation_filter" class="form-control" aria-label="..." >
                                                     <option value="created_at">Quotation Created At</option>
-                                                    <option value="date">Quoation Date</option>
+                                                    <option value="date">Quotation Date</option>
+                                                    <option value="sales_order_date">Sales Order Date</option>
                                                 </select>
                                             </div>
                                             <!-- /input-group -->
@@ -49,9 +71,9 @@
                             </div>
                             <div class="panel-title" style="margin-top:10px; margin-left:-1px">
                                 <a href="{{route('quotations.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Quotation</a>
-                                <a href="#" wire:click="exportQuotationsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportQuotationsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportQuotationsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
+                                <a href="#" wire:click.prevent="exportQuotationsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click.prevent="exportQuotationsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click.prevent="exportQuotationsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
                             </div>
                            
                             
@@ -60,7 +82,7 @@
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search quotations...">
                                 </div>
                             </div>
-                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive quotations-table" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
 
@@ -93,13 +115,22 @@
                                 @if (isset($quotations))
                                 <tbody>
                                     @forelse ($quotations as $quotation)
-                                  <tr wire:key="{{ '6da1c4-95-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($quotation->id ?? '') }}">
+                                  <tr class="{{ $quotation->isSalesOrder() ? 'row-so' : 'row-quote' }}" wire:key="{{ '6da1c4-95-'. ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($quotation->id ?? '') }}">
                                     @php
                                         $expiry = $quotation->expiry;
                                         $now = new DateTime();
                                         $datetime2 = new DateTime($expiry);
                                     @endphp
-                                    <td>{{$quotation->quotation_number}}</td>
+                                    <td>
+                                        <span class="label label-warning">Quote</span> {{$quotation->quotation_number}}
+                                        @if ($quotation->isSalesOrder())
+                                            <br>
+                                            <span class="label label-success">SO</span> {{$quotation->sales_order_number}}
+                                            @if ($quotation->sales_order_ref)
+                                                <br><small><strong>SO Ref:</strong> {{$quotation->sales_order_ref}}</small>
+                                            @endif
+                                        @endif
+                                    </td>
                                     <td>{{$quotation->user ? $quotation->user->name : ""}} {{$quotation->user ? $quotation->user->surname : ""}}</td>
                                     <td>{{$quotation->customer ? $quotation->customer->name : ""}}</td>
                                     <td>
@@ -139,10 +170,16 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('quotations.show',$quotation->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
-                                                <li><a href="{{route('quotations.preview',$quotation->id)}}"  ><i class="fa fa-file-invoice color-primary"></i> Preview</a></li>
+                                                @if ($quotation->isSalesOrder())
+                                                    <li><a href="{{route('quotations.preview',$quotation->id)}}"  ><i class="fa fa-file-invoice color-warning"></i> Quote Preview</a></li>
+                                                    <li><a href="{{route('quotations.preview',['id' => $quotation->id, 'document' => 'sales_order'])}}"  ><i class="fa fa-file-invoice color-success"></i> SO Preview</a></li>
+                                                @else
+                                                    <li><a href="{{route('quotations.preview',$quotation->id)}}"  ><i class="fa fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    <li><a href="#" wire:click.prevent="convertToSalesOrderShow({{$quotation->id}})"  ><i class="fa fa-exchange color-success"></i> Convert to Sales Order</a></li>
+                                                @endif
                                                 @if ($quotation->status == True)
                                                     <li><a href="#" wire:click.prevent="closeQuoteShow({{$quotation->id}})"  ><i class="fa fa-remove color-active"></i> Close Quote</a></li>
-                                                    @if ($quotation->trips->count() == 0)
+                                                    @if ($quotation->trips_count == 0 && !$quotation->isSalesOrder())
                                                         <li><a href="{{route('quotations.edit',$quotation->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                         <li><a href="#" data-toggle="modal" data-target="#quotationDeleteModal{{ $quotation->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endif
@@ -155,7 +192,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="12">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Quotations Found ....
                                         </div>
@@ -207,6 +244,42 @@
                             <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
                         </div>
                         <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="convertQuoteModal" tabindex="-1" role="dialog" aria-labelledby="convertQuoteLabel" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="convertQuoteLabel"><i class="fa fa-exchange"></i> Convert Quotation to Sales Order<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="convertToSalesOrder()" >
+                    <div class="modal-body">
+                        <p>Convert quotation <strong>{{$convert_quotation_number}}</strong>@if ($convert_customer) for <strong>{{$convert_customer}}</strong>@endif to a sales order.</p>
+                        <div class="form-group">
+                            <label>Sales Order#</label>
+                            <input type="text" class="form-control" value="{{$sales_order_number_preview}}" disabled>
+                            <small class="text-muted">Auto generated on conversion.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="sales_order_ref">Sales Order Reference <small>(optional)</small></label>
+                            <input type="text" id="sales_order_ref" class="form-control" wire:model.debounce.300ms="sales_order_ref" placeholder="Enter custom sales order reference">
+                            @error('sales_order_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="sales_order_date">Sales Order Date<span class="required" style="color: red">*</span></label>
+                            <input type="date" id="sales_order_date" class="form-control" wire:model.defer="sales_order_date" required>
+                            @error('sales_order_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" wire:loading.attr="disabled" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-exchange"></i>Convert</button>
+                        </div>
                     </div>
                 </form>
                 </div>

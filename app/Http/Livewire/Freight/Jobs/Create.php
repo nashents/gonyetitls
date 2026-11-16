@@ -2,24 +2,8 @@
 
 namespace App\Http\Livewire\Freight\Jobs;
 
-use App\Models\Agent;
-use App\Models\Broker;
-use App\Models\Cargo;
-use App\Models\ClearingAgent;
-use App\Models\Consignee;
-use App\Models\Currency;
-use App\Models\Customer;
-use App\Models\Destination;
-use App\Models\Employee;
+use App\Http\Livewire\Freight\Jobs\Concerns\FreightJobFormOptions;
 use App\Models\FreightJob;
-use App\Models\FreightServiceType;
-use App\Models\LoadingPoint;
-use App\Models\OffloadingPoint;
-use App\Models\Quotation;
-use App\Models\ShipmentParty;
-use App\Models\Transporter;
-use App\Models\UnitsOfMeasure;
-use App\Models\Vendor;
 use App\Services\Freight\FreightJobAuthorizationService;
 use App\Services\Freight\FreightJobService;
 use Illuminate\Support\Facades\Auth;
@@ -27,23 +11,11 @@ use Livewire\Component;
 
 class Create extends Component
 {
+    use FreightJobFormOptions;
+
     public $employee;
     public $department_names = [];
     public $role_names = [];
-
-    // dropdown collections
-    public $customers;
-    public $freight_service_types;
-    public $currencies;
-    public $destinations;
-    public $officers;
-    public $quotations;
-    public $loading_points;
-    public $offloading_points;
-    public $cargos;
-    public $uoms;
-    public $partyOptions = [];
-    public $partyModels = [];
 
     // Customer & Service
     public $customer_id;
@@ -88,36 +60,7 @@ class Create extends Component
             $this->role_names[] = $role->name;
         }
 
-        $this->customers = Customer::orderBy('name', 'asc')->get();
-        $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
-        $this->currencies = Currency::orderBy('name', 'asc')->get();
-        $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
-        $this->officers = Employee::where('company_id', $this->employee->company_id)
-            ->where('status', 1)
-            ->where('archive', 0)
-            ->whereNotNull('user_id')
-            ->orderBy('name', 'asc')
-            ->orderBy('surname', 'asc')
-            ->get();
-        $this->quotations = Quotation::with('customer')
-            ->whereYear('date', date('Y'))
-            ->latest()
-            ->get();
-        $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
-        $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
-        $this->cargos = Cargo::selectable()->orderBy('name','asc')->get();
-        $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
-
-        $this->partyOptions = ShipmentParty::partyTypeOptions();
-        $this->partyModels = [
-            'customer' => Customer::orderBy('name')->get(['id', 'name'])->toArray(),
-            'vendor' => Vendor::orderBy('name')->get(['id', 'name'])->toArray(),
-            'consignee' => Consignee::orderBy('name')->get(['id', 'name'])->toArray(),
-            'broker' => Broker::orderBy('name')->get(['id', 'name'])->toArray(),
-            'agent' => Agent::orderBy('name')->get(['id', 'name'])->toArray(),
-            'transporter' => Transporter::orderBy('name')->get(['id', 'name'])->toArray(),
-            'clearing_agent' => ClearingAgent::orderBy('name')->get(['id', 'name'])->toArray(),
-        ];
+        $this->loadFormOptions($this->employee->company_id);
 
         $this->addCargoRow();
         $this->addPartyRow();
@@ -125,16 +68,7 @@ class Create extends Component
 
     public function addCargoRow()
     {
-        $this->cargo_rows[] = [
-            'cargo_id' => null,
-            'commodity' => null,
-            'hs_code' => null,
-            'quantity' => null,
-            'uom' => null,
-            'packages' => null,
-            'gross_weight' => null,
-            'is_dangerous_goods' => false,
-        ];
+        $this->cargo_rows[] = $this->blankCargoRow();
     }
 
     public function removeCargoRow($index)
@@ -145,11 +79,7 @@ class Create extends Component
 
     public function addPartyRow()
     {
-        $this->party_rows[] = [
-            'party_type' => null,
-            'party_id' => null,
-            'role' => null,
-        ];
+        $this->party_rows[] = $this->blankPartyRow();
     }
 
     public function removePartyRow($index)
@@ -158,62 +88,9 @@ class Create extends Component
         $this->party_rows = array_values($this->party_rows);
     }
 
-    public function refresh($category)
-    {
-        if ($category === 'customers') {
-            $this->customers = Customer::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Customers Refreshed Successfully!!.']);
-        } elseif ($category === 'freight_service_types') {
-            $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Service Types Refreshed Successfully!!.']);
-        } elseif ($category === 'currencies') {
-            $this->currencies = Currency::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
-        } elseif ($category === 'quotations') {
-            $this->quotations = Quotation::with('customer')->whereYear('date', date('Y'))->latest()->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Quotations Refreshed Successfully!!.']);
-        } elseif ($category === 'destinations') {
-            $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Destinations Refreshed Successfully!!.']);
-        } elseif ($category === 'cargos') {
-            $this->cargos = Cargo::selectable()->orderBy('name','asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargo Types Refreshed Successfully!!.']);
-        } elseif ($category === 'uoms') {
-            $this->uoms = UnitsOfMeasure::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Units of Measure Refreshed Successfully!!.']);
-        } elseif ($category === 'loading_points') {
-            $this->loading_points = LoadingPoint::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Loading Points Refreshed Successfully!!.']);
-        } elseif ($category === 'offloading_points') {
-            $this->offloading_points = OffloadingPoint::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Offloading Points Refreshed Successfully!!.']);
-        }
-    }
-
     public function refreshPartyOptions($index)
     {
-        $type = $this->party_rows[$index]['party_type'] ?? null;
-
-        if (!$type || !isset($this->partyModels[$type])) {
-            return;
-        }
-
-        $modelClass = [
-            'customer' => Customer::class,
-            'vendor' => Vendor::class,
-            'consignee' => Consignee::class,
-            'broker' => Broker::class,
-            'agent' => Agent::class,
-            'transporter' => Transporter::class,
-            'clearing_agent' => ClearingAgent::class,
-        ][$type];
-
-        $this->partyModels[$type] = $modelClass::orderBy('name')->get(['id', 'name'])->toArray();
-
-        $this->dispatchBrowserEvent('alert', [
-            'type' => 'success',
-            'message' => ucfirst(str_replace('_', ' ', $type)) . 's Refreshed Successfully!!.',
-        ]);
+        $this->reloadPartyType($this->party_rows[$index]['party_type'] ?? null);
     }
 
     protected function rules()
@@ -224,9 +101,15 @@ class Create extends Component
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
             'cargo_rows.*.commodity' => 'nullable|string',
-            'party_rows.*.role' => 'nullable|string',
+            'party_rows.*.party_id' => 'required_with:party_rows.*.party_type',
+            'party_rows.*.role' => 'nullable|string|required_with:party_rows.*.party_id',
         ];
     }
+
+    protected $validationAttributes = [
+        'party_rows.*.party_id' => 'party',
+        'party_rows.*.role' => 'role',
+    ];
 
     public function store(FreightJobService $service)
     {

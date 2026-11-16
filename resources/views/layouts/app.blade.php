@@ -908,6 +908,12 @@
             window.addEventListener('hide-closeQuoteModal', event => {
                 $('#closeQuoteModal').modal('hide');
             })
+            window.addEventListener('show-convertQuoteModal', event => {
+                $('#convertQuoteModal').modal('show');
+            })
+            window.addEventListener('hide-convertQuoteModal', event => {
+                $('#convertQuoteModal').modal('hide');
+            })
     </script>
     <script type="text/javascript">
             window.addEventListener('show-removeCostModal', event => {

@@ -2174,9 +2174,21 @@
                                        <label for="one" class="radio-label">Fuel Order</label>
                                        @error('fuel_order') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
-                                   @if ($fuel_order == True && $fuel_split)
+                                   @if ($fuel_order == True)
+                                   <div class="form-group">
+                                       <div class="mb-10">
+                                           <input type="radio" wire:model="fuel_order_mode" value="new" class="line-style" />
+                                           <label for="one" class="radio-label">{{ $fuel ? "Trip's Fuel Order" . ($fuel->order_number ? ' (' . $fuel->order_number . ')' : '') : 'Create New Fuel Order' }}</label>
+                                           <input type="radio" wire:model="fuel_order_mode" value="attach" class="line-style" />
+                                           <label for="one" class="radio-label">Attach Existing Fuel Order(s)</label>
+                                       </div>
+                                   </div>
+                                   @endif
+                                   @if ($fuel_order == True && $fuel_order_mode == 'attach')
+                                       @include('livewire.trips._attach_fuel_orders')
+                                   @elseif ($fuel_order == True && $fuel_split)
                                    <div class="alert alert-info">
-                                       <i class="fa fa-info-circle"></i> Fuel order <strong>{{ $fuel?->order_number }}</strong> is split across trips. Edit its litres and trip allocations from <strong>Fuel Orders</strong>.
+                                       <i class="fa fa-info-circle"></i> Fuel order <strong>{{ $fuel?->order_number }}</strong> is split across trips. Change this trip's litres under <strong>Attach Existing Fuel Order(s)</strong>, or edit the order and all its trip allocations from <strong>Fuel Orders</strong>.
                                    </div>
                                    @elseif ($fuel_order == True)
                                    @if ($selectedHorse)

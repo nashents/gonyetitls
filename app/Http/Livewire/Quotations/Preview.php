@@ -12,8 +12,11 @@ class Preview extends Component
     public $quotation;
     public $quotation_items;
     public $company;
+    // 'quotation' or 'sales_order' (converted quotations only)
+    public $document = 'quotation';
 
-    public function mount($quotation, $quotation_items, $company){
+    public function mount($quotation, $quotation_items, $company, $document = 'quotation'){
+        $this->document = $document === 'sales_order' ? 'sales_order' : 'quotation';
         $this->quotation = $quotation;
         $this->quotation_items = $quotation_items;
         $this->company = $company;

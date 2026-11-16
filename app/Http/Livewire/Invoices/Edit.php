@@ -32,6 +32,8 @@ use Livewire\Component;
 
 class Edit extends Component
 {
+    use \App\Http\Livewire\Concerns\AttachesSalesOrder;
+    use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
 
 
     public $searchBooking;
@@ -130,8 +132,7 @@ class Edit extends Component
     public $currencies;
     public $destinations;
     public $purchase_order_number;
-    public $sales_order_number;
-    public $pat_number;
+    public $custom_ref;
     public $selectedCurrency;
     public $selected_currency;
     public $tax_rate = [];
@@ -1059,8 +1060,9 @@ class Edit extends Component
         $this->values = $invoice->invoicing_values;
         $this->fiscalize_invoice = $invoice->fiscalize;
         $this->purchase_order_number = $invoice->purchase_order_number;
+        $this->quotation_id = $invoice->quotation_id;
         $this->sales_order_number = $invoice->sales_order_number;
-        $this->pat_number = $invoice->pat_number;
+        $this->custom_ref = $invoice->custom_ref;
         $this->from_inventory = $invoice->from_inventory;
         $this->from_trips = $invoice->from_trips;
         $this->from_ttos = $invoice->from_ttos;
@@ -1313,6 +1315,21 @@ class Edit extends Component
         return $safe;
     }
 
+    // Only a changed reference is checked, so invoices carrying an older duplicate can still be saved.
+    private function customRefChanged(): bool
+    {
+        $original = Invoice::whereKey($this->invoice_id)->value('custom_ref');
+
+        return mb_strtolower(trim((string) $this->custom_ref)) !== mb_strtolower(trim((string) $original));
+    }
+
+    public function updatedCustomRef(){
+        $this->resetErrorBag('custom_ref');
+        if ($this->customRefChanged()) {
+            $this->checkUniqueReference('custom_ref', Invoice::class, 'custom_ref', $this->invoice_id, 'invoice reference');
+        }
+    }
+
     public function update()
     {
 
@@ -1322,6 +1339,10 @@ class Edit extends Component
 
         if (!$this->tickedTripsAreFreightUpdateSafe()) {
             return;
+        }
+
+        if ($this->customRefChanged()) {
+            $this->assertUniqueReference('custom_ref', Invoice::class, 'custom_ref', $this->custom_ref, $this->invoice_id, 'invoice reference');
         }
 
         $this->normalizeBaseCurrencyRate();
@@ -1346,8 +1367,9 @@ class Edit extends Component
                 $invoice->invoicing_values = $this->values;
                 $invoice->from_inventory = $this->from_inventory;
                 $invoice->purchase_order_number = $this->purchase_order_number;
+                $invoice->quotation_id = $this->quotation_id ?: null;
                 $invoice->sales_order_number = $this->sales_order_number;
-                $invoice->pat_number = $this->pat_number;
+                $invoice->custom_ref = trim((string) $this->custom_ref) !== '' ? trim($this->custom_ref) : null;
                 $invoice->memo = $this->memo;
                 $invoice->footer = $this->footer;
                 $invoice->subheading = $this->subheading;

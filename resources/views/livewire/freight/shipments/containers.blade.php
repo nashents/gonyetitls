@@ -23,7 +23,25 @@
                     <td>{{ $container->container_type }}</td>
                     <td>{{ $container->seal_number }}</td>
                     <td>{{ $container->shipping_line?->name ?? $container->shipping_line_vendor?->name ?? $container->shipping_line_name }}</td>
-                    <td><span class="label label-info label-wide">{{ $lifecycleStages[$container->status] ?? $container->status }}</span></td>
+                    <td>
+                        <span class="label label-info label-wide">{{ $lifecycleStages[$container->status] ?? $container->status }}</span>
+                        @php
+                            // Every status change records a completed milestone (ShippingContainerService::transitionStatus),
+                            // so these rows are the status trail. Newest update first.
+                            $statusTrail = $container->milestones->sortByDesc('id');
+                        @endphp
+                        @if ($statusTrail->isNotEmpty())
+                            <ul class="list-unstyled" style="margin:6px 0 0; max-height:110px; overflow-y:auto; font-size:11px; line-height:1.5">
+                                @foreach ($statusTrail as $change)
+                                    <li class="{{ $loop->first ? '' : 'text-muted' }}" wire:key="container-{{ $container->id }}-trail-{{ $change->id }}">
+                                        <strong>{{ $change->milestone_name }}</strong>
+                                        &middot; {{ $change->created_at?->format('d M Y H:i') }}
+                                        &middot; {{ $change->creator ? trim($change->creator->name . ' ' . $change->creator->surname) : 'System' }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </td>
                     <td>
                         <a href="#" wire:click.prevent="toggleExpand({{ $container->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Details</a>
                         @if ($container->nextLifecycleStage())

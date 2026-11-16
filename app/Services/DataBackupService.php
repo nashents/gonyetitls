@@ -69,6 +69,7 @@ class DataBackupService
             'Operations/Works'                   => $this->table(Models\Work::class),
 
             // Finance
+            'Finance/Quotations & Sales Orders'  => fn () => new Exports\QuotationsExport(['from' => $from, 'to' => $to]),
             'Finance/Invoices'                   => fn () => new Exports\SalesExport($from, $to, $invoiceFilters, null),
             // PaymentsExport is legacy (built for invoice columns), so dump the cash ledger table directly.
             'Finance/Payments'                   => $this->table(Models\Payment::class),

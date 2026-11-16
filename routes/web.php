@@ -648,6 +648,14 @@ Route::resource('admins','AdminController');
 Route::resource('quotation_products','QuotationProductController');
 Route::resource('rate_cards','RateCardController');
 Route::resource('companies','CompanyController');
+
+// Gonyeti subscription billing: license invoices to client companies
+Route::get('billing','SubscriptionBillingController@index')->name('billing.index');
+Route::get('billing/account','SubscriptionBillingController@account')->name('billing.account');
+Route::get('billing/companies/{company}','SubscriptionBillingController@company')->name('billing.company');
+Route::get('billing/invoices/{invoice}/pdf','SubscriptionBillingController@pdf')->name('billing.invoices.pdf');
+Route::get('billing/payments/{payment}/receipt','SubscriptionBillingController@receipt')->name('billing.payments.receipt');
+
 Route::resource('bookings','BookingController');
 Route::resource('invoice_items','InvoiceItemController');
 Route::resource('consignees','ConsigneeController');
@@ -691,6 +699,9 @@ Route::resource('account_types','AccountTypeController');
 Route::resource('trailer_links','TrailerLinkController');
 Route::resource('payslips','PayslipController');
 Route::resource('salary_items','SalaryItemController');
+// Before the resource, so "import-template" isn't taken for a salary id.
+Route::get('/salaries/import-template','ImportsController@downloadSalariesTemplate')->name('salaries.import_template');
+Route::post('/salaries/import','ImportsController@importSalaries')->name('salaries.import');
 Route::resource('salaries','SalaryController');
 
 // ── New Payroll Module Routes ───────────────────────────────────────────────

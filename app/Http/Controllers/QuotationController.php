@@ -37,6 +37,7 @@ class QuotationController extends Controller
         $company = $quotation->company;
         return view('quotations.preview')->with([
             'quotation' => $quotation,
+            'document' => request('document') === 'sales_order' && $quotation->isSalesOrder() ? 'sales_order' : 'quotation',
             'company' => $company,
             'quotation_items' => $quotation_items,]);
     }
@@ -68,11 +69,12 @@ class QuotationController extends Controller
         $data = [
             'quotation' => $quotation,
             'quotation_items' => $quotation->quotation_item,
-            'company' =>  $company = $quotation->company
+            'company' =>  $company = $quotation->company,
+            'document' => request('document') === 'sales_order' && $quotation->isSalesOrder() ? 'sales_order' : 'quotation',
         ];
         $pdf = PDF::loadView('quotations.quotation', $data);
 
-        return $pdf->download('quotation.pdf');
+        return $pdf->download($data['document'] === 'sales_order' ? 'sales_order.pdf' : 'quotation.pdf');
 
     }
 

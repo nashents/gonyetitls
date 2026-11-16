@@ -46,6 +46,7 @@ class Index extends Component
 {
     use WithFileUploads;
     use HandlesFuelTripAllocations;
+    use \App\Http\Livewire\Concerns\ConfirmsFuelFundingReversal;
 
     use WithPagination;
 
@@ -1423,6 +1424,12 @@ class Index extends Component
             return;
         }
 
+        // Supplier bill already settled and the fuel is becoming customer
+        // funded - nothing is saved until the reversal is confirmed.
+        if ($this->fuel_id && $this->fundingReversalNeedsConfirmation(Fuel::find($this->fuel_id), (bool) $this->isCustomerSupplied)) {
+            return;
+        }
+
         try{
 
         if ($this->fuel_id) {
@@ -1553,7 +1560,10 @@ class Index extends Component
                 // ledger instead of silently leaving the stale entry, so
                 // the Bill/BillExpense/JournalEntry chain stays in sync
                 // with whatever the fuel order says now.
-                app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                DB::transaction(function () use ($fuel) {
+                    $this->applyFundingReversal($fuel, (bool) $this->isCustomerSupplied);
+                    app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
+                });
             }
 
             $this->dispatchBrowserEvent('hide-fuelEditModal');

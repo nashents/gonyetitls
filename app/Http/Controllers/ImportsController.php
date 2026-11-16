@@ -404,6 +404,41 @@ class ImportsController extends Controller
         return redirect()->back();
     }
 
+    // Generated live: one column per allowance / deduction, employees without a salary pre-listed.
+    public function downloadSalariesTemplate(){
+        $this->authorize('create', \App\Models\Salary::class);
+
+        return (new \App\Exports\Templates\SalariesImportTemplate)->download();
+    }
+
+    public function importSalaries(Request $request){
+        $this->authorize('create', \App\Models\Salary::class);
+        $this->validate($request,[
+            'file' => 'required|file|mimes:xls,xlsx'
+        ]);
+        if (!$request->user()->employee?->company) {
+            Session::flash('error', 'Your user account is not linked to an employee record with a company, so salaries cannot be imported.');
+            return redirect()->back();
+        }
+        ini_set('max_execution_time', 300);
+        $import = new \App\Imports\SalariesImport;
+        $import->import($request->file);
+        Session::flash('success', "Salaries Imported Successfully!! ({$import->created} created, {$import->updated} updated)");
+
+        $warnings = [];
+        if (!empty($import->unknownColumns)) {
+            $warnings[] = 'Column(s) not recognised and not imported: '.implode(', ', $import->unknownColumns).'. Add the allowance / deduction in the system, then download a fresh template.';
+        }
+        if (!empty($import->skipped)) {
+            $more = count($import->skipped) > 10 ? ' ... and '.(count($import->skipped) - 10).' more' : '';
+            $warnings[] = count($import->skipped).' row(s) skipped: '.implode('; ', array_slice($import->skipped, 0, 10)).$more;
+        }
+        if (!empty($warnings)) {
+            Session::flash('warning', implode(' | ', $warnings));
+        }
+        return redirect()->back();
+    }
+
     private function flashSkipped(array $skipped){
         if (!empty($skipped)) {
             $more = count($skipped) > 10 ? ' ... and '.(count($skipped) - 10).' more' : '';

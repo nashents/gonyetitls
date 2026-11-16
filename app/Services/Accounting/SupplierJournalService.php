@@ -132,13 +132,13 @@ class SupplierJournalService
      * Reverse the journal entry, release any bill allocations back onto the
      * bills' balances, and mark the journal voided (kept for audit).
      */
-    public function void(SupplierJournal $journal, ?string $reason = null): void
+    public function void(SupplierJournal $journal, ?string $reason = null, bool $originalDate = false): void
     {
         if ($journal->isVoided()) {
             return;
         }
 
-        DB::transaction(function () use ($journal, $reason) {
+        DB::transaction(function () use ($journal, $reason, $originalDate) {
             foreach ($journal->bill_payments()->get() as $allocation) {
                 $this->deallocate($allocation);
             }
@@ -148,7 +148,7 @@ class SupplierJournalService
             JournalEntry::where('supplier_journal_id', $journal->id)
                 ->get()
                 ->filter(fn ($entry) => $this->journalReversal->isLiveEffect($entry))
-                ->each(fn ($entry) => $this->journalReversal->reverse($entry, "Suppliers journal {$journal->journal_number} voided - {$reason}"));
+                ->each(fn ($entry) => $this->journalReversal->reverse($entry, "Suppliers journal {$journal->journal_number} voided - {$reason}", $originalDate ? optional($entry->date)->toDateString() : null));
 
             $journal->status = 'voided';
             $journal->voided_by_id = Auth::id();

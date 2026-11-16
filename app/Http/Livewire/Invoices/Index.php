@@ -1496,7 +1496,7 @@ class Index extends Component
                     ->orWhere('authorization', 'like', "%{$s}%")
                     ->orWhere('purchase_order_number', 'like', "%{$s}%")
                     ->orWhere('sales_order_number', 'like', "%{$s}%")
-                    ->orWhere('pat_number', 'like', "%{$s}%")
+                    ->orWhere('custom_ref', 'like', "%{$s}%")
                     ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$s}%"))
                     ->orWhereHas('transporter', fn ($cq) => $cq->where('name', 'like', "%{$s}%"))
                     ->orWhereHas('currency', fn ($cq) => $cq->where('name', 'like', "%{$s}%"));

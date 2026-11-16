@@ -72,6 +72,8 @@ class Edit extends Component
     use HandlesTripTrailerLinks;
     use ResolvesSageIntegration;
     use ValidatesUniqueReference;
+    use \App\Http\Livewire\Concerns\ConfirmsFuelFundingReversal;
+    use \App\Http\Livewire\Concerns\AttachesTripFuelOrders;
 
     public $trip;
     public $trip_id;
@@ -1444,7 +1446,15 @@ class Edit extends Component
             $this->fuel_type_locked = (bool) ($this->fuel->source_horse_id ? $this->fuel->source_horse?->fuel_type : $this->selected_container?->fuel_type);
 
          }
-        
+
+         // Fuel already on the trip shows ticked under Attach Existing. That is
+         // also where it opens when the form can't edit the order itself: it
+         // is split across trips, or is another trip's order shared here.
+         $this->loadAttachedFuelOrders();
+         if ($this->fuel_split || (!$this->fuel && $this->attach_fuel_ids)) {
+             $this->fuel_order_mode = 'attach';
+             $this->fuel_category = $this->fuel_category ?: 'Self';
+         }
 
          $this->with_trailer = $this->trip->with_trailer;
          $this->selectedDeal = $this->trip->deal_id;
@@ -2593,7 +2603,22 @@ class Edit extends Component
         if (trim((string) $this->trip_ref) !== trim((string) Trip::whereKey($this->trip_id)->value('trip_ref'))) {
             $this->assertUniqueReference('trip_ref', Trip::class, 'trip_ref', $this->trip_ref, $this->trip_id, 'trip reference');
         }
-        $this->validateFuelFunding();
+        $attachingFuel = !$this->shift && $this->fuel_order && $this->fuel_order_mode == 'attach';
+        if ($attachingFuel) {
+            $this->validateAttachedFuelOrders();
+        } else {
+            $this->validateFuelFunding();
+        }
+
+        // The trip's own fuel order is becoming customer funded but its
+        // supplier bill is already settled - nothing is saved until the
+        // reversal is confirmed. (Split orders are edited from Fuel Orders.)
+        $fundedFuel = !$this->shift && $this->fuel_order && !$this->fuel_split && !$attachingFuel
+            ? Fuel::where('trip_id', $this->trip_id)->where('fillup', 1)->first()
+            : null;
+        if ($this->fundingReversalNeedsConfirmation($fundedFuel, (bool) $this->fuelCustomerFunded)) {
+            return;
+        }
 
         DB::transaction(function () {
 
@@ -3279,7 +3304,13 @@ class Edit extends Component
 
          if($this->shift == False){
 
-              if ($this->fuel_order == True) {   
+              if ($this->fuel_order && $this->fuel_order_mode == 'attach') {
+
+            // Attach Existing: only this trip's allocations change; the
+            // orders themselves are edited from Fuel Orders.
+            $this->syncAttachedFuelOrders($trip);
+
+              } elseif ($this->fuel_order == True) {
 
             $fuel = $trip->fuels->where('fillup',1)->first();
 
@@ -3345,6 +3376,7 @@ class Edit extends Component
                     // approved customer-funded fuel: re-post through the service, which
                     // settles/reopens the supplier bill and (re)posts the supply.
                     if ($fuel->authorization == 'approved' && ($fuel->supplied_by_customer || \App\Models\CustomerFuelSupply::where('fuel_id', $fuel->id)->exists())) {
+                        $this->applyFundingReversal($fuel, (bool) $this->fuelCustomerFunded);
                         app(\App\Services\Accounting\FuelJournalService::class)->postConsumption($fuel->fresh());
                     } elseif ($fuel->authorization == 'approved' && $fuel->container) {
                         // Updates the bill AND its journal entry (the inline update below

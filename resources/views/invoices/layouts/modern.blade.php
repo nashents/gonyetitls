@@ -45,8 +45,8 @@
                 @if ($invoice->sales_order_number)
                     <div class="inv-pill-row"><span class="inv-pill"><span>S.O:</span>{{ $invoice->sales_order_number }}</span></div>
                 @endif
-                @if ($invoice->pat_number)
-                    <div class="inv-pill-row"><span class="inv-pill"><span>PAT:</span>{{ $invoice->pat_number }}</span></div>
+                @if ($invoice->custom_ref)
+                    <div class="inv-pill-row"><span class="inv-pill"><span>Ref:</span>{{ $invoice->custom_ref }}</span></div>
                 @endif
             </td>
         </tr>

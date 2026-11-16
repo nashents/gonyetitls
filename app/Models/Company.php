@@ -89,6 +89,44 @@ class Company extends Model  implements Auditable
         return $this->belongsToMany('App\Models\CompanyType', 'company_company_type');
     }
 
+    // --- Gonyeti subscription billing (license invoices raised against this company) ---
+
+    /** Fleet-size bands behind companies.plan (the value is the band's upper limit). */
+    const PLAN_BANDS = [
+        '10' => '0 - 10', '25' => '11 - 25', '50' => '26 - 50', '75' => '51 - 75', '100' => '76 - 100',
+        '125' => '101 - 125', '150' => '126 - 150', '175' => '151 - 175', '200' => '176 - 200', '201' => 'Over 200',
+    ];
+
+    public function subscription_invoices(){
+        return $this->hasMany('App\Models\SubscriptionInvoice');
+    }
+    public function subscription_payments(){
+        return $this->hasMany('App\Models\SubscriptionPayment');
+    }
+    public function billing_contacts(){
+        return $this->hasMany('App\Models\SubscriptionBillingContact');
+    }
+    public function license_currency(){
+        return $this->belongsTo('App\Models\Currency', 'license_currency_id');
+    }
+
+    /** Gonyeti itself (the system owner), never billed. */
+    public function isSystemOwner(): bool
+    {
+        return strtolower((string) $this->type) === 'admin';
+    }
+
+    public function getPlanLabelAttribute(): string
+    {
+        if (! $this->plan) {
+            return 'Standard';
+        }
+
+        return isset(self::PLAN_BANDS[$this->plan])
+            ? self::PLAN_BANDS[$this->plan] . ' fleet units'
+            : (string) $this->plan;
+    }
+
     public function hasCompanyType(string $name): bool
     {
         return $this->company_types->contains('name', $name);
@@ -125,5 +163,7 @@ class Company extends Model  implements Auditable
 
     protected $casts = [
         'credential_sharer_ids' => 'array',
+        'billing_enabled' => 'boolean',
+        'billing_start_date' => 'date',
     ];
 }

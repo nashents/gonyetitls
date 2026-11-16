@@ -67,7 +67,8 @@ class SendDailyReports extends Command
                     $date,
                     null,
                     null,
-                    'date'
+                    'date',
+                    'approved' // only authorised registers go out in the daily mail
                 ),
                 'file' => "attendance_register-{$date}.xlsx",
             ],

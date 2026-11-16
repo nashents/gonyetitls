@@ -16,7 +16,7 @@ class ShipmentParty extends Model implements Auditable
      * party_type -> model class. No morphMap is used here (the codebase has
      * none anywhere); party() below is a plain manual resolver instead.
      */
-    protected const PARTY_MODELS = [
+    public const PARTY_MODELS = [
         'customer'       => \App\Models\Customer::class,
         'vendor'         => \App\Models\Vendor::class,
         'consignee'      => \App\Models\Consignee::class,

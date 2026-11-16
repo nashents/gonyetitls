@@ -114,11 +114,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="name">S.O Number</label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="sales_order_number">
-                                                @error('sales_order_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
+                                            @include('livewire.invoices._sales_order_picker')
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
@@ -129,9 +125,9 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="name">PAT Number</label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="pat_number">
-                                                @error('pat_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                <label for="custom_ref">Custom Reference</label>
+                                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference">
+                                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                     </div>

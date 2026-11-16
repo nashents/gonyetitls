@@ -145,6 +145,8 @@ class CompanyDataResetService
         'Payroll statutory setup' => ['payroll_frequencies', 'payroll_company_configs', 'pension_schemes', 'pension_scheme_rates', 'statutory_deduction_types', 'statutory_deduction_rates', 'nec_categories', 'nec_rates', 'public_holidays', 'tax_brackets', 'tax_brackets_v2', 'tax_tables'],
         'Logins, roles & menus' => ['users', 'admins', 'roles', 'permissions', 'role_user', 'modules', 'sub_modules', 'module_categories', 'module_groups', 'edit_authorizers'],
         'Company & integration setup' => ['companies', 'company_company_type', 'company_types', 'settings', 'integration_providers', 'company_integrations', 'currencies', 'countries', 'provinces'],
+        // Gonyeti's billing of this client - not the client's data to reset.
+        'Gonyeti subscription billing' => ['subscription_billing_contacts', 'subscription_invoices', 'subscription_payments', 'subscription_notifications'],
     ];
 
     /** System tables that still hold captured data and are wiped in this mode. */
