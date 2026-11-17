@@ -15,7 +15,7 @@ class Transactions extends Component
 
         $this->account = Account::find($id);
         $name = $this->account->name;
-        $this->payments = Payment::with('account','customer','vendor')->whereYear('created_at',date('Y'))->where('account_id',$id)
+        $this->payments = Payment::with('account','customer','vendor','currency','paid_currency')->whereYear('created_at',date('Y'))->where('account_id',$id)
         // ->orWhere('transaction_category',"Customer Deposits")
         ->orderBy('created_at','desc')->get();
     }

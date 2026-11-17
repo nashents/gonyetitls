@@ -799,21 +799,18 @@ class Index extends Component
             ->map(fn ($names, $type) => count($names).' '.$type.'(s): '.implode(', ', $names))
             ->implode('; ');
         $created = $created ? ' New master data created - '.$created.'.' : '';
+        $counts = count($import->getCreatedRows()).' trip(s) created, '.count($import->getUpdatedRows()).' updated.';
 
         $this->dispatchBrowserEvent('hide-tripsImportModal');
         if (!empty($skipped) || !empty($warnings)) {
             session()->flash('warning', trim(
-                (empty($skipped) ? '' : count($skipped).' trip row(s) were skipped: '.$line($skipped).'. ')
+                $counts.' '
+                .(empty($skipped) ? '' : count($skipped).' trip row(s) were skipped: '.$line($skipped).'. ')
                 .(empty($warnings) ? '' : 'Imported with warnings: '.$line($warnings).'.')
                 .$created
             ));
-        } elseif ($created) {
-            session()->flash('success', 'Trip(s) Imported Successfully!!'.$created);
         } else {
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Trip(s) Imported Successfully!!"
-            ]);
+            session()->flash('success', 'Trip(s) Imported Successfully!! '.$counts.$created);
         }
 
         return redirect(request()->header('Referer'));

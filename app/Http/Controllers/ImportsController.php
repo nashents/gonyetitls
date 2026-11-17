@@ -111,15 +111,17 @@ class ImportsController extends Controller
             ->map(fn ($names, $type) => count($names).' '.$type.'(s): '.implode(', ', $names))
             ->implode('; ');
         $created = $created ? ' New master data created - '.$created.'.' : '';
+        $counts = count($import->getCreatedRows()).' trip(s) created, '.count($import->getUpdatedRows()).' updated.';
         if (!empty($skipped) || !empty($warnings)) {
             $line = fn ($rows) => collect($rows)->map(fn ($skip) => "{$skip['ref']}: {$skip['reason']}")->implode(' | ');
             Session::flash('warning', trim(
-                (empty($skipped) ? '' : count($skipped).' trip row(s) were skipped: '.$line($skipped).'. ')
+                $counts.' '
+                .(empty($skipped) ? '' : count($skipped).' trip row(s) were skipped: '.$line($skipped).'. ')
                 .(empty($warnings) ? '' : 'Imported with warnings: '.$line($warnings).'.')
                 .$created
             ));
         } else {
-            Session::flash('success','Trip(s) Imported Successfully!!'.$created);
+            Session::flash('success','Trip(s) Imported Successfully!! '.$counts.$created);
         }
         return redirect()->back();
     }

@@ -81,9 +81,23 @@ WithBatchInserts
     // Master data created by this upload, by type
     protected $created = [];
 
+    // Trip refs created / updated (re-upload of an existing Trip Reference) by this upload
+    protected $createdRows = [];
+    protected $updatedRows = [];
+
     public function getSkippedRows(): array
     {
         return $this->skippedRows;
+    }
+
+    public function getCreatedRows(): array
+    {
+        return $this->createdRows;
+    }
+
+    public function getUpdatedRows(): array
+    {
+        return $this->updatedRows;
     }
 
     public function getWarnings(): array
@@ -236,9 +250,22 @@ WithBatchInserts
         })->first();
 
         $rows = $fuel ? $allocations->rowsFor($fuel) : [];
-        $adding = !empty($rows);
-        $rows[] = ['trip_id' => $trip->id, 'quantity' => $qty];
-        $newQty = $adding ? round((float) $fuel->quantity + $qty, 2) : $qty;
+
+        // Re-upload of a trip already on this order: its old share is swapped for the new one
+        $oldQty = 0.0;
+        $oldAmount = 0.0;
+        $mine = array_search((int) $trip->id, array_map('intval', array_column($rows, 'trip_id')), true);
+        if ($mine !== false) {
+            $oldQty = (float) $rows[$mine]['quantity'];
+            $oldAmount = (float) TripExpense::where('fuel_id', $fuel->id)->where('trip_id', $trip->id)->value('amount');
+            $rows[$mine]['quantity'] = $qty;
+        } else {
+            $rows[] = ['trip_id' => $trip->id, 'quantity' => $qty];
+        }
+
+        // Other trips on the order: grow/shrink it by this trip's change; else it is just this trip's
+        $adding = count($rows) > 1;
+        $newQty = $adding ? round((float) $fuel->quantity - $oldQty + $qty, 2) : $qty;
 
         if ($error = $allocations->validationError($rows, $newQty, (bool) $fuel?->supplied_by_customer, $fuel?->horse_id ?: $trip->horse_id)) {
             $this->warnings[] = ['ref' => $trip_ref, 'reason' => "fuel order {$number}: {$error}"];
@@ -258,7 +285,7 @@ WithBatchInserts
         }
 
         if ($adding) {
-            $fuel->amount = round((float) $fuel->amount + $amount, 2);
+            $fuel->amount = round((float) $fuel->amount - $oldAmount + $amount, 2);
             $fuel->quantity = $newQty;
             $fuel->unit_price = round($fuel->amount / $newQty, 4);
         } else {
@@ -460,7 +487,7 @@ WithBatchInserts
             $normalized = preg_replace('/[\.\/\\\\]/', '-', $value);
 
             try {
-                return Carbon::createFromFormat('Y-m-d', $normalized);
+                return Carbon::createFromFormat('Y-m-d', $normalized)->startOfDay();
             } catch (\Exception $e) {
                 return null;
             }
@@ -840,14 +867,18 @@ WithBatchInserts
                 }
 
                 // One row = one trip with its order, deal, fuel and bills: all or nothing
-                DB::transaction(fn () => $this->importRow($row));
+                try {
+                    DB::transaction(fn () => $this->importRow($row));
+                } catch (\RuntimeException $e) {
+                    // A posting that can't be reversed safely (e.g. an invoiced order) - this row only
+                    $this->skippedRows[] = ['ref' => trim((string) $row->get('trip_reference')), 'reason' => $e->getMessage()];
+                }
             }
         }
     }
 
     protected function importRow(Collection $row): void
     {
-                $trip_number = $this->tripNumber();
                 $user_id = Auth::id();
                 $company_id = $this->company->id;
                 $trailer_ids = [];
@@ -855,12 +886,30 @@ WithBatchInserts
                 $trip_ref = trim((string) $row->get('trip_reference'));
                 $order_ref = trim((string) $this->cell($row, ['order_ref', 'orderref', 'order_reference']));
 
+                // Re-upload: a Trip Reference already on a trip updates that trip
+                if ($trip_ref !== '') {
+                    $matches = Trip::whereRaw('LOWER(TRIM(trip_ref)) = ?', [mb_strtolower($trip_ref)])->get();
+                    if ($matches->count() > 1) {
+                        $this->skippedRows[] = ['ref' => $trip_ref, 'reason' => "trip reference is on {$matches->count()} trips - fix the duplicates first"];
+                        return;
+                    }
+                    if ($matches->count() === 1) {
+                        if ((int) $matches->first()->company_id !== (int) $company_id) {
+                            $this->skippedRows[] = ['ref' => $trip_ref, 'reason' => 'trip reference already in use'];
+                            return;
+                        }
+                        $this->updateRow($matches->first(), $row, $trip_ref, $order_ref);
+                        $this->updatedRows[] = $trip_ref;
+                        return;
+                    }
+                }
+
                 // Without an OrderRef# the trip ref becomes the order's custom ref (as before)
-                if (UniqueReference::exists(Trip::class, 'trip_ref', $trip_ref)
-                    || ($order_ref === '' && UniqueReference::exists(TransportOrder::class, 'custom_ref', $trip_ref))) {
-                    $this->skippedRows[] = ['ref' => $trip_ref, 'reason' => 'trip reference already in use'];
+                if ($order_ref === '' && UniqueReference::exists(TransportOrder::class, 'custom_ref', $trip_ref)) {
+                    $this->skippedRows[] = ['ref' => $trip_ref, 'reason' => 'trip reference already in use as a transport order reference'];
                     return;
                 }
+                $trip_number = $this->tripNumber();
                 $start_date = $this->parseExcelDate($row->get('start_date'));
                 $end_date = $this->parseExcelDate($row->get('offloading_date'));
 
@@ -1155,28 +1204,7 @@ WithBatchInserts
                 // Transporter Payment (subcontracted trips): the bill
                 // owed to the transporter, posted once Offloaded
                 // ──────────────────────────────────────────────
-                if ($transporter_agreement) {
-                    $foreign = $currency && $currency->id != $this->company->currency_id;
-
-                    $payment_expense = new TripExpense;
-                    $payment_expense->user_id = $user_id;
-                    $payment_expense->trip_id = $trip->id;
-                    $payment_expense->transporter_id = $transporter->id;
-                    $payment_expense->expense_id = Expense::where('name', 'Transporter Payment')->value('id');
-                    $payment_expense->currency_id = $currency?->id;
-                    $payment_expense->category = 'Self';
-                    $payment_expense->amount = $transporter_freight;
-                    $payment_expense->exchange_rate = $foreign ? null : 1;
-                    $payment_expense->exchange_amount = $foreign ? null : $transporter_freight;
-                    $payment_expense->date = $start_date;
-                    $payment_expense->save();
-
-                    $warning = null;
-                    app(TransporterPaymentBillService::class)->syncTrip($trip->fresh(), $warning);
-                    if ($warning) {
-                        $this->warnings[] = ['ref' => $trip_ref, 'reason' => $warning];
-                    }
-                }
+                $this->syncTransporterPayment($trip, $transporter, $currency, $transporter_freight, $start_date, $transporter_agreement, $trip_ref);
 
                 // ──────────────────────────────────────────────
                 // Delivery Note (linked to the TTO)
@@ -1200,6 +1228,13 @@ WithBatchInserts
                 $delivery_note->offloaded_litreage_at_20 = $offloaded['litreage_at_20'];
                 $delivery_note->save();
 
+                $this->finishTrip($trip, $horse, $vehicle, $driver);
+                $this->createdRows[] = $trip_ref;
+    }
+
+    // Free the truck/driver of a finished trip and refresh its cost of sales + margins
+    protected function finishTrip(Trip $trip, $horse, $vehicle, $driver): void
+    {
                 // Update statuses if trip is completed or cancelled
                 if (in_array($trip->trip_status, ['Offloaded', 'Cancelled', 'Scheduled'])) {
                     if ($horse) $horse->update(['status' => 1]);
@@ -1250,6 +1285,533 @@ WithBatchInserts
                 }
 
                 $trip->update();
+    }
+
+    // ──────────────────────────────────────────────
+    // Re-upload: update an existing trip by its Trip Reference.
+    // A blank cell keeps what the trip has; a filled one replaces it
+    // and everything posted from it is reposted (expense bills +
+    // payments, fuel orders, transporter payment bill, order, legs,
+    // delivery note). Expenses / fuel orders not listed are kept.
+    // ──────────────────────────────────────────────
+    protected function updateRow(Trip $trip, Collection $row, string $trip_ref, string $order_ref): void
+    {
+        $filled = fn (array $keys) => collect($keys)->contains(fn ($key) => filled($row->get($key)));
+        $old = [
+            'freight'             => $trip->freight,
+            'transporter_freight' => $trip->transporter_freight,
+            'litreage_at_20'      => $trip->litreage_at_20,
+        ];
+
+        // Master data: filled cells are resolved (created when missing), blank ones keep the trip's
+        $transporter = $filled(['transporter'])
+            ? $this->resolveTransporter($row->get('transporter'))
+            : Transporter::find($trip->transporter_id);
+        $driver = $this->resolveDriver($row->get('driver'), $transporter) ?? Driver::find($trip->driver_id);
+        $horse = $this->resolveHorse($row->get('horse_registration_number'), $transporter, $trip_ref);
+        $vehicle = $horse ? $horse->vehicle : Vehicle::find($trip->vehicle_id);
+        $horse = $horse ?? Horse::find($trip->horse_id);
+        $customer = $this->resolveCustomer($row->get('customer')) ?? Customer::find($trip->customer_id);
+
+        $cargo_type = trim((string) $row->get('cargo_type')) ?: null;
+        $cargo = $this->resolveOrCreate(Cargo::class, $row->get('cargo'), ['type' => $cargo_type ?: 'Solid'])
+            ?? Cargo::find($trip->cargo_id);
+        $cargo_type = $cargo_type ?: $cargo?->type;
+
+        $own_fleet = !$transporter || $transporter->default;
+        $expense_category = $own_fleet ? 'Self' : 'Transporter';
+
+        $trip_type = $this->resolveOrCreate(TripType::class, $row->get('trip_type')) ?? TripType::find($trip->trip_type_id);
+        $currency = $filled(['currency'])
+            ? $this->resolveCurrency($row->get('currency'), $trip_ref)
+            : (Currency::find($trip->currency_id) ?? $this->currency);
+
+        $start_date = $this->parseExcelDate($row->get('start_date')) ?? $trip->start_date;
+        $end_date = $this->parseExcelDate($row->get('offloading_date')) ?? $trip->end_date;
+
+        $freight_calculation = trim((string) $row->get('freight_calculation_method')) ?: null;
+        if (!in_array($freight_calculation, ['flat_rate', 'rate_weight', 'rate_weight_distance', 'rate_distance'])) {
+            $freight_calculation = $trip->freight_calculation ?: ($filled(['rate']) ? 'flat_rate' : null);
+        }
+        $calculation_measurement = $cargo_type === 'Solid' ? 'weight' : ($cargo_type === 'Liquid' ? 'litreage_at_ambient' : null);
+        $distance = $filled(['distance']) ? $row->get('distance') : $trip->distance;
+
+        // Legs: rebuilt from the row when it has any point/figure, blanks taken from the current legs
+        $delivery_note = DeliveryNote::where('trip_id', $trip->id)->orderBy('id')->first();
+        $origins = $this->updatedLegs($row, true, $this->currentLegs($trip, true, $delivery_note));
+        $destinations = $this->updatedLegs($row, false, $this->currentLegs($trip, false, $delivery_note));
+
+        $loaded = $this->legTotals($origins);
+        $offloaded = $this->legTotals($destinations);
+        // Delivery note keeps its own offloaded figures unless the row has them
+        foreach (self::OFFLOADED_COLUMNS as $field => $column) {
+            if (!$filled([$column]) && $delivery_note) {
+                $offloaded[$field] = $delivery_note->{'offloaded_' . $field};
+            }
+        }
+
+        $loading_point = $origins[0]['point'];
+        $offloading_point = end($destinations)['point'];
+        $multiple_points = count($origins) > 1 || count($destinations) > 1;
+        $measurement_value = $this->legMeasurement($loaded, $cargo_type);
+
+        // Freight: the row's figure, else recalculated when something it depends on was given
+        $rate = $filled(['rate']) ? $row->get('rate') : $trip->rate;
+        $drivers = $filled(array_merge(['rate', 'freight_calculation_method', 'distance', 'cargo_type'], array_values(self::LOADED_COLUMNS)));
+        $freight = $row->get('freight');
+        if (!is_numeric($freight)) {
+            $freight = ($drivers ? $this->calculateFreight($freight_calculation, $rate, $measurement_value, $distance) : null) ?? $trip->freight;
+        }
+
+        $transporter_rate = $own_fleet ? null : ($this->toNumber($row->get('transporter_rate')) ?? $trip->transporter_rate);
+        $transporter_freight = null;
+        if (!$own_fleet) {
+            $transporter_freight = $this->toNumber($row->get('transporter_freight'));
+            if ($transporter_freight === null && $transporter_rate !== null && ($drivers || $filled(['transporter_rate']))) {
+                $transporter_freight = $this->calculateFreight($freight_calculation, $transporter_rate, $measurement_value, $distance);
+            }
+            $transporter_freight = $transporter_freight ?? $trip->transporter_freight;
+        }
+        $transporter_agreement = !$own_fleet && $transporter_freight > 0;
+
+        $deal = $this->resolveDeal($row, [
+            'customer'   => $customer,
+            'cargo'      => $cargo,
+            'cargo_type' => $cargo_type,
+            'currency'   => $currency,
+            'start_date' => $start_date,
+            'end_date'   => $end_date,
+        ]) ?? Deal::find($trip->deal_id);
+
+        $trip->trip_type_id = $trip_type?->id;
+        $trip->transporter_id = $transporter?->id;
+        $trip->horse_id = $horse?->id;
+        $trip->driver_id = $driver?->id;
+        $trip->vehicle_id = $vehicle?->id;
+        $trip->customer_id = $customer?->id;
+        $trip->currency_id = $currency?->id;
+        $trip->loading_point_id = $loading_point?->id;
+        $trip->offloading_point_id = $offloading_point?->id;
+        $trip->cargo_id = $cargo?->id;
+        $trip->start_date = $start_date;
+        $trip->end_date = $end_date;
+        if ($filled(['trip_status'])) {
+            $trip->trip_status = trim($row->get('trip_status'));
+        }
+        $trip->rate = $rate;
+        $trip->freight = $freight;
+        $trip->turnover = $freight;
+        $trip->weight = $loaded['weight'];
+        $trip->quantity = $loaded['quantity'];
+        $trip->litreage = $loaded['litreage'];
+        $trip->litreage_at_20 = $loaded['litreage_at_20'];
+        $trip->offloaded_quantity = $offloaded['quantity'];
+        $trip->multiple_destinations = $multiple_points;
+        $trip->distance = $distance;
+        $trip->deal_id = $deal?->id;
+        $trip->transporter_agreement = $transporter_agreement;
+        $trip->transporter_rate = $transporter_rate;
+        $trip->transporter_freight = $transporter_freight;
+        $trip->freight_calculation = $freight_calculation;
+        $trip->calculation_measurement = $calculation_measurement;
+        $trip->save();
+
+        if ($filled(['trailer_reg_numbers'])) {
+            $trailer_ids = [];
+            foreach (preg_split('/[,\/;|]+/', (string) $row->get('trailer_reg_numbers'), -1, PREG_SPLIT_NO_EMPTY) as $reg) {
+                if ($trailer = $this->resolveTrailer(trim($reg), $transporter, $trip_ref)) {
+                    $trailer_ids[] = $trailer->id;
+                }
+            }
+            $trip->trailers()->sync(array_values(array_unique($trailer_ids)));
+            $trip->with_trailer = count($trailer_ids) > 0 ? 1 : 0;
+            $trip->save();
+        }
+
+        // Transport order + this trip's legs on it
+        $lookups = [
+            'customer'                => $customer,
+            'cargo'                   => $cargo,
+            'trip_type'               => $trip_type,
+            'currency'                => $currency,
+            'loading_point'           => $loading_point,
+            'offloading_point'        => $offloading_point,
+            'freight_calculation'     => $freight_calculation,
+            'calculation_measurement' => $calculation_measurement,
+            'start_date'              => $start_date,
+            'end_date'                => $end_date,
+            'trip_ref'                => $trip_ref,
+            'rate'                    => $rate,
+            'freight'                 => $freight,
+            'distance'                => $distance,
+            'cargo_type'              => $cargo_type,
+            'origins'                 => $origins,
+            'destinations'            => $destinations,
+            'loaded'                  => $loaded,
+            'multiple_points'         => $multiple_points,
+            'order_ref'               => $order_ref,
+            'deal'                    => $deal,
+            'transporter_rate'        => $transporter_rate,
+            'transporter_freight'     => $transporter_freight,
+        ];
+        [$transport_order, $trip_transport_order] = $this->updateTransportOrder($trip, $row, $lookups, $old);
+        $this->authorizeTransportOrders($trip);
+
+        // Expenses listed in the row: amount set (not added), bill + payment reposted when it changed
+        $this->updateTripExpenses($trip, $row, $expense_category, $trip_ref);
+
+        // Fuel orders listed in the row: this trip's litres replaced, order reposted
+        $this->importFuelOrders($trip, $row, $expense_category, $trip_ref);
+
+        $this->syncTransporterPayment($trip, $transporter, $currency, $transporter_freight, $start_date, $transporter_agreement, $trip_ref);
+
+        $delivery_note = $delivery_note ?? new DeliveryNote;
+        $delivery_note->user_id = $delivery_note->user_id ?: Auth::id();
+        $delivery_note->trip_id = $trip->id;
+        $delivery_note->transport_order_id = $transport_order->id;
+        $delivery_note->trip_transport_order_id = $trip_transport_order?->id;
+        $delivery_note->loaded_date = $trip->start_date;
+        $delivery_note->offloaded_date = $trip->end_date;
+        $delivery_note->loaded_litreage = $trip->litreage;
+        $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
+        $delivery_note->loaded_weight = $trip->weight;
+        $delivery_note->loaded_quantity = $trip->quantity;
+        $delivery_note->loaded_rate = $trip->rate;
+        $delivery_note->loaded_freight = $trip->freight;
+        $delivery_note->offloaded_weight = $offloaded['weight'];
+        $delivery_note->offloaded_quantity = $offloaded['quantity'];
+        $delivery_note->offloaded_litreage = $offloaded['litreage'];
+        $delivery_note->offloaded_litreage_at_20 = $offloaded['litreage_at_20'];
+        $delivery_note->save();
+
+        $this->finishTrip($trip, $horse, $vehicle, $driver);
+
+        // Invoices are the user's documents - flag them rather than rewrite them
+        if (round((float) $old['freight'], 2) !== round((float) $trip->freight, 2)) {
+            $invoices = \App\Models\InvoiceItem::with('invoice')
+                ->where(fn ($q) => $q->where('trip_id', $trip->id)->orWhere('transport_order_id', $transport_order->id))
+                ->get()->pluck('invoice.invoice_number')->filter()->unique();
+            if ($invoices->isNotEmpty()) {
+                $this->warnings[] = ['ref' => $trip_ref, 'reason' => 'freight changed from ' . number_format((float) $old['freight'], 2)
+                    . ' to ' . number_format((float) $trip->freight, 2) . ' but invoice(s) ' . $invoices->implode(', ') . ' were not changed - update them'];
+            }
+        }
+    }
+
+    // The trip's current loading (or offloading) legs; a trip without leg rows gets one from its header
+    protected function currentLegs(Trip $trip, bool $loading, $delivery_note): array
+    {
+        $legs = ($loading ? TripOrigin::class : TripDestination::class)::where('trip_id', $trip->id)->orderBy('id')->get();
+        $pointClass = $loading ? LoadingPoint::class : OffloadingPoint::class;
+        $pointKey = $loading ? 'loading_point_id' : 'offloading_point_id';
+
+        if ($legs->isNotEmpty()) {
+            return $legs->map(fn ($leg) => [
+                'point'   => $pointClass::find($leg->$pointKey),
+                'figures' => [
+                    'weight'         => $leg->weight,
+                    'quantity'       => $leg->quantity,
+                    'litreage'       => $leg->litreage,
+                    'litreage_at_20' => $leg->litreage_at_20,
+                ],
+            ])->all();
+        }
+
+        $source = $loading ? $trip : $delivery_note;
+        $prefix = $loading ? '' : 'offloaded_';
+
+        return [[
+            'point'   => $pointClass::find($trip->$pointKey),
+            'figures' => [
+                'weight'         => $source?->{$prefix . 'weight'},
+                'quantity'       => $source?->{$prefix . 'quantity'},
+                'litreage'       => $source?->{$prefix . 'litreage'},
+                'litreage_at_20' => $source?->{$prefix . 'litreage_at_20'},
+            ],
+        ]];
+    }
+
+    // Legs from the row when it names any point or figure (blanks from $current by position), else $current
+    protected function updatedLegs(Collection $row, bool $loading, array $current): array
+    {
+        $pointKeys = $loading ? ['loading_points', 'loading_point'] : ['offloading_points', 'offloading_point'];
+        $columns = $loading ? self::LOADED_COLUMNS : self::OFFLOADED_COLUMNS;
+
+        $given = collect(array_merge($pointKeys, array_values($columns)))->contains(fn ($key) => filled($row->get($key)));
+        if (!$given) {
+            return $current;
+        }
+
+        $legs = $this->buildLegs(
+            $loading ? LoadingPoint::class : OffloadingPoint::class,
+            $row->get($pointKeys[0]) ?? $row->get($pointKeys[1]),
+            $row,
+            $columns
+        );
+
+        foreach ($legs as $i => $leg) {
+            if (!isset($current[$i])) {
+                continue;
+            }
+            $legs[$i]['point'] = $leg['point'] ?? $current[$i]['point'];
+            foreach ($leg['figures'] as $field => $value) {
+                $legs[$i]['figures'][$field] = $value ?? $current[$i]['figures'][$field];
+            }
+        }
+
+        return $legs;
+    }
+
+    /**
+     * Keep the trip's transport order in step. Same order: an order only this
+     * trip uses is rewritten; a shared one has this trip's old share swapped
+     * for the new. A different OrderRef# moves the trip to that order. The
+     * trip's legs on the order are replaced. Returns [order, trip-order link].
+     */
+    protected function updateTransportOrder(Trip $trip, Collection $row, array $lookups, array $old): array
+    {
+        $tto = TripTransportOrder::where('trip_id', $trip->id)->orderBy('id')->first();
+        $order = $tto ? TransportOrder::find($tto->transport_order_id) : null;
+        $ref = $lookups['order_ref'];
+        $moving = $order && $ref !== '' && mb_strtolower(trim((string) $order->custom_ref)) !== mb_strtolower($ref);
+
+        // Corrected OrderRef# on an order only this trip uses, and no order has the new ref: just rename it
+        if ($moving && !isset($this->ordersSeen[mb_strtolower($ref)])
+            && !TripTransportOrder::where('transport_order_id', $order->id)->where('trip_id', '!=', $trip->id)->exists()
+            && !UniqueReference::exists(TransportOrder::class, 'custom_ref', $ref, $order->id)) {
+            $order->custom_ref = $ref;
+            $moving = false;
+        }
+
+        if ($order && !$moving) {
+            $shared = TripTransportOrder::where('transport_order_id', $order->id)->where('trip_id', '!=', $trip->id)->exists();
+            if ($shared) {
+                foreach (['quantity', 'weight', 'litreage'] as $field) {
+                    $order->$field = round((float) $order->$field - (float) $tto->{'allocated_' . $field} + (float) $lookups['loaded'][$field], 2);
+                }
+                $order->litreage_at_20 = round((float) $order->litreage_at_20 - (float) $old['litreage_at_20'] + (float) $lookups['loaded']['litreage_at_20'], 2);
+                $order->freight = round((float) $order->freight - (float) $tto->allocated_freight + (float) $lookups['freight'], 2);
+                $order->transporter_freight = round((float) $order->transporter_freight - (float) $old['transporter_freight'] + (float) $lookups['transporter_freight'], 2);
+                $order->deal_id = $order->deal_id ?: $lookups['deal']?->id;
+                $order->save();
+            } else {
+                $this->refreshOwnTransportOrder($order, $row, $lookups);
+            }
+            $attached = $shared;
+        } else {
+            if ($order) {
+                $this->detachFromTransportOrder($trip, $tto, $order, $old);
+            }
+            if ($ref === '' && UniqueReference::exists(TransportOrder::class, 'custom_ref', $lookups['trip_ref'])) {
+                throw new \RuntimeException('trip reference already in use as a transport order reference');
+            }
+            [$order, $attached] = $this->resolveTransportOrder($row, $lookups);
+        }
+
+        $tto = $this->createTripTransportOrder($trip, $order, [
+            'quantity' => $lookups['loaded']['quantity'],
+            'weight'   => $lookups['loaded']['weight'],
+            'litreage' => $lookups['loaded']['litreage'],
+            'freight'  => $lookups['freight'],
+            'rate'     => $lookups['rate'],
+            'deal_id'  => $lookups['deal']?->id ?? $order->deal_id,
+        ]);
+
+        // This trip's legs are replaced; an order only it uses loses all its old legs
+        TripOrigin::where('trip_id', $trip->id)->delete();
+        TripDestination::where('trip_id', $trip->id)->delete();
+        $this->addOrigins($order, $row, $lookups, !$attached, $trip, $tto);
+        $this->addDestinations($order, $row, $lookups, !$attached, $trip, $tto);
+
+        return [$order, $tto];
+    }
+
+    // An order only this trip uses mirrors the trip; blank bill of entry / cargo details are kept
+    protected function refreshOwnTransportOrder(TransportOrder $order, Collection $row, array $lookups): void
+    {
+        $order->deal_id = $lookups['deal']?->id ?? $order->deal_id;
+        $order->customer_id = $lookups['customer']?->id;
+        $order->freight_calculation = $lookups['freight_calculation'];
+        $order->calculation_measurement = $lookups['calculation_measurement'];
+        $order->currency_id = $lookups['currency']?->id;
+        $order->cargo_id = $lookups['cargo']?->id;
+        $order->trip_type_id = $lookups['trip_type']?->id;
+        $order->loading_point_id = $lookups['loading_point']?->id;
+        $order->offloading_point_id = $lookups['offloading_point']?->id;
+        $order->start_date = $lookups['start_date'];
+        $order->end_date = $lookups['end_date'];
+        $order->multiple_destinations = $lookups['multiple_points'];
+        $order->quantity = $lookups['loaded']['quantity'];
+        $order->weight = $lookups['loaded']['weight'];
+        $order->litreage = $lookups['loaded']['litreage'];
+        $order->litreage_at_20 = $lookups['loaded']['litreage_at_20'];
+        $order->rate = $lookups['rate'] ?: null;
+        $order->freight = $lookups['freight'] ?: null;
+        $order->transporter_rate = $lookups['transporter_rate'];
+        $order->transporter_freight = $lookups['transporter_freight'];
+        $order->distance = $lookups['distance'] ?: null;
+        if (filled($row->get('bill_of_entry'))) {
+            $order->bill_of_entry = $row->get('bill_of_entry');
+        }
+        if (filled($row->get('cargo_details'))) {
+            $order->cargo_details = $row->get('cargo_details');
+        }
+        $order->save();
+    }
+
+    // Take the trip off its old order (new OrderRef#): a shared order loses this trip's share, an own one is removed
+    protected function detachFromTransportOrder(Trip $trip, TripTransportOrder $tto, TransportOrder $order, array $old): void
+    {
+        if ($order->invoice_items()->exists()) {
+            throw new \RuntimeException("transport order {$order->transport_order_number} is already invoiced - the trip can't be moved to another OrderRef#");
+        }
+
+        $shared = TripTransportOrder::where('transport_order_id', $order->id)->where('trip_id', '!=', $trip->id)->exists();
+
+        TripOrigin::where('trip_id', $trip->id)->delete();
+        TripDestination::where('trip_id', $trip->id)->delete();
+        $tto->delete();
+
+        if ($shared) {
+            foreach (['quantity', 'weight', 'litreage'] as $field) {
+                $order->$field = round((float) $order->$field - (float) $tto->{'allocated_' . $field}, 2);
+            }
+            $order->litreage_at_20 = round((float) $order->litreage_at_20 - (float) $old['litreage_at_20'], 2);
+            $order->freight = round((float) $order->freight - (float) $tto->allocated_freight, 2);
+            $order->transporter_freight = round((float) $order->transporter_freight - (float) $old['transporter_freight'], 2);
+            $order->save();
+            $sibling = Trip::whereHas('trip_transport_orders', fn ($q) => $q->where('transport_order_id', $order->id))->first();
+            if ($sibling) {
+                app(\App\Services\TripCompletionCascadeService::class)->syncForTrip($sibling);
+            }
+        } else {
+            TripOrigin::where('transport_order_id', $order->id)->delete();
+            TripDestination::where('transport_order_id', $order->id)->delete();
+            $order->delete();
+        }
+    }
+
+    // "Tolls: 50, Food: 20" => ['Tolls' => 50.0, 'Food' => 20.0] (a repeated name adds up)
+    protected function parseExpenses($value): array
+    {
+        $expenses = [];
+        foreach (explode(',', preg_replace('/\s*,\s*/', ',', (string) $value)) as $pair) {
+            [$name, $amount] = array_pad(explode(':', preg_replace('/\s*:\s*/', ':', $pair)), 2, null);
+            $name = $name ? trim($name) : null;
+            $amount = $amount ? trim($amount) : null;
+            if ($name && is_numeric($amount)) {
+                $expenses[$name] = ($expenses[$name] ?? 0) + (float) $amount;
+            }
+        }
+
+        return $expenses;
+    }
+
+    /**
+     * Re-upload: each listed expense's amount is SET. When the amount, date
+     * or category changed, its bill (and the import's payment of it) is
+     * deleted - reversing their postings - and raised again. A bill someone
+     * paid by hand is left alone with a warning.
+     */
+    protected function updateTripExpenses(Trip $trip, Collection $row, string $category, string $trip_ref): void
+    {
+        $billDate = $trip->start_date ? $trip->start_date->format('Y-m-d') : date('Y-m-d');
+
+        foreach ($this->parseExpenses($row->get('expenses')) as $name => $amount) {
+            $expense = Expense::firstOrCreate(
+                ['name' => $name],
+                ['status' => 1, 'account_id' => 30, 'type' => 'Direct', 'user_id' => Auth::id()]
+            );
+
+            $tripExpense = TripExpense::where('trip_id', $trip->id)->where('expense_id', $expense->id)
+                ->whereNull('fuel_id')->whereNull('transporter_id')->orderBy('id')->first();
+            $bills = $tripExpense ? Bill::where('trip_expense_id', $tripExpense->id)->get() : collect();
+
+            $unchanged = $tripExpense
+                && round((float) $tripExpense->amount, 2) === round($amount, 2)
+                && $tripExpense->category === $category
+                && $bills->every(fn ($bill) => Carbon::parse($bill->bill_date)->toDateString() === $billDate);
+            if ($unchanged) {
+                continue;
+            }
+
+            $paidByHand = $bills->first(fn ($bill) => $bill->bill_payments()->exists()
+                || $bill->payments()->where(fn ($q) => $q->whereNull('notes')->orWhere('notes', '!=', 'Imported historical trip expense payment'))->exists());
+            if ($paidByHand) {
+                $this->warnings[] = ['ref' => $trip_ref, 'reason' => "expense {$name} not updated - bill {$paidByHand->bill_number} has payments made outside the import"];
+                continue;
+            }
+
+            $tripExpense = $tripExpense ?? new TripExpense([
+                'trip_id'           => $trip->id,
+                'expense_id'        => $expense->id,
+                'currency_id'       => $this->currency->id,
+                'user_id'           => Auth::id(),
+                'payment_method_id' => PaymentMethod::where('name', 'Cash')->first()?->id,
+            ]);
+            $tripExpense->amount = $amount;
+            $tripExpense->category = $category;
+            $tripExpense->save();
+
+            foreach ($bills as $bill) {
+                app(\App\Services\Accounting\BillDeletionService::class)
+                    ->delete($bill, Auth::id(), "Trip {$trip->trip_number} re-imported", fromSource: true);
+            }
+
+            if ($amount > 0 && ($bill = $this->createTripExpenseBill($trip, $tripExpense))) {
+                $this->recordImportPayment($bill, $tripExpense);
+            }
+        }
+    }
+
+    /**
+     * The "Transporter Payment" trip expense of a subcontracted trip and its
+     * bill (TransporterPaymentBillService posts it once Offloaded). Created or
+     * updated to the transporter freight; cleared when there's none.
+     */
+    protected function syncTransporterPayment(Trip $trip, $transporter, $currency, $transporter_freight, $start_date, bool $agreement, $trip_ref): void
+    {
+        $expenseId = Expense::where('name', 'Transporter Payment')->value('id');
+        $payment_expense = TripExpense::where('trip_id', $trip->id)->whereNotNull('transporter_id')
+            ->where('expense_id', $expenseId)->orderBy('id')->first();
+        $service = app(TransporterPaymentBillService::class);
+        $warning = null;
+
+        if (!$agreement) {
+            if ($payment_expense) {
+                // Amount 0 drops an unpaid bill; a paid one is kept for review
+                $payment_expense->amount = 0;
+                $payment_expense->exchange_amount = 0;
+                $payment_expense->save();
+                $service->sync($payment_expense->fresh(), $warning);
+                if (Bill::where('trip_expense_id', $payment_expense->id)->exists()) {
+                    $this->warnings[] = ['ref' => $trip_ref, 'reason' => 'transporter freight cleared but its bill is already paid - review it'];
+                } else {
+                    $payment_expense->delete();
+                }
+            }
+            return;
+        }
+
+        $foreign = $currency && $currency->id != $this->company->currency_id;
+
+        $payment_expense = $payment_expense ?? new TripExpense;
+        $payment_expense->user_id = $payment_expense->user_id ?: Auth::id();
+        $payment_expense->trip_id = $trip->id;
+        $payment_expense->transporter_id = $transporter->id;
+        $payment_expense->expense_id = $expenseId;
+        $payment_expense->currency_id = $currency?->id;
+        $payment_expense->category = 'Self';
+        $payment_expense->amount = $transporter_freight;
+        $payment_expense->exchange_rate = $foreign ? null : 1;
+        $payment_expense->exchange_amount = $foreign ? null : $transporter_freight;
+        $payment_expense->date = $start_date;
+        $payment_expense->save();
+
+        $service->syncTrip($trip->fresh(), $warning);
+        if ($warning) {
+            $this->warnings[] = ['ref' => $trip_ref, 'reason' => $warning];
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -1678,7 +2240,7 @@ WithBatchInserts
             'transport_order_id' => $transport_order->id,
         ]);
 
-        $trip_transport_order->tto_number          = $this->ttoNumber();
+        $trip_transport_order->tto_number          = $trip_transport_order->tto_number ?: $this->ttoNumber();
         $trip_transport_order->allocated_quantity  = $allocation['quantity'];
         $trip_transport_order->allocated_weight    = $allocation['weight'];
         $trip_transport_order->allocated_litreage  = $allocation['litreage'];

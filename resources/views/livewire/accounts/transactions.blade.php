@@ -44,10 +44,18 @@
               Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
               @endif
              </td>
-            <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
+            @php
+                // Cross-currency payments keep currency/amount in the invoice
+                // currency; what actually hit this account is paid_*.
+                $cashCurrency = $payment->isCrossCurrency() ? $payment->paid_currency : $payment->currency;
+            @endphp
+            <td>{{$cashCurrency ? $cashCurrency->name : ""}}</td>
             <td>
                 @if (isset($payment->amount))
-                {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
+                {{$cashCurrency ? $cashCurrency->symbol : ""}}{{number_format($payment->cashAmount(),2)}}
+                @if ($payment->isCrossCurrency())
+                <br><small class="text-muted">Applied: {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}</small>
+                @endif
                 @endif
             </td>
             <td class="w-10 line-height-35 table-dropdown">
