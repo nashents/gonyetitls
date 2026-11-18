@@ -262,6 +262,7 @@
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#shiftModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Shift</a>
+                                <a href="#" wire:click.prevent="$emitTo('shifts.bulk-create', 'openBulkShifts')" class="btn btn-default" title="Create a shift for several trucks at once"><i class="fa fa-clone"></i>Bulk Shifts</a>
                                 <a href="#" wire:click.prevent="exportShiftsExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click.prevent="exportShiftsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click.prevent="exportShiftsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>

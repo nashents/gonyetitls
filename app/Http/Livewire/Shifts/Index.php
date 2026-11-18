@@ -46,6 +46,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\Cartrack\CartrackSyncService;
 use App\Services\EzyTrack\EzyTrackSyncService;
+use App\Support\RehandlingHourMeter;
 use App\Models\Work;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -1963,7 +1964,7 @@ class Index extends Component
                     $rehandling->weight = $this->weight[$key];
                 }
                 if (isset($this->loads[$key])){
-                    $rehandling->weight = $this->loads[$key];
+                    $rehandling->loads = $this->loads[$key];
                 }
                 if (isset($this->freight[$key])){
                     $rehandling->freight = $this->freight[$key];
@@ -2036,6 +2037,39 @@ class Index extends Component
 
         if ($rules) {
             $this->validate($rules, [], $attributes);
+        }
+
+        // Machine hours can't exceed man hours: the hour-meter run must fit in Start -> Close time
+        $errors = [];
+
+        foreach ((array) $this->inputs as $key) {
+            $problem = RehandlingHourMeter::problem(
+                $this->start_time[$key] ?? null,
+                $this->stop_time[$key] ?? null,
+                $this->starting_hours[$key] ?? null,
+                $this->ending_hours[$key] ?? null
+            );
+            if ($problem) {
+                $errors["ending_hours.{$key}"] = $problem;
+            }
+        }
+
+        if ($includeExisting && $this->shift_rehandlings) {
+            foreach ($this->shift_rehandlings as $key => $rehandling) {
+                $problem = RehandlingHourMeter::problem(
+                    $this->current_start_time[$key] ?? null,
+                    $this->current_stop_time[$key] ?? null,
+                    $this->current_starting_hours[$key] ?? null,
+                    $this->current_ending_hours[$key] ?? null
+                );
+                if ($problem) {
+                    $errors["current_ending_hours.{$key}"] = $problem;
+                }
+            }
+        }
+
+        if ($errors) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
     }
 

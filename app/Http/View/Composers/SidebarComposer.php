@@ -690,56 +690,8 @@ class SidebarComposer
         $hasFanTrackerIntegration = IntegrationGate::enabledForUser('fantracker');
         $hasPinpointIntegration = IntegrationGate::enabledForUser('pinpoint');
 
-           // Build your context keys ONCE (map your booleans + ids here)
-        $ctx = [
-             // roles / flags (use what you computed, not session())
-            'isAdmin'       => (bool) $isAdmin,
-            'isSuperAdmin'  => (bool) $isSuperAdmin,
-            'isEditAuthorizer' => (bool) $isEditAuthorizer,
-            'isHOD'  => (bool) $isHOD,
-            'isUser'        => (bool) $isUser,
-            'isManagement'  => (bool) $isManagement,
-            'isEmployee'    => (bool) $isEmployee,
-            'isDirector'    => (bool) $isDirector,
-            'isDriver'      => (bool) ($user?->driver ?? false),
-            'isSystemAdmin'      => (bool) $isSystemAdmin,
-            'in_transport_admin' => (bool) $in_transport_admin,
-            'in_transport_management' => (bool) $in_transport_management,
-            'inHR'          => (bool) $inHR,
-            'inFinance'     => (bool) $inFinance,
-            'inTransport'   => (bool) $inTransport,
-            'inHSEQ'        => (bool) $inHSEQ,
-            'inSecurity'    => (bool) $inSecurity,
-            'inStores'      => (bool) $inStores,
-            'inWorkshop'    => (bool) $inWorkshop,
-            'inFreight'     => (bool) $inFreight,
-            'companyIsFreightForwarder' => (bool) $companyIsFreightForwarder,
-            'isNotDriver'    => (bool) $not_driver,
-            'hasTrackingIntegration' => (bool) $hasTrackingIntegration,
-            'hasEzyTrackIntegration' => (bool) $hasEzyTrackIntegration,
-            'hasFanTrackerIntegration' => (bool) $hasFanTrackerIntegration,
-            'hasPinpointIntegration' => (bool) $hasPinpointIntegration,
-            'hasStoresDeptHead'    => (bool) $stdepartment_head,
-            'hasWorkshopDeptHead'    => (bool) $wsdepartment_head,
-            'hasHRDeptHead'    => (bool) $hrdepartment_head,
-            'hasDeptHead'    => (bool) $department_head,
-            'hasHSEQDeptHead'    => (bool) $hseqdepartment_head,
-            'hasTLDeptHead'    => (bool) $tldepartment_head,
-            'hasFinanceDeptHead'    => (bool) $fndepartment_head,
-            'hasVehicleAssignment'    => (bool) ($employee?->vehicleAssignments?->where('status',1)->count() > 0),
-            'admin_company_id' => $admin_company?->id,
-            'driver_id'        => $employee?->driver?->id,     // only if you have a driver relation
-            'department_id'    => $employee?->departments->first()?->id,
-
-            'roles'       => $role_names ?? [],        // from DB/session/computed user roles
-            'departments' => $department_names ?? [],  // from DB/session/computed user departments
-            'ranks'       => $rank_names ?? [],  
-            // ids for placeholders (MOST IMPORTANT PART)
-            'user_id'       => $user?->id,
-            'employee_id'   => $employee?->id ?? $user?->employee_id,  // ✅ reliable
-            'company_id'   => $employee?->company_id ?? $user?->employee?->company_id,  // ✅ reliable
-            'hseq_department_id' => $hseq_department?->id,
-        ];
+        // Visibility context — shared with the route guard and Module Access screen
+        $ctx = \App\Support\MenuContext::build($user);
 
 
         // Your badge map (connect to your real computed counts)

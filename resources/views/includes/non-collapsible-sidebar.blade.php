@@ -63,11 +63,17 @@
                             continue;
                         }
 
+                        // Per-user module locks (App\Support\ModuleAccess)
+                        if (\App\Support\ModuleAccess::isGroupBlocked($group)) {
+                            continue;
+                        }
+
                         // ✅ only keep modules that are active AND visible (with inherited visibility)
                         $visibleModules = $group->modules
                             ->sortBy('sort_order')
                             ->filter(function ($m) use ($groupVis, $inheritVis, $menuCtx) {
                                 if (!($m->is_active ?? true)) return false;
+                                if (\App\Support\ModuleAccess::isModuleBlocked($m)) return false;
 
                                 $mVis = $inheritVis($m->visibility, $groupVis);
                                 return Menu::isVisible($mVis, $menuCtx);

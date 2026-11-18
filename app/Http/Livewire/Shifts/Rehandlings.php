@@ -6,6 +6,7 @@ use App\Models\Work;
 use Livewire\Component;
 use App\Models\Location;
 use App\Models\Rehandling;
+use App\Support\RehandlingHourMeter;
 
 class Rehandlings extends Component
 {
@@ -63,6 +64,11 @@ class Rehandlings extends Component
     }
 
     public function update(){
+        if ($problem = RehandlingHourMeter::problem($this->start_time, $this->stop_time, $this->open_hours, $this->close_hours)) {
+            $this->addError('close_hours', $problem);
+            return;
+        }
+
         $rehandling = Rehandling::find($this->rehandling_id);
         $rehandling->location_id = $this->location_id;
         $rehandling->work_id = $this->work_id;

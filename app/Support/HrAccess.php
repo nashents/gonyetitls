@@ -9,7 +9,8 @@ use Illuminate\Support\Str;
 
 /**
  * "HR access: drivers only" — a per-user toggle (users.hr_drivers_only) that any
- * HR user can be given regardless of post, role or department.
+ * Human Resources department member can be given regardless of post or role.
+ * It is ignored for users outside Human Resources.
  *
  * A restricted user keeps everything generic, but in HR they can only work with
  * drivers: driver records, driver leave (capture + approve), driver loans and
@@ -49,7 +50,14 @@ class HrAccess
         'leaves.import',
     ];
 
-    /** Whether the given (or current) user has the drivers-only HR restriction. */
+    /** The department the restriction belongs to; it means nothing outside HR. */
+    public const HR_DEPARTMENT = 'Human Resources';
+
+    /**
+     * Whether the given (or current) user has the drivers-only HR restriction.
+     * Only applies to members of the Human Resources department: a Workshop
+     * (or any other non-HR) user with the flag set is not restricted.
+     */
     public static function driversOnly(?User $user = null): bool
     {
         $user = $user ?? Auth::user();
@@ -58,7 +66,21 @@ class HrAccess
             return false;
         }
 
-        return !($user->is_admin() || $user->isSuperAdmin());
+        if ($user->is_admin() || $user->isSuperAdmin()) {
+            return false;
+        }
+
+        return static::inHrDepartment($user->employee);
+    }
+
+    /** Is this employee in the Human Resources department? */
+    public static function inHrDepartment(?Employee $employee): bool
+    {
+        if (!$employee) {
+            return false;
+        }
+
+        return $employee->departments->contains('name', static::HR_DEPARTMENT);
     }
 
     public static function isBlockedRoute(?string $routeName, ?User $user = null): bool

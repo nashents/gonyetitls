@@ -181,6 +181,15 @@ class EmployeeController extends Controller
         return view('employees.edit')->with('employee',$employee);
     }
 
+    /** Per-user module locks (App\Support\ModuleAccess) — is_admin / Super Admin only. */
+    public function moduleAccess(Employee $employee)
+    {
+        $me = Auth::user();
+        abort_unless($me && ($me->is_admin() || $me->isSuperAdmin()), 403, 'Only system admins and Super Admins can manage module access.');
+
+        return view('employees.module_access')->with('employee', $employee);
+    }
+
     /**
      * Update the specified resource in storage.
      *

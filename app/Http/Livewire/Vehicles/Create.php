@@ -54,6 +54,7 @@ class Create extends Component
     public $origin;
     public $condition;
     public $fuel_type;
+    public $fuel_measurement;
     public $fuel_consumption_empty_standard;
     public $fuel_consumption_loaded_standard;
 
@@ -103,6 +104,7 @@ class Create extends Component
         $this->chasis_number = '';
         $this->engine_number = '';
         $this->fuel_type = '';
+        $this->fuel_measurement = '';
         $this->registration_number = '';
     
 
@@ -255,6 +257,7 @@ class Create extends Component
         $vehicle->hours = $this->hours;
         $vehicle->condition = $this->condition;
         $vehicle->fuel_type = $this->fuel_type;
+        $vehicle->fuel_measurement = $this->fuel_measurement;
         $vehicle->vehicle_type_id = $this->vehicle_type_id;
         $vehicle->vehicle_group_id = $this->vehicle_group_id;
         $vehicle->status = 1;

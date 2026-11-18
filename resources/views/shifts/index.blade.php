@@ -40,6 +40,7 @@
                         </div>
 
                         @livewire('shifts.index')
+                        @livewire('shifts.bulk-create')
 
 
                     </div>
@@ -51,6 +52,7 @@
     $(document).ready( function () {
         $('#shiftsTable').DataTable();
     } );
+    window.addEventListener('show-bulkShiftsModal', event => { $('#bulkShiftsModal').modal('show'); });
     </script>
 @endsection
 

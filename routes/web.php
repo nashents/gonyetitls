@@ -1036,6 +1036,7 @@ Route::get('/trailers/{id}/archive','TrailerController@archive')->name('trailers
 Route::get('/horses/{id}/archive','HorseController@archive')->name('horses.archive');
 Route::get('/employees/{id}/archive','EmployeeController@archive')->name('employees.archive');
 Route::get('/drivers/{id}/archive','DriverController@archive')->name('drivers.archive');
+Route::get('/employees/{employee}/module-access','EmployeeController@moduleAccess')->name('employees.module_access');
 Route::get('/employees/{employee}/activate','EmployeeController@activate')->name('employees.activate');
 Route::get('/employees/{employee}/deactivate','EmployeeController@deactivate')->name('employees.deactivate');
 

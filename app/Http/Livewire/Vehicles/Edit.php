@@ -52,6 +52,7 @@ class Edit extends Component
     public $vehicle_images;
     public $documents;
     public $fuel_type;
+    public $fuel_measurement;
     public $fuel_consumption_empty_standard;
     public $fuel_consumption_loaded_standard;
     public $images = [];
@@ -100,6 +101,7 @@ class Edit extends Component
         $this->chasis_number = '';
         $this->engine_number = '';
         $this->fuel_type = '';
+        $this->fuel_measurement = '';
         $this->registration_number = '';
 
     }
@@ -134,6 +136,7 @@ class Edit extends Component
         $this->chasis_number = $vehicle->chasis_number;
         $this->engine_number = $vehicle->engine_number;
         $this->fuel_type = $vehicle->fuel_type;
+        $this->fuel_measurement = $vehicle->fuel_measurement;
         $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
         $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
         $this->mileage = $vehicle->mileage;
@@ -203,6 +206,7 @@ class Edit extends Component
         $vehicle->no_of_wheels = $this->no_of_wheels;
         $vehicle->condition = $this->condition;
         $vehicle->fuel_type = $this->fuel_type;
+        $vehicle->fuel_measurement = $this->fuel_measurement;
         $vehicle->vehicle_type_id = $this->vehicle_type_id;
         $vehicle->vehicle_group_id = $this->vehicle_group_id;
         $vehicle->update();

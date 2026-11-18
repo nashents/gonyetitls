@@ -237,6 +237,7 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group">
+                                            @if ($in_hr_department)
                                             <label style="font-weight:normal">
                                                 <input type="checkbox" wire:model.defer="hr_drivers_only">
                                                 <strong>HR access: drivers only</strong>
@@ -246,6 +247,10 @@
                                                 Admin staff records, admin leave and payroll are blocked. Everything outside HR is unaffected.
                                                 Has no effect on is_admin users or Super Admins.
                                             </small>
+                                            @endif
+                                            <a href="{{ route('employees.module_access', $employee_id) }}" class="d-block" style="margin-top:6px">
+                                                <i class="fas fa-lock"></i> Module access locks (hide modules within this user's departments, e.g. Fleet / Fuel Management) &rarr;
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

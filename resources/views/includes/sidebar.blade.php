@@ -118,6 +118,11 @@
                             continue;
                         }
 
+                        // Per-user module locks (App\Support\ModuleAccess)
+                        if (\App\Support\ModuleAccess::isGroupBlocked($group)) {
+                            continue;
+                        }
+
                         // ✅ only keep modules that are active AND visible (with inherited visibility)
                         $visibleModules = $group->modules
                             ->sortBy('sort_order')
@@ -126,6 +131,7 @@
                                 if ($sageActive && in_array($m->route_name, $sageLockedRoutes, true)) return false;
                                 // "HR access: drivers only" users: hide payroll + admin-staff screens
                                 if (\App\Support\HrAccess::isBlockedRoute($m->route_name)) return false;
+                                if (\App\Support\ModuleAccess::isModuleBlocked($m)) return false;
 
                                 $mVis = $inheritVis($m->visibility, $groupVis);
                                 return Menu::isVisible($mVis, $menuCtx);
