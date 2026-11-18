@@ -195,6 +195,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $mTo = $reportTo;
 
         $this->reportPeriods = [
+            'As At' => $this->asAt->format('d M Y'),
             'Period (Yesterday)' => $this->formatWindow($yFrom, $yTo),
             'Period (Month To Date)' => $this->formatWindow($mFrom, $mTo),
         ];

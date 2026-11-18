@@ -19,6 +19,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use App\Exports\Concerns\DailyShiftReportHeader;
 
 class ShiftsExport implements  FromQuery,
 ShouldAutoSize,
@@ -30,6 +31,7 @@ WithCustomStartCell,
 WithColumnWidths
 {
     use Exportable;
+    use DailyShiftReportHeader;
     public $commission;
     /**
     * @return \Illuminate\Support\Collection
@@ -246,7 +248,7 @@ WithColumnWidths
             $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['filter_haulage_type']))
         )
         ->when(filled($this->filters['filter_cargo_id']), fn (Builder $q) =>
-            $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['filter_cargo_id']))
+            $q->whereHas('trips', fn (Builder $t) => $t->where('cargo_id', $this->filters['filter_cargo_id']))
         )
         
         ->when(filled($this->filters['filter_loading_point_id']), fn (Builder $q) =>
@@ -507,26 +509,83 @@ WithColumnWidths
                         'startColor' => ['rgb' => 'FCE4D6'],
                     ],
                 ]);
+
+                // Report info beside the logo (rows 2-6); merged so auto-size ignores it
+                $sheet = $event->sheet->getDelegate();
+                $this->writeReportInfo($sheet, 'D', [
+                    'Report' => 'Shifts',
+                    'Period' => $this->periodLabel(),
+                    'Date Filter' => $this->dateFieldLabel(),
+                ], 'J');
+
+                // Filters used, beside the totals (rows 8-15, A:I)
+                $sheet->setCellValue('A8', 'Filters Applied');
+                $sheet->mergeCells('A8:I8');
+                $sheet->getStyle('A8')->getFont()->setBold(true);
+
+                $filters = $this->appliedFilters() ?: ['Filters' => 'None (all shifts in the period)'];
+                if (count($filters) > 7) {
+                    // keep within the 7 rows above the table: fold the rest into the last line
+                    $rest = array_slice($filters, 6, null, true);
+                    $filters = array_slice($filters, 0, 6, true) + [
+                        'Also' => implode('; ', array_map(fn ($k, $v) => "{$k}: {$v}", array_keys($rest), $rest)),
+                    ];
+                }
+                $this->writeLabelLines($sheet, 'A', 9, $filters, 'I');
             },
         ];
     }
 
-    
-        public function drawings()
+    protected function periodLabel(): string
     {
-        $drawing = new Drawing();
-        if (isset(Auth::user()->employee->company)) {
-        $drawing->setName(Auth::user()->employee->company->name);
-        $drawing->setDescription(Auth::user()->employee->company->name . 'Logo');
-      if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
-            $drawing->setPath(public_path('/images/uploads/'.Auth::user()->employee->company->logo));
-        }else{
-            $drawing->setPath(public_path('/images/uploads/logo.png'));
+        if (filled($this->from) && filled($this->to)) {
+            return Carbon::parse($this->from)->format('d M Y H:i') . ' - ' . Carbon::parse($this->to)->format('d M Y H:i');
         }
-        } 
-        $drawing->setHeight(90);
-        $drawing->setCoordinates('A2');
-        return $drawing;
+
+        return 'Current month (' . now()->format('M Y') . ')';
+    }
+
+    protected function dateFieldLabel(): string
+    {
+        return [
+            'created_at' => 'Shift Created At',
+            'date' => 'Shift Date',
+            'shift_start_time' => 'Shift Start Time',
+        ][$this->shift_filter] ?? (string) $this->shift_filter;
+    }
+
+    /** The list filters that were set, as "Label => readable value". */
+    protected function appliedFilters(): array
+    {
+        $f = $this->filters ?? [];
+        $name = fn ($model, $key, callable $label) => filled($f[$key] ?? null)
+            ? (($m = $model::find($f[$key])) ? $label($m) : "#{$f[$key]}")
+            : null;
+        $person = fn ($e) => trim(($e->name ?? '') . ' ' . ($e->surname ?? ''));
+        $unit = fn ($u) => $u->identifier_label ?: $u->registration_number;
+        $place = fn ($d) => trim(($d->country->name ?? '') . ' ' . $d->city);
+
+        $lines = [
+            'Search' => filled($this->search) ? '"' . trim($this->search) . '"' : null,
+            'Shift' => $f['filter_shift_type'] ?? null,
+            'For' => $f['filter_for'] ?? null,
+            'Status' => filled($f['auth_status'] ?? null) ? ucfirst($f['auth_status']) : null,
+            'Team' => $name(\App\Models\Team::class, 'filter_team_id', fn ($m) => $m->name),
+            'Transporter' => $name(\App\Models\Transporter::class, 'filter_transporter_id', fn ($m) => $m->name),
+            'Customer' => $name(\App\Models\Customer::class, 'filter_customer_id', fn ($m) => $m->name),
+            'Driver' => $name(\App\Models\Driver::class, 'filter_driver_id', fn ($m) => $person($m->employee)),
+            'Horse' => $name(\App\Models\Horse::class, 'filter_horse_id', $unit),
+            'Vehicle' => $name(\App\Models\Vehicle::class, 'filter_vehicle_id', $unit),
+            'Captured By' => $name(\App\Models\User::class, 'filter_user_id', $person),
+            'Haulage' => filled($f['filter_haulage_type'] ?? null) ? ucwords(str_replace('_', ' ', $f['filter_haulage_type'])) : null,
+            'Cargo' => $name(\App\Models\Cargo::class, 'filter_cargo_id', fn ($m) => $m->name),
+            'Loading Point' => $name(\App\Models\LoadingPoint::class, 'filter_loading_point_id', fn ($m) => $m->name),
+            'Offloading Point' => $name(\App\Models\OffloadingPoint::class, 'filter_offloading_point_id', fn ($m) => $m->name),
+            'From' => $name(\App\Models\Destination::class, 'filter_from_destination', $place),
+            'To' => $name(\App\Models\Destination::class, 'filter_to_destination', $place),
+        ];
+
+        return array_filter($lines, fn ($v) => filled($v));
     }
 
     public function startCell(): string{

@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\DailyShiftReportHeader;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -18,6 +19,8 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ShiftActivitiesSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths, WithEvents
 {
+    use DailyShiftReportHeader;
+
     protected Collection $horses;
     protected Carbon $date;
 
@@ -280,6 +283,13 @@ class ShiftActivitiesSheet implements FromArray, WithTitle, WithStyles, WithColu
                     ->setOddHeader('&C&B Shift Activities Monitoring — ' . $this->date->format('d F Y'));
                 $sheet->getHeaderFooter()
                     ->setOddFooter('&LGenerated: &D &T&R Page &P of &N');
+
+                // Logo + report parameters on top (must stay last: shifts the sheet down)
+                $this->prependReportHeader($sheet, [
+                    'Report' => 'Daily Shift Activities',
+                    'Date' => $this->date->format('d M Y'),
+                    'Horses' => $this->horses->map(fn ($h) => $h->identifier_label ?: $h->registration_number)->join(', ') ?: 'None',
+                ]);
             },
         ];
     }

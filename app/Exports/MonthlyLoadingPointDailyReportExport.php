@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\DailyShiftReportHeader;
 use App\Models\LoadingPoint;
 use App\Models\Shift;
 use Carbon\Carbon;
@@ -20,6 +21,8 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, WithStyles, WithColumnWidths, WithEvents
 {
+    use DailyShiftReportHeader;
+
     protected int $year;
     protected int $month;
     protected Collection $loading_points;
@@ -438,6 +441,13 @@ class MonthlyLoadingPointDailyReportExport implements FromArray, WithTitle, With
                     ->setOddHeader('&C&B Monthly Transport Report — ' . Carbon::create($this->year, $this->month)->format('F Y'));
                 $sheet->getHeaderFooter()
                     ->setOddFooter('&L&D &T&R Page &P of &N');
+
+                // Logo + report parameters on top (must stay last: shifts the sheet down)
+                $this->prependReportHeader($sheet, [
+                    'Report' => 'LP Prod Report (Monthly Transport)',
+                    'Month' => Carbon::create($this->year, $this->month, 1)->format('F Y'),
+                    'Loading Points' => $this->loading_points->count() . ' (all)',
+                ]);
             },
         ];
     }

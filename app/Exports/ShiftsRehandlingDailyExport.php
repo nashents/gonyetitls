@@ -70,6 +70,7 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
         $mFrom = $this->asAt->copy()->subDay()->startOfMonth()->startOfDay()->addHours(2);
 
         $this->reportPeriods = [
+            'As At' => $this->asAt->format('d M Y'),
             'Period (Yesterday)' => $this->formatWindow($yFrom, $reportTo),
             'Period (Month To Date)' => $this->formatWindow($mFrom, $reportTo),
         ];

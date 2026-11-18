@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\DailyShiftReportHeader;
 use App\Models\Horse;
 use App\Models\Shift;
 use Carbon\Carbon;
@@ -101,6 +102,8 @@ class MonthlyShiftActivitiesExport implements WithMultipleSheets
 
 class DailyAllHorsesSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths, WithEvents
 {
+    use DailyShiftReportHeader;
+
     protected Collection $horses;
     protected Carbon $date;
 
@@ -351,6 +354,14 @@ class DailyAllHorsesSheet implements FromArray, WithTitle, WithStyles, WithColum
                     ->setOddHeader('&C&B Shift Activities — ' . $this->date->format('l, d F Y'));
                 $sheet->getHeaderFooter()
                     ->setOddFooter('&LGenerated: &D &T&R Page &P of &N');
+
+                // Logo + report parameters on top (must stay last: shifts the sheet down)
+                $this->prependReportHeader($sheet, [
+                    'Report' => 'Monthly Shift Activities',
+                    'Month' => $this->date->format('F Y'),
+                    'Day' => $this->date->format('l, d M Y'),
+                    'Horses' => $this->horses->count(),
+                ]);
             },
         ];
     }

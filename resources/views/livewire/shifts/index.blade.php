@@ -1353,8 +1353,8 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="fuel_allocation_to">Allocation To</label>
-                                        <select class="form-control" wire:model.debounce.300ms="fuel_allocation_to">
+                                        <label for="fuel_allocation_to">Allocation To @if ($for == 'Trips')<span class="required" style="color: red">*</span>@endif</label>
+                                        <select class="form-control" wire:model.debounce.300ms="fuel_allocation_to" @if ($for == 'Trips') required @endif>
                                             <option value="">Select Allocation</option>
                                             <option value="long_haul">Long Haul</option>
                                             <option value="short_haul">Short Haul</option>
@@ -2526,8 +2526,8 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="fuel_allocation_to">Allocation To</label>
-                                        <select class="form-control" wire:model.debounce.300ms="fuel_allocation_to">
+                                        <label for="fuel_allocation_to">Allocation To @if ($for == 'Trips')<span class="required" style="color: red">*</span>@endif</label>
+                                        <select class="form-control" wire:model.debounce.300ms="fuel_allocation_to" @if ($for == 'Trips') required @endif>
                                             <option value="">Select Allocation</option>
                                             <option value="long_haul">Long Haul</option>
                                             <option value="short_haul">Short Haul</option>
@@ -2698,13 +2698,18 @@
                                     <option value="">Select Report</option>
                                     <option value="Production Report">Production Report</option>
                                     <option value="Rehandling Production Report">Rehandling Production Report</option>
+                                    <option value="Daily Consumption Report">Daily Consumption Report</option>
+                                    <option value="Ops Concentrate Report">Ops Concentrate Report</option>
+                                    <option value="Daily Fuel Summary">Daily Fuel Summary (Monthly)</option>
+                                    <option value="Ops Flash Report">Ops Flash Report (Monthly)</option>
+                                    <option value="Concentrates Haulage Report">Concentrates Haulage Report (Monthly)</option>
                                     <option value="LP Prod Report">LP Prod Report</option>
                                     <option value="Daily Shift Activities Report">Daily Shift Activities Report</option>
                                     <option value="Monthly Shift Activities Report">Monthly Shift Activities Report</option>
                                 </select>
                                 @error('report') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                            @if (isset($report) && in_array($report, ["Production Report", "Rehandling Production Report"]))
+                            @if (isset($report) && in_array($report, ["Production Report", "Rehandling Production Report", "Daily Consumption Report", "Ops Concentrate Report"]))
                                 <div class="form-group">
                                     <label for="reason">As At<span class="required" style="color: red">*</span></label>
                                     <input type="date" wire:model.debounce.300="asAt" class="form-control" placeholder="asAt Date " required>
@@ -2714,6 +2719,30 @@
                                     <strong>Reporting Cut-off Logic:</strong>
                                     The selected As At Date is used as the report cut-off date. <br> Production data is calculated using a reporting day that runs from 02:00 AM of the previous day to 01:00 AM of the selected date. <br> For example, if 31 May 2026 is selected, the report will include data captured between 30 May 2026 02:00 AM and 31 May 2026 01:00 AM.
                                 </small>
+                            @endif
+                            @if (isset($report) && in_array($report, ["Daily Fuel Summary", "Ops Flash Report", "Concentrates Haulage Report"]))
+                                <div class="form-group">
+                                    <label for="reportMonth">Month<span class="required" style="color: red">*</span></label>
+                                    <input type="month" wire:model.debounce.300="reportMonth" class="form-control" required>
+                                    @error('reportMonth') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                                @if ($report == "Concentrates Haulage Report")
+                                <small>
+                                    Concentrate trips on shifts, per truck per day: tonnes, litres, litres/tonne, loads, km, km/load and km/litre (production day 02:00 to 01:00 next day).
+                                    A shift's fuel and mileage are shared across its trips, so mixed-cargo shifts only charge their concentrate share.
+                                </small>
+                                @elseif ($report == "Ops Flash Report")
+                                <small>
+                                    One block per offloading point: daily target vs tonnage, budget vs actual loads, KM, fuel and km/litre from trips on shifts (production day 02:00 to 01:00 next day).
+                                    Targets come from Shifts budgets named after the offloading point, e.g. "SMC Tonnage" and "SMC Loads" (Daily, or Monthly spread over the month).
+                                </small>
+                                @else
+                                <small>
+                                    Litres per truck / vehicle per day for the month, on Long Haul, Short Haul and Light Vehicles sheets.
+                                    Shift fuel orders count on the shift's production day (02:00 to 01:00 next day); other fuel orders on their order date.
+                                    Haul comes from the order's Allocation To, else the shift's or trip's haulage type; truck fuel with no haul is listed on an Unallocated Truck Fuel sheet.
+                                </small>
+                                @endif
                             @endif
                             
                         </div>

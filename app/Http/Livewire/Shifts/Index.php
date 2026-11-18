@@ -6,6 +6,11 @@ use App\Exports\MonthlyLoadingPointDailyReportExport;
 use App\Exports\MonthlyShiftActivitiesExport;
 use App\Exports\ShiftActivitiesExport;
 use App\Exports\ShiftsDailyExport;
+use App\Exports\ShiftsDailyConsumptionExport;
+use App\Exports\OpsConcentrateExport;
+use App\Exports\DailyFuelSummaryExport;
+use App\Exports\OpsFlashExport;
+use App\Exports\ConcentratesHaulageExport;
 use App\Exports\ShiftsRehandlingDailyExport;
 use App\Exports\ShiftsExport;
 use App\Imports\ShiftsImport;
@@ -305,6 +310,7 @@ class Index extends Component
     public $month;
     public $asAt ;
     public $report;
+    public $reportMonth; // Y-m, monthly reports (Daily Fuel Summary)
 
     public $cargo_type = [];
     public $calculation_measurement = [];
@@ -518,6 +524,7 @@ class Index extends Component
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->year = date('Y');
         $this->month = date('m');
+        $this->reportMonth = date('Y-m');
         $this->team = $this->employee->teams->first();
         $this->team_id =  $this->team?->id;
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
@@ -1057,6 +1064,21 @@ class Index extends Component
         elseif ($this->report == "Rehandling Production Report") {
             return $this->exportRehandlingDailyExcel(app(Excel::class));
         }
+        elseif ($this->report == "Daily Consumption Report") {
+            return $this->exportDailyConsumptionExcel(app(Excel::class));
+        }
+        elseif ($this->report == "Ops Concentrate Report") {
+            return $this->exportOpsConcentrateExcel(app(Excel::class));
+        }
+        elseif ($this->report == "Daily Fuel Summary") {
+            return $this->exportDailyFuelSummaryExcel(app(Excel::class));
+        }
+        elseif ($this->report == "Ops Flash Report") {
+            return $this->exportOpsFlashExcel(app(Excel::class));
+        }
+        elseif ($this->report == "Concentrates Haulage Report") {
+            return $this->exportConcentratesHaulageExcel(app(Excel::class));
+        }
         elseif ($this->report == "LP Prod Report") {
             return $this->exportMonthlyReport(app(Excel::class));
         }
@@ -1070,6 +1092,47 @@ class Index extends Component
     public function exportShiftsDailyExcel(Excel $excel){
         $this->dispatchBrowserEvent('hide-reportsModal');
         return $excel->download(new ShiftsDailyExport(asAt: Carbon::parse($this->asAt)), 'shifts_daily_'.$this->asAt.'.xlsx');
+    }
+    public function exportDailyConsumptionExcel(Excel $excel){
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new ShiftsDailyConsumptionExport(Carbon::parse($this->asAt)), 'daily_consumption_'.$this->asAt.'.xlsx');
+    }
+    /** Monthly: litres per unit per day (Long Haul / Short Haul / Light Vehicles sheets). */
+    public function exportDailyFuelSummaryExcel(Excel $excel){
+        $this->validate(
+            ['reportMonth' => 'required|date_format:Y-m'],
+            [],
+            ['reportMonth' => 'Month']
+        );
+        $month = Carbon::createFromFormat('Y-m-d', $this->reportMonth . '-01')->startOfMonth();
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new DailyFuelSummaryExport($month), 'daily_fuel_summary_'.$month->format('Y_m').'.xlsx');
+    }
+    /** Monthly Ops Flash: daily tonnage/loads/fuel vs target, one block per offloading point. */
+    public function exportOpsFlashExcel(Excel $excel){
+        $this->validate(
+            ['reportMonth' => 'required|date_format:Y-m'],
+            [],
+            ['reportMonth' => 'Month']
+        );
+        $month = Carbon::createFromFormat('Y-m-d', $this->reportMonth . '-01')->startOfMonth();
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new OpsFlashExport($month), 'ops_flash_'.$month->format('Y_m').'.xlsx');
+    }
+    /** Monthly concentrates haulage: per truck per day tonnes, litres, loads, km and ratios. */
+    public function exportConcentratesHaulageExcel(Excel $excel){
+        $this->validate(
+            ['reportMonth' => 'required|date_format:Y-m'],
+            [],
+            ['reportMonth' => 'Month']
+        );
+        $month = Carbon::createFromFormat('Y-m-d', $this->reportMonth . '-01')->startOfMonth();
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new ConcentratesHaulageExport($month), 'concentrates_haulage_'.$month->format('Y_m').'.xlsx');
+    }
+    public function exportOpsConcentrateExcel(Excel $excel){
+        $this->dispatchBrowserEvent('hide-reportsModal');
+        return $excel->download(new OpsConcentrateExport(Carbon::parse($this->asAt)), 'ops_concentrate_'.$this->asAt.'.xlsx');
     }
     public function exportRehandlingDailyExcel(Excel $excel){
         $this->dispatchBrowserEvent('hide-reportsModal');
@@ -1976,10 +2039,23 @@ class Index extends Component
         }
     }
 
+    /** Trips shifts with a fuel order must say which haul the fuel is for (Production / consumption reports). */
+    protected function validateFuelAllocation(): void
+    {
+        if ($this->for == 'Trips' && $this->fuel_order) {
+            $this->validate(
+                ['fuel_allocation_to' => 'required|in:long_haul,short_haul'],
+                ['fuel_allocation_to.required' => 'Allocation To is required for a Trips shift fuel order.'],
+                ['fuel_allocation_to' => 'Allocation To']
+            );
+        }
+    }
+
     public function store(){
 
         $this->validateTripRefs();
         $this->validateRehandlingCloseFields();
+        $this->validateFuelAllocation();
 
         // if($this->for == "Trips") {
             $this->validate([
@@ -2295,6 +2371,7 @@ class Index extends Component
 
          $this->validateTripRefs();
          $this->validateRehandlingCloseFields(true);
+         $this->validateFuelAllocation();
 
          if($this->for == "Trips") {
             $this->validate([
