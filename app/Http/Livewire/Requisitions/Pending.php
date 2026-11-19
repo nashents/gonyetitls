@@ -256,6 +256,14 @@ class Pending extends Component
         }
     }
 
+    // Expense account per line comes from the product/service; legacy requisitions fall back to the old header category.
+    private function lineAccountId($requisition, $requisition_item)
+    {
+        return $requisition_item->account_id
+            ?: optional($requisition_item->product)->expense_account_id
+            ?: $requisition->account_id;
+    }
+
     private function createBillFromRequisition($requisition)
     {
         if (
@@ -273,7 +281,8 @@ class Pending extends Component
 
         foreach ($requisition->requisition_items as $requisition_item) {
 
-            $account = Account::find($requisition->account_id);
+            $lineAccountId = $this->lineAccountId($requisition, $requisition_item);
+            $account = $lineAccountId ? Account::find($lineAccountId) : null;
             $account_type = $account ? $account->account_type : null;
 
             $bill = new Bill;
@@ -291,7 +300,7 @@ class Pending extends Component
             $bill->employee_id = $requisition->attached_employee_id;
             $bill->bill_date = $requisition->date;
             $bill->notes = $requisition->description;
-            $bill->account_id = $requisition->account_id ?? null;
+            $bill->account_id = $lineAccountId;
 
             if ($account_type) {
                 $bill->account_type_id = $account_type->id;
@@ -312,7 +321,7 @@ class Pending extends Component
             $bill_expense = new BillExpense;
             $bill_expense->bill_id = $bill->id;
             $bill_expense->currency_id = $bill->currency_id ?: Null;
-            $bill_expense->account_id = $requisition->account_id ?? null;
+            $bill_expense->account_id = $lineAccountId;
 
             if ($account_type) {
                 $bill_expense->account_type_id = $account_type->id;

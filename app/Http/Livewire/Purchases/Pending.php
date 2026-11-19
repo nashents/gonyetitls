@@ -130,8 +130,14 @@ class Pending extends Component
             $bill->category = "Purchase Order";
             $bill->bill_date = $purchase->date;
 
-            $account_type = Account::find($purchase->account_id)->account_type;
-            $bill->account_id = $purchase->account_id;
+            // Accounts come from the lines (PO header category removed); legacy POs fall back to the header.
+            $lineAccountId = fn ($line) => $line->account_id
+                ?: optional($line->product)->expense_account_id
+                ?: $purchase->account_id;
+            $firstLine = $purchase->purchase_products->first();
+            $billAccountId = $firstLine ? $lineAccountId($firstLine) : $purchase->account_id;
+            $account_type = optional(Account::find($billAccountId))->account_type;
+            $bill->account_id = $billAccountId;
             if (isset($account_type)) {
                 $bill->account_type_id = $account_type->id;
             }
@@ -156,8 +162,9 @@ class Pending extends Component
                     $bill_expense = new BillExpense;
                     $bill_expense->bill_id = $bill->id;
                     $bill_expense->currency_id = $bill->currency_id;
-                    $account_type = Account::find($purchase->account_id)->account_type;
-                    $bill_expense->account_id = $purchase->account_id;
+                    $itemAccountId = $lineAccountId($purchase_product);
+                    $account_type = optional(Account::find($itemAccountId))->account_type;
+                    $bill_expense->account_id = $itemAccountId;
                     if (isset($account_type)) {
                         $bill_expense->account_type_id = $account_type->id;
                     }

@@ -22,6 +22,9 @@ class PurchaseProduct extends Model implements Auditable
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }
+    public function account(){
+        return $this->belongsTo('App\Models\Account');
+    }
     public function store(){
         return $this->belongsTo('App\Models\Store');
     }

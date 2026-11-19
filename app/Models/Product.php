@@ -27,6 +27,11 @@ class Product extends Model implements Auditable
         });
     }
 
+    /** The expense (GL) account this product/service is bought against. */
+    public function expense_account(){
+        return $this->belongsTo('App\Models\Account', 'expense_account_id');
+    }
+
     /** The expense linked to this product (non-inventory billable items). */
     public function expense(){
         return $this->hasOne('App\Models\Expense');

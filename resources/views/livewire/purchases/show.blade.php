@@ -43,7 +43,8 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Expense Category</th>
-                                <td class="w-20 line-height-35">{{$purchase->account ? $purchase->account->name : ""}}</td>
+                                {{-- Each line carries its own account (from its product, or picked on the line); legacy POs used the header one. --}}
+                                <td class="w-20 line-height-35">{{ $purchase->purchase_products->map(fn ($line) => optional($line->account)->name ?: optional(optional($line->product)->expense_account)->name ?: optional($purchase->account)->name)->filter()->unique()->implode(', ') }}</td>
                             </tr>
                         
                             <tr>

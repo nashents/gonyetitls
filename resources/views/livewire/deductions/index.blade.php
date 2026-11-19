@@ -24,9 +24,9 @@
                                     </th>
                                     <th class="th-sm">Description
                                     </th>
-                                    <th class="th-sm">CalculateBy
+                                    <th class="th-sm">Calculate By
                                     </th>
-                                    <th class="th-sm">CalculateOn
+                                    <th class="th-sm">Percentage Of
                                     </th>
                                     <th class="th-sm">Amount
                                     </th>
@@ -53,8 +53,8 @@
                                     </td>
                                     <td>{{$deduction->currency ? $deduction->currency->name : ""}}</td>
                                     <td>{{$deduction->description}}</td>
-                                    <td>{{$deduction->calculate_by}}</td>
-                                    <td>{{$deduction->calculate_on}}</td>
+                                    <td>{{ $deduction->isShared() ? "Shared premium" : ($deduction->calculate_by === "percentage" ? "Percentage" : "Fixed Amount") }}</td>
+                                    <td>{{ $deduction->isPercentage() ? ($deduction->calculateOn() === "basic" ? "Basic" : "Gross") : "" }}</td>
                                     <td>{{$deduction->amount}}</td>
                                     <td>{{$deduction->percentage}}</td>
                                     @php $isSystem = $deduction->isSystem(); @endphp
@@ -136,46 +136,11 @@
                             </div>
                         </div>
                     </div>
-                    <h5 class="underline mt-10">Select item calculation.</h5>
+                    @if ($contribution_type !== 'shared')
+                        <h5 class="underline mt-10">Calculation</h5>
+                        @include('deductions.calculation-fields')
+                    @endif
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="country">Calculate By<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="calculate_by" class="form-control" required >
-                                    <option value="">Select Option</option>
-                                    <option value="currency">$</option>
-                                    <option value="percentage">%</option>
-                                </select>
-                                @error('calculate_by') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="country">Calculate On<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="calculate_on" class="form-control" required >
-                                    <option value="basic">Basic (% of basic salary)</option>
-                                    <option value="gross">Gross (% of basic + earnings)</option>
-                                </select>
-                                @error('calculate_on') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            @if ($calculate_by == "percentage")
-                                <div class="form-group">
-                                    <label for="name">Percentage</label>
-                                    <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="percentage" placeholder="Enter Percentage"  />
-                                    @error('percentage') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            @elseif($calculate_by == "currency")
-                            <div class="form-group">
-                                <label for="name">Amount</label>
-                                <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount"  />
-                                @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                            @endif
-                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Description</label>
@@ -227,46 +192,11 @@
                             </div>
                         </div>
                     </div>
-                    <h5 class="underline mt-10">Select item calculation.</h5>
+                    @if ($contribution_type !== 'shared')
+                        <h5 class="underline mt-10">Calculation</h5>
+                        @include('deductions.calculation-fields')
+                    @endif
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="country">Calculate By<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="calculate_by" class="form-control" required >
-                                    <option value="">Select Option</option>
-                                    <option value="currency">$</option>
-                                    <option value="percentage">%</option>
-                                </select>
-                                @error('calculate_by') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="country">Calculate On<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="calculate_on" class="form-control" required >
-                                    <option value="basic">Basic (% of basic salary)</option>
-                                    <option value="gross">Gross (% of basic + earnings)</option>
-                                </select>
-                                @error('calculate_on') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            @if ($calculate_by == "percentage")
-                                <div class="form-group">
-                                    <label for="name">Percentage</label>
-                                    <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="percentage" placeholder="Enter Percentage"  />
-                                    @error('percentage') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            @elseif($calculate_by == "currency")
-                            <div class="form-group">
-                                <label for="name">Amount</label>
-                                <input type="number"  step="any" class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount"  />
-                                @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                            @endif
-                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Description</label>
@@ -274,15 +204,16 @@
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="country">Status<span class="required" style="color: red">*</span></label>
-                        <select wire:model.debounce.300ms="status" class="form-control" required @if($is_system) disabled @endif>
-                            <option value="">Select Option</option>
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
-                        </select>
-                        @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="status">Status<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="status" class="form-control" required @if($is_system) disabled @endif>
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                                @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                     @include('deductions.shared-premium-fields')
                 </div>

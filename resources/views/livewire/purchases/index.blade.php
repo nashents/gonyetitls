@@ -490,19 +490,6 @@
                                 @endif
                             @endif
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
-                                    <option value="">Select Category</option>
-                                    @foreach ($expense_accounts as $account)
-                                      <option value="{{$account->id}}">{{$account->name}}</option>
-                                    @endforeach
-                                </select>
-                                <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small><a href="#" wire:click.prevent="refresh('accounts')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
-                                @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
                        </div>
                   
                        <div class="form-group">
@@ -588,6 +575,7 @@
                                 @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>      
+                        @include('livewire.purchases.partials.line-account', ['productId' => $selectedProduct[0] ?? null, 'model' => 'item_account_id.0'])
                        
                     </div>
 
@@ -668,6 +656,7 @@
                                     <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                 </div>
                             </div>
+                            @include('livewire.purchases.partials.line-account', ['productId' => $selectedProduct[$value] ?? null, 'model' => 'item_account_id.'.$value])
                             <!-- /.col-md-6 -->
                         </div>
                         @endforeach
@@ -927,19 +916,6 @@
                                     @endif
                                 @endif
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
-                                        <option value="">Select Category</option>
-                                        @foreach ($expense_accounts as $account)
-                                          <option value="{{$account->id}}">{{$account->name}}</option>
-                                        @endforeach
-                                    </select>
-                                    <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small> 
-                                    @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
-                            </div>
                            </div>
                       
                            <div class="form-group">
@@ -1026,6 +1002,7 @@
                                     <a href="#" wire:click="removeShow({{ $value->id }})"  ><i class="fa fa-trash color-danger"></i></a>
                                 </div>
                             </div>   
+                            @include('livewire.purchases.partials.line-account', ['productId' => $selectedCurrentProduct[$key] ?? null, 'model' => 'current_item_account_id.'.$key])
                            
                         </div>
                         @endforeach
@@ -1108,6 +1085,7 @@
                                         <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                     </div>
                                 </div>
+                                @include('livewire.purchases.partials.line-account', ['productId' => $selectedProduct[$value] ?? null, 'model' => 'item_account_id.'.$value])
                                 <!-- /.col-md-6 -->
                             </div>
                             @endforeach

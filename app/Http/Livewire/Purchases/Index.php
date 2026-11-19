@@ -74,7 +74,8 @@ class Index extends Component
 
     
     public $expense_accounts;
-    public $selectedAccount;
+    public $item_account_id = [];          // per-line expense account (new lines) - only picked when the product has none
+    public $current_item_account_id = [];  // per-line expense account (existing lines, edit)
     public $expenses;
     public $expense_id;
 
@@ -151,7 +152,6 @@ class Index extends Component
         $this->date = '';
         $this->selectedCurrency = '';
         $this->vendor_id = '';
-        $this->selectedAccount = '';
         $this->inputs = [];
         $this->current_amount = [];
     }
@@ -169,7 +169,7 @@ class Index extends Component
 
     protected function forgetLine($line): void
     {
-        foreach (['selectedProduct', 'selectedStore', 'qty', 'amount', 'payment_method_id', 'tax_rate', 'selectedTax'] as $field) {
+        foreach (['selectedProduct', 'selectedStore', 'item_account_id', 'qty', 'amount', 'payment_method_id', 'tax_rate', 'selectedTax'] as $field) {
             if (is_array($this->{$field})) {
                 unset($this->{$field}[$line]);
             }
@@ -390,12 +390,6 @@ class Index extends Component
     }
 
    
-    public function updatedSelectedAccount($id)
-    {
-        if (!is_null($id) ) {
-        $this->expenses = Expense::where('account_id', $id)->orderBy('name','asc')->get();
-        }
-    }
     public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
             $product = Product::find($id);
@@ -550,14 +544,19 @@ class Index extends Component
         $this->pruneRemovedLines(! $includeCurrent);
         $this->normalizeLineNumbers();
 
-        $sets = [['selectedProduct', 'amount', 'qty']];
+        $sets = [['selectedProduct', 'amount', 'qty', 'item_account_id']];
         if ($includeCurrent) {
-            $sets[] = ['selectedCurrentProduct', 'current_amount', 'current_qty'];
+            $sets[] = ['selectedCurrentProduct', 'current_amount', 'current_qty', 'current_item_account_id'];
         }
         $valid = true;
+        $missingAccount = false;
 
-        foreach ($sets as [$products, $amounts, $qtys]) {
+        foreach ($sets as [$products, $amounts, $qtys, $accounts]) {
             foreach ((array) $this->{$products} as $key => $value) {
+                if ($this->lineNeedsAccount($value) && blank($this->{$accounts}[$key] ?? null)) {
+                    $this->addError("{$accounts}.{$key}", 'This product has no expense category. Select one.');
+                    $missingAccount = true;
+                }
                 if (! is_numeric($this->{$amounts}[$key] ?? null)) {
                     $this->addError("{$amounts}.{$key}", 'Enter a valid rate, e.g. 8.66.');
                     $valid = false;
@@ -577,7 +576,50 @@ class Index extends Component
             return false;
         }
 
+        if ($missingAccount) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => 'Select an expense category for each item whose product has none.',
+            ]);
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * True when a line's product has no expense account, so the line must pick one itself.
+     * Inventory POs never need one: the GRV posts them to Spares Inventory.
+     */
+    public function lineNeedsAccount($productId): bool
+    {
+        if ($this->department === 'inventory' || blank($productId)) {
+            return false;
+        }
+
+        $accounts = $this->productAccounts();
+
+        return array_key_exists((int) $productId, $accounts) && blank($accounts[(int) $productId]);
+    }
+
+    /** Line expense account: the product's own account wins; otherwise what was picked on the line. */
+    private function lineAccountId($productId, $picked)
+    {
+        if ($this->department === 'inventory') {
+            return null;
+        }
+
+        $productAccount = $productId ? Product::whereKey($productId)->value('expense_account_id') : null;
+
+        return $productAccount ?: ($picked ?: null);
+    }
+
+    private $productAccountCache;
+
+    /** product id => expense_account_id (null when unset), loaded once per request. */
+    private function productAccounts(): array
+    {
+        return $this->productAccountCache ??= Product::query()->pluck('expense_account_id', 'id')->all();
     }
 
     public function store(){
@@ -601,7 +643,6 @@ class Index extends Component
              $purchase->requisition_id = $this->requisition_id;
         }
         $purchase->description = $this->description;
-        $purchase->account_id = $this->selectedAccount;
         $purchase->vendor_id = $this->vendor_id;
         $purchase->employee_id = $this->employee_id;
         $purchase->currency_id = $this->selectedCurrency;
@@ -621,6 +662,7 @@ class Index extends Component
             }
             // Optional per-line store/warehouse.
             $purchase_product->store_id = $this->validStoreId($this->selectedStore[$key] ?? null);
+            $purchase_product->account_id = $this->lineAccountId($purchase_product->product_id, $this->item_account_id[$key] ?? null);
             if (isset($this->qty[$key])) {
                 $purchase_product->qty = $this->qty[$key];
             }
@@ -776,9 +818,15 @@ class Index extends Component
         $this->purchase_order_products = $this->purchase->purchase_products;
         if(isset($this->purchase_order_products)){
 
+            // Start the existing-line arrays fresh, or a second edit appends after the first PO's lines.
+            $this->selectedCurrentProduct = $this->selectedCurrentStore = $this->current_item_account_id = [];
+            $this->current_qty = $this->current_payment_method_id = $this->current_amount = [];
+            $this->selectedCurrentTax = $this->current_tax_rate = [];
+
             foreach($this->purchase_order_products as $purchase_product){
                 $this->selectedCurrentProduct[] = $purchase_product->product_id;
                 $this->selectedCurrentStore[] = $purchase_product->store_id;
+                $this->current_item_account_id[] = $purchase_product->account_id;
                 $this->current_qty[] = $purchase_product->qty;
                 $this->current_payment_method_id[] = $purchase_product->payment_method_id; 
                 $this->current_amount[] = $purchase_product->amount; 
@@ -789,7 +837,6 @@ class Index extends Component
         }
         $this->vendor_id = $this->purchase->vendor_id;
         $this->selectedVendorType = $this->purchase->vendor_type_id;
-        $this->selectedAccount = $this->purchase->account_id;
         $this->expense_id = $this->purchase->expense_id;
         $this->status = $this->purchase->status;
         $this->exchange_rate = $this->purchase->exchange_rate;
@@ -828,7 +875,6 @@ class Index extends Component
         }elseif($this->attach_to == "Requisition"){
              $purchase->requisition_id = $this->requisition_id;
         }
-        $purchase->account_id = $this->selectedAccount;
         $purchase->expense_id = $this->expense_id;
         $purchase->vendor_id = $this->vendor_id;
         $purchase->vendor_type_id = $this->selectedVendorType;
@@ -848,6 +894,7 @@ class Index extends Component
             }
             // Optional per-line store on an existing line.
             $purchase_product->store_id = $this->validStoreId($this->selectedCurrentStore[$key] ?? null);
+            $purchase_product->account_id = $this->lineAccountId($purchase_product->product_id, $this->current_item_account_id[$key] ?? null);
             if (isset($this->current_qty[$key])) {
                 $purchase_product->qty = $this->current_qty[$key];
             }
@@ -920,6 +967,7 @@ class Index extends Component
                 }
                 // Optional per-line store on a newly added line.
                 $purchase_product->store_id = $this->validStoreId($this->selectedStore[$key] ?? null);
+                $purchase_product->account_id = $this->lineAccountId($purchase_product->product_id, $this->item_account_id[$key] ?? null);
                 if (isset($this->qty[$key])) {
                     $purchase_product->qty = $this->qty[$key];
                 }

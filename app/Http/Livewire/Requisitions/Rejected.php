@@ -132,8 +132,14 @@ class Rejected extends Component
                 $bill->employee_id = $requisition->attached_employee_id;
                 $bill->bill_date = $requisition->date;
                 $bill->notes = $requisition->description;
-                $account_type = Account::find($requisition->account_id)->account_type;
-                $bill->account_id = $requisition->account_id;
+                // Expense account comes from each line's product/service; legacy requisitions fall back to the old header category.
+                $lineAccountId = fn ($item) => $item->account_id
+                    ?: optional($item->product)->expense_account_id
+                    ?: $requisition->account_id;
+                $firstItem = $requisition->requisition_items->first();
+                $billAccountId = $firstItem ? $lineAccountId($firstItem) : $requisition->account_id;
+                $account_type = optional(Account::find($billAccountId))->account_type;
+                $bill->account_id = $billAccountId;
                 if (isset($account_type)) {
                     $bill->account_type_id = $account_type->id;
                 }
@@ -156,8 +162,9 @@ class Rejected extends Component
                         $bill_expense = new BillExpense;
                         $bill_expense->bill_id = $bill->id;
                         $bill_expense->currency_id = $bill->currency_id;
-                        $account_type = Account::find($requisition->account_id)->account_type;
-                        $bill_expense->account_id = $requisition->account_id;
+                        $itemAccountId = $lineAccountId($requisition_item);
+                        $account_type = optional(Account::find($itemAccountId))->account_type;
+                        $bill_expense->account_id = $itemAccountId;
                         if (isset($account_type)) {
                             $bill_expense->account_type_id = $account_type->id;
                         }

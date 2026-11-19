@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -65,7 +66,6 @@ class Index extends Component
     public $accounts;
     public $expense_accounts;
     public $account;
-    public $selectedAccount;
     public $requisition_for = "Other";
     public $requisition_type;
 
@@ -140,6 +140,7 @@ class Index extends Component
     public $amount = [];
     
     public $current_selectedProduct = [];
+    public $current_item_account_id = [];
     public $current_selectedCurrency = [];
     public $current_selected_currency = [];
     public $current_payment_method_id = [];
@@ -217,6 +218,7 @@ class Index extends Component
         unset($this->expense_id[$i]);
         unset($this->allowance_id[$i]);
         unset($this->selectedProduct[$i]);
+        unset($this->item_account_id[$i]);
         unset($this->amount[$i]);
         unset($this->qty[$i]);
         unset($this->payment_method_id[$i]);
@@ -236,7 +238,6 @@ class Index extends Component
         $this->requisition_date = '';
         $this->expense_id = '';
         $this->allowance_id = '';
-        $this->selectedAccount = '';
         $this->description = '';
         $this->subject = '';
         $this->total = Null;
@@ -256,6 +257,7 @@ class Index extends Component
 
         $this->selectedProduct = [];
         $this->item_account_id = [];
+        $this->current_item_account_id = [];
         $this->selectedCurrency = [];
         $this->selected_currency = [];
         $this->selectedRequisitionCurrency = Null;
@@ -517,8 +519,11 @@ class Index extends Component
             if (!$product) {
                 return;
             }
+            // Take the product's expense account; without one the line shows its own Expense Category picker.
             if ($product->expense_account_id) {
                 $this->item_account_id[$key] = $product->expense_account_id;
+            } else {
+                unset($this->item_account_id[$key]);
             }
             $this->amount[$key] = $product->price;
             $this->selectedTax[$key] = $product->tax_id;
@@ -797,6 +802,8 @@ class Index extends Component
             return;
         }
 
+        $this->assertLineAccounts();
+
         DB::transaction(function () {
 
         $requisition = new Requisition;
@@ -808,7 +815,6 @@ class Index extends Component
         $requisition->booking_id = $this->selectedBooking ?: Null;
         $requisition->purchase_id = $this->selectedPurchase ?: Null;
         $requisition->employee_id = $this->employee_id ?: Null;
-        $requisition->account_id = $this->selectedAccount ?: Null;
         $requisition->date = $this->requisition_date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;
@@ -908,9 +914,12 @@ class Index extends Component
                     $requisition_item->qty = $qty;
                     $requisition_item->amount = $amount;
 
-                    if (isset($this->item_account_id[$key])) {
-                        $account = Account::find($this->item_account_id[$key]);
-                        $requisition_item->account_id = $this->item_account_id[$key];
+                    // The expense account comes from the product/service (no requisition-level category).
+                    $lineAccountId = $this->item_account_id[$key]
+                        ?? optional(Product::find($product_id))->expense_account_id;
+                    if ($lineAccountId) {
+                        $account = Account::find($lineAccountId);
+                        $requisition_item->account_id = $lineAccountId;
                         $requisition_item->account_type_id = $account?->account_type?->id;
                     }
                     if (!empty($this->selectedTax[$key])) {
@@ -1116,7 +1125,6 @@ class Index extends Component
         $this->employee_id = $requisition->employee_id;
         $this->department_id = $requisition->department_id;
         $this->requisition_type = $requisition->type ?: "payment_requisition";
-        $this->selectedAccount = $requisition->account_id;
         $this->requisition_date = $requisition->date;
         $this->description = $requisition->description;
         $this->subject = $requisition->subject;
@@ -1142,6 +1150,7 @@ class Index extends Component
                     $this->current_expense_id[$key] = $requisition_item->expense_id;
                     $this->current_allowance_id[$key] = $requisition_item->allowance_id;
                     $this->current_selectedProduct[$key] = $requisition_item->product_id;
+                    $this->current_item_account_id[$key] = $requisition_item->account_id;
                     $this->current_payment_method_id[$key] = $requisition_item->payment_method_id;
                     $this->current_selectedCurrency[$key] = $requisition_item->currency_id;
                     $this->current_selected_currency[$key] = $requisition_item->currency;
@@ -1332,7 +1341,48 @@ class Index extends Component
     }
 
 
+    /**
+     * True when the line's product/service has no expense account, so the line must pick one itself.
+     * The requisition-level "Expense Category" was removed: the account normally comes from the product.
+     */
+    public function lineNeedsAccount($productId): bool
+    {
+        if (blank($productId)) {
+            return false;
+        }
+
+        $product = collect($this->products)->firstWhere('id', (int) $productId) ?? Product::find($productId);
+
+        return $product && ! $product->expense_account_id;
+    }
+
+    /** Block saving an "Other" requisition while a line's product has no expense account and none was picked. */
+    private function assertLineAccounts(): void
+    {
+        if ($this->requisition_for != 'Other') {
+            return;
+        }
+
+        $errors = [];
+        foreach ((array) $this->current_selectedProduct as $key => $productId) {
+            if ($this->lineNeedsAccount($productId) && blank($this->current_item_account_id[$key] ?? null)) {
+                $errors['current_item_account_id.'.$key] = 'This item has no expense category on its product/service. Select one.';
+            }
+        }
+        foreach (array_keys((array) $this->qty) as $key) {
+            $productId = $this->selectedProduct[$key] ?? null;
+            if ($this->lineNeedsAccount($productId) && blank($this->item_account_id[$key] ?? null)) {
+                $errors['item_account_id.'.$key] = 'This item has no expense category on its product/service. Select one.';
+            }
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
     public function update(){
+        $this->assertLineAccounts();
      
 
         DB::transaction(function () {
@@ -1345,7 +1395,6 @@ class Index extends Component
         $requisition->booking_id = $this->selectedBooking ? $this->selectedBooking : Null;
         $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
         $requisition->employee_id = $this->employee_id;
-        $requisition->account_id = $this->selectedAccount;
         $requisition->date = $this->requisition_date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;
@@ -1402,9 +1451,12 @@ class Index extends Component
                     $requisition_item->qty = $qty;
                     $requisition_item->amount = $amount;
 
-                    if (isset($this->current_item_account_id[$key])) {
-                        $account = Account::find($this->current_item_account_id[$key]);
-                        $requisition_item->account_id = $this->current_item_account_id[$key];
+                    // The expense account comes from the product/service (no requisition-level category).
+                    $lineAccountId = optional(Product::find($product_id))->expense_account_id
+                        ?: ($this->current_item_account_id[$key] ?? null);
+                    if ($lineAccountId) {
+                        $account = Account::find($lineAccountId);
+                        $requisition_item->account_id = $lineAccountId;
                         $requisition_item->account_type_id = $account?->account_type?->id;
                     }
                     if (!empty($this->current_selectedTax[$key])) {
@@ -1530,9 +1582,12 @@ class Index extends Component
                     $requisition_item->qty = $qty;
                     $requisition_item->amount = $amount;
 
-                    if (isset($this->item_account_id[$key])) {
-                        $account = Account::find($this->item_account_id[$key]);
-                        $requisition_item->account_id = $this->item_account_id[$key];
+                    // The expense account comes from the product/service (no requisition-level category).
+                    $lineAccountId = $this->item_account_id[$key]
+                        ?? optional(Product::find($product_id))->expense_account_id;
+                    if ($lineAccountId) {
+                        $account = Account::find($lineAccountId);
+                        $requisition_item->account_id = $lineAccountId;
                         $requisition_item->account_type_id = $account?->account_type?->id;
                     }
                     if (!empty($this->selectedTax[$key])) {

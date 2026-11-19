@@ -807,31 +807,6 @@
                                             @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        @if (in_array($requisition_for,['Trip','Booking','Purchase']))
-                                            <div class="form-group">
-                                                <label for="Product">Expense Category</label>
-                                                <select wire:model.debounce.300ms="selectedAccount" class="form-control" disabled>
-                                                    <option value="">Select Category</option>
-                                                    @foreach ($expense_accounts as $account)
-                                                    <option value="{{$account->id}}">{{$account->name}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @else
-                                            <div class="form-group">
-                                                <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
-                                                    <option value="">Select Category</option>
-                                                    @foreach ($expense_accounts as $account)
-                                                    <option value="{{$account->id}}">{{$account->name}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @endif
-                                    </div> 
                                     @if ($requisition_for == "Other")
                                         <div class="col-md-3">
                                             <div class="form-group">
@@ -935,6 +910,7 @@
                                                     @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
+                                            @include('livewire.requisitions.partials.line-account', ['productId' => $selectedProduct[0] ?? null, 'model' => 'item_account_id.0'])
                                         </div>
                                     </div>
                                     <br>
@@ -1010,6 +986,7 @@
                                                         <button class="btn btn-danger btn-rounded btn-xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                                     </div>
                                                 </div>
+                                                @include('livewire.requisitions.partials.line-account', ['productId' => $selectedProduct[$value] ?? null, 'model' => 'item_account_id.'.$value])
                                             </div>
                                         </div>
                                     @else
@@ -1522,31 +1499,6 @@
                                             @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        @if (in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']))
-                                            <div class="form-group">
-                                                <label for="Product">Expense Category</label>
-                                                <select wire:model.debounce.300ms="selectedAccount" class="form-control" disabled>
-                                                    <option value="">Select Category</option>
-                                                    @foreach ($expense_accounts as $account)
-                                                    <option value="{{$account->id}}">{{$account->name}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @else
-                                            <div class="form-group">
-                                                <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
-                                                    <option value="">Select Category</option>
-                                                    @foreach ($expense_accounts as $account)
-                                                    <option value="{{$account->id}}">{{$account->name}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @endif
-                                    </div>
                                     @if ($requisition_for == "Other")
                                         <div class="col-md-3">
                                             <div class="form-group">
@@ -1680,6 +1632,7 @@
                                                             <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                                         </div>
                                                     </div>
+                                                    @include('livewire.requisitions.partials.line-account', ['productId' => $current_selectedProduct[$key] ?? null, 'model' => 'current_item_account_id.'.$key])
                                                 </div>
                                             </div>
                                             <br>
@@ -1756,6 +1709,7 @@
                                                         <button class="btn btn-danger btn-rounded btn-xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                                     </div>
                                                 </div>
+                                                @include('livewire.requisitions.partials.line-account', ['productId' => $selectedProduct[$value] ?? null, 'model' => 'item_account_id.'.$value])
                                             </div>
                                         </div>
                                     @else
