@@ -143,10 +143,10 @@
                                                     <br>
                                                     <strong>Post: </strong>{{$employee->post}} <br>
                                                     @if ($employee->department_head)
-                                                        <strong>HOD: </strong>{{$employee->department_head?->department->name}} <br>
+                                                        <strong>HOD: </strong>{{ $employee->department_head?->department?->name }} <br>
                                                     @endif
                                                     <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
-                                                    <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
+                                                    <strong>Rank: </strong>{{ $employee->ranks?->first()?->name }} <br>
                                                     <strong>Role(s):</strong> 
                                                         @if ($employee->user && $employee->user->roles)
                                                             @foreach ($employee->user->roles as $role)

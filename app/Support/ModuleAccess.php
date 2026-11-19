@@ -48,6 +48,11 @@ class ModuleAccess
         }
 
         if (!array_key_exists($user->id, static::$blocks)) {
+            // Deployed before `php artisan migrate`? No locks rather than a 500 on every page.
+            if (!static::blocksTableExists()) {
+                return static::$blocks[$user->id] = $empty;
+            }
+
             $rows = ModuleAccessBlock::where('user_id', $user->id)->get(['module_group_id', 'module_id']);
 
             $blocks = [
@@ -63,6 +68,13 @@ class ModuleAccess
         }
 
         return static::$blocks[$user->id];
+    }
+
+    private static function blocksTableExists(): bool
+    {
+        static $exists = null;
+
+        return $exists ??= \Illuminate\Support\Facades\Schema::hasTable('module_access_blocks');
     }
 
     public static function isExempt(User $user): bool

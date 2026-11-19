@@ -173,7 +173,7 @@
                                             <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
                                             <strong>Rank: </strong>
                                             @if ($employee->ranks && $employee->ranks->count()>0)
-                                                {{$employee->ranks ? $employee->ranks->first()->name : ""}}
+                                                {{ $employee->ranks?->first()?->name }}
                                             @endif
                                              <br>
                                             <strong>Role(s):</strong> 
