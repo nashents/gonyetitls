@@ -108,6 +108,11 @@ class AccountTransactionsCalculator
                 'credit' => $credit,
                 'running_balance' => $running,
                 'converted' => $converted,
+                'reference' => $line->reference,
+                'invoice_id' => $line->invoice_id,
+                'bill_id' => $line->bill_id,
+                'payment_id' => $line->payment_id,
+                'credit_note_id' => $line->credit_note_id,
             ];
         }
 
@@ -126,6 +131,10 @@ class AccountTransactionsCalculator
                 'journal_entries.date',
                 'journal_entries.journal_number',
                 'journal_entries.reference',
+                'journal_entries.invoice_id',
+                'journal_entries.bill_id',
+                'journal_entries.payment_id',
+                'journal_entries.credit_note_id',
                 'journal_entries.description as entry_description',
                 'journal_entry_lines.description as line_description',
                 'journal_entry_lines.currency_id',

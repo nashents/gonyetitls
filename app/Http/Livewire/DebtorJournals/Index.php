@@ -335,6 +335,7 @@ class Index extends Component
             ->with(['customer', 'currency', 'account', 'user'])
             ->select('debtor_journals.*')
             ->selectRaw("{$allocated} as allocated_total")
+            ->selectRaw('(select COALESCE(SUM(ip.amount+0),0) from invoice_payments ip where ip.settled_debtor_journal_id = debtor_journals.id and ip.deleted_at is null) as settled_total')
             ->when($this->customer_filter, fn ($q) => $q->where('customer_id', $this->customer_filter))
             ->when($this->type_filter, fn ($q) => $q->where('type', $this->type_filter))
             ->when($this->status_filter, fn ($q) => $q->where('status', $this->status_filter))

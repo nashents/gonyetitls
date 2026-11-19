@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Session;
 class Index extends Component
 {
 
-    use WithPagination;
+    use WithPagination, \App\Http\Livewire\Concerns\ManagesReminderCopies;
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
@@ -52,6 +52,23 @@ class Index extends Component
     public $vehicle_id;
     public $filter_id;
     public $employee_id;
+    public $customer_id;
+    public $vendor_id;
+
+    /** Also email the customer's / vendor's contacts (customer & vendor reminders only). */
+    public $notify_contacts = true;
+
+    private function contactsAllowed(): bool
+    {
+        return in_array($this->type, ['Customer', 'Vendor'], true);
+    }
+
+    /** Subject columns for the current type (all others null). */
+    private function targets(): array
+    {
+        $column = Fitness::SUBJECTS[$this->type] ?? null;
+        return Fitness::subjectColumns($this->type, $column ? $this->{$column} : null);
+    }
 
     public $inputs = [];
     public $i = 1;
@@ -74,7 +91,9 @@ class Index extends Component
         $this->issued_at = "";
         $this->expires_at = "" ;
         $this->cc = false ;
+        $this->notify_contacts = true;
         $this->inputs = [];
+        $this->resetCopySelection();
     }
 
     public function exportRemindersCSV(Excel $excel){
@@ -92,16 +111,8 @@ class Index extends Component
         $this->type = $type;
         $this->filter_id = $id;
 
-        if ($type == "Horse") {
-            $this->horse_id = $id;
-        }elseif($type == "Vehicle"){
-            $this->vehicle_id = $id;
-        }
-        elseif($type == "Trailer"){
-            $this->trailer_id = $id;
-        }
-        elseif($type == "Employee"){
-            $this->employee_id = $id;
+        if (isset(Fitness::SUBJECTS[$type])) {
+            $this->{Fitness::SUBJECTS[$type]} = $id;
         }
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
        
@@ -136,22 +147,7 @@ class Index extends Component
                 // ----------------------------
                 // 1) Resolve type target keys
                 // ----------------------------
-                $targets = [
-                    'horse_id'    => null,
-                    'vehicle_id'  => null,
-                    'trailer_id'  => null,
-                    'employee_id' => null,
-                ];
-
-                if ($this->type === 'Horse') {
-                    $targets['horse_id'] = $this->horse_id ?? null;
-                } elseif ($this->type === 'Vehicle') {
-                    $targets['vehicle_id'] = $this->vehicle_id ?? null;
-                } elseif ($this->type === 'Trailer') {
-                    $targets['trailer_id'] = $this->trailer_id ?? null;
-                } elseif ($this->type === 'Employee') {
-                    $targets['employee_id'] = $this->employee_id ?? null;
-                }
+                $targets = $this->targets();
 
                 // ----------------------------
                 // 2) Parse dates safely (handles datetime-local: 2025-07-05T12:40)
@@ -182,30 +178,21 @@ class Index extends Component
 
                 $where = $fitnessId
                     ? ['id' => $fitnessId]
-                    : array_filter([
+                    : array_filter(array_merge([
                         'company_id'        => $companyId,
                         'reminder_item_id'  => $reminderItemId,
-                        // type target (only one of these will be set)
-                        'horse_id'          => $targets['horse_id'],
-                        'vehicle_id'        => $targets['vehicle_id'],
-                        'trailer_id'        => $targets['trailer_id'],
-                        'employee_id'       => $targets['employee_id'],
-                    ], fn ($v) => $v !== null);
+                    ], $targets), fn ($v) => $v !== null); // type target: only one is set
 
                 // ----------------------------
                 // 4) Build "update" payload
                 // ----------------------------
-                $data = [
+                $data = $targets + [
                     'user_id'   => $userId,
                     'company_id'=> $companyId,
 
-                    'horse_id'    => $targets['horse_id'],
-                    'vehicle_id'  => $targets['vehicle_id'],
-                    'trailer_id'  => $targets['trailer_id'],
-                    'employee_id' => $targets['employee_id'],
-
                     'reminder_item_id' => $reminderItemId,
                     'cc'               => $this->cc[$key] ?? False,
+                    'notify_contacts'  => $this->contactsAllowed() && (bool) $this->notify_contacts,
 
                     'issued_at'  => $issuedAtDb,
                     'expires_at' => $expiresAtDb,
@@ -225,7 +212,7 @@ class Index extends Component
                     'status' => $status,
                 ];
 
-                Fitness::updateOrCreate($where, $data);
+                $this->applyCopySelection(Fitness::updateOrCreate($where, $data));
             }
 
             $this->dispatchBrowserEvent('hide-fitnessModal');
@@ -297,24 +284,16 @@ class Index extends Component
         $this->third_reminder_at  = $this->dbToDateTimeLocal($fitness->third_reminder_at);
         $this->fourth_reminder_at  = $this->dbToDateTimeLocal($fitness->fourth_reminder_at);
         $this->cc =  $fitness->cc;
+        $this->notify_contacts = (bool) $fitness->notify_contacts;
+        $this->loadCopySelection($fitness);
         $this->status = $fitness->status;
       
-        if (!is_null($fitness->horse_id)) {
-            $this->type = "Horse";
-            $this->horse_id = $fitness->horse_id;
-        }elseif(!is_null($fitness->vehicle_id)){
-            $this->type = "Vehicle";
-            $this->vehicle_id = $fitness->vehicle_id;
-        }elseif(!is_null($fitness->trailer_id)){
-            $this->type = "Trailer";
-            $this->trailer_id = $fitness->trailer_id;
-        }elseif(!is_null($fitness->employee_id)){
-            $this->type = "Employee";
-            $this->employee_id = $fitness->employee_id;
-        }else{
-            $this->type = "Other";
+        $this->type = $fitness->subjectType();
+        if (isset(Fitness::SUBJECTS[$this->type])) {
+            $column = Fitness::SUBJECTS[$this->type];
+            $this->{$column} = $fitness->{$column};
         }
-       
+
         $this->fitness_id = $fitness->id;
         $this->dispatchBrowserEvent('show-fitnessEditModal');
 
@@ -334,22 +313,7 @@ class Index extends Component
             // ----------------------------
             // 1) Resolve target ids (and clear others)
             // ----------------------------
-            $targets = [
-                'horse_id'    => null,
-                'vehicle_id'  => null,
-                'trailer_id'  => null,
-                'employee_id' => null,
-            ];
-
-            if ($this->type === 'Horse') {
-                $targets['horse_id'] = $this->horse_id ?? null;
-            } elseif ($this->type === 'Vehicle') {
-                $targets['vehicle_id'] = $this->vehicle_id ?? null;
-            } elseif ($this->type === 'Trailer') {
-                $targets['trailer_id'] = $this->trailer_id ?? null;
-            } elseif ($this->type === 'Employee') {
-                $targets['employee_id'] = $this->employee_id ?? null;
-            }
+            $targets = $this->targets();
 
             // ----------------------------
             // 2) Parse dates safely
@@ -372,10 +336,11 @@ class Index extends Component
             // ----------------------------
             // 3) Update
             // ----------------------------
-            $fitness->update([
+            $fitness->update($targets + [
                 'user_id'          => Auth::id(),
                 'reminder_item_id' => $this->reminder_item_id,
                 'cc'               => $this->cc,
+                'notify_contacts'  => $this->contactsAllowed() && (bool) $this->notify_contacts,
 
                 'issued_at'        => $issuedAtDb,
                 'expires_at'       => $expiresAtDb,
@@ -392,14 +357,10 @@ class Index extends Component
                 'fourth_reminder_at'        => $fourthReminder,
                 'fourth_reminder_at_status' => (int) $this->fourth_reminder_at_status,
 
-                // clear all then set only the correct one
-                'horse_id'    => $targets['horse_id'],
-                'vehicle_id'  => $targets['vehicle_id'],
-                'trailer_id'  => $targets['trailer_id'],
-                'employee_id' => $targets['employee_id'],
-
                 'status' => $status,
             ]);
+
+            $this->applyCopySelection($fitness);
 
             $this->dispatchBrowserEvent('hide-fitnessEditModal');
             $this->resetInputFields();
@@ -416,34 +377,23 @@ class Index extends Component
     {
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
-        if (isset($this->type) && $this->type == "Horse") {
-            return view('livewire.fitnesses.index',[
-                'fitnesses' => Fitness::where('horse_id', $this->horse_id)->where('closed',false)->where('status',true)->orderBy('created_at','desc')->paginate(10),
-                'reminder_items' => $this->reminder_items
-            ]);
-        }elseif (isset($this->type) && $this->type == "Vehicle") {
-            return view('livewire.fitnesses.index',[
-                'fitnesses' =>  Fitness::where('vehicle_id', $this->vehicle_id)->where('closed',false)->where('status',true)->orderBy('created_at','desc')->paginate(10),
-                'reminder_items' => $this->reminder_items
-            ]);
-        
-        }
-        elseif (isset($this->type) && $this->type == "Trailer") {
-            return view('livewire.fitnesses.index',[
-                'fitnesses' => Fitness::where('trailer_id', $this->trailer_id)->where('closed',false)->where('status',true)->orderBy('created_at','desc')->paginate(10),
-                'reminder_items' => $this->reminder_items
-            ]);
-          
-        }
-        elseif (isset($this->type) && $this->type == "Employee") {
-            return view('livewire.fitnesses.index',[
-                'fitnesses' => Fitness::where('employee_id', $this->employee_id)->where('closed',false)->where('status',true)->orderBy('created_at','desc')->paginate(10),
-                'reminder_items' => $this->reminder_items
-            ]);
-          
-        }
-       
-        
-        
+        $column = Fitness::SUBJECTS[$this->type] ?? null;
+
+        $fitnesses = Fitness::query()
+            ->withCount('selectedCopies')
+            ->when($column, fn ($q) => $q->where($column, $this->{$column}), fn ($q) => $q->whereRaw('1 = 0'))
+            ->where('closed', false)
+            ->where('status', true)
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        return view('livewire.fitnesses.index', [
+            'fitnesses' => $fitnesses,
+            'reminder_items' => $this->reminder_items,
+            'contactRecipients' => $this->contactsAllowed() ? Fitness::contactEmailsFor($this->type, $this->filter_id) : [],
+            'copyList' => $this->copyList(),
+            'copyEmployees' => $this->copyEmployeeOptions(),
+        ]);
     }
 }

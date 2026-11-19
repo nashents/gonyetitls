@@ -326,14 +326,18 @@ class Index extends Component
         $deposit = app(CustomerDepositService::class)
             ->deposits((int) $this->selectedCustomer, (int) $this->selectedCurrency)
             ->first(fn ($deposit) => (int) $deposit->payment->id === (int) $line['payment_id']);
-        $invoice = Invoice::find($line['invoice_id']);
+        // The target is an invoice id, or "j<id>" for a debit debtors journal (e.g. opening balance)
+        $journalId = CustomerDepositService::journalTarget($line['invoice_id']);
+        $target_balance = $journalId
+            ? optional(\App\Models\DebtorJournal::find($journalId))->outstandingAmount()
+            : optional(Invoice::find($line['invoice_id']))->balance;
 
-        if (! $deposit || ! $invoice) {
+        if (! $deposit || $target_balance === null) {
             return;
         }
 
         $left_on_payment = $deposit->available - $others->where('payment_id', $line['payment_id'])->sum('amount');
-        $left_on_invoice = (float) $invoice->balance - $others->where('invoice_id', $line['invoice_id'])->sum('amount');
+        $left_on_invoice = (float) $target_balance - $others->where('invoice_id', $line['invoice_id'])->sum('amount');
 
         $this->allocations[$index]['amount'] = max(round(min($left_on_payment, $left_on_invoice), 2), 0);
     }
@@ -621,7 +625,7 @@ class Index extends Component
         $this->dispatchBrowserEvent('hide-paymentDrawdownModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>$symbol.number_format($result['applied'],2)." applied to ".$result['invoices']." invoice(s) successfully!!"
+            'message'=>$symbol.number_format($result['applied'],2)." applied to ".$result['invoices']." invoice(s)/journal(s) successfully!!"
         ]);
 
     }
@@ -1402,6 +1406,8 @@ class Index extends Component
 
         // Bulk invoice payments: every deposit that still has funds on it
         $deposits = collect();
+        // ...and debit debtors journals (opening balances etc.) still owed, matchable like invoices
+        $debit_journals = collect();
 
         if (filled($this->selectedCustomer) && filled($this->selectedCurrency)) {
 
@@ -1409,6 +1415,9 @@ class Index extends Component
                 ->deposits((int) $this->selectedCustomer, (int) $this->selectedCurrency)
                 ->filter(fn ($deposit) => $deposit->available > 0)
                 ->values();
+
+            $debit_journals = app(CustomerDepositService::class)
+                ->openDebitJournals((int) $this->selectedCustomer, (int) $this->selectedCurrency);
 
             $this->unpaid_invoices = Invoice::where('customer_id',$this->selectedCustomer)
                                         ->where('currency_id',$this->selectedCurrency)
@@ -1530,6 +1539,7 @@ class Index extends Component
                 'invoices' => $query->orderByDesc($this->invoice_filter)->paginate(10),
                 'current_balance' => $this->current_balance,
                 'deposits' => $deposits,
+                'debit_journals' => $debit_journals,
                 // What the lines in the bulk payments modal add up to, per payment and per invoice
                 'allocating' => [
                     'payments' => collect($this->allocations)->filter(fn ($line) => filled($line['payment_id'] ?? null) && is_numeric($line['amount'] ?? null))->groupBy('payment_id')->map(fn ($lines) => round($lines->sum('amount'), 2)),

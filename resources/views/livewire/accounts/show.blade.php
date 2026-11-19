@@ -84,13 +84,5 @@
         </div>
         <!-- /.col-md-9 -->
     </div>
-    @section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#transactionsTable').DataTable();
-    } );
-    </script>
-@endsection
-    
 
 </div>

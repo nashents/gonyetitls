@@ -16,7 +16,7 @@
     <div class="col-md-2">
         <div class="form-group">
             <label>Trip Type<span class="required" style="color: red">*</span></label>
-            <select wire:model.defer="{{ $prefix }}trip_type_id" class="form-control{{ $sm }}">
+            <select wire:model="{{ $prefix }}trip_type_id" class="form-control{{ $sm }}">
                 <option value="">Select</option>
                 @foreach ($tripTypes as $tripType)
                     <option value="{{ $tripType->id }}">{{ $tripType->name }}</option>
@@ -111,8 +111,9 @@
 <div class="row">
     <div class="col-md-3">
         <div class="form-group">
-            <label>Freight Calculation<span class="required" style="color: red">*</span></label>
+            <label>Freight Calculation</label>
             <select wire:model="{{ $prefix }}freight_calculation" class="form-control{{ $sm }}">
+                <option value="">None</option>
                 @foreach (\App\Http\Livewire\Trips\BulkCreate::FREIGHT_CALCULATIONS as $value => $label)
                     <option value="{{ $value }}">{{ $label }}</option>
                 @endforeach
@@ -122,9 +123,9 @@
     </div>
     <div class="col-md-2">
         <div class="form-group">
-            <label>Currency<span class="required" style="color: red">*</span></label>
-            <select wire:model="{{ $prefix }}currency_id" class="form-control{{ $sm }}">
-                <option value="">Select</option>
+            <label>Currency</label>
+            <select wire:model="{{ $prefix }}currency_id" class="form-control{{ $sm }}" title="Leave blank to use the company currency">
+                <option value="">Company currency</option>
                 @foreach ($currencies as $currency)
                     <option value="{{ $currency->id }}">{{ $currency->name }}</option>
                 @endforeach
@@ -143,14 +144,14 @@
     @endif
     <div class="col-md-2">
         <div class="form-group">
-            <label>Customer Rate<span class="required" style="color: red">*</span></label>
+            <label>Customer Rate</label>
             <input type="number" step="any" min="0" wire:model.lazy="{{ $prefix }}rate" class="form-control{{ $sm }}">
             @error($prefix.'rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
         </div>
     </div>
     <div class="col-md-1">
         <div class="form-group">
-            <label>Km @if (\App\Http\Livewire\Trips\BulkCreate::usesDistance($job['freight_calculation']))<span class="required" style="color: red">*</span>@endif</label>
+            <label>Km</label>
             <input type="number" step="any" min="0" wire:model.lazy="{{ $prefix }}distance" class="form-control{{ $sm }}">
             @error($prefix.'distance') <span class="error" style="color:red">{{ $message }}</span> @enderror
         </div>
@@ -173,3 +174,40 @@
         </div>
     </div>
 </div>
+@if ($this->isCrossBorder($job['trip_type_id']))
+    {{-- Independent lists: e.g. one border crossed, with a port agent AND a border agent. --}}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label><a href="{{ route('borders.index') }}" target="_blank" style="color: blue">Border(s)</a></label>
+                <div style="max-height: 110px; overflow-y: auto; border: 1px solid #ddd; border-radius: 3px; padding: 4px 8px;">
+                    @forelse ($borders as $border)
+                        <label wire:key="{{ $prefix }}border-{{ $border->id }}" style="display: inline-block; min-width: 180px; font-weight: normal; margin: 0 8px 2px 0;">
+                            <input type="checkbox" wire:model.defer="{{ $prefix }}border_ids" value="{{ $border->id }}"> {{ $border->name }}
+                        </label>
+                    @empty
+                        <small class="text-muted">No borders set up yet.</small>
+                    @endforelse
+                </div>
+                @error($prefix.'border_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                @if ($errors->has($prefix.'border_ids.*')) <span class="error" style="color:red">A selected border no longer exists.</span> @endif
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label><a href="{{ route('clearing_agents.index') }}" target="_blank" style="color: blue">Clearing Agent(s)</a></label>
+                <div style="max-height: 110px; overflow-y: auto; border: 1px solid #ddd; border-radius: 3px; padding: 4px 8px;">
+                    @forelse ($clearingAgents as $clearingAgent)
+                        <label wire:key="{{ $prefix }}clearing-agent-{{ $clearingAgent->id }}" style="display: inline-block; min-width: 180px; font-weight: normal; margin: 0 8px 2px 0;">
+                            <input type="checkbox" wire:model.defer="{{ $prefix }}clearing_agent_ids" value="{{ $clearingAgent->id }}"> {{ $clearingAgent->name }}
+                        </label>
+                    @empty
+                        <small class="text-muted">No clearing agents set up yet.</small>
+                    @endforelse
+                </div>
+                @error($prefix.'clearing_agent_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                @if ($errors->has($prefix.'clearing_agent_ids.*')) <span class="error" style="color:red">A selected clearing agent no longer exists.</span> @endif
+            </div>
+        </div>
+    </div>
+@endif

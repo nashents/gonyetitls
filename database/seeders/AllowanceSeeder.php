@@ -2,24 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\Allowance;
 use Illuminate\Database\Seeder;
 
+/**
+ * Allowances are for Transport / driver trip expenses; there are no default
+ * ones to seed. The payroll defaults that used to live here (Accommodation,
+ * Transport) are seeded as Earnings by EarningSeeder.
+ */
 class AllowanceSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-        $allowances = [
-            ['name' => 'Accomodation','status' => 1],
-            ['name' => 'Transport','status' => 1],
-            ];
-            Allowance::insert($allowances);
+        //
     }
-
-    
 }

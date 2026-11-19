@@ -99,8 +99,8 @@ Payslip | @if (Auth::user()->employee->company)
                                     <tr>
                                         
                                         <td class="text-center">
-                                            @if ($item->allowance)
-                                                {{$item->allowance->name}}
+                                            @if ($item->earning_line)
+                                                {{$item->earning_line->name}}
                                             @endif
                                         </td>
                                         <td class="text-center">
@@ -108,6 +108,9 @@ Payslip | @if (Auth::user()->employee->company)
                                             Loan : {{ $item->loan->loan_number }} {{ $item->loan->loan_type ? $item->loan->loan_type->name : "" }}
                                             @elseif ($item->deduction)
                                             {{$item->deduction->name}}
+                                            @if ((float) $item->employer_amount > 0)
+                                                <br><small>Company contribution: {{ $currency?->symbol }}{{ number_format((float) $item->employer_amount, 2) }} (not deducted)</small>
+                                            @endif
                                             @endif 
                                         </td>
                                         <td class="text-center">{{isset($item_currency) ? $item_currency->name : $currency?->name}}</td>

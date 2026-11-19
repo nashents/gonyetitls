@@ -87,6 +87,7 @@
                 <li role="presentation"><a href="#contacts" aria-controls="contacts" role="tab" data-toggle="tab">Contacts</a></li>
                 <li role="presentation"><a href="#contracts" aria-controls="contracts" role="tab" data-toggle="tab">Contracts</a></li>
                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
+                <li role="presentation"><a href="#reminders" aria-controls="reminders" role="tab" data-toggle="tab">Reminders</a></li>
                 <li role="presentation"><a href="#trips" aria-controls="trips" role="tab" data-toggle="tab">Trips</a></li>
                 <li role="presentation"><a href="#invoices" aria-controls="trips" role="tab" data-toggle="tab">Invoices</a></li>
 
@@ -184,6 +185,9 @@
                 </div>
                 <div role="tabpanel" class="tab-pane" id="documents">
                   @livewire('documents.index', ['id' => $customer->id,'category' =>'customer'])
+                </div>
+                <div role="tabpanel" class="tab-pane" id="reminders">
+                  @livewire('fitnesses.index', ['id' => $customer->id, 'type' => "Customer"])
                 </div>
                 <div role="tabpanel" class="tab-pane" id="trips">
                     <table id="tripsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">

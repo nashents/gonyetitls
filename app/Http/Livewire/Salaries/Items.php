@@ -5,7 +5,7 @@ namespace App\Http\Livewire\Salaries;
 use App\Models\Cargo;
 use App\Models\Salary;
 use Livewire\Component;
-use App\Models\Allowance;
+use App\Models\Earning;
 use App\Models\Deduction;
 use App\Models\SalaryItem;
 use App\Models\Destination;
@@ -74,7 +74,7 @@ private function resetInputFields(){
     public function mount($id){
         $this->salary_id = $id;
         $this->salary = Salary::find($id);
-        $this->allowances = Allowance::orderBy('name','asc')->get();
+        $this->allowances = Earning::orderBy('name','asc')->get();
         $this->deductions = Deduction::where('name','asc')->get();
     }
 

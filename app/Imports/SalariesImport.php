@@ -28,13 +28,13 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
  * (employee who already has a salary).
  *
  * Columns: employee_number (or name + surname), currency, frequency, basic*,
- * paye, aids_levy, then one "Allowance: <name>" / "Deduction: <name>" amount
- * column per allowance / deduction (see SalariesImportTemplate::itemColumns()).
+ * paye, aids_levy, then one "Earning: <name>" / "Deduction: <name>" amount
+ * column per earning / deduction (see SalariesImportTemplate::itemColumns()).
  * All amounts are in the row's salary currency.
  *
- * Employees, currencies, allowances and deductions are matched, never created.
+ * Employees, currencies, earnings and deductions are matched, never created.
  * A blank cell never clears anything: on an existing salary it means "keep",
- * and 0 in an allowance / deduction column removes that item. PAYE, AIDS Levy
+ * and 0 in an earning / deduction column removes that item. PAYE, AIDS Levy
  * and (where rates are configured) NSSA / NEC / Pension are calculated, the
  * same way the Add Salary form does. Loans and recoveries are left untouched.
  *
@@ -149,6 +149,10 @@ class SalariesImport implements ToCollection, SkipsEmptyRows, WithHeadingRow, Wi
                     $this->skipped[] = "{$label}: \"{$this->itemColumns[$key]['heading']}\" must be a number of 0 or more";
                     continue 2;
                 }
+                if (!empty($this->itemColumns[$key]['percent']) && $amount > 100) {
+                    $this->skipped[] = "{$label}: \"{$this->itemColumns[$key]['heading']}\" is a percentage - enter 0 to 100";
+                    continue 2;
+                }
                 $amounts[$key] = $amount;
             }
 
@@ -182,8 +186,21 @@ class SalariesImport implements ToCollection, SkipsEmptyRows, WithHeadingRow, Wi
                     $salary->save();
 
                     $typedStatutory = [];
+                    // Earnings first: a "% of gross" deduction needs them.
+                    uksort($amounts, fn ($a, $b) => ($this->itemColumns[$a]['column'] === 'earning_id' ? 0 : 1) <=> ($this->itemColumns[$b]['column'] === 'earning_id' ? 0 : 1));
+                    $companyCurrencyId = SalaryPayeService::companyCurrencyId($salary);
                     foreach ($amounts as $key => $amount) {
                         $item = $this->itemColumns[$key];
+
+                        // "(% of basic|gross)" column: the typed number is a percentage.
+                        if (!empty($item['percent']) && $amount > 0) {
+                            $base = (float) $salary->basic;
+                            if ($item['percent'] === 'gross') {
+                                $base += SalaryItem::where('salary_id', $salary->id)->whereNotNull('earning_id')->get()
+                                    ->sum(fn ($i) => SalaryPayeService::itemValue($i, $companyCurrencyId));
+                            }
+                            $amount = round($base * $amount / 100, 2);
+                        }
 
                         // A typed amount replaces the employee's current one; 0 just removes it.
                         SalaryItem::where('salary_id', $salary->id)->where($item['column'], $item['id'])->delete();
@@ -229,7 +246,7 @@ class SalariesImport implements ToCollection, SkipsEmptyRows, WithHeadingRow, Wi
         $autoIds = Deduction::whereIn('name', SalariesImportTemplate::AUTO_DEDUCTIONS)->pluck('id');
         SalaryItem::where('salary_id', $salary->id)->whereIn('deduction_id', $autoIds)->delete();
 
-        $totalAllowances = SalaryItem::where('salary_id', $salary->id)->whereNotNull('allowance_id')->get()->sum($value);
+        $totalAllowances = SalaryItem::where('salary_id', $salary->id)->whereNotNull('earning_id')->get()->sum($value);
         $gross = (float) $salary->basic + $totalAllowances;
 
         $this->applyStatutory($salary, $employee, $gross, $typedStatutory);
@@ -239,9 +256,8 @@ class SalariesImport implements ToCollection, SkipsEmptyRows, WithHeadingRow, Wi
             ->get()->sum($value);
 
         if ($salary->paye) {
-            $payeService = new SalaryPayeService();
-            $taxable = max(0, $gross - $payeService->nonTaxableAllowances($salary->id, $companyCurrencyId));
-            $totalDeductions += $payeService->applyPaye($salary, $taxable);
+            // Less non-taxable earnings, plus taxable company benefits, less PAYE credits.
+            $totalDeductions += (new SalaryPayeService())->applyPayeFor($salary, $gross, $companyCurrencyId);
         }
 
         $salary->gross = $gross;
@@ -366,14 +382,14 @@ class SalariesImport implements ToCollection, SkipsEmptyRows, WithHeadingRow, Wi
         return in_array($value, ['no', 'n', '0', 'false'], true) ? false : 'invalid';
     }
 
-    /** Allowance / deduction columns in the file that match nothing in the system. */
+    /** Earning / deduction columns in the file that match nothing in the system. */
     private function noteUnknownColumns(array $headings): void
     {
         foreach ($headings as $heading) {
             if (!is_string($heading) || in_array($heading, self::FIXED_COLUMNS, true) || isset($this->itemColumns[$heading])) {
                 continue;
             }
-            if (str_starts_with($heading, 'allowance_') || str_starts_with($heading, 'deduction_')) {
+            if (str_starts_with($heading, 'earning_') || str_starts_with($heading, 'allowance_') || str_starts_with($heading, 'deduction_')) {
                 $this->unknownColumns[] = $heading;
             }
         }

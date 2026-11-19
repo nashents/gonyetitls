@@ -338,6 +338,7 @@ class Index extends Component
             ->with(['vendor', 'currency', 'account', 'user'])
             ->select('supplier_journals.*')
             ->selectRaw("{$allocated} as allocated_total")
+            ->selectRaw('(select COALESCE(SUM(bp.amount+0),0) from bill_payments bp where bp.settled_supplier_journal_id = supplier_journals.id and bp.deleted_at is null) as settled_total')
             ->when($this->vendor_filter, fn ($q) => $q->where('vendor_id', $this->vendor_filter))
             ->when($this->type_filter, fn ($q) => $q->where('type', $this->type_filter))
             ->when($this->status_filter, fn ($q) => $q->where('status', $this->status_filter))

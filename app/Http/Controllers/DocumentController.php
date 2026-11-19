@@ -26,6 +26,53 @@ class DocumentController extends Controller
         ]);
     }
 
+    /** Chain of custody (hand-over / receipt log) for one document. */
+    public function custody(Document $document)
+    {
+        return view('documents.custody')->with('document', $document);
+    }
+
+    /**
+     * Printable QR label to stick on / clip to the physical document. The QR
+     * opens the custody page, which jumps to whichever action the scanner can
+     * take (confirm receipt if it's addressed to them, else hand over).
+     */
+    public function custodyLabel(Document $document)
+    {
+        $user = auth()->user();
+
+        return view('documents.custody-label')->with([
+            'document' => $document,
+            'company' => optional($user->employee)->company ?? $user->company ?? null,
+            'scanUrl' => route('documents.custody', ['document' => $document->id, 'action' => 'scan']),
+        ]);
+    }
+
+    /** Printable custody log (receipt-book page) for one document. */
+    public function custodyPrint(Document $document)
+    {
+        $service = app(\App\Services\Documents\DocumentCustodyService::class);
+        $user = auth()->user();
+        abort_unless($service->canView($user, $document), 403);
+
+        $document->load('user');
+
+        return view('documents.custody-print')->with([
+            'document' => $document,
+            'company' => optional($user->employee)->company ?? $user->company ?? \App\Models\Company::first(),
+            'movements' => $document->movements()->with(['fromUser', 'toUser', 'receiver', 'user'])->orderBy('id')->get(),
+            'holder' => $service->currentHolder($document),
+            'versions' => $service->versions($document),
+            'printedBy' => trim($user->name . ' ' . $user->surname),
+        ]);
+    }
+
+    /** Hand-overs waiting for / sent by the logged-in user. */
+    public function custodyMine()
+    {
+        return view('documents.custody-mine');
+    }
+
     /**
      * Show the form for creating a new resource.
      *

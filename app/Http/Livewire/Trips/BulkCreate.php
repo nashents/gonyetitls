@@ -3,7 +3,9 @@
 namespace App\Http\Livewire\Trips;
 
 use App\Models\Assignment;
+use App\Models\Border;
 use App\Models\Cargo;
+use App\Models\ClearingAgent;
 use App\Models\Consignee;
 use App\Models\Consignor;
 use App\Models\Currency;
@@ -25,10 +27,17 @@ use App\Models\TripExpense;
 use App\Models\TripType;
 use App\Models\UnitsOfMeasure;
 use App\Models\Vendor;
+use App\Mail\AccountCreationMail;
+use App\Models\User;
 use App\Rules\UniqueReference;
+use App\Services\Sage\SageIntegration;
 use App\Services\Trips\BulkTripScheduleService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
 /**
@@ -52,8 +61,11 @@ class BulkCreate extends Component
     const JOB_FIELDS = [
         'customer_id', 'trip_type_id', 'cargo_id', 'consignee_id', 'consignor_id', 'currency_id', 'exchange_rate',
         'from', 'to', 'loading_point_id', 'offloading_point_id', 'distance', 'units_of_measure_id',
-        'freight_calculation', 'rate', 'cargo_details',
+        'freight_calculation', 'rate', 'cargo_details', 'border_ids', 'clearing_agent_ids',
     ];
+
+    // Trip types that cross a border: only these show (and save) borders and clearing agents, as on Trips > Create.
+    const CROSS_BORDER_TYPES = ['Intransit', 'Cross Border', 'Inward', 'Outward', 'Return'];
 
     public $sameJob = true;
 
@@ -71,17 +83,20 @@ class BulkCreate extends Component
     public $offloading_point_id;
     public $distance;
     public $units_of_measure_id;
-    public $freight_calculation = 'flat_rate';
+    public $freight_calculation; // optional; starts on None
     public $rate;
     public $cargo_details;
+    // Borders crossed and clearing agents used: independent lists (e.g. one border, a port agent AND a border agent).
+    public $border_ids = [];
+    public $clearing_agent_ids = [];
 
     // Both modes
     public $trip_status = 'Scheduled';
     public $start_date;
     public $transporter_rate; // default for trucks from subcontracted transporters
 
-    // Per truck: horse_id, label, transporter_id, transporter_name, driver_id, trailer_ids, trip_ref, start_date,
-    // weight, quantity, litreage, comments, transporter_agreement, transporter_rate + JOB_FIELDS
+    // Per truck: horse_id, label, transporter_id, transporter_name, driver_id, trailer_ids, trip_ref, container_number,
+    // bill_of_lading, start_date, weight, quantity, litreage, comments, transporter_agreement, transporter_rate + JOB_FIELDS
     public $rows = [];
 
     // Trip expenses: key, expense_id, funded_by, category, payment_method_id, currency_id, exchange_rate, vendor_id,
@@ -104,9 +119,9 @@ class BulkCreate extends Component
 
     public function open()
     {
-        $this->reset(array_merge(self::JOB_FIELDS, ['transporter_rate', 'rows', 'expenseLines', 'truckSearch', 'pickerTransporterId', 'pickedHorses']));
+        $this->reset(array_merge(self::JOB_FIELDS, ['transporter_rate', 'rows', 'expenseLines', 'truckSearch', 'pickerTransporterId', 'pickedHorses', 'newVendorFor', 'newVendor']));
         $this->sameJob = true;
-        $this->freight_calculation = 'flat_rate';
+        $this->freight_calculation = null;
         $this->trip_status = 'Scheduled';
         $this->start_date = now()->format('Y-m-d');
         $this->currency_id = optional($this->company)->currency_id;
@@ -117,6 +132,16 @@ class BulkCreate extends Component
     public function getCargoTypesProperty()
     {
         return Cargo::pluck('type', 'id');
+    }
+
+    public function getTripTypeNamesProperty()
+    {
+        return TripType::pluck('name', 'id');
+    }
+
+    public function isCrossBorder($tripTypeId): bool
+    {
+        return $tripTypeId && in_array($this->tripTypeNames[$tripTypeId] ?? null, self::CROSS_BORDER_TYPES, true);
     }
 
     // The job a row is saved with: the shared one, or the row's own.
@@ -243,6 +268,8 @@ class BulkCreate extends Component
             'driver_id' => Assignment::where('horse_id', $horse->id)->where('status', 1)->value('driver_id') ?: '',
             'trailer_ids' => TrailerAssignment::where('horse_id', $horse->id)->where('status', 1)->pluck('trailer_id')->map(fn ($id) => (string) $id)->all(),
             'trip_ref' => '',
+            'container_number' => '',
+            'bill_of_lading' => '',
             'start_date' => $this->start_date,
             'weight' => '',
             'quantity' => '',
@@ -290,6 +317,91 @@ class BulkCreate extends Component
     {
         unset($this->expenseLines[$index]);
         $this->expenseLines = array_values($this->expenseLines);
+        $this->cancelNewVendor();
+    }
+
+    // Quick "New Vendor" from an expense line: created the way Vendors > New does
+    // (login account + PIN email, vendor number, Sage push) and picked on that line.
+    public $newVendorFor = null;
+    public $newVendor = ['name' => '', 'email' => '', 'phonenumber' => '', 'currency_id' => ''];
+
+    public function startNewVendor($index)
+    {
+        $this->newVendorFor = $index;
+        $this->newVendor = ['name' => '', 'email' => '', 'phonenumber' => '', 'currency_id' => $this->expenseLines[$index]['currency_id'] ?? ''];
+        $this->resetErrorBag(['newVendor.name', 'newVendor.email', 'newVendor.phonenumber', 'newVendor.currency_id']);
+    }
+
+    public function cancelNewVendor()
+    {
+        $this->newVendorFor = null;
+        $this->resetErrorBag(['newVendor.name', 'newVendor.email', 'newVendor.phonenumber', 'newVendor.currency_id']);
+    }
+
+    public function createVendor()
+    {
+        $this->newVendor = array_map(fn ($v) => is_string($v) ? trim($v) : $v, $this->newVendor);
+
+        $this->validate([
+            'newVendor.name' => 'required|string|min:2|max:255|unique:vendors,name,NULL,id,deleted_at,NULL',
+            'newVendor.email' => 'nullable|email|max:255|unique:users,email',
+            'newVendor.phonenumber' => 'nullable|string|max:255',
+            'newVendor.currency_id' => 'nullable|exists:currencies,id',
+        ], [
+            'newVendor.name.required' => 'Enter the vendor name.',
+            'newVendor.name.unique' => 'A vendor with this name already exists.',
+            'newVendor.email.unique' => 'This email is already used by another account.',
+        ]);
+
+        $data = $this->newVendor;
+        $pin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+
+        $vendor = DB::transaction(function () use ($data, $pin) {
+            $user = new User;
+            $user->name = $data['name'];
+            $user->category = 'vendor';
+            $user->email = $data['email'] ?: null;
+            $user->password = Hash::make($pin);
+            $user->save();
+
+            $vendor = new Vendor;
+            $vendor->user_id = $user->id;
+            $vendor->creator_id = Auth::id();
+            $vendor->company_id = optional($this->company)->id;
+            $vendor->vendor_number = Vendor::nextVendorNumber();
+            $vendor->name = $data['name'];
+            $vendor->email = $data['email'] ?: null;
+            $vendor->pin = $pin;
+            $vendor->phonenumber = $data['phonenumber'] ?: null;
+            $vendor->currency_id = $data['currency_id'] ?: null;
+            $vendor->status = 1;
+            $vendor->save();
+
+            return $vendor;
+        });
+
+        // Account email and Sage push after commit; neither failure undoes the vendor.
+        if ($vendor->email) {
+            try {
+                Mail::to($vendor->email)->send(new AccountCreationMail($vendor->user, $this->company, $pin));
+            } catch (\Throwable $e) {
+                Log::warning('Bulk schedule vendor account email failed', ['vendor_id' => $vendor->id, 'error' => $e->getMessage()]);
+            }
+        }
+        if (SageIntegration::enabledForUser()) {
+            $result = app(\App\Services\SageIntacctService::class)->syncVendor($vendor);
+            if (isset($result['success']) && $result['success'] === false && empty($result['skipped'])) {
+                $this->dispatchBrowserEvent('alert', ['type' => 'warning', 'message' => 'Vendor saved, but Sage sync failed: '.($result['error'] ?? 'unknown error')]);
+            }
+        }
+
+        if ($this->newVendorFor !== null && isset($this->expenseLines[$this->newVendorFor])) {
+            $this->expenseLines[$this->newVendorFor]['vendor_id'] = (string) $vendor->id;
+            $this->resetErrorBag('expenseLines.'.$this->newVendorFor.'.vendor_id');
+        }
+        $this->newVendorFor = null;
+
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendor '.$vendor->name.' created.']);
     }
 
     // Picking an expense fills its defaults the way Trips\Create::mount() does: the master's currency, amount and
@@ -361,15 +473,20 @@ class BulkCreate extends Component
             $prefix.'customer_id' => 'required|exists:customers,id',
             $prefix.'trip_type_id' => 'required|exists:trip_types,id',
             $prefix.'cargo_id' => 'required|exists:cargos,id',
-            $prefix.'currency_id' => 'required|exists:currencies,id',
+            $prefix.'currency_id' => 'nullable|exists:currencies,id',
             $prefix.'exchange_rate' => ($this->isForeign($job['currency_id']) ? 'required' : 'nullable').'|numeric|min:0.0001',
             $prefix.'from' => 'required|exists:destinations,id',
             $prefix.'to' => 'required|exists:destinations,id',
             $prefix.'loading_point_id' => 'nullable|exists:loading_points,id',
             $prefix.'offloading_point_id' => 'nullable|exists:offloading_points,id',
-            $prefix.'freight_calculation' => 'required|in:'.implode(',', array_keys(self::FREIGHT_CALCULATIONS)),
-            $prefix.'rate' => 'required|numeric|min:0',
-            $prefix.'distance' => (static::usesDistance($job['freight_calculation']) ? 'required' : 'nullable').'|numeric|min:0',
+            $prefix.'freight_calculation' => 'nullable|in:'.implode(',', array_keys(self::FREIGHT_CALCULATIONS)),
+            // Customer rate (and so freight) is optional: a trip can be scheduled before it is priced.
+            $prefix.'rate' => 'nullable|numeric|min:0',
+            $prefix.'distance' => 'nullable|numeric|min:0',
+            $prefix.'border_ids' => 'nullable|array',
+            $prefix.'border_ids.*' => 'exists:borders,id',
+            $prefix.'clearing_agent_ids' => 'nullable|array',
+            $prefix.'clearing_agent_ids.*' => 'exists:clearing_agents,id',
         ];
     }
 
@@ -383,6 +500,8 @@ class BulkCreate extends Component
             'rows.*.driver_id' => 'required|distinct|exists:drivers,id',
             'rows.*.start_date' => 'required|date',
             'rows.*.trip_ref' => 'nullable|string|max:255|distinct:ignore_case',
+            'rows.*.container_number' => 'nullable|string|max:255',
+            'rows.*.bill_of_lading' => 'nullable|string|max:255',
             'rows.*.weight' => 'nullable|numeric|min:0',
             'rows.*.quantity' => 'nullable|numeric|min:0',
             'rows.*.litreage' => 'nullable|numeric|min:0',
@@ -396,9 +515,6 @@ class BulkCreate extends Component
             $job = $this->job($i);
             if (! $this->sameJob) {
                 $rules += $this->jobRules("rows.$i.", $job);
-            }
-            if (static::usesMeasure($job['freight_calculation'])) {
-                $rules[$job['cargo_type'] === 'Liquid' ? "rows.$i.litreage" : "rows.$i.weight"] = 'required|numeric|min:0.01';
             }
             if (! empty($row['transporter_agreement'])) {
                 $rules["rows.$i.transporter_rate"] = 'required|numeric|min:0';
@@ -513,7 +629,15 @@ class BulkCreate extends Component
         $trips = [];
         foreach ($this->rows as $i => $row) {
             $job = $this->job($i);
+            // Currency is optional on the form; a blank one saves in the company's own currency.
+            $job['currency_id'] = $job['currency_id'] ?: optional($this->company)->currency_id;
             $job['exchange_rate'] = $this->isForeign($job['currency_id']) ? $job['exchange_rate'] : null;
+            $job['rate'] = is_numeric($job['rate']) ? $job['rate'] : null;
+            $job['freight_calculation'] = $job['freight_calculation'] ?: null;
+            // Borders / clearing agents only apply to cross-border trip types (they're hidden otherwise).
+            $crossBorder = $this->isCrossBorder($job['trip_type_id']);
+            $job['border_ids'] = $crossBorder ? array_values(array_filter((array) $job['border_ids'])) : [];
+            $job['clearing_agent_ids'] = $crossBorder ? array_values(array_filter((array) $job['clearing_agent_ids'])) : [];
             $trips[] = array_merge($row, $job, [
                 'trip_status' => $this->trip_status,
                 'transporter_agreement' => (bool) $row['transporter_agreement'],
@@ -590,6 +714,8 @@ class BulkCreate extends Component
             'expenses' => Expense::orderBy('name')->get(['id', 'name']),
             'vendors' => $this->expenseLines ? Vendor::orderBy('name')->get(['id', 'name']) : collect(),
             'paymentMethods' => PaymentMethod::orderBy('name')->get(['id', 'name']),
+            'borders' => Border::orderBy('name')->get(['id', 'name']),
+            'clearingAgents' => ClearingAgent::orderBy('name')->get(['id', 'name']),
             'trucks' => $trucks,
             'drivers' => $drivers,
             'trailers' => $trailers,

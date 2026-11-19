@@ -22,7 +22,7 @@
           <tr>
          
             <td>
-                @if ($salary_item->allowance)
+                @if ($salary_item->earning_line)
                     Earning
                 @elseif($salary_item->deduction)
                     Deduction
@@ -38,8 +38,8 @@
                 @endif
             </td>
             <td>
-                @if ($salary_item->allowance)
-                    {{$salary_item->allowance ? $salary_item->allowance->name : ""}}
+                @if ($salary_item->earning_line)
+                    {{$salary_item->earning_line?->name}}
                 @elseif($salary_item->deduction)
                     {{$salary_item->deduction ? $salary_item->deduction->name : ""}}
                 @elseif($salary_item->recovery)

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Exports\Concerns\DailyShiftReportHeader;
+use App\Models\Fuel;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -28,7 +29,10 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
  * for works described "DHI Runs"; Charged Hrs = Man Hrs - DHI Runs.
  * Machine Hrs = hour-meter run (Close Hours - Open Hours) per work, never more
  * than that work's man hours (the machine cannot run unmanned).
- * Ltr/Hr = Diesel / Machine Hrs.
+ * Ltr/Hr = litres on the shift's fuel order / hour-meter change since the
+ * equipment's last refuel (hours not captured as works still count). When a
+ * shift has no usable refuel hour readings it falls back to Diesel / Machine
+ * Hrs; Yesterday rows using the fallback are highlighted and noted in Comments.
  *
  * Rows 1-6 hold the logo and report info; the table starts at row 7.
  */
@@ -43,9 +47,14 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
 
     protected const RED = 'FF0000';
     protected const GREY = '808080';
+    protected const AMBER = 'FFE699';
+
+    protected const FALLBACK_NOTE = 'Ltr/Hr based on Diesel ÷ Machine Hrs';
 
     protected Carbon $asAt;
     protected int $rowCount = 0;
+    /** Sheet rows whose Yesterday Ltr/Hr used the Diesel / Machine Hrs fallback. */
+    protected array $fallbackRows = [];
     protected array $reportPeriods = [];
 
     public function __construct(?Carbon $asAt = null)
@@ -93,21 +102,31 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
              'EQUIPMENT #', 'MAN HRS', 'DHI RUNS', 'CHARGED HRS', 'MACHINE HRS', 'LOADS', 'DIESEL', 'LTR/HR'],
         ];
 
-        foreach ($labels as $key => $label) {
+        $this->fallbackRows = [];
+
+        foreach (array_keys($labels) as $i => $key) {
+            $label = $labels[$key];
             $y = $yesterday[$key] ?? null;
             $m = $mtd[$key] ?? null;
+
+            // Flag (Yesterday only) rows whose Ltr/Hr used Diesel / Machine Hrs
+            $comments = $y ? $y['comments'] : [];
+            if ($y && $y['lph_fallback']) {
+                $this->fallbackRows[] = self::DATA_START + $i;
+                array_unshift($comments, self::FALLBACK_NOTE);
+            }
 
             $rows[] = array_merge(
                 [$label],
                 $this->figures($y),
-                [$y ? implode('; ', $y['comments']) : null, '', $label],
+                [$comments ? implode('; ', $comments) : null, '', $label],
                 $this->figures($m)
             );
         }
 
         $this->rowCount = count($labels);
 
-        // Sub total: plain SUMs; Ltr/Hr re-derived from total diesel / total machine hrs (not a sum of ratios)
+        // Sub total: plain SUMs; Ltr/Hr re-derived from total refuel litres / total refuel-to-refuel hours (not a sum of ratios)
         $first = self::DATA_START;
         $last = max($first, self::DATA_START + $this->rowCount - 1);
         $sum = fn ($col) => $this->rowCount ? "=SUM({$col}{$first}:{$col}{$last})" : 0;
@@ -120,6 +139,11 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
             $sum('L'), $sum('M'), $sum('N'), $sum('O'), $sum('P'), $sum('Q'),
             $this->totalLitresPerHour($mtd),
         ];
+
+        if ($this->fallbackRows) {
+            $rows[] = [];
+            $rows[] = ['* Ltr/Hr highlighted = ' . self::FALLBACK_NOTE . ': the shift\'s fuel order or the previous refuel has no usable hour reading.'];
+        }
 
         return $rows;
     }
@@ -138,15 +162,15 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
             $t['machine_hours'],
             $t['loads'],
             $t['diesel'],
-            $this->litresPerHour($t['diesel'], round($t['machine_hours'], 2)),
+            $this->litresPerHour($t['lph_litres'], $t['lph_hours']),
         ];
     }
 
     protected function totalLitresPerHour(array $block): ?float
     {
         return $this->litresPerHour(
-            array_sum(array_column($block, 'diesel')),
-            array_sum(array_map(fn ($t) => round($t['machine_hours'], 2), $block))
+            array_sum(array_column($block, 'lph_litres')),
+            array_sum(array_column($block, 'lph_hours'))
         );
     }
 
@@ -185,14 +209,31 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
                 'machine_hours' => 0.0,
                 'loads' => 0.0,
                 'diesel' => 0.0,
+                'lph_litres' => 0.0,
+                'lph_hours' => 0.0,
+                'lph_fallback' => false,
                 'comments' => [],
             ];
 
+            $machineHours = $this->machineHours($shift);
+            $diesel = $this->diesel($shift);
+
             $out[$key]['man_hours'] += $this->manHours($shift);
             $out[$key]['dhi_runs'] += $this->dhiRuns($shift);
-            $out[$key]['machine_hours'] += $this->machineHours($shift);
+            $out[$key]['machine_hours'] += $machineHours;
             $out[$key]['loads'] += (float) $shift->rehandlings->sum(fn ($r) => is_numeric($r->loads) ? (float) $r->loads : 0);
-            $out[$key]['diesel'] += $this->diesel($shift);
+            $out[$key]['diesel'] += $diesel;
+
+            // Refuel-to-refuel: covers machine hours that were never captured as works
+            if ($run = $this->hoursSinceLastRefuel($shift->fuel)) {
+                $out[$key]['lph_litres'] += (float) $shift->fuel->quantity;
+                $out[$key]['lph_hours'] += $run;
+            } elseif ($diesel > 0 && $machineHours > 0) {
+                // No usable refuel hour readings: fall back to Diesel / Machine Hrs (flagged on the report)
+                $out[$key]['lph_litres'] += $diesel;
+                $out[$key]['lph_hours'] += $machineHours;
+                $out[$key]['lph_fallback'] = true;
+            }
 
             if (filled($shift->comments)) {
                 $out[$key]['comments'][] = (filled($shift->type) ? "{$shift->type}: " : '') . trim($shift->comments);
@@ -252,6 +293,46 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
         }
 
         return (int) $m[1] * 60 + (int) $m[2];
+    }
+
+    /**
+     * Hour-meter change between this refuel and the same equipment's previous
+     * (non-rejected) refuel with a reading, so hours worked outside the
+     * captured works still count. Null when either reading is missing or the
+     * meter did not move forward.
+     */
+    protected function hoursSinceLastRefuel(?Fuel $fuel): ?float
+    {
+        if (!$fuel || !is_numeric($fuel->hours) || !is_numeric($fuel->quantity) || (float) $fuel->quantity <= 0) {
+            return null;
+        }
+
+        if (!$fuel->horse_id && !$fuel->vehicle_id) {
+            return null;
+        }
+
+        $previous = Fuel::query()
+            ->when($fuel->horse_id, fn ($q) => $q->where('horse_id', $fuel->horse_id))
+            ->when(!$fuel->horse_id, fn ($q) => $q->where('vehicle_id', $fuel->vehicle_id))
+            ->where('id', '!=', $fuel->id)
+            ->where(fn ($q) => $q->whereNull('authorization')->orWhere('authorization', '!=', 'rejected'))
+            ->when(filled($fuel->date), fn ($q) => $q->where(fn ($w) => $w
+                ->where('date', '<', $fuel->date)
+                ->orWhere(fn ($s) => $s->where('date', $fuel->date)->where('id', '<', $fuel->id))))
+            ->when(blank($fuel->date), fn ($q) => $q->where('id', '<', $fuel->id))
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get(['id', 'hours'])
+            ->first(fn ($f) => is_numeric($f->hours) && (float) $f->hours > 0);
+
+        if (!$previous) {
+            return null;
+        }
+
+        $run = (float) $fuel->hours - (float) $previous->hours;
+
+        return $run > 0 ? $run : null;
     }
 
     /**
@@ -379,6 +460,19 @@ class ShiftsRehandlingDailyExport implements FromArray, WithEvents, WithColumnWi
                 // Grey separator column between the blocks
                 $sheet->getStyle("J{$band}:J{$totalRow}")->getFill()
                     ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::GREY);
+
+                // Yesterday Ltr/Hr computed as Diesel / Machine Hrs: amber cell + legend under the table
+                foreach ($this->fallbackRows as $row) {
+                    $sheet->getStyle("H{$row}")->getFill()
+                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::AMBER);
+                }
+                if ($this->fallbackRows) {
+                    $legend = $totalRow + 2;
+                    $sheet->mergeCells("A{$legend}:I{$legend}");
+                    $sheet->getStyle("A{$legend}")->getFont()->setItalic(true)->setSize(9);
+                    $sheet->getStyle("A{$legend}")->getFill()
+                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::AMBER);
+                }
 
                 $sheet->freezePane("B{$dataStart}");
             },

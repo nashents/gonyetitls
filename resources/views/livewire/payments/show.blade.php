@@ -180,12 +180,16 @@
                                                         @if ($payment->transaction_category === 'Customer Deposits')
                                                             @if ($drawdown->invoice)
                                                             <a href="{{ route('invoices.show', $drawdown->invoice->id) }}" style="color: blue">{{ $drawdown->invoice->invoice_number }}</a>
+                                                            @elseif ($drawdown->settled_debtor_journal)
+                                                            Debtors Journal {{ $drawdown->settled_debtor_journal->journal_number }}
                                                             @else
                                                             <em>Invoice deleted</em>
                                                             @endif
                                                         @else
                                                             @if ($drawdown->bill)
                                                             <a href="{{ route('bills.show', $drawdown->bill->id) }}" style="color: blue">{{ $drawdown->bill->bill_number }}</a>
+                                                            @elseif ($drawdown->settled_supplier_journal)
+                                                            Suppliers Journal {{ $drawdown->settled_supplier_journal->journal_number }}
                                                             @else
                                                             <em>Bill deleted</em>
                                                             @endif

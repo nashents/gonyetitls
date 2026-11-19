@@ -7,7 +7,7 @@ use App\Models\Salary;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Employee;
-use App\Models\Allowance;
+use App\Models\Earning;
 use App\Models\Deduction;
 use App\Models\SalaryItem;
 use App\Services\Payroll\SalaryPayeService;
@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Session;
 
 class Edit extends Component
 {
+    use \App\Http\Livewire\Concerns\CalculatesSalaryItemAmounts;
+
     public $employees;
     public $currencies;
     public $loans;
@@ -55,7 +57,7 @@ class Edit extends Component
     public $total_deductions = 0;
     public $frequency;
 
-    // allowance_id:/deduction_id:<id> => [[currency_id, exchange_rate], ...]
+    // earning_id:/deduction_id:<id> => [[currency_id, exchange_rate], ...]
     // of the rows being replaced on save (request-local, not wire state)
     private array $carriedFx = [];
 
@@ -148,9 +150,10 @@ class Edit extends Component
         $aidsLevyDeductionId = Deduction::where('name', 'AIDS Levy')->value('id');
         $autoDeductionIds = array_filter([$payeDeductionId, $aidsLevyDeductionId]);
 
-        $existingAllowances = SalaryItem::where('salary_id', $id)->whereNotNull('allowance_id')->get()->values();
+        // "Allowances" on the form are payroll earnings (earning_id).
+        $existingAllowances = SalaryItem::where('salary_id', $id)->whereNotNull('earning_id')->get()->values();
         foreach ($existingAllowances as $idx => $item) {
-            $this->selectedAllowance[$idx] = $item->allowance_id;
+            $this->selectedAllowance[$idx] = $item->earning_id;
             $this->allowance_amount[$idx] = $item->amount;
             if ($idx > 0) {
                 $this->inputs[] = $idx;
@@ -189,7 +192,10 @@ class Edit extends Component
         ->orderBy('surname', 'asc')
         ->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->allowances = Allowance::orderBy('name','asc')->get();
+        // Active earnings, plus any inactive one already on this salary so it still shows.
+        $this->allowances = Earning::where('status', 1)
+            ->orWhereIn('id', array_filter($this->selectedAllowance))
+            ->orderBy('name','asc')->get();
         $this->loans =   Loan::where('employee_id',$salary->employee_id)->where('balance','>','0')->where('authorization','approved')->get();
         $this->deductions = Deduction::orderBy('name','asc')->get();
       
@@ -199,6 +205,21 @@ class Edit extends Component
         if (!is_null($id)) {
 
             $this->loans =   Loan::where('employee_id',$id)->where('balance','>','0')->where('authorization','approved')->get();
+        }
+    }
+
+    // Picking an earning / deduction pre-fills its amount (fixed, shared-premium
+    // employee share, or % of basic / gross worked out) - same as Create.
+    public function updatedSelectedAllowance($id, $key){
+        if (!empty($id)) {
+            $this->fillEarningAmount($key);
+            $this->recalculatePercentageRows(false);
+        }
+    }
+
+    public function updatedSelectedDeduction($id, $key){
+        if (!empty($id)) {
+            $this->fillDeductionAmount($key);
         }
     }
 
@@ -228,14 +249,17 @@ class Edit extends Component
                 // replacement — otherwise a USD allowance on a ZiG salary
                 // would silently become a ZiG amount.
                 $this->carriedFx = SalaryItem::where('salary_id', $this->salary_id)
-                    ->where(fn ($q) => $q->whereNotNull('allowance_id')->orWhereNotNull('deduction_id'))
+                    ->where(fn ($q) => $q->whereNotNull('earning_id')->orWhereNotNull('deduction_id'))
                     ->whereNotNull('currency_id')
                     ->get()
-                    ->groupBy(fn ($item) => $item->allowance_id ? 'allowance_id:'.$item->allowance_id : 'deduction_id:'.$item->deduction_id)
+                    ->groupBy(fn ($item) => $item->earning_id ? 'earning_id:'.$item->earning_id : 'deduction_id:'.$item->deduction_id)
                     ->map(fn ($items) => $items->map(fn ($item) => [$item->currency_id, $item->exchange_rate])->values()->all())
                     ->all();
 
-                SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('allowance_id')->delete();
+                // Legacy allowance_id rows are cleared too - payroll now uses earnings.
+                SalaryItem::where('salary_id', $this->salary_id)
+                    ->where(fn ($q) => $q->whereNotNull('earning_id')->orWhereNotNull('allowance_id'))
+                    ->delete();
                 SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('loan_id')->delete();
                 // Deductions include PAYE/AIDS Levy alongside manual ones —
                 // clearing all of them here (not just the manual selections)
@@ -243,7 +267,7 @@ class Edit extends Component
                 // top of last save's amounts.
                 SalaryItem::where('salary_id', $this->salary_id)->whereNotNull('deduction_id')->delete();
 
-                $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount);
+                $this->processSalaryItems($this->selectedAllowance, 'earning_id', $this->allowance_amount);
                 $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount);
 
                 if (!empty($this->selectedLoan)) {
@@ -268,7 +292,7 @@ class Edit extends Component
                 // same way Salaries Create totals them.
                 $companyCurrencyId = SalaryPayeService::companyCurrencyId($salary);
                 $items = SalaryItem::where('salary_id', $this->salary_id)->get();
-                $this->total_allowances = $items->whereNotNull('allowance_id')
+                $this->total_allowances = $items->whereNotNull('earning_id')
                     ->sum(fn ($item) => SalaryPayeService::itemValue($item, $companyCurrencyId));
                 $this->total_deductions = $items->filter(fn ($item) => $item->deduction_id || $item->loan_id)
                     ->sum(fn ($item) => SalaryPayeService::itemValue($item, $companyCurrencyId));
@@ -278,9 +302,8 @@ class Edit extends Component
 
                 // Process PAYE & AIDS Levy - on gross less non-taxable allowances
                 if ($this->paye) {
-                    $payeService = new SalaryPayeService();
-                    $taxable = max(0, $gross - $payeService->nonTaxableAllowances($this->salary_id, $companyCurrencyId));
-                    $this->total_deductions += $payeService->applyPaye($salary, $taxable);
+                    // Less non-taxable earnings, plus taxable company benefits, less PAYE credits.
+                    $this->total_deductions += (new SalaryPayeService())->applyPayeFor($salary, $gross, $companyCurrencyId);
                 }
 
                 // Final Salary Calculation

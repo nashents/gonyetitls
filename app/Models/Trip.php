@@ -231,6 +231,19 @@ class Trip extends Model implements Auditable, EditAuthorizable
     }
 
     /**
+     * Bill of Lading # - stored on the trip's trip_transport_orders rows
+     * (the trips table is at its row-size limit, so it has no column of its own).
+     */
+    public function getBillOfLadingAttribute(): ?string
+    {
+        $ttos = $this->relationLoaded('trip_transport_orders')
+            ? $this->trip_transport_orders
+            : $this->trip_transport_orders()->get();
+
+        return $ttos->pluck('bill_of_lading')->filter()->unique()->implode(', ') ?: null;
+    }
+
+    /**
      * All invoices covering this trip — its own lines PLUS the invoices raised
      * against any transport order it belongs to (the single-line invoice).
      */

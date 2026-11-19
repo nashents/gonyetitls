@@ -42,14 +42,28 @@
                                 <tbody>
                                     @foreach ($deductions as $deduction)
                                   <tr wire:key="{{ 'bf6079-43-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($deduction->id ?? '') }}">
-                                    <td>{{$deduction->name}}</td>
+                                    <td>
+                                        {{$deduction->name}}
+                                        @if ($deduction->isShared())
+                                            <br><small class="text-muted" title="Shared premium">Premium {{ number_format((float) $deduction->premium, 2) }}: company {{ rtrim(rtrim(number_format($deduction->employerPercentage(), 2), "0"), ".") }}% / employee {{ rtrim(rtrim(number_format($deduction->employeePercentage(), 2), "0"), ".") }}%</small>
+                                        @endif
+                                        @if ((float) $deduction->paye_credit_percentage > 0)
+                                            <br><small class="text-muted">PAYE credit {{ rtrim(rtrim(number_format((float) $deduction->paye_credit_percentage, 2), "0"), ".") }}%</small>
+                                        @endif
+                                    </td>
                                     <td>{{$deduction->currency ? $deduction->currency->name : ""}}</td>
                                     <td>{{$deduction->description}}</td>
                                     <td>{{$deduction->calculate_by}}</td>
                                     <td>{{$deduction->calculate_on}}</td>
                                     <td>{{$deduction->amount}}</td>
                                     <td>{{$deduction->percentage}}</td>
-                                    <td><span class="badge bg-{{$deduction->status == 1 ? "success" : "danger"}}">{{$deduction->status == 1 ? "Active" : "Inactive"}}</span></td>
+                                    @php $isSystem = $deduction->isSystem(); @endphp
+                                    <td>
+                                        <span class="badge bg-{{$deduction->status == 1 ? "success" : "danger"}}">{{$deduction->status == 1 ? "Active" : "Inactive"}}</span>
+                                        @if ($isSystem)
+                                            <br><small class="text-muted" title="Used by payroll - name, status and delete are locked"><i class="fa fa-lock"></i> System</small>
+                                        @endif
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -57,9 +71,18 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                @if ($deduction->user_id != Null || Auth::user()->is_admin())
-                                                <li><a href="#"  wire:click="edit({{$deduction->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#deductionDeleteModal{{ $deduction->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                <li><a href="#"  wire:click.prevent="edit({{$deduction->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @unless ($isSystem)
+                                                    @if ($deduction->status == 1)
+                                                        <li wire:key="deactivate-{{ $deduction->id }}"><a href="#" wire:click.prevent="toggleStatus({{ $deduction->id }})"><i class="fa fa-toggle-off color-warning"></i> Deactivate</a></li>
+                                                    @else
+                                                        <li wire:key="activate-{{ $deduction->id }}"><a href="#" wire:click.prevent="toggleStatus({{ $deduction->id }})"><i class="fa fa-toggle-on color-success"></i> Activate</a></li>
+                                                    @endif
+                                                @endunless
+                                                @if ($isSystem)
+                                                    <li class="disabled"><a href="#" onclick="return false;" title="Core system deduction used by payroll"><i class="fa fa-lock"></i> Delete (locked)</a></li>
+                                                @else
+                                                    <li><a href="#" data-toggle="modal" data-target="#deductionDeleteModal{{ $deduction->id }}" ><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                 @endif
                                             </ul>
                                         </div>
@@ -85,7 +108,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="deductionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Deduction <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -130,9 +153,8 @@
                             <div class="form-group">
                                 <label for="country">Calculate On<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="calculate_on" class="form-control" required >
-                                    <option value="">Select Option</option>
-                                    <option value="gross">Gross</option>
-                                    <option value="net">Net</option>
+                                    <option value="basic">Basic (% of basic salary)</option>
+                                    <option value="gross">Gross (% of basic + earnings)</option>
                                 </select>
                                 @error('calculate_on') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -162,6 +184,7 @@
                             </div>
                         </div>
                     </div>
+                    @include('deductions.shared-premium-fields')
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -175,7 +198,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="deductionEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Deduction <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -186,7 +209,8 @@
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="name">Name<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required @if($is_system) readonly title="Core system deduction used by payroll - name cannot be changed" @endif />
+                                @if ($is_system)<small class="text-muted"><i class="fa fa-lock"></i> System deduction: name and status are locked.</small>@endif
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -220,9 +244,8 @@
                             <div class="form-group">
                                 <label for="country">Calculate On<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="calculate_on" class="form-control" required >
-                                    <option value="">Select Option</option>
-                                    <option value="gross">Gross</option>
-                                    <option value="net">Net</option>
+                                    <option value="basic">Basic (% of basic salary)</option>
+                                    <option value="gross">Gross (% of basic + earnings)</option>
                                 </select>
                                 @error('calculate_on') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -254,13 +277,14 @@
                     </div>
                     <div class="form-group">
                         <label for="country">Status<span class="required" style="color: red">*</span></label>
-                        <select wire:model.debounce.300ms="status" class="form-control" required >
+                        <select wire:model.debounce.300ms="status" class="form-control" required @if($is_system) disabled @endif>
                             <option value="">Select Option</option>
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                         </select>
                         @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    @include('deductions.shared-premium-fields')
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

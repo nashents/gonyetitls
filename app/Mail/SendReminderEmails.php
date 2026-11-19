@@ -29,7 +29,10 @@ class SendReminderEmails extends Mailable implements ShouldQueue
 
     public function __construct(Fitness $fitness, $copies)
     {
-        $this->company = $fitness->company;
+        // Reminders saved before company_id was fillable have none.
+        $this->company = $fitness->company
+            ?? optional(optional($fitness->user)->employee)->company
+            ?? Company::first();
         $this->fitness = $fitness;
         $this->reminder_item = ReminderItem::find($fitness->reminder_item_id);
         $this->user = $fitness->user;
@@ -45,7 +48,7 @@ class SendReminderEmails extends Mailable implements ShouldQueue
     public function build()
     {
         $subject = ucfirst($this->reminder_item->name)." Reminder: expires on {$this->fitness->expires_at->format('d M Y')}";
-        $cc = $this->copies
+        $cc = collect($this->copies)
             ->filter(fn ($c) => filled($c->email))
             ->map(fn ($c) => ['email' => $c->email, 'name' => $c->name])
             ->values()

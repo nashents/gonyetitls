@@ -46,16 +46,13 @@ WithCustomStartCell
 
     public function query()
     {
-        if ($this->category == "Horse") {
-            return Fitness::query()->where('horse_id', $this->filter_id)->where('closed',false)->where('status',true);
-        }elseif ($this->category == "Trailer") {
-            return Fitness::query()->where('trailer_id', $this->filter_id)->where('closed',false)->where('status',true);
-        }elseif ($this->category == "Vehicle") {
-            return Fitness::query()->where('vehicle_id', $this->filter_id)->where('closed',false)->where('status',true);
-        }elseif ($this->category == "Employee") {
-            return Fitness::query()->where('employee_id', $this->filter_id)->where('closed',false)->where('status',true);
-        }
-     
+        $column = Fitness::SUBJECTS[$this->category] ?? null;
+
+        return Fitness::query()
+            ->when($column, fn ($q) => $q->where($column, $this->filter_id), fn ($q) => $q->whereRaw('1 = 0'))
+            ->where('closed', false)
+            ->where('status', true);
+
     }
     public function map($fitness): array{
         
@@ -77,6 +74,12 @@ WithCustomStartCell
         }elseif ($fitness->trailer) {
             $equipment_type = "Trailer";
             $reminder_for = FleetIdentifier::workshopLabel($fitness->trailer, $fitness->trailer->make, $fitness->trailer->model);
+        }elseif ($fitness->customer) {
+            $equipment_type = "Customer";
+            $reminder_for = $fitness->customer->name;
+        }elseif ($fitness->vendor) {
+            $equipment_type = "Vendor";
+            $reminder_for = $fitness->vendor->name;
         }else {
             $equipment_type = "";
             $reminder_for = "";

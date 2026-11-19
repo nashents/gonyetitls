@@ -159,20 +159,13 @@ class Index extends Component
             $allowance->description = $this->description;
             $allowance->tax_id = $this->tax_id;
             $allowance->type = $this->type;
-            $allowance->taxable = (bool) $this->taxable;
             $allowance->account_id = $this->account_id;
             $allowance->status = $this->status;
-            $taxableChanged = $allowance->isDirty('taxable');
             $allowance->update();
 
-            // PAYE on salary templates is stored, not live — re-run it on
-            // every salary carrying this allowance so future payroll runs
-            // pick up the new Taxable setting.
+            // Allowances are trip expenses only - PAYE Taxable now lives on
+            // Earnings (payroll), so there is nothing to recalculate here.
             $message = "Allowance Updated Successfully!!";
-            if ($taxableChanged) {
-                $count = (new SalaryPayeService())->recalculateForAllowance($allowance);
-                $message .= " PAYE recalculated on {$count} salar" . ($count === 1 ? 'y' : 'ies') . ".";
-            }
 
             $this->dispatchBrowserEvent('hide-allowanceEditModal');
             $this->resetInputFields();

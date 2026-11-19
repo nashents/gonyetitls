@@ -886,7 +886,8 @@
                         $drawdown_invoices = $drawdown_ready && $unpaid_invoices ? $unpaid_invoices : collect();
                         $to_apply = round($allocating['payments']->sum(), 2);
                         $over_allocated = $deposits->contains(fn ($deposit) => ($allocating['payments'][$deposit->payment->id] ?? 0) > $deposit->available + 0.005)
-                            || $drawdown_invoices->contains(fn ($invoice) => ($allocating['invoices'][$invoice->id] ?? 0) > (float) $invoice->balance + 0.005);
+                            || $drawdown_invoices->contains(fn ($invoice) => ($allocating['invoices'][$invoice->id] ?? 0) > (float) $invoice->balance + 0.005)
+                            || $debit_journals->contains(fn ($journal) => ($allocating['invoices']['j'.$journal->id] ?? 0) > $journal->outstanding + 0.005);
                         $incomplete_line = collect($allocations)->contains(fn ($line) => (filled($line['payment_id']) || filled($line['invoice_id']) || filled($line['amount'])) && (blank($line['payment_id']) || blank($line['invoice_id']) || !is_numeric($line['amount']) || $line['amount'] <= 0));
                     @endphp
                     @if ($drawdown_ready)
@@ -902,7 +903,7 @@
                                 <thead>
                                     <tr>
                                         <th>Payment</th>
-                                        <th>Invoice</th>
+                                        <th>Invoice / Journal</th>
                                         <th style="width: 150px">Amount</th>
                                         <th style="width: 40px"></th>
                                     </tr>
@@ -920,10 +921,21 @@
                                         </td>
                                         <td>
                                             <select class="form-control" wire:model="allocations.{{ $index }}.invoice_id">
-                                                <option value="">Select Invoice</option>
+                                                <option value="">Select Invoice / Journal</option>
+                                                @if ($debit_journals->isNotEmpty())
+                                                <optgroup label="Invoices">
+                                                @endif
                                                 @foreach ($drawdown_invoices as $invoice)
                                                 <option value="{{ $invoice->id }}">{{ $invoice->invoice_number }} | {{ $invoice->date }} | Balance: {{ $drawdown_symbol }}{{ number_format((float) $invoice->balance, 2) }}</option>
                                                 @endforeach
+                                                @if ($debit_journals->isNotEmpty())
+                                                </optgroup>
+                                                <optgroup label="Debit Journals (e.g. opening balances)">
+                                                    @foreach ($debit_journals as $journal)
+                                                    <option value="j{{ $journal->id }}">{{ $journal->journal_number }} | {{ $journal->date?->format('Y-m-d') }} | {{ \Illuminate\Support\Str::limit($journal->description ?: $journal->reference, 30) }} | Balance: {{ $drawdown_symbol }}{{ number_format($journal->outstanding, 2) }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endif
                                             </select>
                                         </td>
                                         <td>
@@ -1012,10 +1024,27 @@
                                             <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
                                         </tr>
                                         @empty
+                                        @if ($debit_journals->isEmpty())
                                         <tr>
                                             <td colspan="7" class="text-center">No unpaid invoices for this customer and currency.</td>
                                         </tr>
+                                        @endif
                                         @endforelse
+                                        @foreach ($debit_journals as $journal)
+                                        @php
+                                            $applying = $allocating['invoices']['j'.$journal->id] ?? 0;
+                                            $left = round($journal->outstanding - $applying, 2);
+                                        @endphp
+                                        <tr wire:key="drawdown-journal-{{ $journal->id }}">
+                                            <td>{{ $journal->journal_number }} <small class="text-muted">(Debit Journal)</small></td>
+                                            <td>{{ $journal->date?->format('Y-m-d') }}</td>
+                                            <td>{{ $journal->outstanding < (float) $journal->amount ? 'Partial' : 'Unpaid' }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $journal->amount, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($journal->outstanding, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($applying, 2) }}</td>
+                                            <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
+                                        </tr>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>

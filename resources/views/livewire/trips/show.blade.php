@@ -241,6 +241,14 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
+                                                            @if ($trip->bill_of_lading)
+                                                            <tr>
+                                                                <th scope="row">BOL#</th>
+                                                                <td>
+                                                                    {{$trip->bill_of_lading}}
+                                                                </td>
+                                                            </tr>
+                                                            @endif
                                                             @if ($trip->manifest_number)
                                                             <tr>
                                                                 <th scope="row">Manifest#</th>

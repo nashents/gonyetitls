@@ -272,6 +272,7 @@
                 <th style="width:90px" class="right">Weight (Tons)</th>
                 <th style="width:90px" class="right">SKU / Ref</th>
                 <th style="width:90px" class="right">BillOfEntry#</th>
+                <th style="width:90px" class="right">BOL#</th>
               </tr>
             </thead>
             <tbody>
@@ -279,6 +280,7 @@
                 @php
                   $to         = $tto->transport_order;
                   $boe         = $tto->bill_of_entry;
+                  $bol         = $tto->bill_of_lading;
                   $cargo      = $to?->cargo;
                   $cargoType  = $cargo?->type;
                   $ttoQty     = $to?->quantity        ?? $trip->quantity;
@@ -317,6 +319,7 @@
                   <td class="right">{{ $ttoWeight }}</td>
                   <td class="right">{{ $cargo?->sku }}</td>
                   <td class="right">{{ $boe }}</td>
+                  <td class="right">{{ $bol }}</td>
                 </tr>
               @endforeach
             </tbody>

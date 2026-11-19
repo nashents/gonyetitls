@@ -31,6 +31,7 @@ class Index extends Component
             })
             ->with([
                 'salary_items.allowance:id,name',
+                'salary_items.earning:id,name',
                 'salary_items.deduction:id,name',
                 'salary_items.recovery:id,recovery_number,type,deduction_id',
                 'salary_items.recovery.deduction:id,name',

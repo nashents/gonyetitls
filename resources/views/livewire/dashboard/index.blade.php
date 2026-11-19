@@ -108,6 +108,12 @@
                 </div>
             </div>
 
+            @if (($documents_awaiting_receipt ?? 0) > 0)
+                <div class="gd-alert-strip">
+                    <a class="gd-alert warning" href="{{ route('documents.custody.mine') }}"><span class="num">{{ $documents_awaiting_receipt }}</span><span class="label"><i class="fa fa-exchange"></i> Document(s) handed to you — confirm receipt</span></a>
+                </div>
+            @endif
+
             @if ($isDriver)
                 {{-- DRIVER DASHBOARD: restricted to driver-owned records only. Restores legacy driver widgets in the modern design. --}}
                 <div class="gd-panel wide" style="margin-bottom:12px;">

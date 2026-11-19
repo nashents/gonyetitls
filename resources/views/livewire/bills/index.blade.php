@@ -814,7 +814,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Payment Drawdown <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Payment - Bill Matching <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="drawdownPayments()" >
                 <div class="modal-body">
@@ -846,45 +846,183 @@
                        
                     </div>
                   
-                    @if (isset($selected_vendor) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
+                    @php
+                        $drawdown_ready = filled($selectedVendor) && filled($selectedCurrency);
+                        $drawdown_symbol = isset($selected_currency) ? $selected_currency->symbol : "";
+                        $drawdown_bills = $drawdown_ready && $unpaid_bills ? $unpaid_bills : collect();
+                        $to_apply = round($allocating['payments']->sum(), 2);
+                        $over_allocated = $prepayments->contains(fn ($prepayment) => ($allocating['payments'][$prepayment->payment->id] ?? 0) > $prepayment->available + 0.005)
+                            || $drawdown_bills->contains(fn ($bill) => ($allocating['bills'][$bill->id] ?? 0) > (float) $bill->balance + 0.005)
+                            || $credit_journals->contains(fn ($journal) => ($allocating['bills']['j'.$journal->id] ?? 0) > $journal->outstanding + 0.005);
+                        $incomplete_line = collect($allocations)->contains(fn ($line) => (filled($line['payment_id']) || filled($line['bill_id']) || filled($line['amount'])) && (blank($line['payment_id']) || blank($line['bill_id']) || !is_numeric($line['amount']) || $line['amount'] <= 0));
+                    @endphp
+                    @if ($drawdown_ready)
                         <blockquote>
-                            {{$selected_vendor->name}} has {{$selected_currency->name}} {{$selected_currency->symbol}}{{number_format($last_payment->drawdown_balance ? $last_payment->drawdown_balance : 0,2)}}
+                            {{ isset($selected_vendor) ? $selected_vendor->name : "" }} has {{ isset($selected_currency) ? $selected_currency->name : "" }} {{ $drawdown_symbol }}{{ number_format($prepayments->sum('available'), 2) }} available across {{ $prepayments->count() }} payment(s)
                         </blockquote>
+
+                        <div class="form-group">
+                            <label>Apply Payments To Bills / Journals<span class="required" style="color: red">*</span></label>
+                            <br>
+                            <small style="color: green">Each line applies one payment to one bill or credit journal (e.g. an opening balance). Add more lines to split a payment, or to put several payments on one bill.</small>
+                            <table class="table table-bordered table-condensed" style="margin-bottom: 5px">
+                                <thead>
+                                    <tr>
+                                        <th>Payment</th>
+                                        <th>Bill / Journal</th>
+                                        <th style="width: 150px">Amount</th>
+                                        <th style="width: 40px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($allocations as $index => $line)
+                                    <tr wire:key="bill-allocation-{{ $line['key'] }}">
+                                        <td>
+                                            <select class="form-control" wire:model="allocations.{{ $index }}.payment_id">
+                                                <option value="">Select Payment</option>
+                                                @foreach ($prepayments as $prepayment)
+                                                <option value="{{ $prepayment->payment->id }}">{{ $prepayment->payment->payment_number }} | {{ $prepayment->payment->date }} | Available: {{ $drawdown_symbol }}{{ number_format($prepayment->available, 2) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="form-control" wire:model="allocations.{{ $index }}.bill_id">
+                                                <option value="">Select Bill / Journal</option>
+                                                @if ($credit_journals->isNotEmpty())
+                                                <optgroup label="Bills">
+                                                @endif
+                                                @foreach ($drawdown_bills as $bill)
+                                                <option value="{{ $bill->id }}">{{ $bill->bill_number }} | {{ $bill->bill_date }} | Balance: {{ $drawdown_symbol }}{{ number_format((float) $bill->balance, 2) }}</option>
+                                                @endforeach
+                                                @if ($credit_journals->isNotEmpty())
+                                                </optgroup>
+                                                <optgroup label="Credit Journals (e.g. opening balances)">
+                                                    @foreach ($credit_journals as $journal)
+                                                    <option value="j{{ $journal->id }}">{{ $journal->journal_number }} | {{ $journal->date?->format('Y-m-d') }} | {{ \Illuminate\Support\Str::limit($journal->description ?: $journal->reference, 30) }} | Balance: {{ $drawdown_symbol }}{{ number_format($journal->outstanding, 2) }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endif
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="allocations.{{ $index }}.amount" placeholder="Amount">
+                                        </td>
+                                        <td>
+                                            @if (count($allocations) > 1)
+                                            <button type="button" class="btn btn-danger btn-rounded xs" wire:click.prevent="removeAllocation({{ $index }})"><i class="fa fa-times"></i></button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-success btn-rounded" wire:click.prevent="addAllocation()"><i class="fa fa-plus"></i>Line</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Payments</label>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-bordered table-condensed" style="margin-bottom: 0">
+                                    <thead>
+                                        <tr>
+                                            <th>Payment#</th>
+                                            <th>Date</th>
+                                            <th class="text-right">Amount</th>
+                                            <th class="text-right">Available</th>
+                                            <th class="text-right">Applying Now</th>
+                                            <th class="text-right">Left After</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($prepayments as $prepayment)
+                                        @php
+                                            $applying = $allocating['payments'][$prepayment->payment->id] ?? 0;
+                                            $left = round($prepayment->available - $applying, 2);
+                                        @endphp
+                                        <tr wire:key="bill-prepayment-{{ $prepayment->payment->id }}">
+                                            <td>{{ $prepayment->payment->payment_number }}</td>
+                                            <td>{{ $prepayment->payment->date }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $prepayment->payment->amount, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($prepayment->available, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($applying, 2) }}</td>
+                                            <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center">No payments with funds available for this vendor and currency.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Bills / Journals</label>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-bordered table-condensed" style="margin-bottom: 0">
+                                    <thead>
+                                        <tr>
+                                            <th>Bill# / Journal#</th>
+                                            <th>Date</th>
+                                            <th class="text-right">Total</th>
+                                            <th class="text-right">Balance</th>
+                                            <th class="text-right">Applying Now</th>
+                                            <th class="text-right">Balance After</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($drawdown_bills as $bill)
+                                        @php
+                                            $applying = $allocating['bills'][$bill->id] ?? 0;
+                                            $left = round((float) $bill->balance - $applying, 2);
+                                        @endphp
+                                        <tr wire:key="bill-target-{{ $bill->id }}">
+                                            <td>{{ $bill->bill_number }}</td>
+                                            <td>{{ $bill->bill_date }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $bill->total, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $bill->balance, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($applying, 2) }}</td>
+                                            <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
+                                        </tr>
+                                        @endforeach
+                                        @foreach ($credit_journals as $journal)
+                                        @php
+                                            $applying = $allocating['bills']['j'.$journal->id] ?? 0;
+                                            $left = round($journal->outstanding - $applying, 2);
+                                        @endphp
+                                        <tr wire:key="bill-journal-{{ $journal->id }}">
+                                            <td>{{ $journal->journal_number }} <small class="text-muted">(Credit Journal)</small></td>
+                                            <td>{{ $journal->date?->format('Y-m-d') }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format((float) $journal->amount, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($journal->outstanding, 2) }}</td>
+                                            <td class="text-right">{{ $drawdown_symbol }}{{ number_format($applying, 2) }}</td>
+                                            <td class="text-right" style="{{ $left < 0 ? 'color: red' : '' }}">{{ $drawdown_symbol }}{{ number_format($left, 2) }}</td>
+                                        </tr>
+                                        @endforeach
+                                        @if ($drawdown_bills->isEmpty() && $credit_journals->isEmpty())
+                                        <tr>
+                                            <td colspan="6" class="text-center">No unpaid bills or open credit journals for this vendor and currency.</td>
+                                        </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <strong>Total to be applied: {{ $drawdown_symbol }}{{ number_format($to_apply, 2) }}</strong>
+                        @if ($over_allocated)
+                        <br><small style="color: red">The lines add up to more than a payment has available or a bill/journal has outstanding - see the figures in red.</small>
+                        @elseif ($incomplete_line)
+                        <br><small style="color: red">Every line needs a payment, a bill or journal, and an amount.</small>
+                        @endif
                     @endif
-                    <div class="form-group">
-                        <label for="country">Bills<span class="required" style="color: red">*</span> </label>
-                        <select wire:model.debounce.300ms="selectedBill" class="form-control" required>
-                            <option value="">Select Bill</option>
-                            @if (!is_null($selectedVendor) && !is_null($selectedCurrency) )
-                                @foreach ($unpaid_bills as $bill)
-                                    <option value="{{ $bill->id }}">Bill#: {{$bill->bill_number}} Date: {{$bill->bill_date}} Vendor: {{$bill->vendor ? $bill->vendor->name : ""}} Bal: {{$bill->currency ? $bill->currency->name : ""}} {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance ? $bill->balance : 0,2)}} Status: {{ $bill->status }}</option>
-                                @endforeach
-                            @endif 
-                        </select>
-                         @error('selectedBill') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Drawdown Balance<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="payment_drawdown_balance" placeholder="Payment Drawdown Balance" disabled required >
-                                @error('payment_drawdown_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Balance<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="bill_drawdown_balance" placeholder="Bill Balance" disabled required >
-                                @error('bill_drawdown_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-            
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        @if (isset($selected_vendor) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
+                        @if ($to_apply > 0 && !$over_allocated && !$incomplete_line)
                         <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
                         @else
                         <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled><i class="fa fa-save"></i>Save</button>

@@ -300,7 +300,7 @@
                                 @endif
                             </a>
 
-                           @php $useTall = (($reminders?->count() + $expired_reminders?->count() + $mileage_reminders?->count() + min(($freight_reminders ?? collect())->count(), 15)) > 10); @endphp
+                           @php $useTall = (($reminders?->count() + $expired_reminders?->count() + $mileage_reminders?->count() + min(($freight_reminders ?? collect())->count(), 15) + ($document_handovers ?? collect())->count()) > 10); @endphp
 
                             <ul class="dropdown-menu" style="{{ $useTall ? "overflow-x:auto; height:400px;" : "" }}">
                                 <li style="margin: 10px">
@@ -308,6 +308,21 @@
                                         <li><a href="{{ route('reminders.index') }}"><i class="fa fa-plus-square-o"></i> New Reminder</a></li>
                                     </center>
                                 </li>
+
+                                @if (isset($document_handovers) && $document_handovers->count() > 0)
+                                    <div class="clearfix"></div>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="{{ route('documents.custody.mine') }}"><strong style="color:gray">Documents to sign for</strong></a></li>
+                                    @foreach ($document_handovers as $handover)
+                                        <li>
+                                            <a href="{{ route('documents.custody', ['document' => $handover->document_id, 'action' => 'receive']) }}">
+                                                <i class="fa fa-exchange" style="color: #f0ad4e"></i>
+                                                {{ $handover->document->title }} from {{ $handover->fromLabel() }}
+                                                <small class="text-muted">({{ optional($handover->handed_over_at)->diffForHumans() }})</small>
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                @endif
 
                                 @if ($reminders && $reminders->count() > 0)
                                     <div class="clearfix"></div>
@@ -329,6 +344,10 @@
                                                     for {{ optional($reminder->trailer)->registration_number }}
                                                 @elseif ($reminder->employee)
                                                     for {{ optional($reminder->employee)->name }} {{ optional($reminder->employee)->surname }}
+                                                @elseif ($reminder->customer)
+                                                    for {{ $reminder->customer->name }}
+                                                @elseif ($reminder->vendor)
+                                                    for {{ $reminder->vendor->name }}
                                                 @endif
 
                                                 expires on {{ \Carbon\Carbon::parse($reminder->expires_at)->format('Y-m-d') }}
@@ -356,6 +375,10 @@
                                                     for {{ optional($reminder->trailer)->registration_number }}
                                                 @elseif ($reminder->employee)
                                                     for {{ optional($reminder->employee)->name }} {{ optional($reminder->employee)->surname }}
+                                                @elseif ($reminder->customer)
+                                                    for {{ $reminder->customer->name }}
+                                                @elseif ($reminder->vendor)
+                                                    for {{ $reminder->vendor->name }}
                                                 @endif
 
                                                 expired on {{ \Carbon\Carbon::parse($reminder->expires_at)->format('Y-m-d') }}

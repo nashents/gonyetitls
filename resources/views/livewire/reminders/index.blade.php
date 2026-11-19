@@ -57,6 +57,10 @@
                                         for {{$reminder->vehicle->vehicle_make ? $reminder->vehicle->vehicle_make->name : ""}} {{$reminder->vehicle->vehicle_make ? $reminder->vehicle->vehicle_model->name : ""}} {{$reminder->vehicle->registration_number}}
                                         @elseif (isset($reminder->trailer))
                                         for trailer {{$reminder->trailer->registration_number}}
+                                        @elseif ($reminder->customer)
+                                        for customer <a href="{{ route('customers.show', $reminder->customer_id) }}">{{$reminder->customer->name}}</a>
+                                        @elseif ($reminder->vendor)
+                                        for vendor <a href="{{ route('vendors.show', $reminder->vendor_id) }}">{{$reminder->vendor->name}}</a>
                                         @endif
                                         <br>
                                         <small>
@@ -122,7 +126,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        {{ $reminder->cc ? 'Yes' : 'No' }}
+                                        {{ !$reminder->cc ? 'No' : ($reminder->selected_copies_count ? $reminder->selected_copies_count.' picked' : 'All') }}
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -141,8 +145,8 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="8">
-                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                    <td colspan="10">
+                                        <div style="text-align:center; color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Reminders Found ....
                                         </div>
                                        
@@ -189,6 +193,10 @@
                         <label for="one" class="radio-label">Trailer</label>
                         <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
                         <label for="one" class="radio-label">Employee</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Customer"  class="line-style"  />
+                        <label for="one" class="radio-label">Customer</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Vendor"  class="line-style"  />
+                        <label for="one" class="radio-label">Vendor</label>
                         <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
                         <label for="one" class="radio-label">Other</label>
                     </div>  
@@ -244,6 +252,30 @@
                                                 @endforeach
                                             </select>
                                             @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    @elseif ($type == "Customer")
+                                        <div class="form-group">
+                                            <label>Customers<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchCustomer" placeholder="Search customer..." class="form-control" >
+                                            <select wire:model.debounce.300ms="customer_id" class="form-control" required size="4">
+                                                <option value="">Select Customer</option>
+                                                @foreach ($customers as $customer)
+                                                    <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('customer_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    @elseif ($type == "Vendor")
+                                        <div class="form-group">
+                                            <label>Vendors<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchVendor" placeholder="Search vendor..." class="form-control" >
+                                            <select wire:model.debounce.300ms="vendor_id" class="form-control" required size="4">
+                                                <option value="">Select Vendor</option>
+                                                @foreach ($vendors as $vendor)
+                                                    <option value="{{$vendor->id}}">{{$vendor->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @endif
 
@@ -295,8 +327,10 @@
                             </div>
                         </div>
                     </div>
-                <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
-                <label for="one" class="radio-label">Send reminders to my copy list</label>
+                @include('livewire.fitnesses.partials.copy-list')
+                @if (in_array($type, ['Customer', 'Vendor']) && ($type === 'Customer' ? $customer_id : $vendor_id))
+                    @include('livewire.fitnesses.partials.notify-contacts', ['recipients' => $contactRecipients, 'partyLabel' => strtolower($type)])
+                @endif
    
                 </div>
                 <div class="modal-footer">
@@ -328,6 +362,10 @@
                         <label for="one" class="radio-label">Trailer</label>
                         <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
                         <label for="one" class="radio-label">Employee</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Customer"  class="line-style"  />
+                        <label for="one" class="radio-label">Customer</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Vendor"  class="line-style"  />
+                        <label for="one" class="radio-label">Vendor</label>
                         <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
                         <label for="one" class="radio-label">Other</label>
                     </div>  
@@ -383,6 +421,30 @@
                                                 @endforeach
                                             </select>
                                             @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    @elseif ($type == "Customer")
+                                        <div class="form-group">
+                                            <label>Customers<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchCustomer" placeholder="Search customer..." class="form-control" >
+                                            <select wire:model.debounce.300ms="customer_id" class="form-control" required size="4">
+                                                <option value="">Select Customer</option>
+                                                @foreach ($customers as $customer)
+                                                    <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('customer_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    @elseif ($type == "Vendor")
+                                        <div class="form-group">
+                                            <label>Vendors<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchVendor" placeholder="Search vendor..." class="form-control" >
+                                            <select wire:model.debounce.300ms="vendor_id" class="form-control" required size="4">
+                                                <option value="">Select Vendor</option>
+                                                @foreach ($vendors as $vendor)
+                                                    <option value="{{$vendor->id}}">{{$vendor->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @endif
                                 </div>
@@ -437,8 +499,10 @@
                         </div>
                     </div>
                         </div>
-                <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
-                <label for="one" class="radio-label">Send reminders to my copy list</label>
+                @include('livewire.fitnesses.partials.copy-list')
+                @if (in_array($type, ['Customer', 'Vendor']) && ($type === 'Customer' ? $customer_id : $vendor_id))
+                    @include('livewire.fitnesses.partials.notify-contacts', ['recipients' => $contactRecipients, 'partyLabel' => strtolower($type)])
+                @endif
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

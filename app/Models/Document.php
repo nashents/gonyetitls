@@ -82,4 +82,13 @@ class Document extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+
+    /** Chain of custody (hand-overs). Unordered - callers order explicitly. */
+    public function movements(){
+        return $this->hasMany(DocumentMovement::class);
+    }
+
+    public function latestMovement(){
+        return $this->hasOne(DocumentMovement::class)->latestOfMany();
+    }
 }

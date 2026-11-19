@@ -79,10 +79,12 @@ class PayrollBatchService
                         'recovery_id'       => $salaryItem->recovery_id,
                         'movement'          => $salaryItem->movement,
                         'allowance_id'      => $salaryItem->allowance_id,
+                        'earning_id'        => $salaryItem->earning_id,
                         'currency_id'       => $salaryItem->currency_id,
                         'amount'            => $salaryItem->amount,
                         'exchange_rate'     => $salaryItem->exchange_rate,
                         'exchange_amount'   => $salaryItem->exchange_amount,
+                        'employer_amount'   => $salaryItem->employer_amount,
                     ]);
                 }
 

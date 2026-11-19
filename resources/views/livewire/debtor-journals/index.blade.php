@@ -97,7 +97,15 @@
                                                         <br><span class="badge bg-warning">{{ $symbol }}{{ number_format($open, 2) }} open</span>
                                                     @endif
                                                 @else
-                                                    <small class="text-muted">n/a</small>
+                                                    {{-- Debit: customer payments matched to it (Invoices > Payment - Invoice Matching) --}}
+                                                    @php
+                                                        $paid = (float) $journal->settled_total;
+                                                        $owing = round((float) $journal->amount - $paid, 2);
+                                                    @endphp
+                                                    {{ $symbol }}{{ number_format($paid, 2) }}
+                                                    @if (!$journal->isVoided() && $owing > 0)
+                                                        <br><span class="badge bg-warning">{{ $symbol }}{{ number_format($owing, 2) }} owing</span>
+                                                    @endif
                                                 @endif
                                             </td>
                                             <td>

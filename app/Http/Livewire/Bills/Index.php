@@ -6,6 +6,7 @@ namespace App\Http\Livewire\Bills;
 use App\Exports\BillsExport;
 use App\Imports\BillsImport;
 use App\Services\EditAuthorizationService;
+use App\Services\Accounting\VendorPrepaymentService;
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\BankAccount;
@@ -95,6 +96,8 @@ class Index extends Component
     public $selected_bill;
     public $vendors;
     public $last_payment;
+    // Payment - Bill Matching lines: [key, payment_id, bill_id (bill id or "j<journal id>"), amount]
+    public $allocations = [];
     public $pop;
     public $reference_code;
     public $transaction_types;
@@ -295,6 +298,7 @@ class Index extends Component
         $this->transaction_category = "Bills";
         $this->tax_status = "all";
         $this->vendors = Vendor::orderBy('name','asc')->get();
+        $this->resetAllocations();
     
     }
  
@@ -304,12 +308,14 @@ class Index extends Component
             $this->selectedVendor = $id;
             $this->selected_vendor = Vendor::find($id);
         } 
+        $this->resetAllocations();
     }
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
          
             $this->selected_currency = Currency::find($id);
         } 
+        $this->resetAllocations();
     }
 
     public function updatedSelectedVendorAccount($id){
@@ -405,65 +411,102 @@ class Index extends Component
         }
 
    
+    protected function resetAllocations(): void
+    {
+        $this->allocations = [];
+        $this->addAllocation();
+    }
+
+    public function addAllocation(){
+        $this->allocations[] = ['key' => uniqid(), 'payment_id' => '', 'bill_id' => '', 'amount' => ''];
+    }
+
+    public function removeAllocation($index){
+        unset($this->allocations[$index]);
+        $this->allocations = array_values($this->allocations);
+    }
+
+    /**
+     * Picking the payment or the bill/journal on a line fills in the most
+     * that pairing can take, after the other lines.
+     */
+    public function updatedAllocations($value, $key){
+        [$index, $field] = array_pad(explode('.', $key), 2, null);
+
+        if (! in_array($field, ['payment_id', 'bill_id'], true) || ! isset($this->allocations[$index])) {
+            return;
+        }
+
+        $line = $this->allocations[$index];
+
+        if (blank($line['payment_id']) || blank($line['bill_id'])) {
+            return;
+        }
+
+        $others = collect($this->allocations)->except($index)->filter(fn ($other) => is_numeric($other['amount'] ?? null));
+
+        $prepayment = app(VendorPrepaymentService::class)
+            ->prepayments((int) $this->selectedVendor, (int) $this->selectedCurrency)
+            ->first(fn ($prepayment) => (int) $prepayment->payment->id === (int) $line['payment_id']);
+
+        // The target is a bill id, or "j<id>" for a credit suppliers journal (e.g. opening balance)
+        $journalId = VendorPrepaymentService::journalTarget($line['bill_id']);
+        $target_balance = $journalId
+            ? optional(\App\Models\SupplierJournal::find($journalId))->outstandingAmount()
+            : optional(Bill::find($line['bill_id']))->balance;
+
+        if (! $prepayment || $target_balance === null) {
+            return;
+        }
+
+        $left_on_payment = $prepayment->available - $others->where('payment_id', $line['payment_id'])->sum('amount');
+        $left_on_target = (float) $target_balance - $others->where('bill_id', $line['bill_id'])->sum('amount');
+
+        $this->allocations[$index]['amount'] = max(round(min($left_on_payment, $left_on_target), 2), 0);
+    }
+
+    /**
+     * Payment - Bill Matching: applies vendor prepayments to bills or to
+     * credit suppliers journals exactly as paired on the lines.
+     */
     public function drawdownPayments(){
-       
 
-         DB::transaction(function () {
+        $lines = collect($this->allocations)
+            ->reject(fn ($line) => blank($line['payment_id'] ?? null) && blank($line['bill_id'] ?? null) && blank($line['amount'] ?? null))
+            ->values()
+            ->all();
 
-        $this->amount_paid = 0;
-        $this->payment_drawdown_balance = 0;
-
-        if (isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount >= $this->bill_drawdown_balance)) {
-            $this->payment_drawdown_balance = $this->drawdown_amount - $this->bill_drawdown_balance;
-            $this->amount_paid = $this->bill_drawdown_balance;
-            $this->bill_drawdown_balance = 0;
-        }elseif(isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount <= $this->bill_drawdown_balance)){
-            $this->bill_drawdown_balance = $this->bill_drawdown_balance - $this->drawdown_amount;
-            $this->amount_paid = $this->drawdown_amount;
-            $this->payment_drawdown_balance = 0;
-        }else{
+        if (blank($this->selectedVendor) || blank($this->selectedCurrency) || empty($lines)) {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
-                'message'=>"Invalid Drawdown Amount!!"
+                'message'=>"Add at least one line saying which payment pays which bill."
             ]);
             return;
         }
 
-       
-
-        $bill = Bill::find($this->selectedBill);
-
-        $payment = Payment::find($this->last_payment->id);
-        $payment->drawdown_balance = $this->payment_drawdown_balance;
-        $payment->update();
-
-    
-        
-        $bill->balance = $this->bill_drawdown_balance;
-        if ($this->bill_drawdown_balance <= 0) {
-            $bill->status = "Paid";
-        }else {
-            $bill->status = "Partial";
+        try {
+            $result = app(VendorPrepaymentService::class)->allocate(
+                (int) $this->selectedVendor,
+                (int) $this->selectedCurrency,
+                $lines
+            );
+        } catch (\RuntimeException $e) {
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>$e->getMessage()
+            ]);
+            return;
         }
-        $bill->update();
 
-        $bill_payment = new BillPayment;
-        $bill_payment->vendor_id = $bill->vendor_id;
-        $bill_payment->bill_id = $bill->id;
-        $bill_payment->payment_id = $payment->id;
-        $bill_payment->source = 'drawdown';
-        $bill_payment->currency_id = $bill->currency_id;
-        $bill_payment->amount = $this->amount_paid;
-        $bill_payment->save();  
- 
+        $this->resetAllocations();
+
+        $symbol = $this->selected_currency ? $this->selected_currency->symbol : "";
+
         $this->dispatchBrowserEvent('hide-paymentDrawdownModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Payment Drawdown Effected Successfully!!"
+            'message'=>$symbol.number_format($result['applied'],2)." applied to ".$result['documents']." bill(s)/journal(s) successfully!!"
         ]);
-
-        });
-       
     }
 
     public function showPayment($id){
@@ -1003,14 +1046,18 @@ class Index extends Component
 
         }
 
-        if (isset($this->selectedVendor) && isset($this->selectedCurrency)) {
+        $prepayments = collect();
+        $credit_journals = collect();
+
+        if (filled($this->selectedVendor) && filled($this->selectedCurrency)) {
         
-            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Vendor Payments")->orderBy('created_at','desc')->first();
-            
-            if(isset($this->last_payment)){
-                $this->drawdown_amount = $this->last_payment->drawdown_balance;
-            }
-        
+            // Payment - Bill Matching: prepayments with funds left, and credit suppliers journals still owed
+            $prepayments = app(VendorPrepaymentService::class)
+                ->prepayments((int) $this->selectedVendor, (int) $this->selectedCurrency)
+                ->filter(fn ($prepayment) => $prepayment->available > 0)
+                ->values();
+            $credit_journals = app(VendorPrepaymentService::class)
+                ->openCreditJournals((int) $this->selectedVendor, (int) $this->selectedCurrency);
 
             $this->unpaid_bills = Bill::where('vendor_id',$this->selectedVendor)
                                         ->where('currency_id',$this->selectedCurrency)
@@ -1028,7 +1075,16 @@ class Index extends Component
                 ->orderByDesc($this->bill_filter)
                 ->paginate(10);
 
-            return view('livewire.bills.index', compact('bills'));
+            return view('livewire.bills.index', [
+                'bills' => $bills,
+                'prepayments' => $prepayments,
+                'credit_journals' => $credit_journals,
+                // What the matching lines add up to, per payment and per bill/journal
+                'allocating' => [
+                    'payments' => collect($this->allocations)->filter(fn ($line) => filled($line['payment_id'] ?? null) && is_numeric($line['amount'] ?? null))->groupBy('payment_id')->map(fn ($lines) => round($lines->sum('amount'), 2)),
+                    'bills' => collect($this->allocations)->filter(fn ($line) => filled($line['bill_id'] ?? null) && is_numeric($line['amount'] ?? null))->groupBy('bill_id')->map(fn ($lines) => round($lines->sum('amount'), 2)),
+                ],
+            ]);
 
     }
 }

@@ -126,6 +126,13 @@ class ImportsController extends Controller
         return redirect()->back();
     }
    
+    public function downloadEmployeesLeaveTemplate(Request $request){
+        ini_set('max_execution_time', 300);
+        $staffType = \App\Support\HrAccess::staffType($request->query('staff_type'));
+
+        return (new \App\Exports\Templates\EmployeeLeaveImportTemplate($staffType))->download();
+    }
+
     public function importEmployeesLeave(Request $request){
         $this->validate($request,[
             'file' => 'required|file|mimes:xls,xlsx'
@@ -429,7 +436,7 @@ class ImportsController extends Controller
 
         $warnings = [];
         if (!empty($import->unknownColumns)) {
-            $warnings[] = 'Column(s) not recognised and not imported: '.implode(', ', $import->unknownColumns).'. Add the allowance / deduction in the system, then download a fresh template.';
+            $warnings[] = 'Column(s) not recognised and not imported: '.implode(', ', $import->unknownColumns).'. Add the earning / deduction in the system, then download a fresh template.';
         }
         if (!empty($import->skipped)) {
             $more = count($import->skipped) > 10 ? ' ... and '.(count($import->skipped) - 10).' more' : '';

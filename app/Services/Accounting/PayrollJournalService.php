@@ -105,6 +105,21 @@ class PayrollJournalService
             $this->line($entry, $config?->gl_nssa_liability_account, 'NSSA Employer Contribution Payable', 0, $totals['nssa_employer'], $currencyId, "NSSA employer payable - {$run->name}");
             $this->line($entry, $config?->gl_nec_liability_account, 'NEC Levy Payable', 0, $totals['nec_employee'] + $totals['nec_employer'], $currencyId, "NEC levy payable - {$run->name}");
             $this->line($entry, $config?->gl_pension_liability_account, 'Pension Payable', 0, $totals['pension_employee'] + $totals['pension_employer'], $currencyId, "Pension payable - {$run->name}");
+            // Medical Aid / Funeral Cover ...: company share DR its Expense
+            // (Admin / Drivers when payroll expenses are split, like NSSA/NEC/
+            // Pension), employee + company share CR its Payable.
+            foreach ($totals['benefits'] as $benefit) {
+                if ($benefit['employer'] > 0 && !$benefit['expense']) {
+                    throw new \RuntimeException("Deduction \"{$benefit['name']}\" has a company share but no Expense account. Set it under Deductions, then post again.");
+                }
+                if ($config?->split_payroll_expenses_by_employee_type) {
+                    $this->line($entry, (string) $benefit['expense'], "{$benefit['name']} Expense", $benefit['employer_admin'], 0, $currencyId, "{$benefit['name']} - company share (admin) - {$run->name}");
+                    $this->line($entry, (string) $benefit['expense_drivers'], "{$benefit['name']} Expense", $benefit['employer_drivers'], 0, $currencyId, "{$benefit['name']} - company share (drivers) - {$run->name}");
+                } else {
+                    $this->line($entry, (string) $benefit['expense'], "{$benefit['name']} Expense", $benefit['employer'], 0, $currencyId, "{$benefit['name']} - company share - {$run->name}");
+                }
+                $this->line($entry, (string) $benefit['payable'], "{$benefit['name']} Payable", 0, $benefit['employee'] + $benefit['employer'], $currencyId, "{$benefit['name']} payable (employee + company) - {$run->name}");
+            }
             $this->line($entry, $config?->gl_payroll_suspense_account, 'Payroll Suspense', 0, $totals['other_deductions'], $currencyId, "Loans/advances/other deductions - {$run->name}");
             $this->line($entry, $config?->gl_wages_payable_account, 'Salaries & Wages Payable', 0, $totals['net'], $currencyId, "Net pay owed to staff - {$run->name}");
 
@@ -134,6 +149,8 @@ class PayrollJournalService
             'pension_employee' => 0.0, 'pension_employer' => 0.0,
             'pension_employer_admin' => 0.0, 'pension_employer_drivers' => 0.0,
             'other_deductions' => 0.0,
+            // deduction_id => [name, payable, expense, employee, employer]
+            'benefits' => [],
         ];
 
         foreach ($payroll->payroll_salaries as $payrollSalary) {
@@ -161,6 +178,35 @@ class PayrollJournalService
                 if ($bucket !== null) {
                     $totals[$bucket] += $amount;
                     $employeeNamedTotal += $amount;
+                    continue;
+                }
+
+                // Deductions with their own Payable account (Medical Aid,
+                // Funeral Cover ...): the employee share is owed to that
+                // provider, and a shared premium adds the company share
+                // (DR the deduction's Expense, CR the same Payable).
+                $deduction = $item->deduction;
+                if ($deduction && $deduction->payable_account_id) {
+                    $key = $deduction->id;
+                    $totals['benefits'][$key] ??= [
+                        'name'             => $deduction->name,
+                        'payable'          => $deduction->payable_account_id,
+                        'expense'          => $deduction->expense_account_id,
+                        // blank = same account as admin
+                        'expense_drivers'  => $deduction->expense_account_drivers_id ?: $deduction->expense_account_id,
+                        'employee'         => 0.0,
+                        'employer'         => 0.0,
+                        'employer_admin'   => 0.0,
+                        'employer_drivers' => 0.0,
+                    ];
+                    $totals['benefits'][$key]['employee'] += $amount;
+                    $employeeNamedTotal += $amount;
+
+                    if ($deduction->isShared()) {
+                        $employer = (float) $item->employer_amount;
+                        $totals['benefits'][$key]['employer'] += $employer;
+                        $totals['benefits'][$key][$isDriver ? 'employer_drivers' : 'employer_admin'] += $employer;
+                    }
                 }
             }
 
@@ -188,8 +234,19 @@ class PayrollJournalService
         // computing the balancing plug so the plug matches what is actually stored
         // in each GL line (MySQL rounds 56.475 → 56.48; raw float 56.475 would not).
         foreach (array_keys($totals) as $k) {
+            if ($k === 'benefits') {
+                foreach ($totals['benefits'] as $id => $benefit) {
+                    foreach (['employee', 'employer_admin', 'employer_drivers'] as $part) {
+                        $totals['benefits'][$id][$part] = round($benefit[$part], 2);
+                    }
+                    // Keep the parts summing exactly to the whole.
+                    $totals['benefits'][$id]['employer'] = round($totals['benefits'][$id]['employer_admin'] + $totals['benefits'][$id]['employer_drivers'], 2);
+                }
+                continue;
+            }
             $totals[$k] = round((float) $totals[$k], 2);
         }
+        $benefitEmployeeTotal = round(array_sum(array_column($totals['benefits'], 'employee')), 2);
 
         // Derive net as a plug: DR side = gross + employer-costs; CR side = all payables + net.
         // Cancelling employer-costs from both sides: gross = named_ee_deductions + other + net.
@@ -200,6 +257,7 @@ class PayrollJournalService
             - $totals['nssa_employee']
             - $totals['nec_employee']
             - $totals['pension_employee']
+            - $benefitEmployeeTotal
             - $totals['other_deductions'],
             2
         );

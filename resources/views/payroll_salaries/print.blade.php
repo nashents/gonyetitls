@@ -86,8 +86,8 @@ Payslip Print |@if (Auth::user()->employee->company)
                                     <tr>
                                         
                                         <td class="text-center">
-                                            @if ($payroll_salary_item->salary_item->allowance)
-                                                {{$payroll_salary_item->salary_item->allowance->name}}
+                                            @if ($payroll_salary_item->earning_line)
+                                                {{$payroll_salary_item->earning_line->name}}
                                             @endif
                                         </td>
                                         <td class="text-center">
@@ -95,6 +95,9 @@ Payslip Print |@if (Auth::user()->employee->company)
                                             Loan : {{ $payroll_salary_item->salary_item->loan->loan_number }} {{ $payroll_salary_item->salary_item->loan->loan_type ? $payroll_salary_item->salary_item->loan->loan_type->name : "" }}
                                             @elseif ($payroll_salary_item->salary_item->deduction)
                                             {{$payroll_salary_item->salary_item->deduction->name}}
+                                                    @if ((float) $payroll_salary_item->employer_amount > 0)
+                                                        <br><small>Company contribution: {{ $payroll_salary_item->payroll_salary->salary->currency->symbol ?? '' }}{{ number_format((float) $payroll_salary_item->employer_amount, 2) }} (not deducted)</small>
+                                                    @endif
                                             @endif 
                                         </td>
                                         <td class="text-center">{{$payroll_salary_item->payroll_salary->salary->currency->name}}</td>

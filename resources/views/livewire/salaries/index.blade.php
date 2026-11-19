@@ -76,8 +76,8 @@
                                         foreach ($salary->salary_items as $item) {
                                             $label = null;
 
-                                            if ($item->allowance) {
-                                                $label = $item->allowance->name;
+                                            if ($item->earning_line) {
+                                                $label = $item->earning_line->name;
                                             } elseif ($item->deduction) {
                                                 $label = $item->deduction->name;
                                             } elseif ($item->loan) {
@@ -91,7 +91,7 @@
                                             }
 
                                             $amount = ($salary->currency ? $salary->currency->symbol : "") . number_format($item->amount ?? 0, 2);
-                                            $isEarning = $item->allowance || ($item->recovery && $item->recovery->type == 'Gain');
+                                            $isEarning = $item->earning_line || ($item->recovery && $item->recovery->type == 'Gain');
 
                                             if ($isEarning) {
                                                 $allowanceBadges[] = $label . ': ' . $amount;

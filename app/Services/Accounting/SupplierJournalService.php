@@ -143,6 +143,16 @@ class SupplierJournalService
                 $this->deallocate($allocation);
             }
 
+            // A credit journal matched to vendor prepayments: release them back
+            // (deleting reverses each DR AP / CR Vendor Prepayments posting).
+            $settlements = $journal->settlements()->get();
+            foreach ($settlements as $settlement) {
+                $settlement->delete();
+            }
+            if ($settlements->isNotEmpty()) {
+                app(VendorPrepaymentService::class)->syncWalletBalance((int) $journal->vendor_id, (int) $journal->currency_id);
+            }
+
             $reason = $reason ?: 'Voided';
 
             JournalEntry::where('supplier_journal_id', $journal->id)

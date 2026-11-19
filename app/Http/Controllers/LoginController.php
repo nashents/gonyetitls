@@ -24,6 +24,23 @@ class LoginController extends Controller
      */
 
 
+    /**
+     * Staff landing page after login: the page they were sent to log in from
+     * (e.g. a link in a notification email), else the dashboard.
+     */
+    private function staffHome()
+    {
+        $intended = Session::pull('url.intended');
+        $path = $intended ? (parse_url($intended, PHP_URL_PATH) ?? '') : '';
+        $sameHost = $intended && parse_url($intended, PHP_URL_HOST) === request()->getHost();
+
+        if ($sameHost && $path !== '' && $path !== '/' && !Str::startsWith($path, ['/livewire', '/login', '/logout'])) {
+            return redirect()->to($intended);
+        }
+
+        return redirect()->route('dashboard.index');
+    }
+
     public function login()
     {
 
@@ -73,7 +90,7 @@ class LoginController extends Controller
         switch ($user->category) {
             case 'company':
                 Session::flash('success', "Welcome to your company dashboard {$displayName}");
-                return redirect()->route('dashboard.index');
+                return $this->staffHome();
 
             case 'agent':
             case 'customer':
@@ -120,7 +137,7 @@ class LoginController extends Controller
                 $user->save();
 
                 Session::flash('success', "Welcome to your admin dashboard {$displayName}");
-                return redirect()->route('dashboard.index');
+                return $this->staffHome();
 
             default:
                 Auth::logout();

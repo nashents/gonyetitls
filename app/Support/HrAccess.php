@@ -47,6 +47,7 @@ class HrAccess
 
         // Bulk imports can't be limited row-by-row to drivers
         'employees.leaves.import',
+        'employees.leaves.import_template',
         'leaves.import',
     ];
 

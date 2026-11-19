@@ -56,12 +56,25 @@
         <small class="text-muted d-block">
             Uploaded by: {{ $document->user ? $document->user->name.' '.$document->user->surname : 'N/A' }}
         </small>
+
+        @if($lastMove = $document->latestMovement)
+            <small class="d-block">
+                @if($lastMove->status === 'pending')
+                    <span class="badge bg-warning">In transit to {{ $lastMove->toLabel() }}</span>
+                @elseif($lastMove->status === 'received')
+                    <i class="fa fa-user"></i> With {{ $lastMove->toLabel() }}@if($lastMove->location) · {{ $lastMove->location }}@endif
+                @else
+                    <i class="fa fa-user"></i> With {{ $lastMove->fromLabel() }}
+                @endif
+            </small>
+        @endif
     </div>
 
+    <div class="doc-actions">
+        <a href="{{ route('documents.custody', $document->id) }}" title="Chain of custody / hand over"><i class="fa fa-exchange color-primary"></i></a>
     @if($canManageDocuments)
-        <div class="doc-actions">
             <a href="#" wire:click.prevent="edit({{ $document->id }})"><i class="fa fa-edit color-success"></i></a>
             <a href="#" wire:click.prevent="showDocumentDelete({{ $document->id }})"><i class="fa fa-trash color-danger"></i></a>
-        </div>
     @endif
+    </div>
 </div>

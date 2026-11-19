@@ -519,18 +519,6 @@
                                     </tr>
                                     @endif
                                     @php $cmrDetail = $trip->cmr_detail; @endphp
-                                    @if ($cmrDetail?->number_of_packages)
-                                    <tr>
-                                        <th class="text-center"><strong>Packages</strong></th>
-                                        <td class="text-center">{{$cmrDetail->number_of_packages}}</td>
-                                    </tr>
-                                    @endif
-                                    @if ($cmrDetail?->marks_and_numbers)
-                                    <tr>
-                                        <th class="text-center"><strong>Marks &amp; Numbers</strong></th>
-                                        <td class="text-center">{{$cmrDetail->marks_and_numbers}}</td>
-                                    </tr>
-                                    @endif
                                     @if ($cmrDetail?->insurer_name || $cmrDetail?->insurance_policy_number)
                                     <tr>
                                         <th class="text-center"><strong>Insurance</strong></th>
@@ -538,12 +526,6 @@
                                             {{$cmrDetail->insurer_name}}
                                             @if ($cmrDetail->insurance_policy_number) (Policy: {{$cmrDetail->insurance_policy_number}}) @endif
                                         </td>
-                                    </tr>
-                                    @endif
-                                    @if ($cmrDetail?->special_agreements)
-                                    <tr>
-                                        <th class="text-center"><strong>Special Agreements</strong></th>
-                                        <td class="text-center">{{$cmrDetail->special_agreements}}</td>
                                     </tr>
                                     @endif
 

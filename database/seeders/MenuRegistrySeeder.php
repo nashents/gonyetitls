@@ -431,11 +431,9 @@ class MenuRegistrySeeder extends Seeder
         ]);
 
         $hrMasterSubs = [
-            ['Allowances','allowances.index','fas fa-list'],
+            // Allowances / Deductions / Earnings live under Salaries & Payroll > Master only
             ['Branches','branches.index','fas fa-list'],
             ['Departments','departments.index','fas fa-list', $any([$all(['isSystemAdmin'])])],
-            ['Deductions','deductions.index','fas fa-list'],
-            ['Earnings','earnings.index','fas fa-list'],
             ['Grades','grades.index','fas fa-list'],
             ['Job Titles','job_titles.index','fas fa-list'],
             ['Leave Types','leave_types.index','fas fa-list'],
@@ -575,7 +573,6 @@ class MenuRegistrySeeder extends Seeder
             ]),
         ]);
 
-        $upsertSub($m, ['name'=>'Allowances','slug'=>'allowances','icon'=>'fas fa-list','route_name'=>'allowances.index','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Deductions','slug'=>'deductions','icon'=>'fas fa-list','route_name'=>'deductions.index','sort_order'=>20]);
         $upsertSub($m, ['name'=>'Earnings','slug'=>'earnings','icon'=>'fas fa-list','route_name'=>'earnings.index','sort_order'=>30]);
         $upsertSub($m, ['name'=>'Loan Type','slug'=>'loan-type','icon'=>'fas fa-list','route_name'=>'loan_types.index','sort_order'=>40]);
@@ -1770,6 +1767,8 @@ class MenuRegistrySeeder extends Seeder
 
         $tripMasterSubs = [
             ['Agents','agents.index','fas fa-list', null],
+            // Driver trip expense allowances (payroll uses Earnings under Salaries & Payroll > Master)
+            ['Allowances','allowances.index','fas fa-list', null],
             ['Borders','borders.index','fas fa-bars', null],
             ['Brokers','brokers.index','fas fa-list', null],
             ['Cargos','cargos.index','fas fa-truck-loading', null],

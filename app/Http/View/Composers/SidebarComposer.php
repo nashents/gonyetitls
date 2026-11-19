@@ -767,6 +767,9 @@ class SidebarComposer
         // Edit Authorizations
         'edit_authorizations_pending_count' => (int) ($editAuthorizationsPendingCount ?? 0),
 
+        // Documents handed to this user, waiting for them to confirm receipt
+        'documents_awaiting_receipt' => $user ? app(\App\Services\Documents\DocumentCustodyService::class)->awaitingCount($user) : 0,
+
         // Requisitions
         'requisitions_pending_count'  => (int) ($requisitionsPendingCount ?? 0),
         'requisitions_approved_count' => (int) ($requisitionsApprovedCount ?? 0),

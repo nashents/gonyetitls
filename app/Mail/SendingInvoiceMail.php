@@ -33,8 +33,13 @@ class SendingInvoiceMail extends Mailable implements ShouldQueue
      */
     public function build()
     {
+        // Cover message in the standard email layout + the invoice itself as a
+        // PDF in the company's chosen layout (same as Export as PDF).
+        $pdf = app(\App\Services\Invoices\InvoicePdf::class);
+
         return $this->view('emails.invoice')
-                    ->from($this->company->noreply)
-                    ->subject('Invoice Notification Email');
+                    ->from($this->company->noreply, $this->company->name)
+                    ->subject('Invoice ' . $this->invoice->invoice_number . ' from ' . $this->company->name)
+                    ->attachData($pdf->make($this->invoice)->output(), $pdf->filename($this->invoice), ['mime' => 'application/pdf']);
     }
 }

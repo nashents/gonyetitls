@@ -15,7 +15,7 @@ class PayrollSalaryItem extends Model implements Auditable
 
     protected $fillable = [
         'payroll_salary_id', 'salary_item_id', 'loan_id', 'deduction_id', 'recovery_id',
-        'movement', 'allowance_id', 'currency_id', 'amount', 'exchange_rate', 'exchange_amount',
+        'movement', 'allowance_id', 'earning_id', 'currency_id', 'amount', 'exchange_rate', 'exchange_amount', 'employer_amount',
     ];
 
     public function payroll_salary(){
@@ -35,5 +35,14 @@ class PayrollSalaryItem extends Model implements Auditable
     }
     public function allowance(){
     return $this->belongsTo('App\Models\Allowance');
+    }
+    public function earning(){
+    return $this->belongsTo('App\Models\Earning');
+    }
+
+    /** The earning on this line (falls back to a legacy allowance line). Use $item->earning_line->name. */
+    public function getEarningLineAttribute()
+    {
+        return $this->earning ?? $this->allowance;
     }
 }

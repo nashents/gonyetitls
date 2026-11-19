@@ -262,7 +262,7 @@ class Index extends Component
 
     private function baseDocumentsQuery(): Builder
     {
-        $query = Document::query()->with('user');
+        $query = Document::query()->with(['user', 'latestMovement.fromUser', 'latestMovement.toUser']);
 
         if ($this->category !== 'all') {
             $map = $this->categoryMap()[$this->category] ?? null;

@@ -120,6 +120,7 @@ class Index extends Component
     public $overdue_invoices_value        = 0;
     public $expiring_documents_count      = 0;
     public $expired_documents_count       = 0;
+    public $documents_awaiting_receipt    = 0;
     public $expired_reminders_count       = 0;
     public $trips_overdue_count           = 0;
     public $pending_authorizations_count  = 0;
@@ -769,6 +770,11 @@ class Index extends Component
     private function loadCounts(): void
     {
         $year = date('Y');
+
+        // Per-user, so never part of the cached company KPIs.
+        $this->documents_awaiting_receipt = auth()->check()
+            ? app(\App\Services\Documents\DocumentCustodyService::class)->awaitingCount(auth()->user())
+            : 0;
 
         $this->shift_count              = Shift::count();
         $this->transporter_count        = Transporter::count();

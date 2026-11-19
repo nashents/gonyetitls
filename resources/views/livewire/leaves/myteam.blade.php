@@ -43,14 +43,14 @@
                                         @if (isset($department_heads))
                                             @foreach ($department_heads as $employee)
                                                 <tr>
-                                                    <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
+                                                    <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user?->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
                                                     <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                                     <td>{{$employee->gender}}</td>
                                                     <td>{{$employee->email}}</td>
                                                     <td>
                                                         @foreach ($employee->departments as $department)
                                                             @if (in_array($department->id, $employee_department_ids))
-                                                                <li>{{ $department->name }}</li>
+                                                                <div>{{ $department->name }}</div>
                                                             @endif
                                                         @endforeach
                                                     </td>
@@ -99,13 +99,13 @@
                                     <tbody> 
                                         @foreach ($employees as $employee)
                                             <tr>
-                                                <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
+                                                <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user?->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
                                                 <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                                 <td>{{$employee->gender}}</td>
                                                 <td>{{$employee->email}}</td>
                                                 <td>
                                                     @foreach ($employee->default_departments as $department)
-                                                        <li>{{ $department->name }}</li>
+                                                        <div>{{ $department->name }}</div>
                                                     @endforeach
                                                 </td>
                                                 <td>{{$employee->post}}</td> 

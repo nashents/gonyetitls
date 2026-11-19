@@ -33,7 +33,7 @@ class DeductionSeeder extends Seeder
             foreach ($deductions as $deduction) {
                 Deduction::updateOrCreate(
                     ['name' => $deduction['name']],
-                    $deduction + ['is_locked' => true]
+                    $deduction + ['is_locked' => in_array($deduction['name'], Deduction::SYSTEM_NAMES, true)]
                 );
             }
     }

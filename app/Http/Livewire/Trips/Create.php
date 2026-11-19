@@ -160,7 +160,33 @@ class Create extends Component
 
     public function borderRemove($b)
     {
+        $value = $this->border_inputs[$b] ?? null;
         unset($this->border_inputs[$b]);
+        // Drop the removed row's selection too, otherwise it is still saved.
+        if ($value !== null && is_array($this->selectedBorder)) {
+            unset($this->selectedBorder[$value]);
+        }
+    }
+
+    // Clearing agents are a list of their own, independent of the borders crossed
+    // (e.g. a port agent and a border agent on a single-border trip).
+    public $clearing_agent_inputs = [];
+    public $ca = 1;
+
+    public function clearingAgentAdd($ca)
+    {
+        $ca = $ca + 1;
+        $this->ca = $ca;
+        array_push($this->clearing_agent_inputs, $ca);
+    }
+
+    public function clearingAgentRemove($key)
+    {
+        $value = $this->clearing_agent_inputs[$key] ?? null;
+        unset($this->clearing_agent_inputs[$key]);
+        if ($value !== null && is_array($this->clearing_agent_id)) {
+            unset($this->clearing_agent_id[$value]);
+        }
     }
     public $clearing_agents;
     public $clearing_agent_id;
@@ -170,6 +196,7 @@ class Create extends Component
     public $cd1_number;
     public $container_number;
     public $bill_of_entry;
+    public $bill_of_lading;
     // Freight invoice #(s) for a trip with no attached order; saved on its auto-created transport order.
     public $invoice_numbers;
     public $selectedStatus;
@@ -415,11 +442,8 @@ class Create extends Component
     // CMR / international waybill details
     public $insurer_name;
     public $insurance_policy_number;
+    public $has_insurance = false;
     public $insurance_cover_amount;
-    public $special_agreements;
-    public $marks_and_numbers;
-    public $number_of_packages;
-    public $freight_payment_terms;
 
     //trip expenses
     public $trip_expenses = False;
@@ -1484,6 +1508,7 @@ class Create extends Component
           'cd3_number' => 'nullable|unique:trips,cd3_number,NULL,id,deleted_at,NULL|string',
           'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string',
           'bill_of_entry' => 'nullable|unique:trips,bill_of_entry,NULL,id,deleted_at,NULL|string',
+          'bill_of_lading' => 'nullable|string|max:255',
           'selectedStatus' => 'required',
           'selectedContainer' => 'required',
           'expense_id.*' => 'nullable|exists:expenses,id',
@@ -2563,10 +2588,13 @@ class Create extends Component
 
                 $trip->save();
 
+                // Insurance fields only count when "Insurance Details" is ticked.
+                if (! $this->has_insurance) {
+                    $this->insurer_name = $this->insurance_policy_number = $this->insurance_cover_amount = null;
+                }
+
                 if (
                     $this->insurer_name || $this->insurance_policy_number || $this->insurance_cover_amount
-                    || $this->special_agreements || $this->marks_and_numbers || $this->number_of_packages
-                    || $this->freight_payment_terms
                 ) {
                     TripCmrDetail::updateOrCreate(
                         ['trip_id' => $trip->id],
@@ -2574,10 +2602,6 @@ class Create extends Component
                             'insurer_name'             => $this->insurer_name,
                             'insurance_policy_number'  => $this->insurance_policy_number,
                             'insurance_cover_amount'   => $this->insurance_cover_amount,
-                            'special_agreements'       => $this->special_agreements,
-                            'marks_and_numbers'        => $this->marks_and_numbers,
-                            'number_of_packages'       => $this->number_of_packages,
-                            'freight_payment_terms'    => $this->freight_payment_terms,
                         ]
                     );
                 }
@@ -2632,6 +2656,7 @@ class Create extends Component
                             $trip_transport_order->exchange_rate = $exchange_rate;
                             $trip_transport_order->exchange_amount = $exchange_amount;
                             $trip_transport_order->bill_of_entry = $boe;
+                            $trip_transport_order->bill_of_lading = $this->bill_of_lading ?: null;
                             $trip_transport_order->currency_id = $currency_id;
                            
 
@@ -2651,6 +2676,7 @@ class Create extends Component
                                 $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                                 $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
                                 $trip_transport_order->bill_of_entry = $this->bill_of_entry;
+                                $trip_transport_order->bill_of_lading = $this->bill_of_lading ?: null;
 
                             }
 

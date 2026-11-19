@@ -5,18 +5,20 @@ namespace Database\Seeders;
 use App\Models\Earning;
 use Illuminate\Database\Seeder;
 
+/**
+ * Default payroll earnings - shown in the "Allowances" section of a salary.
+ * (Accommodation / Transport used to be seeded as Allowances; Allowances are
+ * now for driver trip expenses only.) Idempotent.
+ */
 class EarningSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-       $earnings = [
-            ['name' => 'Basic Pay','status' => 1],
-            ];
-            Earning::insert($earnings);
+        foreach (['Accommodation', 'Transport'] as $name) {
+            Earning::firstOrCreate(
+                ['name' => $name],
+                ['calculate_by' => 'currency', 'status' => 1, 'taxable' => true]
+            );
+        }
     }
 }

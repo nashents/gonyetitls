@@ -52,7 +52,46 @@
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Reminder For</th>
                                     <td class="w-20 line-height-35"> {{$fitness->employee ? $fitness->employee->name : ""}} {{$fitness->employee ? $fitness->employee->surname : ""}}</td>
-                                </tr>  
+                                </tr>
+                                @elseif($fitness->customer)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Reminder For</th>
+                                    <td class="w-20 line-height-35">Customer: <a href="{{ route('customers.show', $fitness->customer_id) }}">{{ $fitness->customer->name }}</a></td>
+                                </tr>
+                                @elseif($fitness->vendor)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Reminder For</th>
+                                    <td class="w-20 line-height-35">Vendor: <a href="{{ route('vendors.show', $fitness->vendor_id) }}">{{ $fitness->vendor->name }}</a></td>
+                                </tr>
+                                @endif
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Copied to</th>
+                                    <td class="w-20 line-height-35">
+                                        @if ($copyRecipients->isEmpty())
+                                            Nobody
+                                        @else
+                                            {{ $copyRecipients->map(fn ($c) => trim($c->name.' '.$c->surname).' <'.$c->email.'>')->implode(', ') }}
+                                            @unless (\Illuminate\Support\Facades\DB::table('fitness_reminder_copy')->where('fitness_id', $fitness->id)->exists())
+                                                <small class="text-muted">(whole copy list)</small>
+                                            @endunless
+                                        @endif
+                                    </td>
+                                </tr>
+                                @if ($fitness->canNotifyContacts())
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Contacts emailed</th>
+                                    <td class="w-20 line-height-35">
+                                        @if ($fitness->notify_contacts)
+                                            @if (count($contactRecipients))
+                                                Yes — {{ implode(', ', array_keys($contactRecipients)) }}
+                                            @else
+                                                <span class="text-warning">Yes, but no contact email is on file</span>
+                                            @endif
+                                        @else
+                                            No
+                                        @endif
+                                    </td>
+                                </tr>
                                 @endif
                                 
                                 <tr>
@@ -334,8 +373,10 @@
                         </div>
                     </div>
                         </div>
-                         <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
-                <label for="one" class="radio-label">Send reminders to my copy list</label>
+                @include('livewire.fitnesses.partials.copy-list')
+                @if ($fitness->canNotifyContacts())
+                    @include('livewire.fitnesses.partials.notify-contacts', ['recipients' => $contactRecipients, 'partyLabel' => $fitness->customer_id ? 'customer' : 'vendor'])
+                @endif
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

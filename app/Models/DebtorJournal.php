@@ -109,6 +109,27 @@ class DebtorJournal extends Model implements Auditable
         return round((float) $this->invoice_payments()->sum(\DB::raw('COALESCE(amount+0,0)')), 2);
     }
 
+    /** Deposit allocations settling this DEBIT journal (see CustomerDepositService). */
+    public function settlements()
+    {
+        return $this->hasMany(InvoicePayment::class, 'settled_debtor_journal_id');
+    }
+
+    public function settledAmount(): float
+    {
+        return round((float) $this->settlements()->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(amount+0,0)')), 2);
+    }
+
+    /** What is still owed on a debit journal after deposits matched to it. */
+    public function outstandingAmount(): float
+    {
+        if ($this->isCredit() || $this->isVoided()) {
+            return 0.0;
+        }
+
+        return round(max(0, (float) $this->amount - $this->settledAmount()), 2);
+    }
+
     public function unallocatedAmount(): float
     {
         if (!$this->isCredit() || $this->isVoided()) {

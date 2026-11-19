@@ -2,6 +2,7 @@
 
 namespace App\Services\Accounting;
 
+use App\Models\DebtorJournal;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Payment;
@@ -82,6 +83,12 @@ class CustomerDepositService
      * one invoice. Nothing is matched automatically. The whole batch is
      * rejected if any line is invalid or a deposit/invoice is over-allocated.
      *
+     * A line's invoice_id may instead be "j<id>": a posted DEBIT debtors
+     * journal (e.g. an opening balance) for the same customer + currency.
+     * That allocation is an invoice_payments row with invoice_id null and
+     * settled_debtor_journal_id set; it posts DR Customer Deposits / CR AR
+     * like any drawdown (DrawdownJournalService).
+     *
      * @param  array<int, array{payment_id: mixed, invoice_id: mixed, amount: mixed}>  $lines
      * @return array{applied: float, invoices: int}
      */
@@ -92,7 +99,18 @@ class CustomerDepositService
             $funds = $this->deposits($customerId, $currencyId, lock: true)
                 ->keyBy(fn ($deposit) => (int) $deposit->payment->id);
 
-            $invoices = Invoice::whereIn('id', collect($lines)->pluck('invoice_id')->filter()->unique())
+            $journalIds = collect($lines)->map(fn ($line) => self::journalTarget($line['invoice_id'] ?? null))->filter()->unique();
+            $journals = DebtorJournal::whereIn('id', $journalIds)
+                ->where('customer_id', $customerId)
+                ->where('currency_id', $currencyId)
+                ->where('type', DebtorJournal::DEBIT)
+                ->posted()
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+            $journalDue = $journals->map(fn ($journal) => $journal->outstandingAmount());
+
+            $invoices = Invoice::whereIn('id', collect($lines)->pluck('invoice_id')->filter(fn ($id) => is_numeric($id))->unique())
                 ->where('customer_id', $customerId)
                 ->where('currency_id', $currencyId)
                 ->where('authorization', 'approved')
@@ -108,15 +126,37 @@ class CustomerDepositService
 
             foreach ($lines as $line) {
                 $fund = $funds->get((int) ($line['payment_id'] ?? 0));
-                $invoice = $invoices->get((int) ($line['invoice_id'] ?? 0));
+                $journalId = self::journalTarget($line['invoice_id'] ?? null);
+                $journal = $journalId ? $journals->get($journalId) : null;
+                $invoice = $journalId ? null : $invoices->get((int) ($line['invoice_id'] ?? 0));
                 $amount = is_numeric($line['amount'] ?? null) ? round((float) $line['amount'], 2) : 0.0;
 
-                if (! $fund || ! $invoice || $amount <= 0) {
-                    throw new \RuntimeException('Each line needs a payment, an invoice and an amount greater than zero.');
+                if (! $fund || (! $invoice && ! $journal) || $amount <= 0) {
+                    throw new \RuntimeException('Each line needs a payment, an invoice or journal, and an amount greater than zero.');
                 }
 
                 if ($amount > $fund->available + 0.005) {
                     throw new \RuntimeException("Payment {$fund->payment->payment_number} only has " . number_format($available[$fund->payment->id], 2) . ' available - the lines against it add up to more than that.');
+                }
+
+                if ($journal) {
+                    if ($amount > $journalDue[$journal->id] + 0.005) {
+                        throw new \RuntimeException("Journal {$journal->journal_number} only has " . number_format($journal->outstandingAmount(), 2) . ' outstanding - the lines against it add up to more than that.');
+                    }
+
+                    $settlement = new InvoicePayment;
+                    $settlement->customer_id = $journal->customer_id;
+                    $settlement->settled_debtor_journal_id = $journal->id;
+                    $settlement->payment_id = $fund->payment->id;
+                    $settlement->source = 'drawdown';
+                    $settlement->currency_id = $journal->currency_id;
+                    $settlement->amount = $amount;
+                    $settlement->save();
+
+                    $fund->available = round($fund->available - $amount, 2);
+                    $journalDue[$journal->id] = max(round($journalDue[$journal->id] - $amount, 2), 0);
+                    $applied = round($applied + $amount, 2);
+                    continue;
                 }
 
                 if ($amount > $due[$invoice->id] + 0.005) {
@@ -149,8 +189,33 @@ class CustomerDepositService
 
             $this->syncWalletBalance($customerId, $currencyId);
 
-            return ['applied' => $applied, 'invoices' => $invoices->count()];
+            return ['applied' => $applied, 'invoices' => $invoices->count() + $journals->count()];
         });
+    }
+
+    /**
+     * Posted debit debtors journals (e.g. opening balances) for a customer +
+     * currency that still have an amount outstanding - matchable to
+     * deposits like invoices. Each gets ->outstanding.
+     */
+    public function openDebitJournals(int $customerId, int $currencyId): Collection
+    {
+        return DebtorJournal::where('customer_id', $customerId)
+            ->where('currency_id', $currencyId)
+            ->where('type', DebtorJournal::DEBIT)
+            ->posted()
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get()
+            ->each(fn ($journal) => $journal->outstanding = $journal->outstandingAmount())
+            ->filter(fn ($journal) => $journal->outstanding > 0)
+            ->values();
+    }
+
+    /** "j12" (a line target that is a debtors journal) → 12; an invoice id → null. */
+    public static function journalTarget($target): ?int
+    {
+        return is_string($target) && preg_match('/^j(\d+)$/', $target, $m) ? (int) $m[1] : null;
     }
 
     /**

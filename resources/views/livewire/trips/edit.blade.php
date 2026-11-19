@@ -356,52 +356,138 @@
                                 @if (in_array($trip_type_name, ['Intransit', 'Cross Border', 'Inward', 'Outward', 'Return']))
                                 
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="vehcile"><a href="{{ route('borders.index') }}" target="_blank" style="color: blue">Border(s)</a></label>
-                                            <select class="form-control" wire:model.debounce.300ms="selectedBorder" multiple >
-                                                    <option value="">Select Border</option>
-                                                    @if (!is_null($selectedTripType))
-                                                        @foreach ($borders as $border)
-                                                        <option value="{{$border->id}}">{{$border->name}} </option>
-                                                        @endforeach
-                                                    @endif
-                                            </select>
-                                            @error('selectedBorder') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('borders.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Border</a></small> <a href="#" wire:click.prevent="refresh('borders')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        <!-- Borders and Clearing Agents are independent lists
+                                             (e.g. one border crossed, with a port agent AND a border agent) -->
+                                        <div class="col-md-6">
+                                            <div class="row">
+                                                <!-- Border(s) -->
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="borders">
+                                                            <a href="{{ route('borders.index') }}" target="_blank" style="color: blue">Border(s)</a>
+                                                        </label>
+                                                        <select class="form-control" wire:model.debounce.300ms="selectedBorder.0">
+                                                            <option value="">Select Border</option>
+                                                            @if (!is_null($selectedTripType))
+                                                                @foreach ($borders as $border)
+                                                                    <option value="{{ $border->id }}">{{ $border->name }}</option>
+                                                                @endforeach
+                                                            @endif
+                                                        </select>
+                                                        @error('selectedBorder.0') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+
+                                                    @foreach ($border_inputs as $key => $value)
+                                                        <div class="row mb-10" wire:key="border-input-{{ $value }}">
+                                                            <div class="col-xs-10 col-md-10" style="padding-right: 0;">
+                                                                <select class="form-control" wire:model.debounce.300ms="selectedBorder.{{ $value }}">
+                                                                    <option value="">Select Border</option>
+                                                                    @if (!is_null($selectedTripType))
+                                                                        @foreach ($borders as $border)
+                                                                            <option value="{{ $border->id }}">{{ $border->name }}</option>
+                                                                        @endforeach
+                                                                    @endif
+                                                                </select>
+                                                                @error('selectedBorder.' . $value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                            </div>
+                                                            <div class="col-xs-2 col-md-2" style="margin-top:3px;">
+                                                                <button class="btn btn-danger btn-rounded btn-sm" wire:click.prevent="borderRemove({{ $key }})">
+                                                                    <i class="fa fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+
+                                                    <small>
+                                                        <a href="{{ route('borders.index') }}" target="_blank">
+                                                            <i class="fa fa-plus-square-o"></i> New Border
+                                                        </a>
+                                                    </small>
+                                                    <a href="#" wire:click.prevent="refresh('borders')" class="float-end">
+                                                        <i class="fa fa-refresh"></i>
+                                                    </a>
+                                                    <div class="form-group text-end mt-10">
+                                                        <button class="btn btn-success btn-rounded btn-sm" wire:click.prevent="borderAdd({{ $b }})">
+                                                            <i class="fa fa-plus"></i> Border
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Clearing Agent(s) -->
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="clearing_agents">
+                                                            <a href="{{ route('clearing_agents.index') }}" target="_blank" style="color: blue">Clearing Agent(s)</a>
+                                                        </label>
+                                                        <select class="form-control" wire:model.debounce.300ms="clearing_agent_id.0">
+                                                            <option value="">Select Agent</option>
+                                                            @foreach ($clearing_agents as $clearing_agent)
+                                                                <option value="{{ $clearing_agent->id }}">{{ $clearing_agent->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('clearing_agent_id.0') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+
+                                                    @foreach ($clearing_agent_inputs as $key => $value)
+                                                        <div class="row mb-10" wire:key="clearing-agent-input-{{ $value }}">
+                                                            <div class="col-xs-10 col-md-10" style="padding-right: 0;">
+                                                                <select class="form-control" wire:model.debounce.300ms="clearing_agent_id.{{ $value }}">
+                                                                    <option value="">Select Agent</option>
+                                                                    @foreach ($clearing_agents as $clearing_agent)
+                                                                        <option value="{{ $clearing_agent->id }}">{{ $clearing_agent->name }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                                @error('clearing_agent_id.' . $value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                            </div>
+                                                            <div class="col-xs-2 col-md-2" style="margin-top:3px;">
+                                                                <button class="btn btn-danger btn-rounded btn-sm" wire:click.prevent="clearingAgentRemove({{ $key }})">
+                                                                    <i class="fa fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+
+                                                    <small>
+                                                        <a href="{{ route('clearing_agents.index') }}" target="_blank">
+                                                            <i class="fa fa-plus-square-o"></i> New Clearing Agent
+                                                        </a>
+                                                    </small>
+                                                    <a href="#" wire:click.prevent="refresh('clearing_agents')" class="float-end">
+                                                        <i class="fa fa-refresh"></i>
+                                                    </a>
+                                                    <div class="form-group text-end mt-10">
+                                                        <button class="btn btn-success btn-rounded btn-sm" wire:click.prevent="clearingAgentAdd({{ $ca }})">
+                                                            <i class="fa fa-plus"></i> Clearing Agent
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="vehcile"><a href="{{ route('clearing_agents.index') }}" target="_blank" style="color: blue">Clearing Agent(s)</a></label>
-                                            <select class="form-control" wire:model.debounce.300ms="clearing_agent_id" multiple >
-                                                    <option value="">Select Clearing Agent</option>
-                                                        @foreach ($clearing_agents as $clearing_agent)
-                                                        <option value="{{$clearing_agent->id}}">{{$clearing_agent->name}} </option>
-                                                        @endforeach
-                                            </select>
-                                            @error('clearing_agent_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('clearing_agents.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Clearing Agent</a></small> <a href="#" wire:click.prevent="refresh('clearing_agents')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                    </div>
                                     
                                     <div class="col-md-6">
                                         <div class="row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label for="cd3_number">CD3 Number</label>
                                                     <input type="text" class="form-control" wire:model.debounce.300ms="cd3_number" placeholder="Enter CD3 Number">
                                                     @error('cd3_number') <span class="text-danger error">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label for="boe">Bill Of Entry #</label>
                                                     <input type="text" class="form-control" wire:model.debounce.300ms="bill_of_entry" placeholder="Enter BOE #">
                                                     @error('bill_of_entry') <span class="text-danger error">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="bill_of_lading">BOL#</label>
+                                                    <input type="text" class="form-control" wire:model.debounce.300ms="bill_of_lading" placeholder="Enter BOL #">
+                                                    @error('bill_of_lading') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
                                                 @if ($trip_type_name == 'Outward')
                                                     <div class="form-group">
                                                         <label for="cd1_number">CD1 Number</label>
@@ -1812,7 +1898,7 @@
                                         @include('livewire.trips.partials.horse-assignment-state')
                                         <div class="form-group">
                                                 <label for="notes">Driver Notes</label>
-                                                <textarea wire:model.debounce.300ms="notes"  class="form-control" placeholder="Driver Notes OR Instructions eg What to do @ offloading point" cols="30" rows="2"></textarea>
+                                                <textarea wire:model.debounce.300ms="notes"  class="form-control" placeholder="Driver Notes OR Instructions eg What to do @ offloading point, collect freight payment on delivery" cols="30" rows="2"></textarea>
                                                 @error('notes') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -2096,7 +2182,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="street_address">Trip Notes/Comments</label>
-                                        <textarea wire:model.debounce.300ms="comments" class="form-control" placeholder="Enter Trip Notes / Comments" cols="30" rows="3"></textarea>
+                                        <textarea wire:model.debounce.300ms="comments" class="form-control" placeholder="Enter Trip Notes / Comments, incl. any special agreements between consignor and carrier" cols="30" rows="3"></textarea>
                                         @error('comments') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
@@ -2104,7 +2190,13 @@
 
                             <hr>
 
-                            <h6 class="underline mt-20 mb-20"><strong>Insurance &amp; Waybill Details</strong></h6>
+                            <h6 class="underline mt-20 mb-20"><strong>Insurance</strong></h6>
+                            <div class="form-group">
+                                <label class="checkbox-inline" style="font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" wire:model="has_insurance"> <strong>Insurance Details</strong>
+                                </label>
+                            </div>
+                            @if ($has_insurance)
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -2128,42 +2220,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Marks &amp; Numbers</label>
-                                        <input type="text" class="form-control" wire:model.debounce.300ms="marks_and_numbers" placeholder="Package marks / numbers">
-                                        @error('marks_and_numbers') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Number of Packages</label>
-                                        <input type="number" class="form-control" wire:model.debounce.300ms="number_of_packages" placeholder="Enter number of packages">
-                                        @error('number_of_packages') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Freight Payment Terms</label>
-                                        <select class="form-control" wire:model.debounce.300ms="freight_payment_terms">
-                                            <option value="">Select Terms</option>
-                                            <option value="prepaid">Prepaid</option>
-                                            <option value="collect">Collect</option>
-                                        </select>
-                                        @error('freight_payment_terms') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>Special Agreements</label>
-                                        <textarea wire:model.debounce.300ms="special_agreements" class="form-control" placeholder="Special agreements between consignor and carrier (e.g. CMR box 7)" cols="30" rows="2"></textarea>
-                                        @error('special_agreements') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
-                            </div>
+                            @endif
 
                             <hr>
                                 @if ($shift == False)

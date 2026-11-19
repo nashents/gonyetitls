@@ -3,6 +3,8 @@
 namespace App\Services\Trips;
 
 use App\Mail\PendingNotificationEmails;
+use App\Models\Border;
+use App\Models\ClearingAgent;
 use App\Models\DeliveryNote;
 use App\Models\Driver;
 use App\Models\Expense;
@@ -42,7 +44,8 @@ class BulkTripScheduleService
      *                     consignee_id, consignor_id, currency_id, exchange_rate, from, to, loading_point_id,
      *                     offloading_point_id, distance, units_of_measure_id, freight_calculation, rate, cargo_details,
      *                     trip_status, transporter_agreement, transporter_rate, horse_id, driver_id, trailer_ids,
-     *                     trip_ref, start_date, weight, quantity, litreage, comments,
+     *                     trip_ref, container_number, bill_of_lading, border_ids, clearing_agent_ids,
+     *                     start_date, weight, quantity, litreage, comments,
      *                     expenses (expense_id, funded_by, category, payment_method_id, currency_id, exchange_rate, vendor_id, amount)
      * @return Collection<int, Trip>
      */
@@ -179,6 +182,7 @@ class BulkTripScheduleService
         $trip->trip_status_date = $t['start_date'];
         $trip->start_date = $t['start_date'];
         $trip->comments = $t['comments'] ?? null;
+        $trip->container_number = trim((string) ($t['container_number'] ?? '')) ?: null;
         $trip->currency_id = $t['currency_id'];
         $trip->attach_transport_order = false;
         $trip->emptyrun_origin = false;
@@ -217,6 +221,16 @@ class BulkTripScheduleService
             $trip->trailers()->sync($trailerIds);
         }
 
+        // Borders and clearing agents are independent lists (as on Trips > Create).
+        $borderIds = Border::whereIn('id', (array) ($t['border_ids'] ?? []))->pluck('id')->all();
+        if ($borderIds) {
+            $trip->borders()->sync($borderIds);
+        }
+        $clearingAgentIds = ClearingAgent::whereIn('id', (array) ($t['clearing_agent_ids'] ?? []))->pluck('id')->all();
+        if ($clearingAgentIds) {
+            $trip->clearing_agents()->sync($clearingAgentIds);
+        }
+
         $tripTransportOrder = TripTransportOrder::firstOrNew(['trip_id' => $trip->id, 'transport_order_id' => $transportOrder->id]);
         $tripTransportOrder->tto_number = $this->number(TripTransportOrder::class, 'TO', $company);
         $tripTransportOrder->allocated_quantity = $quantity;
@@ -228,6 +242,8 @@ class BulkTripScheduleService
         $tripTransportOrder->currency_id = $t['currency_id'];
         $tripTransportOrder->exchange_rate = $exchangeRate;
         $tripTransportOrder->exchange_amount = $exchangeFreight;
+        // Bill of Lading lives on the trip's transport-order link (trips is at its row-size limit).
+        $tripTransportOrder->bill_of_lading = trim((string) ($t['bill_of_lading'] ?? '')) ?: null;
         $tripTransportOrder->save();
 
         $origin->update(['trip_id' => $trip->id, 'trip_transport_order_id' => $tripTransportOrder->id]);

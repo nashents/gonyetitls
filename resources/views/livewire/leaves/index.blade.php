@@ -163,9 +163,9 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="leave_type">Departments<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="department_id" class="form-control" required >
-                                    <option value="">Select Department</option>
+                                <label for="leave_type">Department<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="department_id" class="form-control" disabled title="Leave is booked against the employee's default department">
+                                    <option value="">No default department</option>
                                     @foreach ($departments as $department)
                                         <option value="{{$department->id}}">{{$department->name}}</option>
                                     @endforeach
@@ -303,9 +303,9 @@
                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="leave_type">Departments<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="department_id" class="form-control" required >
-                                    <option value="">Select Department</option>
+                                <label for="leave_type">Department<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="department_id" class="form-control" disabled title="Leave is booked against the employee's default department">
+                                    <option value="">No default department</option>
                                     @foreach ($departments as $department)
                                         <option value="{{$department->id}}">{{$department->name}}</option>
                                     @endforeach

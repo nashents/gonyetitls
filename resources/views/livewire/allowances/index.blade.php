@@ -12,6 +12,7 @@
 
                             <div class="panel-title">
                                 <a href="#" data-toggle="modal" data-target="#allowanceModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Allowance</a>
+                                <small class="text-muted" style="margin-left:10px;">Transport / driver trip expense allowances. Payroll allowances (Accommodation, Transport ...) are set up under Earnings.</small>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -39,8 +40,6 @@
                                     </th>
                                     <th class="th-sm">Type
                                     </th>
-                                    <th class="th-sm">PAYE Taxable
-                                    </th>
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
@@ -61,7 +60,6 @@
                                     <td>{{$allowance->percentage}}</td>
                                     <td>{{$allowance->tax ? $allowance->tax->abbreviation : ""}}</td>
                                     <td>{{$allowance->type}}</td>
-                                    <td><span class="badge bg-{{ $allowance->taxable ? 'success' : 'secondary' }}">{{ $allowance->taxable ? 'Yes' : 'No' }}</span></td>
                                     <td><span class="badge bg-{{$allowance->status == 1 ? "success" : "danger"}}">{{$allowance->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -222,18 +220,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="taxable">PAYE Taxable<span class="required" style="color: red">*</span></label>
-                                <select wire:model.defer="taxable" class="form-control" required>
-                                    <option value="1">Yes - included in PAYE</option>
-                                    <option value="0">No - part of gross, excluded from PAYE</option>
-                                </select>
-                                @error('taxable') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
                 <div class="modal-footer">
@@ -364,18 +350,6 @@
                                     <option value="Non Inventory">Non Inventory Item</option>
                                 </select>
                                 @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="taxable">PAYE Taxable<span class="required" style="color: red">*</span></label>
-                                <select wire:model.defer="taxable" class="form-control" required>
-                                    <option value="1">Yes - included in PAYE</option>
-                                    <option value="0">No - part of gross, excluded from PAYE</option>
-                                </select>
-                                @error('taxable') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

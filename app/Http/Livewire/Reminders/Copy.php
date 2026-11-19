@@ -31,7 +31,7 @@ class Copy extends Component
         $this->surname = '';
         $this->email = '';
         $this->phonenumber = '';
-        $this->status = '';
+        $this->status = 1; // new copies default to Active
         $this->selectedEmployee = '';
     }
 
@@ -100,6 +100,7 @@ class Copy extends Component
         $this->surname = $copy->surname;
         $this->email = $copy->email;
         $this->phonenumber = $copy->phonenumber;
+        $this->status = $copy->status ? 1 : 0;
         $this->copy_id = $id;
          $this->dispatchBrowserEvent('show-reminderCopyEditModal');
     }
@@ -110,7 +111,7 @@ class Copy extends Component
             'name' => 'required',
             'surname' => 'required',
             'email' => 'required|email',
-            'phonenumber' => 'required',
+            'phonenumber' => 'nullable',
         ]);
 
         $copy = ReminderCopy::find($this->copy_id);
@@ -118,6 +119,7 @@ class Copy extends Component
         $copy->surname = $this->surname;
         $copy->email = $this->email;
         $copy->phonenumber = $this->phonenumber;
+        $copy->status = (bool) $this->status;
         $copy->save();
 
         $this->dispatchBrowserEvent('hide-reminderCopyEditModal');
@@ -144,7 +146,10 @@ class Copy extends Component
                 // Email
                 ->orWhere('email', 'like', $search)
                 // Phone number
-                ->orWhere('phone_number', 'like', $search);
+                ->orWhere('phonenumber', 'like', $search)
+                // Name typed in directly (no employee link)
+                ->orWhere('name', 'like', $search)
+                ->orWhere('surname', 'like', $search);
             });
         })
         ->orderBy('email','asc')->paginate(10);

@@ -85,6 +85,7 @@
                                     @endforeach
                                 </select>
                                 @error('expenseLines.'.$k.'.vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small><a href="#" wire:click.prevent="startNewVendor({{ $k }})"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
                             </td>
                             <td>
                                 <input type="number" step="any" min="0" wire:model.lazy="expenseLines.{{ $k }}.amount" class="form-control input-sm">
@@ -113,5 +114,40 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($newVendorFor !== null && isset($expenseLines[$newVendorFor]))
+            {{-- Quick vendor: created like Vendors > New and picked on the expense line it was opened from. --}}
+            <div class="well well-sm" style="margin: 10px 0 0; padding: 10px;">
+                <strong><i class="fa fa-plus-square-o"></i> New Vendor</strong>
+                <small class="text-muted">for expense line {{ $newVendorFor + 1 }}. More details (address, contacts, documents) can be added later under Vendors.</small>
+                <div class="row" style="margin-top: 8px;">
+                    <div class="col-md-4">
+                        <input type="text" wire:model.defer="newVendor.name" class="form-control input-sm" placeholder="Vendor name *">
+                        @error('newVendor.name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <input type="email" wire:model.defer="newVendor.email" class="form-control input-sm" placeholder="Email (gets login details)">
+                        @error('newVendor.email') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" wire:model.defer="newVendor.phonenumber" class="form-control input-sm" placeholder="Phone">
+                        @error('newVendor.phonenumber') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-2">
+                        <select wire:model.defer="newVendor.currency_id" class="form-control input-sm">
+                            <option value="">Currency</option>
+                            @foreach ($currencies as $currency)
+                                <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('newVendor.currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-1" style="white-space: nowrap;">
+                        <button type="button" wire:click="createVendor" wire:loading.attr="disabled" wire:target="createVendor" class="btn btn-success btn-xs" title="Save vendor"><i class="fa fa-check"></i></button>
+                        <button type="button" wire:click="cancelNewVendor" class="btn btn-default btn-xs" title="Cancel"><i class="fa fa-times"></i></button>
+                    </div>
+                </div>
+            </div>
+        @endif
     @endif
 </div>

@@ -9,16 +9,29 @@
     @error('rows.'.$i.'.driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
 </td>
 <td>
-    <select wire:model.defer="rows.{{ $i }}.trailer_ids" class="form-control input-sm" multiple size="2" title="Ctrl/Cmd + click to pick more than one">
-        @foreach ($trailers->get($row['transporter_id'], collect())->merge($trailers->collapse()->whereIn('id', array_map('intval', (array) $row['trailer_ids'])))->unique('id') as $trailer)
-            <option value="{{ $trailer->id }}">{{ $trailer->identifier_label }}</option>
-        @endforeach
-    </select>
+    {{-- Tick one or more trailers for this truck (e.g. a link / interlink pair). --}}
+    <div style="max-height: 80px; overflow-y: auto; border: 1px solid #ddd; border-radius: 3px; padding: 2px 6px;">
+        @forelse ($trailers->get($row['transporter_id'], collect())->merge($trailers->collapse()->whereIn('id', array_map('intval', (array) $row['trailer_ids'])))->unique('id') as $trailer)
+            <label wire:key="bulk-trip-{{ $row['horse_id'] }}-trailer-{{ $trailer->id }}" style="display: block; font-weight: normal; margin: 0; white-space: nowrap;">
+                <input type="checkbox" wire:model.defer="rows.{{ $i }}.trailer_ids" value="{{ $trailer->id }}"> {{ $trailer->identifier_label }}
+            </label>
+        @empty
+            <small class="text-muted">No trailers</small>
+        @endforelse
+    </div>
     @error('rows.'.$i.'.trailer_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
 </td>
 <td>
     <input type="text" maxlength="255" wire:model.lazy="rows.{{ $i }}.trip_ref" class="form-control input-sm" placeholder="Optional">
     @error('rows.'.$i.'.trip_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+</td>
+<td>
+    <input type="text" maxlength="255" wire:model.defer="rows.{{ $i }}.container_number" class="form-control input-sm" placeholder="Separate by ,">
+    @error('rows.'.$i.'.container_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+</td>
+<td>
+    <input type="text" maxlength="255" wire:model.defer="rows.{{ $i }}.bill_of_lading" class="form-control input-sm" placeholder="BOL #">
+    @error('rows.'.$i.'.bill_of_lading') <span class="error" style="color:red">{{ $message }}</span> @enderror
 </td>
 <td>
     <input type="date" wire:model.defer="rows.{{ $i }}.start_date" class="form-control input-sm">

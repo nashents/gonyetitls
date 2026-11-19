@@ -28,6 +28,11 @@ class InvoicePayment extends Model implements Auditable
         return $this->belongsTo('App\Models\DebtorJournal');
     }
 
+    /** Debit debtors journal (e.g. opening balance) this deposit allocation settles - instead of an invoice. */
+    public function settled_debtor_journal(){
+        return $this->belongsTo('App\Models\DebtorJournal', 'settled_debtor_journal_id');
+    }
+
     public function items(){
         return $this->hasMany('App\Models\InvoicePaymentItem');
     }

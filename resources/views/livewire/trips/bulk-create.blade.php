@@ -16,7 +16,7 @@
                                     <label style="font-weight: bold;"><input type="checkbox" wire:model="sameJob"> Same job for all trucks</label><br>
                                     <small class="text-muted">
                                         @if ($sameJob)
-                                            Every truck gets the customer, cargo, route and rate below; only driver, trailers and loads differ.
+                                            Every truck gets the customer, cargo, route, rate, borders and clearing agents below; only driver, trailers, containers and loads differ.
                                         @else
                                             Each trip has its own customer, cargo, route and rate. A new truck starts with the previous trip's details.
                                         @endif
@@ -102,6 +102,8 @@
                                             <th style="min-width: 180px">Driver<span style="color: red">*</span></th>
                                             <th style="min-width: 170px">Trailer(s)</th>
                                             <th style="min-width: 130px">Trip Ref</th>
+                                            <th style="min-width: 140px">Container #(s)</th>
+                                            <th style="min-width: 120px">BOL#</th>
                                             <th style="width: 150px">Start Date<span style="color: red">*</span></th>
                                             @if ($liquid)
                                                 <th style="width: 110px">Litreage</th>
@@ -128,7 +130,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <th colspan="{{ $liquid ? 6 : 7 }}" class="text-right">{{ count($rows) }} trip(s)</th>
+                                            <th colspan="{{ $liquid ? 8 : 9 }}" class="text-right">{{ count($rows) }} trip(s)</th>
                                             <th class="text-right">{{ number_format($this->totalFreight, 2) }}</th>
                                             <th colspan="3"></th>
                                         </tr>
@@ -158,6 +160,8 @@
                                                 <th style="min-width: 180px">Driver<span style="color: red">*</span></th>
                                                 <th style="min-width: 170px">Trailer(s)</th>
                                                 <th style="min-width: 130px">Trip Ref</th>
+                                                <th style="min-width: 140px">Container #(s)</th>
+                                                <th style="min-width: 120px">BOL#</th>
                                                 <th style="width: 150px">Start Date<span style="color: red">*</span></th>
                                                 @if ($liquid)
                                                     <th style="width: 110px">Litreage</th>

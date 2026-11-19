@@ -104,23 +104,25 @@ class AgedReceivablesCalculator
             $grandTotal += $amount;
         }
 
-        // Debtors journals: a debit is an open amount owed from its own date;
-        // a credit's unallocated remainder reduces the customer's balance in
-        // its date's bucket (the allocated part already came off an invoice
-        // balance above).
+        // Debtors journals: a debit is an open amount owed from its own date,
+        // less customer deposits matched to it; a credit's unallocated
+        // remainder reduces the customer's balance in its date's bucket (the
+        // allocated part already came off an invoice balance above).
         $allocated = '(select COALESCE(SUM(ip.amount+0),0) from invoice_payments ip where ip.debtor_journal_id = debtor_journals.id and ip.deleted_at is null)';
+        $settled = '(select COALESCE(SUM(ip.amount+0),0) from invoice_payments ip where ip.settled_debtor_journal_id = debtor_journals.id and ip.deleted_at is null)';
 
         $journals = DebtorJournal::posted()
             ->whereDate('date', '<=', $this->asOfDate)
             ->with('customer:id,name')
             ->select('debtor_journals.*')
             ->selectRaw("{$allocated} as allocated_total")
+            ->selectRaw("{$settled} as settled_total")
             ->get();
 
         foreach ($journals as $journal) {
             $open = $journal->isCredit()
                 ? -round((float) $journal->amount - (float) $journal->allocated_total, 2)
-                : (float) $journal->amount;
+                : round(max(0, (float) $journal->amount - (float) $journal->settled_total), 2);
 
             $amount = $this->reportingAmount($journal->currency_id, number_format($open, 2, '.', ''), (string) $journal->exchange_rate);
 

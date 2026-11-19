@@ -344,6 +344,7 @@ Route::get('/employees/export/excel','ExportsController@exportEmployeesExcel')->
 Route::get('/employees/export/csv','ExportsController@exportEmployeesCSV')->name('employees.export.csv');
 Route::get('/employees/export/pdf','ExportsController@exportEmployeesPDF')->name('employees.export.pdf');
 Route::post('/employees/import','ImportsController@importEmployees')->name('employees.import');
+Route::get('/employees/leaves/import-template','ImportsController@downloadEmployeesLeaveTemplate')->name('employees.leaves.import_template');
 Route::post('/employees/leaves/import','ImportsController@importEmployeesLeave')->name('employees.leaves.import');
 
 //Vehicles Import and Export
@@ -921,6 +922,10 @@ Route::post('/login/location', [LoginController::class, 'saveLoginLocation'])
     ->middleware('auth');
 
 Route::get('documents/{id}/{category}/all','DocumentController@documents')->name('documents.all');
+Route::get('documents/custody/mine','DocumentController@custodyMine')->name('documents.custody.mine');
+Route::get('documents/{document}/custody','DocumentController@custody')->name('documents.custody');
+Route::get('documents/{document}/custody/label','DocumentController@custodyLabel')->name('documents.custody.label');
+Route::get('documents/{document}/custody/print','DocumentController@custodyPrint')->name('documents.custody.print');
 Route::get('product_services/{category}/all','ProductServiceController@all')->name('product_services.all');
 
 Route::get('credit_notes/{id}/email','CreditNoteController@email')->name('credit_notes.email');

@@ -74,10 +74,21 @@ class Index extends Component
         $this->is_backdated = False;
     }
 
+    /**
+     * Leave is always booked against the employee's default department, so the
+     * form shows only that department (read-only) and store/update re-resolve it.
+     */
+    private function loadDefaultDepartment(): void
+    {
+        $department = $this->selected_employee?->defaultDepartment();
+        $this->departments = collect($department ? [$department] : []);
+        $this->employee_departments = $this->departments;
+        $this->department_id = $department?->id;
+    }
+
     public function mount(){
         $this->selected_employee = Auth::user()->employee;
-        $this->departments = $this->selected_employee->default_departments;
-        $this->department_id = $this->departments->first()?->id;
+        $this->loadDefaultDepartment();
         $this->available_leave_days =  0;
         $this->leave_types = LeaveType::where('active',True)->orderBy('name','asc')->get();
         $user = Auth::user();
@@ -138,9 +149,7 @@ class Index extends Component
                 return;
             }
 
-            $this->employee_departments = $this->selected_employee->default_departments;
-            $this->departments = $this->employee_departments;
-            $this->department_id = $this->employee_departments->first()?->id;
+            $this->loadDefaultDepartment();
 
             // Refresh leave balance based on currently selected leave type
             if (!is_null($this->leave_type_id)) {
@@ -244,8 +253,7 @@ class Index extends Component
         $this->selectedEmployee = $leave->employee_id;
         $this->selected_employee = Employee::find($leave->employee_id);
         $this->available_leave_days =  $this->selected_employee->leave_days;
-        $this->departments = $this->selected_employee->default_departments;
-        $this->department_id = $this->departments->first()?->id;
+        $this->loadDefaultDepartment();
         $this->leave_type_id = $leave->leave_type_id;
         $this->ignore_public_holidays = $leave->ignore_public_holidays ?? False;
         $this->to = $leave->to;

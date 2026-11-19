@@ -149,14 +149,14 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Annual Leave Days Data <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                        <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Employee Leave Days <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                     </div>
                     <form action="{{route('employees.leaves.import')}}" method="POST" enctype="multipart/form-data">
                         {{ csrf_field() }}
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="name">Upload Employee Leave Data Excel File</label>
-                            @include('includes.import-template-link', ['template' => 'Leave Days Import File.xlsx'])
+                            @include('includes.import-template-link', ['url' => route('employees.leaves.import_template')])
                             <input type="file" class="form-control" name="file" placeholder="Upload Employee File" >
                             @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>

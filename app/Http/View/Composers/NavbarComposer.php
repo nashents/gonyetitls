@@ -93,6 +93,7 @@ class NavbarComposer
                 'expired_reminders' => collect(),
                 'reminders_count' => 0,
                 'freight_reminders' => collect(),
+                'document_handovers' => collect(),
             ]);
             return;
         }
@@ -196,7 +197,7 @@ class NavbarComposer
                     ->where('expires_at', '>=', $now);
                 });
             })
-            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
+            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee', 'customer', 'vendor'])
             ->orderBy('expires_at', 'asc');
 
         $reminders = $validRemindersQuery->get();
@@ -205,7 +206,7 @@ class NavbarComposer
             ->where('user_id', $user->id)
             ->where('closed', 0)
             ->whereDate('expires_at', '<', $today)
-            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
+            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee', 'customer', 'vendor'])
             ->orderBy('expires_at', 'desc')
             ->get();
 
@@ -270,10 +271,20 @@ class NavbarComposer
         $freight_reminders = app(FreightReminderService::class)->forUser($user);
         $isFreightCompany = $company && $company->hasCompanyType('Freight Forwarding & Clearing');
 
+        // Documents handed to this user, waiting for them to sign for them
+        $document_handovers = \App\Models\DocumentMovement::with(['document', 'fromUser'])
+            ->where('status', \App\Models\DocumentMovement::PENDING)
+            ->where('to_user_id', $user->id)
+            ->whereHas('document')
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
         $reminders_count = $reminders->count()
             + $expired_reminders->count()
             + $mileage_reminders->count()
-            + $freight_reminders->count();
+            + $freight_reminders->count()
+            + $document_handovers->count();
 
         // Pending "edit authorization" requests (locked trip/bill edits
         // awaiting a decision) - scoped per-user via the service itself
@@ -295,6 +306,7 @@ class NavbarComposer
             'expired_reminders' => $expired_reminders,
             'mileage_reminders' => $mileage_reminders,
             'freight_reminders' => $freight_reminders,
+            'document_handovers' => $document_handovers,
             'reminders_count' => $reminders_count,
             'isEditAuthorizer' => $isEditAuthorizer,
 

@@ -142,6 +142,16 @@ class DebtorJournalService
                 $this->deallocate($allocation);
             }
 
+            // A debit journal matched to customer deposits: release them back
+            // to the deposits (deleting reverses each DR Deposits / CR AR posting).
+            $settlements = $journal->settlements()->get();
+            foreach ($settlements as $settlement) {
+                $settlement->delete();
+            }
+            if ($settlements->isNotEmpty()) {
+                app(CustomerDepositService::class)->syncWalletBalance((int) $journal->customer_id, (int) $journal->currency_id);
+            }
+
             $reason = $reason ?: 'Voided';
 
             $this->journalReversal->reverseLiveEffects(

@@ -110,19 +110,22 @@ class AgedPayablesCalculator
         // a debit's unallocated remainder reduces the vendor's balance in
         // that date's bucket (the allocated part already came off a bill
         // balance above).
+        // A credit's open amount is less any vendor prepayments matched to it.
         $allocated = '(select COALESCE(SUM(bp.amount+0),0) from bill_payments bp where bp.supplier_journal_id = supplier_journals.id and bp.deleted_at is null)';
+        $settled = '(select COALESCE(SUM(bp.amount+0),0) from bill_payments bp where bp.settled_supplier_journal_id = supplier_journals.id and bp.deleted_at is null)';
 
         $journals = SupplierJournal::posted()
             ->whereDate('date', '<=', $this->asOfDate)
             ->with('vendor:id,name')
             ->select('supplier_journals.*')
             ->selectRaw("{$allocated} as allocated_total")
+            ->selectRaw("{$settled} as settled_total")
             ->get();
 
         foreach ($journals as $journal) {
             $open = $journal->isDebit()
                 ? -round((float) $journal->amount - (float) $journal->allocated_total, 2)
-                : (float) $journal->amount;
+                : round(max(0, (float) $journal->amount - (float) $journal->settled_total), 2);
 
             $amount = $this->reportingAmount($journal->currency_id, number_format($open, 2, '.', ''), (string) $journal->exchange_rate);
 

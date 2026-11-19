@@ -2,7 +2,7 @@
 
 namespace App\Exports\Templates;
 
-use App\Models\Allowance;
+use App\Models\Earning;
 use App\Models\Currency;
 use App\Models\Deduction;
 use App\Models\Employee;
@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Salaries import template, generated live so it carries one column per
- * allowance / deduction set up in this system and lists the employees who
+ * earning / deduction set up in this system and lists the employees who
  * still need a salary. Sheet 1 = data (with a "#" example row, skipped on
  * import), sheet 2 "Instructions" = how to fill it in, hidden "Lists" =
  * dropdown source. SalariesImport reads sheet 1 only.
@@ -38,8 +38,8 @@ class SalariesImportTemplate
     public const STATUTORY_DEDUCTIONS = ['NSSA', 'NEC', 'Pension'];
 
     /**
-     * The allowance / deduction columns, keyed the way Laravel Excel slugs
-     * their headings ("Allowance: Housing" => "allowance_housing"), so the
+     * The earning / deduction columns, keyed the way Laravel Excel slugs
+     * their headings ("Earning: Housing" => "earning_housing"), so the
      * template and SalariesImport always agree.
      *
      * @return array<string,array{heading:string,column:string,id:int,name:string}>
@@ -48,26 +48,57 @@ class SalariesImportTemplate
     {
         $columns = [];
 
+        // A percentage earning / deduction gets a "(% of basic|gross)" column:
+        // the number typed there is the PERCENTAGE and the importer works out
+        // the amount ('percent' => 'basic'|'gross'). Otherwise it's an amount.
         $add = function (string $prefix, string $column, $records) use (&$columns) {
             foreach ($records as $record) {
                 $name = trim((string) $record->name);
-                $heading = "{$prefix}: {$name}";
+                $percent = $record->isPercentage()
+                    ? ($record instanceof Deduction ? $record->calculateOn() : 'basic')
+                    : null;
+                $heading = "{$prefix}: {$name}".($percent ? " (% of {$percent})" : '');
                 $key = Str::slug($heading, '_');
                 if ($name === '' || isset($columns[$key])) {
                     continue;
                 }
-                $columns[$key] = ['heading' => $heading, 'column' => $column, 'id' => $record->id, 'name' => $name];
+                $columns[$key] = ['heading' => $heading, 'column' => $column, 'id' => $record->id, 'name' => $name, 'percent' => $percent];
             }
         };
 
-        $add('Allowance', 'allowance_id', Allowance::query()
+        // Payroll uses Earnings (Allowances are for driver trip expenses only).
+        $earnings = Earning::query()
             ->when($activeOnly, fn ($q) => $q->where('status', 1))
-            ->orderBy('name')->get(['id', 'name']));
+            ->orderBy('name')->get();
+        $add('Earning', 'earning_id', $earnings);
 
-        $add('Deduction', 'deduction_id', Deduction::query()
+        $deductions = Deduction::query()
             ->when($activeOnly, fn ($q) => $q->where('status', 1))
             ->whereNotIn('name', self::AUTO_DEDUCTIONS)
-            ->orderBy('name')->get(['id', 'name']));
+            ->orderBy('name')->get();
+        $add('Deduction', 'deduction_id', $deductions);
+
+        if (!$activeOnly) {
+            // Import only, never in a fresh template:
+            //  - files downloaded before the switch have "Allowance: X" headings
+            //    - read them as the earning named X (an amount);
+            //  - a plain "Earning: X" / "Deduction: Y" heading for a percentage
+            //    item (older template) is read as an amount.
+            $alias = function (string $heading, string $column, $record) use (&$columns) {
+                $name = trim((string) $record->name);
+                $key = Str::slug($heading, '_');
+                if ($name !== '' && !isset($columns[$key])) {
+                    $columns[$key] = ['heading' => $heading, 'column' => $column, 'id' => $record->id, 'name' => $name, 'percent' => null];
+                }
+            };
+            foreach ($earnings as $earning) {
+                $alias('Allowance: '.trim((string) $earning->name), 'earning_id', $earning);
+                $alias('Earning: '.trim((string) $earning->name), 'earning_id', $earning);
+            }
+            foreach ($deductions as $deduction) {
+                $alias('Deduction: '.trim((string) $deduction->name), 'deduction_id', $deduction);
+            }
+        }
 
         return $columns;
     }
@@ -180,21 +211,22 @@ class SalariesImportTemplate
             'Employees who do not have a salary yet are already listed for you. Fill in the ones you want; a listed employee with nothing filled in is simply ignored.',
             'Each employee is found by employee_number. If you leave it blank, name + surname are used instead (they must match the system exactly and be unique).',
             'Columns with a red heading are required. Amounts are plain numbers (e.g. 1250 or 1250.50) with no currency symbol.',
-            'Every amount on a row - basic, allowances and deductions - is in that row\'s salary currency.',
+            'Every amount on a row - basic, earnings and deductions - is in that row\'s salary currency.',
         ]);
 
-        $section('Allowances and deductions', [
-            'There is one "Allowance: ..." column for every active allowance and one "Deduction: ..." column for every active deduction in the system.',
+        $section('Earnings and deductions', [
+            'There is one "Earning: ..." column for every active earning (Accommodation, Transport ... - set up under Payroll > Earnings) and one "Deduction: ..." column for every active deduction in the system.',
             'Type the amount the employee gets per pay period under each one that applies. Leave the others blank.',
-            'Need an allowance or deduction that has no column? Add it in the system first, then download a fresh template. Do not rename or invent columns - a column the system does not recognise is not imported and you are warned about it.',
+            'A column ending in "(% of basic)" or "(% of gross)" is a percentage item: type the PERCENTAGE (e.g. 10 for 10%) and the system works out the amount from the employee\'s basic, or basic + earnings for gross.',
+            'Need an earning or deduction that has no column? Add it in the system first, then download a fresh template. Do not rename or invent columns - a column the system does not recognise is not imported and you are warned about it.',
             'PAYE and AIDS Levy have no columns: answer Yes / No in the paye and aids_levy columns and the system works them out from the tax tables.',
             'NSSA, NEC and Pension are worked out automatically where rates are set up for the employee. If this template has a column for one of them, only type an amount there to override the automatic figure.',
             'Loans and recoveries are not imported. Add them on the salary afterwards (Salaries > Edit).',
         ]);
 
         $section('How the salary is calculated', [
-            'Gross = basic + all allowances.',
-            'PAYE (if Yes) = tax table for the salary currency and frequency, applied to gross less non-taxable allowances. AIDS Levy (if Yes) = 3% of PAYE.',
+            'Gross = basic + all earnings.',
+            'PAYE (if Yes) = tax table for the salary currency and frequency, applied to gross less non-taxable earnings (each earning\'s PAYE Taxable setting). AIDS Levy (if Yes) = 3% of PAYE.',
             'Net = gross - deductions (your deduction columns + PAYE + AIDS Levy + NSSA / NEC / Pension + any loans already on the salary).',
             'This is the same calculation as Salaries > Add Salary, so an imported salary and a hand-captured one give the same result.',
         ]);
@@ -202,7 +234,7 @@ class SalariesImportTemplate
         $section('Uploading again / changing salaries', [
             'An employee who already has a salary is updated, never duplicated. To change existing salaries, add a row with the employee_number.',
             'A blank cell means "leave as it is". It never clears anything.',
-            'To remove an allowance or deduction from an existing salary, type 0 in its column.',
+            'To remove an earning or deduction from an existing salary, type 0 in its column.',
             'A row with a problem (unknown employee, invalid amount, unknown currency ...) is skipped and listed on screen after the upload; all other rows are still imported. Fix the listed rows and upload the file again.',
         ]);
 
@@ -214,7 +246,7 @@ class SalariesImportTemplate
 
         $itemsDescribed = [];
         foreach ($columns as $col) {
-            // One line for all allowance columns and one for all deduction columns.
+            // One line for all earning columns and one for all deduction columns.
             if ($col['group']) {
                 if (isset($itemsDescribed[$col['group']])) {
                     continue;
@@ -332,13 +364,13 @@ class SalariesImportTemplate
 
         $exampled = [];
         foreach (self::itemColumns() as $key => $item) {
-            $group = $item['column'] === 'allowance_id' ? 'Allowance' : 'Deduction';
+            $group = $item['column'] === 'earning_id' ? 'Earning' : 'Deduction';
             $statutory = in_array(strtolower($item['name']), array_map('strtolower', self::STATUTORY_DEDUCTIONS), true);
-            // The example row shows an amount under the first allowance and the first ordinary deduction.
+            // The example row shows an amount under the first earning and the first ordinary deduction.
             $example = '';
             if (!$statutory && !isset($exampled[$group])) {
                 $exampled[$group] = true;
-                $example = $group === 'Allowance' ? '150' : '50';
+                $example = $item['percent'] ? '10' : ($group === 'Earning' ? '150' : '50');
             }
             $columns[$key] = [
                 'heading' => $item['heading'], 'required' => false, 'description' => '', 'example' => $example,

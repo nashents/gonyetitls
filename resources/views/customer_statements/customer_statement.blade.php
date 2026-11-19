@@ -286,7 +286,11 @@
                                                             @if ($payment->invoice_payments->count()> 0)
                                                                     made for
                                                                     @foreach ($payment->invoice_payments as $invoice_payment)
-                                                                        <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice ? $invoice_payment->invoice->invoice_number : "" }} </a>
+                                                                        @if ($invoice_payment->invoice)
+                                                                        <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice->invoice_number }} </a>
+                                                                        @elseif ($invoice_payment->settled_debtor_journal)
+                                                                        Journal# {{ $invoice_payment->settled_debtor_journal->journal_number }}
+                                                                        @endif
                                                                         @if (!$loop->last)
                                                                             ,
                                                                         @endif

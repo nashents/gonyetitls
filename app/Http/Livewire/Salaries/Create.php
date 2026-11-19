@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Session;
 
 class Create extends Component
 {
+    use \App\Http\Livewire\Concerns\CalculatesSalaryItemAmounts;
+
 
 
     public $employees;
@@ -250,8 +252,10 @@ class Create extends Component
         ->orderBy('surname', 'asc')
         ->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->allowances = Allowance::where('status','1')->orderBy('name','asc')->get();
-        $this->earnings = Earning::where('status','1')->orderBy('name','asc')->get();
+        // The form's "Allowances" section lists payroll EARNINGS (Accommodation,
+        // Transport ...). The Allowances module is for driver trip expenses only.
+        $this->allowances = Earning::where('status','1')->orderBy('name','asc')->get();
+        $this->earnings = $this->allowances;
         $this->deductions = Deduction::where('status','1')->where('name','!=','PAYE')->where('name','!=','AIDS Levy')->orderBy('name','asc')->get();
         $this->loans = collect();
        
@@ -276,14 +280,13 @@ class Create extends Component
    
     public function updatedSelectedAllowance($id, $key){
             if (!is_null($id)) {
-              $allowance = Allowance::find($id);
+              $allowance = Earning::find($id);
               if (isset($allowance)) {
                  $this->selectedAllowanceCurrency[$key] = $allowance->currency_id;
-                    if ($allowance->calculate_by == "currency") {
-                        $this->allowance_amount[$key] = $allowance->amount;
-                    }elseif($allowance->calculate_by == "percentage"){
-                        $this->allowance_amount[$key] = $allowance->percentage;
-                    }
+                 // Fixed amount, or % of basic worked out (not the raw percentage).
+                 $this->fillEarningAmount($key);
+                 // Deductions that are a % of gross follow the new earning.
+                 $this->recalculatePercentageRows(false);
               }
             }
     }
@@ -295,11 +298,8 @@ class Create extends Component
                 $deduction = Deduction::find($id);
                 if (isset($deduction)) {
                      $this->selectedDeductionCurrency[$key] = $deduction->currency_id;
-                      if ($deduction->calculate_by == "currency") {
-                          $this->deduction_amount[$key] = $deduction->amount;
-                      }elseif($deduction->calculate_by == "percentage"){
-                          $this->deduction_amount[$key] = $deduction->percentage;
-                      }
+                     // Fixed amount, shared-premium employee share, or % of basic / gross worked out.
+                     $this->fillDeductionAmount($key);
                 }
             }
     }
@@ -338,10 +338,10 @@ class Create extends Component
     public function refresh($category){
 
       if($category == "allowances"){
-            $this->allowances = Allowance::where('status',1)->orderBy('name','asc')->get();
+            $this->allowances = Earning::where('status',1)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Allowances Refreshed Successfully!!."
+                'message'=>"Earnings Refreshed Successfully!!."
             ]);
         }
         elseif($category == "deductions"){
@@ -391,7 +391,7 @@ class Create extends Component
                 if (!empty($this->selectedRecovery)) {
                    $this->total_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->recovery_amount, $this->selectedRecoveryCurrency, $this->recoveryExchangeRate);
                 }
-                $this->total_allowances = $this->total_earning_recoveries + $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
+                $this->total_allowances = $this->total_earning_recoveries + $this->processSalaryItems($this->selectedAllowance, 'earning_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
                 // FIX: total_deduction_recoveries is already captured above — do NOT call processSalaryItems
                 // again here with allowance arrays, which was creating duplicate items and wrong totals.
                 $this->total_deduction_recoveries = $this->total_recoveries;
@@ -454,9 +454,8 @@ class Create extends Component
                 
                 // Process PAYE & AIDS Levy - on gross less non-taxable allowances
                 if ($this->paye) {
-                    $payeService = new SalaryPayeService();
-                    $taxable = max(0, $gross - $payeService->nonTaxableAllowances($this->salary_id, $this->company->currency_id));
-                    $this->total_deductions += $payeService->applyPaye($salary, $taxable, $this->exchange_rate);
+                    // Less non-taxable earnings, plus taxable company benefits, less PAYE credits.
+                    $this->total_deductions += (new SalaryPayeService())->applyPayeFor($salary, $gross, $this->company->currency_id, $this->exchange_rate);
                 }
 
                 // Process NSSA, NEC and Pension statutory contributions
@@ -495,7 +494,13 @@ class Create extends Component
 
                 foreach ($items as $key => $item) {
 
-                    if (!empty($item) && isset($amounts[$key]) && isset($currencyIds[$key])) {
+                    // A row with no currency picked (deduction/earning set up without a
+                    // default currency) is in the salary currency - it used to be dropped.
+                    if (!empty($item) && empty($currencyIds[$key])) {
+                        $currencyIds[$key] = $this->selectedCurrency;
+                    }
+
+                    if (!empty($item) && isset($amounts[$key]) && $amounts[$key] !== '' && isset($currencyIds[$key])) {
 
                         $exchange_amount = 0;
 
@@ -587,7 +592,7 @@ class Create extends Component
 
     public function render()
     {
-        $this->allowances = Allowance::where('status','1')->orderBy('name','asc')->get();
+        $this->allowances = Earning::where('status','1')->orderBy('name','asc')->get();
         $this->deductions = Deduction::where('status','1')->where('name','!=','PAYE')->where('name','!=','AIDS Levy')->orderBy('name','asc')->get();
         return view('livewire.salaries.create',[
             'allowances' => $this->allowances,

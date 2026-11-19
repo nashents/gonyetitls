@@ -21,6 +21,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class EmployeesLeaveImport implements  ToCollection, SkipsEmptyRows, WithLimit,
 WithHeadingRow,
@@ -28,7 +29,8 @@ SkipsOnError,
 WithValidation,
 WithChunkReading,
 WithBatchInserts,
-WithCalculatedFormulas
+WithCalculatedFormulas,
+WithMultipleSheets
 {
     use SkipsTemplateExampleRows;
 
@@ -41,11 +43,17 @@ WithCalculatedFormulas
 
     protected array $skipped = [];
 
+    /** employee lookup key => Employee|null */
+    protected array $employeeCache = [];
+
+    /** lower-cased name => LeaveType */
+    protected $leaveTypes = null;
+
     protected int $rowNumber = 1; // heading row is row 1, so first data row is row 2
 
      public function limit(): int
     {
-        return 2500; // Import only the first 100 rows
+        return 20000; // live template lists every employee x leave type
     }
     public function collection(Collection $rows)
     {
@@ -78,18 +86,22 @@ WithCalculatedFormulas
             continue;
         }
 
-        $employee = Employee::query()
-            ->when($employeeNumber, function ($query) use ($employeeNumber) {
-                $query->where('employee_number', $employeeNumber);
-            })
-            ->when(!$employeeNumber && $fullname, function ($query) use ($fullname) {
-                $query->whereRaw(
-                    "LOWER(TRIM(CONCAT(name, ' ', surname))) = ?",
-                    [$fullname]
-                );
-            })
-            ->first();
-
+        // Cached: the live template repeats each employee once per leave type.
+        $employeeKey = $employeeNumber ? 'n:'.$employeeNumber : 'f:'.$fullname;
+        if (!array_key_exists($employeeKey, $this->employeeCache)) {
+            $this->employeeCache[$employeeKey] = Employee::query()
+                ->when($employeeNumber, function ($query) use ($employeeNumber) {
+                    $query->where('employee_number', $employeeNumber);
+                })
+                ->when(!$employeeNumber && $fullname, function ($query) use ($fullname) {
+                    $query->whereRaw(
+                        "LOWER(TRIM(CONCAT(name, ' ', surname))) = ?",
+                        [$fullname]
+                    );
+                })
+                ->first();
+        }
+        $employee = $this->employeeCache[$employeeKey];
 
         if (!$employee) {
             $this->skipped[] = [
@@ -101,7 +113,10 @@ WithCalculatedFormulas
             continue;
         }
 
-        $leaveType = LeaveType::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($row['leave_type'] ?? ''))])->first();
+        if ($this->leaveTypes === null) {
+            $this->leaveTypes = LeaveType::get()->keyBy(fn ($t) => strtolower(trim($t->name)));
+        }
+        $leaveType = $this->leaveTypes->get(strtolower(trim($row['leave_type'] ?? '')));
 
 
         if (!$leaveType) {
@@ -114,50 +129,75 @@ WithCalculatedFormulas
             continue;
         }
 
-        // Diagnostic: log whenever maximum_leave_days comes through empty/non-numeric
-        // so blank cells or bad formulas in the source file are traceable per row.
-        $maximumLeaveDaysRaw = $row['maximum_leave_days'] ?? null;
-        if ($maximumLeaveDaysRaw === null || $maximumLeaveDaysRaw === '' || !is_numeric($maximumLeaveDaysRaw)) {
-            Log::warning('EmployeesLeaveImport: maximum_leave_days is blank or non-numeric', [
-                'row' => $this->rowNumber,
-                'employee_number' => $employeeNumber,
-                'leave_type' => $leaveType->name,
-                'maximum_leave_days_raw' => $maximumLeaveDaysRaw,
-            ]);
-        }
-
+        // Blank = keep the current figure; never clear anything.
         $data = [];
-
-        if (filled($row['accrual_rate'] ?? null)) {
-            $data['acrual_rate'] = $row['accrual_rate'];
+        $invalid = [];
+        foreach (['accrual_rate' => 'acrual_rate', 'available_leave_days' => 'available_leave_days', 'maximum_leave_days' => 'maximum_leave_days'] as $heading => $column) {
+            $value = $row[$heading] ?? null;
+            if (!filled($value)) {
+                continue;
+            }
+            if (!is_numeric($value) || $value < 0) {
+                $invalid[] = $heading;
+                continue;
+            }
+            $data[$column] = $value;
         }
 
-        if (filled($row['available_leave_days'] ?? null)) {
-            $data['available_leave_days'] = $row['available_leave_days'];
+        if (!empty($invalid)) {
+            $this->skipped[] = [
+                'row' => $this->rowNumber,
+                'reason' => 'invalid_number_in_'.implode('_and_', $invalid),
+                'employee_number' => $employeeNumber,
+            ];
+            continue;
         }
 
-        if (filled($row['maximum_leave_days'] ?? null)) {
-            $data['maximum_leave_days'] = $row['maximum_leave_days'];
+        // The live template lists every employee x leave type; a row with
+        // nothing filled in must not create an empty leave record.
+        if (empty($data)) {
+            continue;
         }
 
-        EmployeeLeave::updateOrCreate(
-            [
-                'employee_id' => $employee->id,
-                'leave_type_id' => $leaveType->id,
-            ],
-            $data
-        );
+        $employeeLeave = EmployeeLeave::firstOrNew([
+            'employee_id' => $employee->id,
+            'leave_type_id' => $leaveType->id,
+        ]);
+        foreach ($data as $column => $value) {
+            // Compare as numbers so "12" vs 12.00 is not seen as a change.
+            if (!is_numeric($employeeLeave->{$column}) || (float) $employeeLeave->{$column} != (float) $value) {
+                $employeeLeave->{$column} = $value;
+            }
+        }
+        // Unchanged pre-filled template rows cost a read only - no write, no audit.
+        if (!$employeeLeave->isDirty()) {
+            continue;
+        }
+        $employeeLeave->save();
 
         // Backward compatibility: keep employee table updated for Annual Leave
+        // (filled figures only, same as the on-screen edit).
         if (strtolower(trim($leaveType->name)) === 'annual') {
-            $employee->accrual_rate = $row['accrual_rate'];
-            $employee->leave_days = $row['available_leave_days'];
-            $employee->maximum_leave_days = $row['maximum_leave_days'];
-            $employee->update();
+            $employeeColumns = ['acrual_rate' => 'accrual_rate', 'available_leave_days' => 'leave_days', 'maximum_leave_days' => 'maximum_leave_days'];
+            foreach ($data as $column => $value) {
+                $attribute = $employeeColumns[$column];
+                if (!is_numeric($employee->{$attribute}) || (float) $employee->{$attribute} != (float) $value) {
+                    $employee->{$attribute} = $value;
+                }
+            }
+            if ($employee->isDirty()) {
+                $employee->save();
+            }
         }
 
     }
        }
+    }
+
+    /** Only the data sheet - the live template also has Instructions + hidden Lists sheets. */
+    public function sheets(): array
+    {
+        return [0 => $this];
     }
 
     public function getSkippedRows(): array

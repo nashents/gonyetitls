@@ -117,6 +117,7 @@ class Edit extends Component
     public $cd3_number;
     public $cd1_number;
     public $bill_of_entry;
+    public $bill_of_lading;
     // Freight invoice #(s) for a trip with no attached order; saved on its auto-created transport order.
     public $invoice_numbers;
     public $container_number;
@@ -256,11 +257,8 @@ class Edit extends Component
     // CMR / international waybill details
     public $insurer_name;
     public $insurance_policy_number;
+    public $has_insurance = false;
     public $insurance_cover_amount;
-    public $special_agreements;
-    public $marks_and_numbers;
-    public $number_of_packages;
-    public $freight_payment_terms;
 
     public $trip_destinations;
     public $destinations_selectedTo = [];
@@ -542,7 +540,33 @@ class Edit extends Component
 
     public function borderRemove($b)
     {
+        $value = $this->border_inputs[$b] ?? null;
         unset($this->border_inputs[$b]);
+        // Drop the removed row's selection too, otherwise it is still saved.
+        if ($value !== null && is_array($this->selectedBorder)) {
+            unset($this->selectedBorder[$value]);
+        }
+    }
+
+    // Clearing agents are a list of their own, independent of the borders crossed
+    // (e.g. a port agent and a border agent on a single-border trip).
+    public $clearing_agent_inputs = [];
+    public $ca = 1;
+
+    public function clearingAgentAdd($ca)
+    {
+        $ca = $ca + 1;
+        $this->ca = $ca;
+        array_push($this->clearing_agent_inputs, $ca);
+    }
+
+    public function clearingAgentRemove($key)
+    {
+        $value = $this->clearing_agent_inputs[$key] ?? null;
+        unset($this->clearing_agent_inputs[$key]);
+        if ($value !== null && is_array($this->clearing_agent_id)) {
+            unset($this->clearing_agent_id[$value]);
+        }
     }
 
     public $trailer_inputs = [];
@@ -1362,11 +1386,29 @@ class Edit extends Component
         foreach ($this->trip->truck_stops as $truck_stop) {
             $this->truck_stop_id[] = $truck_stop->id;
         }
-        foreach ($this->trip->borders as $border) {
-            $this->selectedBorder[] = $border->id;
+        // Borders / clearing agents load into the same row layout Create uses:
+        // index 0 is the first select, each extra one gets its own add/remove row.
+        $this->selectedBorder = [];
+        $this->border_inputs = [];
+        foreach ($this->trip->borders->values() as $i => $border) {
+            if ($i === 0) {
+                $this->selectedBorder[0] = $border->id;
+                continue;
+            }
+            $this->b++;
+            $this->border_inputs[] = $this->b;
+            $this->selectedBorder[$this->b] = $border->id;
         }
-        foreach ($this->trip->clearing_agents as $clearing_agent) {
-            $this->clearing_agent_id[] = $clearing_agent->id;
+        $this->clearing_agent_id = [];
+        $this->clearing_agent_inputs = [];
+        foreach ($this->trip->clearing_agents->values() as $i => $clearing_agent) {
+            if ($i === 0) {
+                $this->clearing_agent_id[0] = $clearing_agent->id;
+                continue;
+            }
+            $this->ca++;
+            $this->clearing_agent_inputs[] = $this->ca;
+            $this->clearing_agent_id[$this->ca] = $clearing_agent->id;
         }
         foreach ($this->trip->trailers as $trailer) {
             $this->trailer_id[] = $trailer->id;
@@ -1546,6 +1588,7 @@ class Edit extends Component
          $this->cd3_number = $this->trip->cd3_number;
          $this->cd1_number = $this->trip->cd1_number;
          $this->bill_of_entry = $this->trip->bill_of_entry;
+         $this->bill_of_lading = TripTransportOrder::where('trip_id', $this->trip->id)->whereNotNull('bill_of_lading')->value('bill_of_lading');
          // Freight invoice #(s) live on the trip's own (auto-created) transport order
          $this->invoice_numbers = $this->attach_transport_order ? null
              : TripTransportOrder::where('trip_id', $this->trip->id)->first()?->transport_order?->invoice_numbers;
@@ -1594,10 +1637,7 @@ class Edit extends Component
          $this->insurer_name = $cmrDetail->insurer_name ?? null;
          $this->insurance_policy_number = $cmrDetail->insurance_policy_number ?? null;
          $this->insurance_cover_amount = $cmrDetail->insurance_cover_amount ?? null;
-         $this->special_agreements = $cmrDetail->special_agreements ?? null;
-         $this->marks_and_numbers = $cmrDetail->marks_and_numbers ?? null;
-         $this->number_of_packages = $cmrDetail->number_of_packages ?? null;
-         $this->freight_payment_terms = $cmrDetail->freight_payment_terms ?? null;
+         $this->has_insurance = (bool) ($this->insurer_name || $this->insurance_policy_number || $this->insurance_cover_amount);
 
       }
 
@@ -1974,6 +2014,7 @@ class Edit extends Component
           'cd3_number' => 'nullable|unique:trips,cd3_number,NULL,id,deleted_at,NULL|string',
           'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string',
           'bill_of_entry' => 'nullable|unique:trips,bill_of_entry,NULL,id,deleted_at,NULL|string',
+          'bill_of_lading' => 'nullable|string|max:255',
           'selectedStatus' => 'required',
           'selectedContainer' => 'required',
           'selectedCategory' => 'required',
@@ -2077,14 +2118,13 @@ class Edit extends Component
             $trip->trailers()->sync($this->selectedTrailerIds());
             $this->saveTrailerLinkIfRequested();
         }
-        if (!empty($this->selectedBorder)) {
-            $trip->borders()->detach();
-            $trip->borders()->sync($this->selectedBorder);
-        }
-        if (!empty($this->clearing_agent_id)) {
-            $trip->clearing_agents()->detach();
-            $trip->clearing_agents()->sync($this->clearing_agent_id);
-        }
+        // Borders and clearing agents are independent lists; blank picks are ignored
+        // and deselecting everything clears the list.
+        $borderIds = array_values(array_filter((array) $this->selectedBorder));
+        $trip->borders()->sync(Border::whereIn('id', $borderIds)->pluck('id')->all());
+
+        $clearingAgentIds = array_values(array_filter((array) $this->clearing_agent_id));
+        $trip->clearing_agents()->sync(ClearingAgent::whereIn('id', $clearingAgentIds)->pluck('id')->all());
         if (!empty($this->truck_stop_id)) {
             $trip->truck_stops()->detach();
             $trip->truck_stops()->sync($this->truck_stop_id);
@@ -2822,10 +2862,14 @@ class Edit extends Component
             $this->activeGrant = null;
         }
 
+        // Insurance fields only count when "Insurance Details" is ticked; unticking clears them.
+        if (! $this->has_insurance) {
+            $this->insurer_name = $this->insurance_policy_number = $this->insurance_cover_amount = null;
+        }
+
         if (
             $this->insurer_name || $this->insurance_policy_number || $this->insurance_cover_amount
-            || $this->special_agreements || $this->marks_and_numbers || $this->number_of_packages
-            || $this->freight_payment_terms
+            || TripCmrDetail::where('trip_id', $trip->id)->exists()
         ) {
             TripCmrDetail::updateOrCreate(
                 ['trip_id' => $trip->id],
@@ -2833,10 +2877,6 @@ class Edit extends Component
                     'insurer_name'             => $this->insurer_name,
                     'insurance_policy_number'  => $this->insurance_policy_number,
                     'insurance_cover_amount'   => $this->insurance_cover_amount,
-                    'special_agreements'       => $this->special_agreements,
-                    'marks_and_numbers'        => $this->marks_and_numbers,
-                    'number_of_packages'       => $this->number_of_packages,
-                    'freight_payment_terms'    => $this->freight_payment_terms,
                 ]
             );
         }
@@ -2896,6 +2936,7 @@ class Edit extends Component
                         $trip_transport_order->exchange_amount = $exchange_amount;
                         $trip_transport_order->currency_id = $currency_id;
                          $trip_transport_order->bill_of_entry = $boe;
+                         $trip_transport_order->bill_of_lading = $this->bill_of_lading ?: null;
 
                     }else{
                               
@@ -2913,6 +2954,7 @@ class Edit extends Component
                             $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                             $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
                             $trip_transport_order->bill_of_entry = $this->bill_of_entry;
+                            $trip_transport_order->bill_of_lading = $this->bill_of_lading ?: null;
 
                         }
 

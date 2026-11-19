@@ -40,14 +40,17 @@ class DrawdownJournalService
 
         $deposit = $allocation->payment()->withTrashed()->first();
         $invoice = $allocation->invoice()->withTrashed()->first();
-        $number = optional($invoice)->invoice_number;
+        // Or a debit debtors journal (e.g. opening balance) - see CustomerDepositService::allocate()
+        $journal = $allocation->settled_debtor_journal_id ? $allocation->settled_debtor_journal()->withTrashed()->first() : null;
+        $number = $journal ? $journal->journal_number : optional($invoice)->invoice_number;
+        $target = $journal ? "debtors journal {$number}" : "invoice {$number}";
 
         return $this->post(
             ['invoice_payment_id' => $allocation->id],
-            optional($deposit)->company_id ?? optional($invoice)->company_id,
+            optional($deposit)->company_id ?? optional($invoice)->company_id ?? optional($journal)->company_id,
             $allocation->created_at,
             "DD-" . ($number ?? $allocation->id),
-            "Customer deposit " . optional($deposit)->payment_number . " applied to invoice {$number}",
+            "Customer deposit " . optional($deposit)->payment_number . " applied to {$target}",
             (float) $allocation->amount,
             (float) (optional($deposit)->exchange_rate ?: (optional($invoice)->exchange_rate ?: 1)),
             $allocation->currency_id,
@@ -65,14 +68,17 @@ class DrawdownJournalService
 
         $prepayment = $allocation->payment()->withTrashed()->first();
         $bill = $allocation->bill()->withTrashed()->first();
-        $number = optional($bill)->bill_number;
+        // Or a credit suppliers journal (e.g. opening balance) - see VendorPrepaymentService::allocate()
+        $journal = $allocation->settled_supplier_journal_id ? $allocation->settled_supplier_journal()->withTrashed()->first() : null;
+        $number = $journal ? $journal->journal_number : optional($bill)->bill_number;
+        $target = $journal ? "suppliers journal {$number}" : "bill {$number}";
 
         return $this->post(
             ['bill_payment_id' => $allocation->id],
-            optional($prepayment)->company_id,
+            optional($prepayment)->company_id ?? optional($journal)->company_id,
             $allocation->created_at,
             "DD-" . ($number ?? $allocation->id),
-            "Vendor prepayment " . optional($prepayment)->payment_number . " applied to bill {$number}",
+            "Vendor prepayment " . optional($prepayment)->payment_number . " applied to {$target}",
             (float) $allocation->amount,
             (float) (optional($prepayment)->exchange_rate ?: (optional($bill)->exchange_rate ?: 1)),
             $allocation->currency_id,

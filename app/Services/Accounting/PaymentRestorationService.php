@@ -73,6 +73,16 @@ class PaymentRestorationService
             if ($payment->invoice_payments && $payment->invoice_payments->count() > 0) {
 
                 foreach ($payment->invoice_payments as $invoice_payment) {
+                    // Deposit matched to a debit debtors journal: nothing to
+                    // rebalance, just bring the match back while the journal stands.
+                    if ($invoice_payment->settled_debtor_journal_id) {
+                        $journal = $invoice_payment->settled_debtor_journal;
+                        if ($journal && ! $journal->isVoided()) {
+                            $invoice_payment->restore();
+                        }
+                        continue;
+                    }
+
                     $inv = $invoice_payment->invoice;
                     if (! $inv || $inv->trashed()) {
                         continue;

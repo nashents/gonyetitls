@@ -78,7 +78,7 @@ class PayrollDepartmentCostService
             ->with([
                 'employee:id,name,surname,employee_number',
                 'salary:id,nssa_employer_amount,nec_employer_amount,pension_employer_amount',
-                'payroll_salary_items:id,payroll_salary_id,deduction_id,amount',
+                'payroll_salary_items:id,payroll_salary_id,deduction_id,amount,employer_amount',
                 'payroll_salary_items.deduction:id,name',
                 'payroll.payrollRun:id,name,period_start',
             ])
@@ -109,6 +109,8 @@ class PayrollDepartmentCostService
             $employer = (float) ($ps->salary?->nssa_employer_amount ?? 0)
                 + (float) ($ps->salary?->nec_employer_amount ?? 0)
                 + (float) ($ps->salary?->pension_employer_amount ?? 0);
+            // Company share of shared-premium deductions (Medical Aid, Funeral Cover ...)
+            $employer += (float) $ps->payroll_salary_items->sum(fn ($item) => (float) $item->employer_amount);
 
             return [
                 'payroll_salary_id'  => $ps->id,

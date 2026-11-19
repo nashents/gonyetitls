@@ -62,17 +62,17 @@
                                 <div class="col-md-6">
                                 <h5 class="underline mt-10">Earnings</h5>
                                   
-                                    <label for="">Allowances</label>
+                                    <label for="">Allowances (Earnings)</label>
                                     <div class="row">  
                                         <div class="col-md-5">
                                             <div class="form-group">
                                                 <select wire:model.debounce.300ms="selectedAllowance.0" class="form-control">
-                                                    <option value="">Select Allowance</option>
+                                                    <option value="">Select Earning</option>
                                                     @foreach ($allowances as $allowance)
                                                         <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <small><a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> <a href="#" wire:click.prevent="refresh('allowances')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                <small><a href="{{ route('earnings.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Earning</a></small> <a href="#" wire:click.prevent="refresh('allowances')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('selectedAllowance.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
@@ -121,7 +121,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <select wire:model.debounce.300ms="selectedAllowance.{{ $value }}" class="form-control">
-                                                        <option value="">Select Allowance</option>
+                                                        <option value="">Select Earning</option>
                                                         @foreach ($allowances as $allowance)
                                                             <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
                                                         @endforeach

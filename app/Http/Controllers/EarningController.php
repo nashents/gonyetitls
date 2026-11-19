@@ -82,6 +82,11 @@ class EarningController extends Controller
      */
     public function destroy(Earning $earning)
     {
+        if ($earning->salary_items()->exists()) {
+            Session::flash('error', 'This earning is on one or more salaries. Remove it from those salaries first, or deactivate it instead.');
+            return redirect()->back();
+        }
+
         $earning->delete();
         Session::flash('success','Earning Deleted Successfully!');
         return redirect()->back();

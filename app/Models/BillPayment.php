@@ -25,6 +25,11 @@ class BillPayment extends Model implements Auditable
     }
 
     /** Set when the customer settled the bill (source 'customer_fuel'). */
+    /** Credit suppliers journal (e.g. opening balance) this prepayment allocation settles - instead of a bill. */
+    public function settled_supplier_journal(){
+        return $this->belongsTo('App\Models\SupplierJournal', 'settled_supplier_journal_id');
+    }
+
     public function customer_fuel_supply(){
         return $this->belongsTo('App\Models\CustomerFuelSupply')->withTrashed();
     }

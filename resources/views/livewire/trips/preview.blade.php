@@ -337,13 +337,7 @@
         <div class="v">{{preg_match($pattern, $trip->depart_offloading_point) ? \Carbon\Carbon::parse($trip->depart_offloading_point)->format('d M Y H:i') : $trip->depart_offloading_point}}</div>
         @endif
 
-        @if($cmrDetail?->number_of_packages)
-        <div class="k">Packages</div><div class="v">{{$cmrDetail->number_of_packages}}</div>
-        @endif
 
-        @if($cmrDetail?->marks_and_numbers)
-        <div class="k">Marks &amp; Numbers</div><div class="v">{{$cmrDetail->marks_and_numbers}}</div>
-        @endif
 
         @if($trip->route)
         <div class="k">Route</div><div class="v">{{$trip->route->name}}</div>
@@ -541,10 +535,10 @@
     </section>
     @endif
 
-    <!-- ===== Insurance & Waybill Details ===== -->
-    @if($cmrDetail && ($cmrDetail->insurer_name || $cmrDetail->insurance_policy_number || $cmrDetail->insurance_cover_amount || $cmrDetail->freight_payment_terms))
+    <!-- ===== Insurance ===== -->
+    @if($cmrDetail && ($cmrDetail->insurer_name || $cmrDetail->insurance_policy_number || $cmrDetail->insurance_cover_amount))
     <section class="card" style="margin-top:12px;">
-      <h3>Insurance &amp; Payment Terms</h3>
+      <h3>Insurance</h3>
       <div class="kv">
         @if($cmrDetail->insurer_name)
         <div class="k">Insurer</div><div class="v">{{$cmrDetail->insurer_name}}</div>
@@ -555,20 +549,10 @@
         @if($cmrDetail->insurance_cover_amount)
         <div class="k">Cover Amount</div><div class="v">{{$trip->currency?->symbol}}{{number_format($cmrDetail->insurance_cover_amount, 2)}}</div>
         @endif
-        @if($cmrDetail->freight_payment_terms)
-        <div class="k">Freight Terms</div><div class="v">{{ucfirst($cmrDetail->freight_payment_terms)}}</div>
-        @endif
       </div>
     </section>
     @endif
 
-    <!-- ===== Special Agreements ===== -->
-    @if($cmrDetail?->special_agreements)
-    <section class="card" style="margin-top:12px;">
-      <h3>Special Agreements</h3>
-      <div class="notes">{{$cmrDetail->special_agreements}}</div>
-    </section>
-    @endif
 
     <!-- ===== Comments ===== -->
     @if($trip->comments)

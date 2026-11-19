@@ -110,6 +110,27 @@ class SupplierJournal extends Model implements Auditable
         return round((float) $this->bill_payments()->sum(\DB::raw('COALESCE(amount+0,0)')), 2);
     }
 
+    /** Vendor prepayment allocations settling this CREDIT journal (see VendorPrepaymentService). */
+    public function settlements()
+    {
+        return $this->hasMany(BillPayment::class, 'settled_supplier_journal_id');
+    }
+
+    public function settledAmount(): float
+    {
+        return round((float) $this->settlements()->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(amount+0,0)')), 2);
+    }
+
+    /** What is still owed on a credit journal after prepayments matched to it. */
+    public function outstandingAmount(): float
+    {
+        if ($this->isDebit() || $this->isVoided()) {
+            return 0.0;
+        }
+
+        return round(max(0, (float) $this->amount - $this->settledAmount()), 2);
+    }
+
     public function unallocatedAmount(): float
     {
         if (!$this->isDebit() || $this->isVoided()) {

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 
 class Show extends Component
 {
+    use \App\Http\Livewire\Concerns\ManagesReminderCopies;
 
     public $fitness;
     public $reminder_items;
@@ -45,6 +46,9 @@ class Show extends Component
     public $vehicle_id;
     public $employees;
     public $employee_id;
+    public $customer_id;
+    public $vendor_id;
+    public $notify_contacts = false;
     public $cc;
     public $pattern;
 
@@ -78,26 +82,17 @@ class Show extends Component
         $this->issued_at = "";
         $this->expires_at = "" ;
         $this->inputs = [];
+        $this->resetCopySelection();
     }
 
     public function mount($id){
         $this->fitness_id = $id;
         $this->fitness = Fitness::find($id); 
         
-        if (!is_null($this->fitness->horse_id)) {
-            $this->type = "Horse";
-            $this->horse_id = $this->fitness->horse_id;
-        }elseif(!is_null($this->fitness->vehicle_id)){
-            $this->type = "Vehicle";
-            $this->vehicle_id = $this->fitness->vehicle_id;
-        }elseif(!is_null($this->fitness->trailer_id)){
-            $this->type = "Trailer";
-            $this->trailer_id = $this->fitness->trailer_id;
-        }elseif(!is_null($this->fitness->employee_id)){
-            $this->type = "Employee";
-            $this->employee_id = $this->fitness->employee_id;
-        }else{
-            $this->type = "Other";
+        $this->type = $this->fitness->subjectType();
+        if (isset(Fitness::SUBJECTS[$this->type])) {
+            $column = Fitness::SUBJECTS[$this->type];
+            $this->{$column} = $this->fitness->{$column};
         }
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
@@ -217,7 +212,9 @@ class Show extends Component
         $fitness = Fitness::find($id);
         $this->user_id = $fitness->user_id;
         $this->reminder_item_id = $fitness->reminder_item_id;
-        $this->type = $fitness->type;
+        // fitnesses.type is not maintained (null on most rows) - derive it from
+        // the subject column, or the update below would unlink the reminder.
+        $this->type = $fitness->subjectType();
         $this->issued_at  = $this->dbToDateTimeLocal($fitness->issued_at);
         $this->expires_at = $this->dbToDateTimeLocal($fitness->expires_at);
         $this->first_reminder_at  = $this->dbToDateTimeLocal($fitness->first_reminder_at);
@@ -226,10 +223,14 @@ class Show extends Component
         $this->fourth_reminder_at  = $this->dbToDateTimeLocal($fitness->fourth_reminder_at);
         $this->status = $fitness->status;
         $this->cc = $fitness->cc;
+        $this->notify_contacts = (bool) $fitness->notify_contacts;
+        $this->loadCopySelection($fitness);
         $this->horse_id = $fitness->horse_id;
         $this->vehicle_id = $fitness->vehicle_id;
         $this->trailer_id = $fitness->trailer_id;
         $this->employee_id = $fitness->employee_id;
+        $this->customer_id = $fitness->customer_id;
+        $this->vendor_id = $fitness->vendor_id;
         $this->fitness_id = $fitness->id;
         $this->dispatchBrowserEvent('show-fitnessEditModal');
 
@@ -252,22 +253,8 @@ class Show extends Component
             // ----------------------------
             // 1) Resolve target ids (and clear others)
             // ----------------------------
-            $targets = [
-                'horse_id'    => null,
-                'vehicle_id'  => null,
-                'trailer_id'  => null,
-                'employee_id' => null,
-            ];
-
-            if ($this->type === 'Horse') {
-                $targets['horse_id'] = $this->horse_id ?? null;
-            } elseif ($this->type === 'Vehicle') {
-                $targets['vehicle_id'] = $this->vehicle_id ?? null;
-            } elseif ($this->type === 'Trailer') {
-                $targets['trailer_id'] = $this->trailer_id ?? null;
-            } elseif ($this->type === 'Employee') {
-                $targets['employee_id'] = $this->employee_id ?? null;
-            }
+            $column = Fitness::SUBJECTS[$this->type] ?? null;
+            $targets = Fitness::subjectColumns($this->type, $column ? $this->{$column} : null);
 
             // ----------------------------
             // 2) Parse dates safely
@@ -290,10 +277,11 @@ class Show extends Component
             // ----------------------------
             // 3) Update
             // ----------------------------
-            $fitness->update([
+            $fitness->update($targets + [
                 'user_id'          => Auth::id(),
                 'reminder_item_id' => $this->reminder_item_id,
                 'cc'               => $this->cc,
+                'notify_contacts'  => in_array($this->type, ['Customer', 'Vendor'], true) && (bool) $this->notify_contacts,
 
                 'issued_at'        => $issuedAtDb,
                 'expires_at'       => $expiresAtDb,
@@ -310,14 +298,10 @@ class Show extends Component
                 'fourth_reminder_at'        => $fourthReminder,
                 'fourth_reminder_at_status' => (int) $this->fourth_reminder_at_status,
 
-                // clear all then set only the correct one
-                'horse_id'    => $targets['horse_id'],
-                'vehicle_id'  => $targets['vehicle_id'],
-                'trailer_id'  => $targets['trailer_id'],
-                'employee_id' => $targets['employee_id'],
-
                 'status' => $status,
             ]);
+
+            $this->applyCopySelection($fitness);
 
             $this->dispatchBrowserEvent('hide-fitnessEditModal');
             $this->resetInputFields();
@@ -352,7 +336,11 @@ class Show extends Component
         $this->fitness = Fitness::find($this->fitness_id); 
 
         return view('livewire.fitnesses.show',[
-            'fitness' => $this->fitness
+            'fitness' => $this->fitness,
+            'contactRecipients' => $this->fitness->canNotifyContacts() ? $this->fitness->contactEmails() : [],
+            'copyList' => $this->copyList(),
+            'copyEmployees' => $this->copyEmployeeOptions(),
+            'copyRecipients' => $this->fitness->copyRecipients(),
         ]);
     }
 }

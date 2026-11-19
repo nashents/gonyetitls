@@ -27,6 +27,7 @@
         'CD1 No'        => $trip->cd1_number,
         'CD3 No'        => $trip->cd3_number,
         'Bill of Entry' => $trip->bill_of_entry,
+        'BOL#' => $trip->bill_of_lading,
     ])->filter();
 
     $remarks = $trip->notes ?: $trip->comments;
@@ -359,18 +360,6 @@
                                 </tr> 
                                 @endif
 
-                                    @if ($cmrDetail?->number_of_packages)
-                                    <tr>
-                                        <th class="text-center"><strong>Packages</strong></th>
-                                        <td class="text-center">{{$cmrDetail->number_of_packages}}</td>
-                                    </tr>
-                                    @endif
-                                    @if ($cmrDetail?->marks_and_numbers)
-                                    <tr>
-                                        <th class="text-center"><strong>Marks &amp; Numbers</strong></th>
-                                        <td class="text-center">{{$cmrDetail->marks_and_numbers}}</td>
-                                    </tr>
-                                    @endif
                                     @if ($cmrDetail?->insurer_name || $cmrDetail?->insurance_policy_number)
                                     <tr>
                                         <th class="text-center"><strong>Insurance</strong></th>
@@ -378,12 +367,6 @@
                                             {{$cmrDetail->insurer_name}}
                                             @if ($cmrDetail->insurance_policy_number) (Policy: {{$cmrDetail->insurance_policy_number}}) @endif
                                         </td>
-                                    </tr>
-                                    @endif
-                                    @if ($cmrDetail?->special_agreements)
-                                    <tr>
-                                        <th class="text-center"><strong>Special Agreements</strong></th>
-                                        <td class="text-center">{{$cmrDetail->special_agreements}}</td>
                                     </tr>
                                     @endif
                                     @if ($remarks)

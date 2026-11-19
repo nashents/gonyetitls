@@ -54,6 +54,12 @@ WithCustomStartCell
         }elseif ($fitness->trailer) {
             $equipment_type = "Trailer";
             $reminder_for = FleetIdentifier::workshopLabel($fitness->trailer, $fitness->trailer->make, $fitness->trailer->model);
+        }elseif ($fitness->customer) {
+            $equipment_type = "Customer";
+            $reminder_for = $fitness->customer->name;
+        }elseif ($fitness->vendor) {
+            $equipment_type = "Vendor";
+            $reminder_for = $fitness->vendor->name;
         }else {
             $equipment_type = "";
             $reminder_for = "";

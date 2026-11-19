@@ -403,6 +403,11 @@ class User extends Authenticatable implements Auditable
     public function admin(){
         return $this->hasOne('App\Models\Admin');
     }
+    /** People this user copies on their reminder emails. */
+    public function reminder_copies(){
+        return $this->hasMany(ReminderCopy::class);
+    }
+
     public function company(){
         return $this->hasOne('App\Models\Company');
     }

@@ -206,7 +206,7 @@ class Pending extends Component
                 Mail::send('emails.fuel_requests',$data, function($message) use($data){
                     $message->to($data['email']);
                     $message->cc($data['employee_email']);
-                    $message->from($data['from']);
+                    if (!empty($data['from'])) { $message->from($data['from']); } // 'from' was never set - fall back to the mail default
                     $message->subject($data['subject']);
                 });
             }
@@ -289,7 +289,7 @@ class Pending extends Component
                             Mail::send('emails.fuel_requests',$data, function($message) use($data){
                                 $message->to($data['email']);
                                 $message->cc($data['employee_email']);
-                                $message->from($data['from']);
+                                if (!empty($data['from'])) { $message->from($data['from']); } // 'from' was never set - fall back to the mail default
                                 $message->subject($data['subject']);
                             });
                         }

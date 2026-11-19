@@ -159,11 +159,11 @@
                     {{-- Checks (step 2, needs qualifications) --}}
                     <td>
                         @if ($hasQual)
-                            <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showChecks({{ $candidate->id }})">
+                            <button wire:key="add-checks-{{ $candidate->id }}" class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showChecks({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="{{ $hasRejectedQualification ? 'Update the rejected qualification to Verified first' : 'Add a qualification first' }}">
+                            <button wire:key="locked-checks-{{ $candidate->id }}" class="btn btn-default btn-rounded btn-xs mb-1" disabled title="{{ $hasRejectedQualification ? 'Update the rejected qualification to Verified first' : 'Add a qualification first' }}">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
                         @endif
@@ -193,11 +193,11 @@
                     {{-- Scores (step 3, needs checks) --}}
                     <td>
                         @if ($hasCheck)
-                            <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showScores({{ $candidate->id }})">
+                            <button wire:key="add-scores-{{ $candidate->id }}" class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showScores({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="{{ $checksExist ? 'All checks must be Present, Pass or Available first' : 'Complete a check first' }}">
+                            <button wire:key="locked-scores-{{ $candidate->id }}" class="btn btn-default btn-rounded btn-xs mb-1" disabled title="{{ $checksExist ? 'All checks must be Present, Pass or Available first' : 'Complete a check first' }}">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
                         @endif
@@ -224,11 +224,11 @@
                     {{-- Management Decision (step 4, needs scores) --}}
                     <td>
                         @if ($hasScore)
-                            <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
+                            <button wire:key="add-decisions-{{ $candidate->id }}" class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
                                 <i class="fa fa-plus"></i> Add
                             </button>
                         @else
-                            <button class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Score the candidate first">
+                            <button wire:key="locked-decisions-{{ $candidate->id }}" class="btn btn-default btn-rounded btn-xs mb-1" disabled title="Score the candidate first">
                                 <i class="fa fa-lock"></i> Locked
                             </button>
                         @endif

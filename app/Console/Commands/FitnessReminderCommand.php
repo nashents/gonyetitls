@@ -8,6 +8,7 @@ use App\Models\Fitness;
 use App\Models\ReminderCopy;
 use Illuminate\Console\Command;
 use App\Mail\SendReminderEmails;
+use App\Mail\ContactReminderMail;
 use Illuminate\Support\Facades\Mail;
 
 class FitnessReminderCommand extends Command
@@ -93,31 +94,49 @@ class FitnessReminderCommand extends Command
             $dueFirst  = $first  && $first->lte($today)  && ! $fitness->first_reminder_at_status;
             $dueSecond = $second && $second->lte($today) && ! $fitness->second_reminder_at_status;
             $dueThird  = $third  && $third->lte($today)  && ! $fitness->third_reminder_at_status;
-            $dueThird  = $fourth  && $third->lte($today)  && ! $fitness->fourth_reminder_at_status;
+            $dueFourth = $fourth && $fourth->lte($today) && ! $fitness->fourth_reminder_at_status;
 
             // Nothing due? Skip (extra safety)
-            if (! ($dueFirst || $dueSecond || $dueThird)) {
+            if (! ($dueFirst || $dueSecond || $dueThird || $dueFourth)) {
                 continue;
             }
           
-            if($fitness->cc){
-                $copies = ReminderCopy::where('user_id', $fitness->user_id)->where('status', true)->get();
-            } else {
-                $copies = [];
-            }
+            // Everyone active on the owner's copy list, or only the people
+            // picked for this reminder (Fitness::copyRecipients).
+            $copies = $fitness->copyRecipients();
 
             // Send email (ideally queue this - see note below)
             $email = $fitness->user?->email;
             if ($email) {
-              
-                Mail::to($email)->send(new SendReminderEmails($fitness, $copies));
+                // One bad reminder must not stop the rest of the run.
+                try {
+                    Mail::to($email)->send(new SendReminderEmails($fitness, $copies));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Reminder email failed', ['fitness_id' => $fitness->id, 'error' => $e->getMessage()]);
+                    continue; // leave it unsent so the next run retries
+                }
+            }
+
+            // Customer-facing copy to the customer's / vendor's contacts. One
+            // email per address (contacts don't see each other's addresses);
+            // a failure here is logged but doesn't hold back the internal one.
+            if ($fitness->notify_contacts && $fitness->canNotifyContacts()) {
+                foreach ($fitness->contactEmails() as $contactEmail => $contactName) {
+                    try {
+                        Mail::to($contactEmail)->send(new ContactReminderMail($fitness, $contactName));
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Contact reminder email failed', [
+                            'fitness_id' => $fitness->id, 'email' => $contactEmail, 'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
             }
 
             // Mark only what was actually due/unsent
             if ($dueFirst)  $fitness->first_reminder_at_status  = true;
             if ($dueSecond) $fitness->second_reminder_at_status = true;
             if ($dueThird)  $fitness->third_reminder_at_status  = true;
-            if ($dueThird)  $fitness->fourth_reminder_at_status  = true;
+            if ($dueFourth) $fitness->fourth_reminder_at_status = true;
 
             $fitness->save();
         }

@@ -92,7 +92,7 @@
                     @endif
                 </td>
                 <td>
-                    {{ $fitness->cc ? 'Yes' : 'No' }}
+                    {{ !$fitness->cc ? 'No' : ($fitness->selected_copies_count ? $fitness->selected_copies_count.' picked' : 'All') }}
                 </td>
                 <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -111,8 +111,8 @@
             </tr>
             @empty
                 <tr>
-                    <td colspan="8">
-                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                    <td colspan="10">
+                        <div style="text-align:center; color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                             No Reminders Found ....
                         </div>
                     </td>
@@ -169,8 +169,6 @@
                         </div>
                     </div>
                         </div>
-                         <input type="checkbox" wire:model.debounce.300ms="cc.0"   class="line-style" />
-                            <label for="one" class="radio-label">Send reminders to my copy list</label>
                         @foreach ($inputs as $key => $value)
                         <div class="row">
                             <div class="col-md-4">
@@ -205,8 +203,6 @@
                                 </div>
                             </div>
                                 </div>
-                            <input type="checkbox" wire:model.debounce.300ms="cc.{{$value}}"   class="line-style" />
-                            <label for="one" class="radio-label">Send reminders to my copy list</label>
                         @endforeach
                        
                         <div class="row">
@@ -216,6 +212,10 @@
                                 </div>
                             </div>
                         </div>
+                        @include('livewire.fitnesses.partials.copy-list')
+                        @if (in_array($type, ['Customer', 'Vendor']))
+                            @include('livewire.fitnesses.partials.notify-contacts', ['recipients' => $contactRecipients, 'partyLabel' => strtolower($type)])
+                        @endif
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -268,8 +268,10 @@
                             </div>
                         </div>
                     </div>
-                    <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
-                    <label for="one" class="radio-label">Send reminders to my copy list</label>
+                    @include('livewire.fitnesses.partials.copy-list')
+                    @if (in_array($type, ['Customer', 'Vendor']))
+                        @include('livewire.fitnesses.partials.notify-contacts', ['recipients' => $contactRecipients, 'partyLabel' => strtolower($type)])
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
