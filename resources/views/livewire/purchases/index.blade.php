@@ -529,9 +529,7 @@
                                 <label for="store">Store</label>
                                 <select wire:model.debounce.300ms="selectedStore.0" class="form-control">
                                     <option value="">Default</option>
-                                    @foreach ($stores as $store)
-                                    <option value="{{ $store->id }}">{{ $store->name }}</option>
-                                    @endforeach
+                                    @include('livewire.purchases.partials.store-options', ['productId' => $selectedProduct[0] ?? null])
                                 </select>
                                 @error('selectedStore.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -603,9 +601,7 @@
                                     <label for="store">Store</label>
                                     <select wire:model.debounce.300ms="selectedStore.{{$value}}" class="form-control">
                                         <option value="">Default</option>
-                                        @foreach ($stores as $store)
-                                        <option value="{{ $store->id }}">{{ $store->name }}</option>
-                                        @endforeach
+                                        @include('livewire.purchases.partials.store-options', ['productId' => $selectedProduct[$value] ?? null])
                                     </select>
                                     @error('selectedStore.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
@@ -951,9 +947,7 @@
                                     <label for="store">Store</label>
                                     <select wire:model.debounce.300ms="selectedCurrentStore.{{$key}}" class="form-control">
                                         <option value="">Default</option>
-                                        @foreach ($stores as $store)
-                                        <option value="{{ $store->id }}">{{ $store->name }}</option>
-                                        @endforeach
+                                        @include('livewire.purchases.partials.store-options', ['productId' => $selectedCurrentProduct[$key] ?? null])
                                     </select>
                                     @error('selectedCurrentStore.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
@@ -1032,9 +1026,7 @@
                                         <label for="store">Store</label>
                                         <select wire:model.debounce.300ms="selectedStore.{{$value}}" class="form-control">
                                             <option value="">Default</option>
-                                            @foreach ($stores as $store)
-                                            <option value="{{ $store->id }}">{{ $store->name }}</option>
-                                            @endforeach
+                                            @include('livewire.purchases.partials.store-options', ['productId' => $selectedProduct[$value] ?? null])
                                         </select>
                                         @error('selectedStore.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>

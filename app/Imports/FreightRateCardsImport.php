@@ -10,7 +10,7 @@ use App\Models\ChargeType;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\FreightRateCard;
-use App\Models\Location;
+use App\Models\Destination;
 use App\Models\Vendor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -104,8 +104,9 @@ class FreightRateCardsImport implements ToCollection, SkipsEmptyRows, WithLimit,
             }
 
             $chargeType = $this->resolveOrCreate(ChargeType::class, $row->get('charge_type'));
-            $originLocation = $this->resolveOnly(Location::class, $row->get('origin_location'));
-            $destinationLocation = $this->resolveOnly(Location::class, $row->get('destination_location'));
+            // Old templates used origin_location/destination_location headings.
+            $origin = $this->resolveDestination($row->get('origin') ?? $row->get('origin_location'));
+            $destination = $this->resolveDestination($row->get('destination') ?? $row->get('destination_location'));
             $cargo = $this->resolveOnly(Cargo::class, $row->get('cargo'));
 
             FreightRateCard::create([
@@ -116,8 +117,8 @@ class FreightRateCardsImport implements ToCollection, SkipsEmptyRows, WithLimit,
                 'charge_type_id' => $chargeType?->id,
                 'mode' => $row->get('mode') ?: null,
                 'container_type' => $row->get('container_type') ?: null,
-                'origin_location_id' => $originLocation?->id,
-                'destination_location_id' => $destinationLocation?->id,
+                'origin_id' => $origin?->id,
+                'destination_id' => $destination?->id,
                 'cargo_id' => $cargo?->id,
                 'currency_id' => $currency->id,
                 'rate_basis' => $rateBasis,
@@ -132,6 +133,25 @@ class FreightRateCardsImport implements ToCollection, SkipsEmptyRows, WithLimit,
 
             $this->rowsCreated++;
         }
+    }
+
+    /**
+     * Destinations have no name column - match on city (exact first, then partial).
+     */
+    protected function resolveDestination($city): ?Destination
+    {
+        $city = is_string($city) ? trim($city) : $city;
+        if (!$city) {
+            return null;
+        }
+
+        $cacheKey = 'destination|' . strtolower($city);
+        if (array_key_exists($cacheKey, $this->lookupCache)) {
+            return $this->lookupCache[$cacheKey];
+        }
+
+        return $this->lookupCache[$cacheKey] = Destination::where('city', $city)->first()
+            ?? Destination::where('city', 'LIKE', '%' . $city . '%')->first();
     }
 
     public function getSkippedRows(): array

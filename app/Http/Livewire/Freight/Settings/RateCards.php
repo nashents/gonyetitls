@@ -7,7 +7,7 @@ use App\Models\ChargeType;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\FreightRateCard;
-use App\Models\Location;
+use App\Models\Destination;
 use App\Models\Vendor;
 use Livewire\Component;
 
@@ -16,7 +16,7 @@ class RateCards extends Component
     public $vendors;
     public $customers;
     public $chargeTypes;
-    public $locations;
+    public $destinations;
     public $cargos;
     public $currencies;
 
@@ -27,8 +27,8 @@ class RateCards extends Component
     public $charge_type_id;
     public $mode;
     public $container_type;
-    public $origin_location_id;
-    public $destination_location_id;
+    public $origin_id;
+    public $destination_id;
     public $cargo_id;
     public $currency_id;
     public $rate_basis;
@@ -45,7 +45,7 @@ class RateCards extends Component
         $this->vendors = Vendor::orderBy('name', 'asc')->get();
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
-        $this->locations = Location::orderBy('name', 'asc')->get();
+        $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
         $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
     }
@@ -68,8 +68,8 @@ class RateCards extends Component
         $this->charge_type_id = $card->charge_type_id;
         $this->mode = $card->mode;
         $this->container_type = $card->container_type;
-        $this->origin_location_id = $card->origin_location_id;
-        $this->destination_location_id = $card->destination_location_id;
+        $this->origin_id = $card->origin_id;
+        $this->destination_id = $card->destination_id;
         $this->cargo_id = $card->cargo_id;
         $this->currency_id = $card->currency_id;
         $this->rate_basis = $card->rate_basis;
@@ -95,8 +95,8 @@ class RateCards extends Component
                 'charge_type_id' => $this->charge_type_id ?: null,
                 'mode' => $this->mode,
                 'container_type' => $this->container_type,
-                'origin_location_id' => $this->origin_location_id ?: null,
-                'destination_location_id' => $this->destination_location_id ?: null,
+                'origin_id' => $this->origin_id ?: null,
+                'destination_id' => $this->destination_id ?: null,
                 'cargo_id' => $this->cargo_id ?: null,
                 'currency_id' => $this->currency_id ?: null,
                 'rate_basis' => $this->rate_basis,
@@ -131,9 +131,9 @@ class RateCards extends Component
         } elseif ($category === 'charge_types') {
             $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
-        } elseif ($category === 'locations') {
-            $this->locations = Location::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
+        } elseif ($category === 'destinations') {
+            $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Destinations Refreshed Successfully!!.']);
         } elseif ($category === 'cargos') {
             $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cargos Refreshed Successfully!!.']);
@@ -147,7 +147,7 @@ class RateCards extends Component
     {
         $this->reset([
             'rate_card_id', 'vendor_id', 'customer_id', 'charge_type_id', 'mode', 'container_type',
-            'origin_location_id', 'destination_location_id', 'cargo_id', 'currency_id', 'rate_basis',
+            'origin_id', 'destination_id', 'cargo_id', 'currency_id', 'rate_basis',
             'rate', 'markup_type', 'markup_value', 'effective_from', 'effective_to', 'notes',
         ]);
         $this->direction = 'buy';
@@ -157,7 +157,7 @@ class RateCards extends Component
     public function render()
     {
         return view('livewire.freight.settings.rate-cards', [
-            'rateCards' => FreightRateCard::with(['vendor', 'customer', 'charge_type', 'currency'])
+            'rateCards' => FreightRateCard::with(['vendor', 'customer', 'charge_type', 'currency', 'origin', 'destination'])
                 ->orderBy('direction')->orderBy('id', 'desc')->get(),
             'directions' => FreightRateCard::DIRECTIONS,
             'markupTypes' => FreightRateCard::MARKUP_TYPES,

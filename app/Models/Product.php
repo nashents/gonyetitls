@@ -103,8 +103,22 @@ class Product extends Model implements Auditable
     public function inventories(){
         return $this->hasMany('App\Models\Inventory');
     }
+    /** Default store (prefilled on PO lines / receipts). Always also one of stores(). */
     public function store(){
         return $this->belongsTo('App\Models\Store');
+    }
+
+    /** Every store this product may be kept in (product_store pivot). */
+    public function stores(){
+        return $this->belongsToMany('App\Models\Store', 'product_store')->withTimestamps();
+    }
+
+    /** Save the product's possible stores; the default store is always one of them. */
+    public function syncStores($defaultStoreId, array $storeIds = []): void
+    {
+        $ids = collect($storeIds)->prepend($defaultStoreId)->filter()->map(fn ($id) => (int) $id)->unique();
+
+        $this->stores()->sync(\App\Models\Store::whereIn('id', $ids)->pluck('id')->all());
     }
     public function vehicle_make(){
         return $this->belongsTo('App\Models\VehicleMake');

@@ -26,6 +26,11 @@ class Store extends Model implements Auditable
         return static::orderBy('id')->first();
     }
 
+    /** Products that may be kept in this store (product_store pivot). */
+    public function products(){
+        return $this->belongsToMany(\App\Models\Product::class, 'product_store')->withTimestamps();
+    }
+
     /** Sage Intacct link (entity_type store_warehouse) for the sync badge/status. */
     public function sageMapping(){
         return $this->hasOne(\App\Models\IntegrationMapping::class, 'local_id')

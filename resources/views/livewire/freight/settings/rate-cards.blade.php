@@ -90,27 +90,27 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Origin</label>
-                                            <select class="form-control" wire:model="origin_location_id">
+                                            <select class="form-control" wire:model="origin_id">
                                                 <option value="">Any</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                                @foreach ($destinations as $destination)
+                                                    <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small>
+                                            <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Destination</label>
-                                            <select class="form-control" wire:model="destination_location_id">
+                                            <select class="form-control" wire:model="destination_id">
                                                 <option value="">Any</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                                @foreach ($destinations as $destination)
+                                                    <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                            <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small>
+                                            <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -207,7 +207,7 @@
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>Direction</th><th>Party</th><th>Charge Type</th><th>Mode</th><th>Rate</th><th>Active</th><th></th>
+                                        <th>Direction</th><th>Party</th><th>Charge Type</th><th>Mode</th><th>Route</th><th>Rate</th><th>Active</th><th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -217,6 +217,7 @@
                                             <td>{{ $card->vendor?->name ?? $card->customer?->name ?? 'Any' }}</td>
                                             <td>{{ $card->charge_type?->name ?? 'Any' }}</td>
                                             <td>{{ ucfirst($card->mode ?? 'Any') }}</td>
+                                            <td>{{ $card->origin?->city ?? 'Any' }} &rarr; {{ $card->destination?->city ?? 'Any' }}</td>
                                             <td>{{ $card->currency?->symbol }}{{ $card->rate !== null ? number_format($card->rate, 2) : '—' }} {{ $card->rate_basis }}</td>
                                             <td>{{ $card->is_active ? 'Yes' : 'No' }}</td>
                                             <td>
@@ -225,7 +226,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="7" class="text-center">No rate cards configured yet.</td></tr>
+                                        <tr><td colspan="8" class="text-center">No rate cards configured yet.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>

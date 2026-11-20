@@ -15,6 +15,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class TripTransportOrder extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use \App\Models\Concerns\NormalizesDecimalInput;
     use \OwenIt\Auditing\Auditable;
 
      protected $table = 'trip_transport_orders';

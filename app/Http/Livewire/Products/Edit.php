@@ -26,6 +26,7 @@ class Edit extends Component
     public $categories;
     public $stores;
     public $store_id;
+    public $store_ids = []; // other stores the product may be kept in (product_store)
     public $attributes;
     public $attribute_values;
     public $selectedCategory = NULL;
@@ -97,6 +98,7 @@ class Edit extends Component
         $this->categories = Category::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
         $this->store_id = $product->store_id;
+        $this->store_ids = $product->stores()->pluck("stores.id")->map(fn ($id) => (string) $id)->all();
         $this->units_of_measure = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->category_values = CategoryValue::orderBy('name','asc')->get();
         $this->selectedCategory = $product->category_id;
@@ -286,6 +288,7 @@ class Edit extends Component
         }
         $product->status = $this->status;
         $product->update();
+        $product->syncStores($product->store_id, (array) $this->store_ids);
 
     
       

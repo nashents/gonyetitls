@@ -248,7 +248,7 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="store_id"><a href="{{route('stores.index')}}" style="color:blue" target="_blank">Store</a></label>
+                                <label for="store_id"><a href="{{route('stores.index')}}" style="color:blue" target="_blank">Default Store</a></label>
                                <select wire:model.debounce.300ms="store_id" class="form-control">
                                    <option value="">Default store</option>
                                  @foreach ($stores as $store)
@@ -259,6 +259,7 @@
                                 @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                        @include('livewire.products.partials.stores-multi')
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="subheading">Tax Categories</label>

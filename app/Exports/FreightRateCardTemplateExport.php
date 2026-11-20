@@ -24,7 +24,7 @@ class FreightRateCardTemplateExport implements FromArray, WithHeadings
     {
         return [
             'direction', 'vendor', 'customer', 'charge_type', 'mode', 'container_type',
-            'origin_location', 'destination_location', 'cargo', 'currency', 'rate_basis',
+            'origin', 'destination', 'cargo', 'currency', 'rate_basis',
             'rate', 'markup_type', 'markup_value', 'effective_from', 'effective_to', 'notes',
         ];
     }

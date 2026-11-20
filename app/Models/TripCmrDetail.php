@@ -10,6 +10,7 @@ class TripCmrDetail extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
     use HasFactory;
+    use \App\Models\Concerns\NormalizesDecimalInput;
 
     protected $fillable = [
         'trip_id',

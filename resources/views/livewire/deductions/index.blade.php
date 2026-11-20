@@ -137,8 +137,10 @@
                         </div>
                     </div>
                     @if ($contribution_type !== 'shared')
-                        <h5 class="underline mt-10">Calculation</h5>
-                        @include('deductions.calculation-fields')
+                        <div wire:key="add-deduction-calculation">
+                            <h5 class="underline mt-10">Calculation</h5>
+                            @include('deductions.calculation-fields', ['fieldKey' => 'add'])
+                        </div>
                     @endif
                     <div class="row">
                         <div class="col-md-6">
@@ -149,7 +151,7 @@
                             </div>
                         </div>
                     </div>
-                    @include('deductions.shared-premium-fields')
+                    @include('deductions.shared-premium-fields', ['fieldKey' => 'add'])
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -193,8 +195,10 @@
                         </div>
                     </div>
                     @if ($contribution_type !== 'shared')
-                        <h5 class="underline mt-10">Calculation</h5>
-                        @include('deductions.calculation-fields')
+                        <div wire:key="edit-deduction-calculation">
+                            <h5 class="underline mt-10">Calculation</h5>
+                            @include('deductions.calculation-fields', ['fieldKey' => 'edit'])
+                        </div>
                     @endif
                     <div class="row">
                         <div class="col-md-6">
@@ -215,7 +219,7 @@
                             </div>
                         </div>
                     </div>
-                    @include('deductions.shared-premium-fields')
+                    @include('deductions.shared-premium-fields', ['fieldKey' => 'edit'])
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

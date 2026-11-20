@@ -29,6 +29,7 @@ class Create extends Component
     public $department;
     public $stores;
     public $store_id;
+    public $store_ids = []; // other stores the product may be kept in (product_store)
     public $selectedCategory = NULL;
     public $selectedCategoryValue = NULL;
     public $category_values;
@@ -412,6 +413,7 @@ class Create extends Component
         $product->status = '1';
 
         $product->save();
+        $product->syncStores($product->store_id, (array) $this->store_ids);
 
         // Push to Sage as an ITEM (guarded — a Sage hiccup never blocks creation).
         if (\App\Services\Sage\SageIntegration::enabledForUser()) {

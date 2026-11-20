@@ -394,6 +394,8 @@ class Index extends Component
         if (!is_null($id)) {
             $product = Product::find($id);
             if (isset($product)) {
+                // Prefill the line store with the product's default store.
+                $this->selectedStore[$key] = $product->store_id ?: ($this->selectedStore[$key] ?? null);
                 if ($product->price) {
                     $this->amount[$key] = $product->price;
                 }
@@ -428,6 +430,8 @@ class Index extends Component
         if (!is_null($id)) {
             $product = Product::find($id);
             if (isset($product)) {
+                // Prefill the line store with the product's default store.
+                $this->selectedCurrentStore[$key] = $product->store_id ?: ($this->selectedCurrentStore[$key] ?? null);
                 if ($product->price) {
                     $this->current_amount[$key] = $product->price;
                 }
@@ -612,6 +616,19 @@ class Index extends Component
         $productAccount = $productId ? Product::whereKey($productId)->value('expense_account_id') : null;
 
         return $productAccount ?: ($picked ?: null);
+    }
+
+    private $productStoreCache = [];
+
+    /** Store ids the line's product may be kept in (product_store), for listing them first on the PO line. */
+    public function productStoreIds($productId): array
+    {
+        if (blank($productId)) {
+            return [];
+        }
+
+        return $this->productStoreCache[(int) $productId] ??= \Illuminate\Support\Facades\DB::table('product_store')
+            ->where('product_id', $productId)->pluck('store_id')->map(fn ($id) => (int) $id)->all();
     }
 
     private $productAccountCache;

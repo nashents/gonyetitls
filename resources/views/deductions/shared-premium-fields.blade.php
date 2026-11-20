@@ -28,6 +28,8 @@
 </div>
 
 @if ($contribution_type === 'shared')
+    {{-- Keyed so Livewire inserts fresh nodes (with listeners) instead of morphing the Calculation inputs into these. --}}
+    <div wire:key="{{ $fieldKey ?? 'deduction' }}-shared-premium">
     @php
         $premiumValue = is_numeric($premium) ? (float) $premium : 0;
         $companyPct = is_numeric($employer_percentage) ? max(0, min(100, (float) $employer_percentage)) : 0;
@@ -98,9 +100,10 @@
         </div>
     </div>
     <small class="text-muted">A salary is pre-filled with the employee share. The company share is worked out automatically, is not deducted from net pay, and posts DR the Expense account / CR the Payable account.</small>
+    </div>
 @endif
 
-<div class="row">
+<div class="row" wire:key="{{ $fieldKey ?? 'deduction' }}-paye-credit">
     <div class="col-md-6">
         <div class="form-group">
             <label for="paye_credit_percentage">PAYE credit % of employee share</label>

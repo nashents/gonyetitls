@@ -41,6 +41,13 @@ class FreightRateCard extends Model implements Auditable
     public function charge_type(){
         return $this->belongsTo('App\Models\ChargeType');
     }
+    public function origin(){
+        return $this->belongsTo('App\Models\Destination', 'origin_id');
+    }
+    public function destination(){
+        return $this->belongsTo('App\Models\Destination', 'destination_id');
+    }
+    // Legacy (pre 2026-11-20): rate cards now use the Destinations module.
     public function origin_location(){
         return $this->belongsTo('App\Models\Location', 'origin_location_id');
     }
@@ -70,8 +77,8 @@ class FreightRateCard extends Model implements Auditable
         'charge_type_id',
         'mode',
         'container_type',
-        'origin_location_id',
-        'destination_location_id',
+        'origin_id',
+        'destination_id',
         'cargo_id',
         'currency_id',
         'rate_basis',

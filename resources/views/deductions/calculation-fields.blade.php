@@ -14,18 +14,18 @@
         <div class="form-group">
             @if ($calculate_by === 'percentage')
                 <label for="percentage">Default Percentage</label>
-                <input type="number" step="any" min="0" max="100" class="form-control" wire:model.debounce.300ms="percentage" placeholder="Eg 5" />
+                <input type="number" step="any" min="0" max="100" class="form-control" wire:model.debounce.300ms="percentage" wire:key="{{ $fieldKey ?? 'deduction' }}-percentage" placeholder="Eg 5" />
                 @error('percentage') <span class="error" style="color:red">{{ $message }}</span> @enderror
             @else
                 <label for="amount">Default Amount</label>
-                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount" placeholder="Eg 50" />
+                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount" wire:key="{{ $fieldKey ?? 'deduction' }}-amount" placeholder="Eg 50" />
                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
             @endif
             <small class="text-muted">Pre-fills the salary form; can be changed per salary.</small>
         </div>
     </div>
     @if ($calculate_by === 'percentage')
-        <div class="col-md-4">
+        <div class="col-md-4" wire:key="{{ $fieldKey ?? 'deduction' }}-calculate-on">
             <div class="form-group">
                 <label for="calculate_on">Percentage Of<span class="required" style="color: red">*</span></label>
                 <select wire:model.defer="calculate_on" class="form-control" required>

@@ -523,7 +523,7 @@ class Create extends Component
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
-                $this->selectedStore[$key] = $purchase_product->store_id ?: $this->defaultStoreId();
+                $this->selectedStore[$key] = $purchase_product->store_id ?: optional($purchase_product->product)->store_id ?: $this->defaultStoreId();
                 $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
