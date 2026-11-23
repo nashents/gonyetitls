@@ -7,6 +7,7 @@ use App\Models\ChargeType;
 use App\Models\ContainerChargeExposure;
 use App\Models\ShippingLine;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Starter master data for Freight Forwarding & Clearing: common charge types,
@@ -139,6 +140,12 @@ class FreightMasterDataSeeder extends Seeder
      */
     public static function linkBuiltInContainerCharges(): void
     {
+        // The 2026_11_22 seed migration runs before 2026_11_23 adds these
+        // columns; that later migration calls this again once they exist.
+        if (! Schema::hasColumn('charge_types', 'exposure_code')) {
+            return;
+        }
+
         foreach (ContainerChargeExposure::CHARGE_TYPES as $code => $label) {
             if (ChargeType::where('exposure_code', $code)->exists()) {
                 continue;
