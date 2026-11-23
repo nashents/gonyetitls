@@ -140,7 +140,7 @@ class Create extends Component
         $this->departments = Department::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
-        $this->roles = Role::orderBy('name','asc')->get();
+        $this->roles = \App\Support\RoleAssignment::assignableRoles();
         $this->currencies = Currency::latest()->get();
         $this->ranks = Rank::orderBy('name','asc')->get();
         $this->job_titles = JobTitle::orderBy('title','asc')->get();
@@ -431,7 +431,7 @@ class Create extends Component
         }
       $user->password = Hash::make($pin);
       $user->save();
-      $user->roles()->sync($this->role_id);
+      $user->roles()->sync(\App\Support\RoleAssignment::resolve($this->role_id));
 
 
       if (isset(Auth::user()->company)) {

@@ -22,6 +22,36 @@ class FreightCost extends Model implements Auditable
         'rejected' => 'Rejected',
     ];
 
+    /** Badge colour per verification status (7 statuses > Bootstrap's 6 label classes, so hex). */
+    const VERIFICATION_COLORS = [
+        'received' => '#777777',             // grey
+        'pending_verification' => '#f0ad4e', // amber
+        'verified' => '#5bc0de',             // light blue
+        'disputed' => '#8e44ad',             // purple
+        'approved' => '#5cb85c',             // green
+        'posted' => '#337ab7',               // blue
+        'rejected' => '#d9534f',             // red
+    ];
+
+    /** Statuses that need a reason (stored in dispute_reason). */
+    const REASON_STATUSES = ['disputed', 'rejected'];
+
+    public function statusLabel(): string
+    {
+        return self::VERIFICATION_STATUSES[$this->verification_status] ?? ucwords(str_replace('_', ' ', (string) $this->verification_status));
+    }
+
+    public function statusColor(): string
+    {
+        return self::VERIFICATION_COLORS[$this->verification_status] ?? '#777777';
+    }
+
+    /** Once on a bill the status follows the bill, so it is locked here. */
+    public function statusLocked(): bool
+    {
+        return $this->bill_id !== null;
+    }
+
     public function freight_job(){
         return $this->belongsTo('App\Models\FreightJob');
     }

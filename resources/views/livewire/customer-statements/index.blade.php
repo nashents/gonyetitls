@@ -140,7 +140,7 @@
                                             <td>{{ $invoice->currency ? $invoice->currency->name : '' }}</td>
                                             <td>{{ $invoice->currency ? $invoice->currency->symbol : '' }}{{ number_format($invoice->total, 2) }}</td>
                                             <td>
-                                                {{ $invoice->currency ? $invoice->currency->symbol : '' }}{{ number_format($invoice->payments->sum('amount'), 2) }}
+                                                {{ $invoice->currency ? $invoice->currency->symbol : '' }}{{ number_format($invoice->settledAmount(), 2) }}
                                             </td>
                                             <td>
                                                 @if ($invoice->balance)

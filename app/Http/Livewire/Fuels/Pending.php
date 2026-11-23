@@ -117,6 +117,7 @@ class Pending extends Component
     {
         $query = Fuel::query()
             ->with([
+                'shift:id,shift_number',
                 'container:id,name',
                 'horse',
                 'horse.horse_model',

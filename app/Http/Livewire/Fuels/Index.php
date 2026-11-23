@@ -1744,6 +1744,7 @@ class Index extends Component
                     'container',
                     'currency',
                     'sageMapping',
+                    'shift:id,shift_number',
                 ]);
 
             // Date filter: from/to if set, otherwise current month — but skip the

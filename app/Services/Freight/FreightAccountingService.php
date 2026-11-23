@@ -51,6 +51,14 @@ class FreightAccountingService
             $bills = collect();
             $warnings = [];
 
+            if ($eligible->isEmpty()) {
+                return ['bills' => $bills, 'warnings' => $this->whyNothingEligible(
+                    FreightCost::where('freight_job_id', $job->id)->get(['verification_status', 'bill_id']),
+                    'verification_status', 'bill_id', FreightCost::VERIFICATION_STATUSES,
+                    'cost', 'billed', 'Verified or Approved'
+                )];
+            }
+
             $groups = $eligible->groupBy(fn (FreightCost $cost) => $cost->vendor_id . ':' . ($cost->currency_id ?? $job->currency_id));
 
             foreach ($groups as $costLines) {
@@ -147,6 +155,14 @@ class FreightAccountingService
             $invoices = collect();
             $warnings = [];
 
+            if ($eligible->isEmpty()) {
+                return ['invoices' => $invoices, 'warnings' => $this->whyNothingEligible(
+                    FreightCharge::where('freight_job_id', $job->id)->get(['status', 'invoice_id']),
+                    'status', 'invoice_id', FreightCharge::STATUSES,
+                    'charge', 'invoiced', 'Approved'
+                )];
+            }
+
             $groups = $eligible->groupBy(fn (FreightCharge $charge) => ($charge->customer_id ?? $job->customer_id) . ':' . ($charge->currency_id ?? $job->currency_id));
 
             foreach ($groups as $chargeLines) {
@@ -203,6 +219,33 @@ class FreightAccountingService
 
             return ['invoices' => $invoices, 'warnings' => $warnings];
         });
+    }
+
+    /**
+     * Explains an empty generate run, e.g. "3 cost line(s) are still
+     * Received - set them to Verified or Approved first."
+     */
+    private function whyNothingEligible($lines, string $statusField, string $linkField, array $labels, string $noun, string $doneWord, string $needed): array
+    {
+        if ($lines->isEmpty()) {
+            return ["This job has no {$noun} lines yet."];
+        }
+
+        $reasons = [];
+        $done = $lines->whereNotNull($linkField)->count();
+        if ($done) {
+            $reasons[] = "{$done} {$noun} line(s) already {$doneWord}.";
+        }
+
+        $waiting = $lines->whereNull($linkField)->groupBy($statusField);
+        foreach ($waiting as $status => $group) {
+            $label = $labels[$status] ?? ucwords(str_replace('_', ' ', (string) $status));
+            $reasons[] = in_array($status, ['cancelled', 'rejected'], true)
+                ? "{$group->count()} {$noun} line(s) are {$label} and will not be {$doneWord}."
+                : "{$group->count()} {$noun} line(s) are {$label} - set them to {$needed} first (Status buttons on the line).";
+        }
+
+        return $reasons;
     }
 
     private function billNumber(): string

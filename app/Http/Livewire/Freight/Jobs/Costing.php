@@ -16,6 +16,8 @@ use App\Services\Freight\FreightChargeService;
 use App\Services\Freight\FreightCostingService;
 use App\Services\Freight\FreightCostService;
 use App\Services\Freight\FreightRateCardMatcher;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class Costing extends Component
@@ -51,6 +53,7 @@ class Costing extends Component
     public $cost_recoverable = false;
     public $cost_customer_billable = false;
     public $cost_notes;
+    public $cost_status = 'received';
 
     public $dispute_reason;
 
@@ -71,6 +74,7 @@ class Costing extends Component
     public $charge_exchange_rate = 1;
     public $charge_tax_id;
     public $charge_notes;
+    public $charge_status = 'draft';
 
     // Rate card pricing (FreightRateCardMatcher)
     public $cost_rate_card_id;
@@ -198,6 +202,9 @@ class Costing extends Component
         $this->cost_rate_card_id = $cost->freight_rate_card_id;
         $this->cost_rate_basis = $cost->freight_rate_card?->rate_basis;
         $this->cost_rate_card_note = $cost->freight_rate_card ? $this->rateCardNote($cost->freight_rate_card) : null;
+        $this->cost_status = $cost->verification_status ?: 'received';
+        $this->dispute_reason = $cost->dispute_reason;
+        $this->resetValidation();
 
         $this->dispatchBrowserEvent('show-costModal-' . $this->job->id);
     }
@@ -324,13 +331,24 @@ class Costing extends Component
 
     public function saveCost(FreightCostService $service)
     {
-        $this->validate(['cost_amount' => 'required|numeric']);
+        $existing = $this->cost_id ? FreightCost::findOrFail($this->cost_id) : null;
+        $statusLocked = $existing && $existing->statusLocked();
 
-        if ($this->cost_id) {
-            $service->update(FreightCost::findOrFail($this->cost_id), $this->costData());
-        } else {
-            $service->create($this->costData());
-        }
+        $this->validate([
+            'cost_amount' => 'required|numeric',
+            'cost_status' => [$statusLocked ? 'nullable' : 'required', Rule::in(array_keys(FreightCost::VERIFICATION_STATUSES))],
+            'dispute_reason' => [Rule::requiredIf(!$statusLocked && in_array($this->cost_status, FreightCost::REASON_STATUSES, true)), 'nullable', 'string', 'max:1000'],
+        ], [], ['cost_status' => 'verification status', 'dispute_reason' => 'reason']);
+
+        DB::transaction(function () use ($service, $existing, $statusLocked) {
+            $cost = $existing ? $service->update($existing, $this->costData()) : $service->create($this->costData());
+
+            // Through transitionVerification so verified_by/at + the dispute reason are recorded.
+            if (!$statusLocked && ($cost->verification_status !== $this->cost_status
+                || (in_array($this->cost_status, FreightCost::REASON_STATUSES, true) && $cost->dispute_reason !== $this->dispute_reason))) {
+                $service->transitionVerification($cost, $this->cost_status, $this->dispute_reason ?: null);
+            }
+        });
 
         $this->resetCostForm();
         $this->refreshJob();
@@ -345,12 +363,27 @@ class Costing extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight cost removed.']);
     }
 
+    /** Quick status change from the actions column. Disputed/Rejected open the edit modal for a reason. */
     public function transitionCost($id, $status, FreightCostService $service)
     {
-        $service->transitionVerification(FreightCost::findOrFail($id), $status, $this->dispute_reason ?: null);
-        $this->reset(['dispute_reason']);
+        $cost = FreightCost::where('freight_job_id', $this->job->id)->findOrFail($id);
+
+        if (!array_key_exists($status, FreightCost::VERIFICATION_STATUSES)) {
+            return;
+        }
+        if ($cost->statusLocked()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This cost is already on bill ' . ($cost->bill?->bill_number ?? '') . '; its status cannot be changed.']);
+            return;
+        }
+        if (in_array($status, FreightCost::REASON_STATUSES, true)) {
+            $this->editCost($cost->id);
+            $this->cost_status = $status;
+            return;
+        }
+
+        $service->transitionVerification($cost, $status);
         $this->refreshJob();
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Verification status updated.']);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Cost marked as ' . FreightCost::VERIFICATION_STATUSES[$status] . '.']);
     }
 
     private function resetCostForm()
@@ -361,8 +394,10 @@ class Costing extends Component
             'cost_currency_id', 'cost_quantity', 'cost_chargeable_days', 'cost_rate', 'cost_amount',
             'cost_tax_id', 'cost_recoverable', 'cost_customer_billable', 'cost_notes',
             'cost_rate_card_id', 'cost_rate_basis', 'cost_rate_card_note',
+            'cost_status', 'dispute_reason',
         ]);
         $this->cost_exchange_rate = 1;
+        $this->resetValidation();
     }
 
     public function toggleExpandCost($id)
@@ -398,6 +433,8 @@ class Costing extends Component
         $this->charge_rate_card_id = $charge->freight_rate_card_id;
         $this->charge_rate_basis = $charge->freight_rate_card?->rate_basis;
         $this->charge_rate_card_note = $charge->freight_rate_card ? $this->rateCardNote($charge->freight_rate_card) : null;
+        $this->charge_status = $charge->status ?: 'draft';
+        $this->resetValidation();
 
         $this->dispatchBrowserEvent('show-chargeModal-' . $this->job->id);
     }
@@ -427,13 +464,22 @@ class Costing extends Component
 
     public function saveCharge(FreightChargeService $service)
     {
-        $this->validate(['charge_amount' => 'required|numeric']);
+        $existing = $this->charge_id ? FreightCharge::findOrFail($this->charge_id) : null;
+        $statusLocked = $existing && $existing->statusLocked();
 
-        if ($this->charge_id) {
-            $service->update(FreightCharge::findOrFail($this->charge_id), $this->chargeData());
-        } else {
-            $service->create($this->chargeData());
-        }
+        $this->validate([
+            'charge_amount' => 'required|numeric',
+            'charge_status' => [$statusLocked ? 'nullable' : 'required', Rule::in(array_keys(FreightCharge::STATUSES))],
+        ], [], ['charge_status' => 'status']);
+
+        DB::transaction(function () use ($service, $existing, $statusLocked) {
+            $charge = $existing ? $service->update($existing, $this->chargeData()) : $service->create($this->chargeData());
+
+            // Through transitionStatus so approved_by/at are recorded.
+            if (!$statusLocked && $charge->status !== $this->charge_status) {
+                $service->transitionStatus($charge, $this->charge_status);
+            }
+        });
 
         $this->resetChargeForm();
         $this->refreshJob();
@@ -448,11 +494,22 @@ class Costing extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight charge removed.']);
     }
 
+    /** Quick status change from the actions column. */
     public function transitionCharge($id, $status, FreightChargeService $service)
     {
-        $service->transitionStatus(FreightCharge::findOrFail($id), $status);
+        $charge = FreightCharge::where('freight_job_id', $this->job->id)->findOrFail($id);
+
+        if (!array_key_exists($status, FreightCharge::STATUSES)) {
+            return;
+        }
+        if ($charge->statusLocked()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This charge is already on invoice ' . ($charge->invoice?->invoice_number ?? '') . '; its status cannot be changed.']);
+            return;
+        }
+
+        $service->transitionStatus($charge, $status);
         $this->refreshJob();
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge status updated.']);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge marked as ' . FreightCharge::STATUSES[$status] . '.']);
     }
 
     private function resetChargeForm()
@@ -463,8 +520,10 @@ class Costing extends Component
             'charge_currency_id', 'charge_quantity', 'charge_chargeable_days', 'charge_rate', 'charge_amount',
             'charge_tax_id', 'charge_notes',
             'charge_rate_card_id', 'charge_rate_basis', 'charge_rate_card_note',
+            'charge_status',
         ]);
         $this->charge_exchange_rate = 1;
+        $this->resetValidation();
         // Charges are normally billed to the job's customer (and its selling rate cards).
         $this->charge_customer_id = $this->job->customer_id;
     }

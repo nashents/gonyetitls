@@ -46,9 +46,11 @@ class CustomsDeclarationService
         return DB::transaction(function () use ($declaration, $stageCode, $milestoneData) {
             $declaration->status = $stageCode;
 
+            // The stage's own date (submission, release, ...) is when it actually
+            // happened - $milestoneData['actual_at'] when the user back-dated it.
             $dateColumn = CustomsDeclaration::STAGE_DATE_COLUMNS[$stageCode] ?? null;
             if ($dateColumn) {
-                $declaration->{$dateColumn} = $declaration->{$dateColumn} ?? now();
+                $declaration->{$dateColumn} = $declaration->{$dateColumn} ?? ($milestoneData['actual_at'] ?? now());
             }
 
             $declaration->save();

@@ -337,7 +337,7 @@
                     @if (!is_null($department))
                     @if ($department == "tyre" || $department == "inventory" )
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="Product">Vendors<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="vendor_id" class="form-control" required>
@@ -373,9 +373,23 @@
                                 </select>
                                 @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <div class="form-group mb-1">
+                                    <label for="po_has_reason_create" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:0; cursor:pointer;">
+                                        <input type="checkbox" id="po_has_reason_create" wire:model="has_reason" style="margin:0;">
+                                        Reason for Purchase Order
+                                    </label>
+                                </div>
+                                @if ($has_reason)
+                                <div class="form-group mb-1">
+                                    <div style="display:flex; gap:6px; align-items:center;">
+                                        <input type="date" class="form-control input-sm" wire:model="reason_from" title="From">
+                                        <span>to</span>
+                                        <input type="date" class="form-control input-sm" wire:model="reason_to" title="To">
+                                    </div>
+                                    <small class="text-muted">Bookings / requisitions in this period (defaults to this month)</small>
+                                </div>
                                 <div class="form-group" >
-                                    <label for="name">Attach PO to a</label>
                                     <label class="radio-inline">
                                         <input type="radio" wire:model.debounce.300ms="attach_to" value="Booking" name="optradio">Booking
                                     </label>
@@ -420,9 +434,10 @@
                                         @endif
                                     </div>
                                 @endif
+                                @endif
                             </div>
                         </div>
-                    @else  
+                    @else
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -490,14 +505,15 @@
                                 @endif
                             @endif
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Additional Notes</label>
+                                <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="2" placeholder="Enter purchase order notes"></textarea>
+                                @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                        </div>
-                  
-                       <div class="form-group">
-                        <label for="name">Additional Notes</label>
-                       <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="2" placeholder="Enter purchase order notes"></textarea>
-                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                      
+
                     <h5 class="underline mt-n">Select products</h5>
                     <div class="row">
                         <div class="col-md-4">
@@ -772,7 +788,7 @@
                         @if (!is_null($department))
                         @if ($department == "tyre" || $department == "inventory" )
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="Product">Vendors<span class="required" style="color: red">*</span></label>
                                         <select wire:model.debounce.300ms="vendor_id" class="form-control" required>
@@ -808,9 +824,23 @@
                                 @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                                
-                                <div class="col-md-3">
+                                <div class="col-md-4">
+                                <div class="form-group mb-1">
+                                    <label for="po_has_reason_edit" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:0; cursor:pointer;">
+                                        <input type="checkbox" id="po_has_reason_edit" wire:model="has_reason" style="margin:0;">
+                                        Reason for Purchase Order
+                                    </label>
+                                </div>
+                                @if ($has_reason)
+                                <div class="form-group mb-1">
+                                    <div style="display:flex; gap:6px; align-items:center;">
+                                        <input type="date" class="form-control input-sm" wire:model="reason_from" title="From">
+                                        <span>to</span>
+                                        <input type="date" class="form-control input-sm" wire:model="reason_to" title="To">
+                                    </div>
+                                    <small class="text-muted">Bookings / requisitions in this period (defaults to this month)</small>
+                                </div>
                                 <div class="form-group" >
-                                    <label for="name">Attach PO to a</label>
                                     <label class="radio-inline">
                                         <input type="radio" wire:model.debounce.300ms="attach_to" value="Booking" name="optradio">Booking
                                     </label>
@@ -855,9 +885,10 @@
                                         @endif
                                     </div>
                                 @endif
+                                @endif
                             </div>
                             </div>
-                        @else  
+                        @else
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="form-group">
@@ -912,14 +943,15 @@
                                     @endif
                                 @endif
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Additional Notes</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="2" placeholder="Enter purchase order notes"></textarea>
+                                    @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                            </div>
-                      
-                           <div class="form-group">
-                            <label for="name">Additional Notes</label>
-                           <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="2" placeholder="Enter purchase order notes"></textarea>
-                            @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                          
+
                         
                         <h5 class="underline mt-n">Select products</h5>
                         @foreach ($purchase_order_products as $key => $value)

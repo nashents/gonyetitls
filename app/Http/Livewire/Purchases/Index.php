@@ -71,6 +71,75 @@ class Index extends Component
     public $exchange_rate;
     public $exchange_amount;
     public $attach_to;
+    public $has_reason = false;
+
+    // "Reason for Purchase Order" unticked: drop any booking/requisition already picked.
+    public function updatedHasReason($value){
+        if (!$value) {
+            $this->clearPurchaseReason();
+        }
+    }
+
+    // Switching Booking <-> Requisition clears the other choice.
+    public function updatedAttachTo($value){
+        if ($value !== 'Booking') {
+            $this->booking_id = null;
+        }
+        if ($value !== 'Requisition') {
+            $this->requisition_id = null;
+        }
+    }
+
+    // Date range for the Booking / Requisition pickers; defaults to the current month.
+    public $reason_from;
+    public $reason_to;
+
+    public function updatedReasonFrom(){
+        $this->loadReasonOptions();
+    }
+
+    public function updatedReasonTo(){
+        $this->loadReasonOptions();
+    }
+
+    /**
+     * Open, approved bookings (job card not closed) and approved, not completed
+     * PO requisitions within the date range. The currently linked booking /
+     * requisition is always kept so editing an older PO still shows it.
+     */
+    private function loadReasonOptions(){
+        $from = $this->reason_from ?: null;
+        $to = $this->reason_to ?: null;
+        if ($from && $to && $from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $this->bookings = Booking::where(function ($q) use ($from, $to) {
+                $q->where(function ($q) use ($from, $to) {
+                    $q->where('authorization', 'approved')->where('status', 1)
+                        ->whereDoesntHave('ticket', fn ($t) => $t->where('status', 0))
+                        ->when($from, fn ($q) => $q->whereDate('in_date', '>=', $from))
+                        ->when($to, fn ($q) => $q->whereDate('in_date', '<=', $to));
+                })->when($this->booking_id, fn ($q) => $q->orWhere('id', $this->booking_id));
+            })->latest('in_date')->latest('id')->get();
+
+        $this->requisitions = Requisition::where(function ($q) use ($from, $to) {
+                $q->where(function ($q) use ($from, $to) {
+                    $q->where('type', 'po_requisition')
+                        ->where('authorization', 'approved')
+                        ->where(fn ($q) => $q->where('is_completed', false)->orWhereNull('is_completed'))
+                        ->when($from, fn ($q) => $q->whereDate('date', '>=', $from))
+                        ->when($to, fn ($q) => $q->whereDate('date', '<=', $to));
+                })->when($this->requisition_id, fn ($q) => $q->orWhere('id', $this->requisition_id));
+            })->latest('date')->latest('id')->get();
+    }
+
+    private function clearPurchaseReason(){
+        $this->attach_to = null;
+        $this->booking_id = null;
+        $this->requisition_id = null;
+        $this->resetErrorBag(['booking_id', 'requisition_id']);
+    }
 
     
     public $expense_accounts;
@@ -360,8 +429,9 @@ class Index extends Component
             $this->company = Auth::user()->employee->company;
             $this->purchase_filter = "created_at";
             $this->employees = Employee::where('archive', 0)->where('status',1)->orderBy('name','asc')->orderBy('surname','asc')->get();
-            $this->bookings = Booking::where('authorization','approved')->where('status',1)->whereYear('in_date',date('Y'))->latest()->get();
-            $this->requisitions = Requisition::where('authorization','approved')->where('is_completed', False)->whereYear('date',date('Y'))->latest()->get();
+            $this->reason_from = now()->startOfMonth()->toDateString();
+            $this->reason_to = now()->endOfMonth()->toDateString();
+            $this->loadReasonOptions();
             $this->department = $category;
             $this->products = Product::query()
             ->with('brand:id,name')
@@ -654,9 +724,9 @@ class Index extends Component
         $purchase->department = $this->department;
         $purchase->booking_id = Null;
         $purchase->requisition_id = Null;
-        if($this->attach_to == "Booking"){
+        if($this->has_reason && $this->attach_to == "Booking"){
               $purchase->booking_id = $this->booking_id;
-        }elseif($this->attach_to == "Requisition"){
+        }elseif($this->has_reason && $this->attach_to == "Requisition"){
              $purchase->requisition_id = $this->requisition_id;
         }
         $purchase->description = $this->description;
@@ -827,11 +897,14 @@ class Index extends Component
         $this->booking_id = $this->purchase->booking_id;
         $this->employee_id = $this->purchase->employee_id;
         $this->requisition_id = $this->purchase->requisition_id;
+        $this->attach_to = null;
         if($this->requisition_id){
             $this->attach_to = "Requisition";
         }elseif($this->booking_id){
              $this->attach_to = "Booking";
         }
+        $this->has_reason = !is_null($this->attach_to);
+        $this->loadReasonOptions();
         $this->purchase_order_products = $this->purchase->purchase_products;
         if(isset($this->purchase_order_products)){
 
@@ -887,9 +960,9 @@ class Index extends Component
         $purchase->employee_id = $this->employee_id;
         $purchase->booking_id = Null;
         $purchase->requisition_id = Null;
-        if($this->attach_to == "Booking"){
+        if($this->has_reason && $this->attach_to == "Booking"){
               $purchase->booking_id = $this->booking_id;
-        }elseif($this->attach_to == "Requisition"){
+        }elseif($this->has_reason && $this->attach_to == "Requisition"){
              $purchase->requisition_id = $this->requisition_id;
         }
         $purchase->expense_id = $this->expense_id;

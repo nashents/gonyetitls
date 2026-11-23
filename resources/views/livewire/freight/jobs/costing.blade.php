@@ -74,30 +74,47 @@
                     <td>{{ $cost->charge_type?->name }}</td>
                     <td>{{ $cost->vendor?->name }}</td>
                     <td>{{ $cost->currency?->symbol }}{{ number_format($cost->amount, 2) }}</td>
-                    <td><span class="label label-info label-wide">{{ $verificationStatuses[$cost->verification_status] ?? $cost->verification_status }}</span></td>
-                    <td>{{ $cost->bill?->bill_number ?? '—' }}</td>
                     <td>
-                        <a href="#" wire:click.prevent="toggleExpandCost({{ $cost->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>
-                        <a href="#" wire:click.prevent="editCost({{ $cost->id }})" class="btn btn-xs btn-default" data-toggle="modal" data-target="#costModal{{ $job->id }}"><i class="fa fa-edit"></i></a>
-                        <a href="#" wire:click.prevent="deleteCost({{ $cost->id }})" wire:confirm="Remove this cost line?" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>
+                        <span class="label label-wide" style="background-color: {{ $cost->statusColor() }}; color: #fff;">{{ $cost->statusLabel() }}</span>
+                        @if (in_array($cost->verification_status, \App\Models\FreightCost::REASON_STATUSES) && $cost->dispute_reason)
+                            <i class="fa fa-comment-o" title="{{ $cost->dispute_reason }}"></i>
+                        @endif
+                    </td>
+                    <td>{{ $cost->bill?->bill_number ?? '—' }}</td>
+                    <td style="white-space:nowrap">
+                        @unless ($cost->statusLocked())
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update verification status">
+                                    <i class="fa fa-exchange"></i> Status <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    @foreach ($verificationStatuses as $code => $label)
+                                        @if ($code !== $cost->verification_status)
+                                            <li>
+                                                <a href="#" wire:click.prevent="transitionCost({{ $cost->id }}, '{{ $code }}')">
+                                                    <span class="label" style="background-color: {{ \App\Models\FreightCost::VERIFICATION_COLORS[$code] }};">&nbsp;</span>
+                                                    Mark as {{ $label }}@if (in_array($code, \App\Models\FreightCost::REASON_STATUSES)) &hellip;@endif
+                                                </a>
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endunless
+                        <a href="#" wire:click.prevent="toggleExpandCost({{ $cost->id }})" class="btn btn-xs btn-default" title="Details"><i class="fa fa-eye"></i></a>
+                        <a href="#" wire:click.prevent="editCost({{ $cost->id }})" class="btn btn-xs btn-default" title="Edit"><i class="fa fa-edit"></i></a>
+                        <a href="#" wire:click.prevent="deleteCost({{ $cost->id }})" wire:confirm="Remove this cost line?" class="btn btn-xs btn-danger" title="Delete"><i class="fa fa-trash"></i></a>
                     </td>
                 </tr>
                 @if ($expanded_cost_id == $cost->id)
                     <tr>
                         <td colspan="6" style="background-color:#f9f9f9;">
-                            <div class="btn-group mb-10">
-                                @foreach (['pending_verification','verified','disputed','approved','posted','rejected'] as $statusOption)
-                                    <a href="#" wire:click.prevent="transitionCost({{ $cost->id }}, '{{ $statusOption }}')" class="btn btn-xs btn-default">{{ $verificationStatuses[$statusOption] }}</a>
-                                @endforeach
-                            </div>
-                            @if (in_array($cost->verification_status, ['disputed','rejected']))
-                                <p><strong>Dispute reason:</strong> {{ $cost->dispute_reason }}</p>
+                            @if (in_array($cost->verification_status, \App\Models\FreightCost::REASON_STATUSES))
+                                <p><strong>{{ $cost->statusLabel() }} reason:</strong> {{ $cost->dispute_reason ?: '—' }}</p>
                             @endif
-                            <div class="row mb-10">
-                                <div class="col-md-6">
-                                    <input type="text" class="form-control" wire:model="dispute_reason" placeholder="Dispute/rejection reason (used on next transition)">
-                                </div>
-                            </div>
+                            @if ($cost->verified_at)
+                                <p class="mb-10"><small>Verified {{ $cost->verified_at->format('d M Y H:i') }}</small></p>
+                            @endif
                             <h6 class="underline mt-10 mb-10"><strong>Documents</strong></h6>
                             @livewire('documents.index', ['id' => $cost->id, 'category' => 'freight_cost'], key('cost-docs-'.$cost->id))
                         </td>
@@ -124,22 +141,35 @@
                     <td>{{ $charge->charge_type?->name }}</td>
                     <td>{{ $charge->customer?->name }}</td>
                     <td>{{ $charge->currency?->symbol }}{{ number_format($charge->amount, 2) }}</td>
-                    <td><span class="label label-info label-wide">{{ $chargeStatuses[$charge->status] ?? $charge->status }}</span></td>
+                    <td><span class="label label-wide" style="background-color: {{ $charge->statusColor() }}; color: #fff;">{{ $charge->statusLabel() }}</span></td>
                     <td>{{ $charge->invoice?->invoice_number ?? '—' }}</td>
-                    <td>
-                        <a href="#" wire:click.prevent="toggleExpandCharge({{ $charge->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>
-                        <a href="#" wire:click.prevent="editCharge({{ $charge->id }})" class="btn btn-xs btn-default" data-toggle="modal" data-target="#chargeModal{{ $job->id }}"><i class="fa fa-edit"></i></a>
-                        <a href="#" wire:click.prevent="deleteCharge({{ $charge->id }})" wire:confirm="Remove this charge line?" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>
+                    <td style="white-space:nowrap">
+                        @unless ($charge->statusLocked())
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update status">
+                                    <i class="fa fa-exchange"></i> Status <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    @foreach ($chargeStatuses as $code => $label)
+                                        @if ($code !== $charge->status)
+                                            <li>
+                                                <a href="#" wire:click.prevent="transitionCharge({{ $charge->id }}, '{{ $code }}')">
+                                                    <span class="label" style="background-color: {{ \App\Models\FreightCharge::STATUS_COLORS[$code] }};">&nbsp;</span> Mark as {{ $label }}
+                                                </a>
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endunless
+                        <a href="#" wire:click.prevent="toggleExpandCharge({{ $charge->id }})" class="btn btn-xs btn-default" title="Details"><i class="fa fa-eye"></i></a>
+                        <a href="#" wire:click.prevent="editCharge({{ $charge->id }})" class="btn btn-xs btn-default" title="Edit"><i class="fa fa-edit"></i></a>
+                        <a href="#" wire:click.prevent="deleteCharge({{ $charge->id }})" wire:confirm="Remove this charge line?" class="btn btn-xs btn-danger" title="Delete"><i class="fa fa-trash"></i></a>
                     </td>
                 </tr>
                 @if ($expanded_charge_id == $charge->id)
                     <tr>
                         <td colspan="6" style="background-color:#f9f9f9;">
-                            <div class="btn-group mb-10">
-                                @foreach (['draft','approved','invoiced','cancelled'] as $statusOption)
-                                    <a href="#" wire:click.prevent="transitionCharge({{ $charge->id }}, '{{ $statusOption }}')" class="btn btn-xs btn-default">{{ $chargeStatuses[$statusOption] }}</a>
-                                @endforeach
-                            </div>
                             <h6 class="underline mt-10 mb-10"><strong>Documents</strong></h6>
                             @livewire('documents.index', ['id' => $charge->id, 'category' => 'freight_charge'], key('charge-docs-'.$charge->id))
                         </td>
@@ -287,6 +317,34 @@
                         <div class="checkbox">
                             <label><input type="checkbox" wire:model="cost_customer_billable"> Customer Billable</label>
                         </div>
+                        @php $costLocked = $cost_id && optional($job->costs->firstWhere('id', $cost_id))->statusLocked(); @endphp
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Verification Status <span class="required text-danger">*</span></label>
+                                    @if ($costLocked)
+                                        <input type="text" class="form-control" value="{{ $verificationStatuses[$cost_status] ?? $cost_status }} (on a bill - locked)" disabled>
+                                    @else
+                                        <select class="form-control" wire:model="cost_status">
+                                            @foreach ($verificationStatuses as $code => $label)
+                                                <option value="{{ $code }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div style="margin-top:4px; font-size:12px; line-height:1.4; color:#31708f;"><i class="fa fa-info-circle"></i> Verified or Approved costs can be billed.</div>
+                                    @endif
+                                    @error('cost_status') <span class="text-danger error">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            @if (!$costLocked && in_array($cost_status, \App\Models\FreightCost::REASON_STATUSES))
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label>{{ $verificationStatuses[$cost_status] }} Reason <span class="required text-danger">*</span></label>
+                                        <input type="text" class="form-control" wire:model.defer="dispute_reason" placeholder="Why is this cost {{ strtolower($verificationStatuses[$cost_status]) }}?">
+                                        @error('dispute_reason') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
                         <div class="form-group">
                             <label>Notes</label>
                             <textarea class="form-control" wire:model="cost_notes"></textarea>
@@ -431,6 +489,25 @@
                                 <a href="#" wire:click.prevent="applyChargeRateCard" class="btn btn-xs btn-default" style="margin-left: 6px;"><i class="fa fa-tag"></i> Apply rate card</a>
                             @endif
                         </p>
+                        @php $chargeLocked = $charge_id && optional($job->charges->firstWhere('id', $charge_id))->statusLocked(); @endphp
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Status <span class="required text-danger">*</span></label>
+                                    @if ($chargeLocked)
+                                        <input type="text" class="form-control" value="{{ $chargeStatuses[$charge_status] ?? $charge_status }} (on an invoice - locked)" disabled>
+                                    @else
+                                        <select class="form-control" wire:model="charge_status">
+                                            @foreach ($chargeStatuses as $code => $label)
+                                                <option value="{{ $code }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div style="margin-top:4px; font-size:12px; line-height:1.4; color:#31708f;"><i class="fa fa-info-circle"></i> Approved charges can be invoiced.</div>
+                                    @endif
+                                    @error('charge_status') <span class="text-danger error">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>Notes</label>
                             <textarea class="form-control" wire:model="charge_notes"></textarea>

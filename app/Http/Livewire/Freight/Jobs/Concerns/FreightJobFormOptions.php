@@ -50,16 +50,25 @@ trait FreightJobFormOptions
         'container_depot' => 'Container Depot',
     ];
 
-    /** $keepCargoIds: inactive cargo types still used on the record being edited. */
-    protected function loadFormOptions(int $companyId, array $keepCargoIds = []): void
+    /**
+     * $keepCargoIds: inactive cargo types still used on the record being edited.
+     * $keepOfficerUserIds: users already assigned on the record (e.g. a driver set
+     * by older data) - still listed so Edit shows them, but never offered otherwise.
+     */
+    protected function loadFormOptions(int $companyId, array $keepCargoIds = [], array $keepOfficerUserIds = []): void
     {
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
         $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
-        $this->officers = Employee::where('company_id', $companyId)
-            ->where('status', 1)
-            ->where('archive', 0)
+        // Salesperson / officers: actual staff with a login - no drivers.
+        $keepOfficerUserIds = array_values(array_filter($keepOfficerUserIds));
+        $this->officers = Employee::where(function ($q) use ($companyId, $keepOfficerUserIds) {
+                $q->where(fn ($staff) => $staff->where('company_id', $companyId)->activeStaff()->ofStaffType('admin'));
+                if ($keepOfficerUserIds) {
+                    $q->orWhereIn('user_id', $keepOfficerUserIds);
+                }
+            })
             ->whereNotNull('user_id')
             ->orderBy('name', 'asc')
             ->orderBy('surname', 'asc')

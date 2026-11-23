@@ -47,6 +47,7 @@ class Edit extends Component
     public $user_id;
     public $product;
     public $product_id;
+    public $original_name;
     public $previous_image;
     public $unit_of_measure;
     public $units_of_measure;
@@ -128,6 +129,7 @@ class Edit extends Component
         $this->income_account_id = $product->account_id;
         $this->status = $product->status;
         $this->product_id = $product->id;
+        $this->original_name = $product->name;
 
         $this->income_accounts = Account::selectable($this->income_account_id)->whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Income');
@@ -199,6 +201,12 @@ class Edit extends Component
         $this->duplicateProductEditRoute = null;
 
         if (blank($this->name)) {
+            return false;
+        }
+
+        // Only guard actual renames: a product whose existing name already
+        // collides with a legacy duplicate must still be editable.
+        if (trim((string) $this->name) === trim((string) $this->original_name)) {
             return false;
         }
 

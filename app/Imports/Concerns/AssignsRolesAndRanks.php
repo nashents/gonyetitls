@@ -33,6 +33,15 @@ trait AssignsRolesAndRanks
     {
         $ids = $this->resolveNames($value, $this->roleLookup ??= $this->lookup(Role::class), 'role', $who);
 
+        // Only is_admin / Super Admin importers may grant Admin or Super Admin
+        if (!empty($ids) && !\App\Support\RoleAssignment::canManagePrivileged()) {
+            $blocked = array_intersect($ids, \App\Support\RoleAssignment::privilegedIds());
+            if (!empty($blocked)) {
+                $this->unknownRolesAndRanks[] = "{$who}: Admin / Super Admin can only be granted by an administrator";
+                $ids = array_values(array_diff($ids, $blocked));
+            }
+        }
+
         if (!empty($ids)) {
             $user->roles()->syncWithoutDetaching($ids);
             return;

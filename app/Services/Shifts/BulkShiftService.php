@@ -9,6 +9,7 @@ use App\Models\Rehandling;
 use App\Models\Shift;
 use App\Models\Trip;
 use App\Models\TripType;
+use App\Services\Fuel\FuelApprovalService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -293,6 +294,9 @@ class BulkShiftService
         $fuel->comments = $f['comments'] ?: null;
         $fuel->allocation_to = $f['allocation_to'] ?: null;
         $fuel->save();
+
+        // Approved on creation, like the shift's trips
+        app(FuelApprovalService::class)->approve($fuel, $user->id, 'Auto-approved with shift ' . $shift->shift_number);
 
         return $fuel;
     }

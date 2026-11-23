@@ -142,6 +142,11 @@
                                            <input type="text" class="form-control" wire:model.debounce.300ms="idnumber" placeholder="Enter ID Number" />
                                            @error('idnumber') <span class="text-danger error">{{ $message }}</span>@enderror
                                        </div>
+                                       <div class="form-group">
+                                           <label>Customs / Declarant Code</label>
+                                           <input type="text" class="form-control" wire:model.defer="customs_code" placeholder="Only for staff who lodge customs entries" />
+                                           @error('customs_code') <span class="text-danger error">{{ $message }}</span>@enderror
+                                       </div>
                                    </div>
                                  
                                    <div class="col-md-6">

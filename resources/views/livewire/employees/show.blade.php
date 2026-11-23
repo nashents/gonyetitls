@@ -170,6 +170,12 @@
                                     <th class="w-10 text-center line-height-35">ID #</th>
                                     <td class="w-20 line-height-35">{{$employee->idnumber}}</td>
                                 </tr>
+                                @if ($employee->customs_code)
+                                    <tr>
+                                        <th class="w-10 text-center line-height-35">Customs Code</th>
+                                        <td class="w-20 line-height-35">{{ $employee->customs_code }}</td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Phonenumber</th>
                                     <td class="w-20 line-height-35">{{$employee->phonenumber}}</td>

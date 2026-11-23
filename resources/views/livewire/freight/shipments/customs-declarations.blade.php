@@ -23,13 +23,37 @@
                     <td>{{ ucfirst($declaration->declaration_type ?? '') }}</td>
                     <td>{{ $declaration->entry_number }}</td>
                     <td>{{ $declaration->clearing_agent?->name }}</td>
-                    <td><span class="label label-info label-wide">{{ $workflowStages[$declaration->status] ?? $declaration->status }}</span></td>
+                    <td>
+                        <span class="label label-info label-wide">{{ $workflowStages[$declaration->status] ?? $declaration->status }}</span>
+                        @php
+                            // Every status change records a completed milestone (CustomsDeclarationService::create /
+                            // transitionStatus), so these rows are the status trail. Newest update first.
+                            $statusTrail = $declaration->milestones->sortByDesc('id');
+                        @endphp
+                        @if ($statusTrail->isNotEmpty())
+                            <ul class="list-unstyled" style="margin:6px 0 0; max-height:110px; overflow-y:auto; font-size:11px; line-height:1.5">
+                                @foreach ($statusTrail as $change)
+                                    <li class="{{ $loop->first ? '' : 'text-muted' }}" wire:key="declaration-{{ $declaration->id }}-trail-{{ $change->id }}">
+                                        <strong>{{ $change->milestone_name }}</strong>
+                                        &middot; {{ ($change->actual_at ?? $change->created_at)?->format('d M Y H:i') }}
+                                        &middot; {{ $change->creator ? trim($change->creator->name . ' ' . $change->creator->surname) : 'System' }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </td>
                     <td>
                         <a href="#" wire:click.prevent="toggleExpand({{ $declaration->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Details</a>
                         @if ($declaration->nextWorkflowStage())
-                            <a href="#" wire:click.prevent="advanceStage({{ $declaration->id }})" wire:confirm="Mark this declaration as '{{ $workflowStages[$declaration->nextWorkflowStage()] }}'?" class="btn btn-xs btn-success">
-                                <i class="fa fa-arrow-right"></i> {{ $workflowStages[$declaration->nextWorkflowStage()] }}
-                            </a>
+                            <div style="margin-top:6px; white-space:nowrap;">
+                                <input type="datetime-local" class="form-control input-sm" style="display:inline-block; width:auto;"
+                                       wire:model.defer="stage_dates.{{ $declaration->id }}" max="{{ now()->format('Y-m-d\TH:i') }}"
+                                       title="When this stage actually happened - change it if you're updating the status late.">
+                                <a href="#" wire:click.prevent="advanceStage({{ $declaration->id }})" wire:confirm="Mark this declaration as '{{ $workflowStages[$declaration->nextWorkflowStage()] }}'?" class="btn btn-xs btn-success">
+                                    <i class="fa fa-arrow-right"></i> {{ $workflowStages[$declaration->nextWorkflowStage()] }}
+                                </a>
+                            </div>
+                            @error('stage_dates.' . $declaration->id) <span class="text-danger error">{{ $message }}</span> @enderror
                         @endif
                     </td>
                 </tr>
@@ -42,6 +66,25 @@
                                 <div class="col-md-2"><strong>VAT:</strong> {{ number_format($declaration->total_vat, 2) }}</div>
                                 <div class="col-md-2"><strong>Excise:</strong> {{ number_format($declaration->total_excise, 2) }}</div>
                                 <div class="col-md-3"><strong>Levies:</strong> {{ number_format($declaration->total_levies, 2) }}</div>
+                            </div>
+                            <div class="row mb-10">
+                                <div class="col-md-6">
+                                    <strong>Declarant:</strong>
+                                    {{ $declaration->declarantName() ?? '—' }}
+                                    @if (! $declaration->declarant_id && $declaration->declarant_name)
+                                        <small class="text-muted">(not in system)</small>
+                                    @endif
+                                    @if ($declaration->declarant_code)
+                                        &middot; <strong>Code:</strong> {{ $declaration->declarant_code }}
+                                    @endif
+                                </div>
+                                <div class="col-md-6">
+                                    @if ($declaration->customs_procedure)
+                                        <strong>Customs Procedure:</strong> {{ $declaration->customsProcedureLabel() }}<br>
+                                    @endif
+                                    <strong>Clearing Officer:</strong>
+                                    {{ $declaration->clearing_officer ? trim($declaration->clearing_officer->name . ' ' . $declaration->clearing_officer->surname) : '—' }}
+                                </div>
                             </div>
 
                             <h6 class="underline mt-10 mb-10"><strong>Declaration Lines</strong></h6>
@@ -97,6 +140,11 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <input type="datetime-local" class="form-control" wire:model.defer="ad_hoc_milestone_date" max="{{ now()->format('Y-m-d\TH:i') }}"
+                                           title="When this stage actually happened">
+                                    @error('ad_hoc_milestone_date') <span class="text-danger error">{{ $message }}</span> @enderror
+                                </div>
                                 <div class="col-md-2">
                                     <a href="#" wire:click.prevent="recordAdHocMilestone({{ $declaration->id }})" class="btn btn-xs btn-warning">Record</a>
                                 </div>
@@ -140,7 +188,18 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Customs Office</label>
-                                    <input type="text" class="form-control" wire:model="customs_office">
+                                    <select class="form-control" wire:model="customs_office">
+                                        <option value="">Select Customs Office</option>
+                                        @foreach ($customsOffices as $office)
+                                            <option value="{{ $office->name }}">{{ $office->name }}</option>
+                                        @endforeach
+                                        <option value="{{ \App\Http\Livewire\Freight\Shipments\CustomsDeclarations::NEW_OFFICE }}">+ Add new customs office</option>
+                                    </select>
+                                    @if ($customs_office === \App\Http\Livewire\Freight\Shipments\CustomsDeclarations::NEW_OFFICE)
+                                        <input type="text" class="form-control mt-10" wire:model.defer="new_customs_office" placeholder="Type the new customs office name">
+                                        <div style="margin-top:4px; font-size:12px; line-height:1.4; height:auto; white-space:normal; color:#31708f;"><i class="fa fa-info-circle"></i> Saved to the list for next time.</div>
+                                    @endif
+                                    @error('new_customs_office') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -159,8 +218,18 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Customs Procedure</label>
-                                    <input type="text" class="form-control" wire:model="customs_procedure">
+                                    <label>Customs Procedure (CPC)</label>
+                                    <select class="form-control" wire:model="customs_procedure">
+                                        <option value="">Select</option>
+                                        @foreach (\App\Models\CustomsDeclaration::CUSTOMS_PROCEDURES as $cpc => $cpcLabel)
+                                            <option value="{{ $cpc }}">{{ $cpc }} - {{ $cpcLabel }}</option>
+                                        @endforeach
+                                        <option value="{{ \App\Http\Livewire\Freight\Shipments\CustomsDeclarations::OTHER_PROCEDURE }}">Other (type the code)</option>
+                                    </select>
+                                    @if ($customs_procedure === \App\Http\Livewire\Freight\Shipments\CustomsDeclarations::OTHER_PROCEDURE)
+                                        <input type="text" class="form-control mt-10" wire:model.defer="other_customs_procedure" placeholder="e.g. 4000 412 or 7100">
+                                        @error('other_customs_procedure') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    @endif
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -216,12 +285,44 @@
                                 <div class="form-group">
                                     <label>Declarant</label>
                                     <select class="form-control" wire:model="declarant_id">
-                                        <option value="">Select</option>
+                                        <option value="">Not one of our staff / none</option>
                                         @foreach ($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }} {{ $user->surname }}</option>
+                                            <option value="{{ $user->user_id }}">{{ $user->name }} {{ $user->surname }}</option>
                                         @endforeach
                                     </select>
+                                    @unless ($declarant_id)
+                                        <input type="text" class="form-control mt-10" wire:model.defer="declarant_name" placeholder="or type the declarant's name (e.g. the clearing agent's declarant)">
+                                        @error('declarant_name') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    @endunless
                                 </div>
+                                @if ($declarant_id)
+                                    {{-- Staff declarant: code lives on their employee record. Shown read-only;
+                                         typed here only when missing or on "Update", and written back to the
+                                         employee record when the declaration is saved. --}}
+                                    @php $staffDeclarant = $users->firstWhere('user_id', $declarant_id); @endphp
+                                    @if ($staffDeclarant?->customs_code && ! $editing_staff_code)
+                                        <p class="mb-10">
+                                            <strong>Customs Code:</strong> {{ $staffDeclarant->customs_code }}
+                                            <a href="#" wire:click.prevent="$set('editing_staff_code', true)" class="btn btn-xs btn-default" style="margin-left:6px"><i class="fa fa-pencil"></i> Update</a>
+                                        </p>
+                                    @else
+                                        <div class="form-group">
+                                            <label>Declarant / Customs Code</label>
+                                            <input type="text" class="form-control" wire:model.defer="staff_code_input" placeholder="{{ $staffDeclarant?->customs_code ? 'New customs code' : 'No code on record yet - enter it here' }}">
+                                            <small class="text-muted">Saved to {{ $staffDeclarant?->name }}'s record when you save this declaration, and reused next time.</small>
+                                            @if ($staffDeclarant?->customs_code)
+                                                <a href="#" wire:click.prevent="cancelStaffCodeUpdate" style="float:right"><small>Cancel - keep {{ $staffDeclarant->customs_code }}</small></a>
+                                            @endif
+                                            @error('staff_code_input') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="form-group">
+                                        <label>Declarant / Customs Code</label>
+                                        <input type="text" class="form-control" wire:model.defer="declarant_code" placeholder="Customs registration / declarant code">
+                                        @error('declarant_code') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -229,7 +330,7 @@
                                     <select class="form-control" wire:model="clearing_officer_id">
                                         <option value="">Select</option>
                                         @foreach ($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }} {{ $user->surname }}</option>
+                                            <option value="{{ $user->user_id }}">{{ $user->name }} {{ $user->surname }}</option>
                                         @endforeach
                                     </select>
                                 </div>

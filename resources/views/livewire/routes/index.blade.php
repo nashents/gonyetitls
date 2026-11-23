@@ -72,6 +72,12 @@
                                         @foreach ($route->route_expenses as $route_expense)
                                             {{$route_expense->expense ? $route_expense->expense->name : ""}}@if ($route_expense->source == 'fuel') <span class="badge bg-info">Auto</span>@endif @if (!$loop->last), @endif
                                         @endforeach
+                                        <div style="margin-top:4px; white-space:nowrap">
+                                            <a href="#" wire:click.prevent="addRouteExpense({{$route->id}})" class="btn btn-xs btn-success" title="Add expense to this route"><i class="fa fa-plus"></i></a>
+                                            @if ($route->route_expenses->where('source', '!=', 'fuel')->count())
+                                                <a href="#" wire:click.prevent="removeRouteExpense({{$route->id}})" class="btn btn-xs btn-danger" title="Remove expense(s) from this route"><i class="fa fa-minus"></i></a>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td>
                                         <strong>Distance:</strong> {{$route->distance ? $route->distance."Kms" : ""}} <br>
@@ -146,7 +152,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="routeModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Route <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -332,7 +338,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="routeEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Route <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -493,7 +499,145 @@
         </div>
     </div>
 
+    {{-- Quick add expense to a route (Expenses column "+") --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="routeExpenseAddModal" tabindex="-1" role="dialog" aria-labelledby="routeExpenseAddLabel" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="routeExpenseAddLabel"><i class="fas fa-plus"></i> Add Expense @if ($expense_route_name) to {{ $expense_route_name }} @endif <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="storeRouteExpense()">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Expense<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.defer="route_expense_expense_id" class="form-control" required>
+                                        <option value="">Select Expense</option>
+                                        @foreach ($expenses as $expense)
+                                            <option value="{{ $expense->id }}">{{ $expense->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('route_expense_expense_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.defer="route_expense_category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Customer">Customer</option>
+                                        <option value="Self">Self</option>
+                                        <option value="Transporter">Transporter</option>
+                                    </select>
+                                    @error('route_expense_category') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Payment Method</label>
+                                    <select wire:model.defer="route_expense_payment_method_id" class="form-control">
+                                        <option value="">Select Payment Method</option>
+                                        @foreach ($payment_methods as $payment_method)
+                                            <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('route_expense_payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Currency</label>
+                                    <select wire:model.defer="route_expense_currency_id" class="form-control">
+                                        <option value="">Select Currency</option>
+                                        @foreach ($currencies as $currency)
+                                            <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('route_expense_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Amount</label>
+                                    <input type="number" step="any" min="0" wire:model.defer="route_expense_amount" class="form-control" placeholder="Amount">
+                                    @error('route_expense_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="storeRouteExpense"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
+    {{-- Quick remove expense(s) from a route (Expenses column "-") --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="routeExpenseRemoveModal" tabindex="-1" role="dialog" aria-labelledby="routeExpenseRemoveLabel" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="routeExpenseRemoveLabel"><i class="fas fa-minus"></i> Remove Expense(s) @if ($expense_route_name) from {{ $expense_route_name }} @endif <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="destroyRouteExpenses()">
+                    <div class="modal-body">
+                        @if ($expenseRoute)
+                            <p class="text-muted">Tick the expense(s) to remove from this route.</p>
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="width:30px"></th>
+                                        <th>Expense</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($expenseRoute->route_expenses as $route_expense)
+                                        <tr wire:key="route-expense-remove-{{ $route_expense->id }}">
+                                            <td>
+                                                @if ($route_expense->source == 'fuel')
+                                                    <i class="fa fa-lock text-muted" title="Auto-generated fuel estimate. Clear the route's fuel fields to remove it."></i>
+                                                @else
+                                                    <input type="checkbox" wire:model.defer="remove_route_expense_ids" value="{{ $route_expense->id }}">
+                                                @endif
+                                            </td>
+                                            <td>{{ $route_expense->expense->name ?? '' }} @if ($route_expense->source == 'fuel') <span class="badge bg-info">Auto</span> @endif</td>
+                                            <td>{{ $route_expense->category }}</td>
+                                            <td>{{ number_format((float) $route_expense->amount, 2) }} {{ $route_expense->currency->name ?? '' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @error('remove_route_expense_ids') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-danger btn-wide btn-rounded" wire:loading.attr="disabled" wire:target="destroyRouteExpenses"><i class="fa fa-trash"></i>Remove</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @push('custom-scripts')
+        <script type="text/javascript">
+            window.addEventListener('show-routeExpenseAddModal', () => $('#routeExpenseAddModal').modal('show'));
+            window.addEventListener('hide-routeExpenseAddModal', () => $('#routeExpenseAddModal').modal('hide'));
+            window.addEventListener('show-routeExpenseRemoveModal', () => $('#routeExpenseRemoveModal').modal('show'));
+            window.addEventListener('hide-routeExpenseRemoveModal', () => $('#routeExpenseRemoveModal').modal('hide'));
+        </script>
+    @endpush
 
 </div>
 

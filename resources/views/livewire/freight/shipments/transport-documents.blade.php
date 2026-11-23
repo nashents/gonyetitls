@@ -1,6 +1,6 @@
 <div>
     <div class="mb-10">
-        <a href="#" class="btn btn-xs btn-info" data-toggle="modal" data-target="#addTransportDocumentModal{{ $shipment->id }}">
+        <a href="#" wire:click.prevent="create" class="btn btn-xs btn-info">
             <i class="fa fa-plus"></i> Add Transport Document
         </a>
     </div>
@@ -14,21 +14,42 @@
                 <th>Carrier</th>
                 <th># Originals</th>
                 <th>Status</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             @forelse ($shipment->transport_documents as $doc)
-                <tr>
-                    <td>{{ ucwords(str_replace('_', ' ', $doc->document_type)) }}</td>
+                <tr wire:key="transport-doc-{{ $doc->id }}">
+                    <td>{{ $documentTypes[$doc->document_type] ?? ucwords(str_replace('_', ' ', $doc->document_type)) }}</td>
                     <td>{{ $doc->document_number }}</td>
                     <td>{{ $doc->issue_date?->format('d M Y') }}</td>
                     <td>{{ $doc->carrierLabel() }}</td>
                     <td>{{ $doc->number_of_originals }}</td>
-                    <td><span class="label label-info label-wide">{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span></td>
+                    <td><span class="label label-{{ $doc->statusBadge() }} label-wide">{{ $doc->statusLabel() }}</span></td>
+                    <td style="white-space:nowrap">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update status">
+                                <i class="fa fa-exchange"></i> Status <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                @foreach ($statuses as $code => $label)
+                                    @if ($code !== $doc->status)
+                                        <li>
+                                            <a href="#" wire:click.prevent="setStatus({{ $doc->id }}, '{{ $code }}')">
+                                                <span class="label label-{{ \App\Models\TransportDocument::STATUS_BADGES[$code] ?? 'info' }}">&nbsp;</span> Mark as {{ $label }}
+                                            </a>
+                                        </li>
+                                    @endif
+                                @endforeach
+                            </ul>
+                        </div>
+                        <a href="#" wire:click.prevent="edit({{ $doc->id }})" class="btn btn-xs btn-default" title="Edit"><i class="fa fa-edit"></i></a>
+                        <a href="#" wire:click.prevent="delete({{ $doc->id }})" wire:confirm="Delete transport document {{ $doc->document_number }}?" class="btn btn-xs btn-danger" title="Delete"><i class="fa fa-trash"></i></a>
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center">No transport documents recorded for this shipment yet.</td>
+                    <td colspan="7" class="text-center">No transport documents recorded for this shipment yet.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -41,19 +62,16 @@
                 <form wire:submit.prevent="store">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                        <h4 class="modal-title">Add Transport Document</h4>
+                        <h4 class="modal-title">{{ $document_id ? 'Edit Transport Document' : 'Add Transport Document' }}</h4>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
                             <label>Type <span class="required text-danger">*</span></label>
                             <select class="form-control" wire:model="document_type">
                                 <option value="">Select</option>
-                                <option value="master_bill_of_lading">Master Bill of Lading</option>
-                                <option value="house_bill_of_lading">House Bill of Lading</option>
-                                <option value="sea_waybill">Sea Waybill</option>
-                                <option value="master_air_waybill">Master Air Waybill</option>
-                                <option value="house_air_waybill">House Air Waybill</option>
-                                <option value="booking_number">Booking Number</option>
+                                @foreach ($documentTypes as $code => $label)
+                                    <option value="{{ $code }}">{{ $label }}</option>
+                                @endforeach
                             </select>
                             @error('document_type') <span class="text-danger error">{{ $message }}</span> @enderror
                         </div>
@@ -117,17 +135,16 @@
                         <div class="form-group">
                             <label>Status</label>
                             <select class="form-control" wire:model="status">
-                                <option value="draft">Draft</option>
-                                <option value="issued">Issued</option>
-                                <option value="surrendered">Surrendered</option>
-                                <option value="telex_release">Telex Release</option>
-                                <option value="cancelled">Cancelled</option>
+                                @foreach ($statuses as $code => $label)
+                                    <option value="{{ $code }}">{{ $label }}</option>
+                                @endforeach
                             </select>
+                            @error('status') <span class="text-danger error">{{ $message }}</span> @enderror
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn bg-gray" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Document</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> {{ $document_id ? 'Update Document' : 'Save Document' }}</button>
                     </div>
                 </form>
             </div>
@@ -137,6 +154,9 @@
     <script type="text/javascript">
         window.addEventListener('hide-addTransportDocumentModal-{{ $shipment->id }}', event => {
             $('#addTransportDocumentModal{{ $shipment->id }}').modal('hide');
+        })
+        window.addEventListener('show-addTransportDocumentModal-{{ $shipment->id }}', event => {
+            $('#addTransportDocumentModal{{ $shipment->id }}').modal('show');
         })
     </script>
 </div>

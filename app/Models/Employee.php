@@ -303,6 +303,7 @@ class Employee extends Model implements Auditable
         'email',
         'pin',
         'idnumber',
+        'customs_code',
         'phonenumber',
         'country',
         'city',

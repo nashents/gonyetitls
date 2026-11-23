@@ -87,7 +87,9 @@ class Edit extends Component
             $this->shipments[] = $this->shipmentState(null);
         }
 
-        $this->loadFormOptions($this->employee->company_id, $this->keptCargoIds());
+        $this->loadFormOptions($this->employee->company_id, $this->keptCargoIds(), [
+            $this->job->salesperson_id, $this->job->operations_officer_id, $this->job->clearing_officer_id,
+        ]);
     }
 
     private function shipmentState(?Shipment $shipment): array

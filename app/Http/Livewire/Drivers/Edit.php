@@ -190,7 +190,7 @@ class Edit extends Component
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
          $this->grades = Grade::orderBy('grade_code','asc')->get();
-        $this->roles = Role::orderBy('name','asc')->get();
+        $this->roles = \App\Support\RoleAssignment::assignableRoles();
         $this->ranks = Rank::orderBy('name','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
@@ -356,8 +356,8 @@ class Edit extends Component
             $user->username = $this->phonenumber;
           }
           $user->update();
-          $user->roles()->detach();
-          $user->roles()->sync($this->role_id);
+          // Non-admins can neither grant nor remove Admin / Super Admin (App\Support\RoleAssignment)
+          $user->roles()->sync(\App\Support\RoleAssignment::resolve($this->role_id, $user));
 
           $employee = Employee::find($this->employee_id);
           $employee->user_id = $user->id;

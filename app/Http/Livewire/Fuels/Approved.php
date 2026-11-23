@@ -214,14 +214,14 @@ class Approved extends Component
         
         if (isset($this->from) && isset($this->to)) {
             return view('livewire.fuels.approved',[
-                'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
+                'fuels' => Fuel::query()->with(['container:id,name','shift:id,shift_number','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
                 ])->where('authorization','approved')->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc')->paginate(10),
                 'fuel_filter' => $this->fuel_filter,
             ]);
            
         }else { 
             return view('livewire.fuels.approved',[
-                'fuels' => Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
+                'fuels' => Fuel::query()->with(['container:id,name','shift:id,shift_number','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
                 ])->where('authorization','approved')->whereMonth('created_at', date('m'))
                 ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc')->paginate(10),
                 'fuel_filter' => $this->fuel_filter,

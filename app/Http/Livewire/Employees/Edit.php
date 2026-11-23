@@ -60,6 +60,7 @@ class Edit extends Component
     public $email;
     public $old_email;
     public $idnumber;
+    public $customs_code;
     public $phonenumber;
     public $city;
     public $suburb;
@@ -158,7 +159,7 @@ class Edit extends Component
         $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->grades = Grade::orderBy('grade_code','asc')->get();
-        $this->roles = Role::orderBy('name','asc')->get();
+        $this->roles = \App\Support\RoleAssignment::assignableRoles();
         $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
         $this->job_title = $employee->post;
@@ -211,6 +212,7 @@ class Edit extends Component
         $this->suburb = $employee->suburb;
         $this->street_address = $employee->street_address;
         $this->idnumber = $employee->idnumber;
+        $this->customs_code = $employee->customs_code;
         $this->post = $employee->post;
         $this->start_date = $employee->start_date;
         $this->end_date = $employee->end_date;
@@ -333,8 +335,8 @@ class Edit extends Component
             $user->username = $this->phonenumber;
           }
           $user->update();
-          $user->roles()->detach();
-          $user->roles()->sync($this->role_id);
+          // Non-admins can neither grant nor remove Admin / Super Admin (App\Support\RoleAssignment)
+          $user->roles()->sync(\App\Support\RoleAssignment::resolve($this->role_id, $user));
 
           $employee = Employee::find($this->employee_id);
           $employee->company_id = $this->company_id;
@@ -363,6 +365,7 @@ class Edit extends Component
           $employee->suburb = $this->suburb;
           $employee->street_address = $this->street_address;
           $employee->idnumber = $this->idnumber;
+          $employee->customs_code = trim((string) $this->customs_code) ?: null;
           $employee->post = $this->job_title;
           $employee->duration = $this->duration;
           $employee->salary = $this->salary;

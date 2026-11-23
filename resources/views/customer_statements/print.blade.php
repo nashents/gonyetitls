@@ -151,7 +151,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                             </td>
                                             <td class="text-center">
                                                 @if ($invoice->payments)
-                                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->payments->sum('amount'),2)}}
+                                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->settledAmount(), 2)}}
                                                 @endif
                                             </td>
                                             <td class="text-center">

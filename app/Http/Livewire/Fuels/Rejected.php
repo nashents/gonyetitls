@@ -128,11 +128,11 @@ class Rejected extends Component
       public function getFuelsProperty(){
  
         if (isset($this->from) && isset($this->to)) {
-            return Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
+            return Fuel::query()->with(['container:id,name','shift:id,shift_number','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
             ])->where('authorization','rejected')->whereBetween($this->fuel_filter,[$this->from, $this->to] )->orderBy('created_at','desc')->paginate(10);
            
         }else { 
-            return Fuel::query()->with(['container:id,name','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
+            return Fuel::query()->with(['container:id,name','shift:id,shift_number','horse','horse.horse_model','horse.horse_make', 'vehicle','vehicle.vehicle_model','vehicle.vehicle_make',
             ])->where('authorization','rejected')->whereMonth('created_at', date('m'))
             ->whereYear($this->fuel_filter, date('Y'))->orderBy('created_at','desc')->paginate(10);
           

@@ -106,6 +106,22 @@ class Invoice extends Model implements Auditable
      * settles it: payments, customer-supplied fuel, debtors journal credits
      * and approved credit notes. Saves the invoice.
      */
+    /**
+     * Everything that has settled this invoice: direct payments, bulk-payment
+     * allocations, customer-supplied fuel, debtor journals and credit notes.
+     * Derived from the stored balance (kept by recalculateBalance) so it always
+     * reconciles Total - Paid = Due on statements. Falls back to direct
+     * payments when no balance has been set yet.
+     */
+    public function settledAmount(): float
+    {
+        if ($this->balance === null || $this->balance === '') {
+            return (float) $this->payments->sum('amount');
+        }
+
+        return round(max(0, (float) $this->total - (float) $this->balance), 2);
+    }
+
     public function recalculateBalance(): self
     {
         $directPayments = (float) $this->payments()->whereNotNull('amount')->where('amount', '!=', '')->sum('amount');

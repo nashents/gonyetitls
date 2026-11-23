@@ -19,6 +19,38 @@ class CustomsDeclaration extends Model implements Auditable
      * so transitionStatus() never validates the target against "next" — this
      * array only powers the suggested-next-stage button, not a hard sequence.
      */
+    /**
+     * Common ASYCUDA Customs Procedure Codes (CPC): first two digits = the
+     * procedure requested, last two = the previous procedure. Stored as the
+     * code; anything else can be typed via the form's "Other" option.
+     */
+    public const CUSTOMS_PROCEDURES = [
+        '4000' => 'Import for home use (duty paid)',
+        '1000' => 'Permanent export',
+        '8000' => 'Transit',
+        '7000' => 'Warehousing (into bond)',
+        '7100' => 'Warehouse to warehouse transfer',
+        '4071' => 'Ex-warehouse for home use',
+        '5300' => 'Temporary import (duty suspended)',
+        '5100' => 'Inward processing',
+        '2100' => 'Temporary export / outward processing',
+        '3000' => 'Re-export',
+        '3053' => 'Re-export of temporarily imported goods',
+        '6000' => 'Re-import',
+    ];
+
+    /** "4000 - Import for home use (duty paid)", or the typed value for anything not listed. */
+    public function customsProcedureLabel(): ?string
+    {
+        if (blank($this->customs_procedure)) {
+            return null;
+        }
+
+        $label = self::CUSTOMS_PROCEDURES[$this->customs_procedure] ?? null;
+
+        return $label ? $this->customs_procedure . ' - ' . $label : $this->customs_procedure;
+    }
+
     const WORKFLOW_STAGES = [
         'instructions_received' => 'Instructions Received',
         'documents_outstanding' => 'Documents Outstanding',
@@ -68,6 +100,14 @@ class CustomsDeclaration extends Model implements Auditable
     public function declarant(){
         return $this->belongsTo('App\Models\User', 'declarant_id');
     }
+
+    /** Staff declarant's name, else the typed-in name of an outside declarant. */
+    public function declarantName(): ?string
+    {
+        $staff = $this->declarant ? trim($this->declarant->name . ' ' . $this->declarant->surname) : null;
+
+        return $staff ?: ($this->declarant_name ?: null);
+    }
     public function clearing_officer(){
         return $this->belongsTo('App\Models\User', 'clearing_officer_id');
     }
@@ -115,6 +155,8 @@ class CustomsDeclaration extends Model implements Auditable
         'declaration_type',
         'customs_procedure',
         'declarant_id',
+        'declarant_name',
+        'declarant_code',
         'clearing_officer_id',
         'declaration_date',
         'submission_date',

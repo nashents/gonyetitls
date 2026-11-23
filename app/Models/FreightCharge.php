@@ -19,6 +19,29 @@ class FreightCharge extends Model implements Auditable
         'cancelled' => 'Cancelled',
     ];
 
+    const STATUS_COLORS = [
+        'draft' => '#777777',     // grey
+        'approved' => '#5cb85c',  // green
+        'invoiced' => '#337ab7',  // blue
+        'cancelled' => '#d9534f', // red
+    ];
+
+    public function statusLabel(): string
+    {
+        return self::STATUSES[$this->status] ?? ucwords(str_replace('_', ' ', (string) $this->status));
+    }
+
+    public function statusColor(): string
+    {
+        return self::STATUS_COLORS[$this->status] ?? '#777777';
+    }
+
+    /** Once on an invoice the status follows the invoice, so it is locked here. */
+    public function statusLocked(): bool
+    {
+        return $this->invoice_id !== null;
+    }
+
     public function freight_job(){
         return $this->belongsTo('App\Models\FreightJob');
     }

@@ -2216,7 +2216,10 @@ class Index extends Component
                 $fuel->comments = $this->fuel_comments;
                 $fuel->allocation_to = $this->fuel_allocation_to ?: null;
                 $fuel->save();
-            
+
+                // Approved on creation, like the shift's trips
+                app(\App\Services\Fuel\FuelApprovalService::class)->approve($fuel, Auth::id(), 'Auto-approved with shift ' . $shift->shift_number);
+
             }
 
         $this->calculateFuelConsumption($shift->id);
@@ -2544,6 +2547,14 @@ class Index extends Component
                         'allocation_to'   => $this->fuel_allocation_to ?: null,
                     ]
                 );
+
+                // Approved like the shift's trips; an already-approved order
+                // just has its bill re-posted for the edited figures.
+                if ($fuel->authorization === 'approved') {
+                    if ($fuel->container_id) app(\App\Services\Accounting\FuelJournalService::class)->postConsumptionSafely($fuel->fresh());
+                } elseif ($fuel->authorization !== 'rejected') {
+                    app(\App\Services\Fuel\FuelApprovalService::class)->approve($fuel, Auth::id(), 'Auto-approved with shift ' . $shift->shift_number);
+                }
             }
 
              $this->calculateFuelConsumption($shift->id);

@@ -333,6 +333,11 @@
                                                             </div>
                                                         @endif
                                                     @endif
+                                                    @if ($fuel->shift)
+                                                        <div class="fuel-meta text-muted">
+                                                            <small><strong>Shift:</strong> {{ $fuel->shift->shift_number }}</small>
+                                                        </div>
+                                                    @endif
                                                     @if ($fuel->comments)
                                                         <div class="fuel-meta text-muted">
                                                             <small><strong>Comments:</strong> {{ $fuel->comments }}</small>

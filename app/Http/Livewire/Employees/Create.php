@@ -86,6 +86,7 @@ class Create extends Component
     public $email;
     public $personal_email;
     public $idnumber;
+    public $customs_code;
     public $phonenumber;
     public $city;
     public $suburb;
@@ -125,7 +126,7 @@ class Create extends Component
         $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
-        $this->roles = Role::latest()->get();
+        $this->roles = \App\Support\RoleAssignment::assignableRoles('created_at', 'desc');
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
         $this->ranks = Rank::latest()->get();
@@ -355,7 +356,7 @@ class Create extends Component
           }
           $user->password = Hash::make($pin);
           $user->save();
-          $user->roles()->sync($this->role_id);
+          $user->roles()->sync(\App\Support\RoleAssignment::resolve($this->role_id));
 
 
         if (isset(Auth::user()->company)) {
@@ -399,6 +400,7 @@ class Create extends Component
           $employee->suburb = $this->suburb;
           $employee->street_address = $this->street_address;
           $employee->idnumber = $this->idnumber;
+          $employee->customs_code = trim((string) $this->customs_code) ?: null;
           $employee->post = $this->job_title;
           $employee->duration = $this->duration;
           $employee->frequency = $this->frequency;
