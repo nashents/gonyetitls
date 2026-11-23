@@ -3,11 +3,13 @@
 namespace App\Http\Livewire\Freight\Shipments;
 
 use App\Models\ContainerChargeExposure;
+use App\Models\ContainerStage;
 use App\Models\Shipment;
 use App\Models\ShippingContainer;
 use App\Models\ShippingLine;
 use App\Services\Freight\PortExposureService;
 use App\Services\Freight\ShippingContainerService;
+use Carbon\Carbon;
 use Livewire\Component;
 
 class Containers extends Component
@@ -28,6 +30,9 @@ class Containers extends Component
 
     public $expanded_container_id;
     public $ad_hoc_milestone_code;
+    public $ad_hoc_milestone_date;
+    /** Next-stage event date per container id (blank = now). */
+    public $stage_dates = [];
 
     protected $listeners = ['refreshJob' => '$refresh'];
 
@@ -87,9 +92,12 @@ class Containers extends Component
         $next = $container->nextLifecycleStage();
 
         if ($next) {
-            $service->transitionStatus($container, $next);
+            $eventAt = $this->eventDate("stage_dates.{$containerId}", $this->stage_dates[$containerId] ?? null);
+
+            $service->transitionStatus($container, $next, ['actual_at' => $eventAt]);
+            unset($this->stage_dates[$containerId]);
             $this->refreshShipment();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Container moved to ' . ShippingContainer::LIFECYCLE_STAGES[$next]]);
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Container moved to ' . ContainerStage::label($next) . ' on ' . $eventAt->format('d M Y H:i')]);
         }
     }
 
@@ -99,12 +107,34 @@ class Containers extends Component
             return;
         }
 
-        $container = ShippingContainer::findOrFail($containerId);
-        $service->transitionStatus($container, $this->ad_hoc_milestone_code);
+        $eventAt = $this->eventDate('ad_hoc_milestone_date', $this->ad_hoc_milestone_date);
 
-        $this->reset(['ad_hoc_milestone_code']);
+        $container = ShippingContainer::findOrFail($containerId);
+        $service->transitionStatus($container, $this->ad_hoc_milestone_code, ['actual_at' => $eventAt]);
+
+        $this->reset(['ad_hoc_milestone_code', 'ad_hoc_milestone_date']);
         $this->refreshShipment();
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Milestone recorded.']);
+    }
+
+    /**
+     * When the stage actually happened. Drives the milestone's actual_at and
+     * the start/stop date of any free-time clock the stage triggers
+     * (PortExposureService::handleContainerTransition). Blank = now.
+     */
+    private function eventDate(string $field, $value): Carbon
+    {
+        if ($value === null || $value === '') {
+            return now();
+        }
+
+        $this->validate(
+            [$field => 'date|before_or_equal:now'],
+            [$field . '.before_or_equal' => 'The stage date cannot be in the future.'],
+            [$field => 'stage date']
+        );
+
+        return Carbon::parse($value);
     }
 
     public function toggleExpand($containerId)
@@ -132,8 +162,10 @@ class Containers extends Component
         }
 
         return view('livewire.freight.shipments.containers', [
-            'lifecycleStages' => ShippingContainer::LIFECYCLE_STAGES,
-            'chargeTypes' => ContainerChargeExposure::CHARGE_TYPES,
+            // Labels incl. deactivated custom stages (old statuses/milestones); the dropdown offers active ones only.
+            'lifecycleStages' => ShippingContainer::lifecycleStages(true),
+            'activeStages' => ShippingContainer::lifecycleStages(),
+            'chargeTypes' => ContainerChargeExposure::chargeTypes(true),
         ]);
     }
 }

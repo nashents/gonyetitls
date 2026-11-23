@@ -4,7 +4,7 @@ namespace App\Http\Livewire\Freight\Settings;
 
 use App\Models\ShippingLine;
 use App\Models\Vendor;
-use Illuminate\Support\Facades\Auth;
+use App\Services\Freight\ShippingLineVendorService;
 use Livewire\Component;
 
 class ShippingLines extends Component
@@ -48,52 +48,27 @@ class ShippingLines extends Component
 
     private function matchingVendor($name)
     {
-        $name = mb_strtolower(trim((string) $name));
-        if ($name === '') {
-            return null;
-        }
-
-        return Vendor::whereRaw('LOWER(TRIM(name)) = ?', [$name])->first();
-    }
-
-    // Attach the same-named vendor, or create one, so every shipping line can be billed
-    private function resolveVendor(): array
-    {
-        if ($this->vendor_id) {
-            return [$this->vendor_id, false];
-        }
-
-        if ($vendor = $this->matchingVendor($this->name)) {
-            return [$vendor->id, false];
-        }
-
-        $vendor = new Vendor;
-        $vendor->creator_id = Auth::id();
-        $vendor->company_id = optional(optional(Auth::user()->employee)->company)->id
-            ?? optional(Auth::user()->company)->id;
-        $vendor->vendor_number = Vendor::nextVendorNumber();
-        $vendor->name = trim($this->name);
-        $vendor->status = 1;
-        $vendor->save();
-
-        return [$vendor->id, true];
+        return app(ShippingLineVendorService::class)->matchingVendor($name);
     }
 
     public function save()
     {
         $this->validate();
 
-        [$vendorId, $vendorCreated] = $this->resolveVendor();
         $name = trim($this->name);
 
+        // No vendor picked: the model attaches the same-named vendor or creates one,
+        // and a rename is copied to the linked vendor (ShippingLineVendorService).
+        ShippingLineVendorService::$lastCreatedVendorId = null;
         ShippingLine::updateOrCreate(
             ['id' => $this->shipping_line_id],
             [
-                'name' => $this->name,
-                'vendor_id' => $vendorId,
+                'name' => $name,
+                'vendor_id' => $this->vendor_id ?: null,
                 'is_active' => $this->is_active,
             ]
         );
+        $vendorCreated = ShippingLineVendorService::$lastCreatedVendorId !== null;
 
         $this->reset(['shipping_line_id', 'name', 'vendor_id']);
         $this->is_active = true;

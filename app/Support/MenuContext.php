@@ -72,6 +72,7 @@ class MenuContext
             'inWorkshop'    => in_array('Workshop', $department_names),
             'inFreight'     => in_array('Freight Forwarding & Clearing', $department_names),
             'companyIsFreightForwarder' => (bool) ($company?->hasCompanyType('Freight Forwarding & Clearing') ?? false),
+            'companyIsFreightOnly'      => (bool) ($company?->isFreightForwarderOnly() ?? false),
             'isNotDriver'   => !($employee?->driver),
             'hasTrackingIntegration'   => IntegrationGate::activeForCompanyType('tracking', $companyId),
             'hasEzyTrackIntegration'   => IntegrationGate::activeForCompany('ezytrack', $companyId),

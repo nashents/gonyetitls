@@ -124,7 +124,7 @@
           <h3>Carrier / Vessel</h3>
           <div class="kv">
             <div class="k">Shipping Line</div>
-            <div class="v">{{ $shipment->containers->first()?->shipping_line?->name ?: ($document->carrier_name ?? '—') }}</div>
+            <div class="v">{{ $document?->shipping_line?->name ?: ($shipment->containers->first()?->shipping_line?->name ?: ($document?->carrier_vendor?->name ?: ($document->carrier_name ?? '—'))) }}</div>
             @if ($shipment->containers->isNotEmpty())
               @foreach ($shipment->containers as $container)
                 <div class="k">Container / Seal</div>

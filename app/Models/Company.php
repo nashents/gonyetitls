@@ -132,6 +132,20 @@ class Company extends Model  implements Auditable
         return $this->company_types->contains('name', $name);
     }
 
+    /** Company types that run a fleet and need the transport & logistics modules. */
+    const TRANSPORT_COMPANY_TYPES = ['Admin', 'Rental', 'Broker', 'Transporter'];
+
+    /**
+     * Tagged Freight Forwarding & Clearing and none of the fleet-running types,
+     * so the commercial transport menus (Trip Management except the Log Book,
+     * Route Compliance) are hidden — see App\Support\ModuleAccess::companyHides*().
+     */
+    public function isFreightForwarderOnly(): bool
+    {
+        return $this->hasCompanyType('Freight Forwarding & Clearing')
+            && $this->company_types->whereIn('name', self::TRANSPORT_COMPANY_TYPES)->isEmpty();
+    }
+
     /**
      * Falls back to the default company logo when none is set or the
      * uploaded file was deleted from disk.

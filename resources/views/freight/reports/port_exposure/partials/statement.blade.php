@@ -24,7 +24,7 @@
 
 @include('reports.shared._aging_table', [
     'entityLabel' => 'Shipping Line',
-    'bucketLabels' => \App\Models\ContainerChargeExposure::CHARGE_TYPES,
+    'bucketLabels' => \App\Models\ContainerChargeExposure::chargeTypes(true),
     'rows' => $vendor_rows,
     'grandTotals' => $grand_totals,
     'currencyCode' => $currencyCode,

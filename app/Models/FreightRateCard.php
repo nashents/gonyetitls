@@ -17,6 +17,16 @@ class FreightRateCard extends Model implements Auditable
         'sell' => 'Sell',
     ];
 
+    // Same codes as FreightJob primary_transport_mode, so cards can match jobs.
+    const MODES = [
+        'sea' => 'Sea',
+        'air' => 'Air',
+        'road' => 'Road',
+        'rail' => 'Rail',
+        'courier' => 'Courier',
+        'multimodal' => 'Multimodal',
+    ];
+
     const MARKUP_TYPES = [
         'percentage' => 'Percentage',
         'fixed' => 'Fixed',
@@ -41,6 +51,9 @@ class FreightRateCard extends Model implements Auditable
     public function charge_type(){
         return $this->belongsTo('App\Models\ChargeType');
     }
+    public function freight_service_type(){
+        return $this->belongsTo('App\Models\FreightServiceType');
+    }
     public function origin(){
         return $this->belongsTo('App\Models\Destination', 'origin_id');
     }
@@ -61,6 +74,27 @@ class FreightRateCard extends Model implements Auditable
         return $this->belongsTo('App\Models\Currency');
     }
 
+    /**
+     * Unit rate to put on a job line: the card rate, plus the markup on
+     * sell cards (a percentage of the rate, or a fixed amount per unit).
+     */
+    public function unitRate(): ?float
+    {
+        if ($this->rate === null) {
+            return null;
+        }
+
+        $rate = (float) $this->rate;
+
+        if ($this->direction === 'sell' && $this->markup_value) {
+            $rate += $this->markup_type === 'percentage'
+                ? $rate * ((float) $this->markup_value / 100)
+                : (float) $this->markup_value;
+        }
+
+        return round($rate, 4);
+    }
+
     protected $casts = [
         'rate' => 'float',
         'markup_value' => 'float',
@@ -75,6 +109,7 @@ class FreightRateCard extends Model implements Auditable
         'vendor_id',
         'customer_id',
         'charge_type_id',
+        'freight_service_type_id',
         'mode',
         'container_type',
         'origin_id',

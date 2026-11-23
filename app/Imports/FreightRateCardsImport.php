@@ -10,6 +10,7 @@ use App\Models\ChargeType;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\FreightRateCard;
+use App\Models\FreightServiceType;
 use App\Models\Destination;
 use App\Models\Vendor;
 use Illuminate\Support\Collection;
@@ -109,13 +110,29 @@ class FreightRateCardsImport implements ToCollection, SkipsEmptyRows, WithLimit,
             $destination = $this->resolveDestination($row->get('destination') ?? $row->get('destination_location'));
             $cargo = $this->resolveOnly(Cargo::class, $row->get('cargo'));
 
+            $serviceType = null;
+            if (filled($row->get('service_type'))) {
+                $serviceType = $this->resolveOnly(FreightServiceType::class, $row->get('service_type'));
+                if (!$serviceType) {
+                    $this->skipped[] = ['row' => $this->rowNumber, 'reason' => 'service_type_not_found', 'service_type' => $row->get('service_type')];
+                    continue;
+                }
+            }
+
+            $mode = $row->get('mode') ? strtolower(trim($row->get('mode'))) : null;
+            if ($mode && !array_key_exists($mode, FreightRateCard::MODES)) {
+                $this->skipped[] = ['row' => $this->rowNumber, 'reason' => 'invalid_mode', 'value' => $row->get('mode')];
+                continue;
+            }
+
             FreightRateCard::create([
                 'user_id' => Auth::id(),
                 'direction' => $direction,
                 'vendor_id' => $vendor?->id,
                 'customer_id' => $customer?->id,
                 'charge_type_id' => $chargeType?->id,
-                'mode' => $row->get('mode') ?: null,
+                'freight_service_type_id' => $serviceType?->id,
+                'mode' => $mode,
                 'container_type' => $row->get('container_type') ?: null,
                 'origin_id' => $origin?->id,
                 'destination_id' => $destination?->id,

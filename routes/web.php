@@ -877,6 +877,7 @@ Route::resource('freight/consolidations','ConsolidationController')->parameters(
 ]);
 Route::get('freight/settings/charge-config','FreightChargeConfigController@index')->name('freight.settings.charge-config');
 Route::get('freight/settings/charge-types','FreightChargeTypesController@index')->name('freight.settings.charge-types');
+Route::get('freight/settings/container-stages','FreightContainerStagesController@index')->name('freight.settings.container-stages');
 Route::get('freight/settings/rate-cards','FreightRateCardsController@index')->name('freight.settings.rate-cards');
 Route::get('freight/settings/shipping-lines','FreightShippingLinesController@index')->name('freight.settings.shipping-lines');
 Route::get('freight/settings/service-types','FreightServiceTypesController@index')->name('freight.settings.service-types');

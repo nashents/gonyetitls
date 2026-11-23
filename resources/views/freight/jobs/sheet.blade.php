@@ -159,7 +159,7 @@
               @foreach ($shipment->containers as $container)
                 <div class="k">{{ $container->container_number }}</div>
                 <div class="v">
-                  {{ $container->container_type }} — {{ \App\Models\ShippingContainer::LIFECYCLE_STAGES[$container->status] ?? $container->status }}
+                  {{ $container->container_type }} — {{ \App\Models\ContainerStage::label($container->status) }}
                   @if ($container->shipping_line) / {{ $container->shipping_line->name }} @endif
                 </div>
               @endforeach

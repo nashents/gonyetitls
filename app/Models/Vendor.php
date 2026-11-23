@@ -101,11 +101,24 @@ class Vendor extends Model implements Auditable
      * Shared by manual vendor creation and auto-synced vendors (e.g. from fueling
      * stations) so numbering stays consistent regardless of where the vendor originates.
      */
-    public static function nextVendorNumber(): string
+    protected static function booted()
+    {
+        // Keep a linked freight shipping line's name in step (ShippingLineVendorService).
+        static::updated(function (Vendor $vendor) {
+            if ($vendor->wasChanged('name')) {
+                app(\App\Services\Freight\ShippingLineVendorService::class)->vendorRenamed($vendor);
+            }
+        });
+    }
+
+    public static function nextVendorNumber(?Company $company = null): string
     {
         $initials = '';
 
-        if (isset(\Illuminate\Support\Facades\Auth::user()->company)) {
+        // $company: for callers with no signed-in user (seeders, migrations, CLI)
+        if ($company) {
+            $str = $company->name;
+        } elseif (isset(\Illuminate\Support\Facades\Auth::user()->company)) {
             $str = \Illuminate\Support\Facades\Auth::user()->company->name;
         } elseif (isset(\Illuminate\Support\Facades\Auth::user()->employee->company)) {
             $str = \Illuminate\Support\Facades\Auth::user()->employee->company->name;
@@ -118,7 +131,10 @@ class Vendor extends Model implements Auditable
             $initials = isset($words[1][0]) ? $words[0][0] . $words[1][0] : $words[0][0];
         }
 
-        $last_vendor_id = static::latest()->pluck('id')->first();
+        // Highest id, not latest(): vendors created in the same second tie on
+        // created_at, which handed out the same number twice. withTrashed so a
+        // deleted vendor's number is never reused.
+        $last_vendor_id = static::withTrashed()->max('id');
 
         $next = $last_vendor_id ? $last_vendor_id + 1 : 1;
 

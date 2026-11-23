@@ -29,6 +29,20 @@ class ShipmentLeg extends Model implements Auditable
     public function carrier_vendor(){
         return $this->belongsTo('App\Models\Vendor', 'carrier_vendor_id');
     }
+    public function shipping_line(){
+        return $this->belongsTo('App\Models\ShippingLine');
+    }
+
+    /** Sea legs name a shipping line as carrier; road/rail/air legs a vendor (haulier, airline). */
+    public static function carrierIsShippingLine(?string $mode): bool
+    {
+        return $mode === 'sea';
+    }
+
+    public function carrierLabel(): ?string
+    {
+        return $this->shipping_line?->name ?? $this->carrier_vendor?->name ?? $this->carrier_name;
+    }
     public function origin_location(){
         return $this->belongsTo('App\Models\Location', 'origin_location_id');
     }
@@ -71,6 +85,7 @@ class ShipmentLeg extends Model implements Auditable
         'sequence',
         'transport_mode',
         'carrier_vendor_id',
+        'shipping_line_id',
         'carrier_name',
         'carrier_reference',
         'trip_id',

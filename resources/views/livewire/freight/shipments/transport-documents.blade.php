@@ -22,7 +22,7 @@
                     <td>{{ ucwords(str_replace('_', ' ', $doc->document_type)) }}</td>
                     <td>{{ $doc->document_number }}</td>
                     <td>{{ $doc->issue_date?->format('d M Y') }}</td>
-                    <td>{{ $doc->carrier_vendor?->name ?? $doc->carrier_name }}</td>
+                    <td>{{ $doc->carrierLabel() }}</td>
                     <td>{{ $doc->number_of_originals }}</td>
                     <td><span class="label label-info label-wide">{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span></td>
                 </tr>
@@ -77,15 +77,27 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Carrier</label>
-                            <select class="form-control" wire:model="carrier_vendor_id">
-                                <option value="">Select Vendor</option>
-                                @foreach ($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                                @endforeach
-                            </select>
-                            <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
-                            <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                            @if (\App\Models\TransportDocument::carrierIsShippingLine($document_type))
+                                <label>Carrier (Shipping Line)</label>
+                                <select class="form-control" wire:model="carrier_shipping_line_id">
+                                    <option value="">Select Shipping Line</option>
+                                    @foreach ($shippingLines as $shippingLine)
+                                        <option value="{{ $shippingLine->id }}">{{ $shippingLine->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Shipping Line</a></small>
+                                <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                            @else
+                                <label>Carrier{{ $document_type ? '' : ' (pick a document type first)' }}</label>
+                                <select class="form-control" wire:model="carrier_vendor_id">
+                                    <option value="">Select Vendor</option>
+                                    @foreach ($vendors as $vendor)
+                                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                            @endif
                             <input type="text" class="form-control mt-10" wire:model="carrier_name" placeholder="or type free text">
                         </div>
                         <div class="row">

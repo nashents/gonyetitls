@@ -2,7 +2,9 @@
 
 namespace App\Services\Freight;
 
+use App\Models\ContainerStage;
 use App\Models\ShippingContainer;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ShippingContainerService
@@ -34,7 +36,7 @@ class ShippingContainerService
                 'shipment_id' => $container->shipment_id,
                 'shipping_container_id' => $container->id,
                 'milestone_code' => 'booked',
-                'milestone_name' => ShippingContainer::LIFECYCLE_STAGES['booked'],
+                'milestone_name' => ContainerStage::label('booked'),
             ]);
 
             return $container;
@@ -51,10 +53,10 @@ class ShippingContainerService
                 'shipment_id' => $container->shipment_id,
                 'shipping_container_id' => $container->id,
                 'milestone_code' => $milestoneCode,
-                'milestone_name' => ShippingContainer::LIFECYCLE_STAGES[$milestoneCode] ?? ucwords(str_replace('_', ' ', $milestoneCode)),
+                'milestone_name' => ContainerStage::label($milestoneCode),
             ], $milestoneData));
 
-            $this->exposures->handleContainerTransition($container, $milestoneCode, $milestoneData['actual_at'] ?? now());
+            $this->exposures->handleContainerTransition($container, $milestoneCode, Carbon::parse($milestoneData['actual_at'] ?? now()));
 
             return $container;
         });

@@ -87,6 +87,8 @@ class DatabaseSeeder extends Seeder
         $this->call(RankSeeder::class);
         $this->call(DepartmentSeeder::class);
         $this->call(FreightServiceTypeSeeder::class);
+        $this->call(FreightMasterDataSeeder::class);
+        $this->call(ContainerStageSeeder::class);
         $this->call(CurrencySeeder::class);
         $this->call(BranchSeeder::class);
         $this->call(VehicleGroupSeeder::class);

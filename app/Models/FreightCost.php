@@ -40,6 +40,9 @@ class FreightCost extends Model implements Auditable
     public function charge_type(){
         return $this->belongsTo('App\Models\ChargeType');
     }
+    public function freight_rate_card(){
+        return $this->belongsTo('App\Models\FreightRateCard');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
@@ -76,6 +79,7 @@ class FreightCost extends Model implements Auditable
         'customs_declaration_id',
         'vendor_id',
         'charge_type_id',
+        'freight_rate_card_id',
         'supplier_invoice_reference',
         'date_received',
         'currency_id',

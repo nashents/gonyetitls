@@ -8,7 +8,7 @@
                         <div class="panel-heading">
                             <div class="panel-title">
                                 <h5>Freight Rate Cards</h5>
-                                <small style="color: green">Buying rates (paid to suppliers) and Selling rates (billed to customers), by lane/mode/commodity/container.</small>
+                                <small style="color: green">Buying rates (paid to suppliers) and Selling rates (billed to customers). A blank field means "any". On a freight job's Costing, a cost/charge line is priced from the most specific active card matching its charge type and supplier/customer, plus the job's service type, mode, origin, destination, cargo and container type.</small>
                             </div>
                         </div>
                         <div class="panel-body">
@@ -71,18 +71,24 @@
                                             <label>Mode</label>
                                             <select class="form-control" wire:model="mode">
                                                 <option value="">Any</option>
-                                                <option value="sea">Sea</option>
-                                                <option value="air">Air</option>
-                                                <option value="road">Road</option>
-                                                <option value="rail">Rail</option>
-                                                <option value="courier">Courier</option>
+                                                @foreach ($modes as $code => $label)
+                                                    <option value="{{ $code }}">{{ $label }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label>Container Type</label>
-                                            <input type="text" class="form-control" wire:model="container_type">
+                                            <select class="form-control" wire:model="container_type">
+                                                <option value="">Any</option>
+                                                @foreach ($containerTypes as $type)
+                                                    <option value="{{ $type }}">{{ $type }}</option>
+                                                @endforeach
+                                                @if ($container_type && !in_array($container_type, $containerTypes))
+                                                    <option value="{{ $container_type }}">{{ $container_type }} (old value)</option>
+                                                @endif
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -191,7 +197,20 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-10">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Freight Service Type</label>
+                                            <select class="form-control" wire:model="freight_service_type_id">
+                                                <option value="">Any</option>
+                                                @foreach ($serviceTypes as $serviceType)
+                                                    <option value="{{ $serviceType->id }}">{{ $serviceType->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <small><a href="{{ route('freight.settings.service-types') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Service Type</a></small>
+                                            <a href="#" wire:click.prevent="refresh('service_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
                                         <div class="form-group">
                                             <label>Notes</label>
                                             <input type="text" class="form-control" wire:model="notes">
@@ -207,7 +226,7 @@
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>Direction</th><th>Party</th><th>Charge Type</th><th>Mode</th><th>Route</th><th>Rate</th><th>Active</th><th></th>
+                                        <th>Direction</th><th>Party</th><th>Charge Type</th><th>Service Type</th><th>Mode</th><th>Route</th><th>Rate</th><th>Active</th><th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -216,7 +235,8 @@
                                             <td>{{ $directions[$card->direction] ?? $card->direction }}</td>
                                             <td>{{ $card->vendor?->name ?? $card->customer?->name ?? 'Any' }}</td>
                                             <td>{{ $card->charge_type?->name ?? 'Any' }}</td>
-                                            <td>{{ ucfirst($card->mode ?? 'Any') }}</td>
+                                            <td>{{ $card->freight_service_type?->name ?? 'Any' }}</td>
+                                            <td>{{ $modes[$card->mode] ?? ucfirst($card->mode ?? 'Any') }}</td>
                                             <td>{{ $card->origin?->city ?? 'Any' }} &rarr; {{ $card->destination?->city ?? 'Any' }}</td>
                                             <td>{{ $card->currency?->symbol }}{{ $card->rate !== null ? number_format($card->rate, 2) : '—' }} {{ $card->rate_basis }}</td>
                                             <td>{{ $card->is_active ? 'Yes' : 'No' }}</td>
@@ -226,7 +246,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="8" class="text-center">No rate cards configured yet.</td></tr>
+                                        <tr><td colspan="9" class="text-center">No rate cards configured yet.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>

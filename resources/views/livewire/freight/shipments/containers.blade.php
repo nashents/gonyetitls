@@ -35,7 +35,7 @@
                                 @foreach ($statusTrail as $change)
                                     <li class="{{ $loop->first ? '' : 'text-muted' }}" wire:key="container-{{ $container->id }}-trail-{{ $change->id }}">
                                         <strong>{{ $change->milestone_name }}</strong>
-                                        &middot; {{ $change->created_at?->format('d M Y H:i') }}
+                                        &middot; {{ ($change->actual_at ?? $change->created_at)?->format('d M Y H:i') }}
                                         &middot; {{ $change->creator ? trim($change->creator->name . ' ' . $change->creator->surname) : 'System' }}
                                     </li>
                                 @endforeach
@@ -45,9 +45,15 @@
                     <td>
                         <a href="#" wire:click.prevent="toggleExpand({{ $container->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Details</a>
                         @if ($container->nextLifecycleStage())
-                            <a href="#" wire:click.prevent="advanceStage({{ $container->id }})" wire:confirm="Mark this container as '{{ $lifecycleStages[$container->nextLifecycleStage()] }}'?" class="btn btn-xs btn-success">
-                                <i class="fa fa-arrow-right"></i> {{ $lifecycleStages[$container->nextLifecycleStage()] }}
-                            </a>
+                            <div style="margin-top:6px; white-space:nowrap;">
+                                <input type="datetime-local" class="form-control input-sm" style="display:inline-block; width:auto;"
+                                       wire:model.defer="stage_dates.{{ $container->id }}" max="{{ now()->format('Y-m-d\TH:i') }}"
+                                       title="When this stage actually happened - free-time clocks start/stop from this date. Leave blank for now.">
+                                <a href="#" wire:click.prevent="advanceStage({{ $container->id }})" wire:confirm="Mark this container as '{{ $lifecycleStages[$container->nextLifecycleStage()] }}'?" class="btn btn-xs btn-success">
+                                    <i class="fa fa-arrow-right"></i> {{ $lifecycleStages[$container->nextLifecycleStage()] }}
+                                </a>
+                            </div>
+                            @error('stage_dates.' . $container->id) <span class="text-danger error">{{ $message }}</span> @enderror
                         @endif
                     </td>
                 </tr>
@@ -99,7 +105,7 @@
                             <h6 class="underline mt-20 mb-10"><strong>Milestone History</strong></h6>
                             <table class="table table-condensed">
                                 <thead>
-                                    <tr><th>Stage</th><th>Status</th><th>Actual</th></tr>
+                                    <tr><th>Stage</th><th>Status</th><th>Actual</th><th>Recorded</th></tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($container->milestones as $milestone)
@@ -107,6 +113,7 @@
                                             <td>{{ $milestone->milestone_name }}</td>
                                             <td>{{ ucfirst($milestone->status) }}</td>
                                             <td>{{ $milestone->actual_at?->format('d M Y H:i') }}</td>
+                                            <td>{{ $milestone->created_at?->format('d M Y H:i') }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -116,15 +123,22 @@
                                 <div class="col-md-4">
                                     <select class="form-control" wire:model="ad_hoc_milestone_code">
                                         <option value="">Record ad-hoc milestone...</option>
-                                        @foreach ($lifecycleStages as $code => $label)
+                                        @foreach ($activeStages as $code => $label)
                                             <option value="{{ $code }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="datetime-local" class="form-control" wire:model.defer="ad_hoc_milestone_date" max="{{ now()->format('Y-m-d\TH:i') }}"
+                                           title="When this stage actually happened - free-time clocks start/stop from this date. Leave blank for now.">
+                                    @error('ad_hoc_milestone_date') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="col-md-2">
                                     <a href="#" wire:click.prevent="recordAdHocMilestone({{ $container->id }})" class="btn btn-xs btn-warning">Record</a>
                                 </div>
                             </div>
+                            <small class="color-gray">Date = when the stage actually happened (blank = now). Free-time clocks start/stop on that date.
+                                <a href="{{ route('freight.settings.container-stages') }}" target="_blank">What does each stage mean?</a></small>
 
                             <h6 class="underline mt-20 mb-10"><strong>Documents</strong></h6>
                             @livewire('documents.index', ['id' => $container->id, 'category' => 'shipping_container'], key('container-docs-'.$container->id))
@@ -161,14 +175,9 @@
                                     <label>Container Type</label>
                                     <select class="form-control" wire:model="container_type">
                                         <option value="">Select</option>
-                                        <option value="20GP">20GP</option>
-                                        <option value="40GP">40GP</option>
-                                        <option value="40HC">40HC</option>
-                                        <option value="Reefer">Reefer</option>
-                                        <option value="Open Top">Open Top</option>
-                                        <option value="Flat Rack">Flat Rack</option>
-                                        <option value="Tank">Tank</option>
-                                        <option value="Other">Other</option>
+                                        @foreach (\App\Models\ShippingContainer::CONTAINER_TYPES as $type)
+                                            <option value="{{ $type }}">{{ $type }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>

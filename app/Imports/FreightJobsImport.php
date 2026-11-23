@@ -8,6 +8,7 @@ use App\Imports\Concerns\ResolvesLookups;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Destination;
 use App\Models\FreightJob;
 use App\Models\FreightServiceType;
 use App\Models\Location;
@@ -135,6 +136,9 @@ class FreightJobsImport implements ToCollection, SkipsEmptyRows, WithLimit,
                         'shipment_type' => $row->get('shipment_type') ?: null,
                         'origin' => $row->get('origin') ?: null,
                         'destination' => $row->get('destination') ?: null,
+                        // The job's From/To pickers (Destinations) - what rate cards match on.
+                        'from' => $this->destinationIdForCity($row->get('origin')),
+                        'to' => $this->destinationIdForCity($row->get('destination')),
                         'incoterm' => $row->get('incoterm') ?: null,
                         'opened_at' => $this->parseExcelDate($row->get('opened_at')) ?? now(),
                         'notes' => $row->get('notes') ?: null,
@@ -157,6 +161,22 @@ class FreightJobsImport implements ToCollection, SkipsEmptyRows, WithLimit,
                 $this->skipped[] = ['row' => $this->rowNumber, 'reason' => 'creation_failed', 'error' => $e->getMessage()];
             }
         }
+    }
+
+    /** Destination whose city exactly matches (case-insensitive); null when none, the text is still kept. */
+    protected function destinationIdForCity($city): ?int
+    {
+        $city = mb_strtolower(trim((string) $city));
+        if ($city === '') {
+            return null;
+        }
+
+        $cacheKey = 'destination-city|' . $city;
+        if (!array_key_exists($cacheKey, $this->lookupCache)) {
+            $this->lookupCache[$cacheKey] = Destination::whereRaw('LOWER(TRIM(city)) = ?', [$city])->value('id');
+        }
+
+        return $this->lookupCache[$cacheKey];
     }
 
     public function getSkippedRows(): array

@@ -125,6 +125,8 @@ class FreightReminderService
                 $reminders->push($this->item('milestone', $milestone->shipment->freight_job, $days, 'fa-flag', "{$milestone->milestone_name} ({$milestone->shipment->shipment_number}) {$text}", "milestone:{$milestone->id}"));
             });
 
+        $chargeLabels = ContainerChargeExposure::chargeTypes(true);
+
         // Container free time
         ContainerChargeExposure::query()
             ->with(['shipping_container', 'shipment.freight_job'])
@@ -133,9 +135,11 @@ class FreightReminderService
             ->whereNotNull('last_free_day')
             ->whereDate('last_free_day', '<=', $horizon)
             ->get()
-            ->each(function (ContainerChargeExposure $exposure) use ($today, $reminders) {
+            ->each(function (ContainerChargeExposure $exposure) use ($today, $reminders, $chargeLabels) {
                 $days = $today->diffInDays($exposure->last_free_day->copy()->startOfDay(), false);
-                $charge = $exposure->charge_type === 'demurrage' ? 'demurrage' : 'storage';
+                $charge = in_array($exposure->charge_type, ['port_storage', 'detention'], true)
+                    ? 'storage'
+                    : mb_strtolower($chargeLabels[$exposure->charge_type] ?? $exposure->charge_type);
                 $container = $exposure->shipping_container?->container_number ?: 'container';
                 $text = $days < 0
                     ? "{$charge} accruing for " . abs($days) . ' day' . (abs($days) === 1 ? '' : 's')

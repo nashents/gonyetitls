@@ -8,12 +8,14 @@ use App\Models\Customer;
 use App\Models\FreightCharge;
 use App\Models\FreightCost;
 use App\Models\FreightJob;
+use App\Models\FreightRateCard;
 use App\Models\Tax;
 use App\Models\Vendor;
 use App\Services\Freight\FreightAccountingService;
 use App\Services\Freight\FreightChargeService;
 use App\Services\Freight\FreightCostingService;
 use App\Services\Freight\FreightCostService;
+use App\Services\Freight\FreightRateCardMatcher;
 use Livewire\Component;
 
 class Costing extends Component
@@ -69,6 +71,14 @@ class Costing extends Component
     public $charge_exchange_rate = 1;
     public $charge_tax_id;
     public $charge_notes;
+
+    // Rate card pricing (FreightRateCardMatcher)
+    public $cost_rate_card_id;
+    public $cost_rate_basis;
+    public $cost_rate_card_note;
+    public $charge_rate_card_id;
+    public $charge_rate_basis;
+    public $charge_rate_card_note;
 
     public $expanded_cost_id;
     public $expanded_charge_id;
@@ -185,8 +195,106 @@ class Costing extends Component
         $this->cost_recoverable = $cost->recoverable;
         $this->cost_customer_billable = $cost->customer_billable;
         $this->cost_notes = $cost->notes;
+        $this->cost_rate_card_id = $cost->freight_rate_card_id;
+        $this->cost_rate_basis = $cost->freight_rate_card?->rate_basis;
+        $this->cost_rate_card_note = $cost->freight_rate_card ? $this->rateCardNote($cost->freight_rate_card) : null;
 
         $this->dispatchBrowserEvent('show-costModal-' . $this->job->id);
+    }
+
+    /*
+     * Rate cards: on a new line, picking the charge type / supplier / customer
+     * or changing the date looks up the best rate card and fills currency,
+     * qty, rate and amount. On an existing line nothing changes unless
+     * "Apply rate card" is clicked. While a line is priced from a card, editing
+     * qty, days or rate recalculates the amount.
+     */
+    public function updatedCostChargeTypeId() { $this->autoApplyRateCard('cost'); }
+    public function updatedCostVendorId() { $this->autoApplyRateCard('cost'); }
+    public function updatedCostDateReceived() { $this->autoApplyRateCard('cost'); }
+    public function updatedCostQuantity() { $this->recalculateFromRateCard('cost'); }
+    public function updatedCostChargeableDays() { $this->recalculateFromRateCard('cost'); }
+    public function updatedCostRate() { $this->recalculateFromRateCard('cost'); }
+
+    public function updatedChargeChargeTypeId() { $this->autoApplyRateCard('charge'); }
+    public function updatedChargeCustomerId() { $this->autoApplyRateCard('charge'); }
+    public function updatedChargeDateBilled() { $this->autoApplyRateCard('charge'); }
+    public function updatedChargeQuantity() { $this->recalculateFromRateCard('charge'); }
+    public function updatedChargeChargeableDays() { $this->recalculateFromRateCard('charge'); }
+    public function updatedChargeRate() { $this->recalculateFromRateCard('charge'); }
+
+    public function applyCostRateCard() { $this->applyRateCard('cost', true); }
+    public function applyChargeRateCard() { $this->applyRateCard('charge', true); }
+
+    private function autoApplyRateCard(string $line): void
+    {
+        if (!$this->{$line . '_id'}) {
+            $this->applyRateCard($line, false);
+        }
+    }
+
+    private function applyRateCard(string $line, bool $explicit): void
+    {
+        $matcher = app(FreightRateCardMatcher::class);
+        $isCost = $line === 'cost';
+
+        $card = $matcher->match(
+            $this->job,
+            $isCost ? 'buy' : 'sell',
+            $this->{$line . '_charge_type_id'},
+            $isCost ? $this->cost_vendor_id : ($this->charge_customer_id ?: $this->job->customer_id),
+            $this->{$line . '_shipping_container_id'},
+            $isCost ? $this->cost_date_received : $this->charge_date_billed
+        );
+
+        if (!$card) {
+            $this->{$line . '_rate_card_id'} = null;
+            $this->{$line . '_rate_basis'} = null;
+            $this->{$line . '_rate_card_note'} = $this->{$line . '_charge_type_id'}
+                ? 'No matching ' . ($isCost ? 'buying' : 'selling') . ' rate card - enter the amount manually.'
+                : null;
+            if ($explicit) {
+                $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'No matching rate card for this line.']);
+            }
+            return;
+        }
+
+        $priced = $matcher->price($card, $this->job, $this->{$line . '_shipping_container_id'}, $this->{$line . '_chargeable_days'});
+
+        $this->{$line . '_rate_card_id'} = $card->id;
+        $this->{$line . '_rate_basis'} = $card->rate_basis;
+        $this->{$line . '_currency_id'} = $priced['currency_id'] ?: $this->{$line . '_currency_id'};
+        $this->{$line . '_quantity'} = $priced['quantity'];
+        if ($priced['chargeable_days'] !== null) {
+            $this->{$line . '_chargeable_days'} = $priced['chargeable_days'];
+        }
+        $this->{$line . '_rate'} = $priced['rate'];
+        $this->{$line . '_amount'} = $priced['amount'];
+        $this->{$line . '_rate_card_note'} = $this->rateCardNote($card);
+    }
+
+    private function recalculateFromRateCard(string $line): void
+    {
+        if (!$this->{$line . '_rate_card_id'} || !is_numeric($this->{$line . '_rate'})) {
+            return;
+        }
+
+        $days = $this->{$line . '_rate_basis'} === 'per_day' ? ((float) $this->{$line . '_chargeable_days'} ?: 1) : 1;
+        $this->{$line . '_amount'} = round((float) $this->{$line . '_rate'} * (float) ($this->{$line . '_quantity'} ?: 1) * $days, 2);
+    }
+
+    private function rateCardNote(FreightRateCard $card): string
+    {
+        $card->loadMissing(['currency', 'origin', 'destination']);
+        $basis = FreightRateCard::RATE_BASES[$card->rate_basis] ?? 'Flat';
+        $route = ($card->origin || $card->destination)
+            ? ' · ' . ($card->origin?->city ?? 'Any') . ' → ' . ($card->destination?->city ?? 'Any')
+            : '';
+        $markup = $card->direction === 'sell' && $card->markup_value
+            ? ' + ' . ($card->markup_type === 'percentage' ? rtrim(rtrim(number_format($card->markup_value, 2), '0'), '.') . '%' : number_format($card->markup_value, 2)) . ' markup'
+            : '';
+
+        return "Rate card #{$card->id}: {$card->currency?->symbol}" . number_format($card->rate, 2) . " {$basis}{$markup}{$route}";
     }
 
     private function costData(): array
@@ -198,6 +306,7 @@ class Costing extends Component
             'customs_declaration_id' => $this->cost_customs_declaration_id ?: null,
             'vendor_id' => $this->cost_vendor_id ?: null,
             'charge_type_id' => $this->cost_charge_type_id ?: null,
+            'freight_rate_card_id' => $this->cost_rate_card_id ?: null,
             'supplier_invoice_reference' => $this->cost_supplier_invoice_reference,
             'date_received' => $this->cost_date_received ?: null,
             'currency_id' => $this->cost_currency_id ?: null,
@@ -251,6 +360,7 @@ class Costing extends Component
             'cost_vendor_id', 'cost_charge_type_id', 'cost_supplier_invoice_reference', 'cost_date_received',
             'cost_currency_id', 'cost_quantity', 'cost_chargeable_days', 'cost_rate', 'cost_amount',
             'cost_tax_id', 'cost_recoverable', 'cost_customer_billable', 'cost_notes',
+            'cost_rate_card_id', 'cost_rate_basis', 'cost_rate_card_note',
         ]);
         $this->cost_exchange_rate = 1;
     }
@@ -285,6 +395,9 @@ class Costing extends Component
         $this->charge_exchange_rate = $charge->exchange_rate;
         $this->charge_tax_id = $charge->tax_id;
         $this->charge_notes = $charge->notes;
+        $this->charge_rate_card_id = $charge->freight_rate_card_id;
+        $this->charge_rate_basis = $charge->freight_rate_card?->rate_basis;
+        $this->charge_rate_card_note = $charge->freight_rate_card ? $this->rateCardNote($charge->freight_rate_card) : null;
 
         $this->dispatchBrowserEvent('show-chargeModal-' . $this->job->id);
     }
@@ -298,6 +411,7 @@ class Costing extends Component
             'customs_declaration_id' => $this->charge_customs_declaration_id ?: null,
             'customer_id' => $this->charge_customer_id ?: null,
             'charge_type_id' => $this->charge_charge_type_id ?: null,
+            'freight_rate_card_id' => $this->charge_rate_card_id ?: null,
             'customer_invoice_reference' => $this->charge_customer_invoice_reference,
             'date_billed' => $this->charge_date_billed ?: null,
             'currency_id' => $this->charge_currency_id ?: null,
@@ -348,8 +462,11 @@ class Costing extends Component
             'charge_customer_id', 'charge_charge_type_id', 'charge_customer_invoice_reference', 'charge_date_billed',
             'charge_currency_id', 'charge_quantity', 'charge_chargeable_days', 'charge_rate', 'charge_amount',
             'charge_tax_id', 'charge_notes',
+            'charge_rate_card_id', 'charge_rate_basis', 'charge_rate_card_note',
         ]);
         $this->charge_exchange_rate = 1;
+        // Charges are normally billed to the job's customer (and its selling rate cards).
+        $this->charge_customer_id = $this->job->customer_id;
     }
 
     public function toggleExpandCharge($id)

@@ -12,23 +12,19 @@ class ShippingContainer extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    // Shared by the Containers form and Freight Rate Cards (rate matching).
+    const CONTAINER_TYPES = ['20GP', '40GP', '40HC', 'Reefer', 'Open Top', 'Flat Rack', 'Tank', 'Other'];
+
     /**
-     * Ordered container lifecycle stages (spec section 23). Drives the
-     * "Record Next Stage" UI action and doubles as each stage's milestone_code.
+     * Ordered container lifecycle stages, code => name (spec section 23).
+     * Drives the "Record Next Stage" action and doubles as each stage's
+     * milestone_code. Lives in container_stages (system + custom stages),
+     * see App\Models\ContainerStage.
      */
-    const LIFECYCLE_STAGES = [
-        'booked' => 'Booked',
-        'empty_released' => 'Empty Released',
-        'stuffed' => 'Stuffed / Loaded',
-        'gate_in' => 'Gate-In',
-        'vessel_loaded' => 'Vessel Loaded',
-        'discharged' => 'Discharged',
-        'customs_cleared' => 'Customs Cleared',
-        'port_released' => 'Port Released',
-        'collected_from_port' => 'Collected from Port',
-        'customer_delivery' => 'Customer Delivery',
-        'empty_returned' => 'Empty Returned',
-    ];
+    public static function lifecycleStages(bool $includeInactive = false): array
+    {
+        return ContainerStage::options($includeInactive);
+    }
 
     public function shipment(){
         return $this->belongsTo('App\Models\Shipment');
@@ -54,16 +50,17 @@ class ShippingContainer extends Model implements Auditable
         return $this->hasMany('App\Models\ContainerChargeExposure');
     }
 
+    /** The next ACTIVE stage after the current one (inactive custom stages are skipped). */
     public function nextLifecycleStage(): ?string
     {
-        $codes = array_keys(self::LIFECYCLE_STAGES);
-        $currentIndex = array_search($this->status, $codes, true);
+        $stages = ContainerStage::allOrdered()->values();
+        $currentIndex = $stages->search(fn ($s) => $s->code === $this->status);
 
-        if ($currentIndex === false || !isset($codes[$currentIndex + 1])) {
+        if ($currentIndex === false) {
             return null;
         }
 
-        return $codes[$currentIndex + 1];
+        return $stages->slice($currentIndex + 1)->firstWhere('is_active', true)?->code;
     }
 
     protected $fillable = [

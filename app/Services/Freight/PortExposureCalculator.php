@@ -37,7 +37,8 @@ class PortExposureCalculator
      */
     public function byShippingLine(): array
     {
-        $bucketLabels = array_values(ContainerChargeExposure::CHARGE_TYPES);
+        $chargeTypes = ContainerChargeExposure::chargeTypes(true);
+        $bucketLabels = array_values($chargeTypes);
 
         $rows = [];
         $grandTotals = array_fill_keys($bucketLabels, 0.0);
@@ -47,7 +48,7 @@ class PortExposureCalculator
         foreach ($this->openExposures()->get() as $exposure) {
             $estimated = (float) ($exposure->estimated_exposure ?? 0);
             $actual = (float) ($exposure->actual_charge ?? 0);
-            $bucketLabel = ContainerChargeExposure::CHARGE_TYPES[$exposure->charge_type] ?? $exposure->charge_type;
+            $bucketLabel = $chargeTypes[$exposure->charge_type] ?? $exposure->charge_type;
             $shippingLine = $exposure->shipping_container?->shipping_line;
             $shippingLineId = $shippingLine?->id ?? 0;
 
@@ -87,13 +88,15 @@ class PortExposureCalculator
      */
     public function details(): array
     {
+        $chargeTypes = ContainerChargeExposure::chargeTypes(true);
+
         return $this->openExposures()
             ->with('shipping_container')
             ->get()
             ->map(fn (ContainerChargeExposure $exposure) => [
                 'container_number' => $exposure->shipping_container?->container_number,
                 'vendor' => $exposure->shipping_container?->shipping_line?->name,
-                'charge_type' => ContainerChargeExposure::CHARGE_TYPES[$exposure->charge_type] ?? $exposure->charge_type,
+                'charge_type' => $chargeTypes[$exposure->charge_type] ?? $exposure->charge_type,
                 'status' => $exposure->status,
                 'chargeable_days' => $exposure->chargeable_days,
                 'last_free_day' => optional($exposure->last_free_day)->format('Y-m-d'),

@@ -18,6 +18,22 @@ class TransportDocument extends Model implements Auditable
     public function carrier_vendor(){
         return $this->belongsTo('App\Models\Vendor', 'carrier_vendor_id');
     }
+    public function shipping_line(){
+        return $this->belongsTo('App\Models\ShippingLine');
+    }
+
+    /** Sea documents name a shipping line as carrier; air waybills etc. a vendor (airline). */
+    public const SEA_DOCUMENT_TYPES = ['master_bill_of_lading', 'house_bill_of_lading', 'sea_waybill'];
+
+    public static function carrierIsShippingLine(?string $documentType): bool
+    {
+        return in_array($documentType, self::SEA_DOCUMENT_TYPES, true);
+    }
+
+    public function carrierLabel(): ?string
+    {
+        return $this->shipping_line?->name ?? $this->carrier_vendor?->name ?? $this->carrier_name;
+    }
 
     protected $casts = [
         'issue_date' => 'date',
@@ -29,6 +45,7 @@ class TransportDocument extends Model implements Auditable
         'document_number',
         'issue_date',
         'carrier_vendor_id',
+        'shipping_line_id',
         'carrier_name',
         'place_of_issue',
         'freight_payable_at',

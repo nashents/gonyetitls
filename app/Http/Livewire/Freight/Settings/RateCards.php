@@ -7,6 +7,8 @@ use App\Models\ChargeType;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\FreightRateCard;
+use App\Models\FreightServiceType;
+use App\Models\ShippingContainer;
 use App\Models\Destination;
 use App\Models\Vendor;
 use Livewire\Component;
@@ -16,6 +18,7 @@ class RateCards extends Component
     public $vendors;
     public $customers;
     public $chargeTypes;
+    public $serviceTypes;
     public $destinations;
     public $cargos;
     public $currencies;
@@ -25,6 +28,7 @@ class RateCards extends Component
     public $vendor_id;
     public $customer_id;
     public $charge_type_id;
+    public $freight_service_type_id;
     public $mode;
     public $container_type;
     public $origin_id;
@@ -45,6 +49,7 @@ class RateCards extends Component
         $this->vendors = Vendor::orderBy('name', 'asc')->get();
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
+        $this->serviceTypes = FreightServiceType::orderBy('name', 'asc')->get();
         $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
         $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
@@ -66,6 +71,7 @@ class RateCards extends Component
         $this->vendor_id = $card->vendor_id;
         $this->customer_id = $card->customer_id;
         $this->charge_type_id = $card->charge_type_id;
+        $this->freight_service_type_id = $card->freight_service_type_id;
         $this->mode = $card->mode;
         $this->container_type = $card->container_type;
         $this->origin_id = $card->origin_id;
@@ -93,6 +99,7 @@ class RateCards extends Component
                 'vendor_id' => $this->direction === 'buy' ? ($this->vendor_id ?: null) : null,
                 'customer_id' => $this->direction === 'sell' ? ($this->customer_id ?: null) : null,
                 'charge_type_id' => $this->charge_type_id ?: null,
+                'freight_service_type_id' => $this->freight_service_type_id ?: null,
                 'mode' => $this->mode,
                 'container_type' => $this->container_type,
                 'origin_id' => $this->origin_id ?: null,
@@ -131,6 +138,9 @@ class RateCards extends Component
         } elseif ($category === 'charge_types') {
             $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
+        } elseif ($category === 'service_types') {
+            $this->serviceTypes = FreightServiceType::orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Service Types Refreshed Successfully!!.']);
         } elseif ($category === 'destinations') {
             $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Destinations Refreshed Successfully!!.']);
@@ -146,7 +156,7 @@ class RateCards extends Component
     private function resetForm()
     {
         $this->reset([
-            'rate_card_id', 'vendor_id', 'customer_id', 'charge_type_id', 'mode', 'container_type',
+            'rate_card_id', 'vendor_id', 'customer_id', 'charge_type_id', 'freight_service_type_id', 'mode', 'container_type',
             'origin_id', 'destination_id', 'cargo_id', 'currency_id', 'rate_basis',
             'rate', 'markup_type', 'markup_value', 'effective_from', 'effective_to', 'notes',
         ]);
@@ -157,11 +167,13 @@ class RateCards extends Component
     public function render()
     {
         return view('livewire.freight.settings.rate-cards', [
-            'rateCards' => FreightRateCard::with(['vendor', 'customer', 'charge_type', 'currency', 'origin', 'destination'])
+            'rateCards' => FreightRateCard::with(['vendor', 'customer', 'charge_type', 'freight_service_type', 'currency', 'origin', 'destination'])
                 ->orderBy('direction')->orderBy('id', 'desc')->get(),
             'directions' => FreightRateCard::DIRECTIONS,
             'markupTypes' => FreightRateCard::MARKUP_TYPES,
             'rateBases' => FreightRateCard::RATE_BASES,
+            'modes' => FreightRateCard::MODES,
+            'containerTypes' => ShippingContainer::CONTAINER_TYPES,
         ]);
     }
 }

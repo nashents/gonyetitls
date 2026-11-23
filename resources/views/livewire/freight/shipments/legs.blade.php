@@ -16,7 +16,7 @@
                 <tr wire:key="{{ '56c716-15-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leg->id ?? '') }}">
                     <td>{{ $leg->sequence }}</td>
                     <td>{{ ucfirst($leg->transport_mode ?? '') }}</td>
-                    <td>{{ $leg->carrier_vendor?->name ?? $leg->carrier_name ?? '—' }}</td>
+                    <td>{{ $leg->carrierLabel() ?? '—' }}</td>
                     <td>{{ $leg->origin_location?->name }} &rarr; {{ $leg->destination_location?->name }}</td>
                     <td>{{ $leg->planned_departure?->format('d M Y') }} / {{ $leg->planned_arrival?->format('d M Y') }}</td>
                     <td><span class="label label-info label-wide">{{ $lifecycleStages[$leg->status] ?? ucwords(str_replace('_', ' ', $leg->status)) }}</span></td>
@@ -139,15 +139,27 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Carrier (Vendor)</label>
-                                    <select class="form-control" wire:model="carrier_vendor_id">
-                                        <option value="">Select Vendor</option>
-                                        @foreach ($vendors as $vendor)
-                                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
-                                    <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @if (\App\Models\ShipmentLeg::carrierIsShippingLine($transport_mode))
+                                        <label>Carrier (Shipping Line)</label>
+                                        <select class="form-control" wire:model="carrier_shipping_line_id">
+                                            <option value="">Select Shipping Line</option>
+                                            @foreach ($shippingLines as $shippingLine)
+                                                <option value="{{ $shippingLine->id }}">{{ $shippingLine->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small><a href="{{ route('freight.settings.shipping-lines') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Shipping Line</a></small>
+                                        <a href="#" wire:click.prevent="refresh('shipping_lines')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @else
+                                        <label>Carrier (Vendor){{ $transport_mode ? '' : ' - pick Sea mode to choose a shipping line' }}</label>
+                                        <select class="form-control" wire:model="carrier_vendor_id">
+                                            <option value="">Select Vendor</option>
+                                            @foreach ($vendors as $vendor)
+                                                <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small>
+                                        <a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @endif
                                     <input type="text" class="form-control mt-10" wire:model="carrier_name" placeholder="or type free text">
                                 </div>
                             </div>

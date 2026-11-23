@@ -7,12 +7,14 @@ use App\Models\ChargeRateTier;
 use App\Models\ContainerChargeExposure;
 use App\Models\Currency;
 use App\Models\ShippingLine;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class ChargeConfig extends Component
 {
     public $shippingLines;
     public $currencies;
+    public $chargeTypes = [];
 
     // Free Day Policy form
     public $policy_id;
@@ -33,19 +35,30 @@ class ChargeConfig extends Component
     {
         $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
+        $this->chargeTypes = ContainerChargeExposure::chargeTypes();
     }
 
     /**
-     * Port storage is levied by the port/terminal authority, not the
-     * shipping line - it doesn't vary by carrier, so a line-specific policy
-     * for it doesn't reflect how the charge actually works. Demurrage and
-     * detention are genuinely carrier-specific (the line's own container),
-     * so those are the only charge types a Shipping Line should ever be
-     * attached to.
+     * Port storage (and any custom type flagged as not line-specific) is
+     * levied by the port/terminal, not the shipping line, so a line-specific
+     * policy or tier for it doesn't reflect how the charge actually works.
      */
     private function chargeTypeAllowsShippingLine($chargeType): bool
     {
-        return $chargeType !== 'port_storage';
+        return ContainerChargeExposure::chargeTypeAllowsShippingLine($chargeType);
+    }
+
+    private function chargeTypeRule(): array
+    {
+        return ['required', 'string', Rule::in(array_keys(ContainerChargeExposure::chargeTypes(true)))];
+    }
+
+    // Editing a row whose custom type has since been deactivated: keep it in the dropdown.
+    private function keepChargeTypeSelectable($code): void
+    {
+        if ($code && !array_key_exists($code, $this->chargeTypes)) {
+            $this->chargeTypes[$code] = ContainerChargeExposure::chargeTypes(true)[$code] ?? $code;
+        }
     }
 
     protected function rules()
@@ -74,6 +87,7 @@ class ChargeConfig extends Component
         $policy = ChargeFreeDayPolicy::findOrFail($id);
         $this->policy_id = $policy->id;
         $this->policy_charge_type = $policy->charge_type;
+        $this->keepChargeTypeSelectable($policy->charge_type);
         $this->policy_shipping_line_id = $policy->shipping_line_id;
         $this->policy_free_days = $policy->free_days;
     }
@@ -81,7 +95,7 @@ class ChargeConfig extends Component
     public function savePolicy()
     {
         $this->validate([
-            'policy_charge_type' => 'required|string',
+            'policy_charge_type' => $this->chargeTypeRule(),
             'policy_free_days' => 'required|integer|min:0',
         ]);
 
@@ -128,6 +142,7 @@ class ChargeConfig extends Component
         $tier = ChargeRateTier::findOrFail($id);
         $this->tier_id = $tier->id;
         $this->tier_charge_type = $tier->charge_type;
+        $this->keepChargeTypeSelectable($tier->charge_type);
         $this->tier_shipping_line_id = $tier->shipping_line_id;
         $this->tier_day_from = $tier->day_from;
         $this->tier_day_to = $tier->day_to;
@@ -138,7 +153,7 @@ class ChargeConfig extends Component
     public function saveTier()
     {
         $this->validate([
-            'tier_charge_type' => 'required|string',
+            'tier_charge_type' => $this->chargeTypeRule(),
             'tier_day_from' => 'required|integer|min:1',
             'tier_day_to' => 'nullable|integer|gte:tier_day_from',
             'tier_rate' => 'required|numeric|min:0',
@@ -181,13 +196,19 @@ class ChargeConfig extends Component
         } elseif ($category === 'currencies') {
             $this->currencies = Currency::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Currencies Refreshed Successfully!!.']);
+        } elseif ($category === 'charge_types') {
+            $this->chargeTypes = ContainerChargeExposure::chargeTypes();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
         }
     }
 
     public function render()
     {
         return view('livewire.freight.settings.charge-config', [
-            'chargeTypes' => ContainerChargeExposure::CHARGE_TYPES,
+            // Labels include deactivated custom types so existing rows still read properly.
+            'chargeTypeLabels' => ContainerChargeExposure::chargeTypes(true),
+            'policyLineAllowed' => $this->chargeTypeAllowsShippingLine($this->policy_charge_type),
+            'tierLineAllowed' => $this->chargeTypeAllowsShippingLine($this->tier_charge_type),
             'policies' => ChargeFreeDayPolicy::with('shipping_line')->orderBy('charge_type')->get(),
             'tiers' => ChargeRateTier::with(['shipping_line', 'currency'])->orderBy('charge_type')->orderBy('day_from')->get(),
         ]);

@@ -14,7 +14,7 @@ class FreightRateCardTemplateExport implements FromArray, WithHeadings
     public function array(): array
     {
         return [[
-            '#sell', '', 'Harare Fresh Produce (Pvt) Ltd', 'Ocean Freight', 'sea', '40ft',
+            '#sell', '', 'Harare Fresh Produce (Pvt) Ltd', 'Ocean Freight', '', 'sea', '40GP',
             'Durban', 'Harare', 'General Cargo', 'USD', 'per_container',
             2450, 'percentage', 12, '2026-10-01', '2026-12-31', 'Example row - delete or leave, it is skipped',
         ]];
@@ -23,7 +23,7 @@ class FreightRateCardTemplateExport implements FromArray, WithHeadings
     public function headings(): array
     {
         return [
-            'direction', 'vendor', 'customer', 'charge_type', 'mode', 'container_type',
+            'direction', 'vendor', 'customer', 'charge_type', 'service_type', 'mode', 'container_type',
             'origin', 'destination', 'cargo', 'currency', 'rate_basis',
             'rate', 'markup_type', 'markup_value', 'effective_from', 'effective_to', 'notes',
         ];

@@ -273,6 +273,14 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="mb-10">
+                            @if ($cost_rate_card_note)
+                                <small style="color: {{ $cost_rate_card_id ? 'green' : '#c77a00' }}"><i class="fa fa-tag"></i> {{ $cost_rate_card_note }}</small>
+                            @endif
+                            @if ($cost_charge_type_id)
+                                <a href="#" wire:click.prevent="applyCostRateCard" class="btn btn-xs btn-default" style="margin-left: 6px;"><i class="fa fa-tag"></i> Apply rate card</a>
+                            @endif
+                        </p>
                         <div class="checkbox">
                             <label><input type="checkbox" wire:model="cost_recoverable"> Recoverable Disbursement</label>
                         </div>
@@ -415,6 +423,14 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="mb-10">
+                            @if ($charge_rate_card_note)
+                                <small style="color: {{ $charge_rate_card_id ? 'green' : '#c77a00' }}"><i class="fa fa-tag"></i> {{ $charge_rate_card_note }}</small>
+                            @endif
+                            @if ($charge_charge_type_id)
+                                <a href="#" wire:click.prevent="applyChargeRateCard" class="btn btn-xs btn-default" style="margin-left: 6px;"><i class="fa fa-tag"></i> Apply rate card</a>
+                            @endif
+                        </p>
                         <div class="form-group">
                             <label>Notes</label>
                             <textarea class="form-control" wire:model="charge_notes"></textarea>

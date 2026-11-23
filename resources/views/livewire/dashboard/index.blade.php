@@ -18,6 +18,11 @@
 
                 $companyIsFreightForwarder = $company?->hasCompanyType('Freight Forwarding & Clearing') ?? false;
 
+                // Freight-forwarding-only companies may run their own fleet but don't
+                // do commercial trips: hide the trip widgets (same rule as the sidebar,
+                // see App\Support\ModuleAccess::FREIGHT_ONLY_HIDDEN_GROUP_SLUGS).
+                $freightOnly = (bool) ($company?->isFreightForwarderOnly() ?? false);
+
                 // Department KPI blocks are for admin/managerial users only.
                 // Drivers and non-admin workshop employees get their own restricted dashboard below.
                 $canSee = function(array $departments) use ($department_names, $isSuper, $isDriver, $isWorkshopWorker) {
@@ -29,7 +34,8 @@
                 };
                 $fmt = fn($value, $decimals = 0) => is_numeric($value) ? number_format((float) $value, $decimals) : $value;
                 $money = fn($value) => ($currency_name ?? 'USD').' '.$this->formatCurrency((float) $value);
-                $alertTotal = ($overdue_invoices_count ?? 0) + ($expired_reminders_count ?? 0) + ($expired_documents_count ?? 0) + ($docs_expiring_7d ?? 0) + ($vehicles_on_breakdown_count ?? 0) + ($trips_overdue_count ?? 0) + ($pending_authorizations_count ?? 0);
+                $alertTotal = ($overdue_invoices_count ?? 0) + ($expired_reminders_count ?? 0) + ($expired_documents_count ?? 0) + ($docs_expiring_7d ?? 0) + ($pending_authorizations_count ?? 0)
+                    + ($vehicles_on_breakdown_count ?? 0) + ($freightOnly ? 0 : ($trips_overdue_count ?? 0));
             @endphp
 
             <style>
@@ -196,7 +202,7 @@
                     @if (($expired_documents_count ?? 0) > 0)<a class="gd-alert" href="{{route('documents.index',['category' => 'all', 'expired_documents' => 1])}}"><span class="num">{{ $expired_documents_count }}</span><span class="label"><i class="fa fa-file"></i> Expired documents</span></a>@endif
                     @if (($overdue_invoices_count ?? 0) > 0)<a class="gd-alert" href="{{ route('invoices.index') }}"><span class="num">{{ $overdue_invoices_count }}</span><span class="label"><i class="fa fa-exclamation-circle"></i> Overdue invoices</span></a>@endif
                     @if (($fleet_in_workshop ?? 0) > 0)<a class="gd-alert" href="{{ route('bookings.index') }}"><span class="num">{{ $fleet_in_workshop }}</span><span class="label"><i class="fa fa-wrench"></i> Equipment(s) in workshop</span></a>@endif
-                    @if (($trips_overdue_count ?? 0) > 0)<a class="gd-alert warning" href="#"><span class="num">{{ $trips_overdue_count }}</span><span class="label"><i class="fa fa-road"></i> Overdue trips</span></a>@endif
+                    @if (!$freightOnly && ($trips_overdue_count ?? 0) > 0)<a class="gd-alert warning" href="#"><span class="num">{{ $trips_overdue_count }}</span><span class="label"><i class="fa fa-road"></i> Overdue trips</span></a>@endif
                     @if (($pending_authorizations_count ?? 0) > 0)<a class="gd-alert info" href="#"><span class="num">{{ $pending_authorizations_count }}</span><span class="label"><i class="fa fa-hourglass-half"></i> Pending approvals</span></a>@endif
                 </div>
             @endif
@@ -209,7 +215,7 @@
                     <span class="gd-panel-note">Clickable year-to-date and master record totals</span>
                 </div>
                 <div class="gd-module-count-grid">
-                    @if ($canSee(['Transport & Logistics']))
+                    @if (!$freightOnly && $canSee(['Transport & Logistics']))
                         <a href="{{ route('transport_orders.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-file-text-o"></i></span><strong class="gd-module-value">{{ $fmt($transport_order_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">TOs <span class="gd-module-badge">YTD</span></span>
@@ -222,6 +228,9 @@
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fa fa-clock"></i></span><strong class="gd-module-value">{{ $fmt($shift_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Shifts <span class="gd-module-badge">YTD</span></span>
                         </a>
+                    @endif
+
+                    @if ($canSee(['Transport & Logistics']))
                         <a href="{{ route('horses.index') }}" class="gd-module-count-card">
                             <div class="gd-module-top"><span class="gd-module-icon"><i class="fas fa-truck"></i></span><strong class="gd-module-value">{{ $fmt($horse_count ?? 0) }}</strong></div>
                             <span class="gd-module-label">Horses Active</span>
@@ -321,7 +330,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Transport & Logistics']))
+                @if (!$freightOnly && $canSee(['Transport & Logistics']))
                     <div class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-road"></i> Transport Operations</h5><span class="gd-panel-note">Today & MTD</span></div>
                         <div class="gd-kpi-grid">
@@ -435,7 +444,7 @@
                     <div id="pending-auth" class="gd-panel">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-check-square-o"></i> Pending Authorizations</h5><span class="gd-panel-note">Grouped approvals queue</span></div>
                         <div class="gd-kpi-grid">
-                            @if (($pending_trips_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('trips.pending') }}"><span class="icon"><i class="fa fa-road"></i></span><div class="value">{{ $pending_trips_auth }}</div><span class="name">Trips</span></a>@endif
+                            @if (!$freightOnly && ($pending_trips_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('trips.pending') }}"><span class="icon"><i class="fa fa-road"></i></span><div class="value">{{ $pending_trips_auth }}</div><span class="name">Trips</span></a>@endif
                             @if (($pending_invoices_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('invoices.pending') }}"><span class="icon"><i class="fa fa-file-text"></i></span><div class="value">{{ $pending_invoices_auth }}</div><span class="name">Invoices</span></a>@endif
                             @if (($pending_bills_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('bills.pending') }}"><span class="icon"><i class="fa fa-file"></i></span><div class="value">{{ $pending_bills_auth }}</div><span class="name">Bills</span></a>@endif
                             @if (($pending_fuel_auth ?? 0) > 0)<a class="gd-kpi warn" href="{{ route('fuels.pending') }}"><span class="icon"><i class="fa fa-tint"></i></span><div class="value">{{ $pending_fuel_auth }}</div><span class="name">Fuel</span></a>@endif
@@ -447,7 +456,7 @@
                     </div>
                 @endif
 
-                @if (($top_drivers ?? collect())->count() || ($top_horses ?? collect())->count())
+                @if (!$freightOnly && (($top_drivers ?? collect())->count() || ($top_horses ?? collect())->count()))
                     <div class="gd-panel wide">
                         <div class="gd-panel-head"><h5 class="gd-panel-title"><i class="fa fa-trophy"></i> Performance Snapshot</h5><span class="gd-panel-note">Current month leaders</span></div>
                         <div class="row" style="margin:0;">
@@ -492,7 +501,7 @@
                                 <div id="gd_finance_chart" class="gd-chart"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Transport & Logistics']))
+                        @if (!$freightOnly && $canSee(['Transport & Logistics']))
                             <div class="col-md-6 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Monthly Trips</h6>
                                 <div id="gd_trips_chart" class="gd-chart"></div>
@@ -520,7 +529,7 @@
                                 <div id="gd_gender_chart" class="gd-chart short"></div>
                             </div>
                         @endif
-                        @if ($canSee(['Transport & Logistics']))
+                        @if (!$freightOnly && $canSee(['Transport & Logistics']))
                             <div class="col-md-12 gd-chart-wrap">
                                 <h6 class="gd-panel-title" style="margin-bottom:8px;">Driver Weight Performance</h6>
                                 <div id="gd_driver_weight_chart" class="gd-chart tall"></div>

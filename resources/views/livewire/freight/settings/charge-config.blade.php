@@ -23,17 +23,19 @@
                                                     <option value="{{ $code }}">{{ $label }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('freight.settings.charge-types') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                            <a href="#" wire:click.prevent="refresh('charge_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             @error('policy_charge_type') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Shipping Line</label>
-                                            @if ($policy_charge_type === 'port_storage')
+                                            @if (!$policyLineAllowed)
                                                 <select class="form-control" disabled>
                                                     <option>Generic Default (port authority charge)</option>
                                                 </select>
-                                                <small style="color: #c77a00">Port Storage is levied by the port/terminal, not the shipping line.</small>
+                                                <small style="color: #c77a00">This charge is levied by the port/terminal, not the shipping line.</small>
                                             @else
                                                 <select class="form-control" wire:model="policy_shipping_line_id">
                                                     <option value="">Generic Default</option>
@@ -67,7 +69,7 @@
                                 <tbody>
                                     @forelse ($policies as $policy)
                                         <tr wire:key="{{ '85f7f9-61-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($policy->id ?? '') }}">
-                                            <td>{{ $chargeTypes[$policy->charge_type] ?? $policy->charge_type }}</td>
+                                            <td>{{ $chargeTypeLabels[$policy->charge_type] ?? $policy->charge_type }}</td>
                                             <td>{{ $policy->shipping_line?->name ?? 'Generic Default' }}</td>
                                             <td>{{ $policy->free_days }}</td>
                                             <td>
@@ -104,17 +106,19 @@
                                                     <option value="{{ $code }}">{{ $label }}</option>
                                                 @endforeach
                                             </select>
+                                            <small><a href="{{ route('freight.settings.charge-types') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New</a></small>
+                                            <a href="#" wire:click.prevent="refresh('charge_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             @error('tier_charge_type') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Shipping Line</label>
-                                            @if ($tier_charge_type === 'port_storage')
+                                            @if (!$tierLineAllowed)
                                                 <select class="form-control" disabled>
                                                     <option>Generic Default (port authority charge)</option>
                                                 </select>
-                                                <small style="color: #c77a00">Port Storage is levied by the port/terminal, not the shipping line.</small>
+                                                <small style="color: #c77a00">This charge is levied by the port/terminal, not the shipping line.</small>
                                             @else
                                                 <select class="form-control" wire:model="tier_shipping_line_id">
                                                     <option value="">Generic Default</option>
@@ -174,7 +178,7 @@
                                 <tbody>
                                     @forelse ($tiers as $tier)
                                         <tr wire:key="{{ '85f7f9-161-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($tier->id ?? '') }}">
-                                            <td>{{ $chargeTypes[$tier->charge_type] ?? $tier->charge_type }}</td>
+                                            <td>{{ $chargeTypeLabels[$tier->charge_type] ?? $tier->charge_type }}</td>
                                             <td>{{ $tier->shipping_line?->name ?? 'Generic Default' }}</td>
                                             <td>{{ $tier->day_from }}{{ $tier->day_to ? ' - '.$tier->day_to : '+' }}</td>
                                             <td>{{ $tier->currency?->symbol }}{{ number_format($tier->rate, 2) }}</td>

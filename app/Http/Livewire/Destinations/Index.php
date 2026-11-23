@@ -6,6 +6,7 @@ use App\Models\Country;
 use Livewire\Component;
 use App\Models\Destination;
 use Livewire\WithPagination;
+use App\Http\Livewire\Concerns\HandlesMapLocation;
 use Maatwebsite\Excel\Excel;
 use App\Models\SageProjectLocation;
 use App\Exports\DestinationsExport;
@@ -19,6 +20,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    use HandlesMapLocation;
     use PullsFromSage;
 
     /** Sage integration gate — controls the "Pull Sage locations" button. */
@@ -56,17 +58,21 @@ class Index extends Component
     public $user_id;
 
     protected $listeners = ['setLocationData'];
- 
-    public function setLocationData($data)
+
+    protected function mapNameField(): string
     {
-        $this->city = $data['city'];
-        $this->lat = $data['lat'];
-        $this->long = $data['long'];
-        $this->location = $data['location'];
+        return 'city';
     }
+ 
 
     public function mount(){
         $this->resetPage();
+        $this->countries = Country::all();
+    }
+
+    /** Reload the country dropdown after a country is added in another tab. */
+    public function refreshCountries()
+    {
         $this->countries = Country::all();
     }
     private function resetInputFields(){
@@ -96,9 +102,11 @@ class Index extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
+        'lat' => 'nullable|numeric|between:-90,90',
+        'long' => 'nullable|numeric|between:-180,180',
         'country_id' => 'required',
         'city' => 'required|unique:destinations,city,NULL,id,deleted_at,NULL',
-        'location' => 'required',
+        'location' => 'required_without_all:lat,long',
         'description' => 'required',
     ];
 
@@ -160,77 +168,8 @@ class Index extends Component
 
     }
 
-    private function expandUrl($url)
-    {
-        try {
-        $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])
-            ->get($url);
-
-        return (string) $response->effectiveUri(); // Convert URI object to string
-    } catch (\Exception $e) {
-        return null;
-    }
-    }
 
 
-    public function updatedLocation($location){
-  
-        
-        if (!is_null($location)) {
-            if ((!filled($this->lat) && !filled($this->long))) {
-            
-                if (strpos($location, 'maps.app.goo.gl') !== false) {
-                    $fullUrl = $this->expandUrl($location);
-                } else {
-                    $fullUrl = $location; // Already a long URL
-                }
-
-            
-                if ($fullUrl) {
-
-               // Case 1: Extract from /search/lat,lng format
-               if (preg_match('/\/search\/([-0-9.]+),\+?([-0-9.]+)/', $fullUrl, $matches)) {
-               
-                    $this->lat = $matches[1];
-                    $this->long = $matches[2];
-                }
-                 // Case 2: Extract from /@lat,lng,zoom/
-                elseif (preg_match('/@([-0-9.]+),([-0-9.]+),[0-9.]+z/', $fullUrl, $matches)) {
-                   
-                    $this->lat = $matches[1];
-                    $this->long = $matches[2];
-                }
-                // Case 3: Extract from !3dlat!4dlong format
-                elseif (preg_match('/!3d([-0-9.]+)!4d([-0-9.]+)/', $fullUrl, $matches)) {
-                    $this->lat = $matches[1];
-                    $this->long = $matches[2];
-                }
-                else {
-                    $this->dispatchBrowserEvent('hide-destinationEditModal');
-                    $this->dispatchBrowserEvent('hide-destinationModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Could not extract coordinates. Please check the URL format."
-                    ]);
-                }
-
-                } else {
-                    $this->dispatchBrowserEvent('hide-destinationEditModal');
-                    $this->dispatchBrowserEvent('hide-destinationModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Invalid or unreachable URL."
-                    ]);
-                  
-                }
-
-            }
-    
-           
-        }
-        
-      
-    }
 
     public function update()
     {

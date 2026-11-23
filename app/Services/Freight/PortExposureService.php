@@ -5,6 +5,7 @@ namespace App\Services\Freight;
 use App\Models\ChargeFreeDayPolicy;
 use App\Models\ChargeRateTier;
 use App\Models\ContainerChargeExposure;
+use App\Models\ChargeType;
 use App\Models\ShippingContainer;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -37,6 +38,46 @@ class PortExposureService
 
     public function __construct(private FreeDayCalculatorService $calculator)
     {
+    }
+
+    /** Start/stop stage codes of a built-in charge (port_storage, demurrage, detention), read from the maps above. */
+    public static function builtInClock(string $exposureCode): array
+    {
+        $find = fn (array $map) => collect($map)->search(fn ($codes) => in_array($exposureCode, $codes, true)) ?: null;
+
+        return ['start' => $find(self::START_MAP), 'stop' => $find(self::STOP_MAP)];
+    }
+
+    /**
+     * Which charge clocks each stage starts/stops: stage code =>
+     * ['starts' => [charge name...], 'stops' => [...]]. Built-ins from the
+     * maps above, other free-time Charge Types from their own milestones -
+     * exactly what handleContainerTransition() acts on.
+     */
+    public static function stageClockEffects(): array
+    {
+        $effects = [];
+        $names = ContainerChargeExposure::chargeTypes();
+
+        foreach (['starts' => self::START_MAP, 'stops' => self::STOP_MAP] as $key => $map) {
+            foreach ($map as $stage => $codes) {
+                foreach ($codes as $code) {
+                    $effects[$stage][$key][] = $names[$code] ?? $code;
+                }
+            }
+        }
+
+        $builtIn = array_keys(ContainerChargeExposure::CHARGE_TYPES);
+        foreach (ChargeType::tracksFreeTime()->whereNotIn('exposure_code', $builtIn)->orderBy('name')->get() as $type) {
+            if ($type->start_milestone) {
+                $effects[$type->start_milestone]['starts'][] = $type->name;
+            }
+            if ($type->stop_milestone) {
+                $effects[$type->stop_milestone]['stops'][] = $type->name;
+            }
+        }
+
+        return $effects;
     }
 
     public function startTracking(ShippingContainer $container, string $chargeType, Carbon $startDate): ?ContainerChargeExposure
@@ -96,11 +137,20 @@ class PortExposureService
 
     public function handleContainerTransition(ShippingContainer $container, string $newStatus, Carbon $eventDate): void
     {
-        foreach (self::START_MAP[$newStatus] ?? [] as $chargeType) {
+        // Other Charge Types that track free time carry their own milestones
+        // (built-ins never have milestones set; they use the maps above).
+        $builtIn = array_keys(ContainerChargeExposure::CHARGE_TYPES);
+        $customStarts = ChargeType::tracksFreeTime()->whereNotIn('exposure_code', $builtIn)
+            ->where('start_milestone', $newStatus)->pluck('exposure_code')->all();
+        // Stops also apply to deleted types so already-running clocks still end.
+        $customStops = ChargeType::withTrashed()->tracksFreeTime()->whereNotIn('exposure_code', $builtIn)
+            ->where('stop_milestone', $newStatus)->pluck('exposure_code')->all();
+
+        foreach (array_merge(self::START_MAP[$newStatus] ?? [], $customStarts) as $chargeType) {
             $this->startTracking($container, $chargeType, $eventDate);
         }
 
-        foreach (self::STOP_MAP[$newStatus] ?? [] as $chargeType) {
+        foreach (array_merge(self::STOP_MAP[$newStatus] ?? [], $customStops) as $chargeType) {
             $this->stopTracking($container, $chargeType, $eventDate);
         }
     }

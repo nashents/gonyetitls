@@ -154,6 +154,7 @@
                             @endforeach
                         </select>
                         @error('country_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> <a href="#" wire:click.prevent="refreshCountries" title="Refresh countries list" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                     </div>
                     <div class="form-group">
                         <label for="title">City<span class="required" style="color: red">*</span></label>
@@ -180,21 +181,21 @@
                         </div>
                         <div class="form-group">
                             <label for="description">Google Maps Location Pin<span class="required" style="color: red">*</span></label>
-                            <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Copy and Paste Location Pin from Google Maps" required>
+                            <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Paste Google Maps pin link (or type lat/long below)">
                             @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="description">Latitude<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude" required disabled>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude">
                                     @error('lat') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="description">Longitude<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude" required disabled>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude">
                                     @error('long') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -229,6 +230,7 @@
                             @endforeach
                         </select>
                         @error('country_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <small><a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> <a href="#" wire:click.prevent="refreshCountries" title="Refresh countries list" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                     </div>
                     <div class="form-group">
                         <label for="title">City<span class="required" style="color: red">*</span></label>
@@ -255,21 +257,21 @@
                     </div>
                     <div class="form-group">
                         <label for="description">Google Maps Location Pin<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Copy and Paste Location Pin from Google Maps" required>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Paste Google Maps pin link (or type lat/long below)">
                         @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="description">Latitude<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude" required disabled>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude">
                                 @error('lat') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="description">Longitude<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude" required disabled>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude">
                                 @error('long') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -299,66 +301,7 @@
     </div>
 
     @push('custom-scripts')
-
-    <script async defer 
-        src="https://maps.googleapis.com/maps/api/js?key={{config('services.google.maps_key')}}&libraries=places">
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            initAutocomplete();
-        });
-
-        window.addEventListener('initializeAutocomplete', event => {
-            document.getElementById('autocomplete-edit').value = event.detail.name;
-            initAutocomplete();
-        });
-
-        function initAutocomplete() {
-            let input = document.getElementById('autocomplete-edit');
-            let autocomplete = new google.maps.places.Autocomplete(input);
-
-            autocomplete.addListener('place_changed', function () {
-                let place = autocomplete.getPlace();
-                if (!place.geometry) {
-                    console.log("No details available for input: '" + place.name + "'");
-                    return;
-                }
-                Livewire.emit('setLocationData', {
-                    city: place.name,
-                    lat: place.geometry.location.lat(),
-                    long: place.geometry.location.lng(),
-                    location: place.url || ''
-                });
-            });
-        }
-    </script>
-
-    <script>
-
-
-        document.addEventListener('DOMContentLoaded', function () {
-            let input = document.getElementById('autocomplete');
-            let autocomplete = new google.maps.places.Autocomplete(input);
-
-            // input.value = @this.get('city');
-
-            autocomplete.addListener('place_changed', function () {
-                let place = autocomplete.getPlace();
-                @this.set('city', place.name);
-                @this.set('lat', place.geometry.location.lat());
-                @this.set('long', place.geometry.location.lng());
-                @this.set('location', place.url || '');
-            });
-
-            // Livewire.hook('message.processed', () => {
-            //     input.value = @this.get('city');
-            // });
-
-        });
-
-       
-    </script>
+    @include('partials.google-places-autocomplete')
     @endpush
 
 </div>

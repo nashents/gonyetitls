@@ -162,6 +162,8 @@ class CompanyDataResetService
         \Database\Seeders\VehicleTypeSeeder::class => ['vehicle_types'],
         \Database\Seeders\HorseTypeSeeder::class => ['horse_types'],
         \Database\Seeders\FreightServiceTypeSeeder::class => ['freight_service_types'],
+        \Database\Seeders\FreightMasterDataSeeder::class => ['charge_types', 'shipping_lines', 'charge_free_day_policies'],
+        \Database\Seeders\ContainerStageSeeder::class => ['container_stages'],
         \Database\Seeders\TripTypeSeeder::class => ['trip_types'],
         \Database\Seeders\TrailerTypeSeeder::class => ['trailer_types'],
         \Database\Seeders\VendorTypeSeeder::class => ['vendor_types'],

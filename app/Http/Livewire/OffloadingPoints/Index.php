@@ -5,6 +5,7 @@ namespace App\Http\Livewire\OffloadingPoints;
 use Livewire\Component;
 use App\Models\Consignee;
 use Livewire\WithPagination;
+use App\Http\Livewire\Concerns\HandlesMapLocation;
 use Maatwebsite\Excel\Excel;
 use App\Models\OffloadingPoint;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Session;
 class Index extends Component
 {
     use WithPagination;
+    use HandlesMapLocation;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -39,13 +41,6 @@ class Index extends Component
 
     protected $listeners = ['setLocationData'];
  
-    public function setLocationData($data)
-    {
-        $this->name = $data['name'];
-        $this->lat = $data['lat'];
-        $this->long = $data['long'];
-        $this->location = $data['location'];
-    }
 
     private function resetInputFields(){
         $this->name = '';
@@ -83,6 +78,8 @@ class Index extends Component
     }
 
     protected $rules = [
+        'lat' => 'nullable|numeric|between:-90,90',
+        'long' => 'nullable|numeric|between:-180,180',
         'name' => 'required|unique:offloading_points,name,NULL,id,deleted_at,NULL|string|min:2',
   
 
@@ -123,77 +120,8 @@ class Index extends Component
     }
     }
 
-    private function expandUrl($url)
-    {
-        try {
-        $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])
-            ->get($url);
-
-        return (string) $response->effectiveUri(); // Convert URI object to string
-    } catch (\Exception $e) {
-        return null;
-    }
-    }
 
 
-    public function updatedLocation($location){
-  
-        
-        if (!is_null($location)) {
-            if ((!filled($this->lat) && !filled($this->long))) {
-            
-                if (strpos($location, 'maps.app.goo.gl') !== false) {
-                    $fullUrl = $this->expandUrl($location);
-                } else {
-                    $fullUrl = $location; // Already a long URL
-                }
-
-            
-                if ($fullUrl) {
-
-               // Case 1: Extract from /search/lat,lng format
-               if (preg_match('/\/search\/([-0-9.]+),\+?([-0-9.]+)/', $fullUrl, $matches)) {
-               
-                    $this->lat = $matches[1];
-                    $this->long = $matches[2];
-                }
-                 // Case 2: Extract from /@lat,lng,zoom/
-                elseif (preg_match('/@([-0-9.]+),([-0-9.]+),[0-9.]+z/', $fullUrl, $matches)) {
-                   
-                    $this->lat = $matches[1];
-                    $this->long = $matches[2];
-                }
-                // Case 3: Extract from !3dlat!4dlong format
-                elseif (preg_match('/!3d([-0-9.]+)!4d([-0-9.]+)/', $fullUrl, $matches)) {
-                    $this->lat = $matches[1];
-                    $this->long = $matches[2];
-                }
-                else {
-                    $this->dispatchBrowserEvent('hide-offloadingPointEditModal');
-                    $this->dispatchBrowserEvent('hide-offloadingPointModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Could not extract coordinates. Please check the URL format."
-                    ]);
-                }
-
-                } else {
-                    $this->dispatchBrowserEvent('hide-offloadingPointEditModal');
-                    $this->dispatchBrowserEvent('hide-offloadingPointModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Invalid or unreachable URL."
-                    ]);
-                  
-                }
-
-            }
-    
-           
-        }
-        
-      
-    }
 
     public function edit($id){
     $offloading_point = OffloadingPoint::find($id);

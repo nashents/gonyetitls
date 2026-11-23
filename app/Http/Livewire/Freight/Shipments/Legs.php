@@ -7,6 +7,7 @@ use App\Models\Horse;
 use App\Models\Location;
 use App\Models\Shipment;
 use App\Models\ShipmentLeg;
+use App\Models\ShippingLine;
 use App\Models\Transporter;
 use App\Models\Trip;
 use App\Models\Vehicle;
@@ -18,6 +19,7 @@ class Legs extends Component
 {
     public $shipment;
     public $vendors;
+    public $shippingLines;
     public $locations;
     public $transporters;
 
@@ -25,6 +27,7 @@ class Legs extends Component
     public $editing_leg_id;
     public $transport_mode;
     public $carrier_vendor_id;
+    public $carrier_shipping_line_id;
     public $carrier_name;
     public $carrier_reference;
     public $origin_location_id;
@@ -57,6 +60,7 @@ class Legs extends Component
     {
         $this->shipment = Shipment::findOrFail($shipmentId);
         $this->vendors = Vendor::orderBy('name', 'asc')->get();
+        $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
         $this->locations = Location::orderBy('name', 'asc')->get();
         $this->transporters = Transporter::orderBy('name', 'asc')->get();
         $this->refreshShipment();
@@ -65,7 +69,7 @@ class Legs extends Component
     private function refreshShipment()
     {
         $this->shipment = Shipment::with([
-            'legs.carrier_vendor', 'legs.origin_location', 'legs.destination_location',
+            'legs.carrier_vendor', 'legs.shipping_line', 'legs.origin_location', 'legs.destination_location',
             'legs.trip', 'legs.milestones', 'freight_job',
         ])->findOrFail($this->shipment->id);
     }
@@ -84,6 +88,7 @@ class Legs extends Component
         $this->editing_leg_id = $leg->id;
         $this->transport_mode = $leg->transport_mode;
         $this->carrier_vendor_id = $leg->carrier_vendor_id;
+        $this->carrier_shipping_line_id = $leg->shipping_line_id;
         $this->carrier_name = $leg->carrier_name;
         $this->carrier_reference = $leg->carrier_reference;
         $this->origin_location_id = $leg->origin_location_id;
@@ -100,10 +105,16 @@ class Legs extends Component
     {
         $this->validate();
 
+        // Sea legs: carrier is a shipping line (its vendor kept for billing); others: a vendor.
+        $line = ShipmentLeg::carrierIsShippingLine($this->transport_mode) && $this->carrier_shipping_line_id
+            ? ShippingLine::find($this->carrier_shipping_line_id)
+            : null;
+
         $data = [
             'shipment_id' => $this->shipment->id,
             'transport_mode' => $this->transport_mode ?: null,
-            'carrier_vendor_id' => $this->carrier_vendor_id ?: null,
+            'shipping_line_id' => $line?->id,
+            'carrier_vendor_id' => $line ? $line->vendor_id : ($this->carrier_vendor_id ?: null),
             'carrier_name' => $this->carrier_name,
             'carrier_reference' => $this->carrier_reference,
             'origin_location_id' => $this->origin_location_id ?: null,
@@ -129,7 +140,7 @@ class Legs extends Component
     private function resetLegForm()
     {
         $this->reset([
-            'editing_leg_id', 'transport_mode', 'carrier_vendor_id', 'carrier_name', 'carrier_reference',
+            'editing_leg_id', 'transport_mode', 'carrier_vendor_id', 'carrier_shipping_line_id', 'carrier_name', 'carrier_reference',
             'origin_location_id', 'destination_location_id', 'planned_departure', 'planned_arrival',
             'estimated_departure', 'estimated_arrival',
         ]);
@@ -271,6 +282,9 @@ class Legs extends Component
         if ($category === 'vendors') {
             $this->vendors = Vendor::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendors Refreshed Successfully!!.']);
+        } elseif ($category === 'shipping_lines') {
+            $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Shipping Lines Refreshed Successfully!!.']);
         } elseif ($category === 'locations') {
             $this->locations = Location::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);

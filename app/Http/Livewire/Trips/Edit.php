@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Trips;
 
+
+use App\Http\Livewire\Concerns\CalculatesTripDistance;
 use App\Models\Account;
 use App\Models\Agent;
 use App\Models\Allowance;
@@ -68,6 +70,7 @@ use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
+    use CalculatesTripDistance;
     use WithFileUploads;
     use HandlesTripTrailerLinks;
     use ResolvesSageIntegration;
@@ -750,73 +753,6 @@ class Edit extends Component
     }
 
 
-    public function calculateDistance($from, $to, $category)
-    {
-        $from_location = null;
-        $to_location = null;
-    
-        // Determine the locations based on category
-        if ($category === "destinations") {
-            $from_location = Destination::find($from);
-            $to_location = Destination::find($to);
-        } elseif ($category === "loading_points") {
-            $from_location = LoadingPoint::find($from);
-            $to_location = OffloadingPoint::find($to);
-        }
-    
-        // Ensure we have valid locations
-        if (!$from_location || !$to_location) {
-            return response()->json(['error' => 'Invalid locations provided'], 400);
-        }
-    
-        $apiKey = env('GOOGLE_MAPS_API_KEY');
-        if (!$apiKey) {
-            return response()->json(['error' => 'Google Maps API key is missing'], 500);
-        }
-    
-        // Validate latitude and longitude
-        if (!isset($from_location->lat, $from_location->long, $to_location->lat, $to_location->long)) {
-            return response()->json(['error' => 'Invalid coordinates'], 400);
-        }
-    
-        $origin = "{$from_location->lat},{$from_location->long}";
-        $destination = "{$to_location->lat},{$to_location->long}";
-    
-        // Make API request
-        $response = Http::get("https://maps.googleapis.com/maps/api/distancematrix/json", [
-            'units' => 'metric',
-            'origins' => $origin,
-            'destinations' => $destination,
-            'key' => $apiKey,
-        ]);
-    
-        if (!$response->successful()) {
-            return response()->json(['error' => 'Error fetching data from Google Maps API'], 500);
-        }
-    
-        $data = $response->json();
-        $element = optional($data)['rows'][0]['elements'][0] ?? null;
-    
-        if (!$element) {
-            return response()->json(['error' => 'No distance data available'], 404);
-        }
-    
-        // Extract distance and duration
-        $distance_in_meters = optional($element)['distance']['value'] ?? null;
-        $duration_text = optional($element)['duration']['text'] ?? '';
-    
-        if (!is_numeric($distance_in_meters)) {
-            return response()->json(['error' => 'Invalid distance data'], 500);
-        }
-    
-        // Convert to kilometers
-        $this->distance = ($distance_in_meters >= 1000) ? $distance_in_meters / 1000 : $distance_in_meters;
-        $this->duration =  $duration_text;
-        return response()->json([
-            'distance' => $this->distance,
-            'duration' => $duration_text
-        ], 200);
-    }
     
     public function updatedSelectedTo($id)
     {

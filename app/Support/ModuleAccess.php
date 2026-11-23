@@ -94,7 +94,73 @@ class ModuleAccess
     {
         $id = $group instanceof ModuleGroup ? $group->id : $group;
 
+        if ($id !== null && static::companyHidesGroup((int) $id, $user)) {
+            return true;
+        }
+
         return $id !== null && in_array((int) $id, static::blocks($user)['groups'], true);
+    }
+
+    // ---------------------------------------------------------------- company type
+
+    /**
+     * Commercial transport menus a freight-forwarding-only company never sees
+     * (Company::isFreightForwarderOnly). Its own (non-commercial) fleet stays:
+     * Fleet / Fuel / Workshop / Tyre Management, Drivers and the Log Book.
+     * Applies to everyone in that company, Super Admins included. Kept in code,
+     * not in the visibility JSON, because MenuRegistrySeeder rewrites
+     * visibility on every deploy.
+     */
+    public const FREIGHT_ONLY_HIDDEN_GROUP_SLUGS = ['trip-management'];
+    /** Modules inside a hidden group that stay visible. */
+    public const FREIGHT_ONLY_KEPT_MODULE_SLUGS = ['log-book'];
+    public const FREIGHT_ONLY_HIDDEN_MODULE_SLUGS = ['compliance'];
+
+    private static array $companyRestricted = [];
+
+    /** Whether the user's company hides the transport & logistics menus. */
+    public static function companyRestricted(?User $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+
+        if (!$user instanceof User) {
+            return false;
+        }
+
+        return static::$companyRestricted[$user->id] ??= (bool) (MenuContext::build($user)['companyIsFreightOnly'] ?? false);
+    }
+
+    /** The whole group is hidden only when none of its modules is kept. */
+    public static function companyHidesGroup(int $groupId, ?User $user = null): bool
+    {
+        if (!static::companyRestricted($user)) {
+            return false;
+        }
+
+        $group = static::tree()->firstWhere('id', $groupId);
+
+        return $group
+            && in_array($group->slug, static::FREIGHT_ONLY_HIDDEN_GROUP_SLUGS, true)
+            && !$group->modules->contains(fn ($m) => in_array($m->slug, static::FREIGHT_ONLY_KEPT_MODULE_SLUGS, true));
+    }
+
+    public static function companyHidesModule(Module $module, ?User $user = null): bool
+    {
+        if (!static::companyRestricted($user)) {
+            return false;
+        }
+
+        if (in_array($module->slug, static::FREIGHT_ONLY_HIDDEN_MODULE_SLUGS, true)) {
+            return true;
+        }
+
+        if (in_array($module->slug, static::FREIGHT_ONLY_KEPT_MODULE_SLUGS, true)) {
+            return false;
+        }
+
+        $group = static::tree()->firstWhere('id', (int) $module->module_group_id);
+
+        return $group && in_array($group->slug, static::FREIGHT_ONLY_HIDDEN_GROUP_SLUGS, true);
     }
 
     /** A module is locked when it, or its whole group, is locked. */
@@ -106,6 +172,10 @@ class ModuleAccess
 
         if (!$module || in_array($module->slug, static::EXEMPT_MODULE_SLUGS, true)) {
             return false;
+        }
+
+        if (static::companyHidesModule($module, $user)) {
+            return true;
         }
 
         $b = static::blocks($user);
@@ -151,13 +221,15 @@ class ModuleAccess
 
         foreach (static::tree() as $group) {
             $gVis = static::json($group->visibility);
-            $gShow = (bool) ($group->is_active ?? true) && Menu::isVisible($gVis, $ctx);
+            $gShow = (bool) ($group->is_active ?? true) && Menu::isVisible($gVis, $ctx)
+                && !static::companyHidesGroup((int) $group->id, $user);
             $anyModule = false;
 
             foreach ($group->modules as $module) {
                 $mVis = static::inherit($module->visibility, $gVis);
                 $mShow = in_array($module->slug, static::EXEMPT_MODULE_SLUGS, true)
-                    || ($gShow && ($module->is_active ?? true) && Menu::isVisible($mVis, $ctx));
+                    || ($gShow && ($module->is_active ?? true) && Menu::isVisible($mVis, $ctx)
+                        && !static::companyHidesModule($module, $user));
                 $out['modules'][$module->id] = $mShow;
                 $anyModule = $anyModule || $mShow;
 
@@ -205,7 +277,7 @@ class ModuleAccess
         }
 
         $dept = static::departmentGuardApplies($user);
-        if (!$dept && !static::restricted($user)) {
+        if (!$dept && !static::restricted($user) && !static::companyRestricted($user)) {
             return false;
         }
 

@@ -96,7 +96,7 @@
                                 <thead>
                                     <tr>
                                         <th>Shipping Line</th>
-                                        @foreach (\App\Models\ContainerChargeExposure::CHARGE_TYPES as $label)
+                                        @foreach (\App\Models\ContainerChargeExposure::chargeTypes(true) as $label)
                                         <th class="text-right">{{$label}}</th>
                                         @endforeach
                                         <th class="text-right">Total</th>
@@ -108,7 +108,7 @@
                                         @if ($row['total'] != 0)
                                         <tr>
                                             <td>{{$row['label']}}</td>
-                                            @foreach (\App\Models\ContainerChargeExposure::CHARGE_TYPES as $label)
+                                            @foreach (\App\Models\ContainerChargeExposure::chargeTypes(true) as $label)
                                             <td class="text-right">{{$default_currency?->name}} {{$default_currency?->symbol}}{{$this->fmt($row['buckets'][$label] ?? 0)}}</td>
                                             @endforeach
                                             <td class="text-right"><strong>{{$default_currency?->name}} {{$default_currency?->symbol}}{{$this->fmt($row['total'])}}</strong></td>
@@ -118,7 +118,7 @@
                                     @endif
                                     <tr style="background-color: #D3D3D3">
                                         <td><strong>Total</strong></td>
-                                        @foreach (\App\Models\ContainerChargeExposure::CHARGE_TYPES as $label)
+                                        @foreach (\App\Models\ContainerChargeExposure::chargeTypes(true) as $label)
                                         <td class="text-right"><strong>{{$default_currency?->name}} {{$default_currency?->symbol}}{{$this->fmt($grand_totals['buckets'][$label] ?? 0)}}</strong></td>
                                         @endforeach
                                         <td class="text-right"><strong>{{$default_currency?->name}} {{$default_currency?->symbol}}{{$this->fmt($grand_totals['total'] ?? 0)}}</strong></td>
