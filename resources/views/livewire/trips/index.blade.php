@@ -1724,4 +1724,44 @@
         document.addEventListener('livewire:update', refreshTripsIndexMap);
     </script>
 
+    <script>
+        // Row modals (e.g. Delete trip) live inside .trips-table-scroll, whose
+        // position/z-index makes it a stacking context - the modal gets trapped
+        // under the body-level backdrop and nothing in it can be clicked.
+        // Move the modal to <body> while open, then put it back in its row.
+        (function ($) {
+            if (!$ || window.__tripsRowModalFix) return;
+            window.__tripsRowModalFix = true;
+
+            $(document).on('show.bs.modal', '.trips-table-scroll .modal', function (e) {
+                if (e.target !== this) return;
+                var $modal = $(this);
+                var $placeholder = $('<span class="trips-modal-placeholder" style="display:none"></span>');
+                $modal.before($placeholder).data('tripsPlaceholder', $placeholder).appendTo(document.body);
+            });
+
+            $(document).on('hidden.bs.modal', '.modal', function (e) {
+                if (e.target !== this) return;
+                var $modal = $(this);
+                var $placeholder = $modal.data('tripsPlaceholder');
+                if (!$placeholder) return;
+                $modal.removeData('tripsPlaceholder');
+
+                // If Livewire re-rendered the row meanwhile, it already has its
+                // own copy of this modal - drop ours instead of duplicating ids.
+                var stillThere = $placeholder.closest('body').length;
+                var id = this.id;
+                var rowHasCopy = stillThere && $placeholder.parent().find('.modal').filter(function () {
+                    return this.id === id;
+                }).length;
+                if (stillThere && !rowHasCopy) {
+                    $placeholder.replaceWith($modal);
+                } else {
+                    $placeholder.remove();
+                    $modal.remove();
+                }
+            });
+        })(window.jQuery);
+    </script>
+
 </div>

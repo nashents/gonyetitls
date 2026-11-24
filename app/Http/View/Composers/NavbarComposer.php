@@ -66,7 +66,6 @@ class NavbarComposer
             'fuel_requests'         => FuelRequest::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'loans'            => Loan::visibleTo()->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'leaves'           => Leave::visibleTo()->where('management_decision', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'attendances'      => Attendance::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'overdue_tickets' => Booking::query()
                 ->where('status', 1)   // or whatever your "open" status is
                 ->where('authorization', 'approved') // only approved bookings
@@ -333,7 +332,6 @@ class NavbarComposer
                 'fuel_requests'          => $pendingCounts['fuel_requests'] ?? 0,
                 'loans'             => $pendingCounts['loans'] ?? 0,
                 'leaves'            => $pendingCounts['leaves'] ?? 0,
-                'attendances'       => $pendingCounts['attendances'] ?? 0,
                 'overdue_tickets'       => $pendingCounts['overdue_tickets'] ?? 0,
                 'edit_authorizations'   => $editAuthorizationsPendingCount,
                 'freight_jobs'          => $isFreightCompany ? FreightJob::where('authorization', 'pending')->count() : 0,

@@ -17,6 +17,7 @@ class Index extends Component
     public $training_department_id;
     public $training_department;
     public $name;
+    public $description;
     public $user_id;
 
   
@@ -32,11 +33,13 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:training_departments,name,NULL,id,deleted_at,NULL|string|min:2',
+        'description' => 'nullable|string|max:2000',
     ];
 
     private function resetInputFields(){
       
         $this->name = '';
+        $this->description = '';
      
     }
 
@@ -48,6 +51,7 @@ class Index extends Component
         $training_department = new TrainingDepartment;
         $training_department->user_id = Auth::user()->id;
         $training_department->name = $this->name;
+        $training_department->description = $this->description;
         $training_department->save();
 
         $this->dispatchBrowserEvent('hide-training_departmentModal');
@@ -71,6 +75,7 @@ class Index extends Component
     $training_department = TrainingDepartment::find($id);
     $this->user_id = $training_department->user_id;
     $this->name = $training_department->name;
+    $this->description = $training_department->description;
     $this->training_department_id = $training_department->id;
     $this->dispatchBrowserEvent('show-training_departmentEditModal');
 
@@ -83,6 +88,7 @@ class Index extends Component
             try{
             $training_department = TrainingDepartment::find($this->training_department_id);
             $training_department->name = $this->name;
+            $training_department->description = $this->description;
             $training_department->update();
 
             $this->dispatchBrowserEvent('hide-training_departmentEditModal');

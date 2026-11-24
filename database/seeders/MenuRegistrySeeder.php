@@ -392,9 +392,6 @@ class MenuRegistrySeeder extends Seeder
         ]);
      
         $upsertSub($m, ['name'=>'Manage Attendances','slug'=>'manage-attendances','icon'=>'fas fa-list','route_name'=>'attendances.index','sort_order'=>15]);
-        $upsertSub($m, ['name'=>'Pending Attendances','slug'=>'pending-attendances','icon'=>'fas fa-clock','route_name'=>'attendances.pending','sort_order'=>20,'badge_key'=>'attendances_pending_count']);
-        $upsertSub($m, ['name'=>'Approved Attendances','slug'=>'approved-attendances','icon'=>'fas fa-check','route_name'=>'attendances.approved','sort_order'=>30,'badge_key'=>'attendances_approved_count']);
-        $upsertSub($m, ['name'=>'Rejected Attendances','slug'=>'rejected-attendances','icon'=>'fas fa-ban','route_name'=>'attendances.rejected','sort_order'=>40,'badge_key'=>'attendances_rejected_count']);
         
 
 

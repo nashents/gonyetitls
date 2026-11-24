@@ -24,6 +24,11 @@
         </div>
     </div>
 </div>
+<div class="form-group">
+    <label>Description</label>
+    <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What is measured, why it matters and how the reading is taken"></textarea>
+    @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+</div>
 <div class="row">
     <div class="col-md-3">
         <div class="form-group">

@@ -194,6 +194,7 @@ class CompanyDataResetService
         \Database\Seeders\WasteTypeSeeder::class => ['waste_types'],
         \Database\Seeders\UnitsOfMeasureSeeder::class => ['units_of_measures'],
         \Database\Seeders\LossCauseSeeder::class => ['losses'],
+        \Database\Seeders\SheqLookupDescriptionSeeder::class => [],
         \Database\Seeders\StageSeeder::class => ['stages'],
         \Database\Seeders\CriterionSeeder::class => ['criteria'],
         \Database\Seeders\ProblemCategorySeeder::class => ['problem_categories'],

@@ -182,7 +182,6 @@
                                 'leaves' => ['label' => 'Leave', 'route' => 'leaves.pending', 'icon'  => 'fa-plane'],
                                 'fuels' => ['label' => 'Fuel Order', 'route' => 'fuels.pending', 'icon'  => 'fa-cart-shopping'],
                                 'fuel_requests' => ['label' => 'Fuel Request', 'route' => 'fuel_requests.pending', 'icon'  => 'fa-gas-pump'],
-                                'attendances' => ['label' => 'Attendance', 'route' => 'attendances.pending', 'icon'  => 'fa-clock-o'],
                                 'overdue_tickets' => ['label' => 'Overdue Ticket','route' => 'tickets.index', 'icon'  => 'fa-wrench'],
                                 'edit_authorizations' => ['label' => 'Edit Authorization', 'route' => 'edit_authorizers.pending', 'icon'  => 'fa-user-clock'],
                                 'freight_jobs' => ['label' => 'Freight Job', 'route' => 'freight.jobs.pending', 'icon'  => 'fa-ship'],
@@ -191,7 +190,7 @@
 
                             // Departments are ONLY for visibility (not data filtering)
                             $deptKeys = [
-                                'Human Resource' => ['leaves', 'attendances', 'loans'],
+                                'Human Resource' => ['leaves', 'loans'],
                                 'Finance' => ['bills', 'invoices', 'credit_notes', 'requisitions','payment_requisitions'],
                                 'Transport & Logistics' => ['trips', 'bookings', 'gate_passes', 'topups', 'recoveries' , 'fuel_requests','fuels'],
                                 'Stores' => ['purchases', 'transfers', 'dispatches', 'retreads', 'topups' , 'fuel_requests','fuels'],

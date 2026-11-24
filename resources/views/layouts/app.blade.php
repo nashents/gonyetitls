@@ -5373,6 +5373,29 @@ window.addEventListener('hide-imageModal', event => {
 
      @livewireScripts
 
+    <script>
+        // Generic fallback for Livewire "show-<id>" / "hide-<id>" modal events.
+        // Most modules register one listener per modal above; screens that
+        // didn't (e.g. all SHEQ modules) left Edit/Delete modals unable to
+        // open and Save unable to close them. Opens/closes #<id> only when it
+        // is not already in that state, so explicit listeners are unaffected.
+        document.addEventListener('livewire:load', function () {
+            Livewire.hook('message.processed', function (message) {
+                var effects = (message.response && message.response.effects) || {};
+                (effects.dispatches || []).forEach(function (ev) {
+                    var m = /^(show|hide)-([A-Za-z0-9_\-]+Modal)$/.exec(ev.event || '');
+                    if (!m) return;
+                    var $modal = $('#' + m[2]);
+                    if (!$modal.length || typeof $modal.modal !== 'function') return;
+                    var bs = $modal.data('bs.modal');
+                    var shown = !!(bs && bs.isShown);
+                    if (m[1] === 'show' && !shown) $modal.modal('show');
+                    if (m[1] === 'hide' && shown) $modal.modal('hide');
+                });
+            });
+        });
+    </script>
+
    <script>
     document.addEventListener("DOMContentLoaded", function() {
         const sidebar = document.getElementById('sidebar');

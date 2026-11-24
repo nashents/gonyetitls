@@ -17,6 +17,7 @@ class Index extends Component
     protected $loss_categories;
     public $loss_category_id;
     public $name;
+    public $description;
     public $user_id;
 
 
@@ -32,16 +33,19 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:loss_categories,name,NULL,id,deleted_at,NULL|string|min:2',
+        'description' => 'nullable|string|max:2000',
     ];
 
     private function resetInputFields(){
         $this->name = '';
+        $this->description = '';
     }
 
     public function store(){
         $loss_category = new LossCategory;
         $loss_category->user_id = Auth::user()->id;
         $loss_category->name = $this->name;
+        $loss_category->description = $this->description;
         $loss_category->save();
       
         $this->dispatchBrowserEvent('hide-loss_categoryModal');
@@ -57,6 +61,7 @@ class Index extends Component
     $loss_category = LossCategory::find($id);
     $this->user_id = $loss_category->user_id;
     $this->name = $loss_category->name;
+    $this->description = $loss_category->description;
     $this->loss_category_id = $loss_category->id;
     $this->dispatchBrowserEvent('show-loss_categoryEditModal');
 
@@ -75,6 +80,7 @@ class Index extends Component
                 return;
             }
             $loss_category->name = $this->name;
+            $loss_category->description = $this->description;
             $loss_category->update();
 
         $this->dispatchBrowserEvent('hide-loss_categoryEditModal');

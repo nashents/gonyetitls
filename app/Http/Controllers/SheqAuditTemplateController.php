@@ -25,9 +25,14 @@ class SheqAuditTemplateController extends Controller
      */
     public function show($id)
     {
-        $sheq_audit_template = SheqAuditTemplate::find($id);
+        $sheq_audit_template = SheqAuditTemplate::findOrFail($id);
+        // Everyone gets the read-only checklist; ?mode=build opens the
+        // builder, but only for the creator / is_admin / Super Admin.
+        $mode = request('mode') === 'build' && $sheq_audit_template->canBeBuiltBy(auth()->user()) ? 'build' : 'view';
+
         return view('sheq_audit_templates.show',[
-            'sheq_audit_template' => $sheq_audit_template
+            'sheq_audit_template' => $sheq_audit_template,
+            'mode' => $mode,
         ]);
     }
 }

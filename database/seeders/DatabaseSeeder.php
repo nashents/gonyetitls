@@ -133,6 +133,7 @@ class DatabaseSeeder extends Seeder
         $this->call(WasteTypeSeeder::class);
         $this->call(UnitsOfMeasureSeeder::class);
         $this->call(LossCauseSeeder::class);
+        $this->call(SheqLookupDescriptionSeeder::class);
         $this->call(StageSeeder::class);
         $this->call(CriterionSeeder::class);
         $this->call(CheckSeeder::class);

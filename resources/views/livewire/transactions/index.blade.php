@@ -574,13 +574,11 @@
                             @if (!is_null($selectedCurrency))
                             @if (Auth::user()->employee->company)
                                 @if ($selectedCurrency != Auth::user()->employee->company->currency_id)
-                                <div class="row">
-                                    <div class="form-group">
-                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate" required>
-                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
-                                    </div> 
+                                <div class="form-group">
+                                    <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate" required>
+                                    @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
                                 </div>
                                 @endif
                             @endif

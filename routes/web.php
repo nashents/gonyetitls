@@ -976,9 +976,6 @@ Route::get('incidents/authorization/pending','IncidentController@pending')->name
 Route::get('incidents/authorization/approved','IncidentController@approved')->name('incidents.approved');
 Route::get('incidents/authorization/rejected','IncidentController@rejected')->name('incidents.rejected');
 
-Route::get('attendances/authorization/pending','AttendanceController@pending')->name('attendances.pending');
-Route::get('attendances/authorization/approved','AttendanceController@approved')->name('attendances.approved');
-Route::get('attendances/authorization/rejected','AttendanceController@rejected')->name('attendances.rejected');
 
 Route::get('waste-collections/authorization/pending','WasteCollectionController@pending')->name('waste_collections.pending');
 Route::get('waste-collections/authorization/approved','WasteCollectionController@approved')->name('waste_collections.approved');

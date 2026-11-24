@@ -13,7 +13,11 @@
                                 <h4>{{$sheq_audit_template->name}} <small>{{$sheq_audit_template->standard}}</small>
                                     <span class="label label-primary">Total Possible Marks: {{$sheq_audit_template->possibleTotal()}}</span>
                                 </h4>
-                                <a href="" data-toggle="modal" data-target="#sectionModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Section</a>
+                                @if ($read_only)
+                                    <span class="label label-default"><i class="fa fa-eye"></i> View only</span>
+                                @else
+                                    <a href="" data-toggle="modal" data-target="#sectionModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Section</a>
+                                @endif
                             </div>
                         </div>
                         <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
@@ -23,11 +27,13 @@
                                     <div class="panel-heading">
                                         <strong>{{$section->code}} {{$section->title}}</strong>
                                         <span class="label label-default">Possible: {{$section->possibleTotal()}}</span>
+                                        @unless ($read_only)
                                         <span class="pull-right">
                                             <a href="#" wire:click.prevent="addItem({{$section->id}})" class="btn btn-xs btn-default"><i class="fa fa-plus"></i> Requirement</a>
                                             <a href="#" wire:click.prevent="editSection({{$section->id}})" class="btn btn-xs btn-default"><i class="fa fa-edit color-success"></i></a>
                                             <a href="#" wire:click.prevent="deleteSection({{$section->id}})" class="btn btn-xs btn-default"><i class="fa fa-trash color-danger"></i></a>
                                         </span>
+                                        @endunless
                                     </div>
                                     <div class="panel-body" style="padding:10px">
                                         <table class="table table-striped table-bordered table-sm" width="100%">
@@ -37,7 +43,9 @@
                                                     <th>Requirement</th>
                                                     <th style="width:25%">Guidance / What to check</th>
                                                     <th style="width:8%">Possible Mark</th>
+                                                    @unless ($read_only)
                                                     <th style="width:10%">Action</th>
+                                                    @endunless
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -47,13 +55,15 @@
                                                         <td>{{$item->requirement}}</td>
                                                         <td>{{$item->guidance}}</td>
                                                         <td>{{$item->possible_mark}}</td>
+                                                        @unless ($read_only)
                                                         <td>
                                                             <a href="#" wire:click.prevent="editItem({{$item->id}})" class="btn btn-xs btn-default"><i class="fa fa-edit color-success"></i></a>
                                                             <a href="#" wire:click.prevent="deleteItem({{$item->id}})" class="btn btn-xs btn-default"><i class="fa fa-trash color-danger"></i></a>
                                                         </td>
+                                                        @endunless
                                                     </tr>
                                                 @empty
-                                                    <tr><td colspan="5"><center>No requirements in this section yet.</center></td></tr>
+                                                    <tr><td colspan="{{ $read_only ? 4 : 5 }}"><center>No requirements in this section yet.</center></td></tr>
                                                 @endforelse
                                             </tbody>
                                         </table>
@@ -61,7 +71,11 @@
                                 </div>
                             @empty
                                 <div style="text-align:center; padding:20px; font-size:17px">
-                                    No sections yet. Add your first section (e.g. "4.0 Organisational Context").
+                                    @if ($read_only)
+                                        No sections in this checklist yet.
+                                    @else
+                                        No sections yet. Add your first section (e.g. "4.0 Organisational Context").
+                                    @endif
                                 </div>
                             @endforelse
 
@@ -72,7 +86,8 @@
         </div>
     </section>
 
-    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="sectionDeleteModal" tabindex="-1" role="dialog">
+    @unless ($read_only)
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="sectionDeleteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">
@@ -90,7 +105,7 @@
         </div>
     </div>
 
-    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="itemDeleteModal" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="itemDeleteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">
@@ -191,5 +206,6 @@
             </div>
         </div>
     </div>
+    @endunless
 
 </div>

@@ -18,6 +18,7 @@ class Index extends Component
 
     public $sheq_monitoring_parameter_id;
     public $name;
+    public $description;
     public $category;
     public $unit;
     public $limit_value;
@@ -27,11 +28,13 @@ class Index extends Component
 
     protected $rules = [
         'name' => 'required',
+        'description' => 'nullable|string|max:2000',
         'category' => 'required',
     ];
 
     private function resetInputFields(){
         $this->name = "";
+        $this->description = "";
         $this->category = "";
         $this->unit = "";
         $this->limit_value = "";
@@ -46,6 +49,7 @@ class Index extends Component
         $parameter = new SheqMonitoringParameter;
         $parameter->user_id = Auth::user()->id;
         $parameter->name = $this->name;
+        $parameter->description = $this->description;
         $parameter->category = $this->category;
         $parameter->unit = $this->unit;
         $parameter->limit_value = $this->limit_value;
@@ -66,6 +70,7 @@ class Index extends Component
         $parameter = SheqMonitoringParameter::find($id);
         $this->sheq_monitoring_parameter_id = $parameter->id;
         $this->name = $parameter->name;
+        $this->description = $parameter->description;
         $this->category = $parameter->category;
         $this->unit = $parameter->unit;
         $this->limit_value = $parameter->limit_value;
@@ -80,6 +85,7 @@ class Index extends Component
 
         $parameter = SheqMonitoringParameter::find($this->sheq_monitoring_parameter_id);
         $parameter->name = $this->name;
+        $parameter->description = $this->description;
         $parameter->category = $this->category;
         $parameter->unit = $this->unit;
         $parameter->limit_value = $this->limit_value;

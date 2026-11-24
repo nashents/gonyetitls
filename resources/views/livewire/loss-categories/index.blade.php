@@ -25,6 +25,8 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Description
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -34,6 +36,7 @@
                                     @forelse ($loss_categories as $loss_category)
                                   <tr wire:key="{{ '4ecbec-34-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loss_category->id ?? '') }}">
                                     <td>{{$loss_category->name}}</td>
+                                    <td style="white-space:normal; min-width:300px">{{$loss_category->description}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -52,7 +55,7 @@
                                   </tr>
                                 @empty
                                   <tr>
-                                    <td colspan="2">
+                                    <td colspan="3">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Loss Categories Found ....
                                         </div>
@@ -97,6 +100,11 @@
                         <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What does this mean and when is it used?"></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -121,6 +129,11 @@
                         <label for="name">Name<span class="required" style="color: red">*</span></label>
                         <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What does this mean and when is it used?"></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
                 <div class="modal-footer">

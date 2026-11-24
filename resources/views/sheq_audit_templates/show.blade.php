@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Audit Template Builder | @if (Auth::user()->employee->company)
+    {{ $mode === 'build' ? 'Audit Template Builder' : 'Audit Checklist' }} | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -42,7 +42,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('sheq-audit-templates.show', ['sheq_audit_template_id' => $sheq_audit_template->id])
+                        @livewire('sheq-audit-templates.show', ['sheq_audit_template_id' => $sheq_audit_template->id, 'mode' => $mode])
                         <!-- /.section -->
 
                     </div>

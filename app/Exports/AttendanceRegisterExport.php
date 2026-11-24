@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use Carbon\Carbon;
+use App\Models\Attendance;
 use App\Models\AttendanceRegister;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -42,16 +43,17 @@ class AttendanceRegisterExport implements
     public $totals;
     public $notesTotals;
 
+    // Employees expected on a register but not marked (set by collection()).
+    protected $unmarkedCount = 0;
+
     // Row numbers (absolute sheet rows) of the department and team banner rows,
     // populated by collection() so registerEvents() can style/merge them.
     protected $departmentHeaderRows = [];
     protected $teamHeaderRows = [];
 
-    public $auth_status;
 
-    public function __construct($from = null, $to = null, $department_id = null, $search = null, $attendance_filter = 'created_at', $auth_status = null)
+    public function __construct($from = null, $to = null, $department_id = null, $search = null, $attendance_filter = 'created_at')
     {
-        $this->auth_status = $auth_status;
         $this->from = $from;
         $this->attendance_filter = $attendance_filter;
         $this->to = $to;
@@ -162,11 +164,6 @@ class AttendanceRegisterExport implements
                 });
             })
 
-            // Auth status of the parent attendance register (index table filter)
-            ->when(filled($this->auth_status), function (Builder $q) {
-                $q->whereHas('attendance', fn (Builder $a) => \App\Http\Livewire\Concerns\FiltersAuthStatus::filterByAuthStatus($a, $this->auth_status));
-            })
-
             // Department filter is on the employee's DEFAULT department
             ->when(filled($this->department_id), function (Builder $q) {
                 $q->whereHas('employee', fn (Builder $e) => $e->inDefaultDepartment($this->department_id));
@@ -203,6 +200,21 @@ class AttendanceRegisterExport implements
     public function collection()
     {
         $records = $this->query()->get();
+
+        // Employees who were on a register's department but not marked are
+        // listed too, with blank inputs, so gaps can be traced back to the
+        // person who captured the register.
+        $unmarked = $this->unmarkedRows();
+        $this->unmarkedCount = $unmarked->count();
+
+        $records = $records->concat($unmarked)
+            ->sortBy(fn ($row) => [
+                // newest register first, then by name
+                -strtotime((string) ($row->attendance?->date ?? '1970-01-01')),
+                (string) ($row->attendance?->attendance_number ?? ''),
+                strtolower(trim(($row->employee?->name ?? '') . ' ' . ($row->employee?->surname ?? ''))),
+            ])
+            ->values();
 
         // Drivers are listed in one "Drivers" group of their own and never
         // under a department, so a driver appears exactly once.
@@ -255,6 +267,92 @@ class AttendanceRegisterExport implements
     }
 
     /**
+     * Unsaved AttendanceRegister rows (status etc. blank) for every employee
+     * expected on a register in range who has no register row that date on
+     * any register. Honours the date, department and search filters.
+     */
+    protected function unmarkedRows()
+    {
+        $from = $this->from ? trim($this->from) : null;
+        $to   = $this->to ? trim($this->to) : null;
+        $search = trim($this->search ?? '');
+
+        $attendances = Attendance::query()
+            ->with('department:id,name')
+            ->when($from, fn ($q) => $q->where('date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('date', '<=', $to))
+            ->when(filled($this->department_id), fn ($q) => $q->where('department_id', $this->department_id))
+            ->get(['id', 'attendance_number', 'date', 'department_id', 'is_drivers']);
+
+        if ($attendances->isEmpty()) {
+            return collect();
+        }
+
+        // employee ids already marked, per date (on any register that day)
+        $markedByDate = AttendanceRegister::query()
+            ->join('attendances', 'attendances.id', '=', 'attendance_registers.attendance_id')
+            ->whereNull('attendances.deleted_at')
+            ->whereIn('attendances.date', $attendances->pluck('date')->unique()->values())
+            ->get(['attendances.date as reg_date', 'attendance_registers.employee_id'])
+            ->groupBy('reg_date')
+            ->map(fn ($rows) => $rows->pluck('employee_id')->flip());
+
+        $employeeCache = [];
+        $rows = collect();
+
+        foreach ($attendances as $attendance) {
+            $cacheKey = $attendance->department_id . '-' . (int) (bool) $attendance->is_drivers;
+            $employeeCache[$cacheKey] ??= Attendance::registerEmployeesQuery($attendance->department, (bool) $attendance->is_drivers)
+                ->with([
+                    'default_departments:departments.id,departments.name',
+                    'driver:id,employee_id',
+                    'teams' => fn ($t) => $t->where('teams.status', 1)->orderBy('teams.name'),
+                    'teams.departments:departments.id',
+                ])
+                ->get();
+
+            $marked = $markedByDate->get($attendance->date, collect());
+
+            foreach ($employeeCache[$cacheKey] as $employee) {
+                if ($marked->has($employee->id)) {
+                    continue;
+                }
+
+                // Mark this employee as listed for the date so a second
+                // register for the same department/day doesn't repeat them.
+                $marked->put($employee->id, true);
+
+                $row = new AttendanceRegister();
+                $row->employee_id = $employee->id;
+                $row->attendance_id = $attendance->id;
+                $row->setRelation('employee', $employee);
+                $row->setRelation('attendance', $attendance);
+
+                if ($search === '' || $this->unmarkedMatchesSearch($row, $search)) {
+                    $rows->push($row);
+                }
+            }
+
+            $markedByDate->put($attendance->date, $marked);
+        }
+
+        return $rows;
+    }
+
+    protected function unmarkedMatchesSearch($row, string $search): bool
+    {
+        $haystack = implode(' ', [
+            $row->attendance->attendance_number,
+            $row->attendance->date,
+            $row->attendance->department?->name,
+            $row->employee->employee_number,
+            $row->employee->name . ' ' . $row->employee->surname,
+        ]);
+
+        return stripos($haystack, $search) !== false;
+    }
+
+    /**
      * The team an attendance row is listed under. An employee can sit in
      * several teams, but must appear once: prefer an active team linked to
      * their default department, else their first active team by name.
@@ -292,6 +390,18 @@ class AttendanceRegisterExport implements
     protected function mapRow($row): array
     {
         $employeeName = trim(($row->employee?->name ?? '') . ' ' . ($row->employee?->surname ?? ''));
+
+        // Not marked: identify the register + employee, leave the inputs blank.
+        if (!$row->exists) {
+            return [
+                $row->attendance?->attendance_number ?? '-',
+                $row->attendance?->date ? Carbon::parse($row->attendance->date)->format('Y-m-d') : '-',
+                $row->employee?->employee_number ?? '-',
+                $employeeName ?: '-',
+                '', '', '', '', '', '', '',
+                $this->departmentName($row, '-'),
+            ];
+        }
 
         return [
             $row->attendance?->attendance_number ?? '-',
@@ -434,13 +544,9 @@ class AttendanceRegisterExport implements
                 $row++;
 
                 // Date range shown (from Attendance filtering)
-                if (filled($this->from) && filled($this->to)) {
-                    $fromText = Carbon::parse($this->from)->format('Y-m-d');
-                    $toText   = Carbon::parse($this->to)->format('Y-m-d');
-                } else {
-                    $fromText = now()->startOfMonth()->format('Y-m-d');
-                    $toText   = now()->endOfMonth()->format('Y-m-d');
-                }
+                // Show the range actually applied (open ends shown as such).
+                $fromText = filled($this->from) ? Carbon::parse($this->from)->format('Y-m-d') : 'Start';
+                $toText   = filled($this->to) ? Carbon::parse($this->to)->format('Y-m-d') : 'Today';
 
                 $deptName = 'All';
                 if (filled($this->department_id)) {
@@ -466,6 +572,10 @@ class AttendanceRegisterExport implements
                 $colIndex = 4; // D
                 foreach ((array) ($this->totals->status_counts ?? []) as $status => $count) {
                     $sheet->setCellValueByColumnAndRow($colIndex, $row, $this->humanStatus($status) . '=' . (int) $count);
+                    $colIndex++;
+                }
+                if ($this->unmarkedCount > 0) {
+                    $sheet->setCellValueByColumnAndRow($colIndex, $row, 'Not Marked=' . (int) $this->unmarkedCount);
                     $colIndex++;
                 }
                 $sheet->getStyle("D{$row}:" . $sheet->getCellByColumnAndRow($colIndex - 1, $row)->getCoordinate())

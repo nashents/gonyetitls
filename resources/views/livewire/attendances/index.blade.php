@@ -49,7 +49,6 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        @include('partials.auth-status-filter')
                                         <!-- /input-group -->
                                         <div class="col-lg-3">
                                             <div class="input-group">
@@ -90,8 +89,6 @@
                                         </th>
                                         <th class="th-sm">Department
                                         </th>
-                                        <th class="th-sm">Auth
-                                        </th>
                                         <th class="th-sm">Actions
                                         </th>
                                       </tr>
@@ -107,7 +104,6 @@
                                         <td>{{ucfirst($attendance->user ? $attendance->user->name : "")}} {{ucfirst($attendance->user ? $attendance->user->surname : "")}}</td>
                                         <td>{{$attendance->date}} {{$attendance->time ? "@ ".$attendance->time : ""}}</td>
                                         <td>{{$attendance->department ? $attendance->department->name : ""}}</td>
-                                        <td><span class="badge bg-{{($attendance->authorization == 'approved') ? 'success' : (($attendance->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($attendance->authorization == 'approved') ? 'approved' : (($attendance->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                       
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -117,7 +113,7 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('attendances.show', $attendance->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                    @if ($attendance->user_id == Auth::user()->id && $attendance->authorization == "pending")
+                                                    @if ($attendance->user_id == Auth::user()->id)
                                                         <li><a href="#" wire:click.prevent="edit({{$attendance->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @endif
                                                 </ul>

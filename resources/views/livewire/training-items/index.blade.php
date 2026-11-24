@@ -21,6 +21,8 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Description
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -30,6 +32,7 @@
                                     @forelse ($training_items as $training_item)
                                   <tr wire:key="{{ '44c300-30-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($training_item->id ?? '') }}">
                                     <td>{{$training_item->name}}</td>
+                                    <td style="white-space:normal; min-width:300px">{{$training_item->description}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -94,6 +97,11 @@
                       <input type="text" wire:model.debounce.300ms="name" class="form-control"  placeholder="Training Item" required>
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What does this mean and when is it used?"></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -122,6 +130,11 @@
                             @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
               
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What does this mean and when is it used?"></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

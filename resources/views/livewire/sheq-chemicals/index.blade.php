@@ -129,7 +129,7 @@
         </div>
     </section>
 
-    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="sheq_chemicalDeleteModal" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="sheq_chemicalDeleteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">

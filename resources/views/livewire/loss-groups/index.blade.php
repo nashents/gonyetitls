@@ -27,6 +27,8 @@
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Description
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -37,6 +39,7 @@
                                   <tr wire:key="{{ '5bc1f3-36-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($loss_group->id ?? '') }}">
                                     <td>{{$loss_group->loss_category ? $loss_group->loss_category->name : ""}}</td>
                                     <td>{{$loss_group->name}}</td>
+                                    <td style="white-space:normal; min-width:300px">{{$loss_group->description}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -55,7 +58,7 @@
                                   </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3">
+                                        <td colspan="4">
                                             <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                 No Loss Groups Found ....
                                             </div>
@@ -117,6 +120,11 @@
                             </div>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What does this mean and when is it used?"></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -158,6 +166,11 @@
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="What does this mean and when is it used?"></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
                 <div class="modal-footer">

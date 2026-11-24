@@ -22,6 +22,7 @@ class Index extends Component
     protected $losses;
     public $loss_id;
     public $name;
+    public $description;
     public $user_id;
 
 
@@ -44,10 +45,12 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:losses,name,NULL,id,deleted_at,NULL|string|min:2',
+        'description' => 'nullable|string|max:2000',
     ];
 
     private function resetInputFields(){
         $this->name = '';
+        $this->description = '';
     }
 
      public function refresh($category){
@@ -73,6 +76,7 @@ class Index extends Component
         $loss = new Loss;
         $loss->user_id = Auth::user()->id;
         $loss->name = $this->name;
+        $loss->description = $this->description;
         $loss->loss_category_id = $this->selectedLossCategory;
         $loss->loss_group_id = $this->loss_group_id;
         $loss->save();
@@ -91,6 +95,7 @@ class Index extends Component
     $this->loss_groups = LossGroup::orderBy('name','asc')->get();
     $this->user_id = $loss->user_id;
     $this->name = $loss->name;
+    $this->description = $loss->description;
     $this->selectedLossCategory = $loss->loss_category_id;
     $this->loss_group_id = $loss->loss_group_id;
     $this->loss_id = $loss->id;
@@ -105,6 +110,7 @@ class Index extends Component
 
             $loss = Loss::find($this->loss_id);
             $loss->name = $this->name;
+            $loss->description = $this->description;
             $loss->loss_category_id = $this->selectedLossCategory;
             $loss->loss_group_id = $this->loss_group_id;
             $loss->update();

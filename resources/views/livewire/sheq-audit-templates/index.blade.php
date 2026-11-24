@@ -54,9 +54,12 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a href="{{route('sheq_audit_templates.show',$sheq_audit_template->id)}}"><i class="fa fa-wrench color-primary"></i> Build Checklist</a></li>
-                                                <li><a href="#" wire:click="edit({{$sheq_audit_template->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" wire:click.prevent="delete({{$sheq_audit_template->id}})"><i class="fa fa-trash color-danger"></i> Delete</a></li>
+                                                <li><a href="{{route('sheq_audit_templates.show',$sheq_audit_template->id)}}"><i class="fa fa-eye color-default"></i> View Checklist</a></li>
+                                                @if ($sheq_audit_template->canBeBuiltBy(Auth::user(), $is_privileged))
+                                                    <li><a href="{{route('sheq_audit_templates.show',[$sheq_audit_template->id, 'mode' => 'build'])}}"><i class="fa fa-wrench color-primary"></i> Build Checklist</a></li>
+                                                    <li><a href="#" wire:click="edit({{$sheq_audit_template->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" wire:click.prevent="delete({{$sheq_audit_template->id}})"><i class="fa fa-trash color-danger"></i> Delete</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                     </td>
@@ -89,7 +92,7 @@
         </div>
     </section>
 
-    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="sheq_audit_templateDeleteModal" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="sheq_audit_templateDeleteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">

@@ -1422,7 +1422,8 @@ class Index extends Component
             $this->unpaid_invoices = Invoice::where('customer_id',$this->selectedCustomer)
                                         ->where('currency_id',$this->selectedCurrency)
                                         ->where('authorization','approved')
-                                        ->doesntHave('credit_notes')
+                                        // Partly credited invoices stay matchable - approved
+                                        // credit notes already reduce balance (recalculateBalance)
                                         ->where('status','!=','Paid')
                                         ->orderBy($this->invoice_filter,'desc')->get();
         }

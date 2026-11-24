@@ -27,4 +27,19 @@ class SheqAuditTemplate extends Model implements Auditable
     public function possibleTotal(){
         return $this->items->sum('possible_mark');
     }
+
+    /**
+     * Only the template's creator, is_admin users and Super Admins may build
+     * (add/edit/delete sections and requirements of) the checklist.
+     * Pass $isPrivileged when checking many rows to avoid a role query each.
+     */
+    public function canBeBuiltBy($user, ?bool $isPrivileged = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        $isPrivileged = $isPrivileged ?? ($user->is_admin() || $user->isSuperAdmin());
+
+        return $isPrivileged || ($this->user_id && (int) $this->user_id === (int) $user->id);
+    }
 }

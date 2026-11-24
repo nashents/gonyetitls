@@ -31,7 +31,11 @@
                                 <tbody>
                                     @forelse ($sheq_monitoring_parameters as $parameter)
                                   <tr wire:key="{{ '92dbbe-32-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($parameter->id ?? '') }}">
-                                    <td>{{$parameter->name}}</td>
+                                    <td style="white-space:normal; min-width:250px">{{$parameter->name}}
+                                        @if ($parameter->description)
+                                            <br><small class="text-muted">{{$parameter->description}}</small>
+                                        @endif
+                                    </td>
                                     <td>{{ucwords($parameter->category)}}</td>
                                     <td>{{$parameter->unit}}</td>
                                     <td>
@@ -91,7 +95,7 @@
         </div>
     </section>
 
-    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="sheq_monitoring_parameterDeleteModal" tabindex="-1" role="dialog">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="sheq_monitoring_parameterDeleteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">

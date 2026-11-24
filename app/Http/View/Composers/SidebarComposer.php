@@ -239,15 +239,6 @@ class SidebarComposer
 
 
 
-        $attendancesPendingCount = Attendance::where('authorization','pending')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $attendancesApprovedCount = Attendance::where('authorization','approved')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $attendancesRejectedCount = Attendance::where('authorization','rejected')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         
         $incidentsPendingCount = Incident::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -706,9 +697,6 @@ class SidebarComposer
         'fuel_requests_rejected_count' => (int) ($fuel_requestsRejectedCount ?? 0),
 
 
-        'attendances_pending_count'  => (int) ($attendancesPendingCount ?? 0),
-        'attendances_approved_count' => (int) ($attendancesApprovedCount ?? 0),
-        'attendances_rejected_count' => (int) ($attendancesRejectedCount ?? 0),
 
         'incidents_pending_count'  => (int) ($incidentsPendingCount ?? 0),
         'incidents_approved_count' => (int) ($incidentsApprovedCount ?? 0),
@@ -961,9 +949,6 @@ class SidebarComposer
             'wsdepartment_head'          => $wsdepartment_head,
             'sdepartment_head'          => $sdepartment_head,
             'isSystemAdmin'          => $isSystemAdmin,
-            'attendancesPendingCount'  => $attendancesPendingCount,
-            'attendancesApprovedCount' => $attendancesApprovedCount,
-            'attendancesRejectedCount' => $attendancesRejectedCount,
           
             'incidentsPendingCount'  => $incidentsPendingCount,
             'incidentsApprovedCount' => $incidentsApprovedCount,

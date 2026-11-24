@@ -17,18 +17,6 @@ class AttendanceController extends Controller
     {
         return view('attendances.index');
     }
-    public function pending()
-    {
-        return view('attendances.pending');
-    }
-    public function approved()
-    {
-        return view('attendances.approved');
-    }
-    public function rejected()
-    {
-        return view('attendances.rejected');
-    }
 
     /**
      * Show the form for creating a new resource.

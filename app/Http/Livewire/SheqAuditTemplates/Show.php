@@ -5,6 +5,7 @@ namespace App\Http\Livewire\SheqAuditTemplates;
 use App\Models\SheqAuditItem;
 use App\Models\SheqAuditSection;
 use App\Models\SheqAuditTemplate;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Show extends Component
@@ -24,8 +25,26 @@ class Show extends Component
     public $possible_mark = 0;
     public $item_sort_order = 0;
 
-    public function mount($sheq_audit_template_id){
+    // 'view' = read-only checklist for everyone; 'build' = add/edit/delete,
+    // which is only honoured for the creator / is_admin / Super Admin.
+    public $mode = 'view';
+
+    public function mount($sheq_audit_template_id, $mode = 'view'){
         $this->sheq_audit_template_id = $sheq_audit_template_id;
+        $this->mode = $mode;
+    }
+
+    // Livewire only makes follow-up requests for build actions (the read-only
+    // page has no wire:click), so every one of them must come from a builder.
+    // Checked server-side, never from the public $mode property.
+    public function hydrate(){
+        abort_unless($this->canBuild(), 403, 'Only the creator of this template or a Super Admin can build its checklist.');
+    }
+
+    private function canBuild(): bool
+    {
+        $template = SheqAuditTemplate::find($this->sheq_audit_template_id);
+        return $template && $template->canBeBuiltBy(Auth::user());
     }
 
     private function resetSectionFields(){
@@ -201,7 +220,8 @@ class Show extends Component
         $sheq_audit_template = SheqAuditTemplate::with('sections.items')->find($this->sheq_audit_template_id);
 
         return view('livewire.sheq-audit-templates.show',[
-            'sheq_audit_template' => $sheq_audit_template
+            'sheq_audit_template' => $sheq_audit_template,
+            'read_only' => $this->mode !== 'build' || !$this->canBuild(),
         ]);
     }
 }
