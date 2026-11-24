@@ -621,7 +621,11 @@ class AttendanceRegisterExport implements
             $drawing->setPath(public_path('/images/uploads/logo.png'));
         }
 
-        $drawing->setHeight(90);
+        // Fit inside columns A–B (2 x width 14 ≈ 205px) so a wide logo never
+        // spills over the summary block, which starts at column C.
+        $drawing->setResizeProportional(true);
+        $drawing->setWidthAndHeight(190, 90);
+        $drawing->setOffsetX(5);
         $drawing->setCoordinates('A2');
 
         return $drawing;

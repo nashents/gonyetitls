@@ -6,7 +6,9 @@ use App\Models\Module;
 use App\Models\ModuleAccessBlock;
 use App\Models\ModuleGroup;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 /**
@@ -23,6 +25,12 @@ use Illuminate\Support\Str;
  * by App\Http\Middleware\ModuleAccessGuard (both layers, 403).
  *
  * is_admin users and Super Admins are never restricted.
+ *
+ * Linked access: a blocked route opened by clicking a link/button on a page the
+ * user CAN open (e.g. "New Customer" on a trip form) is let through, and that
+ * route family ("customers.*") stays open for LINK_GRANT_MINUTES so the
+ * create → save → show chain works. Typing the URL (no same-site referer) is
+ * still blocked. See allowedViaLink().
  */
 class ModuleAccess
 {
@@ -388,6 +396,70 @@ class ModuleAccess
             'blocked' => array_values(array_unique($blocked)),
             'allowed' => $allowed,
         ];
+    }
+
+    // ---------------------------------------------------------------- linked access
+
+    /** How long a route family opened from an allowed page stays open (minutes). */
+    public const LINK_GRANT_MINUTES = 120;
+
+    private const LINK_GRANT_SESSION_KEY = 'module_access.link_grants';
+
+    /**
+     * Whether a blocked route may still be opened because the user got there by
+     * clicking something on a page they are allowed to use (same-site Referer
+     * resolving to an unblocked route, or to a route family already granted
+     * this way). Grants the requested route's family on success.
+     */
+    public static function allowedViaLink(Request $request, string $routeName): bool
+    {
+        $referer = (string) $request->headers->get('referer', '');
+        if ($referer === '' || !$request->hasSession()) {
+            return false;
+        }
+
+        $refHost = parse_url($referer, PHP_URL_HOST);
+        if (!$refHost || strcasecmp($refHost, $request->getHost()) !== 0) {
+            return false; // external or malformed referer
+        }
+
+        $refRoute = static::routeNameForUrl($referer);
+        if (!$refRoute) {
+            return false;
+        }
+
+        $session = $request->session();
+        $grants = array_filter(
+            (array) $session->get(static::LINK_GRANT_SESSION_KEY, []),
+            fn ($expires) => $expires > time()
+        );
+
+        $refAllowed = isset($grants[static::routeFamily($refRoute)])
+            || !static::isBlockedRoute($refRoute);
+
+        if ($refAllowed) {
+            $grants[static::routeFamily($routeName)] = time() + static::LINK_GRANT_MINUTES * 60;
+        }
+
+        $session->put(static::LINK_GRANT_SESSION_KEY, $grants);
+
+        return $refAllowed;
+    }
+
+    /** "customers.create" → "customers"; "foo" → "foo". */
+    private static function routeFamily(string $routeName): string
+    {
+        return Str::contains($routeName, '.') ? Str::beforeLast($routeName, '.') : $routeName;
+    }
+
+    /** Name of the GET route a same-site URL points at, or null. */
+    private static function routeNameForUrl(string $url): ?string
+    {
+        try {
+            return Route::getRoutes()->match(Request::create($url, 'GET'))->getName();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     // ---------------------------------------------------------------- helpers

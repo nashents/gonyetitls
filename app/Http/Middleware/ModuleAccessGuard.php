@@ -17,7 +17,10 @@ class ModuleAccessGuard
     {
         $name = $request->route()?->getName();
 
-        if ($name && ModuleAccess::isBlockedRoute($name)) {
+        // A link/button on a page the user may open (e.g. "New Customer" on a
+        // trip form) still works — see ModuleAccess::allowedViaLink().
+        if ($name && ModuleAccess::isBlockedRoute($name)
+            && !ModuleAccess::allowedViaLink($request, $name)) {
             abort(403, 'You do not have access to this module.');
         }
 
