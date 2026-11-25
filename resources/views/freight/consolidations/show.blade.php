@@ -30,6 +30,7 @@
                             </div>
                             <!-- /.row -->
 
+                            @include('includes.messages')
                             @livewire('freight.consolidations.show', ['id' => $consolidation->id])
 
                         </div>

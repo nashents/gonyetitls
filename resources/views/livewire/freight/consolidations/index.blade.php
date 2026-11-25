@@ -37,7 +37,7 @@
                                             <tr>
                                                 <td>{{ $consolidation->consolidation_number }}</td>
                                                 <td>{{ $consolidation->master_shipment?->shipment_number }}</td>
-                                                <td>{{ $consolidation->master_shipment?->freight_job?->customer?->name }}</td>
+                                                <td>{{ $consolidation->master_shipment?->freight_job?->customer_label }}</td>
                                                 <td>{{ $consolidation->house_shipments->count() }}</td>
                                                 <td><span class="label label-info label-wide">{{ ucfirst($consolidation->status) }}</span></td>
                                                 <td>

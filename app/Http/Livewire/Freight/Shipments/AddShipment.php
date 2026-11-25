@@ -65,7 +65,7 @@ class AddShipment extends Component
 
     public function addCargoRow()
     {
-        $this->cargo_rows[] = ['cargo_id' => null, 'commodity' => null, 'hs_code' => null, 'quantity' => null, 'packages' => null, 'gross_weight' => null];
+        $this->cargo_rows[] = ['cargo_id' => null, 'commodity' => null, 'hs_code' => null, 'quantity' => null, 'packages' => null, 'gross_weight' => null, 'cbm' => null];
     }
 
     public function removeCargoRow($index)
@@ -135,8 +135,28 @@ class AddShipment extends Component
         ];
     }
 
+    /**
+     * Consolidation number when this job is part of an LCL consolidation
+     * (as the master container job or a client job) - such jobs keep one
+     * shipment: more containers go on the master shipment, and a client's
+     * later cargo is a new job added to the consolidation.
+     */
+    public function consolidationNumber(): ?string
+    {
+        $shipmentIds = $this->job->shipments()->pluck('id');
+
+        return \App\Models\Consolidation::whereIn('master_shipment_id', $shipmentIds)
+            ->orWhereHas('house_shipments', fn ($q) => $q->whereIn('shipments.id', $shipmentIds))
+            ->value('consolidation_number');
+    }
+
     public function store(FreightJobService $service)
     {
+        if ($number = $this->consolidationNumber()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "This job is part of consolidation {$number} - it keeps a single shipment."]);
+            return;
+        }
+
         $this->validate();
 
         $cargoRows = collect($this->cargo_rows)
@@ -171,6 +191,8 @@ class AddShipment extends Component
 
     public function render()
     {
-        return view('livewire.freight.shipments.add-shipment');
+        return view('livewire.freight.shipments.add-shipment', [
+            'consolidationNumber' => $this->consolidationNumber(),
+        ]);
     }
 }

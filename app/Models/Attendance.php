@@ -45,6 +45,35 @@ class Attendance extends Model implements Auditable
         return $query;
     }
 
+    const DRAFT = 'draft';
+    const FINAL = 'final';
+
+    public function isDraft(): bool
+    {
+        return $this->register_status === self::DRAFT;
+    }
+
+    public function isFinal(): bool
+    {
+        return !$this->isDraft();
+    }
+
+    /** A register row counts as marked only once it has a status. */
+    public static function isMarked(?AttendanceRegister $register): bool
+    {
+        return $register !== null && filled($register->status);
+    }
+
+    /** Expected employees with no status yet (no row, or a row left blank). */
+    public function unmarkedEmployees()
+    {
+        $marked = $this->attendance_registers()->get()->keyBy('employee_id');
+
+        return $this->expectedEmployees()
+            ->filter(fn ($employee) => !static::isMarked($marked->get($employee->id)))
+            ->values();
+    }
+
     /** The employees this register should cover, marked or not. */
     public function expectedEmployees()
     {
@@ -58,6 +87,9 @@ class Attendance extends Model implements Auditable
         'user_id',
         'department_id',
         'is_drivers',
+        'register_status',
+        'finalized_at',
+        'finalized_by',
         'time',
         'date',
      

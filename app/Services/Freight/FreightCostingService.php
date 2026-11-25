@@ -22,26 +22,60 @@ class FreightCostingService
     public function recalculateJobTotals(FreightJob $job): FreightJob
     {
         return DB::transaction(function () use ($job) {
-            $actualCost = FreightCost::where('freight_job_id', $job->id)
-                ->whereIn('verification_status', self::COST_ACTUAL_STATUSES)
-                ->sum('exchange_amount');
-
-            $actualRevenue = FreightCharge::where('freight_job_id', $job->id)
-                ->whereIn('status', self::CHARGE_ACTUAL_STATUSES)
-                ->sum('exchange_amount');
-
-            $job->actual_cost = $actualCost;
-            $job->actual_revenue = $actualRevenue;
-            $job->actual_margin = $actualRevenue - $actualCost;
-
-            if ($job->estimated_revenue !== null && $job->estimated_cost !== null) {
-                $job->estimated_margin = $job->estimated_revenue - $job->estimated_cost;
+            // A consolidation's master costs are shared with its house jobs,
+            // so a change on any of them re-splits every job in it.
+            $allocator = app(ConsolidationCostAllocator::class);
+            foreach ($allocator->relatedJobIds([$job->id]) as $relatedId) {
+                if ($relatedId != $job->id && ($related = FreightJob::find($relatedId))) {
+                    $this->saveTotals($related, $allocator);
+                }
             }
 
-            $job->save();
-
-            return $job;
+            return $this->saveTotals($job, $allocator);
         });
+    }
+
+    /**
+     * Re-split after a consolidation's membership, basis or allocation values
+     * change (affected job ids captured BEFORE a detach so the removed job
+     * gets its share cleared too).
+     */
+    public function recalculateJobs(array $jobIds): void
+    {
+        $allocator = app(ConsolidationCostAllocator::class);
+
+        DB::transaction(function () use ($jobIds, $allocator) {
+            foreach (FreightJob::whereIn('id', $allocator->relatedJobIds($jobIds))->get() as $job) {
+                $this->saveTotals($job, $allocator);
+            }
+        });
+    }
+
+    private function saveTotals(FreightJob $job, ConsolidationCostAllocator $allocator): FreightJob
+    {
+        $ownCost = (float) FreightCost::where('freight_job_id', $job->id)
+            ->whereIn('verification_status', self::COST_ACTUAL_STATUSES)
+            ->sum('exchange_amount');
+
+        $consolidationCost = $allocator->consolidationCostFor($job);
+        $actualCost = $ownCost + $consolidationCost;
+
+        $actualRevenue = FreightCharge::where('freight_job_id', $job->id)
+            ->whereIn('status', self::CHARGE_ACTUAL_STATUSES)
+            ->sum('exchange_amount');
+
+        $job->consolidation_cost = $consolidationCost;
+        $job->actual_cost = $actualCost;
+        $job->actual_revenue = $actualRevenue;
+        $job->actual_margin = $actualRevenue - $actualCost;
+
+        if ($job->estimated_revenue !== null && $job->estimated_cost !== null) {
+            $job->estimated_margin = $job->estimated_revenue - $job->estimated_cost;
+        }
+
+        $job->save();
+
+        return $job;
     }
 
     /**

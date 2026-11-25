@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Maintenance Schedules | @if (isset(Auth::user()->employee->company))
+    Maintenance Planning | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -29,12 +29,13 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fas fa-list"></i> Fleet Maintenance Schedules</li>
+            							<li class="active"> <i class="fas fa-calendar-check"></i> Maintenance Planning</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
+                        @livewire('maintenance-items.index')
                         @livewire('inspection-schedules.index',['type' => 'maintenance'])
                     </div>
 

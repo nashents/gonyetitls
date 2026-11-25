@@ -20,7 +20,7 @@
                                                 <option value="">Select Master Shipment</option>
                                                 @foreach ($shipments as $shipment)
                                                     <option value="{{ $shipment->id }}">
-                                                        {{ $shipment->shipment_number }} &mdash; {{ $shipment->freight_job?->job_number }} &mdash; {{ $shipment->freight_job?->customer?->name }}
+                                                        {{ $shipment->shipment_number }} &mdash; {{ $shipment->freight_job?->job_number }} &mdash; {{ $shipment->freight_job?->customer_label }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -31,13 +31,9 @@
                                         <div class="form-group">
                                             <label>Cost Allocation Basis</label>
                                             <select class="form-control" wire:model="cost_allocation_basis">
-                                                <option value="">Select</option>
-                                                <option value="weight">Weight</option>
-                                                <option value="cbm">CBM</option>
-                                                <option value="container">Container</option>
-                                                <option value="chargeable_weight">Chargeable Weight</option>
-                                                <option value="fixed_percentage">Fixed Percentage</option>
-                                                <option value="manual">Manual</option>
+                                                @foreach (\App\Services\Freight\ConsolidationCostAllocator::BASES as $basisKey => $basisLabel)
+                                                    <option value="{{ $basisKey }}">{{ $basisLabel }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                     </div>

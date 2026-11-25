@@ -30,6 +30,16 @@ trait AuthorizesFreightJobs
         return app(FreightJobAuthorizationService::class)->canAuthorize(Auth::user());
     }
 
+    /**
+     * Authorization states that can be (re-)authorized from this component.
+     * System rule (same as Trips): Pending and Rejected jobs are authorized
+     * from their own lists or the job page; Manage and Approved never.
+     */
+    protected function authorizableStatuses(): array
+    {
+        return ['pending', 'rejected'];
+    }
+
     public function authorizeJob($id)
     {
         if (! $this->canAuthorize) {
@@ -38,6 +48,11 @@ trait AuthorizesFreightJobs
         }
 
         $job = FreightJob::findOrFail($id);
+
+        if (! in_array($job->authorization, $this->authorizableStatuses(), true)) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "Freight job {$job->job_number} is {$job->authorization}; authorize jobs from Pending (or Rejected) Freight Jobs."]);
+            return;
+        }
         $this->authorizing_job_id = $job->id;
         $this->authorizing_job_number = $job->job_number;
         $this->authorize = null;
@@ -62,6 +77,10 @@ trait AuthorizesFreightJobs
         }
 
         $job = FreightJob::findOrFail($this->authorizing_job_id);
+        if (! in_array($job->authorization, $this->authorizableStatuses(), true)) {
+            $this->addError('authorize', "This job is already {$job->authorization}.");
+            return;
+        }
         app(FreightJobAuthorizationService::class)->authorize($job, $this->authorize, $this->comments, Auth::id());
 
         $this->dispatchBrowserEvent('hide-authorizationModal');
@@ -80,6 +99,9 @@ trait AuthorizesFreightJobs
 
     public function showBulkAuthorize()
     {
+        if (! $this->canAuthorize || ! $this->authorizableStatuses()) {
+            return;
+        }
         $this->bulk_authorize = null;
         $this->bulk_comments = null;
         $this->resetErrorBag();
@@ -98,7 +120,7 @@ trait AuthorizesFreightJobs
         }
 
         $service = app(FreightJobAuthorizationService::class);
-        $jobs = FreightJob::whereIn('id', $this->selectedRows)->where('authorization', 'pending')->orderBy('id')->get();
+        $jobs = FreightJob::whereIn('id', $this->selectedRows)->whereIn('authorization', $this->authorizableStatuses() ?: ['-'])->orderBy('id')->get();
 
         $done = 0;
         $skipped = [];

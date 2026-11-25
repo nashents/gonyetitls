@@ -44,8 +44,8 @@ class Show extends Component
 
         return view('livewire.attendances.show', [
             'attendance_registers' => $rows,
-            'marked_count' => $rows->whereNotNull('register')->count(),
-            'unmarked_count' => $rows->whereNull('register')->count(),
+            'marked_count' => $rows->filter(fn ($r) => Attendance::isMarked($r->register))->count(),
+            'unmarked_count' => $rows->reject(fn ($r) => Attendance::isMarked($r->register))->count(),
         ]);
     }
 }

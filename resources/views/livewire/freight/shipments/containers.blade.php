@@ -1,9 +1,15 @@
 <div>
+    @if ($isHouse && $shipment->containers->isEmpty())
+        {{-- LCL client shipment: the shared container is shown above (from the master job). --}}
+        <p class="text-muted"><i class="fa fa-info-circle"></i> Consolidated shipment - its cargo travels in the master container shown above. Containers are added and updated on the master job.</p>
+    @else
+    @unless ($isHouse)
     <div class="mb-10">
         <a href="#" class="btn btn-xs btn-info" data-toggle="modal" data-target="#addContainerModal{{ $shipment->id }}">
             <i class="fa fa-plus"></i> Add Container
         </a>
     </div>
+    @endunless
 
     <table class="table table-striped table-bordered">
         <thead>
@@ -97,7 +103,7 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                                <small class="color-gray">Demurrage and Detention are independent estimates for different possible carrier billing structures &mdash; do not sum them.</small>
+                                <small class="text-muted">Demurrage and Detention are independent estimates for different possible carrier billing structures &mdash; do not sum them.</small>
                             @else
                                 <p class="text-muted">No exposure tracked yet for this container (starts automatically once discharged; requires a free-day policy configured for its shipping line or the generic default).</p>
                             @endif
@@ -137,7 +143,7 @@
                                     <a href="#" wire:click.prevent="recordAdHocMilestone({{ $container->id }})" class="btn btn-xs btn-warning">Record</a>
                                 </div>
                             </div>
-                            <small class="color-gray">Date = when the stage actually happened (blank = now). Free-time clocks start/stop on that date.
+                            <small class="text-muted">Date = when the stage actually happened (blank = now). Free-time clocks start/stop on that date.
                                 <a href="{{ route('freight.settings.container-stages') }}" target="_blank">What does each stage mean?</a></small>
 
                             <h6 class="underline mt-20 mb-10"><strong>Documents</strong></h6>
@@ -152,6 +158,7 @@
             @endforelse
         </tbody>
     </table>
+    @endif
 
     <!-- Add Container Modal -->
     <div wire:ignore.self class="modal fade" id="addContainerModal{{ $shipment->id }}" tabindex="-1" role="dialog">

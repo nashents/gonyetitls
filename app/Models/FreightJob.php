@@ -26,6 +26,27 @@ class FreightJob extends Model implements Auditable
         'CIF' => 'CIF - Cost, Insurance and Freight',
     ];
 
+    /**
+     * LCL: client jobs follow their consolidation's master job through the
+     * shared container stages (see ConsolidationStatusSync for the rules).
+     */
+    protected static function booted()
+    {
+        static::updated(function (FreightJob $job) {
+            if ($job->wasChanged('status')) {
+                \App\Services\Freight\ConsolidationStatusSync::follow($job, $job->getOriginal('status'), $job->status);
+            }
+        });
+    }
+
+    /** Customer may be blank only on a Consolidation (master container) job. */
+    const NO_CUSTOMER_LABEL = 'Consolidation (no customer)';
+
+    public function getCustomerLabelAttribute(): string
+    {
+        return $this->customer?->name ?? self::NO_CUSTOMER_LABEL;
+    }
+
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
@@ -79,6 +100,39 @@ class FreightJob extends Model implements Auditable
     }
     public function authorized_by(){
         return $this->belongsTo('App\Models\User', 'authorized_by_id');
+    }
+
+    /**
+     * Freight Jobs list filters - shared by the list (Freight\Jobs\Index) and
+     * FreightJobsExport so an export always matches what is on screen.
+     * Keys: search, status, authorization, freight_service_type_id, customer_id.
+     */
+    public function scopeListFilter($query, array $filters)
+    {
+        if (filled($search = trim((string) ($filters['search'] ?? '')))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('job_number', 'like', "%{$search}%")
+                    ->orWhere('customer_reference', 'like', "%{$search}%")
+                    ->orWhere('origin', 'like', "%{$search}%")
+                    ->orWhere('destination', 'like', "%{$search}%")
+                    ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('fromDestination', fn ($q2) => $q2->where('city', 'like', "%{$search}%"))
+                    ->orWhereHas('toDestination', fn ($q2) => $q2->where('city', 'like', "%{$search}%"));
+            });
+        }
+
+        foreach (['status', 'authorization', 'freight_service_type_id', 'customer_id'] as $column) {
+            if (filled($filters[$column] ?? null)) {
+                $query->where($column, $filters[$column]);
+            }
+        }
+
+        // Approved / Rejected lists show the latest decisions first.
+        if (in_array($filters['authorization'] ?? null, ['approved', 'rejected'], true)) {
+            $query->orderByDesc('authorization_date');
+        }
+
+        return $query->latest()->orderByDesc('id');
     }
 
     /** Statuses a job may hold before it is approved (see FreightJobAuthorizationService). */

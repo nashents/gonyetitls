@@ -246,7 +246,7 @@ class InvoiceController extends Controller
 
     public function previewClassic($id){
         $invoice = Invoice::find($id);
-        $company = $invoice->company;
+        $company = $invoice->company ?? Auth::user()->employee?->company; // older generated invoices may lack company_id
         $invoice_items = $invoice->invoice_items;
         return view('invoices.classic')->with([
             'invoice' => $invoice,
@@ -257,7 +257,7 @@ class InvoiceController extends Controller
 
     public function previewModern($id){
         $invoice = Invoice::find($id);
-        $company = $invoice->company;
+        $company = $invoice->company ?? Auth::user()->employee?->company; // older generated invoices may lack company_id
         $invoice_items = $invoice->invoice_items;
         return view('invoices.modern')->with([
             'invoice' => $invoice,
@@ -268,7 +268,7 @@ class InvoiceController extends Controller
     
     public function previewTransport($id){
         $invoice = Invoice::find($id);
-        $company = $invoice->company;
+        $company = $invoice->company ?? Auth::user()->employee?->company; // older generated invoices may lack company_id
         $invoice_items = $invoice->invoice_items;
         return view('invoices.transport')->with([
             'invoice' => $invoice,
@@ -279,7 +279,7 @@ class InvoiceController extends Controller
 
     public function print($id){
         $invoice = Invoice::find($id);
-        $company = $invoice->company;
+        $company = $invoice->company ?? Auth::user()->employee?->company; // older generated invoices may lack company_id
         $invoice_items = $invoice->invoice_items;
         return view('invoices.print')->with([
             'invoice' => $invoice,

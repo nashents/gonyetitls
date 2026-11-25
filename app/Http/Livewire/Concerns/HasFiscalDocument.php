@@ -27,6 +27,16 @@ trait HasFiscalDocument
 
     abstract protected function fiscalDocument(): ?FiscalDocument;
 
+    /**
+     * `$this->fiscalEnabled` in views: false when the company has no active
+     * fiscal integration, so Fiscalize / Check Status controls are hidden.
+     * Already-fiscalised documents keep their badge, QR and provider copy.
+     */
+    public function getFiscalEnabledProperty(): bool
+    {
+        return \App\Services\Fiscal\FiscalProviderResolver::availableForCompany();
+    }
+
     /** `$this->fiscalDocumentRecord` in views: the fiscal record the printable layouts render. */
     public function getFiscalDocumentRecordProperty(): ?FiscalDocument
     {

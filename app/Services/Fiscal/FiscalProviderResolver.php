@@ -50,11 +50,34 @@ class FiscalProviderResolver
             return $active->first();
         }
 
-        if ($legacy = $this->legacyFiscalHarmony()) {
+        // A fiscal integration that exists but was deactivated means "off" —
+        // don't quietly carry on through the .env fallback.
+        if (! IntegrationGate::configuredForCompanyType(self::TYPE, $companyId) && ($legacy = $this->legacyFiscalHarmony())) {
             return $legacy;
         }
 
         throw new RuntimeException('No fiscal provider is configured. Add and activate one (e.g. Fiscal Harmony or Revmax) under Integrations.');
+    }
+
+    /**
+     * Can this company fiscalise right now? Drives whether Fiscalize / Check
+     * Status controls show at all. Same rules as integrationForCompany():
+     * an active fiscal integration, or — only when none was ever set up — the
+     * legacy .env Fiscal Harmony config.
+     */
+    public static function availableForCompany(?int $companyId = null): bool
+    {
+        $companyId ??= IntegrationGate::companyIdForUser();
+
+        if (IntegrationGate::activeForCompanyType(self::TYPE, $companyId)) {
+            return true;
+        }
+
+        if (IntegrationGate::configuredForCompanyType(self::TYPE, $companyId)) {
+            return false;
+        }
+
+        return (bool) (config('fiscalharmony.api_key') && config('fiscalharmony.api_secret'));
     }
 
     /** The integration a fiscal document was submitted through. */

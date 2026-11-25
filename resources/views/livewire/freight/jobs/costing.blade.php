@@ -32,6 +32,13 @@
                 <td>{{ $job->currency?->symbol }}{{ number_format(($job->actual_margin ?? 0) - ($job->estimated_margin ?? 0), 2) }}</td>
                 <td>—</td>
             </tr>
+            @if ((float) $job->consolidation_cost != 0)
+                <tr class="info">
+                    <th>{{ $job->consolidation_cost > 0 ? 'Consolidation Cost Share' : 'Shared to Consolidation Clients' }}</th>
+                    <td colspan="3">{{ $job->currency?->symbol }}{{ number_format($job->consolidation_cost, 2) }}</td>
+                    <td><small>{{ $job->consolidation_cost > 0 ? 'Share of the master container cost, included in Actual Cost' : 'Master cost carried by client jobs, deducted from Actual Cost' }}</small></td>
+                </tr>
+            @endif
             <tr class="warning">
                 <th>Accrued (Unverified) Cost</th>
                 <td colspan="3">{{ $job->currency?->symbol }}{{ number_format($accruedCost, 2) }}</td>
@@ -279,7 +286,8 @@
                             <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Amount <span class="required text-danger">*</span></label>
-                                    <input type="number" step="any" class="form-control" wire:model="cost_amount">
+                                    <input type="number" step="any" class="form-control" wire:model="cost_amount" @if(is_numeric($cost_rate)) readonly title="Rate x Qty x Chargeable Days - clear the Rate to type an amount" @endif>
+                                    @if(is_numeric($cost_rate))<small class="text-muted">Rate x Qty x Days</small>@endif
                                     @error('cost_amount') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -457,7 +465,8 @@
                             <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Amount <span class="required text-danger">*</span></label>
-                                    <input type="number" step="any" class="form-control" wire:model="charge_amount">
+                                    <input type="number" step="any" class="form-control" wire:model="charge_amount" @if(is_numeric($charge_rate)) readonly title="Rate x Qty x Chargeable Days - clear the Rate to type an amount" @endif>
+                                    @if(is_numeric($charge_rate))<small class="text-muted">Rate x Qty x Days</small>@endif
                                     @error('charge_amount') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>

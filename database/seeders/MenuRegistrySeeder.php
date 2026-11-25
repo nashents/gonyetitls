@@ -1535,11 +1535,12 @@ class MenuRegistrySeeder extends Seeder
 
         // Live Fleet Map (Cartrack / EzyTrack real-time positions) — only worth
         // showing once the company actually has an active tracking-category
-        // integration; super admins always see it regardless (setup/debugging).
+        // integration. Super admins skip the department check but NOT the
+        // integration check — nothing tied to an inactive integration shows.
         $vHasTracking = $any([
             $all(['isNotDriver', 'inTransport', 'hasTrackingIntegration']),
             $all(['isNotDriver', 'inWorkshop', 'hasTrackingIntegration']),
-            $all(['isSuperAdmin']),
+            $all(['isSuperAdmin', 'hasTrackingIntegration']),
         ]);
 
         // EzyTrack / FanTracker Device Mapping still need the ezytrack /
@@ -2040,6 +2041,14 @@ class MenuRegistrySeeder extends Seeder
         $upsertSub($m, ['name'=>'Inspection Items','slug'=>'inspection-items','icon'=>'fas fa-list','route_name'=>'inspection_types.index','sort_order'=>30]);
         $upsertSub($m, ['name'=>'Problem Categories','slug'=>'problem-categories','icon'=>'fas fa-list','route_name'=>'problem_categories.index','sort_order'=>35]);
         $upsertSub($m, ['name'=>'Workshop Stations','slug'=>'workshop-stations','icon'=>'fas fa-list','route_name'=>'stations.index','sort_order'=>40]);
+        // Maintenance Planning: its own link, directly above Bookings
+        $upsertModule($g, [
+            'name' => 'Maintenance Planning',
+            'slug' => 'maintenance-planning',
+            'icon' => 'fas fa-calendar-check',
+            'route_name' => 'maintenance_schedules.index',
+            'sort_order' => 15,
+        ]);
         $m = $upsertModule($g, [
             'name' => 'Bookings',
             'slug' => 'bookings',
@@ -2049,7 +2058,6 @@ class MenuRegistrySeeder extends Seeder
         ]);
         $upsertSub($m, ['name'=>'Create Booking','slug'=>'create-booking','icon'=>'fas fa-plus','route_name'=>'bookings.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Bookings','slug'=>'manage-bookings','icon'=>'fas fa-list','route_name'=>'bookings.index','sort_order'=>20]);
-        $upsertSub($m, ['name'=>'Maintenance Schedules','slug'=>'maintenance-schedules','icon'=>'fas fa-tasks','route_name'=>'maintenance_schedules.index','sort_order'=>25]);
         $bookingManageVis = $any([
             $all(['hasWorkshopDeptHead']),
             $all(['isAdmin','inWorkshop']),
@@ -2463,13 +2471,17 @@ class MenuRegistrySeeder extends Seeder
         ]);
 
         // Sage integration reconciliation / exception queue (Finance workflow §10).
+        // Business Settings group gate AND an active Sage integration.
         $upsertModule($g, [
             'name' => 'Sage Reconciliation',
             'slug' => 'sage-reconciliation',
             'icon' => 'fas fa-exchange-alt',
             'route_name' => 'sage.reconciliation',
             'sort_order' => 40,
-            'visibility' => null, // inherit the Business Settings group visibility
+            'visibility' => $any([
+                $all(['isSystemAdmin', 'hasSageIntegration']),
+                $all(['isSuperAdmin', 'hasSageIntegration']),
+            ]),
         ]);
 
         // ----------------------------

@@ -164,7 +164,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <small class="color-gray">Leave carrier blank and use "Dispatch via Own Fleet" from the leg row instead if this is executed by our own trucks.</small>
+                                <small class="text-muted">Leave carrier blank and use "Dispatch via Own Fleet" from the leg row instead if this is executed by our own trucks.</small>
                             </div>
                         </div>
                         <div class="row">
@@ -301,13 +301,13 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>From <small class="color-gray">(leg origin: {{ $shipment->legs->firstWhere('id', $dispatching_leg_id)?->origin_location?->name ?? '—' }})</small></label>
+                                    <label>From <small class="text-muted">(leg origin: {{ $shipment->legs->firstWhere('id', $dispatching_leg_id)?->origin_location?->name ?? '—' }})</small></label>
                                     <input type="text" class="form-control" wire:model="dispatch_from">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>To <small class="color-gray">(leg destination: {{ $shipment->legs->firstWhere('id', $dispatching_leg_id)?->destination_location?->name ?? '—' }})</small></label>
+                                    <label>To <small class="text-muted">(leg destination: {{ $shipment->legs->firstWhere('id', $dispatching_leg_id)?->destination_location?->name ?? '—' }})</small></label>
                                     <input type="text" class="form-control" wire:model="dispatch_to">
                                 </div>
                             </div>

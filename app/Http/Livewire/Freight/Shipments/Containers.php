@@ -57,8 +57,22 @@ class Containers extends Component
         ];
     }
 
+    /**
+     * LCL house (client) shipment: its cargo rides in the consolidation's
+     * master container, recorded on the master job - no containers of its own.
+     */
+    public function isHouseShipment(): bool
+    {
+        return $this->shipment->consolidations()->exists();
+    }
+
     public function store(ShippingContainerService $service)
     {
+        if ($this->isHouseShipment()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This shipment is consolidated - add the container on the master job.']);
+            return;
+        }
+
         $this->validate();
 
         $cargoLinks = collect($this->selected_cargo_ids)
@@ -166,6 +180,7 @@ class Containers extends Component
             'lifecycleStages' => ShippingContainer::lifecycleStages(true),
             'activeStages' => ShippingContainer::lifecycleStages(),
             'chargeTypes' => ContainerChargeExposure::chargeTypes(true),
+            'isHouse' => $this->isHouseShipment(),
         ]);
     }
 }

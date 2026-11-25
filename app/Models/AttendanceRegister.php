@@ -23,7 +23,8 @@ class AttendanceRegister extends Model implements Auditable
         return $this->belongsTo('App\Models\Attendance');
     }
 
-    protected $fillable = [ 
+    protected $fillable = [
+        'attendance_id', // needed by updateOrCreate when marking someone new on an existing register
         'employee_id',
         'status',
         'shift',

@@ -18,9 +18,9 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label>Customer <span class="required text-danger">*</span></label>
+                                            <label>Customer @if ($this->isConsolidation())<small class="text-muted">(optional - Consolidation)</small>@else<span class="required text-danger">*</span>@endif</label>
                                             <select class="form-control" wire:model="customer_id">
-                                                <option value="">Select Customer</option>
+                                                <option value="">{{ $this->isConsolidation() ? "None (container job)" : "Select Customer" }}</option>
                                                 @foreach ($customers as $customer)
                                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                                 @endforeach
@@ -278,7 +278,7 @@
                                                 <input type="text" class="form-control" wire:model="cargo_rows.{{ $index }}.commodity">
                                             </div>
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-1">
                                             <div class="form-group">
                                                 <label>HS Code</label>
                                                 <input type="text" class="form-control" wire:model="cargo_rows.{{ $index }}.hs_code">
@@ -317,6 +317,12 @@
                                         </div>
                                         <div class="col-md-1">
                                             <div class="form-group">
+                                                <label>CBM</label>
+                                                <input type="number" step="any" min="0" class="form-control" wire:model="cargo_rows.{{ $index }}.cbm">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="form-group">
                                                 <label>DG</label><br>
                                                 <input type="checkbox" wire:model="cargo_rows.{{ $index }}.is_dangerous_goods">
                                             </div>
@@ -347,7 +353,8 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>Party</label>
+                                                {{-- Required once a party type is picked (rules: required_with party_type) --}}
+                                                <label>Party @if (!empty($row['party_type']))<span class="required text-danger">*</span>@endif</label>
                                                 <select class="form-control" wire:model="party_rows.{{ $index }}.party_id">
                                                     <option value="">Select</option>
                                                     @if (!empty($row['party_type']) && isset($partyModels[$row['party_type']]))
@@ -368,7 +375,8 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
-                                                <label>Role</label>
+                                                {{-- Required once a party is picked (rules: required_with party_id) --}}
+                                                <label>Role @if (!empty($row['party_id']))<span class="required text-danger">*</span>@endif</label>
                                                 <select class="form-control" wire:model="party_rows.{{ $index }}.role">
                                                     <option value="">Select Role</option>
                                                     <option value="shipper">Shipper</option>

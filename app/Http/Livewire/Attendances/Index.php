@@ -117,9 +117,30 @@ class Index extends Component
         $this->date = "";
         $this->time = "";
         $this->notes = [];
+        $this->status = [];
+        $this->shift = [];
+        $this->checkin = [];
+        $this->checkout = [];
+        $this->attendance_id = null;
         $this->selectedDepartment = Null;
         $this->selected_department = Null;
         $this->is_drivers = False;
+        $this->employees = collect();
+        $this->unmarkedAttendance = null;
+    }
+
+    /** Register being completed via "Mark Unmarked" (final registers only). */
+    public $unmarkedAttendance;
+
+    public function newRegister()
+    {
+        $this->resetInputFields();
+        $this->resetErrorBag();
+    }
+
+    private function canManage(?Attendance $attendance): bool
+    {
+        return $attendance && $attendance->user_id == Auth::id();
     }
     protected $rules = [
         'date' => 'required',
@@ -162,10 +183,26 @@ class Index extends Component
 
     }
 
-    public function store(){
+    /** Stamps the register as draft or final (final locks it). */
+    private function applyRegisterStatus(Attendance $attendance, bool $final): void
+    {
+        if ($final) {
+            $attendance->register_status = Attendance::FINAL;
+            $attendance->finalized_at = now();
+            $attendance->finalized_by = Auth::id();
+        } else {
+            $attendance->register_status = Attendance::DRAFT;
+            $attendance->finalized_at = null;
+            $attendance->finalized_by = null;
+        }
+    }
 
-        DB::transaction(function () {
-        
+    public function store($final = false){
+
+        $final = (bool) $final;
+
+        DB::transaction(function () use ($final) {
+
         $this->validate();
 
         $attendance = new Attendance();
@@ -175,6 +212,7 @@ class Index extends Component
         $attendance->time = $this->time;
         $attendance->department_id = $this->selectedDepartment;
         $attendance->is_drivers = $this->is_drivers;
+        $this->applyRegisterStatus($attendance, $final);
         $attendance->save();
 
         if ($this->status) {
@@ -197,15 +235,20 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Attendance Register Marked Successfully!!"
+            'message'=> $final ? "Attendance Register saved as Final." : "Attendance Register saved as Draft - you can still edit it."
         ]);
-        
+
         });
     }
-    
+
     public function edit($id){
-    
+
         $attendance = Attendance::find($id);
+        if (!$this->canManage($attendance) || !$attendance->isDraft()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Only draft registers can be edited. Use "Mark Unmarked" on a final register.']);
+            return;
+        }
+        $this->resetInputFields();
         $this->selectedDepartment = $attendance->department_id;
         $this->selected_department = Department::find($attendance->department_id);
         $this->loadEmployees();
@@ -229,17 +272,26 @@ class Index extends Component
           $this->dispatchBrowserEvent('show-attendanceEditModal');
     }
 
-    public function update(){
+    public function update($final = false){
 
-        DB::transaction(function () {
-        
-        $this->validate();
+        $final = (bool) $final;
 
         $attendance = Attendance::find($this->attendance_id);
+        if (!$this->canManage($attendance) || !$attendance->isDraft()) {
+            $this->dispatchBrowserEvent('hide-attendanceEditModal');
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This register is final and can no longer be edited.']);
+            return;
+        }
+
+        DB::transaction(function () use ($attendance, $final) {
+
+        $this->validate();
+
         $attendance->date = $this->date;
         $attendance->time = $this->time;
         $attendance->department_id = $this->selectedDepartment;
         $attendance->is_drivers = $this->is_drivers;
+        $this->applyRegisterStatus($attendance, $final);
         $attendance->update();
 
         if ($this->status) {
@@ -265,10 +317,71 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Attendance Register Update Successfully!!"
+            'message'=> $final ? "Attendance Register approved as Final - it can no longer be edited." : "Draft updated."
         ]);
-        
+
         });
+    }
+
+    // ---------------------------------------------------------------
+    // Final registers: fill in only the employees left unmarked
+    // ---------------------------------------------------------------
+
+    public function openUnmarked($id)
+    {
+        $attendance = Attendance::find($id);
+        if (!$this->canManage($attendance) || !$attendance->isFinal()) {
+            return;
+        }
+
+        $this->resetInputFields();
+        $this->resetErrorBag();
+        $this->attendance_id = $attendance->id;
+        $this->unmarkedAttendance = $attendance;
+        $this->employees = $attendance->unmarkedEmployees();
+
+        $this->dispatchBrowserEvent('show-attendanceUnmarkedModal');
+    }
+
+    public function saveUnmarked()
+    {
+        $attendance = Attendance::find($this->attendance_id);
+        if (!$this->canManage($attendance) || !$attendance->isFinal()) {
+            return;
+        }
+
+        // Re-read who is unmarked now; anyone already marked is never touched.
+        $allowed = $attendance->unmarkedEmployees()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $toSave = collect($this->status)
+            ->filter(fn ($status, $employeeId) => filled($status) && in_array((int) $employeeId, $allowed, true));
+
+        if ($toSave->isEmpty()) {
+            $this->addError('unmarked', 'Select a status for at least one employee.');
+            return;
+        }
+
+        DB::transaction(function () use ($attendance, $toSave) {
+            foreach ($toSave as $employeeId => $status) {
+                AttendanceRegister::updateOrCreate(
+                    ['attendance_id' => $attendance->id, 'employee_id' => $employeeId],
+                    [
+                        'status'   => $status,
+                        'shift'    => $this->shift[$employeeId] ?? null,
+                        'checkin'  => $this->checkin[$employeeId] ?? null,
+                        'checkout' => $this->checkout[$employeeId] ?? null,
+                        'notes'    => $this->notes[$employeeId] ?? null,
+                    ]
+                );
+            }
+        });
+
+        $count = $toSave->count();
+        $this->dispatchBrowserEvent('hide-attendanceUnmarkedModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "{$count} unmarked " . ($count === 1 ? 'employee' : 'employees') . ' marked.',
+        ]);
     }
 
 

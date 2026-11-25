@@ -18,9 +18,9 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label>Customer <span class="required text-danger">*</span></label>
+                                            <label>Customer @if ($this->isConsolidation())<small class="text-muted">(optional - Consolidation)</small>@else<span class="required text-danger">*</span>@endif</label>
                                             <select class="form-control" wire:model="customer_id">
-                                                <option value="">Select Customer</option>
+                                                <option value="">{{ $this->isConsolidation() ? "None (container job)" : "Select Customer" }}</option>
                                                 @foreach ($customers as $customer)
                                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                                 @endforeach
@@ -288,7 +288,7 @@
                                                         <input type="text" class="form-control" wire:model="shipments.{{ $s }}.cargo_rows.{{ $i }}.commodity">
                                                     </div>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label>HS Code</label>
                                                         <input type="text" class="form-control" wire:model="shipments.{{ $s }}.cargo_rows.{{ $i }}.hs_code">
@@ -330,6 +330,13 @@
                                                 </div>
                                                 <div class="col-md-1">
                                                     <div class="form-group">
+                                                        <label>CBM</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model="shipments.{{ $s }}.cargo_rows.{{ $i }}.cbm">
+                                                        @error('shipments.' . $s . '.cargo_rows.' . $i . '.cbm') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
                                                         <label>DG</label><br>
                                                         <input type="checkbox" wire:model="shipments.{{ $s }}.cargo_rows.{{ $i }}.is_dangerous_goods">
                                                     </div>
@@ -358,7 +365,7 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Party</label>
+                                                        <label>Party @if (!empty($row['party_type']))<span class="required text-danger">*</span>@endif</label>
                                                         <select class="form-control" wire:model="shipments.{{ $s }}.party_rows.{{ $i }}.party_id">
                                                             <option value="">Select</option>
                                                             @if (!empty($row['party_type']) && isset($partyModels[$row['party_type']]))
@@ -376,7 +383,7 @@
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="form-group">
-                                                        <label>Role</label>
+                                                        <label>Role @if (!empty($row['party_id']))<span class="required text-danger">*</span>@endif</label>
                                                         <select class="form-control" wire:model="shipments.{{ $s }}.party_rows.{{ $i }}.role">
                                                             <option value="">Select Role</option>
                                                             @foreach ($partyRoles as $roleValue => $roleLabel)

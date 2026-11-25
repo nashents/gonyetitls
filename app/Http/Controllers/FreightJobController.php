@@ -31,6 +31,11 @@ class FreightJobController extends Controller
         return view('freight.jobs.index', ['authorization' => 'rejected']);
     }
 
+    public function deleted()
+    {
+        return view('freight.jobs.deleted');
+    }
+
     public function create()
     {
         return view('freight.jobs.create');

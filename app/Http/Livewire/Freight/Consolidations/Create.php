@@ -11,7 +11,7 @@ class Create extends Component
     public $shipments;
 
     public $master_shipment_id;
-    public $cost_allocation_basis;
+    public $cost_allocation_basis = 'cbm';
     public $notes;
 
     public function mount()

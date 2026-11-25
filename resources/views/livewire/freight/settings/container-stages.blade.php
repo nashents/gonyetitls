@@ -73,7 +73,7 @@
                                         @php $effect = $effects[$stage->code] ?? []; @endphp
                                         <tr wire:key="container-stage-{{ $stage->id }}" class="{{ $stage->is_active ? '' : 'text-muted' }}">
                                             <td>{{ $loop->iteration }}</td>
-                                            <td><strong>{{ $stage->name }}</strong><br><small class="color-gray">{{ $stage->code }}</small></td>
+                                            <td><strong>{{ $stage->name }}</strong><br><small class="text-muted">{{ $stage->code }}</small></td>
                                             <td>{{ $stage->description }}</td>
                                             <td>
                                                 @foreach ($effect['starts'] ?? [] as $charge)
@@ -83,7 +83,7 @@
                                                     <span class="label label-danger" title="Clock stops">&#9632; Stops {{ $charge }}</span><br>
                                                 @endforeach
                                                 @if (empty($effect))
-                                                    <span class="color-gray">—</span>
+                                                    <span class="text-muted">—</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -107,7 +107,7 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                            <small class="color-gray">
+                            <small class="text-muted">
                                 Deactivated stages are skipped by <em>Next Stage</em> and hidden from the dropdowns, but stay on containers that already reached them.
                                 Demurrage and Detention are independent estimates for different carrier billing structures &mdash; do not sum them.
                             </small>

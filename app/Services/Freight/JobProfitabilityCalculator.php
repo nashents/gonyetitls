@@ -66,7 +66,7 @@ class JobProfitabilityCalculator
             $margin = (float) ($job->actual_margin ?? ($revenue - $cost));
 
             $rows[$customerId] ??= [
-                'label' => $job->customer->name ?? 'Unassigned Customer',
+                'label' => $job->customer_label,
                 'jobCount' => 0, 'revenue' => 0.0, 'cost' => 0.0, 'margin' => 0.0,
             ];
 
@@ -113,7 +113,7 @@ class JobProfitabilityCalculator
 
             $rows[] = [
                 'job_number' => $job->job_number,
-                'customer' => $job->customer->name ?? 'Unassigned Customer',
+                'customer' => $job->customer_label,
                 'status' => $job->status,
                 'opened_at' => optional($job->opened_at)->format('Y-m-d'),
                 'revenue' => $revenue,

@@ -39,3 +39,14 @@
                     <!-- /.main-page -->
 
 @endsection
+
+@push('scripts')
+<script>
+    // Open the tab named in the URL hash, e.g. /freight/jobs/5#costing from the jobs list.
+    $(function () {
+        if (window.location.hash) {
+            $('a[data-toggle="tab"][href="' + window.location.hash + '"]').tab('show');
+        }
+    });
+</script>
+@endpush

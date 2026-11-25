@@ -78,6 +78,7 @@ class MenuContext
             'hasEzyTrackIntegration'   => IntegrationGate::activeForCompany('ezytrack', $companyId),
             'hasFanTrackerIntegration' => IntegrationGate::activeForCompany('fantracker', $companyId),
             'hasPinpointIntegration'   => IntegrationGate::activeForCompany('pinpoint', $companyId),
+            'hasSageIntegration'       => IntegrationGate::activeForCompany('sage_intacct', $companyId),
             'hasStoresDeptHead'   => $isHeadOf('Stores'),
             'hasWorkshopDeptHead' => $isHeadOf('Workshop'),
             'hasHRDeptHead'       => $isHeadOf('Human Resources'),

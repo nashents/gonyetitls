@@ -13,6 +13,19 @@
                                 <td class="w-20 line-height-35">{{$attendance->attendance_number}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Register Status</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($attendance->isDraft())
+                                        <span class="label label-warning">Draft</span>
+                                    @else
+                                        <span class="label label-success">Final</span>
+                                        @if ($attendance->finalized_at)
+                                            <small class="text-muted">{{ \Carbon\Carbon::parse($attendance->finalized_at)->format('d/m/Y H:i') }}</small>
+                                        @endif
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">{{$attendance->user ? $attendance->user->name : ""}} {{$attendance->user ? $attendance->user->surname : ""}}</td>
                             </tr>
@@ -49,10 +62,27 @@
                         </thead>
                         @if (isset($attendance_registers))
                             <tbody>
+                                @php
+                                    // Same name on more than one employee record: flag it so the
+                                    // second record (often the one left blank) is easy to trace.
+                                    $nameKey = fn ($e) => $e ? strtolower(preg_replace('/\s+/', ' ', trim($e->name . ' ' . $e->surname))) : '';
+                                    $nameCounts = collect($attendance_registers)->map(fn ($r) => $nameKey($r->employee))->countBy();
+                                @endphp
                                 @forelse ($attendance_registers as $row)
                                     @php $register = $row->register; @endphp
-                                    <tr wire:key="register-row-{{ $row->employee->id ?? $loop->index }}">
-                                        <td>{{$row->employee ? $row->employee->name : ""}} {{$row->employee ? $row->employee->surname : ""}}</td>
+                                    <tr wire:key="register-row-{{ $loop->index }}-{{ $row->employee->id ?? 'x' }}">
+                                        <td>
+                                            {{$row->employee ? $row->employee->name : ""}} {{$row->employee ? $row->employee->surname : ""}}
+                                            @if ($row->employee)
+                                                <small class="text-muted">({{ $row->employee->employee_number ?: 'id ' . $row->employee->id }})</small>
+                                                @if (($nameCounts[$nameKey($row->employee)] ?? 0) > 1)
+                                                    <span class="label label-danger" title="Another employee record on this register has the same name (employee id {{ $row->employee->id }})">Duplicate record</span>
+                                                @endif
+                                            @endif
+                                            @if ($row->employee)
+                                                <a href="{{ route('audit_logs.index', ['attendance' => $attendance->id, 'attendanceEmployee' => $row->employee->id]) }}" title="Audit history for this person on this register" style="margin-left:4px"><i class="fa fa-history"></i></a>
+                                            @endif
+                                        </td>
                                         <td>{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $register->shift ?? '')) }}</td>
                                         <td>{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $register->status ?? '')) }}</td>
                                         <td>{{ $register->checkin ?? '' }}</td>

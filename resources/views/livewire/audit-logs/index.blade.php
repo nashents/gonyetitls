@@ -61,6 +61,53 @@
                                 </div>
                             </div>
 
+                            @if ($investigation)
+                                @php $reg = $investigation['register']; @endphp
+                                <div class="alert alert-info" style="padding:10px 14px">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <i class="fas fa-search"></i>
+                                            Investigating attendance register <strong>{{ $reg->attendance_number }}</strong>
+                                            &middot; {{ $reg->department->name ?? '' }} &middot; {{ $reg->date }} {{ $reg->time ? '@ ' . $reg->time : '' }}
+                                            &middot; {{ $reg->isDraft() ? 'Draft' : 'Final' }}
+                                            @if ($reg->trashed()) <span class="label label-danger">Deleted</span> @endif
+                                            <br><small class="text-muted">Showing the register's own changes and every employee row captured on it, including deleted rows.</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select wire:model="attendanceEmployee" class="form-control">
+                                                <option value="">All employees on this register</option>
+                                                @foreach ($investigation['employees'] as $emp)
+                                                    <option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->surname }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 text-right">
+                                            <a href="{{ route('attendances.show', $reg->id) }}" class="btn btn-default btn-sm"><i class="fa fa-eye"></i> Register</a>
+                                        </div>
+                                    </div>
+                                    @if (filled($attendanceEmployee))
+                                        <div style="margin-top:8px">
+                                            <strong>Currently on the register:</strong>
+                                            @if ($investigation['current'] && filled($investigation['current']->status))
+                                                <span class="label label-success">Marked - {{ ucwords(str_replace('_', ' ', $investigation['current']->status)) }}</span>
+                                            @else
+                                                <span class="label label-default">Not marked</span>
+                                            @endif
+                                            &middot; <strong>Audit entries for this employee:</strong> {{ $audits->total() }}
+                                            @if ($audits->total() === 0)
+                                                <span class="text-muted">- no save of this person on this register was ever recorded.</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    @if (count($investigation['lost']))
+                                        <div style="margin-top:8px" class="text-danger">
+                                            <i class="fa fa-exclamation-triangle"></i>
+                                            {{ count($investigation['lost']) }} row(s) were saved while this register was being edited but never got linked to it. They're flagged <span class="label label-danger">Not linked</span> below. A bug in the old Edit screen caused this, and it's fixed now.
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
                             <div class="panel-title">
                                 <a href="#" wire:click.prevent="resetFilters()" class="btn btn-default"><i class="fa fa-times"></i>Clear Filters</a>
                                 <a href="#" wire:click.prevent="exportAuditLogsExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
@@ -96,7 +143,15 @@
                                             </span>
                                         </td>
                                         <td>{{ class_basename($audit->auditable_type) }}</td>
-                                        <td>{{ $audit->auditable_id }}</td>
+                                        <td>
+                                            {{ $audit->auditable_id }}
+                                            @if ($recordLabel = $resolver->label($audit->auditable_type, $audit->auditable_id))
+                                                <br><small class="text-muted">{{ $recordLabel }}</small>
+                                            @endif
+                                            @if ($investigation && $audit->auditable_type === \App\Models\AttendanceRegister::class && in_array($audit->auditable_id, $investigation['lost']))
+                                                <br><span class="label label-danger" title="Saved during an edit of this register but never linked to it">Not linked</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $audit->ip_address }}</td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <a href="#" wire:click.prevent="view({{ $audit->id }})"><i class="fa fa-eye color-default"></i> View</a>
@@ -145,21 +200,31 @@
                             <div class="col-md-6"><strong>Date &amp; Time:</strong> {{ $viewingAudit->created_at ? $viewingAudit->created_at->format('Y-m-d H:i:s') : '' }}</div>
                             <div class="col-md-6"><strong>User:</strong> {{ $viewingAudit->user ? trim($viewingAudit->user->name.' '.$viewingAudit->user->surname) : 'System' }}</div>
                             <div class="col-md-6"><strong>Event:</strong> {{ ucfirst($viewingAudit->event) }}</div>
-                            <div class="col-md-6"><strong>Model:</strong> {{ class_basename($viewingAudit->auditable_type) }} #{{ $viewingAudit->auditable_id }}</div>
+                            <div class="col-md-6"><strong>Model:</strong> {{ class_basename($viewingAudit->auditable_type) }} #{{ $viewingAudit->auditable_id }}
+                                @if ($viewLabel = $resolver->label($viewingAudit->auditable_type, $viewingAudit->auditable_id)) ({{ $viewLabel }}) @endif
+                            </div>
                             <div class="col-md-6"><strong>IP Address:</strong> {{ $viewingAudit->ip_address }}</div>
                             <div class="col-md-12"><strong>URL:</strong> {{ $viewingAudit->url }}</div>
                         </div>
                         <hr>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>Old Values</h5>
-                                <pre style="white-space: pre-wrap; word-break: break-word;">{{ json_encode($viewingAudit->old_values, JSON_PRETTY_PRINT) }}</pre>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>New Values</h5>
-                                <pre style="white-space: pre-wrap; word-break: break-word;">{{ json_encode($viewingAudit->new_values, JSON_PRETTY_PRINT) }}</pre>
-                            </div>
-                        </div>
+                        @if (count($viewingChanges))
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr><th style="width:25%">Field</th><th>Old Value</th><th>New Value</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($viewingChanges as $change)
+                                        <tr wire:key="audit-change-{{ $viewingAudit->id }}-{{ $change['field'] }}">
+                                            <td><code>{{ $change['field'] }}</code></td>
+                                            <td style="word-break: break-word">{{ $change['old'] ?? '' }}</td>
+                                            <td style="word-break: break-word">{{ $change['new'] ?? '' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @else
+                            <p class="text-muted">No field values were recorded for this entry.</p>
+                        @endif
                     @endif
                 </div>
                 <div class="modal-footer">

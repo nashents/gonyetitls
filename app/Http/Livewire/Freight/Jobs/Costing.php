@@ -282,12 +282,28 @@ class Costing extends Component
 
     private function recalculateFromRateCard(string $line): void
     {
-        if (!$this->{$line . '_rate_card_id'} || !is_numeric($this->{$line . '_rate'})) {
-            return;
+        $amount = $this->calculatedAmount($line);
+        if ($amount !== null) {
+            $this->{$line . '_amount'} = $amount;
+        }
+    }
+
+    /**
+     * Amount = Rate x Qty x Chargeable Days whenever a rate is entered (blank
+     * qty/days count as 1). A rate-card line that isn't priced per day ignores
+     * days, matching FreightRateCardMatcher. No rate -> null, amount is typed.
+     */
+    private function calculatedAmount(string $line): ?float
+    {
+        $rate = $this->{$line . '_rate'};
+        if ($rate === null || $rate === '' || !is_numeric($rate)) {
+            return null;
         }
 
-        $days = $this->{$line . '_rate_basis'} === 'per_day' ? ((float) $this->{$line . '_chargeable_days'} ?: 1) : 1;
-        $this->{$line . '_amount'} = round((float) $this->{$line . '_rate'} * (float) ($this->{$line . '_quantity'} ?: 1) * $days, 2);
+        $perDay = !$this->{$line . '_rate_card_id'} || $this->{$line . '_rate_basis'} === 'per_day';
+        $days = $perDay ? ((float) $this->{$line . '_chargeable_days'} ?: 1) : 1;
+
+        return round((float) $rate * ((float) $this->{$line . '_quantity'} ?: 1) * $days, 2);
     }
 
     private function rateCardNote(FreightRateCard $card): string
@@ -320,7 +336,7 @@ class Costing extends Component
             'quantity' => $this->cost_quantity ?: null,
             'chargeable_days' => $this->cost_chargeable_days ?: null,
             'rate' => $this->cost_rate ?: null,
-            'amount' => $this->cost_amount ?: 0,
+            'amount' => $this->calculatedAmount('cost') ?? ($this->cost_amount ?: 0),
             'exchange_rate' => $this->cost_exchange_rate ?: 1,
             'tax_id' => $this->cost_tax_id ?: null,
             'recoverable' => (bool) $this->cost_recoverable,
@@ -455,7 +471,7 @@ class Costing extends Component
             'quantity' => $this->charge_quantity ?: null,
             'chargeable_days' => $this->charge_chargeable_days ?: null,
             'rate' => $this->charge_rate ?: null,
-            'amount' => $this->charge_amount ?: 0,
+            'amount' => $this->calculatedAmount('charge') ?? ($this->charge_amount ?: 0),
             'exchange_rate' => $this->charge_exchange_rate ?: 1,
             'tax_id' => $this->charge_tax_id ?: null,
             'notes' => $this->charge_notes,

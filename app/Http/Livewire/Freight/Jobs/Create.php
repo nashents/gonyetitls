@@ -93,10 +93,16 @@ class Create extends Component
         $this->reloadPartyType($this->party_rows[$index]['party_type'] ?? null);
     }
 
+    public function isConsolidation(): bool
+    {
+        return $this->shipment_type === 'Consolidation';
+    }
+
     protected function rules()
     {
         return [
-            'customer_id' => 'required|integer|exists:customers,id',
+            // A Consolidation (master container) job is never invoiced - customer optional.
+            'customer_id' => [$this->isConsolidation() ? 'nullable' : 'required', 'integer', 'exists:customers,id'],
             'freight_service_type_id' => 'nullable|integer|exists:freight_service_types,id',
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
@@ -117,7 +123,7 @@ class Create extends Component
 
         $jobData = [
             'user_id' => Auth::id(),
-            'customer_id' => $this->customer_id,
+            'customer_id' => $this->customer_id ?: null,
             'customer_reference' => $this->customer_reference,
             'company_id' => $this->employee->company_id,
             'freight_service_type_id' => $this->freight_service_type_id,

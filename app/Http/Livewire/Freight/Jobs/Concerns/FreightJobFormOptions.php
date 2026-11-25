@@ -151,6 +151,7 @@ trait FreightJobFormOptions
             'uom' => null,
             'packages' => null,
             'gross_weight' => null,
+            'cbm' => null,
             'is_dangerous_goods' => false,
         ];
     }

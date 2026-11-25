@@ -9,6 +9,8 @@
                 {{-- ── FISCALIZE / STATUS BUTTON (approved credit notes only) ── --}}
                 @if($fiscalStatus === 'approved')
                     <span class="btn btn-success btn-wide btn-rounded" style="cursor:default"><i class="fa fa-check-circle"></i> Fiscalised</span>
+                @elseif(! $this->fiscalEnabled)
+                    {{-- No active fiscal integration: nothing to fiscalise through. --}}
                 @elseif($fiscalStatus === 'pending')
                     <button type="button" wire:click="pollFiscalStatus" wire:loading.attr="disabled" wire:target="pollFiscalStatus" class="btn btn-warning btn-wide btn-rounded">
                         <span wire:loading.remove wire:target="pollFiscalStatus"><i class="fa fa-refresh"></i> Check Fiscal Status</span>

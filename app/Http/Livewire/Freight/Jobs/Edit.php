@@ -103,6 +103,7 @@ class Edit extends Component
             'uom' => $c->uom,
             'packages' => $c->packages,
             'gross_weight' => $c->gross_weight,
+            'cbm' => $c->cbm,
             'is_dangerous_goods' => (bool) $c->is_dangerous_goods,
         ])->values()->all() : [];
 
@@ -133,10 +134,16 @@ class Edit extends Component
         return collect($this->shipments)->pluck('cargo_rows')->flatten(1)->pluck('cargo_id')->filter()->unique()->values()->all();
     }
 
+    public function isConsolidation(): bool
+    {
+        return collect($this->shipments)->contains(fn ($s) => ($s['shipment_type'] ?? null) === 'Consolidation');
+    }
+
     protected function rules()
     {
         return [
-            'customer_id' => 'required|integer|exists:customers,id',
+            // A Consolidation (master container) job is never invoiced - customer optional.
+            'customer_id' => [$this->isConsolidation() ? 'nullable' : 'required', 'integer', 'exists:customers,id'],
             'freight_service_type_id' => 'nullable|integer|exists:freight_service_types,id',
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
@@ -147,6 +154,7 @@ class Edit extends Component
             'shipments.*.cargo_rows.*.quantity' => 'nullable|numeric',
             'shipments.*.cargo_rows.*.packages' => 'nullable|integer',
             'shipments.*.cargo_rows.*.gross_weight' => 'nullable|numeric',
+            'shipments.*.cargo_rows.*.cbm' => 'nullable|numeric|min:0',
             'shipments.*.party_rows.*.party_id' => 'required_with:shipments.*.party_rows.*.party_type',
             'shipments.*.party_rows.*.role' => 'required_with:shipments.*.party_rows.*.party_id',
         ];
@@ -229,7 +237,7 @@ class Edit extends Component
 
         DB::transaction(function () use ($jobService) {
             $this->job->update([
-                'customer_id' => $this->customer_id,
+                'customer_id' => $this->customer_id ?: null,
                 'customer_reference' => $this->customer_reference,
                 'freight_service_type_id' => $this->freight_service_type_id,
                 'salesperson_id' => $this->salesperson_id,
@@ -261,7 +269,11 @@ class Edit extends Component
         $resubmitted = $this->job->authorization === 'rejected';
         app(FreightJobAuthorizationService::class)->resubmit($this->job);
 
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight Job ' . $this->job->job_number . ' updated successfully!' . ($resubmitted ? ' It has been sent for authorization again.' : '')]);
+        $followed = \App\Services\Freight\ConsolidationStatusSync::$lastFollowed;
+
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight Job ' . $this->job->job_number . ' updated successfully!'
+            . ($resubmitted ? ' It has been sent for authorization again.' : '')
+            . ($followed ? ' ' . count($followed) . ' consolidated client job(s) moved with it: ' . implode(', ', $followed) . '.' : '')]);
 
         return redirect()->route('freight.jobs.show', $this->job->id);
     }
@@ -327,6 +339,7 @@ class Edit extends Component
             'uom' => $row['uom'] ?: null,
             'packages' => $row['packages'] === '' ? null : $row['packages'],
             'gross_weight' => $row['gross_weight'] === '' ? null : $row['gross_weight'],
+            'cbm' => ($row['cbm'] ?? '') === '' ? null : $row['cbm'],
             'is_dangerous_goods' => (bool) $row['is_dangerous_goods'],
         ];
     }

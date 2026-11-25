@@ -12,9 +12,10 @@
                     @else
                         <i class="fa fa-gavel"></i> <strong>This freight job is waiting for authorization.</strong>
                         It stays in Draft and can't raise bills or invoices until it is approved.
-                        @if ($this->canAuthorize)
-                            <a href="#" wire:click.prevent="authorizeJob({{ $job->id }})" class="btn btn-xs btn-primary" style="margin-left:10px"><i class="fa fa-gavel"></i> Authorize</a>
-                        @endif
+                    @endif
+                    {{-- Like Trips: pending and rejected items can be authorized from their own page. --}}
+                    @if ($this->canAuthorize)
+                        <a href="#" wire:click.prevent="authorizeJob({{ $job->id }})" class="btn btn-xs btn-primary" style="margin-left:10px"><i class="fas fa-gavel"></i> Authorization</a>
                     @endif
                 </div>
             </div>
@@ -38,7 +39,7 @@
                         <tbody>
                             <tr>
                                 <th>Customer</th>
-                                <td>{{ $job->customer?->name }}</td>
+                                <td>{{ $job->customer_label }}</td>
                             </tr>
                             <tr>
                                 <th>Service Type</th>
@@ -217,6 +218,7 @@
                                 <th>Qty</th>
                                 <th>Packages</th>
                                 <th>Gross Wt</th>
+                                <th>CBM</th>
                                 <th>DG</th>
                             </tr>
                         </thead>
@@ -230,6 +232,7 @@
                                         <td>{{ $cargoItem->quantity }} {{ $cargoItem->uom }}</td>
                                         <td>{{ $cargoItem->packages }}</td>
                                         <td>{{ $cargoItem->gross_weight }}</td>
+                                        <td>{{ $cargoItem->cbm }}</td>
                                         <td>{{ $cargoItem->is_dangerous_goods ? 'Yes' : 'No' }}</td>
                                     </tr>
                                 @empty
@@ -268,6 +271,7 @@
                 </div>
 
                 <div role="tabpanel" class="tab-pane" id="containers">
+                    @include('livewire.freight.jobs.partials.consolidation-tracking', ['section' => 'containers'])
                     @forelse ($job->shipments as $shipment)
                         <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
                         @livewire('freight.shipments.containers', ['shipmentId' => $shipment->id], key('containers-'.$shipment->id))
@@ -308,6 +312,7 @@
                 </div>
 
                 <div role="tabpanel" class="tab-pane" id="timeline">
+                    @include('livewire.freight.jobs.partials.consolidation-tracking', ['section' => 'timeline'])
                     @livewire('freight.shipments.milestones', ['jobId' => $job->id], key('milestones-'.$job->id))
                 </div>
 

@@ -43,6 +43,11 @@ class Show extends Component
             'shipments.containers',
             'shipments.transport_documents',
             'shipments.customs_declarations',
+            // LCL: client jobs see the master container; master sees its clients.
+            'shipments.consolidations.master_shipment.freight_job',
+            'shipments.consolidations.master_shipment.containers.shipping_line',
+            'shipments.consolidations.master_shipment.milestones.shipping_container',
+            'shipments.master_consolidation.house_shipments.freight_job.customer',
         ])->findOrFail($this->job->id);
     }
 

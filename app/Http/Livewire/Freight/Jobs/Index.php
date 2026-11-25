@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Freight\Jobs;
 
+use App\Exports\FreightJobsExport;
 use App\Http\Livewire\Freight\Jobs\Concerns\AuthorizesFreightJobs;
 use App\Models\Customer;
 use App\Models\FreightJob;
@@ -9,6 +10,7 @@ use App\Models\FreightServiceType;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
@@ -52,10 +54,11 @@ class Index extends Component
         $user = Auth::user();
         $this->employee = $user->employee;
 
-        foreach ($this->employee->departments as $department) {
+        // System logins (e.g. a Super Admin without a staff record) have no employee.
+        foreach (($this->employee?->departments ?? []) as $department) {
             $this->department_names[] = $department->name;
         }
-        foreach ($user->roles as $role) {
+        foreach (($user->roles ?? []) as $role) {
             $this->role_names[] = $role->name;
         }
 
@@ -92,6 +95,38 @@ class Index extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight job deleted.']);
     }
 
+    /** The on-screen filters (FreightJob::scopeListFilter keys); exports use the same. */
+    private function listFilters(): array
+    {
+        return [
+            'search' => $this->search,
+            'status' => $this->filter_status,
+            'authorization' => $this->lockedAuthorization ?: $this->filter_authorization,
+            'freight_service_type_id' => $this->filter_freight_service_type_id,
+            'customer_id' => $this->filter_customer_id,
+        ];
+    }
+
+    private function exportFileName(string $extension): string
+    {
+        return 'freight_jobs' . ($this->lockedAuthorization ? '_' . $this->lockedAuthorization : '') . '_' . time() . '.' . $extension;
+    }
+
+    public function exportFreightJobsExcel(Excel $excel)
+    {
+        return $excel->download(new FreightJobsExport($this->listFilters()), $this->exportFileName('xlsx'));
+    }
+
+    public function exportFreightJobsCSV(Excel $excel)
+    {
+        return $excel->download(new FreightJobsExport($this->listFilters()), $this->exportFileName('csv'), Excel::CSV);
+    }
+
+    public function exportFreightJobsPDF(Excel $excel)
+    {
+        return $excel->download(new FreightJobsExport($this->listFilters()), $this->exportFileName('pdf'), Excel::DOMPDF);
+    }
+
     public function render()
     {
         // NOTE: deliberately NOT using ->latest()->limit(1) inside this eager
@@ -101,7 +136,9 @@ class Index extends Component
         // 1-2 rows per job in practice) collection and taking the latest in
         // PHP avoids that.
         $jobs = FreightJob::query()
-            ->with(['customer:id,name', 'freight_service_type:id,name', 'fromDestination.country', 'toDestination.country', 'documents', 'shipments' => function ($q) {
+            // Costing column: actual_* are kept on the job; accrued (unverified) cost is summed here.
+            ->withSum(['costs as accrued_cost' => fn ($q) => $q->whereIn('verification_status', \App\Services\Freight\FreightCostingService::COST_ACCRUED_STATUSES)], 'exchange_amount')
+            ->with(['currency:id,symbol,name', 'customer:id,name', 'freight_service_type:id,name', 'fromDestination.country', 'toDestination.country', 'documents', 'shipments' => function ($q) {
                 $q->with([
                     'transport_documents',
                     'customs_declarations',
@@ -109,50 +146,38 @@ class Index extends Component
                     'containers.exposures',
                     'parties',
                 ]);
-            }]);
-
-        if (filled($this->search)) {
-            $search = trim($this->search);
-            $jobs->where(function ($q) use ($search) {
-                $q->where('job_number', 'like', "%{$search}%")
-                    ->orWhere('customer_reference', 'like', "%{$search}%")
-                    ->orWhere('origin', 'like', "%{$search}%")
-                    ->orWhere('destination', 'like', "%{$search}%")
-                    ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('fromDestination', fn ($q2) => $q2->where('city', 'like', "%{$search}%"))
-                    ->orWhereHas('toDestination', fn ($q2) => $q2->where('city', 'like', "%{$search}%"));
-            });
-        }
-
-        if (filled($this->filter_status)) {
-            $jobs->where('status', $this->filter_status);
-        }
-
-        $authorization = $this->lockedAuthorization ?: $this->filter_authorization;
-        if (filled($authorization)) {
-            $jobs->where('authorization', $authorization);
-        }
-
-        if (filled($this->filter_freight_service_type_id)) {
-            $jobs->where('freight_service_type_id', $this->filter_freight_service_type_id);
-        }
-
-        if (filled($this->filter_customer_id)) {
-            $jobs->where('customer_id', $this->filter_customer_id);
-        }
-
-        // Approved / Rejected lists show the latest decisions first.
-        if (in_array($this->lockedAuthorization, ['approved', 'rejected'], true)) {
-            $jobs->orderByDesc('authorization_date');
-        }
-        $jobs->latest();
+            }])
+            ->listFilter($this->listFilters());
 
         $jobs = $jobs->paginate($this->perPage);
-        $this->pageIds = $jobs->getCollection()->where('authorization', 'pending')->pluck('id')->all();
+        $this->pageIds = $this->authorizableStatuses()
+            ? $jobs->getCollection()->whereIn('authorization', $this->authorizableStatuses())->pluck('id')->all()
+            : [];
 
         return view('livewire.freight.jobs.index', [
             'jobs' => $jobs,
             'pendingAuthorizationCount' => FreightJob::where('authorization', 'pending')->count(),
         ]);
+    }
+
+    /**
+     * System-wide authorization rule (as Trips): only the Pending and
+     * Rejected lists authorize. Manage (all jobs) and Approved never do.
+     */
+    protected function authorizableStatuses(): array
+    {
+        return in_array($this->lockedAuthorization, ['pending', 'rejected'], true) ? [$this->lockedAuthorization] : [];
+    }
+
+    /** Checkboxes, Bulk Actions and the row Authorization action. */
+    public function getShowAuthorizeControlsProperty(): bool
+    {
+        return $this->canAuthorize && (bool) $this->authorizableStatuses();
+    }
+
+    /** New jobs are created from Manage Freight Jobs only, never the authorization lists. */
+    public function getCanCreateHereProperty(): bool
+    {
+        return $this->lockedAuthorization === null;
     }
 }

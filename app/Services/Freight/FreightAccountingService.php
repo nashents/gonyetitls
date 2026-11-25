@@ -2,6 +2,7 @@
 
 namespace App\Services\Freight;
 
+use App\Models\Account;
 use App\Models\Bill;
 use App\Models\BillExpense;
 use App\Models\FreightCharge;
@@ -176,17 +177,29 @@ class FreightAccountingService
 
                 $subtotal = (float) $chargeLines->sum('amount');
                 $tax = (float) $chargeLines->sum('tax_amount');
+                $total = $subtotal + $tax;
+                $rate = (float) ($chargeLines->first()->exchange_rate ?: 1);
 
+                // Same header fields a normal invoice gets: company (logo/letterhead on
+                // preview + PDF), balance (payments, statements, aged AR), exchange amount.
                 $invoice = new Invoice;
                 $invoice->user_id = Auth::id();
+                $invoice->company_id = $job->company_id ?? Auth::user()?->employee?->company_id;
                 $invoice->invoice_number = $this->invoiceNumber();
                 $invoice->customer_id = $customerId;
                 $invoice->currency_id = $currencyId;
+                $invoice->account_id = Account::where('name', 'Sales')->value('id');
                 $invoice->date = now();
-                $invoice->exchange_rate = $chargeLines->first()->exchange_rate ?: 1;
+                $invoice->expiry = now();
+                $invoice->reason = 'Freight';
+                $invoice->memo = 'Freight Job ' . $job->job_number;
+                $invoice->exchange_rate = $rate;
                 $invoice->subtotal = $subtotal;
                 $invoice->tax_amount = $tax;
-                $invoice->total = $subtotal + $tax;
+                $invoice->total = $total;
+                $invoice->balance = $total;
+                $invoice->exchange_amount = round($rate * $total, 2);
+                $invoice->status = 'Unpaid';
                 $invoice->invoice_type = 'earned';
                 $invoice->save();
 
@@ -201,7 +214,9 @@ class FreightAccountingService
                     $invoiceItem->amount = $charge->amount;
                     $invoiceItem->subtotal = $charge->amount;
                     $invoiceItem->subtotal_incl = (float) $charge->amount + (float) ($charge->tax_amount ?? 0);
-                    $invoiceItem->description = $charge->charge_type->name ?? 'Freight Charge';
+                    $invoiceItem->exchange_rate = $rate;
+                    $invoiceItem->exchange_amount = round($rate * (float) $invoiceItem->subtotal_incl, 2);
+                    $invoiceItem->description = self::chargeDescription($charge, $job);
                     $invoiceItem->save();
 
                     $charge->invoice_id = $invoice->id;
@@ -209,6 +224,8 @@ class FreightAccountingService
                     $charge->save();
                 }
 
+                $invoice->authorized_by_id = Auth::id();
+                $invoice->authorization_date = now();
                 $invoice->authorization = 'approved';
                 $invoice->save();
 
@@ -219,6 +236,21 @@ class FreightAccountingService
 
             return ['invoices' => $invoices, 'warnings' => $warnings];
         });
+    }
+
+    /** Invoice line text, e.g. "Ocean Freight - FF-2026-000017 / 2 x 945.00 - Port of Beira". */
+    public static function chargeDescription(FreightCharge $charge, FreightJob $job): string
+    {
+        $text = ($charge->charge_type->name ?? 'Freight Charge') . ' - ' . $job->job_number;
+
+        if ((float) $charge->quantity > 1 && $charge->rate) {
+            $text .= ' / ' . rtrim(rtrim(number_format((float) $charge->quantity, 3, '.', ''), '0'), '.') . ' x ' . number_format((float) $charge->rate, 2);
+        }
+        if (trim((string) $charge->notes) !== '') {
+            $text .= ' - ' . trim($charge->notes);
+        }
+
+        return $text;
     }
 
     /**

@@ -52,8 +52,9 @@ class IntegrationGate
         }
 
         if (! array_key_exists($providerKey, static::$providerIds)) {
+            // A provider switched off globally counts as inactive for everyone.
             static::$providerIds[$providerKey] = optional(
-                IntegrationProvider::where('key', $providerKey)->first()
+                IntegrationProvider::where('key', $providerKey)->where('is_active', true)->first()
             )->id;
         }
 
@@ -93,6 +94,27 @@ class IntegrationGate
 
         return static::$memo[$memoKey] = CompanyIntegration::where('company_id', $companyId)
             ->where('status', 'active')
+            ->whereHas('integration_provider', fn ($q) => $q->where('type', $type)->where('is_active', true))
+            ->exists();
+    }
+
+    /**
+     * True if the company has ANY (non-deleted) integration record of the given
+     * category, whatever its status. Tells "never set up" apart from "set up but
+     * deactivated" — e.g. the fiscal .env fallback only applies to the former.
+     */
+    public static function configuredForCompanyType(string $type, ?int $companyId): bool
+    {
+        if (! $companyId) {
+            return false;
+        }
+
+        $memoKey = 'configured:' . $type . ':' . $companyId;
+        if (array_key_exists($memoKey, static::$memo)) {
+            return static::$memo[$memoKey];
+        }
+
+        return static::$memo[$memoKey] = CompanyIntegration::where('company_id', $companyId)
             ->whereHas('integration_provider', fn ($q) => $q->where('type', $type))
             ->exists();
     }

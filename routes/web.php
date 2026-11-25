@@ -594,7 +594,7 @@ Route::resource('ticket_requests','TicketRequestController');
 Route::resource('payment_methods','PaymentMethodController');
 Route::resource('company_integrations','CompanyIntegrationController');
 // Sage integration reconciliation / exception queue (Finance workflow §10).
-Route::view('sage/reconciliation', 'sage.reconciliation')->name('sage.reconciliation');
+Route::view('sage/reconciliation', 'sage.reconciliation')->name('sage.reconciliation')->middleware('integration:sage_intacct');
 Route::resource('grades','GradeController');
 Route::resource('clusters','ClusterController');
 Route::resource('transport_orders','TransportOrderController');
@@ -670,11 +670,11 @@ Route::resource('reminders','ReminderController');
 Route::resource('logs','LogController');
 Route::resource('drivers','DriverController');
 Route::resource('vehicles','VehicleController');
-Route::get('fleet/live-map', 'FleetController@liveMap')->name('fleet.live-map');
-Route::get('fleet/asset-positions', 'FleetController@assetPositions')->name('fleet.asset-positions');
-Route::get('fleet/ezytrack-device-mapping', 'FleetController@ezyTrackDeviceMappings')->name('fleet.ezytrack-device-mappings');
-Route::get('fleet/fantracker-device-mapping', 'FleetController@fanTrackerDeviceMappings')->name('fleet.fantracker-device-mappings');
-Route::get('fleet/pinpoint-device-mapping', 'FleetController@pinpointDeviceMappings')->name('fleet.pinpoint-device-mappings');
+Route::get('fleet/live-map', 'FleetController@liveMap')->name('fleet.live-map')->middleware('integration:type,tracking');
+Route::get('fleet/asset-positions', 'FleetController@assetPositions')->name('fleet.asset-positions')->middleware('integration:type,tracking');
+Route::get('fleet/ezytrack-device-mapping', 'FleetController@ezyTrackDeviceMappings')->name('fleet.ezytrack-device-mappings')->middleware('integration:ezytrack');
+Route::get('fleet/fantracker-device-mapping', 'FleetController@fanTrackerDeviceMappings')->name('fleet.fantracker-device-mappings')->middleware('integration:fantracker');
+Route::get('fleet/pinpoint-device-mapping', 'FleetController@pinpointDeviceMappings')->name('fleet.pinpoint-device-mappings')->middleware('integration:pinpoint');
 Route::resource('vehicle_assignments','VehicleAssignmentController');
 Route::resource('bills','BillController');
 Route::resource('bill_expenses','BillExpenseController');
@@ -855,6 +855,7 @@ Route::resource('clearing_agents','ClearingAgentController');
 Route::get('freight/jobs/authorization/pending','FreightJobController@pending')->name('freight.jobs.pending');
 Route::get('freight/jobs/authorization/approved','FreightJobController@approved')->name('freight.jobs.approved');
 Route::get('freight/jobs/authorization/rejected','FreightJobController@rejected')->name('freight.jobs.rejected');
+Route::get('deleted/freight-jobs','FreightJobController@deleted')->name('freight.jobs.deleted');
 Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'job'])->names([
     'index' => 'freight.jobs.index',
     'create' => 'freight.jobs.create',
@@ -866,6 +867,9 @@ Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'j
 ]);
 Route::get('freight/jobs/{job}/sheet', 'FreightJobController@sheet')->name('freight.jobs.sheet');
 Route::get('freight/jobs/{job}/bill-of-lading', 'FreightJobController@billOfLading')->name('freight.jobs.bill_of_lading');
+Route::get('freight/consolidations/{consolidation}/add-clients', 'ConsolidationController@addClients')->name('freight.consolidations.add_clients');
+Route::get('freight/consolidations/{consolidation}/manifest', 'ConsolidationController@manifest')->name('freight.consolidations.manifest');
+Route::get('freight/consolidations/{consolidation}/manifest/excel', 'ConsolidationController@manifestExcel')->name('freight.consolidations.manifest.excel');
 Route::resource('freight/consolidations','ConsolidationController')->parameters(['consolidations' => 'consolidation'])->names([
     'index' => 'freight.consolidations.index',
     'create' => 'freight.consolidations.create',

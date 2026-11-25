@@ -68,7 +68,7 @@
                                 </div>
                            
                                 <div class="panel-title">
-                                    <a href="#" data-toggle="modal" data-target="#attendanceModal"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Attendance Register</a>
+                                    <a href="#" data-toggle="modal" data-target="#attendanceModal" wire:click="newRegister" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Attendance Register</a>
                                     <a href="#" wire:click="exportAttendanceRegisterExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportAttendanceRegisterCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportAttendanceRegisterPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -100,8 +100,16 @@
                                       <tr wire:key="{{ 'abfe12-100-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($attendance->id ?? '') }}">
                                         <td>
                                             {{$attendance->attendance_number}}
+                                            @if ($attendance->isDraft())
+                                                <span class="label label-warning" title="Draft - can still be edited">Draft</span>
+                                            @else
+                                                <span class="label label-success" title="Final - locked; only unmarked employees can be filled in">Final</span>
+                                            @endif
                                         </td>
-                                        <td>{{ucfirst($attendance->user ? $attendance->user->name : "")}} {{ucfirst($attendance->user ? $attendance->user->surname : "")}}</td>
+                                        <td>
+                                            {{ucfirst($attendance->user ? $attendance->user->name : "")}} {{ucfirst($attendance->user ? $attendance->user->surname : "")}}
+                                            <br><small class="text-muted">{{ optional($attendance->created_at)->format('d/m/Y H:i') }}</small>
+                                        </td>
                                         <td>{{$attendance->date}} {{$attendance->time ? "@ ".$attendance->time : ""}}</td>
                                         <td>{{$attendance->department ? $attendance->department->name : ""}}</td>
                                       
@@ -113,8 +121,13 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('attendances.show', $attendance->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
+                                                    <li><a href="{{ route('audit_logs.index', ['attendance' => $attendance->id]) }}"><i class="fa fa-history color-default"></i> Audit Trail</a></li>
                                                     @if ($attendance->user_id == Auth::user()->id)
-                                                        <li><a href="#" wire:click.prevent="edit({{$attendance->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                        @if ($attendance->isDraft())
+                                                            <li><a href="#" wire:click.prevent="edit({{$attendance->id}})"><i class="fa fa-edit color-success"></i> Edit Draft</a></li>
+                                                        @else
+                                                            <li><a href="#" wire:click.prevent="openUnmarked({{$attendance->id}})"><i class="fa fa-user-plus color-success"></i> Update Unmarked</a></li>
+                                                        @endif
                                                     @endif
                                                 </ul>
                                             </div>
@@ -226,53 +239,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $i = 1;
-                                    @endphp
-                                    @foreach ($employees as $key => $employee)
-                                        <tr wire:key="attendance-row-{{ $employee->id }}">
-                                            <td>
-                                                {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
-                                            </td>
-                                            <td>
-                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="status-{{ $employee->id }}" >
-                                                    <option value="">Select Option</option>
-                                                    <option value="absent">Absent</option>
-                                                    <option value="annual_leave">Annual Leave</option>
-                                                    <option value="compassionate_leave">Compassionate Leave</option>
-                                                    <option value="off">Off</option>
-                                                    <option value="present">Present</option>
-                                                    <option value="public_holiday">Public Holiday</option>
-                                                    <option value="sick_leave">Sick Leave</option>
-                                                    <option value="suspension">Suspension</option>
-                                                    <option value="training">Training</option>
-                                                    <option value="unpaid_leave">Unpaid Leave</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="shift-{{ $employee->id }}">
-                                                    <option value="">Select Option</option>
-                                                    <option value="day">Day</option>
-                                                    <option value="night">Night</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="checkin-{{ $employee->id }}">
-                                            </td>
-                                            <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="checkout-{{ $employee->id }}">
-                                            </td>
-                                            <td>
-                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="notes-{{ $employee->id }}">
-                                                    <option value="">Select Option</option>
-                                                    <option value="early_arrival">Early Arrival</option>
-                                                    <option value="on_time">On time</option>
-                                                    <option value="slightly_late">Slightly Late</option>
-                                                    <option value="late_arrival">Late Arrival</option>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    @endforeach
+                                    @include('livewire.attendances.partials.register-rows', ['prefix' => 'create'])
                                 </tbody>
                             </table>
                     @if (isset($selectedDepartment))
@@ -283,7 +250,9 @@
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                            <button type="submit" class="btn btn-warning btn-wide btn-rounded" wire:loading.attr="disabled"><i class="fa fa-file-o"></i>Save as Draft</button>
+                            <button type="button" class="btn bg-success btn-wide btn-rounded" wire:click="store(true)" wire:loading.attr="disabled"
+                                onclick="if(!confirm('Save as Final? It can no longer be edited - only unmarked employees can be filled in later.')){event.stopImmediatePropagation();return false;}"><i class="fa fa-check"></i>Save as Final</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>
@@ -296,7 +265,7 @@
         <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Attendance Register<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Attendance Register <span class="label label-warning">Draft</span><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
@@ -359,53 +328,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $i = 1;
-                                    @endphp
-                                    @foreach ($employees as $key => $employee)
-                                        <tr wire:key="attendance-edit-row-{{ $employee->id }}">
-                                            <td>
-                                                {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
-                                            </td>
-                                            <td>
-                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="edit-status-{{ $employee->id }}" >
-                                                    <option value="">Select Option</option>
-                                                    <option value="absent">Absent</option>
-                                                    <option value="annual_leave">Annual Leave</option>
-                                                    <option value="compassionate_leave">Compassionate Leave</option>
-                                                    <option value="off">Off</option>
-                                                    <option value="present">Present</option>
-                                                    <option value="public_holiday">Public Holiday</option>
-                                                    <option value="sick_leave">Sick Leave</option>
-                                                    <option value="suspension">Suspension</option>
-                                                    <option value="training">Training</option>
-                                                    <option value="unpaid_leave">Unpaid Leave</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="edit-shift-{{ $employee->id }}">
-                                                    <option value="">Select Option</option>
-                                                    <option value="day">Day</option>
-                                                    <option value="night">Night</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="edit-checkin-{{ $employee->id }}">
-                                            </td>
-                                            <td>
-                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="edit-checkout-{{ $employee->id }}">
-                                            </td>
-                                            <td>
-                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="edit-notes-{{ $employee->id }}">
-                                                    <option value="">Select Option</option>
-                                                    <option value="early_arrival">Early Arrival</option>
-                                                    <option value="on_time">On time</option>
-                                                    <option value="slightly_late">Slightly Late</option>
-                                                    <option value="late_arrival">Late Arrival</option>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    @endforeach
+                                    @include('livewire.attendances.partials.register-rows', ['prefix' => 'edit'])
                                 </tbody>
                             </table>
                     @if (isset($selectedDepartment))
@@ -416,7 +339,9 @@
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                            <button type="submit" class="btn btn-warning btn-wide btn-rounded" wire:loading.attr="disabled"><i class="fa fa-file-o"></i>Save Draft</button>
+                            <button type="button" class="btn bg-success btn-wide btn-rounded" wire:click="update(true)" wire:loading.attr="disabled"
+                                onclick="if(!confirm('Approve as Final? It can no longer be edited - only unmarked employees can be filled in later.')){event.stopImmediatePropagation();return false;}"><i class="fa fa-check"></i>Approve as Final</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>
@@ -425,5 +350,55 @@
         </div>
     </div>
 
+    {{-- Final registers: only employees left unmarked can be filled in --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="attendanceUnmarkedModal" tabindex="-1" role="dialog" aria-labelledby="attendanceUnmarkedLabel">
+        <div class="modal-dialog mw-100 w-70" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="attendanceUnmarkedLabel"><i class="fas fa-user-plus"></i> Update Unmarked Employees <span class="label label-success">Final</span><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="saveUnmarked()">
+                    <div class="modal-body">
+                        @if ($unmarkedAttendance)
+                            <p>
+                                <strong>{{ $unmarkedAttendance->attendance_number }}</strong>
+                                &middot; {{ $unmarkedAttendance->department->name ?? '' }}
+                                &middot; {{ $unmarkedAttendance->date }} {{ $unmarkedAttendance->time ? '@ ' . $unmarkedAttendance->time : '' }}
+                            </p>
+                            <div class="alert alert-info" style="padding:8px 12px">
+                                <i class="fa fa-lock"></i> This register is final. Only the employees below, who were not marked, can be marked now. Everyone already marked stays as it is.
+                            </div>
+                        @endif
+                        @error('unmarked') <div class="alert alert-danger" style="padding:8px 12px">{{ $message }}</div> @enderror
+                        <div style="max-height: 500px; overflow: auto">
+                            <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th class="th-sm">Employee</th>
+                                        <th class="th-sm">Status</th>
+                                        <th class="th-sm">Shift</th>
+                                        <th class="th-sm">Checkin Time</th>
+                                        <th class="th-sm">Checkout Time</th>
+                                        <th class="th-sm">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @include('livewire.attendances.partials.register-rows', ['prefix' => 'unmarked', 'emptyMessage' => 'Everyone on this register has been marked.'])
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            @if (count($employees))
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded" wire:loading.attr="disabled"><i class="fa fa-save"></i>Save</button>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     </div>

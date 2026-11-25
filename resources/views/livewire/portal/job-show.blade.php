@@ -36,14 +36,39 @@
                     </tbody>
                 </table>
 
+                @php
+                    $masters = $shipment->consolidations->pluck('master_shipment')->filter();
+                    $timeline = $shipment->milestones
+                        ->concat($masters->flatMap->milestones)
+                        ->sortByDesc(fn ($m) => $m->actual_at ?? $m->planned_at ?? $m->estimated_at ?? $m->created_at);
+                @endphp
+
+                @if ($masters->flatMap->containers->count())
+                    <h6 class="underline mt-10 mb-10"><strong>Container</strong></h6>
+                    <table class="table table-condensed table-bordered">
+                        <thead>
+                            <tr><th>Container #</th><th>Type</th><th>Current Stage</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($masters->flatMap->containers as $container)
+                                <tr>
+                                    <td>{{ $container->container_number }}</td>
+                                    <td>{{ $container->container_type }}</td>
+                                    <td>{{ \App\Models\ContainerStage::label($container->status) ?? '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+
                 <h6 class="underline mt-10 mb-10"><strong>Timeline</strong></h6>
-                @if ($shipment->milestones->count())
+                @if ($timeline->count())
                     <table class="table table-condensed table-bordered">
                         <thead>
                             <tr><th>Event</th><th>Status</th><th>Date</th></tr>
                         </thead>
                         <tbody>
-                            @foreach ($shipment->milestones as $milestone)
+                            @foreach ($timeline as $milestone)
                                 <tr>
                                     <td>{{ $milestone->milestone_name }}</td>
                                     <td>{{ ucfirst($milestone->status) }}</td>

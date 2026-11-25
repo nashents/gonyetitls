@@ -218,10 +218,12 @@
                                                                 <a href="{{route('trips.show',$item->trip?->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong></a>
                                                             @elseif($item->trip_transport_order)  
                                                                 <a href="{{route('trip_transport_orders.show', $item->trip_transport_order->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip_transport_order->transport_order ? $item->trip_transport_order->tto_number : ""}}</strong></a>  
-                                                            @elseif($item->rental)  
-                                                                <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>  
-                                                            @endif 
-                                                            {{-- {{$item->description}} --}}
+                                                            @elseif($item->rental)
+                                                                <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>
+                                                            @elseif(trim((string) $item->description) !== '')
+                                                                {{-- Lines with no linked record (freight charges, custom items) --}}
+                                                                <strong>{{ \Illuminate\Support\Str::limit($item->description, 60) }}</strong>
+                                                            @endif
                                                             @ {{number_format($item->subtotal_incl,2)}} @if (!$loop->last),@endif
                                                         @endforeach
                                                     @endif

@@ -1,4 +1,7 @@
 <div style="display:inline-block">
+    @if ($consolidationNumber)
+    <small class="text-muted"><i class="fa fa-cubes"></i> Part of consolidation {{ $consolidationNumber }} - one shipment per job. Extra containers go on the master shipment; a client's further cargo is a new job added to the consolidation.</small>
+    @else
     <a href="#" class="btn btn-xs btn-info" data-toggle="modal" data-target="#addShipmentModal{{ $job->id }}">
         <i class="fa fa-plus"></i> Add Shipment
     </a>
@@ -120,8 +123,11 @@
                                 <div class="col-md-2">
                                     <input type="number" step="any" class="form-control" wire:model="cargo_rows.{{ $index }}.quantity" placeholder="Qty">
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-1">
                                     <input type="number" step="any" class="form-control" wire:model="cargo_rows.{{ $index }}.gross_weight" placeholder="Gross Wt">
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="number" step="any" min="0" class="form-control" wire:model="cargo_rows.{{ $index }}.cbm" placeholder="CBM">
                                 </div>
                                 <div class="col-md-2">
                                     @if (count($cargo_rows) > 1)
@@ -195,4 +201,5 @@
             $('#addShipmentModal{{ $job->id }}').modal('hide');
         })
     </script>
+    @endif
 </div>

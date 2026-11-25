@@ -98,6 +98,7 @@ class DataBackupService
             'Fleet/Horses Performance'           => fn () => new Exports\HorsesPerformanceExport($from, $to, 'start_date'),
             'Fleet/Horses Mileage'               => fn () => new Exports\HorsesMileageExport(),
             'Fleet/Horses Age'                   => fn () => new Exports\HorsesAgeExport(),
+            'Fleet/Maintenance Planner'          => fn () => new Exports\MaintenancePlannerExport(),
             'Fleet/Trailers'                     => fn () => new Exports\TrailersExport(),
             'Fleet/Trailers Mileage'             => fn () => new Exports\TrailersMileageExport(),
             'Fleet/Trailers Age'                 => fn () => new Exports\TrailersAgeExport(),
@@ -115,6 +116,9 @@ class DataBackupService
             'Workshop/Bookings'                  => fn () => new Exports\BookingsExport('all', null, $from, $to),
             'Workshop/Tickets'                   => fn () => new Exports\TicketsExport(null, null, null, $from, $to),
             'Workshop/Workshop Services'         => fn () => new Exports\WorkshopServicesExport(),
+
+            // Freight
+            'Freight/Freight Jobs'               => fn () => new Exports\FreightJobsExport(),
 
             // Inventory & Procurement
             'Inventory/Purchase Orders'          => fn () => new Exports\PurchasesExport($from, $to, 'created_at', 'asset', null),

@@ -88,6 +88,44 @@ class FleetIdentifier
         return blank($secondary) ? $primary : "{$primary} ({$secondary})";
     }
 
+    /**
+     * Always "AAZ 0790 (H12)": registration, fleet number in brackets when
+     * there is one. The company preference only drives ordering (sortCollection).
+     */
+    public static function regFleetLabel($model): string
+    {
+        $reg = self::format(self::REGISTRATION_NUMBER, $model->{self::REGISTRATION_NUMBER});
+        $fleet = self::format(self::FLEET_NUMBER, $model->{self::FLEET_NUMBER});
+
+        if (blank($fleet)) {
+            return (string) $reg;
+        }
+
+        return blank($reg) ? $fleet : "{$reg} ({$fleet})";
+    }
+
+    /**
+     * Ascending natural sort on the preferred identifier (H2 before H10).
+     * Units missing the preferred identifier follow, sorted by the other one.
+     */
+    public static function sortCollection($items)
+    {
+        $key = function ($model) {
+            $primary = $model->{self::primaryColumn($model)};
+
+            return filled($primary)
+                ? [0, (string) $primary]
+                : [1, (string) $model->{self::secondaryColumn($model)}];
+        };
+
+        return $items->sort(function ($a, $b) use ($key) {
+            [$ga, $va] = $key($a);
+            [$gb, $vb] = $key($b);
+
+            return $ga <=> $gb ?: strnatcasecmp($va, $vb);
+        })->values();
+    }
+
     protected static function format(string $column, $value): ?string
     {
         if (blank($value)) {

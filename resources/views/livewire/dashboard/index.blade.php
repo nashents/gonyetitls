@@ -362,7 +362,7 @@
                     </div>
                 @endif
 
-                @if ($canSee(['Transport & Logistics']))
+                @if ($canSee(['Transport & Logistics']) && \App\Services\Integrations\IntegrationGate::enabledForUserType('tracking'))
                     <div class="gd-panel wide">
                         @livewire('dashboard.fleet-map')
                     </div>
