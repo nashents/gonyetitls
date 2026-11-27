@@ -52,6 +52,23 @@
                                         </select>
                                     </div>
                                 @endunless
+                                {{-- Remembered per user (user_preferences 'freight_jobs.sort') until they pick another. --}}
+                                <div class="col-md-2">
+                                    <div class="input-group">
+                                        <select class="form-control" wire:model="sort_by" title="Sort by">
+                                            <option value="">Sort: Default</option>
+                                            @foreach (\App\Models\FreightJob::SORTS as $key => $label)
+                                                <option value="{{ $key }}">Sort: {{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <span class="input-group-btn">
+                                            <button type="button" class="btn btn-default" wire:click="toggleSortDir" @if (!$sort_by) disabled @endif
+                                                title="{{ $sort_dir === 'asc' ? 'Ascending (A→Z, oldest first) - click for descending' : 'Descending (Z→A, newest first) - click for ascending' }}">
+                                                <i class="fa {{ $sort_dir === 'asc' ? 'fa-sort-amount-asc' : 'fa-sort-amount-desc' }}"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             {{-- Toolbar below the filters, same buttons as the other modules (e.g. + Trip on Trips). --}}
@@ -105,7 +122,10 @@
                                             <th>Shipment</th>
                                             <th>Origin &rarr; Destination</th>
                                             <th>Port Exposure</th>
-                                            <th title="Approved/invoiced charges vs verified/approved costs">Costing</th>
+                                            @php $showCosting = \App\Models\Company::freightCostingVisibleTo(); @endphp
+                                            @if ($showCosting)
+                                                <th title="Approved/invoiced charges vs verified/approved costs">Costing</th>
+                                            @endif
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -178,6 +198,7 @@
                                                     <strong>Storage Days:</strong> {{ $storageExposure?->chargeable_days ?? ($primaryContainer ? 0 : '—') }}<br>
                                                     <strong>Demurrage Days:</strong> {{ $demurrageExposure?->chargeable_days ?? ($primaryContainer ? 0 : '—') }}
                                                 </td>
+                                                @if ($showCosting)
                                                 <td style="white-space:nowrap">
                                                     @php
                                                         $sym = $job->currency?->symbol;
@@ -203,6 +224,7 @@
                                                         <br><small class="text-muted" title="Estimated revenue / cost">Est. {{ $sym }}{{ number_format((float) $job->estimated_revenue, 2) }} / {{ $sym }}{{ number_format((float) $job->estimated_cost, 2) }}</small>
                                                     @endif
                                                 </td>
+                                                @endif
                                                 <td>
                                                     <span class="label label-{{ $jobStatusColors[$job->status] ?? 'info' }} label-wide">{{ ucwords(str_replace('_', ' ', $job->status)) }}</span>
                                                     <br><span class="label label-{{ ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger'][$job->authorization] ?? 'default' }} label-wide" style="margin-top:4px; display:inline-block" title="{{ $job->authorization_comments }}">{{ ucfirst($job->authorization) }}</span>
@@ -237,7 +259,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="{{ $this->showAuthorizeControls ? 11 : 10 }}" class="text-center">No freight jobs found.</td>
+                                                <td colspan="{{ ($this->showAuthorizeControls ? 11 : 10) - ($showCosting ? 0 : 1) }}" class="text-center">No freight jobs found.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

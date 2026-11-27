@@ -195,6 +195,9 @@ class Create extends Component
     {
         $revenue = $this->estimated_revenue === '' || $this->estimated_revenue === null ? null : (float) $this->estimated_revenue;
         $cost = $this->estimated_cost === '' || $this->estimated_cost === null ? null : (float) $this->estimated_cost;
+        if (!\App\Models\Company::freightCostingVisibleTo()) {
+            $revenue = $cost = null; // Freight Costing Managed By Finance: only Finance sets estimates
+        }
 
         return [
             'estimated_revenue' => $revenue,

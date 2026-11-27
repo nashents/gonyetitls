@@ -86,6 +86,8 @@
         <!-- /.col-md-3 -->
 
         <div class="col-md-9">
+            {{-- Business Settings "Freight Costing Managed By Finance": costing + estimates for Finance / Super Admin only. --}}
+            @php $showCosting = \App\Models\Company::freightCostingVisibleTo(); @endphp
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active" wire:ignore.self><a href="#overview" aria-controls="overview" role="tab" data-toggle="tab">Overview</a></li>
                 <li role="presentation" wire:ignore.self><a href="#shipment" aria-controls="shipment" role="tab" data-toggle="tab">Shipment</a></li>
@@ -95,7 +97,9 @@
                 <li role="presentation" wire:ignore.self><a href="#transport" aria-controls="transport" role="tab" data-toggle="tab">Transport</a></li>
                 <li role="presentation" wire:ignore.self><a href="#transport-documents" aria-controls="transport-documents" role="tab" data-toggle="tab">Transport Documents</a></li>
                 <li role="presentation" wire:ignore.self><a href="#customs" aria-controls="customs" role="tab" data-toggle="tab">Customs</a></li>
+                @if ($showCosting)
                 <li role="presentation" wire:ignore.self><a href="#costing" aria-controls="costing" role="tab" data-toggle="tab">Costing</a></li>
+                @endif
                 <li role="presentation" wire:ignore.self><a href="#timeline" aria-controls="timeline" role="tab" data-toggle="tab">Timeline</a></li>
                 <li role="presentation" wire:ignore.self><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
                 <li role="presentation" wire:ignore.self><a href="#reminders" aria-controls="reminders" role="tab" data-toggle="tab">Reminders
@@ -146,6 +150,7 @@
                                 <th>Quotation</th>
                                 <td>{{ $job->quotation?->quotation_number }}</td>
                             </tr>
+                            @if ($showCosting)
                             <tr>
                                 <th>Estimated Revenue</th>
                                 <td>{{ $job->currency?->symbol }}{{ number_format($job->estimated_revenue ?? 0, 2) }}</td>
@@ -154,6 +159,7 @@
                                 <th>Estimated Cost</th>
                                 <td>{{ $job->currency?->symbol }}{{ number_format($job->estimated_cost ?? 0, 2) }}</td>
                             </tr>
+                            @endif
                             <tr>
                                 <th>Notes</th>
                                 <td>{{ $job->notes }}</td>
@@ -309,9 +315,11 @@
                     @endforelse
                 </div>
 
+                @if ($showCosting)
                 <div role="tabpanel" wire:ignore.self class="tab-pane" id="costing">
                     @livewire('freight.jobs.costing', ['jobId' => $job->id], key('costing-'.$job->id))
                 </div>
+                @endif
 
                 <div role="tabpanel" wire:ignore.self class="tab-pane" id="timeline">
                     @include('livewire.freight.jobs.partials.consolidation-tracking', ['section' => 'timeline'])

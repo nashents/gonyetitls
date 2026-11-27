@@ -265,7 +265,7 @@
                                                 </div>
                                             </div>
                                             {{-- Estimates are per job, so they sit beside the first shipment's dates only. --}}
-                                            @if ($loop->first)
+                                            @if ($loop->first && \App\Models\Company::freightCostingVisibleTo())
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label>Estimated Revenue</label>

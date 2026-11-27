@@ -82,6 +82,16 @@
                         @error('rates_managed_by_finance') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="mb-10" style="margin-top:30px;">
+                        <input type="checkbox" wire:model.defer="freight_costing_managed_by_finance" class="line-style" />
+                        <label for="one" class="radio-label">Freight Costing Managed By Finance</label>
+                        <div style="font-size:12px; line-height:1.4; color:#555; margin-top:3px;">
+                            When ticked, only the Finance department and Super Admins see freight job costing:
+                            the Costing tab, the Costing column on the jobs list and the estimated revenue / cost.
+                        </div>
+                    </div>
+                </div>
             </div>
          
             <div class="btn-group" role="group" style="float: right;">

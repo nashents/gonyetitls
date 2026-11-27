@@ -314,7 +314,8 @@ class Edit extends Component
             ]);
 
             // Same rule as the Costing tab (margin only when both are set).
-            app(\App\Services\Freight\FreightCostingService::class)->saveEstimates(
+            // Users who can't see costing (Freight Costing Managed By Finance) never change the estimates.
+            if (\App\Models\Company::freightCostingVisibleTo()) app(\App\Services\Freight\FreightCostingService::class)->saveEstimates(
                 $this->job,
                 ($this->estimated_revenue === '' || $this->estimated_revenue === null) ? null : (float) $this->estimated_revenue,
                 ($this->estimated_cost === '' || $this->estimated_cost === null) ? null : (float) $this->estimated_cost

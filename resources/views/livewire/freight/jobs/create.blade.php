@@ -254,6 +254,7 @@
                                             <input type="datetime-local" class="form-control" wire:model="eta">
                                         </div>
                                     </div>
+                                    @if (\App\Models\Company::freightCostingVisibleTo())
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Estimated Revenue</label>
@@ -268,6 +269,7 @@
                                             @error('estimated_cost') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
 
                                 <h6 class="underline mt-20 mb-20"><strong>Cargo</strong></h6>

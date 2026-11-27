@@ -42,7 +42,22 @@ class FreightJobsExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             ->listFilter($this->filters);
     }
 
+    /** Last 7 columns = estimates / revenue / cost (hidden under Freight Costing Managed By Finance). */
+    private const COSTING_COLUMNS = 7;
+
+    private function showCosting(): bool
+    {
+        return \App\Models\Company::freightCostingVisibleTo();
+    }
+
     public function map($job): array
+    {
+        $row = $this->fullRow($job);
+
+        return $this->showCosting() ? $row : array_slice($row, 0, -self::COSTING_COLUMNS);
+    }
+
+    private function fullRow($job): array
     {
         $shipment = $job->shipments->sortByDesc('id')->first();
         $masterBl = $shipment?->transport_documents
@@ -91,6 +106,13 @@ class FreightJobsExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
     public function headings(): array
     {
+        $headings = $this->fullHeadings();
+
+        return $this->showCosting() ? $headings : array_slice($headings, 0, -self::COSTING_COLUMNS);
+    }
+
+    private function fullHeadings(): array
+    {
         return [
             'Job #', 'Created', 'Customer', 'Customer Ref', 'Service', 'Import/Export', 'Mode',
             'Origin', 'Destination', 'Consignee', 'Master BL/AWB', 'Declaration #', 'Shipping Line', 'Container #s',
@@ -103,7 +125,7 @@ class FreightJobsExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getStyle('A7:AB7')->applyFromArray([
+                $event->sheet->getStyle('A7:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->headings())) . '7')->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [

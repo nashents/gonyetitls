@@ -147,6 +147,28 @@ class Company extends Model  implements Auditable
     }
 
     /**
+     * Business Settings "Freight Costing Managed By Finance": when on, only
+     * the Finance department and Super Admins see freight job costing (Costing
+     * tab + column, estimated revenue / cost, cost columns in the export).
+     * Same rule as Trip Rates Managed By Finance on trips.
+     */
+    public static function freightCostingVisibleTo(?\App\Models\User $user = null): bool
+    {
+        $user = $user ?? \Illuminate\Support\Facades\Auth::user();
+        if (!$user) {
+            return true; // CLI / exports from a backup job
+        }
+
+        $company = $user->employee?->company;
+        if (!$company || !$company->freight_costing_managed_by_finance) {
+            return true;
+        }
+
+        return $user->roles->contains('name', 'Super Admin')
+            || (bool) $user->employee?->departments->contains('name', 'Finance');
+    }
+
+    /**
      * Falls back to the default company logo when none is set or the
      * uploaded file was deleted from disk.
      */
@@ -179,5 +201,6 @@ class Company extends Model  implements Auditable
         'credential_sharer_ids' => 'array',
         'billing_enabled' => 'boolean',
         'billing_start_date' => 'date',
+        'freight_costing_managed_by_finance' => 'boolean',
     ];
 }

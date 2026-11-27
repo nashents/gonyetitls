@@ -150,12 +150,67 @@ class FreightJob extends Model implements Auditable
             }
         }
 
+        // A user-picked sort (Freight Jobs "Sort by", remembered per user).
+        if (filled($filters['sort'] ?? null) && isset(self::SORTS[$filters['sort']])) {
+            return $this->applyListSort($query, $filters['sort'], ($filters['sort_dir'] ?? 'desc') === 'asc' ? 'asc' : 'desc');
+        }
+
         // Approved / Rejected lists show the latest decisions first.
         if (in_array($filters['authorization'] ?? null, ['approved', 'rejected'], true)) {
             $query->orderByDesc('authorization_date');
         }
 
         return $query->latest()->orderByDesc('id');
+    }
+
+    /** Freight Jobs list "Sort by" options (key => label). Blank = default order. */
+    public const SORTS = [
+        'created_at' => 'Date Created',
+        'job_number' => 'Job #',
+        'customer' => 'Customer',
+        'etd' => 'ETD',
+        'eta' => 'ETA',
+        'shipping_line' => 'Shipping Line',
+        'origin' => 'Origin',
+        'destination' => 'Destination',
+        'status' => 'Status',
+        'authorization_date' => 'Authorization Date',
+    ];
+
+    /**
+     * ETD/ETA = the job's earliest shipment date; shipping line = first
+     * container's line, else the first sea leg's. Jobs with no value always
+     * sort last (either direction); id breaks ties so pages never skip rows.
+     */
+    private function applyListSort($query, string $sort, string $dir)
+    {
+        $jobs = $this->getTable();
+        $sub = match ($sort) {
+            'etd', 'eta' => "(SELECT MIN(s.{$sort}) FROM shipments s WHERE s.freight_job_id = {$jobs}.id AND s.deleted_at IS NULL)",
+            'customer' => "(SELECT c.name FROM customers c WHERE c.id = {$jobs}.customer_id)",
+            'origin' => "(SELECT d.city FROM destinations d WHERE d.id = {$jobs}.`from`)",
+            'destination' => "(SELECT d.city FROM destinations d WHERE d.id = {$jobs}.`to`)",
+            'shipping_line' => "COALESCE("
+                . "(SELECT sl.name FROM shipping_containers sc JOIN shipments s ON s.id = sc.shipment_id JOIN shipping_lines sl ON sl.id = sc.shipping_line_id"
+                . " WHERE s.freight_job_id = {$jobs}.id AND s.deleted_at IS NULL AND sc.deleted_at IS NULL ORDER BY sc.id LIMIT 1),"
+                . "(SELECT sl.name FROM shipment_legs l JOIN shipments s ON s.id = l.shipment_id JOIN shipping_lines sl ON sl.id = l.shipping_line_id"
+                . " WHERE s.freight_job_id = {$jobs}.id AND s.deleted_at IS NULL AND l.deleted_at IS NULL ORDER BY s.id, l.sequence LIMIT 1))",
+            default => null,
+        };
+
+        if ($sub) {
+            $query->orderByRaw("{$sub} IS NULL")->orderByRaw("{$sub} {$dir}");
+        } elseif ($sort === 'status') {
+            // Lifecycle order, not alphabetical.
+            $statuses = "'draft','confirmed','in_progress','customs_clearance','port_storage','transport_arranged','delivered','invoiced','closed','cancelled'";
+            $query->orderByRaw("FIELD({$jobs}.status, {$statuses}) {$dir}");
+        } elseif ($sort === 'authorization_date') {
+            $query->orderByRaw("{$jobs}.authorization_date IS NULL")->orderBy("{$jobs}.authorization_date", $dir);
+        } else {
+            $query->orderBy("{$jobs}.{$sort}", $dir);
+        }
+
+        return $query->orderBy("{$jobs}.id", $dir);
     }
 
     /** Statuses a job may hold before it is approved (see FreightJobAuthorizationService). */

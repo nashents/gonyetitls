@@ -93,8 +93,20 @@ class Costing extends Component
     public $expanded_cost_id;
     public $expanded_charge_id;
 
+    /** Business Settings "Freight Costing Managed By Finance": Finance / Super Admin only. */
+    private function authorizeCosting(): void
+    {
+        abort_unless(\App\Models\Company::freightCostingVisibleTo(), 403, 'Freight costing is managed by Finance.');
+    }
+
+    public function hydrate()
+    {
+        $this->authorizeCosting();
+    }
+
     public function mount($jobId)
     {
+        $this->authorizeCosting();
         $this->job = FreightJob::findOrFail($jobId);
         $this->chargeTypes = ChargeType::selectable()->get();
         $this->vendors = Vendor::orderBy('name', 'asc')->get();

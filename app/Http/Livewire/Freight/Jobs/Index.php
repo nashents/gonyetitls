@@ -7,6 +7,7 @@ use App\Http\Livewire\Freight\Jobs\Concerns\AuthorizesFreightJobs;
 use App\Models\Customer;
 use App\Models\FreightJob;
 use App\Models\FreightServiceType;
+use App\Models\UserPreference;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -29,6 +30,11 @@ class Index extends Component
     public $filter_freight_service_type_id;
     public $filter_customer_id;
     public $filter_authorization;
+
+    /** "Sort by" (FreightJob::SORTS key, '' = default) - remembered per user. */
+    public $sort_by = '';
+    public $sort_dir = 'desc';
+    const SORT_PREFERENCE = 'freight_jobs.sort';
 
     /** Set on the Pending / Approved / Rejected pages: the list is fixed to it. */
     public $lockedAuthorization;
@@ -64,6 +70,35 @@ class Index extends Component
 
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
+
+        $saved = UserPreference::get(self::SORT_PREFERENCE, []);
+        $this->sort_by = isset(FreightJob::SORTS[$saved['by'] ?? '']) ? $saved['by'] : '';
+        $this->sort_dir = ($saved['dir'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+    }
+
+    public function updatedSortBy()
+    {
+        $this->rememberSort();
+    }
+
+    public function updatedSortDir()
+    {
+        $this->rememberSort();
+    }
+
+    public function toggleSortDir()
+    {
+        $this->sort_dir = $this->sort_dir === 'asc' ? 'desc' : 'asc';
+        $this->rememberSort();
+    }
+
+    private function rememberSort(): void
+    {
+        if (!isset(FreightJob::SORTS[$this->sort_by])) {
+            $this->sort_by = '';
+        }
+        UserPreference::put(self::SORT_PREFERENCE, ['by' => $this->sort_by, 'dir' => $this->sort_dir]);
+        $this->resetPage();
     }
 
     /**
@@ -104,6 +139,8 @@ class Index extends Component
             'authorization' => $this->lockedAuthorization ?: $this->filter_authorization,
             'freight_service_type_id' => $this->filter_freight_service_type_id,
             'customer_id' => $this->filter_customer_id,
+            'sort' => $this->sort_by,
+            'sort_dir' => $this->sort_dir,
         ];
     }
 
