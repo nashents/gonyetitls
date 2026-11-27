@@ -250,6 +250,7 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $rateCards])
                         </div>
                     </div>
                 </div>

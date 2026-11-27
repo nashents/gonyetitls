@@ -23,7 +23,7 @@
                                             @error('name') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label>Comes After @unless ($editing_system)<span class="required" style="color: red">*</span>@endunless</label>
                                             @if ($editing_system)
@@ -41,7 +41,19 @@
                                             @error('after_code') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label title="The freight job moves to this status when its containers reach this stage">Sets Job Status</label>
+                                            <select class="form-control" wire:model.defer="job_status">
+                                                <option value="">No change</option>
+                                                @foreach ($jobStatuses as $status)
+                                                    <option value="{{ $status }}">{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('job_status') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Explanation</label>
                                             <textarea class="form-control" rows="1" wire:model.defer="description" placeholder="What has happened to the container at this stage"></textarea>
@@ -60,21 +72,29 @@
                                     @endif
                                 </div>
                                 @if ($editing_system)
-                                    <small style="color: #c77a00;"><i class="fa fa-cube"></i> System stage: you can rename it and change its explanation; its position is fixed because the built-in Port Storage / Demurrage / Detention clocks depend on it.</small>
+                                    <div style="font-size:12px; line-height:1.4; color:#c77a00;"><i class="fa fa-cube"></i> System stage: you can rename it, change its explanation and the job status it sets; its position is fixed because the built-in Port Storage / Demurrage / Detention clocks depend on it.</div>
                                 @endif
+                                <div style="font-size:12px; line-height:1.4; color:#31708f; margin-top:4px;"><i class="fa fa-info-circle"></i> When a container reaches a stage, its freight job moves to that stage's job status. A job with several containers follows the least advanced one. Invoiced, Closed and Cancelled jobs are never changed.</div>
                             </form>
 
                             <table class="table table-striped table-bordered">
                                 <thead>
-                                    <tr><th>#</th><th>Stage</th><th>What it means</th><th>Clock effect</th><th>Type</th><th>Active</th><th></th></tr>
+                                    <tr><th>#</th><th>Stage</th><th>What it means</th><th>Sets Job Status</th><th>Clock effect</th><th>Type</th><th>Active</th><th></th></tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($stages as $stage)
+                                    @foreach ($stageRows as $stage)
                                         @php $effect = $effects[$stage->code] ?? []; @endphp
                                         <tr wire:key="container-stage-{{ $stage->id }}" class="{{ $stage->is_active ? '' : 'text-muted' }}">
-                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $stageRows->firstItem() + $loop->index }}</td>
                                             <td><strong>{{ $stage->name }}</strong><br><small class="text-muted">{{ $stage->code }}</small></td>
                                             <td>{{ $stage->description }}</td>
+                                            <td>
+                                                @if ($stage->job_status)
+                                                    <span class="label label-primary">{{ ucwords(str_replace('_', ' ', $stage->job_status)) }}</span>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
                                             <td>
                                                 @foreach ($effect['starts'] ?? [] as $charge)
                                                     <span class="label label-success" title="Clock starts">&#9654; Starts {{ $charge }}</span><br>
@@ -107,6 +127,7 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $stageRows])
                             <small class="text-muted">
                                 Deactivated stages are skipped by <em>Next Stage</em> and hidden from the dropdowns, but stay on containers that already reached them.
                                 Demurrage and Detention are independent estimates for different carrier billing structures &mdash; do not sum them.

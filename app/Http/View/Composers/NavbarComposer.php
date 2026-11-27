@@ -42,20 +42,25 @@ class NavbarComposer
     {
         $user = User::find(Auth::user()->id);
 
+        // Notifications are company-specific (multi-tenancy safe): records
+        // that carry a company_id only count for the user's own company.
+        $scopeCompanyId = $user?->employee?->company_id ?? $user?->company?->id
+            ?? $user?->transporter?->company_id ?? $user?->customer?->company_id ?? $user?->agent?->company_id;
+
         $now         = now();                     // uses app timezone (Africa/Harare)
 
         $pendingCounts = [
-            'trips'            => Trip::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'trips'            => Trip::where('company_id', $scopeCompanyId)->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'bookings'         => Booking::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'invoices'         => Invoice::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'invoices'         => Invoice::where('company_id', $scopeCompanyId)->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'bills'            => Bill::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'credit_notes'     => CreditNote::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'credit_notes'     => CreditNote::where('company_id', $scopeCompanyId)->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'purchases'        => Purchase::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'transfers'        => Transfer::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'dispatches'       => Dispatch::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'retreads'         => Retread::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'recoveries'       => Recovery::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'rentals'          => Rental::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'rentals'          => Rental::where('company_id', $scopeCompanyId)->where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'topups'           => TopUp::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'gate_passes'      => GatePass::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'waste_collections'=> WasteCollection::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
@@ -161,6 +166,7 @@ class NavbarComposer
         $now = Carbon::now();
 
         $validRemindersQuery = Fitness::query()
+            ->where('company_id', $scopeCompanyId)
             ->where('user_id', $user->id)
             ->where('closed', 0)
 
@@ -202,6 +208,7 @@ class NavbarComposer
         $reminders = $validRemindersQuery->get();
 
         $expired_reminders = Fitness::query()
+            ->where('company_id', $scopeCompanyId)
             ->where('user_id', $user->id)
             ->where('closed', 0)
             ->whereDate('expires_at', '<', $today)
@@ -274,7 +281,7 @@ class NavbarComposer
         $document_handovers = \App\Models\DocumentMovement::with(['document', 'fromUser'])
             ->where('status', \App\Models\DocumentMovement::PENDING)
             ->where('to_user_id', $user->id)
-            ->whereHas('document')
+            ->whereHas('document') // addressed to this user only (documents.company_id isn't recorded)
             ->latest('id')
             ->limit(20)
             ->get();
@@ -334,7 +341,7 @@ class NavbarComposer
                 'leaves'            => $pendingCounts['leaves'] ?? 0,
                 'overdue_tickets'       => $pendingCounts['overdue_tickets'] ?? 0,
                 'edit_authorizations'   => $editAuthorizationsPendingCount,
-                'freight_jobs'          => $isFreightCompany ? FreightJob::where('authorization', 'pending')->count() : 0,
+                'freight_jobs'          => $isFreightCompany ? FreightJob::where('company_id', $scopeCompanyId)->where('authorization', 'pending')->count() : 0,
             ],
         ]);
     }

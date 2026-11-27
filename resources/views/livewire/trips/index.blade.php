@@ -1729,7 +1729,10 @@
         // position/z-index makes it a stacking context - the modal gets trapped
         // under the body-level backdrop and nothing in it can be clicked.
         // Move the modal to <body> while open, then put it back in its row.
-        (function ($) {
+        // This inline script renders before the layout loads jQuery, so wait
+        // for DOMContentLoaded - otherwise window.jQuery is undefined here and
+        // the fix silently never installs.
+        function installTripsRowModalFix($) {
             if (!$ || window.__tripsRowModalFix) return;
             window.__tripsRowModalFix = true;
 
@@ -1761,7 +1764,15 @@
                     $modal.remove();
                 }
             });
-        })(window.jQuery);
+        }
+
+        if (window.jQuery) {
+            installTripsRowModalFix(window.jQuery);
+        } else {
+            document.addEventListener('DOMContentLoaded', function () {
+                installTripsRowModalFix(window.jQuery);
+            });
+        }
     </script>
 
 </div>

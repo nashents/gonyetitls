@@ -2091,6 +2091,10 @@ class Create extends Component
                     
                 foreach ($this->destinations_selectedTo as $key => $destinationId) {
 
+                    if (empty($destinationId)) {
+                        continue; // blank extra leg - nothing to record
+                    }
+
                     $offloadingPointId = ($this->destinations_offloading_point_id[$key] ?? null) ?: null;
 
                     TripDestination::updateOrCreate(
@@ -2152,6 +2156,10 @@ class Create extends Component
             if (!empty($this->destinations_selectedFrom)) {
 
                 foreach ($this->destinations_selectedFrom as $key => $destinationId) {
+
+                    if (empty($destinationId)) {
+                        continue; // blank extra leg - nothing to record
+                    }
 
                     $loadingPointId = ($this->destinations_loading_point_id[$key] ?? null) ?: null;
 
@@ -2422,6 +2430,44 @@ class Create extends Component
         }
     }
 
+    /**
+     * From/To are only guarded by the HTML `required` attribute (the full
+     * $rules validate() is disabled), so a blank selection - e.g. the chosen
+     * option filtered out by the search box - reached addOrigins() and
+     * crashed on the trip_origins.destination_id foreign key. Only checked
+     * when this form creates the transport order; attached orders bring
+     * their own origins/destinations.
+     */
+    protected function validateRouteEnds(): void
+    {
+        if (!empty($this->selectedTransportOrder)) {
+            return;
+        }
+
+        if ($this->multiple_destinations === true) {
+            $this->validate([
+                'destinations_selectedFrom.0' => 'required|exists:destinations,id',
+                'destinations_selectedTo.0'   => 'required|exists:destinations,id',
+            ], [
+                'destinations_selectedFrom.0.required' => 'Please select the From location.',
+                'destinations_selectedFrom.0.exists'   => 'The selected From location no longer exists - please pick it again.',
+                'destinations_selectedTo.0.required'   => 'Please select the To location.',
+                'destinations_selectedTo.0.exists'     => 'The selected To location no longer exists - please pick it again.',
+            ]);
+            return;
+        }
+
+        $this->validate([
+            'selectedFrom' => 'required|exists:destinations,id',
+            'selectedTo'   => 'required|exists:destinations,id',
+        ], [
+            'selectedFrom.required' => 'Please select the From location.',
+            'selectedFrom.exists'   => 'The selected From location no longer exists - please pick it again.',
+            'selectedTo.required'   => 'Please select the To location.',
+            'selectedTo.exists'     => 'The selected To location no longer exists - please pick it again.',
+        ]);
+    }
+
     public function store(){
 
         // $this->validate();
@@ -2432,6 +2478,7 @@ class Create extends Component
         }
         $this->validateTripExpenses();
         $this->validateFuelFunding();
+        $this->validateRouteEnds();
         //start trip creation logic
         // try{
 

@@ -102,7 +102,7 @@ class CreditNoteJournalService
 
     protected function generateNumber(): string
     {
-        $last = JournalEntry::orderByDesc('id')->value('journal_number');
+        $last = JournalEntry::withoutCompanyScope()->orderByDesc('id')->value('journal_number');
         $next = $last ? ((int) substr($last, 4)) + 1 : 1;
         return 'JNL-' . str_pad($next, 5, '0', STR_PAD_LEFT);
     }

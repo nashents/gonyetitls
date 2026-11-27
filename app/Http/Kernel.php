@@ -71,6 +71,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'ezytrack.token' => \App\Http\Middleware\VerifyEzyTrackToken::class,
+        'gonyeti.link' => \App\Http\Middleware\VerifyGonyetiLinkSignature::class,
         'integration' => \App\Http\Middleware\RequireActiveIntegration::class,
     ];
 }

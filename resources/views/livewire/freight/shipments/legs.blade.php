@@ -1,6 +1,6 @@
 <div>
     <div class="mb-10">
-        <a href="#" wire:click.prevent="$set('editing_leg_id', null)" class="btn btn-xs btn-info" data-toggle="modal" data-target="#addLegModal{{ $shipment->id }}">
+        <a href="#" wire:click.prevent="newLeg" class="btn btn-xs btn-info" data-toggle="modal" data-target="#addLegModal{{ $shipment->id }}">
             <i class="fa fa-plus"></i> Add Leg
         </a>
     </div>
@@ -12,22 +12,48 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($shipment->legs as $leg)
+            @php $linkOn = $this->linkEnabled; @endphp
+            @forelse ($legRows as $leg)
                 <tr wire:key="{{ '56c716-15-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($leg->id ?? '') }}">
                     <td>{{ $leg->sequence }}</td>
                     <td>{{ ucfirst($leg->transport_mode ?? '') }}</td>
                     <td>{{ $leg->carrierLabel() ?? '—' }}</td>
-                    <td>{{ $leg->origin_location?->name }} &rarr; {{ $leg->destination_location?->name }}</td>
+                    <td>{{ $leg->origin?->city ?? '—' }} &rarr; {{ $leg->destination?->city ?? '—' }}</td>
                     <td>{{ $leg->planned_departure?->format('d M Y') }} / {{ $leg->planned_arrival?->format('d M Y') }}</td>
                     <td><span class="label label-info label-wide">{{ $lifecycleStages[$leg->status] ?? ucwords(str_replace('_', ' ', $leg->status)) }}</span></td>
                     <td>
                         <a href="#" wire:click.prevent="toggleExpand({{ $leg->id }})" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Details</a>
                         <a href="#" wire:click.prevent="edit({{ $leg->id }})" class="btn btn-xs btn-default" data-toggle="modal" data-target="#addLegModal{{ $shipment->id }}"><i class="fa fa-edit"></i></a>
 
+                        @php $linkedRoad = $linkOn && \App\Services\GonyetiLink\GonyetiLinkService::isRoadLeg($leg); @endphp
                         @if ($leg->trip_id)
                             <a href="{{ route('trips.show', $leg->trip_id) }}" target="_blank" class="btn btn-xs btn-primary">
                                 <i class="fa fa-truck"></i> Trip {{ $leg->trip->trip_number }} — {{ $leg->trip->trip_status }}
                             </a>
+                        @elseif ($linkedRoad || $leg->link_status)
+                            {{-- Executed by the client's transport instance (Gonyeti Instance Link) --}}
+                            @if ($leg->link_status === 'trip_created')
+                                <span class="label label-primary" title="{{ $leg->link_message }}">
+                                    <i class="fa fa-truck"></i> Transport trip {{ $leg->link_trip_number }} — {{ $leg->link_trip_status }}
+                                </span>
+                            @elseif ($leg->link_status === 'requested')
+                                <span class="label label-info"><i class="fa fa-paper-plane"></i> Requested from transport</span>
+                            @elseif ($leg->link_status === 'rejected')
+                                <span class="label label-danger" title="{{ $leg->link_message }}"><i class="fa fa-ban"></i> Rejected: {{ \Illuminate\Support\Str::limit($leg->link_message, 40) }}</span>
+                            @elseif ($leg->link_status === 'cancelled')
+                                <span class="label label-default">Request cancelled</span>
+                            @elseif ($leg->link_status === 'failed')
+                                <span class="label label-warning" title="{{ $leg->link_message }}"><i class="fa fa-exclamation-triangle"></i> Not delivered</span>
+                                <a href="#" wire:click.prevent="retryLink" class="btn btn-xs btn-warning"><i class="fa fa-refresh"></i> Retry</a>
+                            @endif
+                            @if ($linkedRoad && in_array($leg->link_status, [null, 'rejected', 'cancelled'], true) && $leg->status !== 'cancelled')
+                                <a href="#" wire:click.prevent="sendToTransport({{ $leg->id }})" class="btn btn-xs btn-warning">
+                                    <i class="fa fa-paper-plane"></i> {{ $leg->link_status ? 'Send again' : 'Send to Transport' }}
+                                </a>
+                            @endif
+                            @if ($leg->link_status !== 'trip_created')
+                                <a href="#" wire:click.prevent="delete({{ $leg->id }})" wire:confirm="Remove this leg?{{ $leg->link_ref ? ' The transport instance will be told the request is cancelled.' : '' }}" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>
+                            @endif
                         @else
                             @if ($leg->nextLifecycleStage())
                                 <a href="#" wire:click.prevent="advanceStage({{ $leg->id }})" wire:confirm="Mark this leg as '{{ $lifecycleStages[$leg->nextLifecycleStage()] }}'?" class="btn btn-xs btn-success">
@@ -50,7 +76,7 @@
                             <strong>Estimated:</strong> {{ $leg->estimated_departure?->format('d M Y H:i') }} / {{ $leg->estimated_arrival?->format('d M Y H:i') }}
                             &mdash; <strong>Actual:</strong> {{ $leg->actual_departure?->format('d M Y H:i') ?? '—' }} / {{ $leg->actual_arrival?->format('d M Y H:i') ?? '—' }}
 
-                            @unless ($leg->trip_id)
+                            @unless ($leg->trip_id || $leg->link_status === 'trip_created')
                                 <div class="mt-10">
                                     <a href="#" wire:click.prevent="hold({{ $leg->id }})" class="btn btn-xs btn-default">Put On Hold</a>
                                     <a href="#" wire:click.prevent="cancel({{ $leg->id }})" wire:confirm="Cancel this leg?" class="btn btn-xs btn-default">Cancel</a>
@@ -75,7 +101,7 @@
                                 </tbody>
                             </table>
 
-                            @unless ($leg->trip_id)
+                            @unless ($leg->trip_id || $leg->link_status === 'trip_created')
                                 <div class="row mb-20">
                                     <div class="col-md-4">
                                         <select class="form-control" wire:model="ad_hoc_milestone_code">
@@ -103,6 +129,7 @@
             @endforelse
         </tbody>
     </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $legRows])
 
     <!-- Add/Edit Leg Modal -->
     <div wire:ignore.self class="modal fade" id="addLegModal{{ $shipment->id }}" tabindex="-1" role="dialog">
@@ -171,30 +198,35 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Origin</label>
-                                    <select class="form-control" wire:model="origin_location_id">
+                                    <select class="form-control" wire:model.defer="origin_id">
                                         <option value="">Select</option>
-                                        @foreach ($locations as $location)
-                                            <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                        @foreach ($destinations as $destination)
+                                            <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
                                         @endforeach
                                     </select>
-                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('origin_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small>
+                                    <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Destination</label>
-                                    <select class="form-control" wire:model="destination_location_id">
+                                    <select class="form-control" wire:model.defer="destination_id">
                                         <option value="">Select</option>
-                                        @foreach ($locations as $location)
-                                            <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                        @foreach ($destinations as $destination)
+                                            <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
                                         @endforeach
                                     </select>
-                                    <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small>
-                                    <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('destination_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small>
+                                    <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             </div>
                         </div>
+                        @unless ($editing_leg_id)
+                            <small class="text-muted">Prefilled: a new leg starts where the previous leg ended (the first leg at the job's From) and heads to the job's To. Change either for a stop in between, e.g. a port.</small>
+                        @endunless
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -301,14 +333,26 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>From <small class="text-muted">(leg origin: {{ $shipment->legs->firstWhere('id', $dispatching_leg_id)?->origin_location?->name ?? '—' }})</small></label>
-                                    <input type="text" class="form-control" wire:model="dispatch_from">
+                                    <label>From</label>
+                                    <select class="form-control" wire:model.defer="dispatch_from">
+                                        <option value="">Select</option>
+                                        @foreach ($destinations as $destination)
+                                            <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('dispatch_from') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>To <small class="text-muted">(leg destination: {{ $shipment->legs->firstWhere('id', $dispatching_leg_id)?->destination_location?->name ?? '—' }})</small></label>
-                                    <input type="text" class="form-control" wire:model="dispatch_to">
+                                    <label>To</label>
+                                    <select class="form-control" wire:model.defer="dispatch_to">
+                                        <option value="">Select</option>
+                                        @foreach ($destinations as $destination)
+                                            <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : '' }} {{ $destination->city }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('dispatch_to') <span class="text-danger error">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>

@@ -9,6 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Budget extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 

@@ -16,9 +16,12 @@ use App\Services\Freight\CustomsDeclarationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class CustomsDeclarations extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $shipment;
     public $clearingAgents;
     public $countries;
@@ -92,14 +95,14 @@ class CustomsDeclarations extends Component
     }
 
     /**
-     * Declarant / Clearing Officer = our own (non-driver) staff. Not User::all():
-     * that includes every vendor, driver, customer and transporter portal login.
+     * Declarant / Clearing Officer = active non-driver employees with a login
+     * in the job's company only (multi-tenancy safe), same as the job's officer
+     * dropdowns. Not User::all(): that includes portal logins.
      */
     private function loadStaff(): void
     {
-        $this->users = Employee::where('company_id', Auth::user()->employee?->company_id ?? Auth::user()->company_id)
-            ->activeStaff()
-            ->ofStaffType('admin')
+        $companyId = $this->shipment?->freight_job?->company_id ?? Auth::user()->employee?->company_id;
+        $this->users = Employee::where('company_id', $companyId)->activeStaff()->ofStaffType('admin') // no drivers
             ->whereNotNull('user_id')
             ->orderBy('name', 'asc')
             ->orderBy('surname', 'asc')
@@ -401,6 +404,7 @@ class CustomsDeclarations extends Component
     public function render()
     {
         return view('livewire.freight.shipments.customs-declarations', [
+            'declarationRows' => $this->paginateRows($this->shipment->customs_declarations->sortBy('id')),
             'workflowStages' => CustomsDeclaration::WORKFLOW_STAGES,
         ]);
     }

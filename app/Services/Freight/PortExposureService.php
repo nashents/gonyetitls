@@ -68,7 +68,7 @@ class PortExposureService
         }
 
         $builtIn = array_keys(ContainerChargeExposure::CHARGE_TYPES);
-        foreach (ChargeType::tracksFreeTime()->whereNotIn('exposure_code', $builtIn)->orderBy('name')->get() as $type) {
+        foreach (ChargeType::tracksFreeTime()->where('is_active', true)->whereNotIn('exposure_code', $builtIn)->orderBy('name')->get() as $type) {
             if ($type->start_milestone) {
                 $effects[$type->start_milestone]['starts'][] = $type->name;
             }
@@ -140,9 +140,10 @@ class PortExposureService
         // Other Charge Types that track free time carry their own milestones
         // (built-ins never have milestones set; they use the maps above).
         $builtIn = array_keys(ContainerChargeExposure::CHARGE_TYPES);
-        $customStarts = ChargeType::tracksFreeTime()->whereNotIn('exposure_code', $builtIn)
+        // Inactive types start no new clocks.
+        $customStarts = ChargeType::tracksFreeTime()->where('is_active', true)->whereNotIn('exposure_code', $builtIn)
             ->where('start_milestone', $newStatus)->pluck('exposure_code')->all();
-        // Stops also apply to deleted types so already-running clocks still end.
+        // Stops also apply to inactive/deleted types so already-running clocks still end.
         $customStops = ChargeType::withTrashed()->tracksFreeTime()->whereNotIn('exposure_code', $builtIn)
             ->where('stop_milestone', $newStatus)->pluck('exposure_code')->all();
 

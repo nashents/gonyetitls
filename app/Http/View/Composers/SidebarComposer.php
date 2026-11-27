@@ -135,6 +135,10 @@ class SidebarComposer
         $currentCompanyForType = $employee?->company ?? $user?->company ?? $user?->transporter?->company ?? $user?->customer?->company ?? $user?->agent?->company;
         $companyIsFreightForwarder = $currentCompanyForType?->hasCompanyType('Freight Forwarding & Clearing') ?? false;
 
+        // Menu badges are company-specific (multi-tenancy safe): records that
+        // carry a company_id only count for the user's own company.
+        $scopeCompanyId = $currentCompanyForType?->id;
+
         $companyColor =
         $employee?->company->color ??
         $user?->company->color ??
@@ -303,29 +307,29 @@ class SidebarComposer
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $payrollsDeletedCount = Payroll::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $invoicesPendingCount = Invoice::where('authorization','pending')
+        $invoicesPendingCount = Invoice::where('company_id', $scopeCompanyId)->where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         // ->whereDate('created_at', Carbon::today())->get()->count();
-        $invoicesApprovedCount = Invoice::where('authorization','approved')
+        $invoicesApprovedCount = Invoice::where('company_id', $scopeCompanyId)->where('authorization','approved')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $invoicesRejectedCount = Invoice::where('authorization','rejected')
+        $invoicesRejectedCount = Invoice::where('company_id', $scopeCompanyId)->where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $invoicesDeletedCount = Invoice::onlyTrashed()
+        $invoicesDeletedCount = Invoice::onlyTrashed()->where('company_id', $scopeCompanyId)
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $credit_notesPendingCount = CreditNote::where('authorization','pending')
+        $credit_notesPendingCount = CreditNote::where('company_id', $scopeCompanyId)->where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         // ->whereDate('created_at', Carbon::today())->get()->count();
-        $credit_notesApprovedCount = CreditNote::where('authorization','approved')
+        $credit_notesApprovedCount = CreditNote::where('company_id', $scopeCompanyId)->where('authorization','approved')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $credit_notesRejectedCount = CreditNote::where('authorization','rejected')
+        $credit_notesRejectedCount = CreditNote::where('company_id', $scopeCompanyId)->where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $credit_notesDeletedCount = CreditNote::onlyTrashed()
+        $credit_notesDeletedCount = CreditNote::onlyTrashed()->where('company_id', $scopeCompanyId)
         ->whereDate('created_at', Carbon::today())->get()->count();
         $debit_notesPendingCount = DebitNote::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -423,15 +427,15 @@ class SidebarComposer
         ->whereDate('created_at', Carbon::today())->get()->count();
         $fuelRequesitionDelectedCount = FuelRequest::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $tripPendingCount = Trip::where('authorization','pending')
+        $tripPendingCount = Trip::where('company_id', $scopeCompanyId)->where('authorization','pending')
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $tripApprovedCount = Trip::where('authorization','approved')
+        $tripApprovedCount = Trip::where('company_id', $scopeCompanyId)->where('authorization','approved')
         ->whereDate('created_at', Carbon::today())->get()->count();
         //  ->where('created_at', '>', Carbon::now()->startOfWeek())
         //  ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $tripCount = Trip::where('authorization','rejected')
+        $tripCount = Trip::where('company_id', $scopeCompanyId)->where('authorization','rejected')
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $tripCount = Trip::onlyTrashed()
+        $tripCount = Trip::onlyTrashed()->where('company_id', $scopeCompanyId)
         ->whereDate('created_at', Carbon::today())->get()->count();
 
         $transportersPendingCount = Transporter::where('authorization','pending')
@@ -447,17 +451,17 @@ class SidebarComposer
         $transportersDeletedCount = Transporter::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
         
-        $rentalsPendingCount = Rental::where('authorization','pending')
+        $rentalsPendingCount = Rental::where('company_id', $scopeCompanyId)->where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         // ->whereDate('created_at', Carbon::today())->get()->count();
-        $rentalsApprovedCount = Rental::where('authorization','approved')
+        $rentalsApprovedCount = Rental::where('company_id', $scopeCompanyId)->where('authorization','approved')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $rentalsRejectedCount = Rental::where('authorization','rejected')
+        $rentalsRejectedCount = Rental::where('company_id', $scopeCompanyId)->where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $rentalsDeletedCount = Rental::onlyTrashed()
+        $rentalsDeletedCount = Rental::onlyTrashed()->where('company_id', $scopeCompanyId)
         ->whereDate('created_at', Carbon::today())->get()->count();
 
         $shiftsPendingCount = Shift::where('authorization','pending')
@@ -468,16 +472,16 @@ class SidebarComposer
         //  ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $shiftsRejectedCount = Shift::where('authorization','rejected')
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $tripsPendingCount = Trip::where('authorization','pending')
+        $tripsPendingCount = Trip::where('company_id', $scopeCompanyId)->where('authorization','pending')
         ->whereDate('created_at', Carbon::today())->get()->count();
-        $tripsApprovedCount = Trip::where('authorization','approved')
+        $tripsApprovedCount = Trip::where('company_id', $scopeCompanyId)->where('authorization','approved')
         ->whereDate('created_at', Carbon::today())->get()->count();
         //  ->where('created_at', '>', Carbon::now()->startOfWeek())
         //  ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $tripsRejectedCount = Trip::where('authorization','rejected')
+        $tripsRejectedCount = Trip::where('company_id', $scopeCompanyId)->where('authorization','rejected')
         ->whereDate('created_at', Carbon::today())->get()->count();
         $transportOrdersCount = TransportOrder::whereDate('created_at', Carbon::today())->get()->count();
-        $tripsDelectedCount = Trip::onlyTrashed()
+        $tripsDelectedCount = Trip::onlyTrashed()->where('company_id', $scopeCompanyId)
         ->whereDate('created_at', Carbon::today())->get()->count();
         $logistics_gate_passesPendingCount = GatePass::where('logistics_authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -797,10 +801,14 @@ class SidebarComposer
 
         // Trips
         // Freight: pending = everything still waiting; approved/rejected = decided today
-        'freight_jobs_pending_count'  => $companyIsFreightForwarder ? \App\Models\FreightJob::where('authorization', 'pending')->count() : 0,
-        'freight_jobs_approved_count' => $companyIsFreightForwarder ? \App\Models\FreightJob::where('authorization', 'approved')->whereDate('authorization_date', Carbon::today())->count() : 0,
-        'freight_jobs_rejected_count' => $companyIsFreightForwarder ? \App\Models\FreightJob::where('authorization', 'rejected')->whereDate('authorization_date', Carbon::today())->count() : 0,
+        'freight_jobs_pending_count'  => $companyIsFreightForwarder ? \App\Models\FreightJob::where('company_id', $scopeCompanyId)->where('authorization', 'pending')->count() : 0,
+        'freight_jobs_approved_count' => $companyIsFreightForwarder ? \App\Models\FreightJob::where('company_id', $scopeCompanyId)->where('authorization', 'approved')->whereDate('authorization_date', Carbon::today())->count() : 0,
+        'freight_jobs_rejected_count' => $companyIsFreightForwarder ? \App\Models\FreightJob::where('company_id', $scopeCompanyId)->where('authorization', 'rejected')->whereDate('authorization_date', Carbon::today())->count() : 0,
         'trips_pending_count'  => (int) ($tripsPendingCount ?? 0),
+        // Gonyeti Instance Link: road legs from the freight instance awaiting a trip
+        'trip_requests_pending_count' => \Illuminate\Support\Facades\Schema::hasTable('trip_requests')
+            ? \App\Models\TripRequest::where('status', 'pending')->where('company_id', \App\Services\Integrations\IntegrationGate::companyIdForUser())->count()
+            : 0,
         'trips_approved_count' => (int) ($tripsApprovedCount ?? 0),
         'trips_rejected_count' => (int) ($tripsRejectedCount ?? 0),
         'trips_deleted_count'  => (int) ($tripsDelectedCount ?? 0), // note: your variable is spelled Delected

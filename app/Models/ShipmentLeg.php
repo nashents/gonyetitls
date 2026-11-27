@@ -43,6 +43,14 @@ class ShipmentLeg extends Model implements Auditable
     {
         return $this->shipping_line?->name ?? $this->carrier_vendor?->name ?? $this->carrier_name;
     }
+    /** Leg start/end points come from the Destinations module (same list as the job's From/To). */
+    public function origin(){
+        return $this->belongsTo('App\Models\Destination', 'origin_id');
+    }
+    public function destination(){
+        return $this->belongsTo('App\Models\Destination', 'destination_id');
+    }
+    /** Legacy (pre 2026-11-25) Locations columns - kept for history only. */
     public function origin_location(){
         return $this->belongsTo('App\Models\Location', 'origin_location_id');
     }
@@ -91,6 +99,8 @@ class ShipmentLeg extends Model implements Auditable
         'trip_id',
         'origin_location_id',
         'destination_location_id',
+        'origin_id',
+        'destination_id',
         'planned_departure',
         'planned_arrival',
         'estimated_departure',

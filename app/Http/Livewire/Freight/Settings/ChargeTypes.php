@@ -8,13 +8,16 @@ use App\Models\ContainerStage;
 use App\Services\Freight\PortExposureService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class ChargeTypes extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $charge_type_id;
     public $name;
     public $description;
-    public $is_locked = false;
+    public $is_active = 1;
     public $revenue_account_id;
     public $expense_account_id;
 
@@ -35,6 +38,7 @@ class ChargeTypes extends Component
 
         return [
             'name' => 'required|string|max:255',
+            'is_active' => 'required|boolean',
             'revenue_account_id' => 'nullable|exists:accounts,id',
             'expense_account_id' => 'nullable|exists:accounts,id',
             'start_milestone' => [Rule::requiredIf($needsMilestones), 'nullable', Rule::in($milestones)],
@@ -69,7 +73,7 @@ class ChargeTypes extends Component
         $this->charge_type_id = $chargeType->id;
         $this->name = $chargeType->name;
         $this->description = $chargeType->description;
-        $this->is_locked = $chargeType->is_locked;
+        $this->is_active = $chargeType->is_active ? 1 : 0;
         $this->revenue_account_id = $chargeType->revenue_account_id;
         $this->expense_account_id = $chargeType->expense_account_id;
         $this->tracks_free_time = $chargeType->hasFreeTime();
@@ -94,15 +98,16 @@ class ChargeTypes extends Component
 
         $existing = $this->charge_type_id ? ChargeType::findOrFail($this->charge_type_id) : null;
 
-        if ($existing && $existing->is_locked) {
-            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This charge type is locked and cannot be edited.']);
+        // Port Storage / Demurrage / Detention drive the system's container clocks - always active.
+        if ($existing && $existing->isBuiltInFreeTime() && !$this->is_active) {
+            $this->addError('is_active', 'Built-in free-time charge types cannot be made inactive.');
             return;
         }
 
         $data = [
             'name' => $this->name,
             'description' => $this->description,
-            'is_locked' => $this->is_locked,
+            'is_active' => (bool) $this->is_active,
             'revenue_account_id' => $this->revenue_account_id ?: null,
             'expense_account_id' => $this->expense_account_id ?: null,
         ];
@@ -132,7 +137,7 @@ class ChargeTypes extends Component
 
     public function resetForm()
     {
-        $this->reset(['charge_type_id', 'name', 'description', 'is_locked', 'revenue_account_id', 'expense_account_id',
+        $this->reset(['charge_type_id', 'name', 'description', 'is_active', 'revenue_account_id', 'expense_account_id',
             'tracks_free_time', 'start_milestone', 'stop_milestone', 'is_line_specific', 'editing_built_in']);
         $this->resetValidation();
     }
@@ -141,24 +146,43 @@ class ChargeTypes extends Component
     {
         $chargeType = ChargeType::findOrFail($id);
 
-        if ($chargeType->is_locked) {
-            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This charge type is locked and cannot be deleted.']);
-            return;
-        }
-
         if ($chargeType->isBuiltInFreeTime() || $chargeType->freeTimeInUse()) {
             $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This charge type is used for container free time (Charge Config) and cannot be deleted.']);
             return;
         }
 
+        $used = collect($chargeType->usageCounts())->filter()->map(fn ($n, $what) => "{$n} {$what}")->implode(', ');
+        if ($used !== '') {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "{$chargeType->name} is used on {$used}. Set it Inactive instead."]);
+            return;
+        }
+
         $chargeType->delete();
+
+        if ((int) $this->charge_type_id === (int) $id) {
+            $this->resetForm();
+        }
+
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge type removed.']);
+    }
+
+    public function toggleActive($id)
+    {
+        $chargeType = ChargeType::findOrFail($id);
+
+        if ($chargeType->isBuiltInFreeTime()) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "{$chargeType->name} is a built-in free-time charge and stays active."]);
+            return;
+        }
+
+        $chargeType->update(['is_active' => !$chargeType->is_active]);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => $chargeType->name . ($chargeType->is_active ? ' activated.' : ' deactivated - no longer offered on new cost/charge lines or rate cards.')]);
     }
 
     public function render()
     {
         return view('livewire.freight.settings.charge-types', [
-            'chargeTypes' => ChargeType::with(['revenue_account', 'expense_account'])->orderBy('name', 'asc')->get(),
+            'chargeTypes' => ChargeType::with(['revenue_account', 'expense_account'])->withCount(['freight_costs', 'freight_charges'])->orderBy('name', 'asc')->orderBy('id')->paginate(10),
             // Selectable = active stages; labels include deactivated custom stages still referenced.
             'milestones' => ContainerStage::options(),
             'stageLabels' => ContainerStage::options(true),

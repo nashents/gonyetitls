@@ -169,7 +169,7 @@ class AddShipment extends Component
             ->values()
             ->all();
 
-        $service->addShipment($this->job, [
+        $newShipment = $service->addShipment($this->job, [
             'mode' => $this->mode,
             'shipment_type' => $this->shipment_type,
             'loading_point_id' => $this->loading_point_id ?: null,
@@ -179,6 +179,9 @@ class AddShipment extends Component
             'etd' => $this->etd ?: null,
             'eta' => $this->eta ?: null,
         ], $cargoRows, $partyRows);
+
+        // Leg 1 (job From → To), editable on the Transport tab.
+        app(\App\Services\Freight\ShipmentLegService::class)->createFirstLeg($newShipment);
 
         $this->reset(['mode', 'shipment_type', 'loading_point_id', 'offloading_point_id', 'booking_reference', 'freight_terms', 'etd', 'eta', 'cargo_rows', 'party_rows']);
         $this->addCargoRow();

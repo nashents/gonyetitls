@@ -8,6 +8,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class PayrollReversal extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 

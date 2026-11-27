@@ -19,6 +19,8 @@ use Illuminate\Notifications\Notifiable;
  */
 class Customer extends Authenticatable implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory, SoftDeletes, SyncsToSageIntacct, HasVatTin, Notifiable;
 
     use \OwenIt\Auditing\Auditable;

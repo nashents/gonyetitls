@@ -254,6 +254,20 @@
                                             <input type="datetime-local" class="form-control" wire:model="eta">
                                         </div>
                                     </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Estimated Revenue</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.defer="estimated_revenue" placeholder="0.00">
+                                            @error('estimated_revenue') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Estimated Cost</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.defer="estimated_cost" placeholder="0.00">
+                                            @error('estimated_cost') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <h6 class="underline mt-20 mb-20"><strong>Cargo</strong></h6>

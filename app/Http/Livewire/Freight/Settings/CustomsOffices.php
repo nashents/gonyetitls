@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 /**
  * Freight > Master > Customs Offices: the Customs Declaration dropdown list.
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 class CustomsOffices extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $office_id;
     public $name;
     public $country_id;
@@ -120,8 +123,8 @@ class CustomsOffices extends Component
 
     public function render()
     {
-        $offices = CustomsOffice::with('country')->orderBy('name', 'asc')->get();
-        $usage = CustomsDeclaration::whereIn('customs_office', $offices->pluck('name'))
+        $offices = CustomsOffice::with('country')->orderBy('name', 'asc')->orderBy('id')->paginate(10);
+        $usage = CustomsDeclaration::whereIn('customs_office', $offices->getCollection()->pluck('name'))
             ->select('customs_office', DB::raw('COUNT(*) as total'))
             ->groupBy('customs_office')
             ->pluck('total', 'customs_office');

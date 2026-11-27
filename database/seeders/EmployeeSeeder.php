@@ -50,7 +50,10 @@ class EmployeeSeeder extends Seeder
         $user->roles()->attach(1);
       
         $employee = new Employee;
-        $employee->company_id = 1;
+        // Fresh install: Panashe Ngorima belongs to the Admin company CompanySeeder created
+        // (Support\SeedCompany then resolves every other seeder's company from Panashe).
+        $employee->company_id = \App\Models\Company::where('type', 'Admin')->orderBy('id')->value('id')
+            ?? \App\Models\Company::orderBy('id')->value('id');
         $employee->user_id = $user->id;
         $employee->employee_number = $this->employeeNumber();
         $employee->name =  "Panashe";

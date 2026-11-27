@@ -19,9 +19,15 @@ use App\Services\Freight\FreightRateCardMatcher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Costing extends Component
 {
+    use FreightEmbeddedPagination;
+
+    public $costsPage = 1;
+    public $chargesPage = 1;
+
     public $job;
 
     public $chargeTypes;
@@ -90,7 +96,7 @@ class Costing extends Component
     public function mount($jobId)
     {
         $this->job = FreightJob::findOrFail($jobId);
-        $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
+        $this->chargeTypes = ChargeType::selectable()->get();
         $this->vendors = Vendor::orderBy('name', 'asc')->get();
         $this->customers = Customer::orderBy('name', 'asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
@@ -175,6 +181,7 @@ class Costing extends Component
     public function showAddCost()
     {
         $this->resetCostForm();
+        $this->chargeTypes = ChargeType::selectable()->get();
         $this->dispatchBrowserEvent('show-costModal-' . $this->job->id);
     }
 
@@ -187,6 +194,8 @@ class Costing extends Component
         $this->cost_customs_declaration_id = $cost->customs_declaration_id;
         $this->cost_vendor_id = $cost->vendor_id;
         $this->cost_charge_type_id = $cost->charge_type_id;
+        // Active types + this line's own (even if since deactivated).
+        $this->chargeTypes = ChargeType::selectable($cost->charge_type_id)->get();
         $this->cost_supplier_invoice_reference = $cost->supplier_invoice_reference;
         $this->cost_date_received = optional($cost->date_received)->format('Y-m-d');
         $this->cost_currency_id = $cost->currency_id;
@@ -424,6 +433,7 @@ class Costing extends Component
     public function showAddCharge()
     {
         $this->resetChargeForm();
+        $this->chargeTypes = ChargeType::selectable()->get();
         $this->dispatchBrowserEvent('show-chargeModal-' . $this->job->id);
     }
 
@@ -436,6 +446,8 @@ class Costing extends Component
         $this->charge_customs_declaration_id = $charge->customs_declaration_id;
         $this->charge_customer_id = $charge->customer_id;
         $this->charge_charge_type_id = $charge->charge_type_id;
+        // Active types + this line's own (even if since deactivated).
+        $this->chargeTypes = ChargeType::selectable($charge->charge_type_id)->get();
         $this->charge_customer_invoice_reference = $charge->customer_invoice_reference;
         $this->charge_date_billed = optional($charge->date_billed)->format('Y-m-d');
         $this->charge_currency_id = $charge->currency_id;
@@ -555,7 +567,7 @@ class Costing extends Component
             $this->vendors = Vendor::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Vendors Refreshed Successfully!!.']);
         } elseif ($category === 'charge_types') {
-            $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
+            $this->chargeTypes = ChargeType::selectable()->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
         } elseif ($category === 'customers') {
             $this->customers = Customer::orderBy('name', 'asc')->get();
@@ -572,6 +584,8 @@ class Costing extends Component
     public function render(FreightCostingService $costing)
     {
         return view('livewire.freight.jobs.costing', [
+            'costRows' => $this->paginateRows($this->job->costs->sortBy('id'), 'costsPage'),
+            'chargeRows' => $this->paginateRows($this->job->charges->sortBy('id'), 'chargesPage'),
             'verificationStatuses' => FreightCost::VERIFICATION_STATUSES,
             'chargeStatuses' => FreightCharge::STATUSES,
             'accruedCost' => $costing->accruedCost($this->job),

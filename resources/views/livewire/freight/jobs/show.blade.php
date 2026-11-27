@@ -87,21 +87,23 @@
 
         <div class="col-md-9">
             <ul class="nav nav-tabs nav-justified" role="tablist">
-                <li role="presentation" class="active"><a href="#overview" aria-controls="overview" role="tab" data-toggle="tab">Overview</a></li>
-                <li role="presentation"><a href="#shipment" aria-controls="shipment" role="tab" data-toggle="tab">Shipment</a></li>
-                <li role="presentation"><a href="#cargo" aria-controls="cargo" role="tab" data-toggle="tab">Cargo</a></li>
-                <li role="presentation"><a href="#parties" aria-controls="parties" role="tab" data-toggle="tab">Parties</a></li>
-                <li role="presentation"><a href="#containers" aria-controls="containers" role="tab" data-toggle="tab">Containers</a></li>
-                <li role="presentation"><a href="#transport" aria-controls="transport" role="tab" data-toggle="tab">Transport</a></li>
-                <li role="presentation"><a href="#transport-documents" aria-controls="transport-documents" role="tab" data-toggle="tab">Transport Documents</a></li>
-                <li role="presentation"><a href="#customs" aria-controls="customs" role="tab" data-toggle="tab">Customs</a></li>
-                <li role="presentation"><a href="#costing" aria-controls="costing" role="tab" data-toggle="tab">Costing</a></li>
-                <li role="presentation"><a href="#timeline" aria-controls="timeline" role="tab" data-toggle="tab">Timeline</a></li>
-                <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
+                <li role="presentation" class="active" wire:ignore.self><a href="#overview" aria-controls="overview" role="tab" data-toggle="tab">Overview</a></li>
+                <li role="presentation" wire:ignore.self><a href="#shipment" aria-controls="shipment" role="tab" data-toggle="tab">Shipment</a></li>
+                <li role="presentation" wire:ignore.self><a href="#cargo" aria-controls="cargo" role="tab" data-toggle="tab">Cargo</a></li>
+                <li role="presentation" wire:ignore.self><a href="#parties" aria-controls="parties" role="tab" data-toggle="tab">Parties</a></li>
+                <li role="presentation" wire:ignore.self><a href="#containers" aria-controls="containers" role="tab" data-toggle="tab">Containers</a></li>
+                <li role="presentation" wire:ignore.self><a href="#transport" aria-controls="transport" role="tab" data-toggle="tab">Transport</a></li>
+                <li role="presentation" wire:ignore.self><a href="#transport-documents" aria-controls="transport-documents" role="tab" data-toggle="tab">Transport Documents</a></li>
+                <li role="presentation" wire:ignore.self><a href="#customs" aria-controls="customs" role="tab" data-toggle="tab">Customs</a></li>
+                <li role="presentation" wire:ignore.self><a href="#costing" aria-controls="costing" role="tab" data-toggle="tab">Costing</a></li>
+                <li role="presentation" wire:ignore.self><a href="#timeline" aria-controls="timeline" role="tab" data-toggle="tab">Timeline</a></li>
+                <li role="presentation" wire:ignore.self><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
+                <li role="presentation" wire:ignore.self><a href="#reminders" aria-controls="reminders" role="tab" data-toggle="tab">Reminders
+                    @if ($openReminders = $job->reminders()->open()->count())<span class="badge" style="background:#d35400">{{ $openReminders }}</span>@endif</a></li>
             </ul>
             <div class="tab-content bg-white p-15">
 
-                <div role="tabpanel" class="tab-pane active" id="overview">
+                <div role="tabpanel" wire:ignore.self class="tab-pane active" id="overview">
                     <table class="table table-striped">
                         <tbody class="line-height-35">
                             <tr>
@@ -160,7 +162,7 @@
                     </table>
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="shipment">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="shipment">
                     <div class="mb-10 text-right">
                         @livewire('freight.shipments.add-shipment', ['jobId' => $job->id], key('add-shipment-'.$job->id))
                     </div>
@@ -208,7 +210,7 @@
                     @endforelse
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="cargo">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="cargo">
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
@@ -223,8 +225,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($job->shipments as $shipment)
-                                @forelse ($shipment->cargo_items as $cargoItem)
+                            @forelse ($cargoRows as $row)
+                                @php [$shipment, $cargoItem] = [$row['shipment'], $row['item']]; @endphp
                                     <tr>
                                         <td>{{ $shipment->shipment_number }}</td>
                                         <td>{{ $cargoItem->commodity ?? $cargoItem->cargo?->name }}</td>
@@ -235,15 +237,15 @@
                                         <td>{{ $cargoItem->cbm }}</td>
                                         <td>{{ $cargoItem->is_dangerous_goods ? 'Yes' : 'No' }}</td>
                                     </tr>
-                                @empty
-                                @endforelse
                             @empty
+                                <tr><td colspan="8" class="text-center">No cargo recorded for this job yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
+                    @include('livewire.freight.partials.pagination', ['paginator' => $cargoRows])
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="parties">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="parties">
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
@@ -254,23 +256,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($job->shipments as $shipment)
-                                @forelse ($shipment->parties as $party)
+                            @forelse ($partyRows as $row)
+                                @php [$shipment, $party] = [$row['shipment'], $row['party']]; @endphp
                                     <tr>
                                         <td>{{ $shipment->shipment_number }}</td>
                                         <td>{{ ucwords(str_replace('_', ' ', $party->role)) }}</td>
                                         <td>{{ ucwords(str_replace('_', ' ', $party->party_type)) }}</td>
                                         <td>{{ $party->party()?->name }}</td>
                                     </tr>
-                                @empty
-                                @endforelse
                             @empty
+                                <tr><td colspan="4" class="text-center">No parties recorded for this job yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
+                    @include('livewire.freight.partials.pagination', ['paginator' => $partyRows])
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="containers">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="containers">
                     @include('livewire.freight.jobs.partials.consolidation-tracking', ['section' => 'containers'])
                     @forelse ($job->shipments as $shipment)
                         <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
@@ -280,7 +282,7 @@
                     @endforelse
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="transport">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="transport">
                     @forelse ($job->shipments as $shipment)
                         <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
                         @livewire('freight.shipments.legs', ['shipmentId' => $shipment->id], key('legs-'.$shipment->id))
@@ -289,7 +291,7 @@
                     @endforelse
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="transport-documents">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="transport-documents">
                     @forelse ($job->shipments as $shipment)
                         <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
                         @livewire('freight.shipments.transport-documents', ['shipmentId' => $shipment->id], key('transport-documents-'.$shipment->id))
@@ -298,7 +300,7 @@
                     @endforelse
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="customs">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="customs">
                     @forelse ($job->shipments as $shipment)
                         <h6 class="underline mt-10 mb-10"><strong>{{ $shipment->shipment_number }}</strong></h6>
                         @livewire('freight.shipments.customs-declarations', ['shipmentId' => $shipment->id], key('customs-declarations-'.$shipment->id))
@@ -307,17 +309,21 @@
                     @endforelse
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="costing">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="costing">
                     @livewire('freight.jobs.costing', ['jobId' => $job->id], key('costing-'.$job->id))
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="timeline">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="timeline">
                     @include('livewire.freight.jobs.partials.consolidation-tracking', ['section' => 'timeline'])
                     @livewire('freight.shipments.milestones', ['jobId' => $job->id], key('milestones-'.$job->id))
                 </div>
 
-                <div role="tabpanel" class="tab-pane" id="documents">
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="documents">
                     @livewire('documents.index', ['id' => $job->id, 'category' => 'freight_job'])
+                </div>
+
+                <div role="tabpanel" wire:ignore.self class="tab-pane" id="reminders">
+                    @livewire('freight.jobs.reminders', ['jobId' => $job->id], key('reminders-'.$job->id))
                 </div>
 
                 <div class="row">

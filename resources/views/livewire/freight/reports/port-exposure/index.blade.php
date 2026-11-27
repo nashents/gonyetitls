@@ -104,7 +104,7 @@
                                 </thead>
                                 <tbody>
                                     @if (isset($details) && $summary == null)
-                                        @foreach ($vendor_rows as $row)
+                                        @foreach ($pagedRows as $row)
                                         @if ($row['total'] != 0)
                                         <tr>
                                             <td>{{$row['label']}}</td>
@@ -125,6 +125,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $pagedRows])
                         </div>
                     </div>
                 </div>

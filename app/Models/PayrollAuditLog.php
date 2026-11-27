@@ -7,6 +7,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class PayrollAuditLog extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use \OwenIt\Auditing\Auditable;
 
     // Audit logs are immutable — no updated_at, no soft deletes

@@ -8,9 +8,12 @@ use App\Models\TransportDocument;
 use App\Models\Vendor;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class TransportDocuments extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $shipment;
     public $vendors;
     public $shippingLines;
@@ -175,6 +178,7 @@ class TransportDocuments extends Component
     public function render()
     {
         return view('livewire.freight.shipments.transport-documents', [
+            'documentRows' => $this->paginateRows($this->shipment->transport_documents->sortBy('id')),
             'documentTypes' => TransportDocument::DOCUMENT_TYPES,
             'statuses' => TransportDocument::STATUSES,
         ]);

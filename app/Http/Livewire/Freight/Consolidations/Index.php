@@ -17,12 +17,12 @@ class Index extends Component
         return 'vendor.pagination.bootstrap-custom';
     }
 
-    public $perPage = 15;
+    public $perPage = 10;
     public $search;
 
     protected $queryString = [
         'search',
-        'perPage' => ['except' => 15],
+        'perPage' => ['except' => 10],
         'page' => ['except' => 1],
     ];
 
@@ -39,7 +39,7 @@ class Index extends Component
             });
         }
 
-        $consolidations->latest();
+        $consolidations->latest()->orderByDesc('id');
 
         return view('livewire.freight.consolidations.index', [
             'consolidations' => $consolidations->paginate($this->perPage),

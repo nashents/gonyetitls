@@ -32,8 +32,9 @@ use Illuminate\Support\Facades\Auth;
  */
 class FreightForwardingDemoSeeder extends Seeder
 {
-    private int $companyId = 2;
-    private int $userId = 200;
+    /** Resolved in run(): Panashe Ngorima's company (Support\SeedCompany) - never hard-coded. */
+    private int $companyId;
+    private int $userId;
 
     private array $currencies = [];
     private array $destinations = [];
@@ -54,6 +55,9 @@ class FreightForwardingDemoSeeder extends Seeder
 
             return;
         }
+
+        $this->companyId = (int) Support\SeedCompany::id();
+        $this->userId = (int) Support\SeedCompany::userId(200);
 
         Auth::loginUsingId($this->userId);
 
@@ -206,8 +210,8 @@ class FreightForwardingDemoSeeder extends Seeder
             'transport_mode' => 'sea',
             'carrier_vendor_id' => null,
             'carrier_name' => 'Maersk Line',
-            'origin_location_id' => null,
-            'destination_location_id' => null,
+            'origin_id' => $job->from,
+            'destination_id' => $job->to,
             'planned_departure' => now()->subDays(18),
             'planned_arrival' => now()->subDays(2),
         ]);

@@ -18,7 +18,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($shipment->transport_documents as $doc)
+            @forelse ($documentRows as $doc)
                 <tr wire:key="transport-doc-{{ $doc->id }}">
                     <td>{{ $documentTypes[$doc->document_type] ?? ucwords(str_replace('_', ' ', $doc->document_type)) }}</td>
                     <td>{{ $doc->document_number }}</td>
@@ -54,6 +54,7 @@
             @endforelse
         </tbody>
     </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $documentRows])
 
     <!-- Add Transport Document Modal -->
     <div wire:ignore.self class="modal fade" id="addTransportDocumentModal{{ $shipment->id }}" tabindex="-1" role="dialog">

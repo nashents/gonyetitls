@@ -7,9 +7,18 @@ use App\Services\Freight\CustomsTurnaroundCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Index extends Component
 {
+    use FreightEmbeddedPagination;
+
+    /** Any filter change starts the list again from page 1. */
+    public function updated($property)
+    {
+        $this->resetPage();
+    }
+
     public $from, $to, $clearing_officer_id;
     public $details;
     public $summary = 'summary';
@@ -69,6 +78,8 @@ class Index extends Component
             }
         }
 
-        return view('livewire.freight.reports.customs-turnaround.index');
+        return view('livewire.freight.reports.customs-turnaround.index', [
+            'pagedRows' => $this->paginateRows($this->rows ?? []),
+        ]);
     }
 }

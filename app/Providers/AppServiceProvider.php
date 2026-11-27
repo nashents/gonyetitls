@@ -105,5 +105,6 @@ class AppServiceProvider extends ServiceProvider
         TopUp::observe(TopUpObserver::class);
         DispatchItem::observe(DispatchItemObserver::class);
         Trip::observe(TripObserver::class);
+        \App\Models\ShipmentLeg::observe(\App\Observers\ShipmentLegObserver::class);
     }
 }

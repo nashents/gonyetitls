@@ -10,6 +10,8 @@ use App\Models\ShipmentCargo;
 use App\Models\ShipmentParty;
 use App\Services\Freight\FreightJobAuthorizationService;
 use App\Services\Freight\FreightJobService;
+use App\Services\Freight\ShipmentLegService;
+use App\Models\Destination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -43,12 +45,21 @@ class Edit extends Component
     public $to;
     public $status;
     public $notes;
+    public $estimated_revenue;
+    public $estimated_cost;
 
     /**
      * One entry per shipment: its detail fields plus 'cargo_rows' and
      * 'party_rows'. 'id' is null for a shipment / row not saved yet.
      */
     public $shipments = [];
+
+    /**
+     * Changing the job's From/To asks whether the shipment legs should follow
+     * (legRouteModal). null = not asked yet, 'yes' / 'no' = the answer.
+     */
+    public $leg_route_choice = null;
+    public $leg_route_preview = [];
 
     /** Saved rows the user removed, deleted on save. */
     public $removed_cargo_ids = [];
@@ -79,6 +90,8 @@ class Edit extends Component
         $this->to = $this->job->to;
         $this->status = $this->job->status;
         $this->notes = $this->job->notes;
+        $this->estimated_revenue = $this->job->estimated_revenue;
+        $this->estimated_cost = $this->job->estimated_cost;
 
         foreach ($this->job->shipments->sortBy('id') as $shipment) {
             $this->shipments[] = $this->shipmentState($shipment);
@@ -87,7 +100,7 @@ class Edit extends Component
             $this->shipments[] = $this->shipmentState(null);
         }
 
-        $this->loadFormOptions($this->employee->company_id, $this->keptCargoIds(), [
+        $this->loadFormOptions($this->job->company_id ?? $this->employee->company_id, $this->keptCargoIds(), [
             $this->job->salesperson_id, $this->job->operations_officer_id, $this->job->clearing_officer_id,
         ]);
     }
@@ -148,6 +161,8 @@ class Edit extends Component
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
             'status' => ['required', 'string', Rule::in($this->allowedStatuses())],
+            'estimated_revenue' => 'nullable|numeric|min:0',
+            'estimated_cost' => 'nullable|numeric|min:0',
             'shipments.*.etd' => 'nullable|date',
             'shipments.*.eta' => 'nullable|date',
             'shipments.*.cargo_rows.*.commodity' => 'nullable|string',
@@ -231,11 +246,55 @@ class Edit extends Component
         $this->reloadPartyType($this->shipments[$s]['party_rows'][$i]['party_type'] ?? null);
     }
 
+    /** legRouteModal buttons: save the job, re-routing the legs or leaving them. */
+    public function saveWithLegRoute($updateLegs)
+    {
+        $this->leg_route_choice = $updateLegs ? 'yes' : 'no';
+        $this->dispatchBrowserEvent('hide-legRouteModal');
+
+        return $this->update(app(FreightJobService::class));
+    }
+
+    /** Route changes the new From/To would make to open legs (see ShipmentLegService::routeChangesFor). */
+    private function legRouteChanges(): array
+    {
+        return app(ShipmentLegService::class)->routeChangesFor(
+            $this->job, $this->job->from, $this->job->to, $this->from ?: null, $this->to ?: null
+        );
+    }
+
+    private function legRoutePreview(array $changes): array
+    {
+        $ids = collect($changes)->flatMap(fn ($c) => [$c['leg']->origin_id, $c['leg']->destination_id, $c['origin_id'], $c['destination_id']])->filter()->unique();
+        $cities = Destination::whereIn('id', $ids)->pluck('city', 'id');
+        $name = fn ($id) => $id ? ($cities[$id] ?? '?') : '—';
+
+        return collect($changes)->map(fn ($c) => [
+            'shipment' => $c['leg']->shipment?->shipment_number,
+            'sequence' => $c['leg']->sequence,
+            'mode' => ucfirst((string) $c['leg']->transport_mode),
+            'current' => $name($c['leg']->origin_id) . ' → ' . $name($c['leg']->destination_id),
+            'new' => $name($c['origin_id']) . ' → ' . $name($c['destination_id']),
+        ])->values()->all();
+    }
+
     public function update(FreightJobService $jobService)
     {
         $this->validate();
 
-        DB::transaction(function () use ($jobService) {
+        $legChanges = $this->legRouteChanges();
+        if ($legChanges && $this->leg_route_choice === null) {
+            $this->leg_route_preview = $this->legRoutePreview($legChanges);
+            $this->dispatchBrowserEvent('show-legRouteModal');
+            return;
+        }
+        $rerouteLegs = $legChanges && $this->leg_route_choice === 'yes';
+
+        DB::transaction(function () use ($jobService, $legChanges, $rerouteLegs) {
+            if ($rerouteLegs) {
+                app(ShipmentLegService::class)->applyRouteChanges($legChanges);
+            }
+
             $this->job->update([
                 'customer_id' => $this->customer_id ?: null,
                 'customer_reference' => $this->customer_reference,
@@ -253,6 +312,13 @@ class Edit extends Component
                 'status' => $this->status,
                 'notes' => $this->notes,
             ]);
+
+            // Same rule as the Costing tab (margin only when both are set).
+            app(\App\Services\Freight\FreightCostingService::class)->saveEstimates(
+                $this->job,
+                ($this->estimated_revenue === '' || $this->estimated_revenue === null) ? null : (float) $this->estimated_revenue,
+                ($this->estimated_cost === '' || $this->estimated_cost === null) ? null : (float) $this->estimated_cost
+            );
 
             foreach ($this->shipments as $state) {
                 $this->saveShipment($state, $jobService);
@@ -273,6 +339,7 @@ class Edit extends Component
 
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Freight Job ' . $this->job->job_number . ' updated successfully!'
             . ($resubmitted ? ' It has been sent for authorization again.' : '')
+            . ($rerouteLegs ? ' ' . count($legChanges) . ' transport leg(s) re-routed to match.' : '')
             . ($followed ? ' ' . count($followed) . ' consolidated client job(s) moved with it: ' . implode(', ', $followed) . '.' : '')]);
 
         return redirect()->route('freight.jobs.show', $this->job->id);
@@ -298,12 +365,13 @@ class Edit extends Component
             if (collect($details)->filter()->isEmpty() && $cargoRows->isEmpty() && $partyRows->isEmpty()) {
                 return;
             }
-            $jobService->addShipment(
+            $newShipment = $jobService->addShipment(
                 $this->job,
                 $details + ['user_id' => Auth::id(), 'mode' => $this->primary_transport_mode, 'incoterm' => $this->incoterm],
                 $cargoRows->map(fn ($row) => $this->cargoAttributes($row))->values()->all(),
                 $partyRows->map(fn ($row) => $this->partyAttributes($row))->values()->all()
             );
+            app(ShipmentLegService::class)->createFirstLeg($newShipment);
             return;
         }
 

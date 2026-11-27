@@ -5374,6 +5374,18 @@ window.addEventListener('hide-imageModal', event => {
      @livewireScripts
 
     <script>
+        // wire:confirm="Question?" is a Livewire 3 directive; on Livewire 2 it
+        // was ignored and the action ran without asking. Capture-phase click
+        // handler: cancel before Livewire's own wire:click listener sees it.
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[wire\\:confirm]') : null;
+            if (el && !window.confirm(el.getAttribute('wire:confirm') || 'Are you sure?')) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+            }
+        }, true);
+
         // Generic fallback for Livewire "show-<id>" / "hide-<id>" modal events.
         // Most modules register one listener per modal above; screens that
         // didn't (e.g. all SHEQ modules) left Edit/Delete modals unable to

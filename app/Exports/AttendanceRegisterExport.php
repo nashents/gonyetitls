@@ -5,6 +5,7 @@ namespace App\Exports;
 use Carbon\Carbon;
 use App\Models\Attendance;
 use App\Models\AttendanceRegister;
+use App\Models\Employee;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,10 @@ class AttendanceRegisterExport implements
 
     // Employees expected on a register but not marked (set by collection()).
     protected $unmarkedCount = 0;
+
+    // Employee rows / department-days with no register captured at all.
+    protected $noRegisterCount = 0;
+    protected $noRegisterDepartmentDays = 0;
 
     // Row numbers (absolute sheet rows) of the department and team banner rows,
     // populated by collection() so registerEvents() can style/merge them.
@@ -207,7 +212,16 @@ class AttendanceRegisterExport implements
         $unmarked = $this->unmarkedRows();
         $this->unmarkedCount = $unmarked->count();
 
-        $records = $records->concat($unmarked)
+        // Departments with no register at all for a day: their employees are
+        // listed as "No Register" rows so the missing register shows up.
+        $noRegister = $this->noRegisterRows();
+        $this->noRegisterCount = $noRegister->count();
+        $this->noRegisterDepartmentDays = $noRegister
+            ->map(fn ($row) => $row->attendance->date . '|' . $this->departmentName($row))
+            ->unique()
+            ->count();
+
+        $records = $records->concat($unmarked)->concat($noRegister)
             ->sortBy(fn ($row) => [
                 // newest register first, then by name
                 -strtotime((string) ($row->attendance?->date ?? '1970-01-01')),
@@ -334,6 +348,117 @@ class AttendanceRegisterExport implements
             }
 
             $markedByDate->put($attendance->date, $marked);
+        }
+
+        return $rows;
+    }
+
+    /** Label used in the Attendance# column for days a department had no register. */
+    const NO_REGISTER = 'No Register';
+
+    /**
+     * For each day in range (never past today), every active employee
+     * (default department) who is on NO register that day: neither has a
+     * register row nor belongs to a register captured that day for their
+     * department. Unsaved rows whose attendance is a placeholder labelled
+     * "No Register". Honours the department and search filters.
+     *
+     * With no From date the range starts on the 1st of the To month (or the
+     * current month), so an unbounded export doesn't list every day ever.
+     */
+    protected function noRegisterRows()
+    {
+        $search = trim($this->search ?? '');
+        $today = now()->startOfDay();
+
+        $end = filled($this->to) ? Carbon::parse($this->to)->startOfDay() : $today->copy();
+        if ($end->gt($today)) {
+            $end = $today->copy();
+        }
+        $start = filled($this->from) ? Carbon::parse($this->from)->startOfDay() : $end->copy()->startOfMonth();
+
+        if ($start->gt($end)) {
+            return collect();
+        }
+
+        $employees = Employee::query()
+            ->where('employees.archive', 0)
+            ->when(
+                filled($this->department_id),
+                fn ($q) => $q->inDefaultDepartment($this->department_id),
+                fn ($q) => $q->whereHas('default_departments')
+            )
+            ->with([
+                'default_departments:departments.id,departments.name',
+                'driver:id,employee_id',
+                'teams' => fn ($t) => $t->where('teams.status', 1)->orderBy('teams.name'),
+                'teams.departments:departments.id',
+            ])
+            ->orderBy('name')->orderBy('surname')
+            ->get();
+
+        if ($employees->isEmpty()) {
+            return collect();
+        }
+
+        $startText = $start->toDateString();
+        $endText = $end->toDateString();
+
+        // Who has a register row on each date (any register, marked or blank).
+        $covered = AttendanceRegister::query()
+            ->join('attendances', 'attendances.id', '=', 'attendance_registers.attendance_id')
+            ->whereNull('attendances.deleted_at')
+            ->whereBetween('attendances.date', [$startText, $endText])
+            ->get(['attendances.date as reg_date', 'attendance_registers.employee_id'])
+            ->groupBy(fn ($r) => Carbon::parse($r->reg_date)->toDateString())
+            ->map(fn ($rows) => $rows->pluck('employee_id')->flip()->map(fn () => true));
+
+        // Plus everyone a register captured that day was meant to cover
+        // (they're listed as unmarked on that register instead).
+        $expectedCache = [];
+        $registers = Attendance::query()
+            ->with('department:id,name')
+            ->whereBetween('date', [$startText, $endText])
+            ->get(['id', 'date', 'department_id', 'is_drivers']);
+
+        foreach ($registers as $register) {
+            $date = Carbon::parse($register->date)->toDateString();
+            $key = $register->department_id . '-' . (int) (bool) $register->is_drivers;
+            $expectedCache[$key] ??= Attendance::registerEmployeesQuery($register->department, (bool) $register->is_drivers)
+                ->pluck('employees.id');
+
+            $set = $covered->get($date, collect());
+            foreach ($expectedCache[$key] as $employeeId) {
+                $set->put($employeeId, true);
+            }
+            $covered->put($date, $set);
+        }
+
+        $rows = collect();
+
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $date = $day->toDateString();
+            $set = $covered->get($date, collect());
+
+            foreach ($employees as $employee) {
+                if ($set->has($employee->id)) {
+                    continue;
+                }
+
+                $placeholder = new Attendance();
+                $placeholder->attendance_number = self::NO_REGISTER;
+                $placeholder->date = $date;
+                $placeholder->setRelation('department', $employee->default_departments->first());
+
+                $row = new AttendanceRegister();
+                $row->employee_id = $employee->id;
+                $row->setRelation('employee', $employee);
+                $row->setRelation('attendance', $placeholder);
+
+                if ($search === '' || $this->unmarkedMatchesSearch($row, $search)) {
+                    $rows->push($row);
+                }
+            }
         }
 
         return $rows;
@@ -576,6 +701,11 @@ class AttendanceRegisterExport implements
                 }
                 if ($this->unmarkedCount > 0) {
                     $sheet->setCellValueByColumnAndRow($colIndex, $row, 'Not Marked=' . (int) $this->unmarkedCount);
+                    $colIndex++;
+                }
+                if ($this->noRegisterCount > 0) {
+                    $sheet->setCellValueByColumnAndRow($colIndex, $row, 'No Register=' . (int) $this->noRegisterCount
+                        . ' (' . (int) $this->noRegisterDepartmentDays . ' dept-days)');
                     $colIndex++;
                 }
                 $sheet->getStyle("D{$row}:" . $sheet->getCellByColumnAndRow($colIndex - 1, $row)->getCoordinate())

@@ -829,7 +829,7 @@ class CustomerFuelSupplyService
 
     private function supplyNumber(): string
     {
-        $next = (int) CustomerFuelSupply::withTrashed()->max('id') + 1;
+        $next = (int) CustomerFuelSupply::withoutCompanyScope()->withTrashed()->max('id') + 1;
 
         return 'CFS' . str_pad($next, 5, '0', STR_PAD_LEFT);
     }
@@ -844,7 +844,7 @@ class CustomerFuelSupplyService
 
     private function journalNumber(): string
     {
-        $last = JournalEntry::orderByDesc('id')->value('journal_number');
+        $last = JournalEntry::withoutCompanyScope()->orderByDesc('id')->value('journal_number');
         $next = $last ? ((int) substr($last, 4)) + 1 : 1;
 
         return 'JNL-' . str_pad($next, 5, '0', STR_PAD_LEFT);

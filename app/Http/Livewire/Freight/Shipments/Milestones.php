@@ -6,9 +6,12 @@ use App\Models\FreightJob;
 use App\Models\ShipmentMilestone;
 use App\Services\Freight\ShipmentMilestoneService;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Milestones extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $job;
 
     public $shipment_id;
@@ -81,7 +84,7 @@ class Milestones extends Component
             ->sortByDesc(fn ($m) => $m->actual_at ?? $m->planned_at ?? $m->estimated_at ?? $m->created_at);
 
         return view('livewire.freight.shipments.milestones', [
-            'milestones' => $milestones,
+            'milestones' => $this->paginateRows($milestones),
         ]);
     }
 }

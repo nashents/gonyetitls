@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ImportLog extends Model
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

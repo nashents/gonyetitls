@@ -264,6 +264,23 @@
                                                     @error('shipments.' . $s . '.eta') <span class="text-danger error">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
+                                            {{-- Estimates are per job, so they sit beside the first shipment's dates only. --}}
+                                            @if ($loop->first)
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>Estimated Revenue</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.defer="estimated_revenue" placeholder="0.00">
+                                                        @error('estimated_revenue') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>Estimated Cost</label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.defer="estimated_cost" placeholder="0.00">
+                                                        @error('estimated_cost') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <h6 class="underline mt-20 mb-20"><strong>Cargo</strong></h6>
@@ -423,6 +440,8 @@
                                             @error('status') <span class="text-danger error">{{ $message }}</span> @enderror
                                             @if (! $job->isApproved())
                                                 <small class="text-muted">This job is {{ $job->authorization }} authorization - it can only be Draft or Cancelled until approved.{{ $job->authorization === 'rejected' ? ' Saving sends it for authorization again.' : '' }}</small>
+                                            @else
+                                                <div style="font-size:12px; line-height:1.4; color:#31708f; margin-top:4px;"><i class="fa fa-info-circle"></i> Updated automatically when container stages are recorded (see Container Stages). Invoiced, Closed and Cancelled are never changed.</div>
                                             @endif
                                         </div>
                                     </div>
@@ -450,4 +469,45 @@
             </div>
         </div>
     </section>
+
+    {{-- Asked on Save when the job's Origin/Destination changed and open transport legs follow the old route. --}}
+    <div wire:ignore.self class="modal fade" id="legRouteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title"><i class="fa fa-exclamation-triangle text-warning"></i> Update the transport legs too?</h4>
+                </div>
+                <div class="modal-body">
+                    <p>You changed the job's Origin / Destination. These legs on the Transport tab still follow the old route:</p>
+                    <table class="table table-bordered table-condensed">
+                        <thead>
+                            <tr><th>Shipment</th><th>Leg</th><th>Current</th><th>Will become</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($leg_route_preview as $preview)
+                                <tr>
+                                    <td>{{ $preview['shipment'] }}</td>
+                                    <td>{{ $preview['sequence'] }} {{ $preview['mode'] }}</td>
+                                    <td>{{ $preview['current'] }}</td>
+                                    <td><strong>{{ $preview['new'] }}</strong></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    <small class="text-muted">Completed or cancelled legs are never changed. Stops in between (e.g. a port) are kept.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn bg-gray" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-default" wire:click="saveWithLegRoute(0)" wire:loading.attr="disabled">Save, keep legs as they are</button>
+                    <button type="button" class="btn btn-primary" wire:click="saveWithLegRoute(1)" wire:loading.attr="disabled"><i class="fa fa-check"></i> Save and update legs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window.addEventListener('show-legRouteModal', event => { $('#legRouteModal').modal('show'); })
+        window.addEventListener('hide-legRouteModal', event => { $('#legRouteModal').modal('hide'); })
+    </script>
 </div>

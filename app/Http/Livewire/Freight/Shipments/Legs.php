@@ -2,9 +2,9 @@
 
 namespace App\Http\Livewire\Freight\Shipments;
 
+use App\Models\Destination;
 use App\Models\Driver;
 use App\Models\Horse;
-use App\Models\Location;
 use App\Models\Shipment;
 use App\Models\ShipmentLeg;
 use App\Models\ShippingLine;
@@ -13,14 +13,18 @@ use App\Models\Trip;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\Freight\ShipmentLegService;
+use App\Services\GonyetiLink\GonyetiLinkService;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Legs extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $shipment;
     public $vendors;
     public $shippingLines;
-    public $locations;
+    public $destinations;
     public $transporters;
 
     // Add/Edit Leg form
@@ -30,8 +34,8 @@ class Legs extends Component
     public $carrier_shipping_line_id;
     public $carrier_name;
     public $carrier_reference;
-    public $origin_location_id;
-    public $destination_location_id;
+    public $origin_id;
+    public $destination_id;
     public $planned_departure;
     public $planned_arrival;
     public $estimated_departure;
@@ -61,15 +65,37 @@ class Legs extends Component
         $this->shipment = Shipment::findOrFail($shipmentId);
         $this->vendors = Vendor::orderBy('name', 'asc')->get();
         $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
-        $this->locations = Location::orderBy('name', 'asc')->get();
+        $this->loadDestinations();
         $this->transporters = Transporter::orderBy('name', 'asc')->get();
         $this->refreshShipment();
+    }
+
+    private function loadDestinations()
+    {
+        $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
+    }
+
+    /**
+     * Add Leg: start where the previous leg ended (first leg = the job's From)
+     * and head for the job's To. Both stay editable, e.g. a Beira stop between
+     * a sea leg and a road leg.
+     */
+    public function newLeg()
+    {
+        $this->resetLegForm();
+        $this->resetValidation();
+
+        $job = $this->shipment->freight_job;
+        $previous = $this->shipment->legs->sortBy('sequence')->last();
+
+        $this->origin_id = $previous?->destination_id ?? $job?->from;
+        $this->destination_id = $job?->to && $job->to != $this->origin_id ? $job->to : null;
     }
 
     private function refreshShipment()
     {
         $this->shipment = Shipment::with([
-            'legs.carrier_vendor', 'legs.shipping_line', 'legs.origin_location', 'legs.destination_location',
+            'legs.carrier_vendor', 'legs.shipping_line', 'legs.origin', 'legs.destination',
             'legs.trip', 'legs.milestones', 'freight_job',
         ])->findOrFail($this->shipment->id);
     }
@@ -79,6 +105,8 @@ class Legs extends Component
         return [
             'transport_mode' => 'nullable|string|max:255',
             'carrier_reference' => 'nullable|string|max:255',
+            'origin_id' => 'nullable|integer|exists:destinations,id',
+            'destination_id' => 'nullable|integer|exists:destinations,id',
         ];
     }
 
@@ -91,8 +119,8 @@ class Legs extends Component
         $this->carrier_shipping_line_id = $leg->shipping_line_id;
         $this->carrier_name = $leg->carrier_name;
         $this->carrier_reference = $leg->carrier_reference;
-        $this->origin_location_id = $leg->origin_location_id;
-        $this->destination_location_id = $leg->destination_location_id;
+        $this->origin_id = $leg->origin_id;
+        $this->destination_id = $leg->destination_id;
         $this->planned_departure = optional($leg->planned_departure)->format('Y-m-d\TH:i');
         $this->planned_arrival = optional($leg->planned_arrival)->format('Y-m-d\TH:i');
         $this->estimated_departure = optional($leg->estimated_departure)->format('Y-m-d\TH:i');
@@ -117,8 +145,8 @@ class Legs extends Component
             'carrier_vendor_id' => $line ? $line->vendor_id : ($this->carrier_vendor_id ?: null),
             'carrier_name' => $this->carrier_name,
             'carrier_reference' => $this->carrier_reference,
-            'origin_location_id' => $this->origin_location_id ?: null,
-            'destination_location_id' => $this->destination_location_id ?: null,
+            'origin_id' => $this->origin_id ?: null,
+            'destination_id' => $this->destination_id ?: null,
             'planned_departure' => $this->planned_departure ?: null,
             'planned_arrival' => $this->planned_arrival ?: null,
             'estimated_departure' => $this->estimated_departure ?: null,
@@ -141,7 +169,7 @@ class Legs extends Component
     {
         $this->reset([
             'editing_leg_id', 'transport_mode', 'carrier_vendor_id', 'carrier_shipping_line_id', 'carrier_name', 'carrier_reference',
-            'origin_location_id', 'destination_location_id', 'planned_departure', 'planned_arrival',
+            'origin_id', 'destination_id', 'planned_departure', 'planned_arrival',
             'estimated_departure', 'estimated_arrival',
         ]);
     }
@@ -199,7 +227,7 @@ class Legs extends Component
 
     public function openDispatch($legId)
     {
-        $leg = ShipmentLeg::with('origin_location', 'destination_location')->findOrFail($legId);
+        $leg = ShipmentLeg::findOrFail($legId);
 
         $this->dispatching_leg_id = $leg->id;
         $this->dispatch_transporter_id = Transporter::where('default', true)->value('id');
@@ -209,8 +237,9 @@ class Legs extends Component
         $this->dispatch_horses = [];
         $this->dispatch_vehicles = [];
         $this->dispatch_drivers = [];
-        $this->dispatch_from = null;
-        $this->dispatch_to = null;
+        // Trip from/to are Destination ids - prefill with the leg's route.
+        $this->dispatch_from = $leg->origin_id;
+        $this->dispatch_to = $leg->destination_id;
         $this->dispatch_status = 'Scheduled';
         $this->dispatch_start_date = optional($leg->planned_departure)->format('Y-m-d');
 
@@ -245,6 +274,8 @@ class Legs extends Component
         $this->validate([
             'dispatch_transporter_id' => 'required',
             'dispatch_driver_id' => 'required',
+            'dispatch_from' => 'nullable|integer|exists:destinations,id',
+            'dispatch_to' => 'nullable|integer|exists:destinations,id',
         ]);
 
         $leg = ShipmentLeg::findOrFail($this->dispatching_leg_id);
@@ -258,8 +289,8 @@ class Legs extends Component
             'horse_id' => $this->dispatch_horse_id ?: null,
             'vehicle_id' => $this->dispatch_vehicle_id ?: null,
             'driver_id' => $this->dispatch_driver_id,
-            'from' => $this->dispatch_from,
-            'to' => $this->dispatch_to,
+            'from' => $this->dispatch_from ?: null,
+            'to' => $this->dispatch_to ?: null,
             'cargo_details' => $this->shipment->cargo_description,
             'start_date' => $this->dispatch_start_date ?: null,
             'trip_status' => $this->dispatch_status,
@@ -277,6 +308,52 @@ class Legs extends Component
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Trip ' . $trip->trip_number . ' created and linked to this leg.']);
     }
 
+    // ---------------------------------------------------------------
+    // Gonyeti Instance Link: road legs go to the client's transport instance
+    // ---------------------------------------------------------------
+
+    /** Company has an active link (role freight): road legs are sent, not dispatched here. */
+    public function getLinkEnabledProperty(): bool
+    {
+        return app(GonyetiLinkService::class)->enabledForUser(GonyetiLinkService::ROLE_FREIGHT);
+    }
+
+    public function sendToTransport($legId, GonyetiLinkService $link)
+    {
+        $leg = ShipmentLeg::where('shipment_id', $this->shipment->id)->findOrFail($legId);
+
+        if (!GonyetiLinkService::isRoadLeg($leg)) {
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'Only road legs can be sent to the transport instance.']);
+            return;
+        }
+
+        $message = $link->requestLeg($leg);
+        $this->refreshShipment();
+
+        $ok = $message && $message->status === 'sent';
+        $this->dispatchBrowserEvent('alert', [
+            'type' => $ok ? 'success' : 'error',
+            'message' => $ok ? 'Trip request sent to the transport instance.' : 'Not delivered yet: ' . ($message->last_error ?? 'link not active') . '. Use Retry.',
+        ]);
+    }
+
+    /** Re-sends everything still waiting for this company's link. */
+    public function retryLink(GonyetiLinkService $link)
+    {
+        $integration = $link->integrationFor(optional($this->shipment->freight_job)->company_id
+            ?? \App\Services\Integrations\IntegrationGate::companyIdForUser(), GonyetiLinkService::ROLE_FREIGHT);
+        if (!$integration) {
+            return;
+        }
+
+        $result = $link->deliver($integration);
+        $this->refreshShipment();
+        $this->dispatchBrowserEvent('alert', [
+            'type' => $result['error'] ? 'error' : 'success',
+            'message' => $result['error'] ? 'Still not delivered: ' . $result['error'] : "Delivered {$result['sent']} waiting message(s).",
+        ]);
+    }
+
     public function refresh($category)
     {
         if ($category === 'vendors') {
@@ -285,9 +362,9 @@ class Legs extends Component
         } elseif ($category === 'shipping_lines') {
             $this->shippingLines = ShippingLine::where('is_active', true)->orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Shipping Lines Refreshed Successfully!!.']);
-        } elseif ($category === 'locations') {
-            $this->locations = Location::orderBy('name', 'asc')->get();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Locations Refreshed Successfully!!.']);
+        } elseif ($category === 'destinations') {
+            $this->loadDestinations();
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Destinations Refreshed Successfully!!.']);
         } elseif ($category === 'transporters') {
             $this->transporters = Transporter::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Transporters Refreshed Successfully!!.']);
@@ -308,6 +385,7 @@ class Legs extends Component
         $this->refreshShipment();
 
         return view('livewire.freight.shipments.legs', [
+            'legRows' => $this->paginateRows($this->shipment->legs),
             'lifecycleStages' => ShipmentLeg::LIFECYCLE_STAGES,
             'tripStatuses' => ['Scheduled', 'Started', 'Loading Point', 'Loaded', 'InTransit', 'Offloading Point', 'Offloaded', 'OnHold', 'Cancelled'],
         ]);

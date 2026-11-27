@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AssetPositionLog extends Model
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     protected $fillable = [
         'horse_id',
         'vehicle_id',

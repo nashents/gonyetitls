@@ -58,13 +58,16 @@ trait FreightJobFormOptions
     protected function loadFormOptions(int $companyId, array $keepCargoIds = [], array $keepOfficerUserIds = []): void
     {
         $this->customers = Customer::orderBy('name', 'asc')->get();
-        $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get();
+        $this->freight_service_types = FreightServiceType::selectable($this->freight_service_type_id ?? null)->get(); // active only (+ the job's current type)
         $this->currencies = Currency::orderBy('name', 'asc')->get();
         $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
-        // Salesperson / officers: actual staff with a login - no drivers.
+        // Salesperson / officers: active non-driver employees with a login in
+        // THIS company only (multi-tenancy safe), any department; officers
+        // already on the record stay listed so Edit shows them.
         $keepOfficerUserIds = array_values(array_filter($keepOfficerUserIds));
-        $this->officers = Employee::where(function ($q) use ($companyId, $keepOfficerUserIds) {
-                $q->where(fn ($staff) => $staff->where('company_id', $companyId)->activeStaff()->ofStaffType('admin'));
+        $this->officers = Employee::where('company_id', $companyId)
+            ->where(function ($q) use ($keepOfficerUserIds) {
+                $q->where(fn ($staff) => $staff->activeStaff()->ofStaffType('admin')); // no drivers
                 if ($keepOfficerUserIds) {
                     $q->orWhereIn('user_id', $keepOfficerUserIds);
                 }
@@ -115,7 +118,7 @@ trait FreightJobFormOptions
     {
         $reloads = [
             'customers' => ['Customers', fn () => $this->customers = Customer::orderBy('name', 'asc')->get()],
-            'freight_service_types' => ['Service Types', fn () => $this->freight_service_types = FreightServiceType::orderBy('name', 'asc')->get()],
+            'freight_service_types' => ['Service Types', fn () => $this->freight_service_types = FreightServiceType::selectable($this->freight_service_type_id ?? null)->get()],
             'currencies' => ['Currencies', fn () => $this->currencies = Currency::orderBy('name', 'asc')->get()],
             'quotations' => ['Quotations', fn () => $this->quotations = Quotation::with('customer')->whereYear('date', date('Y'))->latest()->get()],
             'destinations' => ['Destinations', fn () => $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get()],

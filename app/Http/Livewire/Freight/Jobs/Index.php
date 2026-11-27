@@ -23,7 +23,7 @@ class Index extends Component
         return 'vendor.pagination.bootstrap-custom';
     }
 
-    public $perPage = 15;
+    public $perPage = 10;
     public $search;
     public $filter_status;
     public $filter_freight_service_type_id;
@@ -36,7 +36,7 @@ class Index extends Component
     protected $queryString = [
         'search',
         'filter_authorization' => ['as' => 'authorization', 'except' => ''],
-        'perPage' => ['except' => 15],
+        'perPage' => ['except' => 10],
         'page' => ['except' => 1],
     ];
 

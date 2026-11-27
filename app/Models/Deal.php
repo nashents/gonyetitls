@@ -12,6 +12,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Deal extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 

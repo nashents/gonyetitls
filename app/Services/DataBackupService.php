@@ -119,6 +119,7 @@ class DataBackupService
 
             // Freight
             'Freight/Freight Jobs'               => fn () => new Exports\FreightJobsExport(),
+            'Freight/Job Reminders'              => fn () => new Exports\FreightJobRemindersExport(),
 
             // Inventory & Procurement
             'Inventory/Purchase Orders'          => fn () => new Exports\PurchasesExport($from, $to, 'created_at', 'asset', null),

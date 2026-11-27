@@ -255,7 +255,7 @@ class Index extends Component
 
     protected function generateJournalNumber(): string
     {
-        $last = JournalEntry::whereNotNull('journal_number')
+        $last = JournalEntry::withoutCompanyScope()->whereNotNull('journal_number')
             ->orderByDesc('id')
             ->value('journal_number');
 

@@ -17,7 +17,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($shipment->customs_declarations as $declaration)
+            @forelse ($declarationRows as $declaration)
                 <tr wire:key="{{ 'b7446c-20-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($declaration->id ?? '') }}">
                     <td>{{ $declaration->declaration_number }}</td>
                     <td>{{ ucfirst($declaration->declaration_type ?? '') }}</td>
@@ -113,6 +113,7 @@
                                     @endforeach
                                 </tbody>
                             </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $declarationRows])
                             <a href="#" wire:click.prevent="showAddLine({{ $declaration->id }})" class="btn btn-xs btn-info mb-20"><i class="fa fa-plus"></i> Add Line</a>
 
                             <h6 class="underline mt-20 mb-10"><strong>Milestone History</strong></h6>

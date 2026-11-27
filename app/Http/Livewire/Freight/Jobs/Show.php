@@ -5,14 +5,18 @@ namespace App\Http\Livewire\Freight\Jobs;
 use App\Http\Livewire\Freight\Jobs\Concerns\AuthorizesFreightJobs;
 use App\Models\FreightJob;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Show extends Component
 {
-    use AuthorizesFreightJobs;
+    use AuthorizesFreightJobs, FreightEmbeddedPagination;
+
+    public $cargoPage = 1;
+    public $partiesPage = 1;
 
     public $job;
 
-    protected $listeners = ['shipmentAdded' => 'refreshJob'];
+    protected $listeners = ['shipmentAdded' => 'refreshJob', 'jobStatusChanged' => 'refreshJob'];
 
     public function mount($id)
     {
@@ -58,6 +62,12 @@ class Show extends Component
 
     public function render()
     {
-        return view('livewire.freight.jobs.show');
+        $cargoRows = $this->job->shipments->flatMap(fn ($s) => $s->cargo_items->sortBy('id')->map(fn ($item) => ['shipment' => $s, 'item' => $item]));
+        $partyRows = $this->job->shipments->flatMap(fn ($s) => $s->parties->sortBy('id')->map(fn ($party) => ['shipment' => $s, 'party' => $party]));
+
+        return view('livewire.freight.jobs.show', [
+            'cargoRows' => $this->paginateRows($cargoRows, 'cargoPage'),
+            'partyRows' => $this->paginateRows($partyRows, 'partiesPage'),
+        ]);
     }
 }

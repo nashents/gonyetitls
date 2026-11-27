@@ -77,6 +77,7 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $recentLogs])
                         </div>
                     </div>
                 </div>

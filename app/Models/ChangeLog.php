@@ -9,6 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class ChangeLog extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompanyOrShared; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 

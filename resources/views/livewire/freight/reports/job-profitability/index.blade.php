@@ -143,7 +143,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($rows as $row)
+                                    @forelse ($pagedRows as $row)
                                     <tr>
                                         <td>{{ $row['job_number'] }}</td>
                                         <td>{{ $row['customer'] }}</td>
@@ -173,7 +173,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($rows as $row)
+                                    @forelse ($pagedRows as $row)
                                     <tr>
                                         <td>{{ $row['label'] }}</td>
                                         <td class="text-right">{{ $row['jobCount'] }}</td>
@@ -196,6 +196,7 @@
                                 </tbody>
                                 @endif
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $pagedRows])
                         </div>
                     </div>
                 </div>

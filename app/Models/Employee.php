@@ -12,6 +12,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Employee extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory,SoftDeletes;
 
     use \OwenIt\Auditing\Auditable;
@@ -170,6 +172,68 @@ class Employee extends Model implements Auditable
     public function default_departments(){
         return $this->belongsToMany('App\Models\Department')->withPivot('is_default')->withTimestamps()
             ->wherePivot('is_default', true);
+    }
+
+    /** Trim and collapse inner whitespace, so "Charles  " and "Charles" are the same name. */
+    public static function normalizeName($value): string
+    {
+        return preg_replace('/\s+/u', ' ', trim((string) $value));
+    }
+
+    /** ID numbers compared without spaces/dashes, case-insensitive. */
+    public static function normalizeIdNumber($value): string
+    {
+        return strtoupper(preg_replace('/[\s\-\/]+/', '', (string) $value));
+    }
+
+    /**
+     * The existing employee record for this person, if any (archived included),
+     * so forms/imports update or reject instead of creating a duplicate.
+     *
+     * - Same ID number => same person.
+     * - Same name + surname (ignoring case/extra spaces) => same person,
+     *   unless both records carry DIFFERENT ID numbers (two real people
+     *   who share a name).
+     */
+    public static function findExisting($name, $surname, $idnumber = null, $ignoreId = null): ?self
+    {
+        $base = static::query()->when($ignoreId, fn ($q) => $q->where('employees.id', '!=', $ignoreId));
+
+        $id = static::normalizeIdNumber($idnumber);
+        if ($id !== '') {
+            $byId = (clone $base)
+                ->whereRaw("UPPER(REPLACE(REPLACE(REPLACE(employees.idnumber, ' ', ''), '-', ''), '/', '')) = ?", [$id])
+                ->orderBy('employees.id')
+                ->first();
+            if ($byId) {
+                return $byId;
+            }
+        }
+
+        $name = mb_strtolower(static::normalizeName($name));
+        $surname = mb_strtolower(static::normalizeName($surname));
+        if ($name === '' || $surname === '') {
+            return null;
+        }
+
+        $candidates = (clone $base)
+            ->whereRaw('LOWER(TRIM(employees.name)) = ?', [$name])
+            ->whereRaw('LOWER(TRIM(employees.surname)) = ?', [$surname])
+            ->orderBy('employees.id')
+            ->get();
+
+        return $candidates->first(function ($employee) use ($id) {
+            $theirs = static::normalizeIdNumber($employee->idnumber);
+            return $id === '' || $theirs === '' || $theirs === $id;
+        });
+    }
+
+    /** "Charles Ndongwe (DIE00311, archived)" for duplicate warnings. */
+    public function duplicateLabel(): string
+    {
+        $bits = array_filter([$this->employee_number, $this->archive ? 'archived' : null, $this->driver ? 'driver' : null]);
+
+        return trim($this->name . ' ' . $this->surname) . ($bits ? ' (' . implode(', ', $bits) . ')' : '');
     }
 
     /** Employees whose DEFAULT department is $departmentId (other memberships ignored). */

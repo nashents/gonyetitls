@@ -11,8 +11,15 @@ class ShippingContainerService
 {
     public function __construct(
         private ShipmentMilestoneService $milestones,
-        private PortExposureService $exposures
+        private PortExposureService $exposures,
+        private FreightJobStatusSync $jobStatus
     ) {
+    }
+
+    /** Moves the container's job to the status its containers now point to. */
+    private function syncJobStatus(ShippingContainer $container): void
+    {
+        $this->jobStatus->sync($container->shipment?->freight_job);
     }
 
     /**
@@ -39,6 +46,8 @@ class ShippingContainerService
                 'milestone_name' => ContainerStage::label('booked'),
             ]);
 
+            $this->syncJobStatus($container);
+
             return $container;
         });
     }
@@ -57,6 +66,8 @@ class ShippingContainerService
             ], $milestoneData));
 
             $this->exposures->handleContainerTransition($container, $milestoneCode, Carbon::parse($milestoneData['actual_at'] ?? now()));
+
+            $this->syncJobStatus($container);
 
             return $container;
         });

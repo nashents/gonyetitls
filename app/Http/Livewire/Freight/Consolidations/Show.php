@@ -7,9 +7,14 @@ use App\Models\Shipment;
 use App\Services\Freight\ConsolidationCostAllocator;
 use App\Services\Freight\ConsolidationService;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Show extends Component
 {
+    use FreightEmbeddedPagination;
+
+    public $clientsPage = 1;
+
     public $consolidation;
     public $availableShipments;
 
@@ -101,6 +106,7 @@ class Show extends Component
     {
         return view('livewire.freight.consolidations.show', [
             'breakdown' => $allocator->breakdown($this->consolidation),
+            'houseRows' => $this->paginateRows($this->consolidation->house_shipments->sortBy('id'), 'clientsPage'),
             'bases' => ConsolidationCostAllocator::BASES,
             'usesValue' => ConsolidationCostAllocator::usesAllocationValue($this->cost_allocation_basis),
             'valueHint' => ConsolidationCostAllocator::VALUE_HINTS[$this->cost_allocation_basis] ?? null,

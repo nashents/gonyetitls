@@ -108,7 +108,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($consolidation->house_shipments as $houseShipment)
+                            @forelse ($houseRows as $houseShipment)
                                 @php $row = $breakdown['rows'][$houseShipment->id] ?? null; @endphp
                                 <tr wire:key="house-{{ $houseShipment->id }}" class="{{ $row && $row['excluded'] ? 'warning' : '' }}">
                                     <td>{{ $houseShipment->shipment_number }}</td>
@@ -164,6 +164,7 @@
                             </tfoot>
                         @endif
                     </table>
+                    @include('livewire.freight.partials.pagination', ['paginator' => $houseRows])
 
                     <form wire:submit.prevent="attachShipment" class="row mb-20">
                         <div class="col-md-6">

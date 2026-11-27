@@ -53,7 +53,7 @@
                                 </table>
                             </div>
 
-                            {{ $consolidations->links() }}
+                            @include('livewire.freight.partials.pagination', ['paginator' => $consolidations])
                         </div>
                     </div>
                 </div>

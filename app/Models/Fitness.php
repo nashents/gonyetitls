@@ -10,6 +10,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Fitness extends Model  implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use Concerns\GuardsOperationalAssets;
     use HasFactory, SoftDeletes;
 

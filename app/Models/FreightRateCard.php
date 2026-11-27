@@ -49,10 +49,12 @@ class FreightRateCard extends Model implements Auditable
         return $this->belongsTo('App\Models\Customer');
     }
     public function charge_type(){
-        return $this->belongsTo('App\Models\ChargeType');
+        // withTrashed: a deleted charge type still shows its name on existing rate cards.
+        return $this->belongsTo('App\Models\ChargeType')->withTrashed();
     }
     public function freight_service_type(){
-        return $this->belongsTo('App\Models\FreightServiceType');
+        // withTrashed: a deleted service type still shows its name on existing rate cards.
+        return $this->belongsTo('App\Models\FreightServiceType')->withTrashed();
     }
     public function origin(){
         return $this->belongsTo('App\Models\Destination', 'origin_id');

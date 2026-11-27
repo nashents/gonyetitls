@@ -240,7 +240,7 @@
                                 </table>
                             </div>
 
-                            {{ $jobs->links() }}
+                            @include('livewire.freight.partials.pagination', ['paginator' => $jobs])
                         </div>
                     </div>
                 </div>

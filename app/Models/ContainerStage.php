@@ -18,7 +18,7 @@ class ContainerStage extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
 
-    protected $fillable = ['code', 'name', 'description', 'sort_order', 'is_system', 'is_active', 'created_by'];
+    protected $fillable = ['code', 'name', 'description', 'job_status', 'sort_order', 'is_system', 'is_active', 'created_by'];
 
     protected $casts = [
         'is_system' => 'boolean',

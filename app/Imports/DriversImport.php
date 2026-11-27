@@ -278,8 +278,9 @@ WithMultipleSheets
             continue;
         }
 
-        $name    = $row->get('name');
-        $surname = $row->get('surname');
+        // Normalised so "Charles " and "Charles" are one person.
+        $name    = Employee::normalizeName($row->get('name'));
+        $surname = Employee::normalizeName($row->get('surname'));
 
         if (!$name || !$surname) {
             // required for matching
@@ -322,6 +323,14 @@ WithMultipleSheets
         ->where('surname', $surname)
         ->where('category', 'employee')
         ->first();
+
+        // Same check through the employee record, so a name typed with
+        // different spacing/case (or matched by ID number) is caught too.
+        $matchedEmployee = Employee::findExisting($name, $surname, $idNumber);
+        if (!$existingEmployeeUser && $matchedEmployee && !$matchedEmployee->driver
+            && $matchedEmployee->user && $matchedEmployee->user->category === 'employee') {
+            $existingEmployeeUser = $matchedEmployee->user;
+        }
 
         if ($existingEmployeeUser) {
             Log::warning('Skipped row: Person already registered as an employee.', $row->toArray());
@@ -382,11 +391,15 @@ WithMultipleSheets
             */
         
 
-            $user = User::firstOrNew([
-                'name'    => $name,
-                'surname' => $surname,
-                'category' => 'driver',
-            ]);
+            // An existing driver's own login, else match by name.
+            $existing = Employee::findExisting($name, $surname, $idNumber);
+            $user = $existing && $existing->user
+                ? $existing->user
+                : User::firstOrNew([
+                    'name'    => $name,
+                    'surname' => $surname,
+                    'category' => 'driver',
+                ]);
 
             $existingUser = $user->exists;
 
@@ -417,10 +430,14 @@ WithMultipleSheets
             | EMPLOYEE (by name + surname)
             |----------------------
             */
-            $employee = Employee::firstOrNew([
-                'name'    => $name,
-                'surname' => $surname,
-            ]);
+            // ID number first, then name ignoring case/extra spaces, so a
+            // driver already on file is updated rather than created again.
+            $employee = Employee::findExisting($name, $surname, $idNumber);
+            if (!$employee) {
+                $employee = new Employee;
+                $employee->name = $name;
+                $employee->surname = $surname;
+            }
 
             $existingEmployee = $employee->exists;
 

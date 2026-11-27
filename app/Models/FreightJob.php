@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class FreightJob extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
@@ -57,7 +59,8 @@ class FreightJob extends Model implements Auditable
         return $this->belongsTo('App\Models\Customer');
     }
     public function freight_service_type(){
-        return $this->belongsTo('App\Models\FreightServiceType');
+        // withTrashed: a deleted service type still shows its name on existing jobs.
+        return $this->belongsTo('App\Models\FreightServiceType')->withTrashed();
     }
     public function salesperson(){
         return $this->belongsTo('App\Models\User', 'salesperson_id');
@@ -89,6 +92,10 @@ class FreightJob extends Model implements Auditable
     public function shipments(){
         return $this->hasMany('App\Models\Shipment');
     }
+    /** Custom follow-up reminders (Reminders tab). */
+    public function reminders(){
+        return $this->hasMany(FreightJobReminder::class);
+    }
     public function documents(){
         return $this->hasMany('App\Models\Document');
     }
@@ -107,8 +114,24 @@ class FreightJob extends Model implements Auditable
      * FreightJobsExport so an export always matches what is on screen.
      * Keys: search, status, authorization, freight_service_type_id, customer_id.
      */
+    /**
+     * Company-specific (multi-tenancy safe): the signed-in user's company only.
+     * No user (CLI / data backup) = no restriction.
+     */
+    public function scopeForCurrentCompany($query)
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (! $user) {
+            return $query;
+        }
+
+        return $query->where($query->getModel()->getTable() . '.company_id', $user->employee?->company_id ?? $user->company?->id);
+    }
+
     public function scopeListFilter($query, array $filters)
     {
+        $query->forCurrentCompany();
+
         if (filled($search = trim((string) ($filters['search'] ?? '')))) {
             $query->where(function ($q) use ($search) {
                 $q->where('job_number', 'like', "%{$search}%")

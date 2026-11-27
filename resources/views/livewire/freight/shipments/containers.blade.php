@@ -23,7 +23,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($shipment->containers as $container)
+            @forelse ($containerRows as $container)
                 <tr wire:key="{{ 'e0bf4a-20-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($container->id ?? '') }}">
                     <td>{{ $container->container_number }}</td>
                     <td>{{ $container->container_type }}</td>
@@ -103,6 +103,7 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $containerRows])
                                 <small class="text-muted">Demurrage and Detention are independent estimates for different possible carrier billing structures &mdash; do not sum them.</small>
                             @else
                                 <p class="text-muted">No exposure tracked yet for this container (starts automatically once discharged; requires a free-day policy configured for its shipping line or the generic default).</p>

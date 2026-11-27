@@ -51,6 +51,7 @@
             @endforelse
         </tbody>
     </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $milestones])
 
     <!-- Record Milestone Modal -->
     <div wire:ignore.self class="modal fade" id="addMilestoneModal{{ $job->id }}" tabindex="-1" role="dialog">

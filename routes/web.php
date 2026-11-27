@@ -223,6 +223,7 @@ Route::get('horses/reports','HorseController@reports')->name('horses.reports');
 Route::get('vehicles/reports','VehicleController@reports')->name('vehicles.reports');
 
 Route::get('assignments/reports','AssignmentController@reports')->name('assignments.reports');
+Route::get('trip-requests','TripRequestController@index')->name('trip_requests.index')->middleware('integration:gonyeti_link');
 Route::get('trips/reports','TripController@reports')->name('trips.reports');
 Route::get('debtors/report','CustomerController@debtorsReports')->name('debtors.reports');
 Route::get('creditors/report','VendorController@creditorsReports')->name('creditors.reports');
@@ -856,6 +857,7 @@ Route::get('freight/jobs/authorization/pending','FreightJobController@pending')-
 Route::get('freight/jobs/authorization/approved','FreightJobController@approved')->name('freight.jobs.approved');
 Route::get('freight/jobs/authorization/rejected','FreightJobController@rejected')->name('freight.jobs.rejected');
 Route::get('deleted/freight-jobs','FreightJobController@deleted')->name('freight.jobs.deleted');
+Route::get('freight/job-reminders','FreightJobRemindersController@index')->name('freight.job-reminders.index');
 Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'job'])->names([
     'index' => 'freight.jobs.index',
     'create' => 'freight.jobs.create',

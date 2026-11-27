@@ -29,7 +29,7 @@ class AddClients extends Component
         $this->consolidation = Consolidation::with('master_shipment.freight_job', 'master_shipment.containers')->findOrFail($id);
         $this->loadOptions();
 
-        $this->default_service_type_id = FreightServiceType::where('name', 'Freight Forwarding & Customs Clearing')->value('id');
+        $this->default_service_type_id = FreightServiceType::selectable()->where('name', 'Freight Forwarding & Customs Clearing')->value('id');
 
         for ($i = 0; $i < 5; $i++) {
             $this->addRow();
@@ -39,7 +39,7 @@ class AddClients extends Component
     private function loadOptions(): void
     {
         $this->customers = Customer::orderBy('name', 'asc')->get(['id', 'name']);
-        $this->serviceTypes = FreightServiceType::orderBy('name', 'asc')->get(['id', 'name']);
+        $this->serviceTypes = FreightServiceType::selectable()->get(['id', 'name']);
         $this->cargos = Cargo::selectable()->orderBy('name', 'asc')->get(['id', 'name']);
     }
 

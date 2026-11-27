@@ -10,9 +10,18 @@ use App\Services\ReportFormatter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Index extends Component
 {
+    use FreightEmbeddedPagination;
+
+    /** Any filter change starts the list again from page 1. */
+    public function updated($property)
+    {
+        $this->resetPage();
+    }
+
     public $from, $to;
     public $customer_id, $salesperson_id, $freight_service_type_id, $primary_transport_mode, $status;
     public $details;
@@ -95,6 +104,8 @@ class Index extends Component
                 : $calculator->summaryByCustomer();
         }
 
-        return view('livewire.freight.reports.job-profitability.index');
+        return view('livewire.freight.reports.job-profitability.index', [
+            'pagedRows' => $this->paginateRows($this->rows ?? []),
+        ]);
     }
 }

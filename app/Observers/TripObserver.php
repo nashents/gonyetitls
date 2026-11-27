@@ -55,6 +55,14 @@ class TripObserver
         // trip leaves Offloaded) - TransporterPaymentBillService.
         if ($trip->wasChanged('trip_status')) {
             $this->syncTransporterBills($trip);
+
+            // Gonyeti Instance Link: report progress to the freight instance
+            // that requested this trip. Never blocks the trip save.
+            try {
+                app(\App\Services\GonyetiLink\GonyetiLinkService::class)->tripStatusChanged($trip);
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
     }
 

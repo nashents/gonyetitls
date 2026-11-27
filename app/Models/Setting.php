@@ -8,6 +8,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Setting extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompanyOrShared; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 }

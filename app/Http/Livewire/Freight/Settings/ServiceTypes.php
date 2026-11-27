@@ -2,22 +2,38 @@
 
 namespace App\Http\Livewire\Freight\Settings;
 
+use App\Models\FreightJob;
+use App\Models\FreightRateCard;
 use App\Models\FreightServiceType;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
+/**
+ * Freight > Master > Service Types. Active types are offered on jobs, rate
+ * cards and consolidation clients (FreightServiceType::selectable); inactive
+ * ones stay on existing records. A type in use can't be deleted - set it
+ * Inactive instead (same rule as Customs Offices).
+ */
 class ServiceTypes extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $service_type_id;
     public $name;
     public $description;
-    public $is_locked = false;
+    public $is_active = 1;
 
     protected function rules()
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', Rule::unique('freight_service_types', 'name')->ignore($this->service_type_id)->whereNull('deleted_at')],
+            'is_active' => 'required|boolean',
         ];
     }
+
+    protected $validationAttributes = ['is_active' => 'status'];
 
     public function edit($id)
     {
@@ -25,52 +41,70 @@ class ServiceTypes extends Component
         $this->service_type_id = $serviceType->id;
         $this->name = $serviceType->name;
         $this->description = $serviceType->description;
-        $this->is_locked = $serviceType->is_locked;
+        $this->is_active = $serviceType->is_active ? 1 : 0;
+        $this->resetValidation();
     }
 
     public function save()
     {
         $this->validate();
 
-        if ($this->service_type_id) {
-            $existing = FreightServiceType::findOrFail($this->service_type_id);
+        $data = [
+            'name' => trim($this->name),
+            'description' => $this->description,
+            'is_active' => (bool) $this->is_active,
+        ];
 
-            if ($existing->is_locked) {
-                $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This service type is locked and cannot be edited.']);
-                return;
-            }
+        if ($this->service_type_id) {
+            FreightServiceType::findOrFail($this->service_type_id)->update($data);
+        } else {
+            FreightServiceType::create($data + ['user_id' => Auth::id()]);
         }
 
-        FreightServiceType::updateOrCreate(
-            ['id' => $this->service_type_id],
-            [
-                'name' => $this->name,
-                'description' => $this->description,
-                'is_locked' => $this->is_locked,
-            ]
-        );
-
-        $this->reset(['service_type_id', 'name', 'description', 'is_locked']);
+        $this->resetForm();
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Service type saved.']);
+    }
+
+    public function toggleActive($id)
+    {
+        $serviceType = FreightServiceType::findOrFail($id);
+        $serviceType->update(['is_active' => !$serviceType->is_active]);
+
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => $serviceType->name . ($serviceType->is_active ? ' activated.' : ' deactivated - no longer offered on new jobs.')]);
     }
 
     public function delete($id)
     {
         $serviceType = FreightServiceType::findOrFail($id);
 
-        if ($serviceType->is_locked) {
-            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => 'This service type is locked and cannot be deleted.']);
+        $jobs = FreightJob::withTrashed()->where('freight_service_type_id', $serviceType->id)->count();
+        $cards = FreightRateCard::where('freight_service_type_id', $serviceType->id)->count();
+
+        if ($jobs || $cards) {
+            $used = collect([$jobs ? "{$jobs} freight job(s)" : null, $cards ? "{$cards} rate card(s)" : null])->filter()->implode(' and ');
+            $this->dispatchBrowserEvent('alert', ['type' => 'error', 'message' => "{$serviceType->name} is used on {$used}. Set it Inactive instead."]);
             return;
         }
 
         $serviceType->delete();
+
+        if ((int) $this->service_type_id === (int) $id) {
+            $this->resetForm();
+        }
+
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Service type removed.']);
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['service_type_id', 'name', 'description', 'is_active']);
+        $this->resetValidation();
     }
 
     public function render()
     {
         return view('livewire.freight.settings.service-types', [
-            'serviceTypes' => FreightServiceType::orderBy('name', 'asc')->get(),
+            'serviceTypes' => FreightServiceType::withCount('freight_jobs')->orderBy('name', 'asc')->orderBy('id')->paginate(10),
         ]);
     }
 }

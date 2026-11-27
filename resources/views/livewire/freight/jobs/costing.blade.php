@@ -76,7 +76,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($job->costs as $cost)
+            @forelse ($costRows as $cost)
                 <tr wire:key="{{ 'f54020-72-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($cost->id ?? '') }}">
                     <td>{{ $cost->charge_type?->name }}</td>
                     <td>{{ $cost->vendor?->name }}</td>
@@ -132,6 +132,7 @@
             @endforelse
         </tbody>
     </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $costRows])
 
     <h6 class="underline mt-20 mb-10"><strong>Freight Charges (Customer)</strong></h6>
     <a href="#" wire:click.prevent="showAddCharge" class="btn btn-xs btn-info mb-10" data-toggle="modal" data-target="#chargeModal{{ $job->id }}"><i class="fa fa-plus"></i> Add Charge</a>
@@ -143,7 +144,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($job->charges as $charge)
+            @forelse ($chargeRows as $charge)
                 <tr wire:key="{{ 'f54020-122-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($charge->id ?? '') }}">
                     <td>{{ $charge->charge_type?->name }}</td>
                     <td>{{ $charge->customer?->name }}</td>
@@ -187,6 +188,7 @@
             @endforelse
         </tbody>
     </table>
+    @include('livewire.freight.partials.pagination', ['paginator' => $chargeRows])
 
     <!-- Add/Edit Cost Modal -->
     <div wire:ignore.self class="modal fade" id="costModal{{ $job->id }}" tabindex="-1" role="dialog">

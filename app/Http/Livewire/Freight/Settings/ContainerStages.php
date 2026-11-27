@@ -4,12 +4,15 @@ namespace App\Http\Livewire\Freight\Settings;
 
 use App\Models\ChargeType;
 use App\Models\ContainerStage;
+use App\Models\FreightJob;
+use App\Services\Freight\FreightJobStatusSync;
 use App\Services\Freight\PortExposureService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 /**
  * Freight > Master > Container Stages: the container lifecycle with an
@@ -20,10 +23,13 @@ use Livewire\Component;
  */
 class ContainerStages extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $stage_id;
     public $name;
     public $description;
     public $after_code;
+    public $job_status;
     public $is_active = true;
     public $editing_system = false;
 
@@ -32,11 +38,12 @@ class ContainerStages extends Component
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('container_stages', 'name')->ignore($this->stage_id)],
             'description' => 'nullable|string|max:1000',
+            'job_status' => ['nullable', Rule::in(FreightJobStatusSync::FLOW)],
             'after_code' => [Rule::requiredIf(!$this->editing_system), 'nullable', Rule::exists('container_stages', 'code')],
         ];
     }
 
-    protected $validationAttributes = ['after_code' => 'position'];
+    protected $validationAttributes = ['after_code' => 'position', 'job_status' => 'job status'];
 
     public function edit($id)
     {
@@ -44,6 +51,7 @@ class ContainerStages extends Component
         $this->stage_id = $stage->id;
         $this->name = $stage->name;
         $this->description = $stage->description;
+        $this->job_status = $stage->job_status;
         $this->is_active = $stage->is_active;
         $this->editing_system = $stage->is_system;
 
@@ -61,7 +69,8 @@ class ContainerStages extends Component
         $stage = $this->stage_id ? ContainerStage::findOrFail($this->stage_id) : null;
 
         if ($stage && $stage->is_system) {
-            $stage->update(['name' => $this->name, 'description' => $this->description]);
+            $stage->update(['name' => $this->name, 'description' => $this->description, 'job_status' => $this->job_status ?: null]);
+            $this->resyncJobsAt($stage->code);
             $this->resetForm();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Stage saved.']);
             return;
@@ -85,12 +94,13 @@ class ContainerStages extends Component
 
         DB::transaction(function () use ($stage, $code, $codes) {
             if ($stage) {
-                $stage->update(['name' => $this->name, 'description' => $this->description, 'is_active' => (bool) $this->is_active]);
+                $stage->update(['name' => $this->name, 'description' => $this->description, 'job_status' => $this->job_status ?: null, 'is_active' => (bool) $this->is_active]);
             } else {
                 ContainerStage::create([
                     'code' => $code,
                     'name' => $this->name,
                     'description' => $this->description,
+                    'job_status' => $this->job_status ?: null,
                     'is_system' => false,
                     'is_active' => (bool) $this->is_active,
                     'sort_order' => 0,
@@ -104,6 +114,7 @@ class ContainerStages extends Component
         });
 
         ContainerStage::flush(); // sort_order was changed with query-builder updates
+        $this->resyncJobsAt($code);
         $this->resetForm();
         $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Stage saved.']);
     }
@@ -141,7 +152,7 @@ class ContainerStages extends Component
 
     public function resetForm()
     {
-        $this->reset(['stage_id', 'name', 'description', 'after_code', 'is_active', 'editing_system']);
+        $this->reset(['stage_id', 'name', 'description', 'after_code', 'job_status', 'is_active', 'editing_system']);
         $this->resetValidation();
     }
 
@@ -162,6 +173,16 @@ class ContainerStages extends Component
         return null;
     }
 
+    /** A changed stage -> job status link applies to jobs whose containers are on that stage now. */
+    private function resyncJobsAt(string $code): void
+    {
+        ContainerStage::flush();
+        $sync = app(FreightJobStatusSync::class);
+
+        FreightJob::whereHas('shipments.containers', fn ($q) => $q->where('status', $code))
+            ->get()->each(fn ($job) => $sync->sync($job));
+    }
+
     private function makeCode(string $name): string
     {
         $base = Str::slug($name, '_') ?: 'stage';
@@ -178,8 +199,10 @@ class ContainerStages extends Component
     public function render()
     {
         return view('livewire.freight.settings.container-stages', [
-            'stages' => ContainerStage::allOrdered(),
+            'stages' => $stages = ContainerStage::allOrdered(),
+            'stageRows' => $this->paginateRows($stages),
             'effects' => PortExposureService::stageClockEffects(),
+            'jobStatuses' => FreightJobStatusSync::FLOW,
         ]);
     }
 }

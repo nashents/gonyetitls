@@ -16,15 +16,29 @@
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>Name</label>
+                                            <label>Name <span class="required text-danger">*</span></label>
                                             <input type="text" class="form-control" wire:model="name">
                                             @error('name') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Description</label>
                                             <input type="text" class="form-control" wire:model="description">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Status <span class="required text-danger">*</span></label>
+                                            @if ($editing_built_in)
+                                                <input type="text" class="form-control" value="Active (built-in)" disabled>
+                                            @else
+                                                <select class="form-control" wire:model.defer="is_active">
+                                                    <option value="1">Active</option>
+                                                    <option value="0">Inactive</option>
+                                                </select>
+                                            @endif
+                                            @error('is_active') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -133,11 +147,11 @@
 
                             <table class="table table-striped table-bordered">
                                 <thead>
-                                    <tr><th>Name</th><th>Description</th><th>Revenue Account</th><th>Expense Account</th><th>Container Free Time</th><th>Locked</th><th></th></tr>
+                                    <tr><th>Name</th><th>Description</th><th>Revenue Account</th><th>Expense Account</th><th>Container Free Time</th><th title="Cost + charge lines using this type">Lines</th><th>Status</th><th></th></tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($chargeTypes as $type)
-                                        <tr wire:key="{{ '8bd8f5-68-' . ($loop->parent?->index ?? 'r') . '-' . $loop->index . '-' . ($type->id ?? '') }}">
+                                        <tr wire:key="charge-type-{{ $type->id }}" class="{{ $type->is_active ? '' : 'text-muted' }}">
                                             <td>{{ $type->name }}</td>
                                             <td>{{ $type->description }}</td>
                                             <td>{{ $type->revenue_account->name ?? '—' }}</td>
@@ -153,19 +167,22 @@
                                                     —
                                                 @endif
                                             </td>
-                                            <td>{{ $type->is_locked ? 'Yes' : 'No' }}</td>
-                                            <td>
-                                                @unless ($type->is_locked)
-                                                    <a href="#" wire:click.prevent="edit({{ $type->id }})" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>
-                                                    <a href="#" wire:click.prevent="delete({{ $type->id }})" wire:confirm="Remove this charge type?" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>
+                                            <td>{{ $type->freight_costs_count + $type->freight_charges_count }}</td>
+                                            <td><span class="label label-{{ $type->is_active ? 'success' : 'default' }}">{{ $type->is_active ? 'Active' : 'Inactive' }}</span></td>
+                                            <td style="white-space:nowrap">
+                                                <a href="#" wire:click.prevent="edit({{ $type->id }})" class="btn btn-xs btn-default" title="Edit"><i class="fa fa-edit"></i></a>
+                                                @unless ($type->isBuiltInFreeTime())
+                                                    <a href="#" wire:click.prevent="toggleActive({{ $type->id }})" class="btn btn-xs btn-warning" title="{{ $type->is_active ? 'Deactivate (stop offering on new lines / rate cards)' : 'Activate' }}"><i class="fa fa-{{ $type->is_active ? 'eye-slash' : 'eye' }}"></i></a>
+                                                    <a href="#" wire:click.prevent="delete({{ $type->id }})" wire:confirm="Remove charge type {{ $type->name }}?" class="btn btn-xs btn-danger" title="Delete"><i class="fa fa-trash"></i></a>
                                                 @endunless
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="7" class="text-center">No charge types configured yet.</td></tr>
+                                        <tr><td colspan="8" class="text-center">No charge types configured yet.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $chargeTypes])
                         </div>
                     </div>
                 </div>

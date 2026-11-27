@@ -79,7 +79,7 @@
                                 </table>
                             </div>
                             <nav class="text-center" style="float: right">
-                                {{ $jobs->links() }}
+                                @include('livewire.freight.partials.pagination', ['paginator' => $jobs])
                             </nav>
                         </div>
                     </div>

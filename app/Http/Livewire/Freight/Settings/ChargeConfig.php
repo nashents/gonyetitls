@@ -9,9 +9,15 @@ use App\Models\Currency;
 use App\Models\ShippingLine;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class ChargeConfig extends Component
 {
+    use FreightEmbeddedPagination;
+
+    public $policiesPage = 1;
+    public $tiersPage = 1;
+
     public $shippingLines;
     public $currencies;
     public $chargeTypes = [];
@@ -209,8 +215,8 @@ class ChargeConfig extends Component
             'chargeTypeLabels' => ContainerChargeExposure::chargeTypes(true),
             'policyLineAllowed' => $this->chargeTypeAllowsShippingLine($this->policy_charge_type),
             'tierLineAllowed' => $this->chargeTypeAllowsShippingLine($this->tier_charge_type),
-            'policies' => ChargeFreeDayPolicy::with('shipping_line')->orderBy('charge_type')->get(),
-            'tiers' => ChargeRateTier::with(['shipping_line', 'currency'])->orderBy('charge_type')->orderBy('day_from')->get(),
+            'policies' => ChargeFreeDayPolicy::with('shipping_line')->orderBy('charge_type')->orderBy('id')->paginate(10, ['*'], 'policiesPage'),
+            'tiers' => ChargeRateTier::with(['shipping_line', 'currency'])->orderBy('charge_type')->orderBy('day_from')->orderBy('id')->paginate(10, ['*'], 'tiersPage'),
         ]);
     }
 }

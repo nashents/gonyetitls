@@ -7,9 +7,18 @@ use App\Services\ReportFormatter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Index extends Component
 {
+    use FreightEmbeddedPagination;
+
+    /** Any filter change starts the list again from page 1. */
+    public function updated($property)
+    {
+        $this->resetPage();
+    }
+
     public $as_of_date;
     public $details;
     public $summary = 'summary';
@@ -64,6 +73,8 @@ class Index extends Component
             [$this->customer_rows, $this->grand_totals] = $calculator->byCustomer();
         }
 
-        return view('livewire.freight.reports.uninvoiced-charges.index');
+        return view('livewire.freight.reports.uninvoiced-charges.index', [
+            'pagedRows' => $this->paginateRows($this->customer_rows ?? []),
+        ]);
     }
 }

@@ -60,6 +60,7 @@ class SendFreightReminders
             try {
                 ignore_user_abort(true);
                 @set_time_limit(300);
+                app(\App\Services\Freight\FreightJobReminderService::class)->sendDue($company->id);
                 app(FreightReminderService::class)->sendDailyDigests($company->id);
             } catch (\Throwable $e) {
                 Log::warning('Freight reminders failed: ' . $e->getMessage());

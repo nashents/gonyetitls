@@ -7,12 +7,13 @@ use App\Imports\FreightRateCardsImport;
 use App\Models\ImportLog;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RateCardsImport extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, FreightEmbeddedPagination;
 
     public $file;
     public array $skippedRows = [];
@@ -83,7 +84,7 @@ class RateCardsImport extends Component
     public function render()
     {
         return view('livewire.freight.imports.rate-cards-import', [
-            'recentLogs' => ImportLog::where('import_type', 'freight_rate_cards')->latest()->limit(10)->get(),
+            'recentLogs' => ImportLog::where('import_type', 'freight_rate_cards')->latest()->orderByDesc('id')->paginate(10),
         ]);
     }
 }

@@ -73,6 +73,7 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $offices])
                         </div>
                     </div>
                 </div>

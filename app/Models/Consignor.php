@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 /** Shipper on a trip / transport order — the sending-side counterpart of Consignee. */
 class Consignor extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompany; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 

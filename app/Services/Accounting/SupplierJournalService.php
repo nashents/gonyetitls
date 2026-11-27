@@ -267,14 +267,14 @@ class SupplierJournalService
 
     private function number(): string
     {
-        $next = (int) SupplierJournal::withTrashed()->max('id') + 1;
+        $next = (int) SupplierJournal::withoutCompanyScope()->withTrashed()->max('id') + 1;
 
         return 'SJ' . str_pad($next, 5, '0', STR_PAD_LEFT);
     }
 
     private function journalNumber(): string
     {
-        $last = JournalEntry::orderByDesc('id')->value('journal_number');
+        $last = JournalEntry::withoutCompanyScope()->orderByDesc('id')->value('journal_number');
         $next = $last ? ((int) substr($last, 4)) + 1 : 1;
 
         return 'JNL-' . str_pad($next, 5, '0', STR_PAD_LEFT);

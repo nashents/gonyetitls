@@ -36,3 +36,10 @@ Route::post('/webhooks/fiscal-harmony', [FiscalHarmonyWebhookController::class, 
     ->withoutMiddleware('throttle:api')
     ->middleware('throttle:600,1')
     ->name('webhooks.fiscal-harmony');
+
+// Gonyeti Instance Link: the client's other Gonyeti instance (freight <-> transport).
+// Signed with the shared secret (X-Gonyeti-Signature), checked in the middleware.
+Route::post('/gonyeti-link', [\App\Http\Controllers\GonyetiLinkWebhookController::class, 'store'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['gonyeti.link', 'throttle:300,1'])
+    ->name('gonyeti-link.receive');

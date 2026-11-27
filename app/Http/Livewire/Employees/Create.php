@@ -35,6 +35,7 @@ use Livewire\WithFileUploads;
 class Create extends Component
 {
     use \App\Http\Livewire\Concerns\ValidatesUniqueReference;
+    use \App\Http\Livewire\Concerns\PreventsDuplicateEmployees;
     use WithFileUploads;
 
     public $departments;
@@ -338,6 +339,7 @@ class Create extends Component
 
       public function store(){
         $this->assertUniqueReference('custom_ref', \App\Models\Employee::class, 'custom_ref', $this->custom_ref, null, 'employee reference');
+        $this->assertNotDuplicateEmployee();
 
         DB::transaction(function () {
 

@@ -1929,6 +1929,10 @@ class MenuRegistrySeeder extends Seeder
             ])
         ]);
         $upsertSub($m, ['name'=>'Manage Trips','slug'=>'manage-trips','icon'=>'fas fa-list','route_name'=>'trips.index','sort_order'=>20]);
+        // Road legs from the client's freight instance (Gonyeti Instance Link, role transport).
+        $upsertSub($m, ['name'=>'Trip Requests','slug'=>'trip-requests','icon'=>'fas fa-inbox','route_name'=>'trip_requests.index','sort_order'=>25,
+            'badge_key'=>'trip_requests_pending_count',
+            'visibility'=>$any([$all(['hasTransportLinkIntegration', 'isNotDriver'])])]);
 
        
         $upsertSub($m, ['name'=>'Pending Trips','slug'=>'pending-trips','icon'=>'fas fa-clock','route_name'=>'trips.pending','sort_order'=>30,'badge_key'=>'trips_pending_count','visibility'=>$tripManageVis]);

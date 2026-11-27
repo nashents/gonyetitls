@@ -41,6 +41,7 @@ class ContainerStageSeeder extends Seeder
                     'sort_order' => $order,
                     'is_system' => true,
                     'is_active' => true,
+                    'job_status' => \App\Services\Freight\FreightJobStatusSync::DEFAULT_MAP[$code] ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

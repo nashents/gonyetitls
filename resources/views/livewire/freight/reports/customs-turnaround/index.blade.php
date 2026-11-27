@@ -101,7 +101,7 @@
                                     <tr><th>Declaration #</th><th>Clearing Officer</th><th>Submitted</th><th>Cleared</th><th class="text-right">Days</th></tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($rows as $row)
+                                    @forelse ($pagedRows as $row)
                                     <tr>
                                         <td>{{ $row['declaration_number'] }}</td>
                                         <td>{{ $row['clearing_officer'] }}</td>
@@ -118,7 +118,7 @@
                                     <tr><th>Clearing Officer</th><th class="text-right">Declarations</th><th class="text-right">Avg Days</th><th class="text-right">Median Days</th></tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($rows as $row)
+                                    @forelse ($pagedRows as $row)
                                     <tr>
                                         <td>{{ $row['label'] }}</td>
                                         <td class="text-right">{{ $row['count'] }}</td>
@@ -137,6 +137,7 @@
                                 </tbody>
                                 @endif
                             </table>
+                            @include('livewire.freight.partials.pagination', ['paginator' => $pagedRows])
                         </div>
                     </div>
                 </div>

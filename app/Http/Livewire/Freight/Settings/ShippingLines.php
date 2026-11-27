@@ -6,9 +6,12 @@ use App\Models\ShippingLine;
 use App\Models\Vendor;
 use App\Services\Freight\ShippingLineVendorService;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class ShippingLines extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $shipping_line_id;
     public $name;
     public $vendor_id;
@@ -99,7 +102,7 @@ class ShippingLines extends Component
     public function render()
     {
         return view('livewire.freight.settings.shipping-lines', [
-            'shippingLines' => ShippingLine::with('vendor')->orderBy('name', 'asc')->get(),
+            'shippingLines' => ShippingLine::with('vendor')->orderBy('name', 'asc')->orderBy('id')->paginate(10),
         ]);
     }
 }

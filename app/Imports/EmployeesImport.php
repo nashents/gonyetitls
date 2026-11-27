@@ -243,8 +243,9 @@ WithMultipleSheets
                     continue;
                 }
 
-                $name    = $row->get('name');
-                $surname = $row->get('surname');
+                // Normalised so "Charles " and "Charles" are one person.
+                $name    = Employee::normalizeName($row->get('name'));
+                $surname = Employee::normalizeName($row->get('surname'));
 
                 if (!$name || !$surname) {
                     // Skip row if required fields are missing
@@ -279,16 +280,22 @@ WithMultipleSheets
                 ) {
                     $pin = $this->generatePIN();
 
-                    // Find or instantiate by name + surname
-                    $user = User::firstOrNew([
-                        'name'    => $name,
-                        'surname' => $surname,
-                    ]);
+                    // Match an existing person by ID number first, then by
+                    // name (ignoring case/extra spaces), so re-uploads and
+                    // slightly different spellings never create a duplicate.
+                    $employee = Employee::findExisting($name, $surname, $idNumber);
+                    if (!$employee) {
+                        $employee = new Employee;
+                        $employee->name = $name;
+                        $employee->surname = $surname;
+                    }
 
-                    $employee = Employee::firstOrNew([
-                        'name'    => $name,
-                        'surname' => $surname,
-                    ]);
+                    $user = $employee->exists && $employee->user
+                        ? $employee->user
+                        : User::firstOrNew([
+                            'name'    => $name,
+                            'surname' => $surname,
+                        ]);
 
                     // Check if both existed already (mirrors your old if(isset($user) && isset($employee)))
                     $existingPair = $user->exists && $employee->exists;

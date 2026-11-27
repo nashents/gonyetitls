@@ -27,7 +27,7 @@ class Deleted extends Component
     }
 
     public $search;
-    public $perPage = 15;
+    public $perPage = 10;
     public $restoring_job_id;
     public $restoring_job_number;
 
@@ -38,7 +38,7 @@ class Deleted extends Component
 
     public function restore($id)
     {
-        $job = FreightJob::onlyTrashed()->findOrFail($id);
+        $job = FreightJob::onlyTrashed()->forCurrentCompany()->findOrFail($id);
         $this->restoring_job_id = $job->id;
         $this->restoring_job_number = $job->job_number;
         $this->dispatchBrowserEvent('show-freightJobRestoreModal');
@@ -46,7 +46,7 @@ class Deleted extends Component
 
     public function update()
     {
-        $job = FreightJob::onlyTrashed()->findOrFail($this->restoring_job_id);
+        $job = FreightJob::onlyTrashed()->forCurrentCompany()->findOrFail($this->restoring_job_id);
 
         DB::transaction(function () use ($job) {
             // Children deleted together with the job (same request) - not ones removed earlier on purpose.
@@ -72,7 +72,7 @@ class Deleted extends Component
 
     public function render()
     {
-        $jobs = FreightJob::onlyTrashed()
+        $jobs = FreightJob::onlyTrashed()->forCurrentCompany()
             ->with(['customer:id,name', 'freight_service_type:id,name', 'fromDestination.country', 'toDestination.country'])
             ->when(filled($this->search), function ($q) {
                 $search = trim($this->search);

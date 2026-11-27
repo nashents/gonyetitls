@@ -7,9 +7,18 @@ use App\Services\Freight\PortExposureCalculator;
 use App\Services\ReportFormatter;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Index extends Component
 {
+    use FreightEmbeddedPagination;
+
+    /** Any filter change starts the list again from page 1. */
+    public function updated($property)
+    {
+        $this->resetPage();
+    }
+
     public $shipping_line_id;
     public $details;
     public $summary = 'summary';
@@ -64,6 +73,8 @@ class Index extends Component
         [$this->vendor_rows, $this->grand_totals] = $calculator->byShippingLine();
         $this->status_breakdown = $calculator->statusBreakdown();
 
-        return view('livewire.freight.reports.port-exposure.index');
+        return view('livewire.freight.reports.port-exposure.index', [
+            'pagedRows' => $this->paginateRows($this->vendor_rows ?? []),
+        ]);
     }
 }

@@ -68,7 +68,8 @@ class FreightCost extends Model implements Auditable
         return $this->belongsTo('App\Models\Vendor');
     }
     public function charge_type(){
-        return $this->belongsTo('App\Models\ChargeType');
+        // withTrashed: a deleted charge type keeps its name + expense account on the line (Generate Bills skips lines without one).
+        return $this->belongsTo('App\Models\ChargeType')->withTrashed();
     }
     public function freight_rate_card(){
         return $this->belongsTo('App\Models\FreightRateCard');

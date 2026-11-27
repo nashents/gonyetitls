@@ -12,9 +12,12 @@ use App\Models\ShippingContainer;
 use App\Models\Destination;
 use App\Models\Vendor;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class RateCards extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $vendors;
     public $customers;
     public $chargeTypes;
@@ -48,8 +51,8 @@ class RateCards extends Component
     {
         $this->vendors = Vendor::orderBy('name', 'asc')->get();
         $this->customers = Customer::orderBy('name', 'asc')->get();
-        $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
-        $this->serviceTypes = FreightServiceType::orderBy('name', 'asc')->get();
+        $this->chargeTypes = ChargeType::selectable($this->charge_type_id ?? null)->get();
+        $this->serviceTypes = FreightServiceType::selectable($this->freight_service_type_id ?? null)->get();
         $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
         $this->cargos = Cargo::selectable($this->cargo_id)->orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name', 'asc')->get();
@@ -72,6 +75,9 @@ class RateCards extends Component
         $this->customer_id = $card->customer_id;
         $this->charge_type_id = $card->charge_type_id;
         $this->freight_service_type_id = $card->freight_service_type_id;
+        // Keep this card's types in the dropdowns even if they were deactivated since.
+        $this->serviceTypes = FreightServiceType::selectable($this->freight_service_type_id)->get();
+        $this->chargeTypes = ChargeType::selectable($this->charge_type_id)->get();
         $this->mode = $card->mode;
         $this->container_type = $card->container_type;
         $this->origin_id = $card->origin_id;
@@ -136,10 +142,10 @@ class RateCards extends Component
             $this->customers = Customer::orderBy('name', 'asc')->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Customers Refreshed Successfully!!.']);
         } elseif ($category === 'charge_types') {
-            $this->chargeTypes = ChargeType::orderBy('name', 'asc')->get();
+            $this->chargeTypes = ChargeType::selectable($this->charge_type_id ?? null)->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Charge Types Refreshed Successfully!!.']);
         } elseif ($category === 'service_types') {
-            $this->serviceTypes = FreightServiceType::orderBy('name', 'asc')->get();
+            $this->serviceTypes = FreightServiceType::selectable($this->freight_service_type_id ?? null)->get();
             $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Service Types Refreshed Successfully!!.']);
         } elseif ($category === 'destinations') {
             $this->destinations = Destination::with('country')->orderBy('city', 'asc')->get();
@@ -168,7 +174,7 @@ class RateCards extends Component
     {
         return view('livewire.freight.settings.rate-cards', [
             'rateCards' => FreightRateCard::with(['vendor', 'customer', 'charge_type', 'freight_service_type', 'currency', 'origin', 'destination'])
-                ->orderBy('direction')->orderBy('id', 'desc')->get(),
+                ->orderBy('direction')->orderBy('id', 'desc')->paginate(10),
             'directions' => FreightRateCard::DIRECTIONS,
             'markupTypes' => FreightRateCard::MARKUP_TYPES,
             'rateBases' => FreightRateCard::RATE_BASES,

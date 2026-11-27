@@ -8,6 +8,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class StatutoryDeductionType extends Model implements Auditable
 {
+    use \App\Models\Concerns\BelongsToCompanyOrShared; // multi-tenancy (docs/multi-tenancy-plan.md)
+
     use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 

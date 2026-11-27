@@ -6,7 +6,9 @@ use App\Http\Livewire\Freight\Jobs\Concerns\FreightJobFormOptions;
 use App\Models\FreightJob;
 use App\Services\Freight\FreightJobAuthorizationService;
 use App\Services\Freight\FreightJobService;
+use App\Services\Freight\ShipmentLegService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Create extends Component
@@ -39,6 +41,8 @@ class Create extends Component
     public $offloading_point_id;
     public $etd;
     public $eta;
+    public $estimated_revenue;
+    public $estimated_cost;
     public $booking_reference;
     public $freight_terms;
 
@@ -106,6 +110,8 @@ class Create extends Component
             'freight_service_type_id' => 'nullable|integer|exists:freight_service_types,id',
             'primary_transport_mode' => 'required|string',
             'currency_id' => 'nullable|integer|exists:currencies,id',
+            'estimated_revenue' => 'nullable|numeric|min:0',
+            'estimated_cost' => 'nullable|numeric|min:0',
             'cargo_rows.*.commodity' => 'nullable|string',
             'party_rows.*.party_id' => 'required_with:party_rows.*.party_type',
             'party_rows.*.role' => 'nullable|string|required_with:party_rows.*.party_id',
@@ -138,7 +144,7 @@ class Create extends Component
             'from' => $this->from,
             'to' => $this->to,
             'notes' => $this->notes,
-        ];
+        ] + $this->estimateFields();
 
         $shipmentData = [
             'user_id' => Auth::id(),
@@ -163,7 +169,16 @@ class Create extends Component
             ->values()
             ->all();
 
-        $job = $service->create($jobData, $shipmentData, $cargoRows, $partyRows);
+        $job = DB::transaction(function () use ($service, $jobData, $shipmentData, $cargoRows, $partyRows) {
+            $job = $service->create($jobData, $shipmentData, $cargoRows, $partyRows);
+
+            // Leg 1 (job From → To) is created now; edit it / add legs on the Transport tab.
+            if ($shipment = $job->shipments()->first()) {
+                app(ShipmentLegService::class)->createFirstLeg($shipment);
+            }
+
+            return $job;
+        });
 
         app(FreightJobAuthorizationService::class)->notifyAuthorizers($job);
 
@@ -173,6 +188,19 @@ class Create extends Component
         ]);
 
         return redirect()->route('freight.jobs.show', $job->id);
+    }
+
+    /** Same rule as the Costing tab's saveEstimates: margin only when both are set. */
+    private function estimateFields(): array
+    {
+        $revenue = $this->estimated_revenue === '' || $this->estimated_revenue === null ? null : (float) $this->estimated_revenue;
+        $cost = $this->estimated_cost === '' || $this->estimated_cost === null ? null : (float) $this->estimated_cost;
+
+        return [
+            'estimated_revenue' => $revenue,
+            'estimated_cost' => $cost,
+            'estimated_margin' => ($revenue !== null && $cost !== null) ? $revenue - $cost : null,
+        ];
     }
 
     public function render()

@@ -79,6 +79,8 @@ class MenuContext
             'hasFanTrackerIntegration' => IntegrationGate::activeForCompany('fantracker', $companyId),
             'hasPinpointIntegration'   => IntegrationGate::activeForCompany('pinpoint', $companyId),
             'hasSageIntegration'       => IntegrationGate::activeForCompany('sage_intacct', $companyId),
+            'hasTransportLinkIntegration' => (bool) app(\App\Services\GonyetiLink\GonyetiLinkService::class)
+                ->integrationFor($companyId, \App\Services\GonyetiLink\GonyetiLinkService::ROLE_TRANSPORT),
             'hasStoresDeptHead'   => $isHeadOf('Stores'),
             'hasWorkshopDeptHead' => $isHeadOf('Workshop'),
             'hasHRDeptHead'       => $isHeadOf('Human Resources'),

@@ -11,9 +11,12 @@ use App\Services\Freight\PortExposureService;
 use App\Services\Freight\ShippingContainerService;
 use Carbon\Carbon;
 use Livewire\Component;
+use App\Http\Livewire\Freight\Concerns\FreightEmbeddedPagination;
 
 class Containers extends Component
 {
+    use FreightEmbeddedPagination;
+
     public $shipment;
     public $shippingLines;
 
@@ -80,6 +83,7 @@ class Containers extends Component
             ->values()
             ->all();
 
+        $jobStatusBefore = $this->jobStatus();
         $service->create([
             'shipment_id' => $this->shipment->id,
             'container_number' => $this->container_number,
@@ -97,7 +101,7 @@ class Containers extends Component
 
         $this->refreshShipment();
         $this->dispatchBrowserEvent('hide-addContainerModal-' . $this->shipment->id);
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Container added successfully!']);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Container added successfully!' . $this->jobStatusNote($jobStatusBefore)]);
     }
 
     public function advanceStage($containerId, ShippingContainerService $service)
@@ -108,11 +112,30 @@ class Containers extends Component
         if ($next) {
             $eventAt = $this->eventDate("stage_dates.{$containerId}", $this->stage_dates[$containerId] ?? null);
 
+            $jobStatusBefore = $this->jobStatus();
             $service->transitionStatus($container, $next, ['actual_at' => $eventAt]);
             unset($this->stage_dates[$containerId]);
             $this->refreshShipment();
-            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Container moved to ' . ContainerStage::label($next) . ' on ' . $eventAt->format('d M Y H:i')]);
+            $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Container moved to ' . ContainerStage::label($next) . ' on ' . $eventAt->format('d M Y H:i') . '.' . $this->jobStatusNote($jobStatusBefore)]);
         }
+    }
+
+    private function jobStatus(): ?string
+    {
+        return \App\Models\FreightJob::whereKey($this->shipment->freight_job_id)->value('status');
+    }
+
+    /** " Job status is now Delivered." when the container stage moved the job (FreightJobStatusSync), and refreshes the job page. */
+    private function jobStatusNote(?string $before): string
+    {
+        $after = $this->jobStatus();
+        if ($after === $before) {
+            return '';
+        }
+
+        $this->emit('jobStatusChanged');
+
+        return ' Job status is now ' . ucwords(str_replace('_', ' ', (string) $after)) . '.';
     }
 
     public function recordAdHocMilestone($containerId, ShippingContainerService $service)
@@ -124,11 +147,12 @@ class Containers extends Component
         $eventAt = $this->eventDate('ad_hoc_milestone_date', $this->ad_hoc_milestone_date);
 
         $container = ShippingContainer::findOrFail($containerId);
+        $jobStatusBefore = $this->jobStatus();
         $service->transitionStatus($container, $this->ad_hoc_milestone_code, ['actual_at' => $eventAt]);
 
         $this->reset(['ad_hoc_milestone_code', 'ad_hoc_milestone_date']);
         $this->refreshShipment();
-        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Milestone recorded.']);
+        $this->dispatchBrowserEvent('alert', ['type' => 'success', 'message' => 'Milestone recorded.' . $this->jobStatusNote($jobStatusBefore)]);
     }
 
     /**
@@ -176,6 +200,7 @@ class Containers extends Component
         }
 
         return view('livewire.freight.shipments.containers', [
+            'containerRows' => $this->paginateRows($this->shipment->containers->sortBy('id')),
             // Labels incl. deactivated custom stages (old statuses/milestones); the dropdown offers active ones only.
             'lifecycleStages' => ShippingContainer::lifecycleStages(true),
             'activeStages' => ShippingContainer::lifecycleStages(),

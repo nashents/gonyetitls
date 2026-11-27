@@ -5,6 +5,7 @@ namespace App\Services\Freight;
 use App\Mail\FreightRemindersDigestMail;
 use App\Models\Company;
 use App\Models\ContainerChargeExposure;
+use App\Models\FreightJobReminder;
 use App\Models\Notification;
 use App\Models\Shipment;
 use App\Models\ShipmentMilestone;
@@ -46,19 +47,29 @@ class FreightReminderService
      */
     public function forUser(User $user): Collection
     {
+        // Company-specific (multi-tenancy safe): only the user's own company's
+        // jobs, never another company's - even for a person picked on a
+        // follow-up there. Staff without an email get follow-ups here.
         $company = $user->employee?->company ?? $user->company;
         if (! $company || ! $company->hasCompanyType(FreightJobAuthorizationService::FREIGHT_DEPARTMENT)) {
             return collect();
         }
 
-        $seeAll = $user->roles->contains('name', 'Super Admin')
-            || ($user->employee && $user->employee->departments->contains('name', FreightJobAuthorizationService::FREIGHT_DEPARTMENT));
+        $seeAll = self::seesAllJobs($user);
 
         $all = Cache::remember('freight-reminders:' . $company->id . ':' . Carbon::today()->toDateString(), now()->addMinutes(2), fn () => $this->collect($company->id)->all());
 
         return collect($all)
+            ->filter(fn ($r) => (int) $r['company_id'] === (int) $company->id)
             ->when(! $seeAll, fn ($items) => $items->filter(fn ($r) => in_array($user->id, $r['user_ids'], true)))
             ->values();
+    }
+
+    /** Super Admins and the Freight Forwarding & Clearing department see every job's reminders. */
+    public static function seesAllJobs(User $user): bool
+    {
+        return $user->roles->contains('name', 'Super Admin')
+            || ($user->employee && $user->employee->departments->contains('name', FreightJobAuthorizationService::FREIGHT_DEPARTMENT));
     }
 
     /** Every open reminder for a company (null = all companies). */
@@ -70,7 +81,7 @@ class FreightReminderService
         $openJob = function ($q) use ($companyId) {
             $q->whereNotIn('status', self::FINISHED_STATUSES)
                 ->where('authorization', '!=', 'rejected')
-                ->when($companyId, fn ($qq) => $qq->where(fn ($c) => $c->where('company_id', $companyId)->orWhereNull('company_id')));
+                ->when($companyId, fn ($qq) => $qq->where('company_id', $companyId));
         };
 
         $reminders = collect();
@@ -147,7 +158,56 @@ class FreightReminderService
                 $reminders->push($this->item('free_time', $exposure->shipment->freight_job, $days, 'fa-cube', "Container {$container} {$text}", "free_time:{$exposure->id}"));
             });
 
+        $reminders = $reminders->merge($this->followUpItems($companyId));
+
         return $reminders->sortBy([['days', 'asc'], ['job_number', 'asc']])->values();
+    }
+
+    public const FOLLOW_UPS_CACHE_PREFIX = 'freight-followups:';
+
+    /** Clears the cached bell lists after a follow-up is added / changed. */
+    public static function flushCache(?int $companyId = null): void
+    {
+        $today = Carbon::today()->toDateString();
+        Cache::forget(self::FOLLOW_UPS_CACHE_PREFIX . $today);
+        foreach (array_filter([$companyId]) ?: Company::pluck('id')->all() as $id) {
+            Cache::forget('freight-reminders:' . $id . ':' . $today);
+        }
+    }
+
+    /**
+     * Custom follow-ups (job Reminders tab): from the first remind day (or the
+     * lookahead) until marked done. Shown even for delivered jobs - the user
+     * set them on purpose - but not closed/cancelled ones. $companyId null =
+     * every company (a picked person sees theirs whatever company the job is in).
+     */
+    public function followUpItems(?int $companyId = null): Collection
+    {
+        $today = Carbon::today();
+        $horizon = $today->copy()->addDays(self::LOOKAHEAD_DAYS)->endOfDay();
+
+        return FreightJobReminder::query()
+            ->open()
+            ->with('freight_job')
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->whereHas('freight_job', fn ($q) => $q->whereNull('deleted_at')->whereNotIn('status', FreightJobReminderService::STOPPED_JOB_STATUSES))
+            ->whereDate('due_at', '<=', $today->copy()->addDays(max(array_keys(FreightJobReminder::REMIND_OPTIONS))))
+            ->get()
+            ->filter(function (FreightJobReminder $r) use ($horizon, $today) {
+                $firstRemind = $r->due_at->copy()->startOfDay()->subDays((int) collect((array) $r->remind_days)->max());
+                return $r->due_at->lte($horizon) || $firstRemind->lte($today);
+            })
+            ->map(function (FreightJobReminder $r) {
+                $days = $r->daysLeft();
+                $text = $days < 0
+                    ? abs($days) . ' day' . (abs($days) === 1 ? '' : 's') . ' overdue'
+                    : ($days === 0 ? 'due today' : 'due in ' . $days . ' day' . ($days === 1 ? '' : 's') . ' (' . $r->due_at->format('d M') . ')');
+                $item = $this->item('follow_up', $r->freight_job, $days, 'fa-bell', "Follow-up: {$r->title} {$text}", "follow_up:{$r->id}");
+                $item['url'] .= '#reminders';
+                $item['user_ids'] = array_values(array_unique(array_merge($item['user_ids'], array_map('intval', array_filter((array) $r->staff_user_ids)), array_filter([(int) $r->user_id]))));
+                return $item;
+            })
+            ->values();
     }
 
     private function item(string $type, $job, int $days, string $icon, string $message, string $key): array
@@ -176,6 +236,11 @@ class FreightReminderService
      */
     public function sendDailyDigests(?int $companyId = null): int
     {
+        // Company-specific: one company at a time, so nobody's digest mixes companies.
+        if (! $companyId) {
+            return Company::pluck('id')->sum(fn ($id) => $this->sendDailyDigests((int) $id));
+        }
+
         $reminders = $this->collect($companyId);
         if ($reminders->isEmpty()) {
             return 0;
@@ -184,7 +249,11 @@ class FreightReminderService
         // email => [reminder key => reminder]
         $byEmail = [];
 
-        $users = User::whereIn('id', $reminders->pluck('user_ids')->flatten()->unique())->get()->keyBy('id');
+        // Only people employed by this company (an officer/staff id left over
+        // from another company never receives this company's jobs).
+        $users = User::whereIn('id', $reminders->pluck('user_ids')->flatten()->unique())
+            ->whereHas('employee', fn ($e) => $e->where('company_id', $companyId))
+            ->get()->keyBy('id');
         foreach ($reminders as $reminder) {
             foreach ($reminder['user_ids'] as $userId) {
                 $email = $users->get($userId)?->email;
@@ -194,7 +263,10 @@ class FreightReminderService
             }
         }
 
-        $watchers = Notification::where('category', self::NOTIFICATION_CATEGORY)->where('status', 1)->with('employee')->get();
+        // "Freight Reminders" watchers: only those belonging to this company
+        // (via their employee, else the user who set the watcher up).
+        $watchers = Notification::where('category', self::NOTIFICATION_CATEGORY)->where('status', 1)->with(['employee', 'user.employee'])->get()
+            ->filter(fn ($w) => (int) ($w->employee?->company_id ?? $w->user?->employee?->company_id) === $companyId);
         foreach ($watchers as $watcher) {
             $email = $watcher->email ?? $watcher->employee?->email;
             if ($email) {
