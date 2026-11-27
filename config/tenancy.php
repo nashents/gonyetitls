@@ -11,9 +11,13 @@
  */
 return [
 
-    // Kill switch: TENANCY_ENFORCED=false turns every company filter off
-    // (records are still stamped with company_id on create).
-    'enforced' => env('TENANCY_ENFORCED', true),
+    // Company filters are OFF unless an instance sets TENANCY_ENFORCED=true.
+    // Default off since 2026-11-27: switching it on hid customers on trinitas
+    // (trips/customers filed under different companies, logins without an
+    // employee record saw nothing). Turn on per instance only after the
+    // rollout is finished and smoke-tested. Records are still stamped with
+    // company_id on create either way.
+    'enforced' => env('TENANCY_ENFORCED', false),
 
     // companies.type of the platform (licensing) company - Gonyeti itself.
     // Its rows are never used as a fallback owner for client data.

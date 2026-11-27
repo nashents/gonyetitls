@@ -28,7 +28,7 @@ class Tenant
 
     public static function enforced(): bool
     {
-        return (bool) config('tenancy.enforced', true) && ! self::$disabled;
+        return (bool) config('tenancy.enforced', false) && ! self::$disabled;
     }
 
     /**
