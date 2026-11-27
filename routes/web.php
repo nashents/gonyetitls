@@ -858,6 +858,7 @@ Route::get('freight/jobs/authorization/approved','FreightJobController@approved'
 Route::get('freight/jobs/authorization/rejected','FreightJobController@rejected')->name('freight.jobs.rejected');
 Route::get('deleted/freight-jobs','FreightJobController@deleted')->name('freight.jobs.deleted');
 Route::get('freight/job-reminders','FreightJobRemindersController@index')->name('freight.job-reminders.index');
+Route::get('freight/demo-data','FreightDemoDataController@index')->name('freight.demo-data');
 Route::resource('freight/jobs','FreightJobController')->parameters(['jobs' => 'job'])->names([
     'index' => 'freight.jobs.index',
     'create' => 'freight.jobs.create',

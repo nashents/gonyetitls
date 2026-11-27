@@ -60,6 +60,12 @@ class ShipmentLegObserver
     /** The link must never break saving a leg; failures stay in the outbox for retry. */
     private function safely(callable $callback): void
     {
+        // Demo data being loaded (Freight > Demo Data) must never reach the
+        // client's transport instance as real Trip Requests.
+        if (\App\Services\DemoData\DemoDataRecorder::$suppressExternal) {
+            return;
+        }
+
         try {
             $callback(app(GonyetiLinkService::class));
         } catch (Throwable $e) {

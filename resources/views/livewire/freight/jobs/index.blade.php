@@ -62,6 +62,10 @@
                                 <a href="#" wire:click.prevent="exportFreightJobsExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click.prevent="exportFreightJobsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click.prevent="exportFreightJobsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                @if (Auth::user()?->is_admin)
+                                    {{-- System administrators only: load / roll back sample jobs for new users. --}}
+                                    <a href="{{ route('freight.demo-data') }}" class="btn btn-default border-primary btn-rounded btn-wide pull-right" title="Load or roll back sample freight jobs"><i class="fa fa-flask"></i>Demo Data</a>
+                                @endif
                             </div>
 
                             @if ($pendingAuthorizationCount > 0 && $filter_authorization !== 'pending' && $lockedAuthorization !== 'pending')
