@@ -211,7 +211,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-10" style="margin-top: 30px;">
-                                    <input type="checkbox" wire:model.debounce.300ms="is_drivers" {{$selected_department?->name == "Transport & Logistics" ? "" : "disabled"}}  class="line-style" />
+                                    <input type="checkbox" wire:model.debounce.300ms="is_drivers" {{ $selected_department ? "" : "disabled" }}  class="line-style" />
                                     <label for="one" class="radio-label">Mark drivers attendance</label>
                                     @error('is_drivers') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
@@ -300,7 +300,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-10" style="margin-top: 30px;">
-                                    <input type="checkbox" wire:model.debounce.300ms="is_drivers" {{$selected_department?->name == "Transport & Logistics" ? "" : "disabled"}}  class="line-style" />
+                                    <input type="checkbox" wire:model.debounce.300ms="is_drivers" {{ $selected_department ? "" : "disabled" }}  class="line-style" />
                                     <label for="one" class="radio-label">Mark drivers attendance</label>
                                     @error('is_drivers') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>

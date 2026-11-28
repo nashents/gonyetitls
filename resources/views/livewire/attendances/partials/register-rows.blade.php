@@ -4,6 +4,12 @@
     <tr wire:key="{{ $prefix }}-row-{{ $employee->id }}">
         <td>
             {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
+            @if ($employee->driver)
+                <span class="label label-info">Driver</span>
+            @endif
+            @if (!empty($otherKindRecords[$employee->id]))
+                <span class="label label-warning" title="This person seems to have two records: one as an employee and one as a driver. Fix the records in HR.">{{ $otherKindRecords[$employee->id] }}</span>
+            @endif
         </td>
         <td>
             <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="{{ $prefix }}-status-{{ $employee->id }}" >

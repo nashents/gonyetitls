@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
+/**
+ * The system's "What's new" release notes (synced by SyncChangeLog) - the same
+ * for every company, so NOT company-filtered (platform data, see
+ * config/tenancy.php platform_tables). No SoftDeletes: change_logs has no
+ * deleted_at column (every model query failed with it).
+ */
 class ChangeLog extends Model implements Auditable
 {
-    use \App\Models\Concerns\BelongsToCompanyOrShared; // multi-tenancy (docs/multi-tenancy-plan.md)
-
-    use HasFactory, SoftDeletes;
+    use HasFactory;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [

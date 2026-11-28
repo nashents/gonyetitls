@@ -49,20 +49,110 @@ class Tenant
         return self::$resolved[$userId] ??= self::companyOfUser($userId) ?? 0;
     }
 
-    /** A user's company, from employee or portal account (raw queries). */
+    /**
+     * The company a user works in:
+     *  1. their own CLIENT company (ownCompanyOfUser);
+     *  2. else the instance's client company (single-client installs) - covers
+     *     logins with no employee record and Gonyeti / Basilmark staff;
+     *  3. else (multi-client install) their platform company, if any.
+     */
     public static function companyOfUser(int $userId): ?int
     {
-        $id = DB::table('employees')->where('user_id', $userId)->whereNotNull('company_id')->whereNull('deleted_at')->orderBy('id')->value('company_id')
-            ?? DB::table('employees')->where('user_id', $userId)->whereNotNull('company_id')->orderBy('id')->value('company_id');
+        return self::ownCompanyOfUser($userId)
+            ?? self::operatingCompanyId()
+            ?? self::anyCompanyOfUser($userId, true);
+    }
 
-        foreach (['transporters', 'customers', 'agents'] as $table) {
-            if ($id) {
-                break;
-            }
-            $id = DB::table($table)->where('user_id', $userId)->whereNotNull('company_id')->value('company_id');
+    /**
+     * A user's own client company (never a platform one): employee record,
+     * then company-owner login, then transporter / customer / agent / vendor /
+     * broker portal account. Raw queries so it never recurses into scoped models.
+     */
+    public static function ownCompanyOfUser(int $userId): ?int
+    {
+        return self::anyCompanyOfUser($userId, false);
+    }
+
+    private static function anyCompanyOfUser(int $userId, bool $platformOnly): ?int
+    {
+        $platform = self::platformCompanyIds();
+        $accept = fn ($id) => $id && ($platformOnly ? in_array((int) $id, $platform, true) : !in_array((int) $id, $platform, true));
+
+        $sources = [
+            fn () => DB::table('employees')->where('user_id', $userId)->whereNotNull('company_id')->orderByRaw('deleted_at IS NOT NULL')->orderBy('id')->pluck('company_id'),
+            fn () => DB::table('companies')->where('user_id', $userId)->orderBy('id')->pluck('id'),
+        ];
+        foreach (['transporters', 'customers', 'agents', 'vendors', 'brokers'] as $table) {
+            $sources[] = fn () => self::hasColumns($table, ['user_id', 'company_id'])
+                ? DB::table($table)->where('user_id', $userId)->whereNotNull('company_id')->orderBy('id')->pluck('company_id')
+                : collect();
         }
 
-        return $id ? (int) $id : null;
+        foreach ($sources as $source) {
+            foreach ($source() as $id) {
+                if ($accept($id)) {
+                    return (int) $id;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Gonyeti / Basilmark: by companies.type or name prefix (config/tenancy.php). */
+    public static function platformCompanyIds(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $names = config('tenancy.platform_company_names', []);
+        $cache = DB::table('companies')
+            ->where(function ($q) use ($names) {
+                $q->where('type', config('tenancy.platform_company_type', 'Admin'));
+                foreach ($names as $name) {
+                    $q->orWhereRaw('LOWER(name) LIKE ?', [strtolower($name) . '%']);
+                }
+            })
+            ->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        return $cache;
+    }
+
+    public static function isPlatformCompany($companyId): bool
+    {
+        return $companyId !== null && in_array((int) $companyId, self::platformCompanyIds(), true);
+    }
+
+    /**
+     * The instance's client company: the only company that is not a platform
+     * (Gonyeti / Basilmark) one. Null when there are none or several.
+     */
+    public static function operatingCompanyId(): ?int
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache ?: null;
+        }
+
+        $ids = DB::table('companies')
+            ->when(self::hasColumns('companies', ['deleted_at']), fn ($q) => $q->whereNull('deleted_at'))
+            ->whereNotIn('id', self::platformCompanyIds() ?: [0])
+            ->pluck('id');
+
+        $cache = $ids->count() === 1 ? (int) $ids->first() : 0;
+
+        return $cache ?: null;
+    }
+
+    private static function hasColumns(string $table, array $columns): bool
+    {
+        static $cache = [];
+        $key = $table . ':' . implode(',', $columns);
+
+        return $cache[$key] ??= \Illuminate\Support\Facades\Schema::hasTable($table)
+            && collect($columns)->every(fn ($c) => \Illuminate\Support\Facades\Schema::hasColumn($table, $c));
     }
 
     /** Runs $callback as company $companyId (null = no filter). */
@@ -93,24 +183,12 @@ class Tenant
 
     /**
      * Company to stamp on a record created with no tenant context (artisan,
-     * seeders, queue): the only non-platform company when there is exactly
-     * one, else null (callers must set company_id themselves).
+     * seeders, queue): the instance's client company, else null (callers must
+     * set company_id themselves).
      */
     public static function fallbackId(): ?int
     {
-        static $cache = null;
-        if ($cache !== null) {
-            return $cache ?: null;
-        }
-
-        $ids = DB::table('companies')
-            ->where(fn ($q) => $q->whereNull('type')->orWhere('type', '!=', config('tenancy.platform_company_type', 'Admin')))
-            ->when(\Illuminate\Support\Facades\Schema::hasColumn('companies', 'deleted_at'), fn ($q) => $q->whereNull('deleted_at'))
-            ->pluck('id');
-
-        $cache = $ids->count() === 1 ? (int) $ids->first() : 0;
-
-        return $cache ?: null;
+        return self::operatingCompanyId();
     }
 
     /** Clears the per-request cache (tests, login switch). */

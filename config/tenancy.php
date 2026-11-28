@@ -19,9 +19,13 @@ return [
     // company_id on create either way.
     'enforced' => env('TENANCY_ENFORCED', false),
 
-    // companies.type of the platform (licensing) company - Gonyeti itself.
-    // Its rows are never used as a fallback owner for client data.
+    // Platform (vendor) companies seeded on every instance - Gonyeti TLS and
+    // Basilmark. They never own client data: a record whose creator has no
+    // client company goes to the instance's client company instead, and a
+    // platform login works inside that client company. Matched by type OR
+    // by name prefix (case-insensitive).
     'platform_company_type' => 'Admin',
+    'platform_company_names' => ['Gonyeti', 'Basilmark'],
 
     // Tables never filtered or repaired: platform-level, keyed by the client
     // being billed / configured rather than owned by it.
@@ -31,5 +35,6 @@ return [
         'subscription_billing_contacts',
         'subscription_invoice_items',
         'company_company_type',
+        'change_logs', // "What's new" release notes - same for every company
     ],
 ];

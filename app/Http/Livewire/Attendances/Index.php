@@ -106,7 +106,7 @@ class Index extends Component
 
         // Default department only, so an employee in several departments is
         // marked on one register, never two or three.
-        $this->employees = Attendance::registerEmployeesQuery($this->selected_department, (bool) $this->is_drivers)->get();
+        $this->employees = Attendance::registerEmployeesQuery($this->selected_department, (bool) $this->is_drivers)->with('driver:id,employee_id')->get();
     }
 
 
@@ -434,6 +434,8 @@ class Index extends Component
 
         return view('livewire.attendances.index', [
             'attendances' => $attendances,
+            // Employee/driver captured twice: flagged on the marking rows.
+            'otherKindRecords' => Attendance::otherKindRecords($this->employees ?? []),
         ]);
     }
 }

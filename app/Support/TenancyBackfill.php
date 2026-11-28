@@ -135,17 +135,168 @@ class TenancyBackfill
             ->update([$table . '.company_id' => DB::raw('e.company_id')]);
     }
 
-    /** The single client (non-platform) company, else the one with the most employees if only one has any. */
+    /** The instance's client company (see Tenant::operatingCompanyId). */
     public static function operatingCompanyId(): ?int
     {
-        if ($id = Tenant::fallbackId()) {
-            return $id;
+        return Tenant::operatingCompanyId();
+    }
+
+    // ------------------------------------------------------------ align (2026-11-28)
+
+    /**
+     * Tables whose rows carry their own login in user_id (a customer's portal
+     * login, an employee's login...): their creator is creator_id, never user_id.
+     */
+    public const IDENTITY_TABLES = ['agents', 'brokers', 'customers', 'drivers', 'employees', 'transporters', 'vendors'];
+
+    /** Creator columns, most specific first. */
+    private const CREATOR_COLUMNS = ['creator_id', 'created_by', 'created_by_id', 'user_id'];
+
+    /** Child => [foreign key => parent table] tried after the creator. */
+    public const PARENTS = [
+        'bank_reconciliations' => ['bank_account_id' => 'bank_accounts'],
+        'bank_statements' => ['bank_account_id' => 'bank_accounts'],
+        'credit_notes' => ['invoice_id' => 'invoices'],
+        'debit_notes' => ['invoice_id' => 'invoices'],
+        'documents' => ['freight_job_id' => 'freight_jobs', 'trip_id' => 'trips'],
+        'drivers' => ['employee_id' => 'employees'],
+        'freight_job_reminders' => ['freight_job_id' => 'freight_jobs'],
+        'payroll_reversals' => ['payroll_run_id' => 'payroll_runs'],
+        'receipts' => ['invoice_id' => 'invoices'],
+    ];
+
+    /**
+     * Every table a model filters by company: [table => 'strict'|'shared'].
+     * Read from the models using BelongsToCompany / BelongsToCompanyOrShared,
+     * so a newly scoped model is repaired and checked automatically.
+     */
+    public static function scopedTables(): array
+    {
+        $tables = [];
+        foreach (glob(app_path('Models') . '/*.php') as $file) {
+            if (!preg_match('/\bBelongsToCompany(OrShared)?\s*;/', file_get_contents($file), $m)) {
+                continue;
+            }
+            $class = 'App\\Models\\' . basename($file, '.php');
+            if (!class_exists($class)) {
+                continue;
+            }
+            $tables[(new $class)->getTable()] = empty($m[1]) ? 'strict' : 'shared';
+        }
+        ksort($tables);
+
+        return $tables;
+    }
+
+    /**
+     * Rows that need a (new) company: strict tables - no company, a platform
+     * company or a company that no longer exists; shared tables - a platform or
+     * vanished company only (null = shared on purpose).
+     */
+    public static function needsCompany($query, string $table, string $mode)
+    {
+        $platform = Tenant::platformCompanyIds() ?: [0];
+        $column = $table . '.company_id';
+
+        return $query->where(function ($q) use ($column, $platform, $mode) {
+            if ($mode === 'strict') {
+                $q->whereNull($column);
+            }
+            $q->orWhereIn($column, $platform)
+              ->orWhere(fn ($q2) => $q2->whereNotNull($column)->whereNotIn($column, DB::table('companies')->select('id')));
+        });
+    }
+
+    /**
+     * Give rows that need one the right company:
+     *  1. the creator's own client company;
+     *  2. the parent record's client company;
+     *  3. the instance's client company (single-client installs).
+     * Rows already in a client company are never moved. Returns counts.
+     */
+    public static function align(string $table, string $mode = 'strict'): array
+    {
+        $done = ['creator' => 0, 'parent' => 0, 'default' => 0, 'left' => 0];
+        if (!Schema::hasTable($table)) {
+            return $done;
+        }
+        self::ensureColumn($table);
+
+        $pending = fn () => self::needsCompany(DB::table($table), $table, $mode);
+        if (!$pending()->exists()) {
+            return $done;
         }
 
-        $withStaff = DB::table('employees')->whereNotNull('company_id')
-            ->select('company_id', DB::raw('count(*) as c'))->groupBy('company_id')->get();
+        // 1. Creator's client company.
+        foreach (self::creatorColumns($table) as $col) {
+            $userIds = $pending()->whereNotNull($col)->distinct()->pluck($col);
+            $byCompany = [];
+            foreach ($userIds as $uid) {
+                if ($company = Tenant::ownCompanyOfUser((int) $uid)) {
+                    $byCompany[$company][] = $uid;
+                }
+            }
+            foreach ($byCompany as $company => $uids) {
+                foreach (array_chunk($uids, 500) as $chunk) {
+                    $done['creator'] += $pending()->whereIn($col, $chunk)->update(['company_id' => $company]);
+                }
+            }
+        }
 
-        return $withStaff->count() === 1 ? (int) $withStaff->first()->company_id : null;
+        // 2. Parent record's client company.
+        foreach (self::PARENTS[$table] ?? [] as $fk => $parent) {
+            if (!Schema::hasColumn($table, $fk) || !Schema::hasColumn($parent, 'company_id')) {
+                continue;
+            }
+            $done['parent'] += self::needsCompany(DB::table($table), $table, $mode)
+                ->join($parent . ' as p', 'p.id', '=', $table . '.' . $fk)
+                ->whereNotNull('p.company_id')
+                ->whereNotIn('p.company_id', Tenant::platformCompanyIds() ?: [0])
+                ->update([$table . '.company_id' => DB::raw('p.company_id')]);
+        }
+
+        // 3. The instance's client company.
+        if ($default = Tenant::operatingCompanyId()) {
+            $done['default'] = $pending()->update(['company_id' => $default]);
+        }
+
+        $done['left'] = $pending()->count();
+        if ($done['left']) {
+            Log::warning("Tenancy align: {$done['left']} row(s) in {$table} still have no client company (several client companies, creator unknown) - fill them by hand.");
+        }
+
+        return $done;
+    }
+
+    /** align() for every scoped table: [table => counts]. */
+    public static function alignAll(): array
+    {
+        $out = [];
+        $tables = self::scopedTables();
+        foreach ($tables as $table => $mode) {
+            $out[$table] = self::align($table, $mode);
+        }
+        // Second pass for children whose parent table sorts after them (credit_notes -> invoices).
+        foreach (array_intersect_key($tables, self::PARENTS) as $table => $mode) {
+            if ($out[$table]['left'] ?? 0) {
+                $again = self::align($table, $mode);
+                foreach ($again as $k => $v) {
+                    $out[$table][$k] = $k === 'left' ? $v : $out[$table][$k] + $v;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    private static function creatorColumns(string $table): array
+    {
+        $columns = Schema::getColumnListing($table);
+        $candidates = in_array($table, self::IDENTITY_TABLES, true)
+            ? array_diff(self::CREATOR_COLUMNS, ['user_id'])
+            : self::CREATOR_COLUMNS;
+
+        return array_values(array_intersect($candidates, $columns));
     }
 
     private static function usable(string $table, string $column): bool

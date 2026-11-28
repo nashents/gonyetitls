@@ -78,6 +78,12 @@
                                                 @if (($nameCounts[$nameKey($row->employee)] ?? 0) > 1)
                                                     <span class="label label-danger" title="Another employee record on this register has the same name (employee id {{ $row->employee->id }})">Duplicate record</span>
                                                 @endif
+                                                @if ($row->employee->driver)
+                                                    <span class="label label-info">Driver</span>
+                                                @endif
+                                                @if (!empty($otherKindRecords[$row->employee->id]))
+                                                    <span class="label label-warning" title="This person seems to have two records: one as an employee and one as a driver. Fix the records in HR.">{{ $otherKindRecords[$row->employee->id] }}</span>
+                                                @endif
                                             @endif
                                             @if ($row->employee)
                                                 <a href="{{ route('audit_logs.index', ['attendance' => $attendance->id, 'attendanceEmployee' => $row->employee->id]) }}" title="Audit history for this person on this register" style="margin-left:4px"><i class="fa fa-history"></i></a>

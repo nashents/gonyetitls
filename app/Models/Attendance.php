@@ -24,9 +24,10 @@ class Attendance extends Model implements Auditable
 
     /**
      * Employees who belong on a register for $department: active staff whose
-     * DEFAULT department it is. In Transport & Logistics the drivers flag
-     * splits drivers from non-drivers; elsewhere it limits to drivers only.
-     * Same list the marking form shows.
+     * DEFAULT department it is. In EVERY department the drivers flag splits
+     * the register: ticked = drivers only, unticked = non-drivers only
+     * (drivers sit under Operations, Rehandle etc. in some companies, not
+     * just Transport & Logistics). Same list the marking form shows.
      */
     public static function registerEmployeesQuery(?Department $department, $isDrivers = false)
     {
@@ -36,13 +37,69 @@ class Attendance extends Model implements Auditable
 
         $query = $department->defaultEmployees()->where('employees.archive', 0);
 
-        if ($department->name === 'Transport & Logistics') {
-            $isDrivers ? $query->whereHas('driver') : $query->whereDoesntHave('driver');
-        } elseif ($isDrivers) {
-            $query->whereHas('driver');
-        }
+        $isDrivers ? $query->whereHas('driver') : $query->whereDoesntHave('driver');
 
         return $query;
+    }
+
+    /**
+     * Flags for people captured twice by mistake: once as an employee and
+     * once as a driver (two employee records, different employee numbers).
+     * Returns [employee_id => "Also on file as driver DIE00311 (Rehandle)"]
+     * for each of $employees with an active record of the OTHER kind that has
+     * the same name (case/spacing ignored) or the same ID number.
+     */
+    public static function otherKindRecords($employees): array
+    {
+        $employees = collect($employees)->filter();
+        if ($employees->isEmpty()) {
+            return [];
+        }
+
+        $nameKey = fn ($e) => mb_strtolower(Employee::normalizeName($e->name) . '|' . Employee::normalizeName($e->surname));
+        $idKey = fn ($e) => Employee::normalizeIdNumber($e->idnumber);
+
+        $names = $employees->map(fn ($e) => mb_strtolower(Employee::normalizeName($e->name)))->unique()->values()->all();
+        $surnames = $employees->map(fn ($e) => mb_strtolower(Employee::normalizeName($e->surname)))->unique()->values()->all();
+        $ids = $employees->map($idKey)->filter()->unique()->values()->all();
+
+        $placeholders = fn ($list) => implode(',', array_fill(0, count($list), '?'));
+
+        $candidates = Employee::query()
+            ->with(['driver:id,employee_id', 'default_departments:departments.id,departments.name'])
+            ->where('employees.archive', 0)
+            ->where(function ($q) use ($names, $surnames, $ids, $placeholders) {
+                $q->where(function ($n) use ($names, $surnames, $placeholders) {
+                    $n->whereRaw('LOWER(TRIM(employees.name)) IN (' . $placeholders($names) . ')', $names)
+                      ->whereRaw('LOWER(TRIM(employees.surname)) IN (' . $placeholders($surnames) . ')', $surnames);
+                });
+                if ($ids) {
+                    $q->orWhereRaw("UPPER(REPLACE(REPLACE(REPLACE(employees.idnumber, ' ', ''), '-', ''), '/', '')) IN (" . $placeholders($ids) . ')', $ids);
+                }
+            })
+            ->get();
+
+        $flags = [];
+        foreach ($employees as $employee) {
+            $isDriver = $employee->relationLoaded('driver') ? $employee->driver !== null : $employee->driver()->exists();
+
+            $other = $candidates->first(function ($c) use ($employee, $isDriver, $nameKey, $idKey) {
+                if ($c->id === $employee->id || ($c->driver !== null) === $isDriver) {
+                    return false;
+                }
+                $sameId = $idKey($employee) !== '' && $idKey($c) === $idKey($employee);
+                return $sameId || $nameKey($c) === $nameKey($employee);
+            });
+
+            if ($other) {
+                $dept = $other->default_departments->first()?->name;
+                $flags[$employee->id] = 'Also on file as ' . ($isDriver ? 'employee' : 'driver') . ' '
+                    . ($other->employee_number ?: 'id ' . $other->id)
+                    . ($dept ? " ({$dept})" : '');
+            }
+        }
+
+        return $flags;
     }
 
     const DRAFT = 'draft';
@@ -78,6 +135,7 @@ class Attendance extends Model implements Auditable
     public function expectedEmployees()
     {
         return static::registerEmployeesQuery($this->department, (bool) $this->is_drivers)
+            ->with('driver:id,employee_id')
             ->orderBy('employees.name')
             ->orderBy('employees.surname')
             ->get();
